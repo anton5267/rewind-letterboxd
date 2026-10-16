@@ -39,7 +39,21 @@ $userId = ($registered.Content | ConvertFrom-Json).id
 $publicUser = (Send 'GET' "/users/$userId").Content | ConvertFrom-Json
 if ($null -ne $publicUser.email) { throw 'Public user endpoint exposed email' }
 Write-Output 'public profile omits email'
-Expect (Send 'GET' '/movies/1/details').StatusCode 200 'public film details'
+$filmResponse = Send 'GET' '/movies/1/details'
+Expect $filmResponse.StatusCode 200 'public film details'
+$film = $filmResponse.Content | ConvertFrom-Json
+$genresResponse = Send 'GET' '/genres'
+Expect $genresResponse.StatusCode 200 'public genres'
+if (($genresResponse.Content | ConvertFrom-Json).Count -lt 1) { throw 'Genre catalog is empty' }
+$pageOne = (Send 'GET' '/movies/search?page=0&size=12&sort=newest').Content | ConvertFrom-Json
+$pageTwo = (Send 'GET' '/movies/search?page=1&size=12&sort=newest').Content | ConvertFrom-Json
+if ($pageOne.content.Count -gt 12 -or $pageTwo.number -ne 1) { throw 'Movie pagination is broken' }
+$filmTitle = [uri]::EscapeDataString($film.title)
+$filmYear = $film.releaseDate.Substring(0, 4)
+$filmGenre = $film.genres[0].id
+$filtered = (Send 'GET' "/movies/search?q=$filmTitle&genreId=$filmGenre&year=$filmYear&size=12").Content | ConvertFrom-Json
+if ($filtered.content.id -notcontains 1) { throw 'Movie title, genre and year filters did not find film 1' }
+Write-Output 'catalog search, genre, year and pagination passed'
 $loggedIn = Send 'POST' '/auth/login' @{ email = $email; password = $password }
 Expect $loggedIn.StatusCode 200 'login'
 if (($loggedIn.Content | ConvertFrom-Json).PSObject.Properties.Name -contains 'token') { throw 'Login response exposed access token' }
