@@ -6,14 +6,12 @@ public class UserLoginResponse {
     private String username;
     private String email;
     private String role;
-    private String token; // поки буде null або заглушка
 
-    public UserLoginResponse(Long id, String username, String email, String role, String token) {
+    public UserLoginResponse(Long id, String username, String email, String role) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.role = role;
-        this.token = token;
     }
 
     public Long getId() { return id; }
@@ -24,5 +22,4 @@ public class UserLoginResponse {
 
     public String getRole() { return role; }
 
-    public String getToken() { return token; }
 }

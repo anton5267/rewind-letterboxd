@@ -34,7 +34,10 @@ server:
 app:
   jwt:
     secret: test-only-signing-key-with-at-least-thirty-two-bytes
-    expiration-minutes: 120
+    expiration-minutes: 15
+  auth:
+    refresh-days: 30
+    cookie-secure: ${COOKIE_SECURE:true}
   security:
     reset-password:
       token-ttl-minutes: 30

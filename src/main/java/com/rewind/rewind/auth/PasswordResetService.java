@@ -26,6 +26,7 @@ public class PasswordResetService {
     private final UserRepository users;
     private final PasswordResetTokenRepository tokens;
     private final PasswordEncoder passwords;
+    private final RefreshSessionService sessions;
     private final JavaMailSender mail;
     private final SecureRandom random = new SecureRandom();
     private final String resetUrl;
@@ -34,7 +35,7 @@ public class PasswordResetService {
     private final String from;
 
     public PasswordResetService(UserRepository users, PasswordResetTokenRepository tokens,
-            PasswordEncoder passwords, JavaMailSender mail,
+            PasswordEncoder passwords, RefreshSessionService sessions, JavaMailSender mail,
             @Value("${app.security.reset-password.frontend-reset-url}") String resetUrl,
             @Value("${app.security.reset-password.token-pepper}") String pepper,
             @Value("${app.security.reset-password.token-ttl-minutes}") long ttlMinutes,
@@ -42,6 +43,7 @@ public class PasswordResetService {
         this.users = users;
         this.tokens = tokens;
         this.passwords = passwords;
+        this.sessions = sessions;
         this.mail = mail;
         this.resetUrl = resetUrl;
         this.pepper = pepper;
@@ -86,6 +88,7 @@ public class PasswordResetService {
         }
         token.getUser().setPasswordHash(passwords.encode(newPassword));
         token.setUsedAt(Instant.now());
+        sessions.revokeAllForUser(token.getUser().getId());
     }
 
     private ResponseStatusException invalidToken() {

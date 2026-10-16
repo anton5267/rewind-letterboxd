@@ -3,6 +3,7 @@ services:
     image: ghcr.io/axllent/mailpit:v1.27
     ports:
       - "127.0.0.1:8025:8025"
+      - "127.0.0.1:1025:1025"
 
   db:
     image: mysql:8.4
@@ -31,6 +32,7 @@ services:
       DB_USERNAME: rewind
       DB_PASSWORD: ${MYSQL_PASSWORD}
       JWT_SECRET: ${JWT_SECRET:?Run scripts/init-dev-env.ps1 first}
+      COOKIE_SECURE: "false"
       FRONTEND_RESET_URL: http://localhost:3000/uk/reset-password
       MAIL_HOST: mailpit
       MAIL_PORT: 1025

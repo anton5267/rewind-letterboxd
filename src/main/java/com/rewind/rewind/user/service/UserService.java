@@ -1,6 +1,5 @@
 package com.rewind.rewind.user.service;
 
-import com.rewind.rewind.security.JwtService;
 import com.rewind.rewind.user.dto.UserLoginRequest;
 import com.rewind.rewind.user.dto.UserLoginResponse;
 import com.rewind.rewind.user.dto.UserRegisterRequest;
@@ -19,13 +18,11 @@ public class UserService {
 
     private final UserRepository users;
     private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
     private final SystemListService systemListService;
 
-    public UserService(UserRepository users, PasswordEncoder passwordEncoder, JwtService jwtService, SystemListService systemListService) {
+    public UserService(UserRepository users, PasswordEncoder passwordEncoder, SystemListService systemListService) {
         this.users = users;
         this.passwordEncoder = passwordEncoder;
-        this.jwtService = jwtService;
         this.systemListService = systemListService;
     }
 
@@ -73,15 +70,11 @@ public class UserService {
             throw new IllegalArgumentException("Invalid email or password");
         }
 
-        // ✅ тепер генеруємо реальний JWT
-        String token = jwtService.generateToken(user.getEmail(), user.getRole().name());
-
         return new UserLoginResponse(
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
-                user.getRole().name(),
-                token
+                user.getRole().name()
         );
     }
     public Long requireUserId() {

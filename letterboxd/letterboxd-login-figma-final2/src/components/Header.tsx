@@ -2,11 +2,23 @@ import styles from "./Header.module.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
+import { useState } from "react";
 
 export default function Header() {
   const { isAuth, logout } = useAuth();
   const navigate = useNavigate();
   const { lang, path, t, otherLanguagePath } = useLocale();
+  const [logoutError, setLogoutError] = useState(false);
+
+  const handleLogout = async () => {
+    setLogoutError(false);
+    try {
+      await logout();
+      navigate(path("/login"));
+    } catch {
+      setLogoutError(true);
+    }
+  };
 
   return (
     <header className={styles.header}>
@@ -27,7 +39,7 @@ export default function Header() {
           <>
             <Link to={path("/lists")}>{t("lists")}</Link>
             <Link to={path("/profile")}>{t("profile")}</Link>
-            <button type="button" onClick={() => { logout(); navigate(path("/login")); }}>{t("logout")}</button>
+            <button type="button" onClick={() => { void handleLogout(); }}>{t("logout")}</button>
           </>
         ) : (
           <>
@@ -37,6 +49,7 @@ export default function Header() {
         )}
         <Link to={otherLanguagePath} lang={lang === "uk" ? "en" : "uk"}>{lang === "uk" ? "EN" : "УКР"}</Link>
       </nav>
+      {logoutError && <p role="alert">{t("logoutError")}</p>}
 
       {/* SEARCH */}
       <Link to={path("/films")} className={styles.search} aria-label={t("browseFilms")}>

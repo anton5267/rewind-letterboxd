@@ -5,9 +5,14 @@ $suffix = [guid]::NewGuid().ToString('N').Substring(0, 12)
 $email = "verify-$suffix@example.invalid"
 $password = 'VerificationPass123!'
 $headers = @{}
+$webSession = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 
 function Send([string]$Method, [string]$Path, $Body = $null) {
-    $args = @{ Method = $Method; Uri = "$BaseUrl/api$Path"; Headers = $headers; UseBasicParsing = $true }
+    if ($Method -notin @('GET', 'HEAD', 'OPTIONS')) {
+        $csrfCookie = $webSession.Cookies.GetCookies([uri]"$BaseUrl/api$Path") | Where-Object Name -eq 'XSRF-TOKEN'
+        if ($csrfCookie) { $headers['X-XSRF-TOKEN'] = $csrfCookie.Value }
+    }
+    $args = @{ Method = $Method; Uri = "$BaseUrl/api$Path"; Headers = $headers; WebSession = $webSession; UseBasicParsing = $true }
     if ($null -ne $Body) {
         $args.ContentType = 'application/json'
         $args.Body = ($Body | ConvertTo-Json -Compress)
@@ -20,6 +25,14 @@ function Expect([int]$Actual, [int]$Wanted, [string]$Step) {
     Write-Output "$Step : $Actual"
 }
 
+$null = Send 'GET' '/auth/csrf'
+try {
+    $null = Invoke-WebRequest -Method POST -Uri "$BaseUrl/api/auth/login" -WebSession $webSession -ContentType 'application/json' -Body (@{ email = $email; password = $password } | ConvertTo-Json -Compress) -UseBasicParsing
+    throw 'Login without CSRF header was accepted'
+} catch {
+    if ($_.Exception.Response.StatusCode.value__ -ne 403) { throw }
+    Write-Output 'missing CSRF header : 403'
+}
 $registered = Send 'POST' '/auth/register' @{ username = "verify$suffix"; email = $email; password = $password }
 Expect $registered.StatusCode 200 'register'
 $userId = ($registered.Content | ConvertFrom-Json).id
@@ -29,7 +42,19 @@ Write-Output 'public profile omits email'
 Expect (Send 'GET' '/movies/1/details').StatusCode 200 'public film details'
 $loggedIn = Send 'POST' '/auth/login' @{ email = $email; password = $password }
 Expect $loggedIn.StatusCode 200 'login'
-$headers.Authorization = "Bearer $((($loggedIn.Content | ConvertFrom-Json).token))"
+if (($loggedIn.Content | ConvertFrom-Json).PSObject.Properties.Name -contains 'token') { throw 'Login response exposed access token' }
+$cookies = $webSession.Cookies.GetCookies([uri]"$BaseUrl/api/auth/refresh")
+foreach ($name in @('rewind_access', 'rewind_refresh')) {
+    $found = $cookies | Where-Object Name -eq $name
+    if (-not $found -or -not $found.HttpOnly) { throw "$name is missing or not HttpOnly" }
+}
+$null = Send 'GET' '/auth/csrf'
+Expect (Send 'GET' '/users/me').StatusCode 200 'cookie authentication'
+$oldRefresh = ($webSession.Cookies.GetCookies([uri]"$BaseUrl/api/auth/refresh") | Where-Object Name -eq 'rewind_refresh').Value
+Expect (Send 'POST' '/auth/refresh').StatusCode 204 'refresh session'
+$newRefresh = ($webSession.Cookies.GetCookies([uri]"$BaseUrl/api/auth/refresh") | Where-Object Name -eq 'rewind_refresh').Value
+if (-not $newRefresh -or $newRefresh -eq $oldRefresh) { throw 'Refresh token did not rotate' }
+Write-Output 'refresh token rotated'
 
 $list = Send 'POST' '/lists' @{ name = 'Verification list'; isPublic = $true }
 Expect $list.StatusCode 200 'create list'
@@ -56,4 +81,33 @@ if ($savedRating.rating -ne 5) { throw 'Deleting a review unexpectedly removed i
 Write-Output 'rating remains after review deletion : 5'
 Expect (Send 'DELETE' '/movies/1/rating').StatusCode 204 'delete rating'
 Expect (Send 'DELETE' "/lists/$listId/items/1").StatusCode 204 'remove item'
+
+$replaySession = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$null = Invoke-WebRequest -Method GET -Uri "$BaseUrl/api/auth/csrf" -WebSession $replaySession -UseBasicParsing
+$replayCsrf = $replaySession.Cookies.GetCookies([uri]"$BaseUrl/api/auth/refresh") | Where-Object Name -eq 'XSRF-TOKEN'
+$replaySession.Cookies.Add([uri]"$BaseUrl/api/auth/refresh", [System.Net.Cookie]::new('rewind_refresh', $oldRefresh, '/api/auth', ([uri]$BaseUrl).Host))
+try {
+    $null = Invoke-WebRequest -Method POST -Uri "$BaseUrl/api/auth/refresh" -Headers @{ 'X-XSRF-TOKEN' = $replayCsrf.Value } -WebSession $replaySession -UseBasicParsing
+    throw 'Replayed refresh token was accepted'
+} catch {
+    if ($_.Exception.Response.StatusCode.value__ -ne 401) { throw }
+    Write-Output 'replayed refresh token : 401'
+}
+try {
+    $null = Send 'POST' '/auth/refresh'
+    throw 'Session family survived refresh replay'
+} catch {
+    if ($_.Exception.Response.StatusCode.value__ -ne 401) { throw }
+    Write-Output 'refresh family revoked after replay : 401'
+}
+
+Expect (Send 'POST' '/auth/login' @{ email = $email; password = $password }).StatusCode 200 'new login after replay'
+Expect (Send 'POST' '/auth/logout').StatusCode 204 'logout'
+try {
+    $null = Send 'POST' '/auth/refresh'
+    throw 'Refresh succeeded after logout'
+} catch {
+    if ($_.Exception.Response.StatusCode.value__ -ne 401) { throw }
+    Write-Output 'refresh after logout : 401'
+}
 Write-Output 'HTTP core flow passed.'

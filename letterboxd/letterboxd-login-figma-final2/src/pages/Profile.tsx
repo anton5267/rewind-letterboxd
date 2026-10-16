@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { changePassword, getProfile, updateProfile } from "../api/profile.api";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
@@ -14,7 +14,8 @@ interface ProfileData {
 }
 
 export default function Profile() {
-  const { isAuth } = useAuth();
+  const { isAuth, ready, logout } = useAuth();
+  const navigate = useNavigate();
   const { path, t } = useLocale();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [displayName, setDisplayName] = useState("");
@@ -31,6 +32,7 @@ export default function Profile() {
     }).catch(() => setError(t("loadProfileError")));
   }, [isAuth]);
 
+  if (!ready) return <main>{t("loading")}</main>;
   if (!isAuth) return <Navigate to={path("/login")} replace />;
 
   const saveName = async (event: React.FormEvent) => {
@@ -50,7 +52,12 @@ export default function Profile() {
       await changePassword(currentPassword, newPassword);
       setCurrentPassword("");
       setNewPassword("");
-      setMessage(t("passwordChanged"));
+      try {
+        await logout();
+        navigate(`${path("/login")}?passwordChanged=1`, { replace: true });
+      } catch {
+        setError(t("passwordChangedLogoutError"));
+      }
     } catch { setError(t("changePasswordError")); }
   };
 

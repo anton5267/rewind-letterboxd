@@ -4,7 +4,7 @@ export type Language = "uk" | "en";
 
 const messages: Record<Language, Record<string, string>> = {
   uk: {
-    films: "Фільми", login: "Увійти", logout: "Вийти", register: "Реєстрація",
+    films: "Фільми", login: "Увійти", logout: "Вийти", logoutError: "Не вдалося вийти. Спробуйте ще раз.", register: "Реєстрація",
     lists: "Мої списки", profile: "Профіль", browseFilms: "Переглянути фільми",
     searchFilms: "Пошук фільмів", search: "Пошук", loadingFilms: "Завантаження фільмів...",
     loadFilmsError: "Не вдалося завантажити фільми. Перевірте API.", noFilms: "Фільмів не знайдено.",
@@ -34,7 +34,7 @@ const messages: Record<Language, Record<string, string>> = {
     invalidMovieId: "Некоректний номер фільму.",
     loadProfileError: "Не вдалося завантажити профіль.", nameSaved: "Ім'я оновлено.",
     saveNameError: "Не вдалося зберегти ім'я.", passwordChanged: "Пароль змінено.",
-    changePasswordError: "Перевірте поточний і новий пароль.", loadListsError: "Не вдалося завантажити списки.",
+    changePasswordError: "Перевірте поточний і новий пароль.", passwordChangedSignIn: "Пароль змінено. Увійдіть знову.", passwordChangedLogoutError: "Пароль змінено, але не вдалося вийти. Спробуйте вийти вручну.", loadListsError: "Не вдалося завантажити списки.",
     loadItemsError: "Не вдалося завантажити фільми.", createListError: "Не вдалося створити список.",
     removeItemError: "Не вдалося видалити фільм зі списку.", changeListError: "Не вдалося змінити список.",
     saveRatingError: "Не вдалося зберегти оцінку.", rateFirst: "Спочатку поставте оцінку.",
@@ -43,7 +43,7 @@ const messages: Record<Language, Record<string, string>> = {
     poster: "Постер", minutes: "хв", rateAs: "Оцінити на",
   },
   en: {
-    films: "Films", login: "Log in", logout: "Log out", register: "Register",
+    films: "Films", login: "Log in", logout: "Log out", logoutError: "Could not log out. Please try again.", register: "Register",
     lists: "My lists", profile: "Profile", browseFilms: "Browse films",
     searchFilms: "Search films", search: "Search", loadingFilms: "Loading films...",
     loadFilmsError: "Could not load films. Check that the API is running.", noFilms: "No films found.",
@@ -73,7 +73,7 @@ const messages: Record<Language, Record<string, string>> = {
     invalidMovieId: "Invalid film ID.",
     loadProfileError: "Could not load your profile.", nameSaved: "Name updated.",
     saveNameError: "Could not save the name.", passwordChanged: "Password changed.",
-    changePasswordError: "Check your current and new passwords.", loadListsError: "Could not load lists.",
+    changePasswordError: "Check your current and new passwords.", passwordChangedSignIn: "Password changed. Please log in again.", passwordChangedLogoutError: "Password changed, but sign-out failed. Please sign out manually.", loadListsError: "Could not load lists.",
     loadItemsError: "Could not load films.", createListError: "Could not create the list.",
     removeItemError: "Could not remove the film from the list.", changeListError: "Could not update the list.",
     saveRatingError: "Could not save your rating.", rateFirst: "Rate the film first.",

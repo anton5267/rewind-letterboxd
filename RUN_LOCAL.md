@@ -11,6 +11,8 @@ docker compose up --build
 
 Для перевірки відновлення пароля відкрийте `http://localhost:8025`: локальний Mailpit перехоплює листи, а посилання з листа веде на форму нового пароля. Для production налаштуйте справжній SMTP через `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`, `MAIL_SMTP_AUTH` і `MAIL_SMTP_STARTTLS`.
 
+Авторизація використовує короткий access token та відкличний refresh token у HttpOnly cookie. Запити, що змінюють дані, потребують CSRF cookie і заголовка `X-XSRF-TOKEN`; фронтенд додає його автоматично. У Compose `COOKIE_SECURE=false` лише для локального HTTP. Для HTTPS залишайте `COOKIE_SECURE=true`.
+
 На машині з уже зайнятим портом 3000 або 8081 спочатку звільніть порт чи змініть локальний mapping у `compose.yaml`. Не запускайте `docker compose down -v`, якщо хочете зберегти дані.
 
 ## Запуск із локальними Java і Node
@@ -19,11 +21,16 @@ docker compose up --build
 
 ```powershell
 docker start rewind-mysql
+docker compose up -d mailpit
 $env:JAVA_HOME = 'C:\Users\Legion\AppData\Local\Programs\Microsoft\jdk-17.0.10.7-hotspot'
 $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 $env:DB_USERNAME = 'rewind'
 $env:DB_PASSWORD = 'rewinddev'
 $env:JWT_SECRET = '<власний випадковий секрет щонайменше 32 байти>'
+$env:COOKIE_SECURE = 'false'
+$env:MAIL_HOST = 'localhost'
+$env:MAIL_PORT = '1025'
+$env:FRONTEND_RESET_URL = 'http://127.0.0.1:5173/uk/reset-password'
 .\mvnw.cmd spring-boot:run
 ```
 
@@ -48,6 +55,6 @@ npx tsc --noEmit
 npm run build
 ```
 
-Інтеграційні тести запускають Spring і Flyway на реальній MySQL та перевіряють видалення зі списків, оцінки, огляди й одноразовий токен відновлення. Тестові зміни даних відкочуються. Чистий MySQL-контейнер і API пройшли `scripts/verify-api.ps1 -BaseUrl http://localhost:8082`; тимчасовий контейнер після тесту видалено. Повний Compose на поточному ПК ще не перевірений: Docker Hub повертав мережеву помилку під час завантаження базових образів. Конфігурацію перевірено командою `docker compose config --quiet`.
+Інтеграційні тести запускають Spring і Flyway на реальній MySQL та перевіряють видалення зі списків, оцінки, огляди, одноразовий токен відновлення й ротацію refresh token. Тестові зміни даних відкочуються. `scripts/verify-api.ps1 -BaseUrl http://localhost:8080` перевіряє реальний HTTP-сценарій, cookie, CSRF, повторне використання refresh token і logout. Скрипт створює тимчасовий обліковий запис: запускайте його на тестовій БД. Повний Compose на поточному ПК ще не перевірений: Docker Hub повертав мережеву помилку під час завантаження базових образів. Конфігурацію перевірено командою `docker compose config --quiet`.
 
-Окремий `scripts/verify-password-reset.ps1 -BaseUrl http://localhost:8082` пройшов із реальною SMTP-доставкою до Mailpit: однакова відповідь для відомого й невідомого email, одноразове посилання та вхід із новим паролем. Скрипти використовують тимчасові адреси `example.invalid`; запускайте їх на тестовій БД. Для локального перехоплення пошти використано [офіційний Docker-образ Mailpit](https://mailpit.axllent.org/docs/install/docker/).
+Окремий `scripts/verify-password-reset.ps1 -BaseUrl http://localhost:8080` пройшов із реальною SMTP-доставкою до Mailpit: однакова відповідь для відомого й невідомого email, одноразове посилання та вхід із новим паролем. Скрипти використовують тимчасові адреси `example.invalid`; запускайте їх на тестовій БД. Для локального перехоплення пошти використано [офіційний Docker-образ Mailpit](https://mailpit.axllent.org/docs/install/docker/).

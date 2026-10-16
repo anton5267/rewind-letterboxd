@@ -1,5 +1,6 @@
 package com.rewind.rewind.profile.service;
 
+import com.rewind.rewind.auth.RefreshSessionService;
 import com.rewind.rewind.list.entity.ListType;
 import com.rewind.rewind.list.repo.ListItemRepository;
 import com.rewind.rewind.list.repo.MovieListRepository;
@@ -26,6 +27,7 @@ public class ProfileService {
     private final ReviewRepository reviews;
     private final ListItemRepository listItems;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshSessionService sessions;
 
     public ProfileService(
             UserRepository users,
@@ -33,7 +35,8 @@ public class ProfileService {
             RatingRepository ratings,
             ReviewRepository reviews,
             ListItemRepository listItems,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            RefreshSessionService sessions
     ) {
         this.users = users;
         this.lists = lists;
@@ -41,6 +44,7 @@ public class ProfileService {
         this.reviews = reviews;
         this.listItems = listItems;
         this.passwordEncoder = passwordEncoder;
+        this.sessions = sessions;
     }
 
     public ProfileResponse myProfile(String email) {
@@ -138,5 +142,6 @@ public class ProfileService {
 
         user.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
         users.save(user);
+        sessions.revokeAllForUser(user.getId());
     }
 }

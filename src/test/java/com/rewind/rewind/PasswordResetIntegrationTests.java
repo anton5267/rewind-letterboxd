@@ -1,6 +1,7 @@
 package com.rewind.rewind;
 
 import com.rewind.rewind.auth.PasswordResetService;
+import com.rewind.rewind.auth.RefreshSessionService;
 import com.rewind.rewind.user.entity.User;
 import com.rewind.rewind.user.repo.UserRepository;
 import java.util.UUID;
@@ -24,6 +25,7 @@ class PasswordResetIntegrationTests {
     @Autowired PasswordResetService reset;
     @Autowired UserRepository users;
     @Autowired PasswordEncoder passwords;
+    @Autowired RefreshSessionService sessions;
     @MockitoBean JavaMailSender mail;
 
     @Test
@@ -46,9 +48,11 @@ class PasswordResetIntegrationTests {
         assertTrue(body.contains("/uk/reset-password?token="));
         String token = body.split("token=")[1].split("\\s")[0];
 
+        var previousSession = sessions.issue(email);
         reset.reset(token, "NewPassword123!");
         users.flush();
         assertTrue(passwords.matches("NewPassword123!", users.findByEmail(email).orElseThrow().getPasswordHash()));
+        assertThrows(ResponseStatusException.class, () -> sessions.refresh(previousSession.refresh()));
         assertThrows(ResponseStatusException.class, () -> reset.reset(token, "AnotherPassword123!"));
     }
 }

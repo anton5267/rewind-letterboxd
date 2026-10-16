@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import styles from "./Login.module.css";
 import { useLocale } from "../i18n";
 
 export default function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login } = useAuth();
   const { path, t } = useLocale();
   const [email, setEmail] = useState("");
@@ -31,6 +32,7 @@ export default function Login() {
     <div className={styles.page}>
       <div className={styles.card}>
         <h1 className={styles.title}>{t("welcome")}</h1>
+        {searchParams.get("passwordChanged") === "1" && <p role="status">{t("passwordChangedSignIn")}</p>}
         <form onSubmit={submit}>
           <input
             type="email"

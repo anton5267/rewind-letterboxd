@@ -8,7 +8,7 @@ interface List { id: number; name: string; listType: string; isPublic: boolean }
 interface Item { id: number; movie: { id: number; title: string } }
 
 export default function UserLists() {
-  const { isAuth } = useAuth();
+  const { isAuth, ready } = useAuth();
   const { path, t } = useLocale();
   const [lists, setLists] = useState<List[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
@@ -23,6 +23,7 @@ export default function UserLists() {
     if (selected != null) getListItems(selected).then(({ data }) => setItems(data)).catch(() => setError(t("loadItemsError")));
   }, [selected]);
 
+  if (!ready) return <main>{t("loading")}</main>;
   if (!isAuth) return <Navigate to={path("/login")} replace />;
 
   const create = async (event: React.FormEvent) => {
