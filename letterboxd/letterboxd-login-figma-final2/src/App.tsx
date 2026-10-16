@@ -8,6 +8,7 @@ import Search from "./pages/Search";
 import MovieDetails from "./pages/MovieDetails";
 import Profile from "./pages/Profile";
 import UserLists from "./pages/UserLists";
+import About from "./pages/About";
 import Layout from "./layout/Layout";
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
       <Route path="/films/:id" element={<Layout><MovieDetails /></Layout>} />
       <Route path="/profile" element={<Layout><Profile /></Layout>} />
       <Route path="/lists" element={<Layout><UserLists /></Layout>} />
+      <Route path="/about" element={<Layout><About /></Layout>} />
       <Route
         path="/login"
         element={

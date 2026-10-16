@@ -79,3 +79,9 @@
 .search:hover {
   opacity: 1;
 }
+
+@media (max-width: 720px) {
+  .header { height: auto; min-height: 80px; padding: 12px 16px; flex-wrap: wrap; gap: 8px; background: #111; }
+  .logoImage { width: 110px; height: auto; }
+  .nav { position: static; transform: none; order: 3; width: 100%; flex-wrap: wrap; justify-content: center; gap: 12px; }
+}

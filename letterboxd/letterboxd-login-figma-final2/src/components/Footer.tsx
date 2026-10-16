@@ -1,4 +1,5 @@
 import styles from "./Footer.module.css";
+import { Link } from "react-router-dom";
 
 export default function Footer() {
   return (
@@ -14,11 +15,7 @@ export default function Footer() {
 
         {/* NAV */}
         <nav className={styles.nav}>
-          <a>ABOUT US</a>
-          <a>NEWS</a>
-          <a>HELP</a>
-          <a>TERMS</a>
-          <a>CONTACTS</a>
+          <Link to="/about">ABOUT US</Link>
         </nav>
 
       </div>
@@ -32,7 +29,7 @@ export default function Footer() {
 
       {/* BOTTOM */}
       <div className={styles.bottom}>
-        © 2025 Rewind. Made by students in Kyiv, Ukraine. Film data from IMDb
+        © {new Date().getFullYear()} Rewind. Made by students in Kyiv, Ukraine. Film data from TMDB. <Link to="/about">Credits</Link>
       </div>
 
     </footer>

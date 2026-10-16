@@ -1,0 +1,6 @@
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { margin: 0; min-width: 0; width: 100%; }
+body { font-family: Arial, sans-serif; background: #151515; color: #fff; }
+img { max-width: 100%; }
+button, input, select, textarea { font: inherit; }
+a { color: inherit; }
