@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import styles from "./Register.module.css";
 import { register } from "../api/auth.api";
+import { useLocale } from "../i18n";
 
 export default function Register() {
   const navigate = useNavigate();
+  const { path, t } = useLocale();
 
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
@@ -20,7 +22,7 @@ export default function Register() {
       await register(email, password, nickname);
       setSuccess(true);
     } catch {
-      setError("Registration failed");
+      setError(t("registrationError"));
     }
   };
 
@@ -29,13 +31,13 @@ export default function Register() {
     return (
       <div className={styles.page}>
         <div className={styles.card}>
-          <h2 className={styles.title}>Account created ✅</h2>
+          <h2 className={styles.title}>{t("accountCreated")} ✅</h2>
 
           <button
             className={styles.button}
-            onClick={() => navigate("/login")}
+            onClick={() => navigate(path("/login"))}
           >
-            Go to login
+            {t("goToLogin")}
           </button>
         </div>
       </div>
@@ -46,12 +48,13 @@ export default function Register() {
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        <h1 className={styles.title}>Create your account</h1>
+        <h1 className={styles.title}>{t("createAccount")}</h1>
 
         <form onSubmit={submit}>
           <input
             className={styles.input}
-            placeholder="Enter username"
+            placeholder={t("username")}
+            aria-label={t("username")}
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             required
@@ -60,7 +63,8 @@ export default function Register() {
           <input
             className={styles.input}
             type="email"
-            placeholder="Enter email"
+            placeholder={t("email")}
+            aria-label={t("email")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -69,7 +73,8 @@ export default function Register() {
           <input
             className={styles.input}
             type="password"
-            placeholder="Password"
+            placeholder={t("password")}
+            aria-label={t("password")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -78,17 +83,13 @@ export default function Register() {
           {error && <p className={styles.error}>{error}</p>}
 
           <button className={styles.button} type="submit">
-            Create Account
+            {t("createAccount")}
           </button>
         </form>
 
         {/* ✅ BACK TO LOGIN */}
-        <p
-          className={styles.footer}
-          onClick={() => navigate("/login")}
-          style={{ cursor: "pointer", marginTop: "25px" }}
-        >
-          Already have an account? <span>Log in</span>
+        <p className={styles.footer} style={{ marginTop: "25px" }}>
+          {t("alreadyAccount")} <Link to={path("/login")}>{t("login")}</Link>
         </p>
       </div>
     </div>

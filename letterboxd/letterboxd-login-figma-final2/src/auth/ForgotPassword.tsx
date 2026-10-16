@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import styles from "./ForgotPassword.module.css";
 import { forgotPassword } from "../api/auth.api";
+import { useLocale } from "../i18n";
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
+  const { path, t } = useLocale();
 
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -17,9 +19,9 @@ export default function ForgotPassword() {
 
     try {
       await forgotPassword(email);
-      setMessage("Recovery link has been sent to your email");
+      setMessage(t("resetSent"));
     } catch {
-      setError("Failed to reset password");
+      setError(t("resetInvalid"));
     }
   };
 
@@ -30,25 +32,25 @@ export default function ForgotPassword() {
         {/* ← BACK TO LOGIN */}
         <button
           className={styles.back}
-          onClick={() => navigate("/login")}
+          onClick={() => navigate(path("/login"))}
         >
-          ← Return
+          ← {t("return")}
         </button>
 
         <div className={styles.icon}>🔒</div>
 
-        <h1 className={styles.title}>Forgot your password?</h1>
+        <h1 className={styles.title}>{t("forgotTitle")}</h1>
 
         <p className={styles.text}>
-          Enter your email address and we will send you a link to reset your
-          password.
+          {t("forgotDescription")}
         </p>
 
         <form onSubmit={submit}>
           <input
             className={styles.input}
             type="email"
-            placeholder="Enter email"
+            placeholder={t("email")}
+            aria-label={t("email")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -58,19 +60,14 @@ export default function ForgotPassword() {
           {error && <p className={styles.error}>{error}</p>}
 
           <button className={styles.button} type="submit">
-            Reset password
+            {t("resetPassword")}
           </button>
         </form>
 
-        <div className={styles.divider}>Or</div>
+        <div className={styles.divider}>/</div>
 
         {/* → REGISTER */}
-        <p
-          className={styles.create}
-          onClick={() => navigate("/register")}
-        >
-          Create new account
-        </p>
+        <Link className={styles.create} to={path("/register")}>{t("createAccount")}</Link>
 
       </div>
     </div>

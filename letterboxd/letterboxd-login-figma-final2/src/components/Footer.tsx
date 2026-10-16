@@ -1,7 +1,9 @@
 import styles from "./Footer.module.css";
 import { Link } from "react-router-dom";
+import { useLocale } from "../i18n";
 
 export default function Footer() {
+  const { path, t } = useLocale();
   return (
     <footer className={styles.footer}>
 
@@ -15,7 +17,7 @@ export default function Footer() {
 
         {/* NAV */}
         <nav className={styles.nav}>
-          <Link to="/about">ABOUT US</Link>
+          <Link to={path("/about")}>{t("about")}</Link>
         </nav>
 
       </div>
@@ -29,7 +31,7 @@ export default function Footer() {
 
       {/* BOTTOM */}
       <div className={styles.bottom}>
-        © {new Date().getFullYear()} Rewind. Made by students in Kyiv, Ukraine. Film data from TMDB. <Link to="/about">Credits</Link>
+        © {new Date().getFullYear()} Rewind. {t("footerMade")} {t("filmDataFrom")} <Link to={path("/about")}>{t("credits")}</Link>
       </div>
 
     </footer>

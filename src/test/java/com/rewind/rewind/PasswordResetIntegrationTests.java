@@ -43,6 +43,7 @@ class PasswordResetIntegrationTests {
         verify(mail).send(captured.capture());
         String body = captured.getValue().getText();
         assertNotNull(body);
+        assertTrue(body.contains("/uk/reset-password?token="));
         String token = body.split("token=")[1].split("\\s")[0];
 
         reset.reset(token, "NewPassword123!");

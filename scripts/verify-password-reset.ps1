@@ -22,6 +22,7 @@ if ($unknown.StatusCode -ne 202 -or $requested.StatusCode -ne 202 -or $unknown.C
 }
 
 $body = (Invoke-WebRequest -Uri "$MailpitUrl/view/latest.txt" -UseBasicParsing).Content
+if ($body -notmatch '/uk/reset-password\?token=') { throw 'Email does not link to the localized reset page' }
 if ($body -notmatch 'token=([A-Za-z0-9_-]+)') { throw 'No reset token in captured email' }
 $token = $Matches[1]
 $changed = Post '/auth/reset-password' @{ token = $token; newPassword = $newPassword }

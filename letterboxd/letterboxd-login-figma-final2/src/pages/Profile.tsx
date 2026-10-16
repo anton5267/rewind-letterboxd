@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { changePassword, getProfile, updateProfile } from "../api/profile.api";
 import { useAuth } from "../context/AuthContext";
+import { useLocale } from "../i18n";
 
 interface ProfileData {
   username: string;
@@ -14,6 +15,7 @@ interface ProfileData {
 
 export default function Profile() {
   const { isAuth } = useAuth();
+  const { path, t } = useLocale();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -26,10 +28,10 @@ export default function Profile() {
     getProfile().then(({ data }) => {
       setProfile(data);
       setDisplayName(data.displayName ?? "");
-    }).catch(() => setError("Не вдалося завантажити профіль."));
+    }).catch(() => setError(t("loadProfileError")));
   }, [isAuth]);
 
-  if (!isAuth) return <Navigate to="/login" replace />;
+  if (!isAuth) return <Navigate to={path("/login")} replace />;
 
   const saveName = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -37,8 +39,8 @@ export default function Profile() {
     try {
       const { data } = await updateProfile({ displayName });
       setProfile(data);
-      setMessage("Ім'я оновлено.");
-    } catch { setError("Не вдалося зберегти ім'я."); }
+      setMessage(t("nameSaved"));
+    } catch { setError(t("saveNameError")); }
   };
 
   const savePassword = async (event: React.FormEvent) => {
@@ -48,33 +50,33 @@ export default function Profile() {
       await changePassword(currentPassword, newPassword);
       setCurrentPassword("");
       setNewPassword("");
-      setMessage("Пароль змінено.");
-    } catch { setError("Перевірте поточний і новий пароль."); }
+      setMessage(t("passwordChanged"));
+    } catch { setError(t("changePasswordError")); }
   };
 
   return <main style={{ background: "#151515", color: "white", minHeight: "70vh", padding: "110px 5% 40px" }}>
-    <h1>Мій профіль</h1>
+    <h1>{t("myProfile")}</h1>
     {error && <p role="alert">{error}</p>}
     {message && <p role="status">{message}</p>}
-    {!profile && !error && <p>Завантаження...</p>}
+    {!profile && !error && <p>{t("loading")}</p>}
     {profile && <>
       <p>@{profile.username} · {profile.email}</p>
       <form onSubmit={saveName}>
-        <label>Відображуване ім'я <input value={displayName} minLength={2} maxLength={60} onChange={e => setDisplayName(e.target.value)} /></label>
-        <button type="submit">Зберегти</button>
+        <label>{t("displayName")} <input value={displayName} minLength={2} maxLength={60} onChange={e => setDisplayName(e.target.value)} /></label>
+        <button type="submit">{t("save")}</button>
       </form>
       <form onSubmit={savePassword} style={{ marginTop: 24 }}>
-        <h2>Змінити пароль</h2>
-        <label>Поточний пароль <input type="password" required value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} /></label>
-        <label> Новий пароль <input type="password" required value={newPassword} onChange={e => setNewPassword(e.target.value)} /></label>
-        <button type="submit">Змінити</button>
+        <h2>{t("changePassword")}</h2>
+        <label>{t("currentPassword")} <input type="password" required value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} /></label>
+        <label> {t("newPassword")} <input type="password" required value={newPassword} onChange={e => setNewPassword(e.target.value)} /></label>
+        <button type="submit">{t("changePassword")}</button>
       </form>
-      <h2>Списки</h2>
-      <ul>{profile.lists.map(list => <li key={list.id}><Link to="/lists">{list.name}</Link></li>)}</ul>
-      <h2>Останні оцінки</h2>
-      <ul>{profile.recentRatings.map(item => <li key={item.movieId}><Link to={`/films/${item.movieId}`}>{item.movieTitle}</Link> — {item.rating}/5</li>)}</ul>
-      <h2>Останні огляди</h2>
-      <ul>{profile.recentReviews.map(item => <li key={item.reviewId}><Link to={`/films/${item.movieId}`}>{item.movieTitle}</Link>: {item.content}</li>)}</ul>
+      <h2>{t("lists")}</h2>
+      <ul>{profile.lists.map(list => <li key={list.id}><Link to={path("/lists")}>{list.name}</Link></li>)}</ul>
+      <h2>{t("recentRatings")}</h2>
+      <ul>{profile.recentRatings.map(item => <li key={item.movieId}><Link to={path(`/films/${item.movieId}`)}>{item.movieTitle}</Link> — {item.rating}/5</li>)}</ul>
+      <h2>{t("recentReviews")}</h2>
+      <ul>{profile.recentReviews.map(item => <li key={item.reviewId}><Link to={path(`/films/${item.movieId}`)}>{item.movieTitle}</Link>: {item.content}</li>)}</ul>
     </>}
   </main>;
 }

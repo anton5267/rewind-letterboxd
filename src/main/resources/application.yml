@@ -38,6 +38,6 @@ app:
   security:
     reset-password:
       token-ttl-minutes: 30
-      frontend-reset-url: ${FRONTEND_RESET_URL:http://localhost:3000/reset-password}
+      frontend-reset-url: ${FRONTEND_RESET_URL:http://localhost:3000/uk/reset-password}
       token-pepper: ${RESET_TOKEN_PEPPER:}
       from: ${MAIL_FROM:no-reply@rewind.local}

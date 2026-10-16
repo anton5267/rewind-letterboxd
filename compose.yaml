@@ -31,7 +31,7 @@ services:
       DB_USERNAME: rewind
       DB_PASSWORD: ${MYSQL_PASSWORD}
       JWT_SECRET: ${JWT_SECRET:?Run scripts/init-dev-env.ps1 first}
-      FRONTEND_RESET_URL: http://localhost:3000/reset-password
+      FRONTEND_RESET_URL: http://localhost:3000/uk/reset-password
       MAIL_HOST: mailpit
       MAIL_PORT: 1025
     depends_on:
