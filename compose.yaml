@@ -1,4 +1,9 @@
 services:
+  mailpit:
+    image: ghcr.io/axllent/mailpit:v1.27
+    ports:
+      - "127.0.0.1:8025:8025"
+
   db:
     image: mysql:8.4
     environment:
@@ -27,9 +32,13 @@ services:
       DB_PASSWORD: ${MYSQL_PASSWORD}
       JWT_SECRET: ${JWT_SECRET:?Run scripts/init-dev-env.ps1 first}
       FRONTEND_RESET_URL: http://localhost:3000/reset-password
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
     depends_on:
       db:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     ports:
       - "127.0.0.1:8081:8080"
 

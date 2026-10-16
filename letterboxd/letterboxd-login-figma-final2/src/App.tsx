@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import ForgotPassword from "./auth/ForgotPassword";
+import ResetPassword from "./auth/ResetPassword";
 import Search from "./pages/Search";
 import MovieDetails from "./pages/MovieDetails";
 import Profile from "./pages/Profile";
@@ -36,6 +37,7 @@ export default function App() {
           </Layout>
         }
       />
+      <Route path="/reset-password" element={<Layout><ResetPassword /></Layout>} />
     </Routes>
   );
 }

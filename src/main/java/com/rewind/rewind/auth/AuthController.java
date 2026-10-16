@@ -14,9 +14,11 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final UserService users;
+    private final PasswordResetService passwords;
 
-    public AuthController(UserService users) {
+    public AuthController(UserService users, PasswordResetService passwords) {
         this.users = users;
+        this.passwords = passwords;
     }
 
     @PostMapping("/register")
@@ -38,5 +40,17 @@ public class AuthController {
             // Не світимо, що саме не так — email чи пароль
             return ResponseEntity.badRequest().body("Invalid email or password");
         }
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        passwords.request(request.email());
+        return ResponseEntity.accepted().body("If the account exists, a reset link has been sent.");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwords.reset(request.token(), request.newPassword());
+        return ResponseEntity.noContent().build();
     }
 }
