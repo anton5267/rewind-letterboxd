@@ -1,0 +1,45 @@
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: rewind
+      MYSQL_USER: rewind
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Run scripts/init-dev-env.ps1 first}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Run scripts/init-dev-env.ps1 first}
+    volumes:
+      - rewind-db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    ports:
+      - "127.0.0.1:3307:3306"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_URL: jdbc:mysql://db:3306/rewind?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
+      DB_USERNAME: rewind
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Run scripts/init-dev-env.ps1 first}
+      FRONTEND_RESET_URL: http://localhost:3000/reset-password
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8081:8080"
+
+  web:
+    build:
+      context: ./letterboxd/letterboxd-login-figma-final2
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:3000:80"
+
+volumes:
+  rewind-db:
