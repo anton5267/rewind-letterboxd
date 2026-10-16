@@ -27,6 +27,13 @@ public class ReviewController {
         return service.listByMovie(movieId, page, size);
     }
 
+    @GetMapping("/api/movies/{movieId}/reviews/me")
+    public ResponseEntity<ReviewResponse> my(Authentication auth, @PathVariable Long movieId) {
+        return service.myReview(auth.getName(), movieId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
     // protected: створити відгук (текст + оцінка)
     @PostMapping("/api/movies/{movieId}/reviews")
     public ReviewResponse create(Authentication auth, @PathVariable Long movieId, @Valid @RequestBody CreateReviewRequest req) {

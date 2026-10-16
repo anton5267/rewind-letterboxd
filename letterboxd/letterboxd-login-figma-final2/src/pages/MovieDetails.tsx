@@ -15,7 +15,7 @@ interface Movie {
   similarMovies: { id: number; title: string; photoUrl: string | null }[];
   myFlags: { watched: boolean; watchlist: boolean; favorites: boolean } | null;
 }
-interface Review { id: number; username: string; content: string; rating: number; userId: number }
+interface Review { id: number; username: string; content: string; rating: number | null; userId: number }
 interface List { id: number; name: string }
 
 export default function MovieDetails() {
@@ -25,6 +25,11 @@ export default function MovieDetails() {
   const { lang, path, t } = useLocale();
   const [movie, setMovie] = useState<Movie | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [myReview, setMyReview] = useState<Review | null>(null);
+  const [myReviewReady, setMyReviewReady] = useState(false);
+  const [myReviewError, setMyReviewError] = useState(false);
+  const [editingReview, setEditingReview] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
   const [lists, setLists] = useState<List[]>([]);
   const [selectedList, setSelectedList] = useState("");
   const [rating, setRating] = useState(0);
@@ -44,13 +49,25 @@ export default function MovieDetails() {
     } catch { setError(t("loadMovieError")); }
   }, [movieId, lang]);
 
+  const loadMyReview = useCallback(async () => {
+    const response = await api.get<Review>(`/movies/${movieId}/reviews/me`);
+    setMyReview(response.status === 204 ? null : response.data);
+    setMyReviewError(false);
+    setMyReviewReady(true);
+  }, [movieId]);
+
   useEffect(() => {
     if (Number.isInteger(movieId) && movieId > 0) void load();
     if (isAuth) {
+      setMyReview(null);
       getUserLists().then(({ data }) => setLists(data)).catch(() => setLists([]));
       api.get<{ rating: number }>(`/movies/${movieId}/rating/me`).then(({ data }) => setRating(data?.rating ?? 0)).catch(() => setRating(0));
+      setMyReviewReady(false);
+      void loadMyReview().catch(() => { setMyReviewError(true); setMyReviewReady(true); });
+    } else {
+      setMyReview(null);
     }
-  }, [isAuth, load, movieId]);
+  }, [isAuth, load, loadMyReview, movieId]);
 
   const toggle = async (kind: "watched" | "watchlist" | "favorite", enabled: boolean) => {
     try {
@@ -62,21 +79,58 @@ export default function MovieDetails() {
 
   const saveRating = async (value: number) => {
     try {
-      await api.put(`/movies/${movieId}/rating`, { rating: value });
+      if (myReview) {
+        await api.patch(`/reviews/${myReview.id}`, { rating: value });
+        await loadMyReview();
+      } else {
+        await api.put(`/movies/${movieId}/rating`, { rating: value });
+      }
       setRating(value);
+      if (editingReview) setReviewRating(value);
       await load();
+      setError("");
     } catch { setError(t("saveRatingError")); }
   };
 
   const createReview = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!rating) { setError(t("rateFirst")); return; }
+    const chosenRating = editingReview ? reviewRating : rating;
+    if (!chosenRating) { setError(t("rateFirst")); return; }
     try {
-      await api.post(`/movies/${movieId}/reviews`, { content: reviewText.trim(), rating });
+      if (editingReview && myReview) {
+        await api.patch(`/reviews/${myReview.id}`, { content: reviewText.trim(), rating: chosenRating });
+      } else {
+        await api.post(`/movies/${movieId}/reviews`, { content: reviewText.trim(), rating: chosenRating });
+      }
+      setRating(chosenRating);
       setReviewText("");
-      setMessage(t("reviewPublished"));
+      setEditingReview(false);
+      setMessage(t(editingReview ? "reviewUpdated" : "reviewPublished"));
+      setError("");
+      await Promise.all([load(), loadMyReview()]);
+    } catch { setError(t(editingReview ? "updateReviewError" : "createReviewError")); }
+  };
+
+  const deleteReview = async () => {
+    if (!myReview || !window.confirm(t("deleteReviewConfirm"))) return;
+    try {
+      await api.delete(`/reviews/${myReview.id}`);
+      setEditingReview(false);
+      setReviewText("");
+      setMessage(t("reviewDeleted"));
+      setError("");
+      await Promise.all([load(), loadMyReview()]);
+    } catch { setError(t("deleteReviewError")); }
+  };
+
+  const deleteRating = async () => {
+    try {
+      await api.delete(`/movies/${movieId}/rating`);
+      setRating(0);
+      setMessage(t("ratingDeleted"));
+      setError("");
       await load();
-    } catch { setError(t("createReviewError")); }
+    } catch { setError(t("deleteRatingError")); }
   };
 
   const addToList = async () => {
@@ -86,6 +140,8 @@ export default function MovieDetails() {
       setMessage(t("filmAdded"));
     } catch { setError(t("addFilmError")); }
   };
+
+  const otherReviews = reviews.filter(item => item.id !== myReview?.id);
 
   if (!Number.isInteger(movieId) || movieId < 1) return <main>{t("invalidMovieId")}</main>;
   return <main style={{ background: "#151515", color: "white", minHeight: "75vh", padding: "110px 5% 40px" }}>
@@ -114,6 +170,7 @@ export default function MovieDetails() {
         </div>
         <p>{t("myRating")}: {rating || t("none")}</p>
         {[1, 2, 3, 4, 5].map(value => <button key={value} type="button" onClick={() => void saveRating(value)} aria-label={`${t("rateAs")} ${value}`} aria-pressed={rating === value}>{value} ★</button>)}
+        {rating > 0 && !myReview && <button type="button" onClick={() => void deleteRating()}>{t("deleteRating")}</button>}
         <div style={{ marginTop: 16 }}>
           <label>{t("addToList")} <select value={selectedList} onChange={event => setSelectedList(event.target.value)}><option value="">{t("chooseList")}</option>{lists.map(list => <option key={list.id} value={list.id}>{list.name}</option>)}</select></label>
           <button type="button" disabled={!selectedList} onClick={() => void addToList()}>{t("add")}</button>
@@ -122,12 +179,24 @@ export default function MovieDetails() {
       <section><h2>{t("actors")}</h2><p>{movie.actors.map(item => item.name).join(", ") || "—"}</p></section>
       <section><h2>{t("similarFilms")}</h2><ul>{movie.similarMovies.map(item => <li key={item.id}><Link to={path(`/films/${item.id}`)}>{item.title}</Link></li>)}</ul></section>
       <section><h2>{t("reviews")}</h2>
-        {reviews.length === 0 && <p>{t("noReviews")}</p>}
-        {reviews.map(item => <article key={item.id}><h3>{item.username} · {item.rating}/5</h3><p>{item.content}</p></article>)}
-        {isAuth ? <form onSubmit={createReview}>
+        {isAuth && myReview && <article>
+          <h3>{t("yourReview")} · {myReview.rating ?? "—"}/5</h3>
+          {!editingReview && <><p>{myReview.content}</p>
+            <button type="button" onClick={() => { setReviewText(myReview.content); setReviewRating(myReview.rating ?? rating); setEditingReview(true); }}>{t("editReview")}</button>{" "}
+            <button type="button" onClick={() => void deleteReview()}>{t("deleteReview")}</button>
+          </>}
+        </article>}
+        {otherReviews.length === 0 && !myReview && <p>{t("noReviews")}</p>}
+        {otherReviews.map(item => <article key={item.id}><h3>{item.username} · {item.rating ?? "—"}/5</h3><p>{item.content}</p></article>)}
+        {isAuth && !myReviewReady && <p>{t("loading")}</p>}
+        {isAuth && myReviewError && <p role="alert">{t("loadMyReviewError")}</p>}
+        {isAuth && myReviewReady && !myReviewError && (!myReview || editingReview) && <form onSubmit={createReview}>
           <label>{t("yourReview")}<br /><textarea required maxLength={5000} value={reviewText} onChange={event => setReviewText(event.target.value)} /></label><br />
-          <button type="submit">{t("publishReview")}</button>
-        </form> : <p><Link to={path("/login")}>{t("login")}</Link> {t("signInToReview")}</p>}
+          {editingReview && <label>{t("myRating")}: <select value={reviewRating} onChange={event => setReviewRating(Number(event.target.value))}>{[1, 2, 3, 4, 5].map(value => <option key={value} value={value}>{value}/5</option>)}</select></label>}{" "}
+          <button type="submit">{t(editingReview ? "saveReview" : "publishReview")}</button>{" "}
+          {editingReview && <button type="button" onClick={() => { setEditingReview(false); setReviewText(""); }}>{t("cancel")}</button>}
+        </form>}
+        {!isAuth && <p><Link to={path("/login")}>{t("login")}</Link> {t("signInToReview")}</p>}
       </section>
     </>}
   </main>;

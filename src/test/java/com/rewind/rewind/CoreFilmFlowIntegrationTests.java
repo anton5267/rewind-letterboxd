@@ -11,6 +11,7 @@ import com.rewind.rewind.movie.repo.MovieRepository;
 import com.rewind.rewind.rating.dto.UpsertRatingRequest;
 import com.rewind.rewind.rating.service.RatingService;
 import com.rewind.rewind.review.dto.CreateReviewRequest;
+import com.rewind.rewind.review.dto.UpdateReviewRequest;
 import com.rewind.rewind.review.repo.ReviewRepository;
 import com.rewind.rewind.review.service.ReviewService;
 import com.rewind.rewind.user.dto.UserRegisterRequest;
@@ -87,12 +88,20 @@ class CoreFilmFlowIntegrationTests {
         reviewRequest.setRating(5);
         Long reviewId = reviews.create(email, movieId, reviewRequest).getId();
         assertEquals(5, ratings.getMyRating(email, movieId).orElseThrow());
+        assertEquals(reviewId, reviews.myReview(email, movieId).orElseThrow().getId());
         assertThrows(ResponseStatusException.class, () -> reviews.create(email, movieId, reviewRequest));
+
+        UpdateReviewRequest updateReview = new UpdateReviewRequest();
+        updateReview.setContent("Edited review");
+        updateReview.setRating(4);
+        assertEquals("Edited review", reviews.updateMy(email, reviewId, updateReview).getContent());
+        assertEquals(4, ratings.getMyRating(email, movieId).orElseThrow());
 
         reviews.deleteMy(email, reviewId);
         entityManager.flush();
         assertFalse(reviewRepository.existsByUserIdAndMovieId(userId, movieId));
-        assertEquals(5, ratings.getMyRating(email, movieId).orElseThrow());
+        assertTrue(reviews.myReview(email, movieId).isEmpty());
+        assertEquals(4, ratings.getMyRating(email, movieId).orElseThrow());
 
         ratings.deleteMyRating(email, movieId);
         entityManager.flush();

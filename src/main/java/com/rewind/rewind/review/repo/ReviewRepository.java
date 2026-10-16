@@ -17,5 +17,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Page<Review> findAllByUserIdAndIsHidden(Long userId, Boolean hidden, Pageable pageable);
     Page<Review> findAllByMovieIdAndUserIdAndIsHidden(Long movieId, Long userId, Boolean hidden, Pageable pageable);
     Optional<Review> findByIdAndUserId(Long id, Long userId);
+    Optional<Review> findByUserIdAndMovieId(Long userId, Long movieId);
     boolean existsByUserIdAndMovieId(Long userId, Long movieId);
 }

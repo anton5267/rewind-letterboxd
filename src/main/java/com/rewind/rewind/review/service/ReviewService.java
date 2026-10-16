@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import java.util.Optional;
 
 @Service
 public class ReviewService {
@@ -75,6 +76,14 @@ public class ReviewService {
                 r.getRating() == null ? null : r.getRating().intValue(),
                 r.getCreatedAt()
         ));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<ReviewResponse> myReview(String email, Long movieId) {
+        var user = users.findByEmail(email).orElseThrow();
+        return reviews.findByUserIdAndMovieId(user.getId(), movieId)
+                .map(r -> new ReviewResponse(r.getId(), user.getId(), user.getUsername(), user.getAvatarUrl(),
+                        r.getContent(), r.getRating() == null ? null : r.getRating().intValue(), r.getCreatedAt()));
     }
 
     // ✅ РЕДАГУВАННЯ СВОГО ОГЛЯДУ

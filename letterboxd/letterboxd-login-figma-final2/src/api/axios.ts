@@ -3,6 +3,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 const api = axios.create({ baseURL: "/api", withCredentials: true });
 const csrfClient = axios.create({ baseURL: "/api", withCredentials: true });
 let csrfRequest: Promise<void> | null = null;
+let csrfInitialized = false;
 let refreshRequest: Promise<void> | null = null;
 
 function cookie(name: string) {
@@ -11,9 +12,9 @@ function cookie(name: string) {
 }
 
 async function ensureCsrf() {
-  if (cookie("XSRF-TOKEN")) return;
+  if (csrfInitialized && cookie("XSRF-TOKEN")) return;
   if (!csrfRequest) {
-    csrfRequest = csrfClient.get("/auth/csrf").then(() => undefined).finally(() => { csrfRequest = null; });
+    csrfRequest = csrfClient.get("/auth/csrf").then(() => { csrfInitialized = true; }).finally(() => { csrfRequest = null; });
   }
   await csrfRequest;
 }

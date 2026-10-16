@@ -66,6 +66,7 @@ Expect (Send 'PUT' '/movies/1/rating' @{ rating = 4 }).StatusCode 200 'rate film
 $review = Send 'POST' '/movies/1/reviews' @{ content = 'Verification review'; rating = 5 }
 Expect $review.StatusCode 200 'create review'
 $reviewId = ($review.Content | ConvertFrom-Json).id
+Expect (Send 'GET' '/movies/1/reviews/me').StatusCode 200 'my review'
 
 try {
     $null = Send 'POST' '/movies/1/reviews' @{ content = 'Duplicate'; rating = 4 }
@@ -75,10 +76,17 @@ try {
     Write-Output 'duplicate review : 409'
 }
 
+$updatedReview = Send 'PATCH' "/reviews/$reviewId" @{ content = 'Edited verification review'; rating = 4 }
+Expect $updatedReview.StatusCode 200 'edit review'
+if (($updatedReview.Content | ConvertFrom-Json).content -ne 'Edited verification review') { throw 'Review text did not update' }
+$updatedRating = (Send 'GET' '/movies/1/rating/me').Content | ConvertFrom-Json
+if ($updatedRating.rating -ne 4) { throw 'Review edit did not update rating' }
+
 Expect (Send 'DELETE' "/reviews/$reviewId").StatusCode 204 'delete review'
+Expect (Send 'GET' '/movies/1/reviews/me').StatusCode 204 'my review removed'
 $savedRating = (Send 'GET' '/movies/1/rating/me').Content | ConvertFrom-Json
-if ($savedRating.rating -ne 5) { throw 'Deleting a review unexpectedly removed its rating' }
-Write-Output 'rating remains after review deletion : 5'
+if ($savedRating.rating -ne 4) { throw 'Deleting a review unexpectedly removed its rating' }
+Write-Output 'rating remains after review deletion : 4'
 Expect (Send 'DELETE' '/movies/1/rating').StatusCode 204 'delete rating'
 Expect (Send 'DELETE' "/lists/$listId/items/1").StatusCode 204 'remove item'
 
