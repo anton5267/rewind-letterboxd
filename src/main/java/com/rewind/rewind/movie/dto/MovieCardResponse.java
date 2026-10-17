@@ -12,6 +12,10 @@ public class MovieCardResponse {
     private BigDecimal rating;
     private String photoUrl;
 
+    /** Required by the Redis JSON serializer when a cached details response is read back. */
+    public MovieCardResponse() {
+    }
+
     public MovieCardResponse(
             Long id,
             String title,
