@@ -6,6 +6,7 @@ import com.rewind.rewind.journal.service.JournalArticleService;
 import com.rewind.rewind.newsletter.service.NewsletterSubscriptionService;
 import com.rewind.rewind.newsletter.service.NewsletterDeliveryWorker;
 import com.rewind.rewind.newsletter.service.NewsletterDeliveryService;
+import com.rewind.rewind.newsletter.repo.NewsletterDeliveryRepository;
 import com.rewind.rewind.user.dto.UserRegisterRequest;
 import com.rewind.rewind.user.repo.UserRepository;
 import com.rewind.rewind.user.service.UserService;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.persistence.EntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +34,7 @@ class NewsletterIntegrationTests {
     @Autowired NewsletterSubscriptionService newsletter;
     @Autowired NewsletterDeliveryWorker deliveryWorker;
     @Autowired NewsletterDeliveryService deliveryService;
+    @Autowired NewsletterDeliveryRepository deliveryRepository;
     @Autowired EntityManager entityManager;
     @MockitoBean JavaMailSender mail;
 
@@ -75,6 +78,40 @@ class NewsletterIntegrationTests {
         assertEquals(1, deliveryService.status(article.id()).sent());
         assertEquals(0, newsletter.sendPublishedArticle(article.id()).recipients(),
                 "Re-queueing an already queued article must be idempotent");
+    }
+
+    @Test
+    void failedDeliveryIsRetriedAndMarkedSent() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String adminEmail = "newsletter-retry-admin-" + suffix + "@example.invalid";
+        String readerEmail = "newsletter-retry-reader-" + suffix + "@example.invalid";
+        register("newsletterretryadmin" + suffix, adminEmail);
+        register("newsletterretryreader" + suffix, readerEmail);
+        userRepository.findByEmail(adminEmail).orElseThrow().setRole(com.rewind.rewind.user.entity.UserRole.ADMIN);
+        newsletter.set(readerEmail, true);
+
+        JournalArticleResponse article = articles.create(adminEmail,
+                new AdminJournalArticleRequest("newsletter-retry-" + suffix, "en", "Newsletter", "Retry issue", null,
+                        "Retry body", null, null, true));
+        assertEquals(1, newsletter.sendPublishedArticle(article.id()).recipients());
+        entityManager.flush();
+
+        doThrow(new MailSendException("smtp unavailable")).when(mail).send(any(SimpleMailMessage.class));
+        assertEquals(1, deliveryWorker.processPending());
+        assertEquals(1, deliveryService.status(article.id()).failed());
+
+        var delivery = deliveryRepository.findAll().stream()
+                .filter(item -> item.getArticle().getId().equals(article.id()))
+                .findFirst().orElseThrow();
+        delivery.setAvailableAt(java.time.Instant.now().minusSeconds(1));
+        deliveryRepository.save(delivery);
+        entityManager.flush();
+        reset(mail);
+
+        assertEquals(1, deliveryWorker.processPending());
+        verify(mail, times(1)).send(any(SimpleMailMessage.class));
+        assertEquals(1, deliveryService.status(article.id()).sent());
+        assertEquals(0, deliveryService.status(article.id()).failed());
     }
 
     private void register(String username, String email) {
