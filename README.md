@@ -70,6 +70,17 @@ Content-Type: application/json
 
 Якщо один ID не знайдено або TMDB тимчасово недоступний, інші елементи batch все одно обробляються. Зміни виконуються в окремих транзакціях, тому невдалий імпорт не залишає порожній локальний фільм.
 
+Для контрольованого імпорту з TMDB discovery використовуйте фільтри й сторінку результатів. Endpoint повертає загальну кількість сторінок/результатів і статус кожного імпорту; за один запит обробляється не більше 20 кандидатів:
+
+```http
+POST /api/admin/movies/tmdb-import/discover
+Content-Type: application/json
+
+{"page":1,"year":2024,"genreId":18,"minRating":7.0,"limit":20,"syncSimilar":true}
+```
+
+Це дозволяє адмінському імпорту рухатися сторінка за сторінкою та повторювати невдалі елементи без неконтрольованого масового заповнення каталогу.
+
 The Compose file uses public ECR mirrors for container images. Maven uses the configured public mirror in `.mvn/settings.xml` so a local Docker build does not depend on a single registry endpoint.
 
 ### Run services without Compose

@@ -59,6 +59,50 @@ public class TmdbClient {
         }
     }
 
+    public DiscoveryPage discoverMovies(int page, Integer year, Long genreId,
+                                        BigDecimal minRating, int limit) {
+        if (!enabled || apiKey == null || apiKey.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "TMDB integration is disabled");
+        }
+        try {
+            JsonNode body = client.get()
+                    .uri(uri -> {
+                        var builder = uri.path("/discover/movie")
+                                .queryParam("api_key", apiKey)
+                                .queryParam("language", "en-US")
+                                .queryParam("page", page)
+                                .queryParam("sort_by", "popularity.desc")
+                                .queryParam("include_adult", false);
+                        if (year != null) builder.queryParam("primary_release_year", year);
+                        if (genreId != null) builder.queryParam("with_genres", genreId);
+                        if (minRating != null) builder.queryParam("vote_average.gte", minRating);
+                        return builder.build();
+                    })
+                    .retrieve()
+                    .body(JsonNode.class);
+            if (body == null || !body.has("results")) {
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "TMDB returned an empty discovery page");
+            }
+            List<Long> ids = new ArrayList<>();
+            for (JsonNode node : body.path("results")) {
+                Long id = longValue(node, "id");
+                if (id != null && !ids.contains(id)) {
+                    ids.add(id);
+                    if (ids.size() >= limit) break;
+                }
+            }
+            return new DiscoveryPage(page, body.path("total_pages").asInt(page),
+                    body.path("total_results").asInt(ids.size()), List.copyOf(ids));
+        } catch (RestClientResponseException ex) {
+            if (ex.getStatusCode().value() == 404) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "TMDB discovery page not found");
+            }
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "TMDB discovery request failed");
+        } catch (RestClientException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "TMDB discovery request failed");
+        }
+    }
+
     private MovieData map(JsonNode body, long requestedId) {
         Long id = longValue(body, "id");
         if (id == null) id = requestedId;
@@ -158,6 +202,8 @@ public class TmdbClient {
             List<CrewData> directors,
             List<Long> similarTmdbIds
     ) {}
+
+    public record DiscoveryPage(int page, int totalPages, int totalResults, List<Long> tmdbIds) {}
 
     public record GenreData(Long tmdbId, String name) {}
     public record CastData(Long tmdbId, String name, String photoUrl, String characterName, Integer castOrder) {}

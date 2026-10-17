@@ -10,9 +10,19 @@ import java.util.List;
 @Service
 public class TmdbImportService {
     private final TmdbSyncService syncService;
+    private final TmdbClient tmdb;
 
-    public TmdbImportService(TmdbSyncService syncService) {
+    public TmdbImportService(TmdbSyncService syncService, TmdbClient tmdb) {
         this.syncService = syncService;
+        this.tmdb = tmdb;
+    }
+
+    public TmdbDiscoveryImportResponse importDiscovered(TmdbDiscoveryRequest request) {
+        TmdbClient.DiscoveryPage page = tmdb.discoverMovies(request.page(), request.year(), request.genreId(),
+                request.minRating(), request.limit());
+        TmdbBatchSyncResponse imports = importMovies(new TmdbImportRequest(page.tmdbIds(), request.syncSimilar()));
+        return new TmdbDiscoveryImportResponse(page.page(), page.totalPages(), page.totalResults(),
+                page.tmdbIds().size(), imports);
     }
 
     public TmdbBatchSyncResponse importMovies(TmdbImportRequest request) {

@@ -35,4 +35,9 @@ public class AdminTmdbController {
     public TmdbBatchSyncResponse importMovies(@Valid @RequestBody TmdbImportRequest request) {
         return importService.importMovies(request);
     }
+
+    @PostMapping("/tmdb-import/discover")
+    public TmdbDiscoveryImportResponse importDiscovered(@Valid @RequestBody TmdbDiscoveryRequest request) {
+        return importService.importDiscovered(request);
+    }
 }

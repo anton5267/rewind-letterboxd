@@ -13,6 +13,8 @@ import com.rewind.rewind.tmdb.TmdbBatchSyncResponse;
 import com.rewind.rewind.tmdb.TmdbBatchSyncService;
 import com.rewind.rewind.tmdb.TmdbImportRequest;
 import com.rewind.rewind.tmdb.TmdbImportService;
+import com.rewind.rewind.tmdb.TmdbDiscoveryImportResponse;
+import com.rewind.rewind.tmdb.TmdbDiscoveryRequest;
 import com.rewind.rewind.tmdb.TmdbSyncRequest;
 import com.rewind.rewind.tmdb.TmdbSyncResponse;
 import com.rewind.rewind.tmdb.TmdbSyncService;
@@ -155,5 +157,30 @@ class TmdbSyncIntegrationTests {
                 () -> importService.importMovies(new TmdbImportRequest(List.of(700L, 700L), false)));
 
         assertEquals(org.springframework.http.HttpStatus.BAD_REQUEST, error.getStatusCode());
+    }
+
+    @Test
+    @Transactional
+    void discoveryImportUsesProviderFiltersAndKeepsPerMovieResults() {
+        when(tmdb.discoverMovies(2, 2024, 18L, new BigDecimal("7.0"), 2))
+                .thenReturn(new TmdbClient.DiscoveryPage(2, 12, 240, List.of(800L, 801L)));
+        when(tmdb.fetchMovie(800L)).thenReturn(new TmdbClient.MovieData(
+                800L, "tt0800800", "Discovery hit", 110, LocalDate.of(2024, 5, 6),
+                "Discovery overview", null, null, null, new BigDecimal("7.3"), 800,
+                List.of(), List.of(), List.of(), List.of()));
+        when(tmdb.fetchMovie(801L)).thenThrow(new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.NOT_FOUND, "TMDB movie not found"));
+
+        TmdbDiscoveryImportResponse result = importService.importDiscovered(new TmdbDiscoveryRequest(
+                2, 2024, 18L, new BigDecimal("7.0"), 2, false));
+
+        assertEquals(2, result.page());
+        assertEquals(12, result.totalPages());
+        assertEquals(240, result.totalResults());
+        assertEquals(2, result.discovered());
+        assertEquals(1, result.imports().succeeded());
+        assertEquals(1, result.imports().failed());
+        assertEquals("Discovery hit", movies.findByTmdbId(800L).orElseThrow().getTitle());
+        assertTrue(movies.findByTmdbId(801L).isEmpty());
     }
 }

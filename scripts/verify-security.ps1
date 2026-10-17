@@ -71,6 +71,7 @@ try {
         @{ Name = 'POST /api/admin/movies/999999/tmdb-sync'; Method = 'POST'; Route = '/api/admin/movies/999999/tmdb-sync'; Body = '{}' },
         @{ Name = 'POST /api/admin/movies/tmdb-sync/batch'; Method = 'POST'; Route = '/api/admin/movies/tmdb-sync/batch'; Body = '{"movies":[]}' },
         @{ Name = 'POST /api/admin/movies/tmdb-import'; Method = 'POST'; Route = '/api/admin/movies/tmdb-import'; Body = '{"tmdbIds":[]}' },
+        @{ Name = 'POST /api/admin/movies/tmdb-import/discover'; Method = 'POST'; Route = '/api/admin/movies/tmdb-import/discover'; Body = '{"page":1,"limit":1}' },
         @{ Name = 'PUT /api/admin/lists/999999/visibility'; Method = 'PUT'; Route = '/api/admin/lists/999999/visibility'; Body = '{"isPublic":true}' },
         @{ Name = 'DELETE /api/admin/lists/999999'; Method = 'DELETE'; Route = '/api/admin/lists/999999'; Body = '' },
         @{ Name = 'POST /api/admin/moderation/review/999999/hide'; Method = 'POST'; Route = '/api/admin/moderation/review/999999/hide'; Body = '{"reason":"security smoke"}' },
