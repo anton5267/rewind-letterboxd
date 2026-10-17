@@ -1,8 +1,10 @@
 # Rewind: перевірка основного API сценарію
 
-> **Оновлення 17.10.2026.** Нижче збережений початковий аудит. Транзакційні помилки виправлено; на чистій MySQL 8.4 пройшов `scripts/verify-api.ps1`: усі чотири видалення повернули 204, повторний огляд — 409, видалення огляду зберегло рейтинг, а публічний профіль не розкрив email. `CoreFilmFlowIntegrationTests` також пройшов із MySQL. Деталі виконання — у `RUN_LOCAL.md`.
+> **Оновлення 17.10.2026.** Нижче збережений початковий аудит як історичний baseline. Транзакційні помилки виправлено; на чистій MySQL 8.4 пройшов `scripts/verify-api.ps1`: усі чотири видалення повернули 204, повторний огляд — 409, видалення огляду зберегло рейтинг, публічний профіль не розкрив email, а validation/not-found відповіді відповідають `ApiErrorResponse`. `CoreFilmFlowIntegrationTests` також пройшов із MySQL. Деталі виконання — у `RUN_LOCAL.md`.
 
 16.10.2026 перевірено живий Spring Boot API (`localhost:8080`) з MySQL 8.4. Використано випадковий тимчасовий акаунт у домені `example.invalid`, фільм `id=50` і його власний тестовий список. Після перевірок акаунт видалено за точним `id` та email; середню оцінку фільму перераховано. Контрольний SQL запит показав `users=0`, `reviews=0`, `ratings=0`, `list_items=0`, `movies[50].rating=NULL`.
+
+Поточний regression-сценарій у `scripts/verify-api.ps1` повторно проходить цей flow на Compose API `:8081`: видалення watchlist/rating/review/list item повертає `204`, duplicate review — `409`, replayed refresh — `401`, а помилки validation/not-found мають поля `ApiErrorResponse`.
 
 ## Результати HTTP сценарію
 
@@ -24,10 +26,10 @@
 | `DELETE /api/movies/50/rating` | **500** | Видалення власної оцінки зламане |
 | `DELETE /api/reviews/{id}` | **500** | Видалення відгуку зламане; після нього `GET rating/me` усе ще повертав 200 |
 
-Ці чотири статуси 500 відтворено в окремому короткому повторному сценарії. HTTP error body не містив причини винятку, тому наведений нижче діагноз є висновком із коду та поведінки, а не прочитаним stack trace.
+Ці чотири статуси 500 відтворено в окремому короткому повторному сценарії. Після виправлення всі чотири операції повертають 204; нижче збережено первісний діагноз для історії змін.
 
 ## Ймовірна спільна причина
 
 `ListItemRepository.deleteByListIdAndMovieId` та `RatingRepository.deleteByUserIdAndMovieId` — оголошені derived delete methods. Їх викликають `MovieListService.removeItem`, `SystemListItemService.remove` і `RatingService.deleteMyRating` без сервісної `@Transactional`. `ReviewService.deleteMy` викликає `RatingService.deleteMyRating` після видалення review. [Документація Spring Data JPA](https://docs.spring.io/spring-data/jpa/reference/jpa/transactions.html) пояснює, що оголошені query methods не отримують транзакцію автоматично; [derived delete](https://docs.spring.io/spring-data/jpa/reference/jpa/query-methods.html) спочатку знаходить сутності, а потім видаляє їх по одній. Це узгоджується з усіма чотирма помилками 500.
 
-Наступний ремонт має задати транзакційні межі на сервісних методах видалення, а `ReviewService.deleteMy` зробити однією транзакцією разом із видаленням rating і перерахунком середнього. Після цього потрібен повторний HTTP сценарій із перевіркою рядків БД, бо попередня відповідь 500 могла залишити частково змінений стан. У цьому аудиті код видалення **не змінено**.
+Ремонт задав транзакційні межі на сервісних методах видалення, а `ReviewService.deleteMy` виконується однією транзакцією разом із видаленням rating і перерахунком середнього. Повторний HTTP сценарій із перевіркою стану БД зафіксований у `scripts/verify-api.ps1`; код видалення вже змінено у наступних комітах.

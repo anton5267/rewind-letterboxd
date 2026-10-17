@@ -19,7 +19,7 @@
 - [x] Публічний профіль більше не розкриває email; публічні деталі фільму доступні гостю.
 - [x] Публічний профіль показує сторінкові watched, watchlist і favorites через `GET /api/users/{id}/collections/{collection}`. Маршрут відкритий тільки на читання; HTTP-сценарій підтверджує його доступність без cookie.
 - [x] Обмежено page/size для основних endpoint'ів; додано базові відповіді 400/404/409.
-- [x] `CoreFilmFlowIntegrationTests`, `PasswordResetIntegrationTests` і `RefreshSessionIntegrationTests` пройшли з реальною MySQL; `scripts/verify-api.ps1` перевірив cookie/CSRF, список, оцінку, створення/редагування/видалення огляду та refresh-сесію. Після retry-зрізу повний Maven suite також підтвердив 38 тестів без failures/errors.
+- [x] `CoreFilmFlowIntegrationTests`, `PasswordResetIntegrationTests` і `RefreshSessionIntegrationTests` пройшли з реальною MySQL; `scripts/verify-api.ps1` перевірив cookie/CSRF, уніфікований контракт помилок для validation `400` і not-found `404`, список, оцінку, створення/редагування/видалення огляду та refresh-сесію. Після retry-зрізу повний Maven suite також підтвердив 38 тестів без failures/errors.
 - [x] Додано базовий GitHub Actions CI для MySQL, Maven, TypeScript і Vite; локально виконано ті самі збірки.
 - [x] Dev-профіль на чистій MySQL сам застосував міграції й імпортував 50 фільмів.
 - [x] Перевірити локальний `docker compose up -d` після переходу на ECR-образи та Maven mirror. MySQL і Redis healthy, API `/actuator/health` повернув 200, Web повернув 200; API image зібрався з `BUILD SUCCESS`. Повністю чисту машину та production-параметри ще не заявляємо.

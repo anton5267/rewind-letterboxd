@@ -49,6 +49,34 @@ try {
     if ($_.Exception.Response.StatusCode.value__ -ne 403) { throw }
     Write-Output 'missing CSRF header : 403'
 }
+
+try {
+    $null = Invoke-WebRequest -Method POST -Uri "$BaseUrl/api/auth/register" -WebSession $webSession -Headers @{ 'X-XSRF-TOKEN' = ($webSession.Cookies.GetCookies([uri]"$BaseUrl/api/auth/register") | Where-Object Name -eq 'XSRF-TOKEN').Value } -ContentType 'application/json' -Body '{}' -UseBasicParsing
+    throw 'Invalid registration was unexpectedly accepted'
+} catch {
+    if ($_.Exception.Response.StatusCode.value__ -ne 400) { throw }
+    $errorBody = $_.ErrorDetails.Message
+    if ([string]::IsNullOrWhiteSpace($errorBody)) { $errorBody = $_.Exception.Response.GetResponseStream() | ForEach-Object { (New-Object IO.StreamReader($_)).ReadToEnd() } }
+    $errorJson = $errorBody | ConvertFrom-Json
+    foreach ($field in @('timestamp', 'status', 'error', 'message', 'path')) {
+        if (-not ($errorJson.PSObject.Properties.Name -contains $field)) { throw "Validation error response is missing '$field'" }
+    }
+    if ($errorJson.status -ne 400) { throw "Validation error body reported status $($errorJson.status)" }
+    Write-Output 'validation error contract : 400'
+}
+
+try {
+    $null = Invoke-WebRequest -Method GET -Uri "$BaseUrl/api/movies/999999/details" -UseBasicParsing
+    throw 'Missing movie was unexpectedly returned'
+} catch {
+    if ($_.Exception.Response.StatusCode.value__ -ne 404) { throw }
+    $errorBody = $_.ErrorDetails.Message
+    if ([string]::IsNullOrWhiteSpace($errorBody)) { $errorBody = $_.Exception.Response.GetResponseStream() | ForEach-Object { (New-Object IO.StreamReader($_)).ReadToEnd() } }
+    $errorJson = $errorBody | ConvertFrom-Json
+    if ($errorJson.status -ne 404 -or [string]::IsNullOrWhiteSpace($errorJson.path)) { throw 'Not-found error response contract is malformed' }
+    Write-Output 'not-found error contract : 404'
+}
+
 $registered = Send 'POST' '/auth/register' @{ username = "verify$suffix"; email = $email; password = $password }
 Expect $registered.StatusCode 200 'register'
 $userId = ($registered.Content | ConvertFrom-Json).id
