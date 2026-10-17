@@ -54,6 +54,24 @@ public class ProfileController {
         return service.mySystemCollection(auth.getName(), ListType.FAVORITES, page, size);
     }
 
+    @GetMapping("/me/ratings")
+    public Page<ProfileResponse.ProfileRatingItem> myRatings(
+            Authentication auth,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return service.myRatings(auth.getName(), page, size);
+    }
+
+    @GetMapping("/me/reviews")
+    public Page<ProfileResponse.ProfileReviewItem> myReviews(
+            Authentication auth,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return service.myReviews(auth.getName(), page, size);
+    }
+
     @PatchMapping("/me")
     public ProfileResponse updateMe(Authentication auth, @Valid @RequestBody ProfileUpdateRequest req) {
         return service.updateMyProfile(auth.getName(), req);

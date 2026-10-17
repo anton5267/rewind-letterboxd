@@ -74,5 +74,9 @@ class PublicProfileIntegrationTests {
         assertEquals(1, ownProfile.getStats().getWatched());
         assertEquals(1, ownProfile.getStats().getRatings());
         assertEquals(1, ownProfile.getStats().getReviews());
+        assertEquals(1, profiles.myRatings(email, 0, 20).getTotalElements());
+        assertEquals(movieId, profiles.myRatings(email, 0, 20).getContent().get(0).getMovieId());
+        assertEquals(1, profiles.myReviews(email, 0, 20).getTotalElements());
+        assertEquals("Visible profile review", profiles.myReviews(email, 0, 20).getContent().get(0).getContent());
     }
 }

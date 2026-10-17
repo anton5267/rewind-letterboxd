@@ -107,9 +107,15 @@ if ($watchlist.content.id -notcontains 1) { throw 'Watchlist did not appear in p
 Write-Output 'profile collection history'
 Expect (Send 'DELETE' '/movies/1/watchlist').StatusCode 204 'remove watchlist'
 Expect (Send 'PUT' '/movies/1/rating' @{ rating = 4 }).StatusCode 200 'rate film'
+$ratingHistory = (Send 'GET' '/profile/me/ratings?size=20').Content | ConvertFrom-Json
+if ($ratingHistory.content.movieId -notcontains 1) { throw 'Rating did not appear in profile history' }
+Write-Output 'rating history'
 $review = Send 'POST' '/movies/1/reviews' @{ content = 'Verification review'; rating = 5 }
 Expect $review.StatusCode 200 'create review'
 $reviewId = ($review.Content | ConvertFrom-Json).id
+$reviewHistory = (Send 'GET' '/profile/me/reviews?size=20').Content | ConvertFrom-Json
+if ($reviewHistory.content.reviewId -notcontains $reviewId) { throw 'Review did not appear in profile history' }
+Write-Output 'review history'
 $comment = Send 'POST' "/reviews/$reviewId/comments" @{ text = 'Verification comment' }
 Expect $comment.StatusCode 200 'create comment'
 $commentId = ($comment.Content | ConvertFrom-Json).id

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { changePassword, getProfile, getProfileCollection, type ProfileCollection, updateProfile } from "../api/profile.api";
+import { changePassword, getProfile, getProfileCollection, getProfileRatings, getProfileReviews, type ProfileCollection, type ProfilePage, type ProfileRating, type ProfileReview, updateProfile } from "../api/profile.api";
 import type { MoviePage } from "../api/search.api";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
@@ -32,6 +32,14 @@ export default function Profile() {
   const [collectionPage, setCollectionPage] = useState(0);
   const [collectionLoading, setCollectionLoading] = useState(false);
   const [collectionError, setCollectionError] = useState(false);
+  const [ratingsHistory, setRatingsHistory] = useState<ProfilePage<ProfileRating> | null>(null);
+  const [ratingsPage, setRatingsPage] = useState(0);
+  const [ratingsLoading, setRatingsLoading] = useState(false);
+  const [ratingsError, setRatingsError] = useState(false);
+  const [reviewsHistory, setReviewsHistory] = useState<ProfilePage<ProfileReview> | null>(null);
+  const [reviewsPage, setReviewsPage] = useState(0);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsError, setReviewsError] = useState(false);
 
   useEffect(() => {
     if (!isAuth) return;
@@ -53,6 +61,30 @@ export default function Profile() {
       .finally(() => { if (current) setCollectionLoading(false); });
     return () => { current = false; };
   }, [isAuth, collectionKind, collectionPage]);
+
+  useEffect(() => {
+    if (!isAuth) return;
+    let current = true;
+    setRatingsLoading(true);
+    setRatingsError(false);
+    getProfileRatings(ratingsPage)
+      .then(({ data }) => { if (current) setRatingsHistory(data); })
+      .catch(() => { if (current) setRatingsError(true); })
+      .finally(() => { if (current) setRatingsLoading(false); });
+    return () => { current = false; };
+  }, [isAuth, ratingsPage]);
+
+  useEffect(() => {
+    if (!isAuth) return;
+    let current = true;
+    setReviewsLoading(true);
+    setReviewsError(false);
+    getProfileReviews(reviewsPage)
+      .then(({ data }) => { if (current) setReviewsHistory(data); })
+      .catch(() => { if (current) setReviewsError(true); })
+      .finally(() => { if (current) setReviewsLoading(false); });
+    return () => { current = false; };
+  }, [isAuth, reviewsPage]);
 
   const chooseCollection = (kind: ProfileCollection) => {
     setCollectionKind(kind);
@@ -131,10 +163,32 @@ export default function Profile() {
       </section>
       <h2>{t("lists")}</h2>
       <ul>{profile.lists.map(list => <li key={list.id}><Link to={path("/lists")}>{list.name}</Link></li>)}</ul>
-      <h2>{t("recentRatings")}</h2>
-      <ul>{profile.recentRatings.map(item => <li key={item.movieId}><Link to={path(`/films/${item.movieId}`)}>{item.movieTitle}</Link> — {item.rating}/5</li>)}</ul>
-      <h2>{t("recentReviews")}</h2>
-      <ul>{profile.recentReviews.map(item => <li key={item.reviewId}><Link to={path(`/films/${item.movieId}`)}>{item.movieTitle}</Link>: {item.content}</li>)}</ul>
+      <section>
+        <h2>{t("allRatings")}</h2>
+        {ratingsLoading && <p>{t("loading")}</p>}
+        {ratingsError && <p role="alert">{t("loadRatingsError")}</p>}
+        {!ratingsLoading && !ratingsError && ratingsHistory && <>
+          {ratingsHistory.content.length === 0 ? <p>{t("noRatings")}</p> : <ul>{ratingsHistory.content.map(item => <li key={item.movieId}><Link to={path(`/films/${item.movieId}`)}>{item.movieTitle}</Link> — {item.rating}/5</li>)}</ul>}
+          {ratingsHistory.totalPages > 1 && <nav aria-label={t("allRatings")} style={{ display: "flex", gap: 8 }}>
+            <button type="button" disabled={ratingsPage === 0} onClick={() => setRatingsPage(page => page - 1)}>{t("previous")}</button>
+            <span>{t("page")} {ratingsPage + 1} {t("of")} {ratingsHistory.totalPages}</span>
+            <button type="button" disabled={ratingsPage + 1 >= ratingsHistory.totalPages} onClick={() => setRatingsPage(page => page + 1)}>{t("next")}</button>
+          </nav>}
+        </>}
+      </section>
+      <section>
+        <h2>{t("allReviews")}</h2>
+        {reviewsLoading && <p>{t("loading")}</p>}
+        {reviewsError && <p role="alert">{t("loadReviewsError")}</p>}
+        {!reviewsLoading && !reviewsError && reviewsHistory && <>
+          {reviewsHistory.content.length === 0 ? <p>{t("noReviews")}</p> : <ul>{reviewsHistory.content.map(item => <li key={item.reviewId}><Link to={path(`/films/${item.movieId}`)}>{item.movieTitle}</Link>: {item.content}</li>)}</ul>}
+          {reviewsHistory.totalPages > 1 && <nav aria-label={t("allReviews")} style={{ display: "flex", gap: 8 }}>
+            <button type="button" disabled={reviewsPage === 0} onClick={() => setReviewsPage(page => page - 1)}>{t("previous")}</button>
+            <span>{t("page")} {reviewsPage + 1} {t("of")} {reviewsHistory.totalPages}</span>
+            <button type="button" disabled={reviewsPage + 1 >= reviewsHistory.totalPages} onClick={() => setReviewsPage(page => page + 1)}>{t("next")}</button>
+          </nav>}
+        </>}
+      </section>
     </>}
   </main>;
 }

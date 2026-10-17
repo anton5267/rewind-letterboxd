@@ -9,7 +9,9 @@ import com.rewind.rewind.profile.dto.ChangePasswordRequest;
 import com.rewind.rewind.profile.dto.ProfileResponse;
 import com.rewind.rewind.profile.dto.ProfileUpdateRequest;
 import com.rewind.rewind.rating.repo.RatingRepository;
+import com.rewind.rewind.rating.entity.Rating;
 import com.rewind.rewind.review.repo.ReviewRepository;
+import com.rewind.rewind.review.entity.Review;
 import com.rewind.rewind.user.repo.UserRepository;
 import com.rewind.rewind.user.dto.PublicProfileResponse;
 import org.springframework.data.domain.*;
@@ -61,25 +63,13 @@ public class ProfileService {
         var recentRatings = ratings.findAllByUserIdOrderByUpdatedAtDesc(user.getId(), PageRequest.of(0, 10))
                 .getContent()
                 .stream()
-                .map(r -> new ProfileResponse.ProfileRatingItem(
-                        r.getMovie().getId(),
-                        r.getMovie().getTitle(),
-                        r.getMovie().getPhotoUrl(),
-                        r.getRating().intValue(),
-                        r.getUpdatedAt()
-                ))
+                .map(this::toProfileRating)
                 .collect(Collectors.toList());
 
         var recentReviews = reviews.findAllByUserIdOrderByUpdatedAtDesc(user.getId(), PageRequest.of(0, 10))
                 .getContent()
                 .stream()
-                .map(rv -> new ProfileResponse.ProfileReviewItem(
-                        rv.getId(),
-                        rv.getMovie().getId(),
-                        rv.getMovie().getTitle(),
-                        rv.getContent(),
-                        rv.getUpdatedAt()
-                ))
+                .map(this::toProfileReview)
                 .collect(Collectors.toList());
 
         String displayName = user.getDisplayName();
@@ -140,7 +130,7 @@ public class ProfileService {
 
         var list = lists.findByUserAndListType(user, type).orElseThrow();
 
-        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 50)));
+        Pageable pageable = pageRequest(page, size);
         return listItems.findMoviesByListId(list.getId(), pageable)
                 .map(m -> new MovieCardResponse(
                         m.getId(),
@@ -149,6 +139,35 @@ public class ProfileService {
                         m.getRating(),
                         m.getPhotoUrl()
                 ));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ProfileResponse.ProfileRatingItem> myRatings(String email, int page, int size) {
+        var user = users.findByEmail(email).orElseThrow();
+        return ratings.findAllByUserIdOrderByUpdatedAtDesc(user.getId(), pageRequest(page, size))
+                .map(this::toProfileRating);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ProfileResponse.ProfileReviewItem> myReviews(String email, int page, int size) {
+        var user = users.findByEmail(email).orElseThrow();
+        return reviews.findAllByUserIdOrderByUpdatedAtDesc(user.getId(), pageRequest(page, size))
+                .map(this::toProfileReview);
+    }
+
+    private Pageable pageRequest(int page, int size) {
+        return PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 50)));
+    }
+
+    private ProfileResponse.ProfileRatingItem toProfileRating(Rating rating) {
+        return new ProfileResponse.ProfileRatingItem(
+                rating.getMovie().getId(), rating.getMovie().getTitle(), rating.getMovie().getPhotoUrl(),
+                rating.getRating().intValue(), rating.getUpdatedAt());
+    }
+
+    private ProfileResponse.ProfileReviewItem toProfileReview(Review review) {
+        return new ProfileResponse.ProfileReviewItem(
+                review.getId(), review.getMovie().getId(), review.getMovie().getTitle(), review.getContent(), review.getUpdatedAt());
     }
 
     @Transactional
