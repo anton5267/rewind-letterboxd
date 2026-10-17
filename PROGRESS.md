@@ -106,6 +106,7 @@
 - [x] Адмінський dashboard тепер створює, редагує та видаляє фільми через наявні API; форма має локалізовані підписи, URL-постер, дату, рейтинг і підтвердження видалення. `AdminMovieIntegrationTests` перевіряє create → update → delete, TypeScript і production build пройшли.
 - [x] Додано admin-only сторінковий огляд діалогів і сповіщень з агрегованою кількістю повідомлень, статусом прочитання та ID учасників; email і пароль не повертаються. `AdminCommunicationIntegrationTests` перевірив MySQL-запити, TypeScript і production build пройшли.
 - [x] Dashboard, користувачі/HQ, огляди й коментарі мають базові admin API/UI та аудит.
+- [x] Users у dashboard отримали пошук за username/email/display name і activate/deactivate з аудитом; `AdminAuditIntegrationTests` перевіряє обидва переходи, TypeScript і production build пройшли.
 - [ ] Додати повні admin UI для фільмів, списків, повідомлень, сповіщень і розширеного пошуку користувачів.
 - [ ] Блокування, черга модерації, аудит дій, налаштування сайту та серверні тести прав.
 

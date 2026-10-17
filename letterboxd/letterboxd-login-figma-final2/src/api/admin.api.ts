@@ -13,8 +13,9 @@ export interface AdminConversation { id: number; userOneId: number; userTwoId: n
 export interface AdminNotification { id: number; recipientId: number; actorId: number | null; type: string; reviewId: number | null; createdAt: string; readAt: string | null }
 export interface Page<T> { content: T[]; totalPages: number; totalElements: number }
 export const getAdminDashboard = () => api.get<AdminDashboard>("/admin/dashboard");
-export const getAdminUsers = () => api.get<Page<AdminUser>>("/admin/users", { params: { size: 50 } });
+export const getAdminUsers = (q = "") => api.get<Page<AdminUser>>("/admin/users", { params: { size: 50, ...(q.trim() ? { q: q.trim() } : {}) } });
 export const setAdminHq = (id: number, hq: boolean) => api.put<AdminUser>(`/admin/users/${id}/hq`, { hq });
+export const setAdminUserActive = (id: number, active: boolean) => api.post(`/admin/users/${id}/${active ? "activate" : "deactivate"}`);
 export const getAuditLogs = () => api.get<Page<AuditLog>>("/admin/audit-logs", { params: { size: 50 } });
 export const getAdminComments = () => api.get<Page<AdminComment>>("/admin/comments", { params: { size: 50 } });
 export const setAdminCommentHidden = (id: number, hidden: boolean, reason = "") => api.post<AdminComment>(`/admin/comments/${id}/${hidden ? "hide" : "unhide"}`, { reason });

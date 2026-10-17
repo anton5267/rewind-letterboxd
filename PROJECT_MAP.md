@@ -84,7 +84,7 @@ V1 створює 14 таблиць: `users`, `movies`, `actors`, `directors`, `
 | U | `GET /api/profile/me/watched`, `/watchlist`, `/favorites` | Сторінки власних системних списків |
 | P | `GET /api/users/{id}`, `GET /api/users/me` | Перший відкритий усім; `/me` без токена повертає 401 у самому handler |
 | A | `GET`, `POST /api/admin/movies`; `PUT`, `DELETE /api/admin/movies/{id}` | Сторінковий список, створення, редагування, видалення фільму; dashboard має CRUD-форму |
-| A | `GET /api/admin/users`, `GET`, `PATCH /api/admin/users/{id}` | Пошук, перегляд і редагування користувачів |
+| A | `GET /api/admin/users`, `GET`, `PATCH /api/admin/users/{id}` | Пошук, перегляд і редагування користувачів; dashboard підтримує пошук і activate/deactivate |
 | A | `POST /api/admin/users/{id}/activate`, `/deactivate` | Активація/деактивація |
 | A | `GET /api/admin/reviews`; `POST /api/admin/reviews/{id}/hide`, `/unhide`; `DELETE /api/admin/reviews/{id}` | Модерація відгуків; UI підключено до dashboard |
 | P | `GET /api/journal/articles`, `GET /api/journal/articles/{slug}` | Публічний журнал із мовним fallback |

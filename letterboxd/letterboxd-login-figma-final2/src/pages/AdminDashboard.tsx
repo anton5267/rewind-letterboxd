@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { createAdminArticle, createAdminMovie, deleteAdminMovie, getAdminArticles, getAdminComments, getAdminConversations, getAdminDashboard, getAdminLists, getAdminMovies, getAdminNotifications, getAdminReviews, getAdminUsers, getAuditLogs, setAdminCommentHidden, setAdminHq, setAdminListVisibility, setAdminReviewHidden, updateAdminMovie, type AdminArticle, type AdminComment, type AdminConversation, type AdminDashboard as Dashboard, type AdminList, type AdminMovie, type AdminMovieWrite, type AdminNotification, type AdminReview, type AdminUser, type AuditLog } from "../api/admin.api";
+import { createAdminArticle, createAdminMovie, deleteAdminMovie, getAdminArticles, getAdminComments, getAdminConversations, getAdminDashboard, getAdminLists, getAdminMovies, getAdminNotifications, getAdminReviews, getAdminUsers, getAuditLogs, setAdminCommentHidden, setAdminHq, setAdminListVisibility, setAdminReviewHidden, setAdminUserActive, updateAdminMovie, type AdminArticle, type AdminComment, type AdminConversation, type AdminDashboard as Dashboard, type AdminList, type AdminMovie, type AdminMovieWrite, type AdminNotification, type AdminReview, type AdminUser, type AuditLog } from "../api/admin.api";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
 
@@ -17,6 +17,7 @@ export default function AdminDashboard() {
   const [articles, setArticles] = useState<AdminArticle[]>([]);
   const [conversations, setConversations] = useState<AdminConversation[]>([]);
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
+  const [userQuery, setUserQuery] = useState("");
   const [movieDraft, setMovieDraft] = useState<AdminMovieWrite>({ title: "", releaseDate: "", rating: null, photoUrl: "" });
   const [editingMovieId, setEditingMovieId] = useState<number | null>(null);
   const [article, setArticle] = useState({ slug: "", language: "uk", category: "Новини", title: "", excerpt: "", content: "", coverUrl: "", published: false });
@@ -33,6 +34,15 @@ export default function AdminDashboard() {
   if (!isAuth || user?.role !== "ADMIN") return <Navigate to={path("/home")} replace />;
   const toggleHq = async (target: AdminUser) => {
     try { const { data } = await setAdminHq(target.id, !target.isHq); setUsers(current => current.map(item => item.id === data.id ? data : item)); setDashboard(current => current ? { ...current, hqUsers: current.hqUsers + (data.isHq ? 1 : -1) } : current); }
+    catch { setError(true); }
+  };
+  const toggleUserActive = async (target: AdminUser) => {
+    try { await setAdminUserActive(target.id, !target.isActive); setUsers(current => current.map(item => item.id === target.id ? { ...item, isActive: !target.isActive } : item)); }
+    catch { setError(true); }
+  };
+  const searchUsers = async (event: React.FormEvent) => {
+    event.preventDefault();
+    try { const { data } = await getAdminUsers(userQuery); setUsers(data.content); }
     catch { setError(true); }
   };
   const toggleComment = async (comment: AdminComment) => {
@@ -74,7 +84,7 @@ export default function AdminDashboard() {
     {dashboard && <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 12 }}>
       {([["users", dashboard.users], ["activeUsers", dashboard.activeUsers], ["hqUsers", dashboard.hqUsers], ["movies", dashboard.movies], ["reviews", dashboard.reviews], ["hiddenReviews", dashboard.hiddenReviews]] as const).map(([key, value]) => <div key={key} style={{ padding: 14, border: "1px solid #444", borderRadius: 8 }}><strong>{t(key)}</strong><div style={{ fontSize: 24 }}>{value}</div></div>)}
     </section>}
-    <section><h2>{t("adminUsers")}</h2><ul>{users.map(target => <li key={target.id} style={{ marginBottom: 8 }}>{target.displayName || target.username} · {target.role} <button type="button" onClick={() => { void toggleHq(target); }}>{target.isHq ? t("revokeHq") : t("grantHq")}</button></li>)}</ul></section>
+    <section><h2>{t("adminUsers")}</h2><form onSubmit={searchUsers} style={{ display: "flex", gap: 8, marginBottom: 12 }}><input aria-label={t("userSearch")} placeholder={t("userSearch")} value={userQuery} onChange={event => setUserQuery(event.target.value)} /><button type="submit">{t("search")}</button></form><ul>{users.map(target => <li key={target.id} style={{ marginBottom: 8 }}>{target.displayName || target.username} · {target.role} · {target.isActive ? t("activeUser") : t("blockedUser")} <button type="button" onClick={() => { void toggleHq(target); }}>{target.isHq ? t("revokeHq") : t("grantHq")}</button> <button type="button" onClick={() => { void toggleUserActive(target); }}>{target.isActive ? t("blockUser") : t("activateUser")}</button></li>)}</ul></section>
     <section><h2>{t("adminComments")}</h2><ul>{comments.map(comment => <li key={comment.id} style={{ marginBottom: 8 }}>{comment.username}: {comment.content} · {comment.isHidden ? t("hiddenComment") : t("visibleComment")} <button type="button" onClick={() => { void toggleComment(comment); }}>{comment.isHidden ? t("unhideComment") : t("hideComment")}</button></li>)}</ul></section>
     <section><h2>{t("adminReviews")}</h2><ul>{reviews.map(review => <li key={review.id} style={{ marginBottom: 8 }}>{review.movieTitle} · {review.username}: {review.content} · {review.isHidden ? t("hiddenReview") : t("visibleReview")} <button type="button" onClick={() => { void toggleReview(review); }}>{review.isHidden ? t("unhideReview") : t("hideReview")}</button></li>)}</ul></section>
     <section><h2>{t("adminMovies")}</h2><form onSubmit={saveMovie} style={{ display: "grid", gap: 8, maxWidth: 700, marginBottom: 16 }}><label>{t("movieTitle")}<input required maxLength={255} value={movieDraft.title} onChange={event => setMovieDraft({ ...movieDraft, title: event.target.value })} /></label><label>{t("releaseDate")}<input type="date" value={movieDraft.releaseDate ?? ""} onChange={event => setMovieDraft({ ...movieDraft, releaseDate: event.target.value })} /></label><label>{t("rating")}<input type="number" min="0" max="10" step="0.1" value={movieDraft.rating ?? ""} onChange={event => setMovieDraft({ ...movieDraft, rating: event.target.value === "" ? null : Number(event.target.value) })} /></label><label>{t("posterUrl")}<input type="url" value={movieDraft.photoUrl ?? ""} onChange={event => setMovieDraft({ ...movieDraft, photoUrl: event.target.value })} /></label><div><button type="submit">{editingMovieId === null ? t("create") : t("save")}</button>{editingMovieId !== null && <button type="button" onClick={resetMovieDraft}>{t("cancel")}</button>}</div></form><ul>{movies.map(movie => <li key={movie.id} style={{ marginBottom: 8 }}>{movie.title} · {movie.releaseDate || "—"} · {movie.rating ?? "—"} <button type="button" onClick={() => editMovie(movie)}>{t("editMovie")}</button> <button type="button" onClick={() => { void removeMovie(movie); }}>{t("deleteMovie")}</button></li>)}</ul></section>

@@ -37,6 +37,10 @@ class AdminAuditIntegrationTests {
 
         adminUsers.setHq(targetId, true, adminEmail);
         assertTrue(audit.list(0, 20).getContent().stream().anyMatch(item -> item.targetId().equals(targetId) && item.action().equals("HQ_GRANTED")));
+        adminUsers.deactivate(targetId, adminEmail);
+        assertFalse(userRepository.findById(targetId).orElseThrow().getIsActive());
+        adminUsers.activate(targetId, adminEmail);
+        assertTrue(userRepository.findById(targetId).orElseThrow().getIsActive());
         assertTrue(dashboard.summary().users() >= 2);
     }
 
