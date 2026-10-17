@@ -33,6 +33,12 @@ server:
     include-message: always
     include-binding-errors: always
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
 app:
   jwt:
     secret: test-only-signing-key-with-at-least-thirty-two-bytes

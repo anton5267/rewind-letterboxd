@@ -33,6 +33,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // ✅ щоб не маскувало помилки як 403
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
 
                         // ✅ swagger / openapi
                         .requestMatchers(
