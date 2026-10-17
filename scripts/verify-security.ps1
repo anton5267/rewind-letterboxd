@@ -34,7 +34,22 @@ try {
     $userHeaders = @{ 'X-XSRF-TOKEN' = $userCsrf.Value }
     $null = Invoke-WebRequest -Method POST -UseBasicParsing "$BaseUrl/api/auth/register" -WebSession $userSession -Headers $userHeaders -ContentType 'application/json' -Body (@{ username = "security$userSuffix"; email = $userEmail; password = $userPassword } | ConvertTo-Json -Compress)
     $null = Invoke-WebRequest -Method POST -UseBasicParsing "$BaseUrl/api/auth/login" -WebSession $userSession -Headers $userHeaders -ContentType 'application/json' -Body (@{ email = $userEmail; password = $userPassword } | ConvertTo-Json -Compress)
-    Expect-Status 'normal user admin dashboard' (Get-Status { Invoke-WebRequest -UseBasicParsing "$BaseUrl/api/admin/dashboard" -WebSession $userSession }) 403
+    $adminReadRoutes = @(
+        '/api/admin/dashboard',
+        '/api/admin/users?size=1',
+        '/api/admin/comments?size=1',
+        '/api/admin/reviews?size=1',
+        '/api/admin/movies?size=1',
+        '/api/admin/lists?size=1',
+        '/api/admin/conversations?size=1',
+        '/api/admin/notifications?size=1',
+        '/api/admin/moderation/queue?size=1',
+        '/api/admin/settings',
+        '/api/admin/audit-logs?size=1'
+    )
+    foreach ($route in $adminReadRoutes) {
+        Expect-Status "normal user $route" (Get-Status { Invoke-WebRequest -UseBasicParsing "$BaseUrl$route" -WebSession $userSession }) 403
+    }
 }
 finally {
     "DELETE FROM users WHERE email='$userEmail';" | docker compose exec -T db sh -lc 'mysql -urewind -p"$MYSQL_PASSWORD" rewind' | Out-Null
