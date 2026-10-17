@@ -16,7 +16,7 @@ flowchart LR
     Controllers --> Services[Services]
     Services --> Repositories[Spring Data JPA repositories]
     Repositories --> MySQL[(MySQL :3306)]
-    Flyway[Flyway V1–V20] --> MySQL
+    Flyway[Flyway V1–V21] --> MySQL
     Seed[seed_50_real.sql] --> MySQL
 ```
 
@@ -27,7 +27,7 @@ flowchart LR
 | `src/main/java/com/rewind/rewind/{auth,user,movie,list,rating,review,profile,admin,comment,message,notification,journal,...}` | Функціональні модулі бекенду; у більшості є `controller`, `service`, `repo`, `entity`, `dto` |
 | `src/main/java/com/rewind/rewind/security/` | Правила доступу, перевірка JWT, BCrypt |
 | `src/main/resources/application.yml` | База, Flyway, JPA, пошта, JWT |
-| `src/main/resources/db/migration/` | Послідовні SQL міграції V1–V20 |
+| `src/main/resources/db/migration/` | Послідовні SQL міграції V1–V21 |
 | `src/main/resources/seed_50_real.sql`, `tmdb_seed_50.py` | Готове демо наповнення і його генератор |
 | `letterboxd/letterboxd-login-figma-final2/src/App.tsx` | Реальні маршрути фронтенду |
 | `letterboxd/letterboxd-login-figma-final2/src/api/` | Axios клієнт і виклики API |
@@ -94,6 +94,7 @@ V1 створює 14 таблиць: `users`, `movies`, `actors`, `directors`, `
 | A | `GET /api/admin/comments`; `POST /api/admin/comments/{id}/hide`, `/unhide`; `DELETE /api/admin/comments/{id}` | Модерація коментарів; UI підключено до dashboard |
 | A | `GET /api/admin/lists`; `PUT /api/admin/lists/{id}/visibility?visible=...` | Сторінковий список списків з кількістю фільмів; приховування/публікація з аудитом; UI підключено до dashboard |
 | A | `GET /api/admin/conversations`, `GET /api/admin/notifications` | Сторінковий адміністративний огляд діалогів і сповіщень без email та службових полів; UI підключено до dashboard |
+| A | `GET /api/admin/settings`, `PUT /api/admin/settings/{key}` | Whitelist налаштувань сайту з аудитом; UI підключено до dashboard |
 | U | `GET`, `POST /api/conversations`; `GET`, `POST /api/conversations/{id}/messages`; `POST /api/conversations/{id}/read` | Приватні діалоги й повідомлення |
 | U | `GET`, `PUT /api/notifications/preferences` | Налаштування сповіщень |
 
@@ -148,15 +149,13 @@ Axios бере base URL із `VITE_API_URL` із fallback на `http://localhost
 
 Пізніший тестовий сценарій через живий API підтвердив реєстрацію, вхід, створення списку, додавання фільму, оцінку й відгук. Чотири операції видалення повернули **500**: CUSTOM елемент, системний елемент, оцінка й відгук. Точні результати та очищення тестових даних — у [API_AUDIT.md](API_AUDIT.md).
 
-Оновлення 17.10.2026: після цього аудиту транзакційні DELETE виправлені; `scripts/verify-api.ps1` і MySQL інтеграційні тести перевіряють реєстрацію → список → оцінку → огляд → редагування → видалення. Додані V5–V20, cookie auth, локалізовані маршрути, профілі, соціальні функції, повідомлення, HQ, адмін-аудит, модерація коментарів і журнал.
+Оновлення 17.10.2026: після цього аудиту транзакційні DELETE виправлені; `scripts/verify-api.ps1` і MySQL інтеграційні тести перевіряють реєстрацію → список → оцінку → огляд → редагування → видалення. Додані V5–V21, cookie auth, локалізовані маршрути, профілі, соціальні функції, повідомлення, HQ, адмін-аудит, модерація, черга модерації, налаштування сайту і журнал.
 
 ## 6. Конкретні проблеми та межі поточного стану
 
-1. **Неповний користувацький шлях:** UI не має сторінки фільму, профілю, оцінок, власних і публічних списків, відгуків, адміністратора. Багато функцій є тільки в API. Відновлення пароля показане в UI, але endpoint-а немає; mail/reset налаштування в YAML поки ніде не використовуються.
-2. **Публічний перегляд не збігається з задумом:** security вимагає токен для GET відгуків і GET `/lists/public`, попри їхні назви/коментарі. Для публічного списку є лише картка; endpoint перегляду чужих елементів відсутній.
-3. **Дані та безпека:** `GET /api/users/{id}` відкритий і повертає email. У вихідних файлах зберігаються пароль БД, demo JWT secret та TMDB API ключ; їх слід прибрати з репозиторію перед публікацією. Login не перевіряє `isActive` перед видачею токена, хоча фільтр потім блокує доступ деактивованому користувачу.
-4. **Цілісність відгуків/оцінок і видалення:** чотири DELETE дії вище відтворено з HTTP 500; ймовірна спільна причина — derived delete methods без транзакції в сервісах. `ReviewService` записує review, rating і середнє без спільної сервісної транзакції. Схема дозволяє кілька review одного користувача до одного фільму, але rating лише один; видалення одного review намагається видалити й rating. Адміністративне видалення review, на відміну від користувацького, rating не змінює.
-5. **Дрібніші backend дефекти:** `AdminReviewService.list` ігнорує фільтр лише за `movieId` або лише за `userId`, якщо `hidden` не заданий. `MovieListService.reorderMyListItems` перевіряє довжину й належність ID, але не унікальність; повтор ID може залишити частину елементів без нового порядку. Вхідні `page/size` у більшості контролерів не нормалізовані, на відміну від пошуку.
-6. **Операційні прогалини:** SQL seed імпортується вручну; Python генератор не розбирається під Python 3.11. Немає контейнерного опису всього застосунку, CI, deployment config чи тестового покриття функцій. `.gitignore` не виключає `node_modules`, `dist` і `.vs` фронтенду, якщо архів перетворити на Git репозиторій.
+1. **Незавершені продуктні модулі:** повний журнал із подкастами/архівом/бюлетенем, контрольований TMDB update/import, повна browser-регресія, production deployment і Figma-візуальна звірка ще відкриті.
+2. **Операційні обмеження:** повний Compose із Redis/Maven/JRE/Nginx ще не перевірений на чистому середовищі через недоступність частини Docker Hub образів на цій машині.
+3. **Безпека перед production:** потрібно ротувати раніше розкритий TMDB-ключ, виконати SQLi/XSS/accessibility/load аудит і підтвердити VPS/HTTPS/backup restore на production-подібному середовищі.
+4. **Технічні покращення:** перевірити N+1 та індекси на реальних профілях навантаження; окремо завершити повне admin керування повідомленнями/сповіщеннями та settings UX.
 
 Ця карта потрібна як точка входу для наступних змін: спочатку вибрати користувацький сценарій, потім звірити його React компонент/API клієнт → контролер/DTO → сервіс/репозиторій → таблиці/міграції → реальна HTTP поведінка. Межі й невизначеність наведені прямо, щоб не сприймати сам факт компіляції за завершення функції.

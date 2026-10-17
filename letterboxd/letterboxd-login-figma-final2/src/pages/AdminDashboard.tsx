@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { createAdminArticle, createAdminMovie, deleteAdminMovie, getAdminArticles, getAdminComments, getAdminConversations, getAdminDashboard, getAdminLists, getAdminModerationQueue, getAdminMovies, getAdminNotifications, getAdminReviews, getAdminUsers, getAuditLogs, setAdminCommentHidden, setAdminHq, setAdminListVisibility, setAdminReviewHidden, setAdminUserActive, updateAdminMovie, type AdminArticle, type AdminComment, type AdminConversation, type AdminDashboard as Dashboard, type AdminList, type AdminModerationQueueItem, type AdminMovie, type AdminMovieWrite, type AdminNotification, type AdminReview, type AdminUser, type AuditLog } from "../api/admin.api";
+import { createAdminArticle, createAdminMovie, deleteAdminMovie, getAdminArticles, getAdminComments, getAdminConversations, getAdminDashboard, getAdminLists, getAdminModerationQueue, getAdminMovies, getAdminNotifications, getAdminReviews, getAdminSettings, getAdminUsers, getAuditLogs, setAdminCommentHidden, setAdminHq, setAdminListVisibility, setAdminReviewHidden, setAdminUserActive, updateAdminMovie, updateAdminSetting, type AdminArticle, type AdminComment, type AdminConversation, type AdminDashboard as Dashboard, type AdminList, type AdminModerationQueueItem, type AdminMovie, type AdminMovieWrite, type AdminNotification, type AdminReview, type AdminSetting, type AdminUser, type AuditLog } from "../api/admin.api";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
 
@@ -18,6 +18,7 @@ export default function AdminDashboard() {
   const [conversations, setConversations] = useState<AdminConversation[]>([]);
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [moderationQueue, setModerationQueue] = useState<AdminModerationQueueItem[]>([]);
+  const [settings, setSettings] = useState<AdminSetting[]>([]);
   const [userQuery, setUserQuery] = useState("");
   const [movieDraft, setMovieDraft] = useState<AdminMovieWrite>({ title: "", releaseDate: "", rating: null, photoUrl: "" });
   const [editingMovieId, setEditingMovieId] = useState<number | null>(null);
@@ -26,8 +27,8 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!isAuth || user?.role !== "ADMIN") return;
-    Promise.all([getAdminDashboard(), getAdminUsers(), getAuditLogs(), getAdminComments(), getAdminArticles(), getAdminReviews(), getAdminMovies(), getAdminLists(), getAdminConversations(), getAdminNotifications(), getAdminModerationQueue()]).then(([summary, usersResponse, logsResponse, commentsResponse, articlesResponse, reviewsResponse, moviesResponse, listsResponse, conversationsResponse, notificationsResponse, moderationResponse]) => {
-      setDashboard(summary.data); setUsers(usersResponse.data.content); setLogs(logsResponse.data.content); setComments(commentsResponse.data.content); setArticles(articlesResponse.data.content); setReviews(reviewsResponse.data.content); setMovies(moviesResponse.data.content); setLists(listsResponse.data.content); setConversations(conversationsResponse.data.content); setNotifications(notificationsResponse.data.content); setModerationQueue(moderationResponse.data.content);
+    Promise.all([getAdminDashboard(), getAdminUsers(), getAuditLogs(), getAdminComments(), getAdminArticles(), getAdminReviews(), getAdminMovies(), getAdminLists(), getAdminConversations(), getAdminNotifications(), getAdminModerationQueue(), getAdminSettings()]).then(([summary, usersResponse, logsResponse, commentsResponse, articlesResponse, reviewsResponse, moviesResponse, listsResponse, conversationsResponse, notificationsResponse, moderationResponse, settingsResponse]) => {
+      setDashboard(summary.data); setUsers(usersResponse.data.content); setLogs(logsResponse.data.content); setComments(commentsResponse.data.content); setArticles(articlesResponse.data.content); setReviews(reviewsResponse.data.content); setMovies(moviesResponse.data.content); setLists(listsResponse.data.content); setConversations(conversationsResponse.data.content); setNotifications(notificationsResponse.data.content); setModerationQueue(moderationResponse.data.content); setSettings(settingsResponse.data);
     }).catch(() => setError(true));
   }, [isAuth, user?.role]);
 
@@ -56,6 +57,10 @@ export default function AdminDashboard() {
   };
   const toggleList = async (list: AdminList) => {
     try { const { data } = await setAdminListVisibility(list.id, !list.isPublic); setLists(current => current.map(item => item.id === data.id ? data : item)); }
+    catch { setError(true); }
+  };
+  const saveSetting = async (setting: AdminSetting) => {
+    try { const { data } = await updateAdminSetting(setting.key, setting.value); setSettings(current => current.map(item => item.key === data.key ? data : item)); }
     catch { setError(true); }
   };
   const resetMovieDraft = () => { setEditingMovieId(null); setMovieDraft({ title: "", releaseDate: "", rating: null, photoUrl: "" }); };
@@ -89,6 +94,7 @@ export default function AdminDashboard() {
     <section><h2>{t("adminComments")}</h2><ul>{comments.map(comment => <li key={comment.id} style={{ marginBottom: 8 }}>{comment.username}: {comment.content} · {comment.isHidden ? t("hiddenComment") : t("visibleComment")} <button type="button" onClick={() => { void toggleComment(comment); }}>{comment.isHidden ? t("unhideComment") : t("hideComment")}</button></li>)}</ul></section>
     <section><h2>{t("adminReviews")}</h2><ul>{reviews.map(review => <li key={review.id} style={{ marginBottom: 8 }}>{review.movieTitle} · {review.username}: {review.content} · {review.isHidden ? t("hiddenReview") : t("visibleReview")} <button type="button" onClick={() => { void toggleReview(review); }}>{review.isHidden ? t("unhideReview") : t("hideReview")}</button></li>)}</ul></section>
     <section><h2>{t("moderationQueue")}</h2>{moderationQueue.length === 0 ? <p>{t("noModerationItems")}</p> : <ul>{moderationQueue.map(item => <li key={`${item.type}-${item.id}`}>{item.type === "REVIEW" ? t("moderationReview") : t("moderationComment")} · {item.subject} · {item.username}: {item.content}</li>)}</ul>}</section>
+    <section><h2>{t("adminSettings")}</h2>{settings.length === 0 ? <p>{t("noAdminSettings")}</p> : <ul>{settings.map(setting => <li key={setting.key} style={{ marginBottom: 8 }}><label>{setting.key} <input value={setting.value} onChange={event => setSettings(current => current.map(item => item.key === setting.key ? { ...item, value: event.target.value } : item))} /></label> <button type="button" onClick={() => { void saveSetting(setting); }}>{t("saveSetting")}</button></li>)}</ul>}</section>
     <section><h2>{t("adminMovies")}</h2><form onSubmit={saveMovie} style={{ display: "grid", gap: 8, maxWidth: 700, marginBottom: 16 }}><label>{t("movieTitle")}<input required maxLength={255} value={movieDraft.title} onChange={event => setMovieDraft({ ...movieDraft, title: event.target.value })} /></label><label>{t("releaseDate")}<input type="date" value={movieDraft.releaseDate ?? ""} onChange={event => setMovieDraft({ ...movieDraft, releaseDate: event.target.value })} /></label><label>{t("rating")}<input type="number" min="0" max="10" step="0.1" value={movieDraft.rating ?? ""} onChange={event => setMovieDraft({ ...movieDraft, rating: event.target.value === "" ? null : Number(event.target.value) })} /></label><label>{t("posterUrl")}<input type="url" value={movieDraft.photoUrl ?? ""} onChange={event => setMovieDraft({ ...movieDraft, photoUrl: event.target.value })} /></label><div><button type="submit">{editingMovieId === null ? t("create") : t("save")}</button>{editingMovieId !== null && <button type="button" onClick={resetMovieDraft}>{t("cancel")}</button>}</div></form><ul>{movies.map(movie => <li key={movie.id} style={{ marginBottom: 8 }}>{movie.title} · {movie.releaseDate || "—"} · {movie.rating ?? "—"} <button type="button" onClick={() => editMovie(movie)}>{t("editMovie")}</button> <button type="button" onClick={() => { void removeMovie(movie); }}>{t("deleteMovie")}</button></li>)}</ul></section>
     <section><h2>{t("adminLists")}</h2><ul>{lists.map(list => <li key={list.id} style={{ marginBottom: 8 }}>{list.name} · {list.username} · {list.itemCount} {t("items")} · {list.isPublic ? t("publicList") : t("hiddenList")} <button type="button" onClick={() => { void toggleList(list); }}>{list.isPublic ? t("hideList") : t("publishList")}</button></li>)}</ul></section>
     <section><h2>{t("adminConversations")}</h2><ul>{conversations.map(conversation => <li key={conversation.id}>{t("conversationUsers")} #{conversation.userOneId} / #{conversation.userTwoId} · {conversation.messageCount} {t("messagesCount")} · {new Date(conversation.updatedAt).toLocaleString()}</li>)}</ul></section>
