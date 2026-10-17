@@ -112,6 +112,7 @@
 
 - [x] V25 додає приватну підписку користувача на newsletter (`GET/PUT /api/newsletter/subscription`) без повернення email у відповіді. Адмін може надіслати опубліковану статтю категорії Newsletter/Бюлетень через `POST /api/admin/journal/articles/{id}/newsletter`; одержувачами стають лише активні opt-in користувачі, дія пишеться в audit log.
 - [x] `NewsletterIntegrationTests` перевіряє opt-in/opt-out і відправку тільки підписаному користувачу; Docker API успішно застосував Flyway V25. `scripts/verify-api.ps1` доповнений HTTP-перевіркою стану підписки.
+- [x] Профіль React отримав двомовний перемикач newsletter, підключений до V25 API; TypeScript і production Vite build пройшли.
 
 - [x] V20: мовні статті журналу `uk/en`, публічні list/detail endpoint-и з fallback поведінкою через language, адмінське створення/редагування/публікація з аудитом, UI `/uk|en/journal` і базовий редактор у `/uk|en/admin`; `JournalArticleIntegrationTests` та frontend build пройдені.
 - [x] Журнал підтримує фільтр розділу через `GET /api/journal/articles?category=...`; UI має локалізований вибір Awards/Community/Interviews/Platform/Podcasts із тим самим language fallback. Інтеграційний тест перевіряє позитивний і порожній category result.

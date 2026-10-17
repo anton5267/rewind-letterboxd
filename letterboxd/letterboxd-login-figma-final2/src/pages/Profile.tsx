@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { changePassword, deleteAccount, getProfile, getProfileCollection, getProfileRatings, getProfileReviews, type ProfileCollection, type ProfilePage, type ProfileRating, type ProfileReview, updateProfile } from "../api/profile.api";
+import { getNewsletterSubscription, updateNewsletterSubscription } from "../api/newsletter.api";
 import type { MoviePage } from "../api/search.api";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
@@ -41,6 +42,8 @@ export default function Profile() {
   const [reviewsPage, setReviewsPage] = useState(0);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [reviewsError, setReviewsError] = useState(false);
+  const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
+  const [newsletterBusy, setNewsletterBusy] = useState(false);
 
   useEffect(() => {
     if (!isAuth) return;
@@ -49,6 +52,11 @@ export default function Profile() {
       setDisplayName(data.displayName ?? "");
       setAvatarUrl(data.avatarUrl ?? "");
     }).catch(() => setError(t("loadProfileError")));
+  }, [isAuth]);
+
+  useEffect(() => {
+    if (!isAuth) return;
+    getNewsletterSubscription().then(({ data }) => setNewsletterSubscribed(data.subscribed)).catch(() => undefined);
   }, [isAuth]);
 
   useEffect(() => {
@@ -128,6 +136,16 @@ export default function Profile() {
     try { await deleteAccount(deletePassword); await logout(); navigate(path("/home"), { replace: true }); }
     catch { setError(t("deleteAccountError")); }
   };
+  const toggleNewsletter = async (subscribed: boolean) => {
+    setNewsletterBusy(true);
+    setError("");
+    try {
+      const { data } = await updateNewsletterSubscription(subscribed);
+      setNewsletterSubscribed(data.subscribed);
+      setMessage(t("newsletterSaved"));
+    } catch { setError(t("newsletterError")); }
+    finally { setNewsletterBusy(false); }
+  };
 
   return <main style={{ background: "#151515", color: "white", minHeight: "70vh", padding: "110px 5% 40px" }}>
     <h1>{t("myProfile")}</h1>
@@ -138,6 +156,7 @@ export default function Profile() {
       {profile.avatarUrl && <img src={profile.avatarUrl} alt="" width="96" height="96" />}
       <p>@{profile.username} · {profile.email}</p>
       <section><h2>{t("profileStats")}</h2><p>{t("watched")}: {profile.stats.watched} · {t("watchlist")}: {profile.stats.watchlist} · {t("favorite")}: {profile.stats.favorites} · {t("reviews")}: {profile.stats.reviews} · {t("ratings")}: {profile.stats.ratings}</p></section>
+      <section style={{ marginTop: 24 }} aria-labelledby="newsletter-settings"><h2 id="newsletter-settings">{t("newsletter")}</h2><label><input type="checkbox" checked={newsletterSubscribed} disabled={newsletterBusy} onChange={event => { void toggleNewsletter(event.target.checked); }} /> {t("newsletterEnabled")}</label></section>
       <form onSubmit={saveName}>
         <label>{t("displayName")} <input value={displayName} minLength={2} maxLength={60} onChange={e => setDisplayName(e.target.value)} /></label>
         <label> {t("avatarUrl")} <input type="url" value={avatarUrl} maxLength={255} placeholder="https://…" onChange={e => setAvatarUrl(e.target.value)} /></label>
