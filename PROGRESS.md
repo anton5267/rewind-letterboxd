@@ -2,7 +2,7 @@
 
 Це робочий журнал для [повного плану розвитку](PLAN.md) і ТЗ. Оновлювати після **кожного перевіреного зрізу**: ставити `[x]` тільки коли є код, тест і відповідний наскрізний сценарій; `[ ]` означає відкриту роботу. Часткова реалізація зазначена в примітках і не робить етап завершеним.
 
-Останнє оновлення: **17.10.2026**. Вихідна точка Git: `bf6507f`; зафіксовані зрізи охоплюють auth, каталог, профілі, списки, соціальні модулі, журнал, адмінку, rate limit/cache, health/metrics/backup, V22 індекси/N+1 (`965a610`), browser security headers/accessibility (`377cef1`), social/XSS/SQLi smoke (`e6532a0`), локальний load smoke (`8540405`), SSE reconnect (`66e2250`), backend security smoke (`e62a56b`), admin browser smoke (`d7fdc99`), keyboard smoke (`0425783`) і non-root API/розширений accessibility audit (`7b65a95`). Цей зріз додає production Compose overlay і secure production profile; наступний — повний axe audit, production load та контрольований TMDB import/update.
+Останнє оновлення: **17.10.2026**. Вихідна точка Git: `bf6507f`; зафіксовані зрізи охоплюють auth, каталог, профілі, списки, соціальні модулі, журнал, адмінку, rate limit/cache, health/metrics/backup, V22 індекси/N+1 (`965a610`), browser security headers/accessibility (`377cef1`), social/XSS/SQLi smoke (`e6532a0`), локальний load smoke (`8540405`), SSE reconnect (`66e2250`), backend security smoke (`e62a56b`), admin browser smoke (`d7fdc99`), keyboard smoke (`0425783`), non-root API/розширений accessibility audit (`7b65a95`) і production Compose overlay/secure profile (`22cc44a`). Наступний — повний axe audit, production load та контрольований TMDB import/update.
 
 ## 1. Основа проєкту й дизайн — в роботі
 
