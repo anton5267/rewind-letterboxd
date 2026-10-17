@@ -18,6 +18,12 @@ export default function Footer() {
         {/* NAV */}
         <nav className={styles.nav}>
           <Link to={path("/about")}>{t("about")}</Link>
+          <Link to={path("/help")}>{t("help")}</Link>
+          <Link to={path("/contact")}>{t("contact")}</Link>
+          <Link to={path("/rules")}>{t("rules")}</Link>
+          <Link to={path("/privacy")}>{t("privacy")}</Link>
+          <Link to={path("/film-data")}>{t("filmData")}</Link>
+          <Link to={path("/delete-account")}>{t("deleteAccount")}</Link>
         </nav>
 
       </div>
