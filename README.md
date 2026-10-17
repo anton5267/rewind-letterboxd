@@ -102,6 +102,7 @@ The current verified slice is tracked in [PROGRESS.md](PROGRESS.md), while the A
 - Requirements trace: [REQUIREMENTS_TRACE.md](REQUIREMENTS_TRACE.md)
 - Local setup: [RUN_LOCAL.md](RUN_LOCAL.md)
 - Database ER diagram: [ER_DIAGRAM.md](ER_DIAGRAM.md)
+- Production deployment: [DEPLOYMENT.md](DEPLOYMENT.md)
 - Figma design file: <https://www.figma.com/design/orb73jiLJnIsZNCRtJsWgS/>
 - Project FigJam: <https://www.figma.com/board/gPITmVEnT5L61gN7JiwIiX/>
 - Information architecture FigJam: <https://www.figma.com/board/qrrA6VTNZFiJstg1CsaOTo/>
