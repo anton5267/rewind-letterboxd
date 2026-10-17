@@ -3,7 +3,7 @@ WORKDIR /app
 COPY pom.xml ./
 COPY .mvn ./.mvn
 COPY src ./src
-RUN mvn -q -DskipTests package
+RUN mvn -B -DskipTests -Dmaven.wagon.http.retryHandler.count=5 -Djava.net.preferIPv4Stack=true package
 
 FROM public.ecr.aws/docker/library/eclipse-temurin:17-jre
 WORKDIR /app
