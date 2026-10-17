@@ -25,6 +25,7 @@
 - [ ] Перевірити **весь** `docker compose up --build` на чистій машині. На цьому ПК Docker Hub відмовив у завантаженні Maven/JRE/Nginx образів; `docker compose config --quiet` проходить.
 - [ ] Автоматизувати браузерний тест сценарію реєстрація → список → оцінка → огляд → редагування → видалення. У Chrome вручну пройдено шлях від реєстрації до редагування огляду й видалення фільму зі списку; видалення огляду та оцінки перевірено HTTP-скриптом. Тестові акаунти видалено.
 - [ ] Завершити єдиний формат помилок і контрактні тести для всіх API, включно з конкурентними записами.
+- [x] `ApiErrorResponse` уніфікує 400/404/409/422/500-подібні помилки з timestamp, status, error, message і path; додані validation/body/status handlers та `ApiExceptionHandlerTests`.
 
 ## 3. Спільний інтерфейс і акаунт — в роботі
 
@@ -74,6 +75,7 @@
 - [x] Адмінка отримала сторінковий список списків з кількістю елементів і дію приховування/публікації; дія записується в audit log. `AdminListIntegrationTests` пройшов на MySQL, frontend production build пройшов.
 - [x] Повний `mvnw -q test` після admin lists пройшов: усі 25 тестів/сценаріїв без failures/errors; frontend production build також пройшов.
 - [x] Повторний повний `mvnw -q test` після admin movie CRUD також пройшов: 25 тестів, 0 failures/errors.
+- [x] Повний `mvnw -q test` після admin communications та error contract пройшов: 28 тестів, 0 failures/errors.
 
 ## 6. Спільнота — в роботі
 
