@@ -10,6 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.Instant;
+import java.time.YearMonth;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.List;
 
 @Service
 public class JournalArticleService {
@@ -35,6 +39,21 @@ public class JournalArticleService {
         return category == null
                 ? articles.findAllByLanguageAndIsPublishedTrueOrderByPublishedAtDesc(language, pageable)
                 : articles.findAllByLanguageAndCategoryAndIsPublishedTrueOrderByPublishedAtDesc(language, category, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<JournalArchiveEntry> publicArchive(String language) {
+        String lang = language.equals("en") ? "en" : "uk";
+        List<JournalArticle> published = articles.findAllByLanguageAndIsPublishedTrueOrderByPublishedAtDesc(lang);
+        if (published.isEmpty()) published = articles.findAllByLanguageAndIsPublishedTrueOrderByPublishedAtDesc(lang.equals("en") ? "uk" : "en");
+        Map<YearMonth, Long> grouped = new TreeMap<>((a, b) -> b.compareTo(a));
+        for (JournalArticle article : published) {
+            if (article.getPublishedAt() != null) {
+                YearMonth month = YearMonth.from(article.getPublishedAt().atZone(java.time.ZoneOffset.UTC));
+                grouped.merge(month, 1L, Long::sum);
+            }
+        }
+        return grouped.entrySet().stream().map(entry -> new JournalArchiveEntry(entry.getKey().getYear(), entry.getKey().getMonthValue(), entry.getValue())).toList();
     }
 
     @Transactional(readOnly = true)

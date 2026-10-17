@@ -37,6 +37,7 @@ class JournalArticleIntegrationTests {
         assertEquals(1, articles.publicList("uk", 0, 20).getTotalElements());
         assertEquals(1, articles.publicList("uk", "Новини", 0, 20).getTotalElements());
         assertEquals(0, articles.publicList("uk", "Подкасти", 0, 20).getTotalElements());
+        assertEquals(1, articles.publicArchive("uk").stream().mapToLong(item -> item.articleCount()).sum());
         assertEquals("Тестова стаття", articles.publicGet("uk", published.slug()).title());
         assertEquals(1, articles.publicList("en", 0, 20).getTotalElements());
         assertEquals("Тестова стаття", articles.publicGet("en", published.slug()).title());
