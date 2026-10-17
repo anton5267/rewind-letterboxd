@@ -6,6 +6,11 @@ import com.rewind.rewind.user.entity.User;
 import com.rewind.rewind.user.repo.UserRepository;
 import com.rewind.rewind.profile.service.ProfileService;
 import com.rewind.rewind.user.dto.PublicProfileResponse;
+import com.rewind.rewind.list.entity.ListType;
+import com.rewind.rewind.movie.dto.MovieCardResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
@@ -25,6 +30,22 @@ public class UserController {
     @GetMapping("/{id}/profile")
     public PublicProfileResponse publicProfile(@PathVariable Long id) {
         return profiles.publicProfile(id);
+    }
+
+    @GetMapping("/{id}/collections/{collection}")
+    public Page<MovieCardResponse> publicCollection(
+            @PathVariable Long id,
+            @PathVariable String collection,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        ListType type = switch (collection) {
+            case "watched" -> ListType.WATCHED;
+            case "watchlist" -> ListType.WATCHLIST;
+            case "favorites" -> ListType.FAVORITES;
+            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown collection");
+        };
+        return profiles.publicSystemCollection(id, type, page, size);
     }
 
     @GetMapping("/{id}")

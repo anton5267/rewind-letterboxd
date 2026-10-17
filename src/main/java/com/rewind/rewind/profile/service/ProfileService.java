@@ -127,9 +127,17 @@ public class ProfileService {
 
     public Page<MovieCardResponse> mySystemCollection(String email, ListType type, int page, int size) {
         var user = users.findByEmail(email).orElseThrow();
+        return systemCollection(user, type, page, size);
+    }
 
+    @Transactional(readOnly = true)
+    public Page<MovieCardResponse> publicSystemCollection(Long userId, ListType type, int page, int size) {
+        var user = users.findById(userId).orElseThrow();
+        return systemCollection(user, type, page, size);
+    }
+
+    private Page<MovieCardResponse> systemCollection(com.rewind.rewind.user.entity.User user, ListType type, int page, int size) {
         var list = lists.findByUserAndListType(user, type).orElseThrow();
-
         Pageable pageable = pageRequest(page, size);
         return listItems.findMoviesByListId(list.getId(), pageable)
                 .map(m -> new MovieCardResponse(

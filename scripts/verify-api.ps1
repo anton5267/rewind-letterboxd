@@ -105,6 +105,9 @@ Expect (Send 'POST' '/movies/1/watchlist').StatusCode 200 'add watchlist'
 $watchlist = (Send 'GET' '/profile/me/watchlist?size=20').Content | ConvertFrom-Json
 if ($watchlist.content.id -notcontains 1) { throw 'Watchlist did not appear in profile collection history' }
 Write-Output 'profile collection history'
+$publicWatchlist = (Invoke-WebRequest -Method GET -Uri "$BaseUrl/api/users/$userId/collections/watchlist?size=20" -UseBasicParsing).Content | ConvertFrom-Json
+if ($publicWatchlist.content.id -notcontains 1) { throw 'Public profile watchlist was not readable without authentication' }
+Write-Output 'public profile collection'
 Expect (Send 'DELETE' '/movies/1/watchlist').StatusCode 204 'remove watchlist'
 Expect (Send 'PUT' '/movies/1/rating' @{ rating = 4 }).StatusCode 200 'rate film'
 $ratingHistory = (Send 'GET' '/profile/me/ratings?size=20').Content | ConvertFrom-Json

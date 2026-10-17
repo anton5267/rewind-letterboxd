@@ -57,8 +57,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/lists/public").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/lists/public/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/users/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/*/collections/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/profile").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/*").permitAll()
 
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
