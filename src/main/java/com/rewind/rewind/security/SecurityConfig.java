@@ -50,6 +50,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/movies/*/details").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/movies/*/reviews").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/recent").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/reviews/*/comments").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/genres").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/lists/public").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()

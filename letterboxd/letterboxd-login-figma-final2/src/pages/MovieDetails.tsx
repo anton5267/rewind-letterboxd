@@ -4,6 +4,7 @@ import api from "../api/axios";
 import { addMovieToList, getUserLists } from "../api/lists.api";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
+import Comments from "./Comments";
 
 interface Movie {
   id: number; title: string; shortPlot: string | null; photoUrl: string | null;
@@ -184,10 +185,11 @@ export default function MovieDetails() {
           {!editingReview && <><p>{myReview.content}</p>
             <button type="button" onClick={() => { setReviewText(myReview.content); setReviewRating(myReview.rating ?? rating); setEditingReview(true); }}>{t("editReview")}</button>{" "}
             <button type="button" onClick={() => void deleteReview()}>{t("deleteReview")}</button>
+            <Comments reviewId={myReview.id} />
           </>}
         </article>}
         {otherReviews.length === 0 && !myReview && <p>{t("noReviews")}</p>}
-        {otherReviews.map(item => <article key={item.id}><h3>{item.username} · {item.rating ?? "—"}/5</h3><p>{item.content}</p></article>)}
+        {otherReviews.map(item => <article key={item.id}><h3>{item.username} · {item.rating ?? "—"}/5</h3><p>{item.content}</p><Comments reviewId={item.id} /></article>)}
         {isAuth && !myReviewReady && <p>{t("loading")}</p>}
         {isAuth && myReviewError && <p role="alert">{t("loadMyReviewError")}</p>}
         {isAuth && myReviewReady && !myReviewError && (!myReview || editingReview) && <form onSubmit={createReview}>

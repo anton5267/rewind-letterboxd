@@ -83,6 +83,16 @@ Expect (Send 'PUT' '/movies/1/rating' @{ rating = 4 }).StatusCode 200 'rate film
 $review = Send 'POST' '/movies/1/reviews' @{ content = 'Verification review'; rating = 5 }
 Expect $review.StatusCode 200 'create review'
 $reviewId = ($review.Content | ConvertFrom-Json).id
+$comment = Send 'POST' "/reviews/$reviewId/comments" @{ text = 'Verification comment' }
+Expect $comment.StatusCode 200 'create comment'
+$commentId = ($comment.Content | ConvertFrom-Json).id
+$comments = (Send 'GET' "/reviews/$reviewId/comments?size=20").Content | ConvertFrom-Json
+if ($comments.content.id -notcontains $commentId) { throw 'Comment did not appear below its review' }
+Write-Output 'public comments feed'
+$updatedComment = Send 'PATCH' "/comments/$commentId" @{ text = 'Edited verification comment' }
+Expect $updatedComment.StatusCode 200 'edit comment'
+if (($updatedComment.Content | ConvertFrom-Json).text -ne 'Edited verification comment') { throw 'Comment text did not update' }
+Expect (Send 'DELETE' "/comments/$commentId").StatusCode 204 'delete comment'
 $recentReviews = (Send 'GET' '/reviews/recent?size=20').Content | ConvertFrom-Json
 if ($recentReviews.content.id -notcontains $reviewId) { throw 'Review did not appear in recent feed' }
 Write-Output 'recent review feed'

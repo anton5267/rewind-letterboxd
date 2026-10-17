@@ -51,6 +51,9 @@ const messages: Record<Language, Record<string, string>> = {
     saveRatingError: "Не вдалося зберегти оцінку.", rateFirst: "Спочатку поставте оцінку.",
     reviewPublished: "Огляд опубліковано.", createReviewError: "Не вдалося додати огляд. На один фільм дозволено один активний огляд.",
     filmAdded: "Фільм додано до списку.", addFilmError: "Не вдалося додати фільм до списку.",
+    showComments: "Показати коментарі", hideComments: "Сховати коментарі", noComments: "Коментарів поки немає.", yourComment: "Ваш коментар", sendComment: "Надіслати",
+    editComment: "Редагувати коментар", deleteComment: "Видалити коментар", deleteCommentConfirm: "Видалити цей коментар?", loginToComment: "Увійдіть, щоб залишити коментар.",
+    loadCommentsError: "Не вдалося завантажити коментарі.", createCommentError: "Не вдалося додати коментар.", updateCommentError: "Не вдалося оновити коментар.", deleteCommentError: "Не вдалося видалити коментар.",
     poster: "Постер", minutes: "хв", rateAs: "Оцінити на",
   },
   en: {
@@ -101,6 +104,9 @@ const messages: Record<Language, Record<string, string>> = {
     saveRatingError: "Could not save your rating.", rateFirst: "Rate the film first.",
     reviewPublished: "Review published.", createReviewError: "Could not add the review. One active review per film is allowed.",
     filmAdded: "Film added to the list.", addFilmError: "Could not add the film to the list.",
+    showComments: "Show comments", hideComments: "Hide comments", noComments: "No comments yet.", yourComment: "Your comment", sendComment: "Send",
+    editComment: "Edit comment", deleteComment: "Delete comment", deleteCommentConfirm: "Delete this comment?", loginToComment: "Log in to leave a comment.",
+    loadCommentsError: "Could not load comments.", createCommentError: "Could not add the comment.", updateCommentError: "Could not update the comment.", deleteCommentError: "Could not delete the comment.",
     poster: "Poster", minutes: "min", rateAs: "Rate as",
   },
 };
