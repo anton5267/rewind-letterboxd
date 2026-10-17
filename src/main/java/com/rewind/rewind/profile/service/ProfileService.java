@@ -115,7 +115,7 @@ public class ProfileService {
         long watchlist = collectionCount(allLists, ListType.WATCHLIST);
         long favorites = collectionCount(allLists, ListType.FAVORITES);
         String displayName = user.getDisplayName() == null || user.getDisplayName().isBlank() ? user.getUsername() : user.getDisplayName();
-        return new PublicProfileResponse(user.getId(), user.getUsername(), displayName, user.getAvatarUrl(),
+        return new PublicProfileResponse(user.getId(), user.getUsername(), displayName, user.getAvatarUrl(), user.getIsHq(),
                 new PublicProfileResponse.Stats(ratings.countByUserId(userId), reviews.countByUserIdAndIsHiddenFalse(userId), watched, watchlist, favorites),
                 publicLists, publicReviews);
     }

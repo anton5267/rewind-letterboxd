@@ -8,6 +8,7 @@ public record PublicProfileResponse(
         String username,
         String displayName,
         String avatarUrl,
+        Boolean hq,
         Stats stats,
         List<PublicList> lists,
         List<PublicReview> recentReviews

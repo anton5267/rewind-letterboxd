@@ -11,6 +11,7 @@ interface Profile {
   username: string;
   displayName: string;
   avatarUrl: string | null;
+  hq: boolean;
   stats: { ratings: number; reviews: number; watched: number; watchlist: number; favorites: number };
   lists: { id: number; name: string; description: string | null }[];
   recentReviews: { id: number; movieId: number; movieTitle: string; content: string; rating: number | null }[];
@@ -115,7 +116,7 @@ export default function PublicProfile() {
   if (!profile) return <main style={{ padding: "110px 5% 40px" }}><p>{t("loading")}</p></main>;
   return <main style={{ background: "#151515", color: "white", minHeight: "70vh", padding: "110px 5% 40px" }}>
     {profile.avatarUrl && <img src={profile.avatarUrl} alt="" width="96" height="96" />}
-    <h1>{profile.displayName}</h1><p>@{profile.username}</p>
+    <h1>{profile.displayName}{profile.hq && <span aria-label="HQ" title="HQ" style={{ marginLeft: 8, fontSize: 14, color: "#d8a5ff" }}>HQ</span>}</h1><p>@{profile.username}</p>
     {isAuth && user?.id !== profile.id && followStatus && <button type="button" disabled={followBusy} onClick={() => void changeFollow()}>{followStatus.following ? t("unfollow") : t("follow")}</button>}
     {isAuth && user?.id !== profile.id && <Link to={path(`/messages?user=${profile.id}`)} style={{ marginLeft: 8 }}>{t("sendMessage")}</Link>}
     {followError && <p role="alert">{t("followError")}</p>}

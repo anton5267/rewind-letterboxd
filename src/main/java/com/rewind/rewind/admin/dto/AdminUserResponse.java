@@ -11,10 +11,11 @@ public class AdminUserResponse {
     private String role;
     private String avatarUrl;
     private Boolean isActive;
+    private Boolean isHq;
     private Instant createdAt;
 
     public AdminUserResponse(Long id, String username, String displayName, String email, String role, String avatarUrl,
-                             Boolean isActive, Instant createdAt) {
+                             Boolean isActive, Boolean isHq, Instant createdAt) {
         this.id = id;
         this.username = username;
         this.displayName = displayName;
@@ -22,6 +23,7 @@ public class AdminUserResponse {
         this.role = role;
         this.avatarUrl = avatarUrl;
         this.isActive = isActive;
+        this.isHq = isHq;
         this.createdAt = createdAt;
     }
 
@@ -32,5 +34,6 @@ public class AdminUserResponse {
     public String getRole() { return role; }
     public String getAvatarUrl() { return avatarUrl; }
     public Boolean getIsActive() { return isActive; }
+    public Boolean getIsHq() { return isHq; }
     public Instant getCreatedAt() { return createdAt; }
 }

@@ -1,0 +1,2 @@
+ALTER TABLE users ADD COLUMN is_hq BOOLEAN NOT NULL DEFAULT FALSE;
+CREATE INDEX idx_users_hq ON users(is_hq);

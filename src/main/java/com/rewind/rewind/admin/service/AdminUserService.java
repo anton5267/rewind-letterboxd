@@ -83,7 +83,16 @@ public class AdminUserService {
                 u.getRole().name(),
                 u.getAvatarUrl(),
                 u.getIsActive(),
+                u.getIsHq(),
                 u.getCreatedAt()
         );
+    }
+
+    @Transactional
+    public AdminUserResponse setHq(Long id, boolean hq) {
+        User user = users.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        user.setIsHq(hq);
+        users.save(user);
+        return toDto(user);
     }
 }

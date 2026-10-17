@@ -2,6 +2,7 @@ package com.rewind.rewind.admin.controller;
 
 import com.rewind.rewind.admin.dto.AdminUpdateUserRequest;
 import com.rewind.rewind.admin.dto.AdminUserResponse;
+import com.rewind.rewind.admin.dto.AdminHqRequest;
 import com.rewind.rewind.admin.service.AdminUserService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -47,5 +48,10 @@ public class AdminUserController {
     public ResponseEntity<?> activate(@PathVariable Long id) {
         service.activate(id);
         return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/hq")
+    public AdminUserResponse setHq(@PathVariable Long id, @Valid @RequestBody AdminHqRequest request) {
+        return service.setHq(id, request.hq());
     }
 }
