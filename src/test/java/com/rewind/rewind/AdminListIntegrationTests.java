@@ -47,6 +47,28 @@ class AdminListIntegrationTests {
         assertFalse(hidden.isPublic());
     }
 
+    @Test
+    @Transactional
+    void adminCanDeleteCustomListButCannotDeleteSystemList() {
+        String suffix = String.valueOf(System.nanoTime());
+        String ownerEmail = "list-delete-owner-" + suffix + "@example.invalid";
+        String adminEmail = "list-delete-admin-" + suffix + "@example.invalid";
+        register("list-delete-owner-" + suffix, ownerEmail);
+        register("list-delete-admin-" + suffix, adminEmail);
+
+        var create = new CreateListRequest();
+        create.setName("Delete me");
+        create.setDescription("Moderation fixture");
+        create.setIsPublic(false);
+        var created = lists.create(ownerEmail, create);
+
+        adminLists.delete(created.getId(), adminEmail);
+        assertTrue(lists.myLists(ownerEmail).stream().noneMatch(item -> item.getId().equals(created.getId())));
+
+        var systemList = lists.myLists(ownerEmail).stream().findFirst().orElseThrow();
+        assertThrows(IllegalArgumentException.class, () -> adminLists.delete(systemList.getId(), adminEmail));
+    }
+
     private void register(String username, String email) {
         var request = new UserRegisterRequest();
         request.setUsername(username);

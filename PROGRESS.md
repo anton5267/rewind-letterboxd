@@ -137,6 +137,7 @@
 - [x] Додано Flyway V21 і admin-only `GET/PUT /api/admin/settings`: whitelist `site_name`, `default_locale`, `maintenance_mode`, `journal_enabled`, валідація значень і audit log; dashboard дозволяє змінювати їх. `AdminSettingsIntegrationTests` перевіряє MySQL update та відмову для невідомих/некоректних значень.
 - [x] `scripts/verify-admin-browser.ps1` готує disposable ADMIN fixture у dev MySQL і перевіряє browser flow: login → dashboard → user search → admin movie create/delete. Тест пройшов **1/1**; fixture видаляється після запуску.
 - [ ] Розширити admin UI для списків, повідомлень і сповіщень до повного керування; базові сторінкові огляди, CRUD фільмів і user search/blocking уже підключені.
+- [x] Admin lists отримали `DELETE /api/admin/lists/{id}` для кастомних списків із каскадним очищенням items/tags та audit log; системні списки видаляти заборонено. `AdminListIntegrationTests`, TypeScript і production build пройшли.
 - [ ] Блокування, черга модерації, аудит дій, налаштування сайту та серверні тести прав.
 
 ## 9. Якість і публічний реліз — в роботі

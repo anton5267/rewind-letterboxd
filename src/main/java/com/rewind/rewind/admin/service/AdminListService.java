@@ -3,6 +3,7 @@ package com.rewind.rewind.admin.service;
 import com.rewind.rewind.admin.audit.service.AdminAuditLogService;
 import com.rewind.rewind.admin.dto.AdminListResponse;
 import com.rewind.rewind.list.entity.MovieList;
+import com.rewind.rewind.list.entity.ListType;
 import com.rewind.rewind.list.repo.AdminListProjection;
 import com.rewind.rewind.list.repo.MovieListRepository;
 import org.springframework.data.domain.*;
@@ -32,6 +33,16 @@ public class AdminListService {
         MovieList saved = lists.save(list);
         audit.record(adminEmail, visible ? "LIST_PUBLISHED" : "LIST_HIDDEN", "LIST", id, null);
         return lists.findAdminRowById(saved.getId()).map(this::toDto).orElseThrow();
+    }
+
+    @Transactional
+    public void delete(Long id, String adminEmail) {
+        MovieList list = lists.findById(id).orElseThrow(() -> new IllegalArgumentException("List not found"));
+        if (list.getListType() != ListType.CUSTOM) {
+            throw new IllegalArgumentException("System lists cannot be deleted");
+        }
+        lists.delete(list);
+        audit.record(adminEmail, "LIST_DELETED", "LIST", id, null);
     }
 
     private AdminListResponse toDto(AdminListProjection list) {

@@ -33,6 +33,7 @@ export const deleteAdminMovie = (id: number) => api.delete(`/admin/movies/${id}`
 export const syncAdminMovieTmdb = (id: number, tmdbId: number, syncSimilar = true) => api.post<TmdbSyncResponse>(`/admin/movies/${id}/tmdb-sync`, { tmdbId, syncSimilar });
 export const getAdminLists = () => api.get<Page<AdminList>>("/admin/lists", { params: { size: 50 } });
 export const setAdminListVisibility = (id: number, visible: boolean) => api.put<AdminList>(`/admin/lists/${id}/visibility`, null, { params: { visible } });
+export const deleteAdminList = (id: number) => api.delete(`/admin/lists/${id}`);
 export const getAdminConversations = () => api.get<Page<AdminConversation>>("/admin/conversations", { params: { size: 50 } });
 export const getAdminNotifications = () => api.get<Page<AdminNotification>>("/admin/notifications", { params: { size: 50 } });
 export const deleteAdminConversation = (id: number) => api.delete(`/admin/conversations/${id}`);
