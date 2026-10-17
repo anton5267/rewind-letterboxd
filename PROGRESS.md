@@ -99,6 +99,7 @@
 ## 7. Журнал і службові розділи — в роботі
 
 - [x] V20: мовні статті журналу `uk/en`, публічні list/detail endpoint-и з fallback поведінкою через language, адмінське створення/редагування/публікація з аудитом, UI `/uk|en/journal` і базовий редактор у `/uk|en/admin`; `JournalArticleIntegrationTests` та frontend build пройдені.
+- [x] Журнал підтримує фільтр розділу через `GET /api/journal/articles?category=...`; UI має локалізований вибір Awards/Community/Interviews/Platform/Podcasts із тим самим language fallback. Інтеграційний тест перевіряє позитивний і порожній category result.
 - [x] Додано локалізовані службові маршрути `/help`, `/contact`, `/rules`, `/privacy`, `/film-data`, `/delete-account` і робочі footer-посилання; TypeScript та production build пройдені.
 - [ ] Розширити журнал категоріями подкастів, архівом і бюлетенем; статті та двомовний редактор із fallback уже працюють.
 - [x] Допомога, контакти, правила, приватність і дані фільмів мають локалізовані службові маршрути та footer-посилання.

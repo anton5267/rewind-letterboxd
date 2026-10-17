@@ -7,6 +7,7 @@ import java.util.Optional;
 
 public interface JournalArticleRepository extends JpaRepository<JournalArticle, Long> {
     Page<JournalArticle> findAllByLanguageAndIsPublishedTrueOrderByPublishedAtDesc(String language, Pageable pageable);
+    Page<JournalArticle> findAllByLanguageAndCategoryAndIsPublishedTrueOrderByPublishedAtDesc(String language, String category, Pageable pageable);
     Optional<JournalArticle> findBySlugAndLanguageAndIsPublishedTrue(String slug, String language);
     Page<JournalArticle> findAllByOrderByUpdatedAtDesc(Pageable pageable);
 }

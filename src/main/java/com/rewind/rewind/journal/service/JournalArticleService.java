@@ -18,10 +18,23 @@ public class JournalArticleService {
 
     @Transactional(readOnly = true)
     public Page<JournalArticleResponse> publicList(String language, int page, int size) {
+        return publicList(language, null, page, size);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<JournalArticleResponse> publicList(String language, String category, int page, int size) {
         String lang = language.equals("en") ? "en" : "uk";
         Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 50)));
-        Page<JournalArticle> result = articles.findAllByLanguageAndIsPublishedTrueOrderByPublishedAtDesc(lang, pageable);
-        return (result.isEmpty() && page == 0 ? articles.findAllByLanguageAndIsPublishedTrueOrderByPublishedAtDesc(lang.equals("en") ? "uk" : "en", pageable) : result).map(this::toResponse);
+        String normalizedCategory = category == null || category.isBlank() ? null : category.trim();
+        Page<JournalArticle> result = findPublished(lang, normalizedCategory, pageable);
+        if (result.isEmpty() && page == 0) result = findPublished(lang.equals("en") ? "uk" : "en", normalizedCategory, pageable);
+        return result.map(this::toResponse);
+    }
+
+    private Page<JournalArticle> findPublished(String language, String category, Pageable pageable) {
+        return category == null
+                ? articles.findAllByLanguageAndIsPublishedTrueOrderByPublishedAtDesc(language, pageable)
+                : articles.findAllByLanguageAndCategoryAndIsPublishedTrueOrderByPublishedAtDesc(language, category, pageable);
     }
 
     @Transactional(readOnly = true)
