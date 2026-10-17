@@ -15,7 +15,7 @@
 | 3. Інтерфейс і акаунт | `[~]` | локалізовані маршрути, cookie auth, reset, профіль і списки, mobile overflow smoke для public screens | повна локалізація, responsive/a11y-аудит, Figma-візуал |
 | 4. Фільми й пошук | `[~]` | home, каталог, фільтри, деталка, персоналії, рекомендації | TMDB import/update, external IDs, повна якість каталогу, Figma-звірка |
 | 5. Особисті дії та списки | `[~]` | watched/watchlist/favorites, ratings, reviews, comments, public lists, automated core flow | повні browser-регресії, фінальний UX профілю та списків |
-| 6. Спільнота | `[~]` | follows, likes, activity, tags, notifications/SSE, messages, HQ | browser-регресії й окремий тест розриву SSE |
+| 6. Спільнота | `[~]` | follows, likes, activity, tags, notifications/SSE, messages, HQ, follow→notification browser smoke | admin/social browser-регресії й окремий тест розриву SSE |
 | 7. Журнал і службові сторінки | `[~]` | статті, категорії, archive, fallback, admin editor, help/legal | podcasts/newsletter та повна редакційна локалізація |
 | 8. Адмінка | `[~]` | dashboard, users/HQ, films, moderation, settings, audit, communications | повний CRUD списків/сповіщень і розширена moderation UX |
 | 9. Якість і реліз | `[~]` | rate limit, Redis service/cache profile, cache hit/miss, metrics, backup/restore scripts, runtime health, V22 індекси й N+1 fetch-плани, browser security headers і 5 Playwright smoke tests | SQLi/XSS, повний a11y, навантаження, VPS/HTTPS |
