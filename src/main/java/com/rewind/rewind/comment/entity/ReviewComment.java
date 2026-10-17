@@ -29,6 +29,19 @@ public class ReviewComment {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Column(name = "is_hidden", nullable = false)
+    private Boolean isHidden = false;
+
+    @Column(name = "moderated_reason", length = 255)
+    private String moderatedReason;
+
+    @Column(name = "moderated_at")
+    private Instant moderatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "moderated_by")
+    private User moderatedBy;
+
     @PrePersist
     void onCreate() {
         Instant now = Instant.now();
@@ -48,4 +61,12 @@ public class ReviewComment {
     public void setContent(String content) { this.content = content; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
+    public Boolean getIsHidden() { return isHidden; }
+    public void setIsHidden(Boolean hidden) { isHidden = hidden; }
+    public String getModeratedReason() { return moderatedReason; }
+    public void setModeratedReason(String reason) { moderatedReason = reason; }
+    public Instant getModeratedAt() { return moderatedAt; }
+    public void setModeratedAt(Instant at) { moderatedAt = at; }
+    public User getModeratedBy() { return moderatedBy; }
+    public void setModeratedBy(User user) { moderatedBy = user; }
 }

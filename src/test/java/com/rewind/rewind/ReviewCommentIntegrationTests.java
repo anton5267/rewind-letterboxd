@@ -3,6 +3,7 @@ package com.rewind.rewind;
 import com.rewind.rewind.comment.dto.CreateCommentRequest;
 import com.rewind.rewind.comment.dto.UpdateCommentRequest;
 import com.rewind.rewind.comment.service.ReviewCommentService;
+import com.rewind.rewind.admin.service.AdminCommentService;
 import com.rewind.rewind.movie.entity.Movie;
 import com.rewind.rewind.movie.repo.MovieRepository;
 import com.rewind.rewind.review.dto.CreateReviewRequest;
@@ -29,6 +30,7 @@ class ReviewCommentIntegrationTests {
     @Autowired MovieRepository movies;
     @Autowired ReviewService reviews;
     @Autowired ReviewCommentService comments;
+    @Autowired AdminCommentService adminComments;
 
     @Test
     @Transactional
@@ -57,6 +59,29 @@ class ReviewCommentIntegrationTests {
         userRepository.findByEmail(strangerEmail).orElseThrow().setRole(UserRole.ADMIN);
         comments.delete(strangerEmail, commentId);
         assertTrue(comments.list(reviewId, 0, 20).isEmpty());
+    }
+
+    @Test
+    @Transactional
+    void adminModerationHidesCommentFromPublicListingAndCanRestoreIt() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String adminEmail = register("comment-admin_" + suffix, suffix);
+        String authorEmail = register("comment-author_" + suffix, suffix);
+        userRepository.findByEmail(adminEmail).orElseThrow().setRole(UserRole.ADMIN);
+
+        Movie movie = new Movie();
+        movie.setTitle("Comment moderation " + suffix);
+        Long movieId = movies.saveAndFlush(movie).getId();
+        CreateReviewRequest review = new CreateReviewRequest();
+        review.setContent("Review for moderation");
+        review.setRating(5);
+        Long reviewId = reviews.create(authorEmail, movieId, review).getId();
+        Long commentId = comments.create(authorEmail, reviewId, new CreateCommentRequest("Needs review")).id();
+
+        adminComments.hide(commentId, adminEmail, "Policy violation");
+        assertTrue(comments.list(reviewId, 0, 20).isEmpty());
+        adminComments.unhide(commentId, adminEmail);
+        assertEquals(1, comments.list(reviewId, 0, 20).getTotalElements());
     }
 
     private String register(String username, String suffix) {

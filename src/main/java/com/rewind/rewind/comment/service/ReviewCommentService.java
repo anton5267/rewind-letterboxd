@@ -31,7 +31,7 @@ public class ReviewCommentService {
     @Transactional(readOnly = true)
     public Page<CommentResponse> list(Long reviewId, int page, int size) {
         requireVisibleReview(reviewId);
-        return comments.findAllByReviewIdOrderByCreatedAtAsc(reviewId,
+        return comments.findAllByReviewIdAndIsHiddenFalseOrderByCreatedAtAsc(reviewId,
                         PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 50))))
                 .map(this::toResponse);
     }

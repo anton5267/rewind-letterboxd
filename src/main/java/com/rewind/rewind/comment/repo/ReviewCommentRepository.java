@@ -6,5 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ReviewCommentRepository extends JpaRepository<ReviewComment, Long> {
-    Page<ReviewComment> findAllByReviewIdOrderByCreatedAtAsc(Long reviewId, Pageable pageable);
+    Page<ReviewComment> findAllByReviewIdAndIsHiddenFalseOrderByCreatedAtAsc(Long reviewId, Pageable pageable);
+    Page<ReviewComment> findAllByOrderByIdDesc(Pageable pageable);
+    Page<ReviewComment> findAllByIsHidden(Boolean hidden, Pageable pageable);
 }
