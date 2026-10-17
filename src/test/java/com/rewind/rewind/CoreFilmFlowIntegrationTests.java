@@ -13,6 +13,7 @@ import com.rewind.rewind.movie.repo.MovieRepository;
 import com.rewind.rewind.rating.dto.UpsertRatingRequest;
 import com.rewind.rewind.rating.service.RatingService;
 import com.rewind.rewind.review.dto.CreateReviewRequest;
+import com.rewind.rewind.review.dto.ReviewResponse;
 import com.rewind.rewind.review.dto.UpdateReviewRequest;
 import com.rewind.rewind.review.repo.ReviewRepository;
 import com.rewind.rewind.review.service.ReviewService;
@@ -27,6 +28,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -129,5 +134,55 @@ class CoreFilmFlowIntegrationTests {
         entityManager.clear();
         assertTrue(ratings.getMyRating(email, movieId).isEmpty());
         assertNull(movies.findById(movieId).orElseThrow().getRating());
+    }
+
+    @Test
+    void concurrentReviewCreatesKeepOneReviewAndReturnConflictForTheLoser() throws Exception {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String email = "race-" + suffix + "@example.invalid";
+        UserRegisterRequest registration = new UserRegisterRequest();
+        registration.setUsername("race_" + suffix);
+        registration.setEmail(email);
+        registration.setPassword("test-password-123");
+        users.register(registration);
+
+        Movie movie = new Movie();
+        movie.setTitle("Concurrent review film " + suffix);
+        Long movieId = movies.saveAndFlush(movie).getId();
+        CreateReviewRequest request = new CreateReviewRequest();
+        request.setContent("Concurrent review");
+        request.setRating(4);
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            CompletableFuture<ReviewResponse> first = CompletableFuture.supplyAsync(
+                    () -> reviews.create(email, movieId, request), executor);
+            CompletableFuture<ReviewResponse> second = CompletableFuture.supplyAsync(
+                    () -> reviews.create(email, movieId, request), executor);
+
+            int successes = 0;
+            int conflicts = 0;
+            for (CompletableFuture<ReviewResponse> future : java.util.List.of(first, second)) {
+                try {
+                    future.join();
+                    successes++;
+                } catch (CompletionException ex) {
+                    Throwable cause = ex.getCause();
+                    if (cause instanceof ResponseStatusException response
+                            && response.getStatusCode().value() == 409) {
+                        conflicts++;
+                    } else {
+                        throw ex;
+                    }
+                }
+            }
+
+            assertEquals(1, successes);
+            assertEquals(1, conflicts);
+            Long userId = userRepository.findByEmail(email).orElseThrow().getId();
+            assertEquals(1, reviewRepository.countByUserIdAndMovieId(userId, movieId));
+        } finally {
+            executor.shutdownNow();
+        }
     }
 }

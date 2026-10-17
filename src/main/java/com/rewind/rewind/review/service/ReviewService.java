@@ -14,6 +14,7 @@ import com.rewind.rewind.social.entity.ActivityType;
 import com.rewind.rewind.social.service.ActivityService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
@@ -51,7 +52,15 @@ public class ReviewService {
         r.setContent(req.getContent());
         r.setRating(req.getRating().byteValue());
 
-        Review saved = reviews.save(r);
+        Review saved;
+        try {
+            // Flush here so a concurrent request that wins the unique
+            // (user_id, movie_id) constraint becomes a stable HTTP 409
+            // instead of surfacing as a late transaction/500 error.
+            saved = reviews.saveAndFlush(r);
+        } catch (DataIntegrityViolationException ex) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "You already reviewed this movie", ex);
+        }
 
         // ✅ синхронізуємо таблицю ratings + оновлюється movies.rating
         UpsertRatingRequest rr = new UpsertRatingRequest();
