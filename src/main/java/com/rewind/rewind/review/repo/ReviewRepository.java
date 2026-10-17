@@ -11,6 +11,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Page<Review> findAllByMovieId(Long movieId, Pageable pageable);
     Page<Review> findAllByUserIdOrderByUpdatedAtDesc(Long userId, Pageable pageable);
     Page<Review> findAllByMovieIdAndIsHiddenFalse(Long movieId, Pageable pageable);
+    Page<Review> findAllByIsHiddenFalseOrderByCreatedAtDesc(Pageable pageable);
 
     Page<Review> findAllByIsHidden(Boolean hidden, Pageable pageable);
     Page<Review> findAllByMovieIdAndIsHidden(Long movieId, Boolean hidden, Pageable pageable);

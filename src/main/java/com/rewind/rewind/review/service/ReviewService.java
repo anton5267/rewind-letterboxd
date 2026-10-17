@@ -5,6 +5,7 @@ import com.rewind.rewind.rating.service.RatingService;
 import com.rewind.rewind.movie.repo.MovieRepository;
 import com.rewind.rewind.review.dto.CreateReviewRequest;
 import com.rewind.rewind.review.dto.ReviewResponse;
+import com.rewind.rewind.review.dto.RecentReviewResponse;
 import com.rewind.rewind.review.dto.UpdateReviewRequest;
 import com.rewind.rewind.review.entity.Review;
 import com.rewind.rewind.review.repo.ReviewRepository;
@@ -76,6 +77,22 @@ public class ReviewService {
                 r.getRating() == null ? null : r.getRating().intValue(),
                 r.getCreatedAt()
         ));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<RecentReviewResponse> recent(int page, int size) {
+        return reviews.findAllByIsHiddenFalseOrderByCreatedAtDesc(
+                        PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 20))))
+                .map(review -> new RecentReviewResponse(
+                        review.getId(),
+                        review.getMovie().getId(),
+                        review.getMovie().getTitle(),
+                        review.getUser().getId(),
+                        review.getUser().getUsername(),
+                        review.getContent(),
+                        review.getRating() == null ? null : review.getRating().intValue(),
+                        review.getCreatedAt()
+                ));
     }
 
     @Transactional(readOnly = true)

@@ -5,6 +5,7 @@ import Register from "./auth/Register";
 import ForgotPassword from "./auth/ForgotPassword";
 import ResetPassword from "./auth/ResetPassword";
 import Search from "./pages/Search";
+import Home from "./pages/Home";
 import MovieDetails from "./pages/MovieDetails";
 import Profile from "./pages/Profile";
 import UserLists from "./pages/UserLists";
@@ -26,7 +27,8 @@ function LocalizedApp() {
   }
 
   return <Routes>
-    <Route index element={<Navigate to="films" replace />} />
+    <Route index element={<Navigate to="home" replace />} />
+    <Route path="home" element={<Layout><Home /></Layout>} />
     <Route path="films" element={<Layout><Search /></Layout>} />
     <Route path="films/:id" element={<Layout><MovieDetails /></Layout>} />
     <Route path="profile" element={<Layout><Profile /></Layout>} />

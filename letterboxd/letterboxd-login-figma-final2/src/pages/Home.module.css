@@ -1,0 +1,33 @@
+.page { background: #151515; color: #fff; min-height: 70vh; padding: 112px 5% 48px; }
+.hero { max-width: 760px; padding: 56px 0 44px; }
+.eyebrow { color: #7bdff2; font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.hero h1 { font-size: clamp(38px, 7vw, 72px); line-height: 1.04; margin: 10px 0 18px; }
+.hero > p:not(.eyebrow) { color: #d1d1d1; font-size: 18px; line-height: 1.6; max-width: 600px; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+.actions a { border-radius: 7px; font-weight: 700; padding: 12px 18px; text-decoration: none; }
+.primary { background: #7bdff2; color: #111; }
+.secondary { border: 1px solid #777; color: #fff; }
+.section { margin-top: 48px; }
+.sectionHeading { align-items: baseline; display: flex; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.sectionHeading h2 { font-size: 24px; margin: 0; }
+.sectionHeading a { color: #7bdff2; }
+.movieRow { display: grid; gap: 16px; grid-template-columns: repeat(6, minmax(130px, 1fr)); overflow-x: auto; padding-bottom: 4px; }
+.movieCard { min-width: 0; }
+.movieCard a { color: #fff; text-decoration: none; }
+.movieCard img, .posterFallback { aspect-ratio: 2 / 3; background: #282828; border-radius: 8px; display: block; object-fit: cover; width: 100%; }
+.posterFallback { align-items: center; display: flex; justify-content: center; padding: 12px; text-align: center; }
+.movieCard h3 { font-size: 15px; margin: 10px 0 4px; }
+.movieCard p { color: #bdbdbd; font-size: 13px; margin: 0; }
+.grid { display: grid; gap: 24px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 48px; }
+.panel { background: #202020; border: 1px solid #333; border-radius: 10px; padding: 22px; }
+.stack { display: grid; gap: 14px; }
+.review, .list { border-top: 1px solid #3b3b3b; padding-top: 14px; }
+.review p, .list p { margin: 0 0 8px; }
+.review a { color: #7bdff2; font-weight: 700; }
+.reviewText { color: #dedede; line-height: 1.45; }
+.review small, .list small { color: #a0a0a0; }
+.list h3 { font-size: 16px; margin: 0 0 8px; }
+.status { margin: 36px 0; }
+.status button { margin-left: 8px; }
+@media (max-width: 900px) { .movieRow { grid-template-columns: repeat(6, minmax(150px, 1fr)); } }
+@media (max-width: 680px) { .page { padding: 130px 16px 36px; } .hero { padding-top: 20px; } .grid { grid-template-columns: 1fr; } .movieRow { grid-template-columns: repeat(6, minmax(135px, 1fr)); } }

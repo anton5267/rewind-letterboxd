@@ -24,7 +24,7 @@ export default function Header() {
     <header className={styles.header}>
 
       {/* LOGO */}
-      <Link to={path("/films")} className={styles.logo}>
+      <Link to={path("/home")} className={styles.logo}>
         <img
           src="/logo.png.png"
           alt="REWIND"
@@ -34,6 +34,7 @@ export default function Header() {
 
       {/* NAV */}
       <nav className={styles.nav}>
+        <Link to={path("/home")}>{t("home")}</Link>
         <Link to={path("/films")}>{t("films")}</Link>
         {isAuth ? (
           <>

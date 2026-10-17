@@ -73,6 +73,9 @@ Write-Output 'refresh token rotated'
 $list = Send 'POST' '/lists' @{ name = 'Verification list'; isPublic = $true }
 Expect $list.StatusCode 200 'create list'
 $listId = ($list.Content | ConvertFrom-Json).id
+$publicLists = (Send 'GET' '/lists/public?size=20').Content | ConvertFrom-Json
+if ($publicLists.content.id -notcontains $listId) { throw 'Public list did not appear in public feed' }
+Write-Output 'public list feed'
 Expect (Send 'POST' "/lists/$listId/items" @{ movieId = 1 }).StatusCode 200 'add item'
 Expect (Send 'POST' '/movies/1/watchlist').StatusCode 200 'add watchlist'
 Expect (Send 'DELETE' '/movies/1/watchlist').StatusCode 204 'remove watchlist'
@@ -80,6 +83,9 @@ Expect (Send 'PUT' '/movies/1/rating' @{ rating = 4 }).StatusCode 200 'rate film
 $review = Send 'POST' '/movies/1/reviews' @{ content = 'Verification review'; rating = 5 }
 Expect $review.StatusCode 200 'create review'
 $reviewId = ($review.Content | ConvertFrom-Json).id
+$recentReviews = (Send 'GET' '/reviews/recent?size=20').Content | ConvertFrom-Json
+if ($recentReviews.content.id -notcontains $reviewId) { throw 'Review did not appear in recent feed' }
+Write-Output 'recent review feed'
 Expect (Send 'GET' '/movies/1/reviews/me').StatusCode 200 'my review'
 
 try {
