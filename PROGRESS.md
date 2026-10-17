@@ -2,7 +2,7 @@
 
 Це робочий журнал для [повного плану розвитку](PLAN.md) і ТЗ. Оновлювати після **кожного перевіреного зрізу**: ставити `[x]` тільки коли є код, тест і відповідний наскрізний сценарій; `[ ]` означає відкриту роботу. Часткова реалізація зазначена в примітках і не робить етап завершеним.
 
-Останнє оновлення: **17.10.2026**. Вихідна точка Git: `bf6507f`; зафіксовані зрізи охоплюють auth, каталог, профілі, списки, соціальні модулі, журнал, адмінку, rate limit/cache, health/metrics/backup, V22 індекси/N+1 (`965a610`), browser security headers/accessibility (`377cef1`), social/XSS/SQLi smoke (`e6532a0`), локальний load smoke (`8540405`), SSE reconnect (`66e2250`) і backend security smoke (`e62a56b`). Наступний зріз — admin browser regressions та глибший security/load audit.
+Останнє оновлення: **17.10.2026**. Вихідна точка Git: `bf6507f`; зафіксовані зрізи охоплюють auth, каталог, профілі, списки, соціальні модулі, журнал, адмінку, rate limit/cache, health/metrics/backup, V22 індекси/N+1 (`965a610`), browser security headers/accessibility (`377cef1`), social/XSS/SQLi smoke (`e6532a0`), локальний load smoke (`8540405`), SSE reconnect (`66e2250`), backend security smoke (`e62a56b`) і admin browser smoke (`поточний зріз`). Наступний зріз — повний keyboard/axe audit та production-like security/load checks.
 
 ## 1. Основа проєкту й дизайн — в роботі
 
@@ -127,6 +127,7 @@
 - [x] Users у dashboard отримали пошук за username/email/display name і activate/deactivate з аудитом; `AdminAuditIntegrationTests` перевіряє обидва переходи, TypeScript і production build пройшли.
 - [x] Додано `GET /api/admin/moderation/queue`: об'єднує немодеровані огляди й коментарі в сторінкову чергу з типом, автором, текстом і часом; dashboard показує її окремим блоком. `AdminModerationQueueIntegrationTests` перевіряє обидва типи записів у MySQL.
 - [x] Додано Flyway V21 і admin-only `GET/PUT /api/admin/settings`: whitelist `site_name`, `default_locale`, `maintenance_mode`, `journal_enabled`, валідація значень і audit log; dashboard дозволяє змінювати їх. `AdminSettingsIntegrationTests` перевіряє MySQL update та відмову для невідомих/некоректних значень.
+- [x] `scripts/verify-admin-browser.ps1` готує disposable ADMIN fixture у dev MySQL і перевіряє browser flow: login → dashboard → user search → admin movie create/delete. Тест пройшов **1/1**; fixture видаляється після запуску.
 - [ ] Розширити admin UI для списків, повідомлень і сповіщень до повного керування; базові сторінкові огляди, CRUD фільмів і user search/blocking уже підключені.
 - [ ] Блокування, черга модерації, аудит дій, налаштування сайту та серверні тести прав.
 
@@ -141,8 +142,8 @@
 - [x] Security browser smoke перевіряє React escaping для review payload із `<img onerror>`, відсутність діалогу/XSS і пошук із SQL-подібним введенням без 500/alert; повний набір проходить **8/8**.
 - [x] Додано `scripts/verify-load.ps1`: 40 паралельних guest-запитів до каталогу й деталки фільму на Compose повернули 2xx за 0.24 секунди; це smoke-перевірка локального runtime, не production load test.
 - [x] Додано `scripts/verify-security.ps1`: public catalog/health повертають 200, guest profile/admin і metrics — 401, login без CSRF — 403. Це backend security smoke для локального runtime; повний penetration/load audit ще відкритий.
-- [~] Залишаються глибші SQLi/XSS і права, навантаження, повне відновлення у тимчасову БД та admin/social browser-регресії.
-- [~] Базову доступність, mobile overflow і browser security headers перевірено; залишаються повний keyboard/axe аудит, SQLi/XSS, права, навантаження та admin/social browser-регресії.
+- [~] Залишаються глибші SQLi/XSS і права, навантаження, повне відновлення у тимчасову БД та production-like конфігурація.
+- [~] Базову доступність, mobile overflow, browser security headers і admin/social browser flows перевірено; залишаються повний keyboard/axe аудит, SQLi/XSS, права, production load та VPS/HTTPS.
 - [ ] Production конфігурація, VPS, HTTPS, приватна БД і публічний запуск.
 
 ## 10. Захист і презентація — не почато
@@ -152,7 +153,7 @@
 
 ## Негайний наступний крок
 
-1. Розширити Playwright перевірками admin сценаріїв.
+1. Додати повний keyboard/axe аудит і перевірки production-like конфігурації.
 2. Розширити backend security/load checks та зберегти сценарій відновлення у тимчасову БД.
 3. Реалізувати контрольований TMDB update/import із зовнішніми ID та перевіркою якості каталогу.
 4. Після Editor-доступу зафіксувати точні Figma-фрейми, tokens і assets; до цього не підміняти макети припущеннями.
