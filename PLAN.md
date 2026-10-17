@@ -23,7 +23,7 @@
 
 Детальний чекліст із доказами, тестами та наступними діями ведеться у [PROGRESS.md](PROGRESS.md). Після кожного завершеного зрізу оновлюємо спочатку `PROGRESS.md`, а потім цей короткий статус.
 
-Зараз React показує каталог і форми входу, а Spring Boot має частину API. Профіль, сторінка фільму та списки переважно не підключені до UI; коментарів і більшості соціальних модулів немає. Чотири операції видалення повертають HTTP 500. Зафіксований стан — у [карті проєкту](C:/Users/Legion/Downloads/rewind-master/rewind-master/PROJECT_MAP.md) та [аудиті API](C:/Users/Legion/Downloads/rewind-master/rewind-master/API_AUDIT.md).
+Початкова карта фіксувала каталог і форми входу як основний стан, але після наступних зрізів підключено профіль, деталку фільму, списки, огляди, коментарі, соціальні модулі та адмінські блоки. Поточні залишки й докази ведуться у [карті проєкту](C:/Users/Legion/Downloads/rewind-master/rewind-master/PROJECT_MAP.md), [аудиті API](C:/Users/Legion/Downloads/rewind-master/rewind-master/API_AUDIT.md) та [журналі прогресу](C:/Users/Legion/Downloads/rewind-master/rewind-master/PROGRESS.md).
 
 ## Технічні рішення
 
