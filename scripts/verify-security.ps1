@@ -23,6 +23,23 @@ Expect-Status 'guest admin dashboard' (Get-Status { Invoke-WebRequest -UseBasicP
 Expect-Status 'protected metrics' (Get-Status { Invoke-WebRequest -UseBasicParsing "$BaseUrl/actuator/metrics" }) 401
 Expect-Status 'public health' (Get-Status { Invoke-WebRequest -UseBasicParsing "$BaseUrl/actuator/health" }) 200
 
+$userSuffix = [guid]::NewGuid().ToString('N').Substring(0, 12)
+$userEmail = "security$userSuffix@example.invalid"
+$userPassword = 'Security-user-password-123!'
+$userSession = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+try {
+    $null = Invoke-WebRequest -UseBasicParsing "$BaseUrl/api/auth/csrf" -WebSession $userSession
+    $userCsrf = $userSession.Cookies.GetCookies([uri]"$BaseUrl/api/auth/csrf") | Where-Object Name -eq 'XSRF-TOKEN'
+    if (-not $userCsrf) { throw 'CSRF cookie was not issued for normal-user fixture' }
+    $userHeaders = @{ 'X-XSRF-TOKEN' = $userCsrf.Value }
+    $null = Invoke-WebRequest -Method POST -UseBasicParsing "$BaseUrl/api/auth/register" -WebSession $userSession -Headers $userHeaders -ContentType 'application/json' -Body (@{ username = "security$userSuffix"; email = $userEmail; password = $userPassword } | ConvertTo-Json -Compress)
+    $null = Invoke-WebRequest -Method POST -UseBasicParsing "$BaseUrl/api/auth/login" -WebSession $userSession -Headers $userHeaders -ContentType 'application/json' -Body (@{ email = $userEmail; password = $userPassword } | ConvertTo-Json -Compress)
+    Expect-Status 'normal user admin dashboard' (Get-Status { Invoke-WebRequest -UseBasicParsing "$BaseUrl/api/admin/dashboard" -WebSession $userSession }) 403
+}
+finally {
+    "DELETE FROM users WHERE email='$userEmail';" | docker compose exec -T db sh -lc 'mysql -urewind -p"$MYSQL_PASSWORD" rewind' | Out-Null
+}
+
 $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 $null = Invoke-WebRequest -UseBasicParsing "$BaseUrl/api/auth/csrf" -WebSession $session
 $csrfStatus = Get-Status {
