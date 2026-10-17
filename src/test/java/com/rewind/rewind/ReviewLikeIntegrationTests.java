@@ -5,7 +5,9 @@ import com.rewind.rewind.movie.repo.MovieRepository;
 import com.rewind.rewind.review.dto.CreateReviewRequest;
 import com.rewind.rewind.review.service.ReviewService;
 import com.rewind.rewind.social.service.ReviewLikeService;
+import com.rewind.rewind.social.service.PopularReviewerService;
 import com.rewind.rewind.user.dto.UserRegisterRequest;
+import com.rewind.rewind.user.repo.UserRepository;
 import com.rewind.rewind.user.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,8 @@ class ReviewLikeIntegrationTests {
     @Autowired MovieRepository movies;
     @Autowired ReviewService reviews;
     @Autowired ReviewLikeService likes;
+    @Autowired PopularReviewerService popularReviewers;
+    @Autowired UserRepository userRepository;
 
     @Test
     @Transactional
@@ -29,6 +33,7 @@ class ReviewLikeIntegrationTests {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         String author = register("author_" + suffix, "author-" + suffix + "@example.invalid");
         String liker = register("liker_" + suffix, "liker-" + suffix + "@example.invalid");
+        Long authorId = userRepository.findByEmail(author).orElseThrow().getId();
         Movie movie = new Movie();
         movie.setTitle("Liked review film " + suffix);
         Long movieId = movies.saveAndFlush(movie).getId();
@@ -41,6 +46,8 @@ class ReviewLikeIntegrationTests {
         likes.like(liker, reviewId);
         assertEquals(1, likes.count(reviewId));
         assertTrue(likes.status(liker, reviewId).liked());
+        assertTrue(popularReviewers.popular(10).stream()
+                .anyMatch(reviewer -> reviewer.id().equals(authorId) && reviewer.likes() == 1));
         likes.unlike(liker, reviewId);
         assertEquals(0, likes.count(reviewId));
         assertFalse(likes.status(liker, reviewId).liked());

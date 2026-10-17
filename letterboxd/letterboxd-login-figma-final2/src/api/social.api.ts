@@ -37,9 +37,14 @@ export interface ActivityPage {
   totalElements: number;
 }
 
+export interface PopularReviewer extends PublicNetworkUser {
+  likes: number;
+}
+
 export const getFollowers = (userId: string | number) => api.get<NetworkPage>(`/users/${userId}/followers`, { params: { size: 8 } });
 export const getFollowing = (userId: string | number) => api.get<NetworkPage>(`/users/${userId}/following`, { params: { size: 8 } });
 export const getFollowStatus = (userId: string | number) => api.get<FollowStatus>(`/users/${userId}/follow-status`);
 export const follow = (userId: string | number) => api.post(`/users/${userId}/follow`);
 export const unfollow = (userId: string | number) => api.delete(`/users/${userId}/follow`);
 export const getUserActivity = (userId: string | number) => api.get<ActivityPage>(`/users/${userId}/activity`, { params: { size: 10 } });
+export const getPopularReviewers = () => api.get<PopularReviewer[]>("/users/popular-reviewers", { params: { size: 6 } });

@@ -135,6 +135,8 @@ $reviewLikeStatus = (Send 'GET' "/reviews/$reviewId/like-status").Content | Conv
 if (-not $reviewLikeStatus.liked -or $reviewLikeStatus.likes -ne 1) { throw 'Review like status is incorrect' }
 $publicLikeCount = Invoke-WebRequest -Method GET -Uri "$BaseUrl/api/reviews/$reviewId/likes" -UseBasicParsing
 if ([int]($publicLikeCount.Content | ConvertFrom-Json) -ne 1) { throw 'Public review like count is incorrect' }
+$popularReviewers = (Invoke-WebRequest -Method GET -Uri "$BaseUrl/api/users/popular-reviewers?size=10" -UseBasicParsing).Content | ConvertFrom-Json
+if ($popularReviewers.id -notcontains $userId) { throw 'Popular reviewers did not include the liked review author' }
 Write-Output 'review likes'
 Expect (Send 'DELETE' "/reviews/$reviewId/likes").StatusCode 204 'unlike review'
 $reviewHistory = (Send 'GET' '/profile/me/reviews?size=20').Content | ConvertFrom-Json

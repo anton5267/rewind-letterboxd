@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/axios";
 import { searchMovies, type MovieCard, type MoviePage } from "../api/search.api";
+import { getPopularReviewers, type PopularReviewer } from "../api/social.api";
 import { useLocale } from "../i18n";
 import styles from "./Home.module.css";
 
@@ -45,6 +46,7 @@ export default function Home() {
   const [newest, setNewest] = useState<MovieCard[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [lists, setLists] = useState<PublicList[]>([]);
+  const [reviewers, setReviewers] = useState<PopularReviewer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -58,12 +60,14 @@ export default function Home() {
       searchMovies({ sort: "newest", page: 0, size: 6 }),
       api.get<Page<Review>>("/reviews/recent", { params: { size: 4 } }),
       api.get<Page<PublicList>>("/lists/public", { params: { size: 4 } }),
-    ]).then(([popularResponse, newestResponse, reviewsResponse, listsResponse]) => {
+      getPopularReviewers(),
+    ]).then(([popularResponse, newestResponse, reviewsResponse, listsResponse, reviewersResponse]) => {
       if (!current) return;
       setPopular((popularResponse.data as MoviePage).content);
       setNewest((newestResponse.data as MoviePage).content);
       setReviews(reviewsResponse.data.content);
       setLists(listsResponse.data.content);
+      setReviewers(reviewersResponse.data);
     }).catch(() => { if (current) setError(true); })
       .finally(() => { if (current) setLoading(false); });
     return () => { current = false; };
@@ -106,6 +110,13 @@ export default function Home() {
             <h3><Link to={path(`/lists/public/${list.id}`)}>{list.name}</Link></h3>
             {list.description && <p>{list.description}</p>}
             <small>{t("byUser")} <Link to={path(`/users/${list.ownerId}`)}>{list.ownerUsername}</Link></small>
+          </article>)}</div>}
+        </div>
+        <div className={styles.panel}>
+          <div className={styles.sectionHeading}><h2>{t("popularReviewers")}</h2></div>
+          {reviewers.length === 0 ? <p>{t("noPopularReviewers")}</p> : <div className={styles.stack}>{reviewers.map(reviewer => <article className={styles.list} key={reviewer.id}>
+            <h3><Link to={path(`/users/${reviewer.id}`)}>{reviewer.displayName || reviewer.username}</Link></h3>
+            <small>{t("likes")}: {reviewer.likes}</small>
           </article>)}</div>}
         </div>
       </section>
