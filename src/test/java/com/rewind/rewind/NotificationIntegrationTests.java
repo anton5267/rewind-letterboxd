@@ -47,6 +47,12 @@ class NotificationIntegrationTests {
         follows.follow(followerEmail, targetId);
         notifications.markAllRead(targetEmail);
         assertEquals(0, notifications.unreadCount(targetEmail));
+
+        assertTrue(notifications.preferences(targetEmail).followsEnabled());
+        var updated = notifications.updatePreferences(targetEmail,
+                new com.rewind.rewind.notification.dto.UpdateNotificationPreferencesRequest(false, true));
+        assertFalse(updated.followsEnabled());
+        assertTrue(updated.reviewLikesEnabled());
     }
 
     private Long register(String username, String email) {

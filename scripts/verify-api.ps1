@@ -113,6 +113,12 @@ Expect (SendNetwork 'POST' '/notifications/read-all').StatusCode 204 'mark notif
 $networkUnreadAfter = (SendNetwork 'GET' '/notifications/unread-count').Content | ConvertFrom-Json
 if ([int64]$networkUnreadAfter.count -ne 0) { throw 'Read-all did not clear unread notifications' }
 Write-Output 'notifications read state'
+$notificationPreferences = (SendNetwork 'GET' '/notifications/preferences').Content | ConvertFrom-Json
+if (-not $notificationPreferences.followsEnabled -or -not $notificationPreferences.reviewLikesEnabled) { throw 'Notification preferences defaults are incorrect' }
+$updatedNotificationPreferences = SendNetwork 'PUT' '/notifications/preferences' @{ followsEnabled = $false; reviewLikesEnabled = $true }
+Expect $updatedNotificationPreferences.StatusCode 200 'update notification preferences'
+if (($updatedNotificationPreferences.Content | ConvertFrom-Json).followsEnabled) { throw 'Notification follow preference did not update' }
+Write-Output 'notification preferences'
 Expect (Send 'DELETE' "/users/$networkUserId/follow").StatusCode 204 'unfollow user'
 $oldRefresh = ($webSession.Cookies.GetCookies([uri]"$BaseUrl/api/auth/refresh") | Where-Object Name -eq 'rewind_refresh').Value
 Expect (Send 'POST' '/auth/refresh').StatusCode 204 'refresh session'

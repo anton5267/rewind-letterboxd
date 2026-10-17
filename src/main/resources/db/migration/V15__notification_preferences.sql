@@ -1,0 +1,8 @@
+CREATE TABLE notification_preferences (
+    user_id BIGINT PRIMARY KEY,
+    follows_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    review_likes_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_notification_preferences_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);

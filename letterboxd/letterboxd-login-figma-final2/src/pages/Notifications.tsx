@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { getNotifications, getUnreadNotificationCount, markAllNotificationsRead, markNotificationRead, type NotificationItem, type NotificationPage } from "../api/notifications.api";
+import { getNotificationPreferences, getNotifications, getUnreadNotificationCount, markAllNotificationsRead, markNotificationRead, updateNotificationPreferences, type NotificationItem, type NotificationPage, type NotificationPreferences } from "../api/notifications.api";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
 
@@ -18,6 +18,8 @@ export default function Notifications() {
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
+  const [preferencesMessage, setPreferencesMessage] = useState("");
 
   const load = () => {
     setLoading(true);
@@ -31,6 +33,11 @@ export default function Notifications() {
   useEffect(() => {
     if (isAuth) void load();
   }, [isAuth, page]);
+
+  useEffect(() => {
+    if (!isAuth) return;
+    getNotificationPreferences().then(({ data }) => setPreferences(data)).catch(() => setError(true));
+  }, [isAuth]);
 
   useEffect(() => {
     if (!isAuth) return;
@@ -66,6 +73,18 @@ export default function Notifications() {
     setUnread(0);
   };
 
+  const savePreferences = async (next: NotificationPreferences) => {
+    setPreferences(next);
+    setPreferencesMessage("");
+    try {
+      const { data } = await updateNotificationPreferences(next);
+      setPreferences(data);
+      setPreferencesMessage(t("notificationPreferencesSaved"));
+    } catch {
+      setPreferencesMessage(t("notificationPreferencesError"));
+    }
+  };
+
   return <main style={{ background: "#151515", color: "white", minHeight: "70vh", padding: "110px 5% 40px" }}>
     <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
       <h1>{t("notifications")}{unread > 0 ? ` (${unread})` : ""}</h1>
@@ -73,6 +92,12 @@ export default function Notifications() {
     </div>
     {loading && <p>{t("loading")}</p>}
     {error && <p role="alert">{t("loadNotificationsError")}</p>}
+    {preferences && <section aria-labelledby="notification-preferences" style={{ margin: "20px 0", padding: 16, border: "1px solid #444", borderRadius: 8 }}>
+      <h2 id="notification-preferences">{t("notificationPreferences")}</h2>
+      <label style={{ display: "block", marginBottom: 8 }}><input type="checkbox" checked={preferences.followsEnabled} onChange={event => { void savePreferences({ ...preferences, followsEnabled: event.target.checked }); }} /> {t("notifyOnFollow")}</label>
+      <label style={{ display: "block" }}><input type="checkbox" checked={preferences.reviewLikesEnabled} onChange={event => { void savePreferences({ ...preferences, reviewLikesEnabled: event.target.checked }); }} /> {t("notifyOnReviewLike")}</label>
+      {preferencesMessage && <p role="status">{preferencesMessage}</p>}
+    </section>}
     {!loading && !error && data && (data.content.length === 0 ? <p>{t("noNotifications")}</p> : <ul style={{ listStyle: "none", padding: 0, display: "grid", gap: 10 }}>
       {data.content.map(item => <li key={item.id} style={{ padding: 16, border: "1px solid #444", borderRadius: 8, background: item.readAt ? "transparent" : "#242424" }}>
         <div>

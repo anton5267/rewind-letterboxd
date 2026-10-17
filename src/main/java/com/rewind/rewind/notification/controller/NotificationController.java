@@ -1,6 +1,8 @@
 package com.rewind.rewind.notification.controller;
 
 import com.rewind.rewind.notification.dto.NotificationResponse;
+import com.rewind.rewind.notification.dto.NotificationPreferencesResponse;
+import com.rewind.rewind.notification.dto.UpdateNotificationPreferencesRequest;
 import com.rewind.rewind.notification.service.NotificationService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
@@ -8,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import jakarta.validation.Valid;
 
 import java.util.Map;
 
@@ -37,6 +40,16 @@ public class NotificationController {
     public ResponseEntity<Void> markAllRead(Authentication auth) {
         notifications.markAllRead(auth.getName());
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/preferences")
+    public NotificationPreferencesResponse preferences(Authentication auth) {
+        return notifications.preferences(auth.getName());
+    }
+
+    @PutMapping("/preferences")
+    public NotificationPreferencesResponse updatePreferences(Authentication auth, @Valid @RequestBody UpdateNotificationPreferencesRequest request) {
+        return notifications.updatePreferences(auth.getName(), request);
     }
 
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

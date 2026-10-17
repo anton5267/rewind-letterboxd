@@ -25,6 +25,11 @@ export interface NotificationPage {
   totalElements: number;
 }
 
+export interface NotificationPreferences {
+  followsEnabled: boolean;
+  reviewLikesEnabled: boolean;
+}
+
 export const getNotifications = (page = 0, size = 20) =>
   api.get<NotificationPage>("/notifications", { params: { page, size } });
 
@@ -36,3 +41,9 @@ export const markNotificationRead = (id: number) =>
 
 export const markAllNotificationsRead = () =>
   api.post("/notifications/read-all");
+
+export const getNotificationPreferences = () =>
+  api.get<NotificationPreferences>("/notifications/preferences");
+
+export const updateNotificationPreferences = (preferences: NotificationPreferences) =>
+  api.put<NotificationPreferences>("/notifications/preferences", preferences);

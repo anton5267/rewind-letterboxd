@@ -3,7 +3,11 @@ package com.rewind.rewind.notification.service;
 import com.rewind.rewind.notification.dto.NotificationResponse;
 import com.rewind.rewind.notification.entity.Notification;
 import com.rewind.rewind.notification.entity.NotificationType;
+import com.rewind.rewind.notification.entity.NotificationPreference;
 import com.rewind.rewind.notification.repo.NotificationRepository;
+import com.rewind.rewind.notification.repo.NotificationPreferenceRepository;
+import com.rewind.rewind.notification.dto.NotificationPreferencesResponse;
+import com.rewind.rewind.notification.dto.UpdateNotificationPreferencesRequest;
 import com.rewind.rewind.user.entity.User;
 import com.rewind.rewind.user.repo.UserRepository;
 import com.rewind.rewind.review.entity.Review;
@@ -25,17 +29,20 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class NotificationService {
     private static final long SSE_TIMEOUT_MS = 30 * 60 * 1000L;
     private final NotificationRepository notifications;
+    private final NotificationPreferenceRepository preferences;
     private final UserRepository users;
     private final Map<Long, CopyOnWriteArraySet<SseEmitter>> emitters = new ConcurrentHashMap<>();
 
-    public NotificationService(NotificationRepository notifications, UserRepository users) {
+    public NotificationService(NotificationRepository notifications, NotificationPreferenceRepository preferences, UserRepository users) {
         this.notifications = notifications;
+        this.preferences = preferences;
         this.users = users;
     }
 
     @Transactional
     public void follow(User recipient, User actor) {
         if (recipient.getId().equals(actor.getId())) return;
+        if (!preference(recipient.getId()).isFollowsEnabled()) return;
         Notification notification = new Notification();
         notification.setRecipientId(recipient.getId());
         notification.setActorId(actor.getId());
@@ -49,6 +56,7 @@ public class NotificationService {
     public void reviewLiked(Review review, User actor) {
         User recipient = review.getUser();
         if (recipient.getId().equals(actor.getId())) return;
+        if (!preference(recipient.getId()).isReviewLikesEnabled()) return;
         Notification notification = new Notification();
         notification.setRecipientId(recipient.getId());
         notification.setActorId(actor.getId());
@@ -69,6 +77,31 @@ public class NotificationService {
     public long unreadCount(String email) {
         User user = users.findByEmail(email).orElseThrow();
         return notifications.countByRecipientIdAndReadAtIsNull(user.getId());
+    }
+
+    @Transactional
+    public NotificationPreferencesResponse preferences(String email) {
+        User user = users.findByEmail(email).orElseThrow();
+        NotificationPreference preference = preference(user.getId());
+        return new NotificationPreferencesResponse(preference.isFollowsEnabled(), preference.isReviewLikesEnabled());
+    }
+
+    @Transactional
+    public NotificationPreferencesResponse updatePreferences(String email, UpdateNotificationPreferencesRequest request) {
+        User user = users.findByEmail(email).orElseThrow();
+        NotificationPreference preference = preference(user.getId());
+        preference.setFollowsEnabled(request.followsEnabled());
+        preference.setReviewLikesEnabled(request.reviewLikesEnabled());
+        preferences.save(preference);
+        return new NotificationPreferencesResponse(preference.isFollowsEnabled(), preference.isReviewLikesEnabled());
+    }
+
+    private NotificationPreference preference(Long userId) {
+        return preferences.findById(userId).orElseGet(() -> {
+            NotificationPreference created = new NotificationPreference();
+            created.setUserId(userId);
+            return preferences.save(created);
+        });
     }
 
     @Transactional
