@@ -10,5 +10,6 @@ public record AdminJournalArticleRequest(
         @Size(max = 500) String excerpt,
         @NotBlank String content,
         @Size(max = 500) String coverUrl,
+        @Size(max = 500) String audioUrl,
         boolean published
 ) {}

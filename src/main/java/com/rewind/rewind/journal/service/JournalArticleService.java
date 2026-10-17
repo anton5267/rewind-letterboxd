@@ -106,8 +106,8 @@ public class JournalArticleService {
 
     private void apply(JournalArticle article, AdminJournalArticleRequest request) {
         article.setSlug(request.slug().trim()); article.setLanguage(request.language()); article.setCategory(request.category().trim());
-        article.setTitle(request.title().trim()); article.setExcerpt(request.excerpt()); article.setContent(request.content()); article.setCoverUrl(request.coverUrl());
+        article.setTitle(request.title().trim()); article.setExcerpt(request.excerpt()); article.setContent(request.content()); article.setCoverUrl(request.coverUrl()); article.setAudioUrl(request.audioUrl());
         article.setIsPublished(request.published()); article.setPublishedAt(request.published() ? (article.getPublishedAt() == null ? Instant.now() : article.getPublishedAt()) : null);
     }
-    private JournalArticleResponse toResponse(JournalArticle a) { return new JournalArticleResponse(a.getId(), a.getSlug(), a.getLanguage(), a.getCategory(), a.getTitle(), a.getExcerpt(), a.getContent(), a.getCoverUrl(), a.getPublishedAt()); }
+    private JournalArticleResponse toResponse(JournalArticle a) { return new JournalArticleResponse(a.getId(), a.getSlug(), a.getLanguage(), a.getCategory(), a.getTitle(), a.getExcerpt(), a.getContent(), a.getCoverUrl(), a.getAudioUrl(), a.getPublishedAt()); }
 }

@@ -30,9 +30,10 @@ class JournalArticleIntegrationTests {
         users.register(register);
         userRepository.findByEmail(adminEmail).orElseThrow().setRole(UserRole.ADMIN);
 
-        AdminJournalArticleRequest published = new AdminJournalArticleRequest("rewind-news-" + suffix, "uk", "Новини", "Тестова стаття", "Коротко", "Повний текст", null, true);
+        String audioUrl = "https://cdn.example.invalid/rewind-" + suffix + ".mp3";
+        AdminJournalArticleRequest published = new AdminJournalArticleRequest("rewind-news-" + suffix, "uk", "Новини", "Тестова стаття", "Коротко", "Повний текст", null, audioUrl, true);
         articles.create(adminEmail, published);
-        AdminJournalArticleRequest draft = new AdminJournalArticleRequest("draft-" + suffix, "en", "News", "Draft", null, "Hidden", null, false);
+        AdminJournalArticleRequest draft = new AdminJournalArticleRequest("draft-" + suffix, "en", "News", "Draft", null, "Hidden", null, null, false);
         articles.create(adminEmail, draft);
 
         assertEquals(1, articles.publicList("uk", 0, 20).getTotalElements());
@@ -42,6 +43,7 @@ class JournalArticleIntegrationTests {
         YearMonth publishedMonth = YearMonth.now(java.time.ZoneOffset.UTC);
         assertEquals(1, articles.publicList("uk", null, publishedMonth.getYear(), publishedMonth.getMonthValue(), 0, 20).getTotalElements());
         assertEquals("Тестова стаття", articles.publicGet("uk", published.slug()).title());
+        assertEquals(audioUrl, articles.publicGet("uk", published.slug()).audioUrl());
         assertEquals(1, articles.publicList("en", 0, 20).getTotalElements());
         assertEquals("Тестова стаття", articles.publicGet("en", published.slug()).title());
     }

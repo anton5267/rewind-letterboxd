@@ -16,6 +16,7 @@ public class JournalArticle {
     @Column(length = 500) private String excerpt;
     @Column(nullable = false, columnDefinition = "TEXT") private String content;
     @Column(name = "cover_url", length = 500) private String coverUrl;
+    @Column(name = "audio_url", length = 500) private String audioUrl;
     @Column(name = "is_published", nullable = false) private Boolean isPublished = false;
     @Column(name = "published_at") private Instant publishedAt;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "author_id") private User author;
@@ -31,6 +32,7 @@ public class JournalArticle {
     public String getExcerpt() { return excerpt; } public void setExcerpt(String value) { excerpt = value; }
     public String getContent() { return content; } public void setContent(String value) { content = value; }
     public String getCoverUrl() { return coverUrl; } public void setCoverUrl(String value) { coverUrl = value; }
+    public String getAudioUrl() { return audioUrl; } public void setAudioUrl(String value) { audioUrl = value; }
     public Boolean getIsPublished() { return isPublished; } public void setIsPublished(Boolean value) { isPublished = value; }
     public Instant getPublishedAt() { return publishedAt; } public void setPublishedAt(Instant value) { publishedAt = value; }
     public User getAuthor() { return author; } public void setAuthor(User value) { author = value; }

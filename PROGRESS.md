@@ -2,7 +2,7 @@
 
 Це робочий журнал для [повного плану розвитку](PLAN.md) і ТЗ. Оновлювати після **кожного перевіреного зрізу**: ставити `[x]` тільки коли є код, тест і відповідний наскрізний сценарій; `[ ]` означає відкриту роботу. Часткова реалізація зазначена в примітках і не робить етап завершеним.
 
-Останнє оновлення: **17.10.2026**. Вихідна точка Git: `bf6507f`; зафіксовані зрізи охоплюють auth, каталог, профілі, списки, соціальні модулі, журнал, адмінку, rate limit/cache, health/metrics/backup, V22 індекси/N+1 (`965a610`), browser security headers/accessibility (`377cef1`), social/XSS/SQLi smoke (`e6532a0`), локальний load smoke (`8540405`), SSE reconnect (`66e2250`), backend security smoke (`e62a56b`), admin browser smoke (`d7fdc99`), keyboard smoke (`0425783`), non-root API/розширений accessibility audit (`7b65a95`), production Compose overlay/secure profile (`22cc44a`), WCAG axe audit (`414234c`) і контрольований TMDB sync (`b6d5de2`). Поточний локальний зріз додає кнопку TMDB-sync в адмінці; push відкладається до завершення пов'язаного блоку. Наступні — перевірка повного каталогу, dependency remediation та production load.
+Останнє оновлення: **17.10.2026**. Вихідна точка Git: `bf6507f`; зафіксовані зрізи охоплюють auth, каталог, профілі, списки, соціальні модулі, журнал, адмінку, rate limit/cache, health/metrics/backup, V22 індекси/N+1 (`965a610`), browser security headers/accessibility (`377cef1`), social/XSS/SQLi smoke (`e6532a0`), локальний load smoke (`8540405`), SSE reconnect (`66e2250`), backend security smoke (`e62a56b`), admin browser smoke (`d7fdc99`), keyboard smoke (`0425783`), non-root API/розширений accessibility audit (`7b65a95`), production Compose overlay/secure profile (`22cc44a`), WCAG axe audit (`414234c`) і контрольований TMDB sync (`b6d5de2`). Поточні зрізи додають видалення кастомних списків в адмінці та V24-підтримку podcast audio/newsletter категорії. `AdminListIntegrationTests`, `JournalArticleIntegrationTests`, повний `mvnw -q test`, TypeScript/Vite build і Docker API з Flyway 24 пройдені; пакетні коміти `c30720f` і `81a0111` вже відправлені в GitHub.
 
 ## 1. Основа проєкту й дизайн — в роботі
 
@@ -116,7 +116,7 @@
 - [x] Архівні місяці стали навігацією: `GET /api/journal/articles?year=...&month=...` фільтрує публікації з мовним fallback, а UI має кнопку очищення фільтра; інтеграційний тест перевіряє поточний місяць.
 - [x] Повторний повний `mvnw -q test` після архіву пройшов: 31 тест, 0 failures/errors; frontend `tsc --noEmit` і production build також пройдені.
 - [x] Додано локалізовані службові маршрути `/help`, `/contact`, `/rules`, `/privacy`, `/film-data`, `/delete-account` і робочі footer-посилання; TypeScript та production build пройдені.
-- [ ] Розширити журнал подкастами й бюлетенем; статті, категорії, архів і двомовний редактор із fallback уже працюють.
+- [x] V24 додає `journal_articles.audio_url`, адмінський URL аудіо, podcast-плеєр на сторінці статті та локалізовані Podcasts/Newsletter фільтри. Повний backend (`mvnw -q test`), `JournalArticleIntegrationTests`, TypeScript/Vite build і Docker API зі схемою Flyway 24 пройдені. Email-розсилка бюлетеня поки не входить у цей зріз.
 - [x] Допомога, контакти, правила, приватність і дані фільмів мають локалізовані службові маршрути та footer-посилання.
 - [x] Видалення акаунта стало реальним захищеним flow: DELETE `/api/profile/me` вимагає поточний пароль, відкликає refresh-сесії й каскадно видаляє дані; UI додає пароль, попередження та вихід. `AccountDeletionIntegrationTests` перевірив неправильний/правильний пароль і відсутність користувача, frontend build пройшов.
 - [x] Додано About/Credits, офіційний логотип TMDB і потрібне повідомлення про джерело; прибрано хибний підпис IMDb у футері. Точний дизайн ще залежить від Figma.
@@ -136,7 +136,7 @@
 - [x] Додано `GET /api/admin/moderation/queue`: об'єднує немодеровані огляди й коментарі в сторінкову чергу з типом, автором, текстом і часом; dashboard показує її окремим блоком. `AdminModerationQueueIntegrationTests` перевіряє обидва типи записів у MySQL.
 - [x] Додано Flyway V21 і admin-only `GET/PUT /api/admin/settings`: whitelist `site_name`, `default_locale`, `maintenance_mode`, `journal_enabled`, валідація значень і audit log; dashboard дозволяє змінювати їх. `AdminSettingsIntegrationTests` перевіряє MySQL update та відмову для невідомих/некоректних значень.
 - [x] `scripts/verify-admin-browser.ps1` готує disposable ADMIN fixture у dev MySQL і перевіряє browser flow: login → dashboard → user search → admin movie create/delete. Тест пройшов **1/1**; fixture видаляється після запуску.
-- [ ] Розширити admin UI для списків, повідомлень і сповіщень до повного керування; базові сторінкові огляди, CRUD фільмів і user search/blocking уже підключені.
+- [ ] Розширити admin UI для списків, повідомлень і сповіщень до повного керування; кастомні списки вже мають видалення, базові сторінкові огляди, CRUD фільмів і user search/blocking уже підключені.
 - [x] Admin lists отримали `DELETE /api/admin/lists/{id}` для кастомних списків із каскадним очищенням items/tags та audit log; системні списки видаляти заборонено. `AdminListIntegrationTests`, TypeScript і production build пройшли.
 - [ ] Блокування, черга модерації, аудит дій, налаштування сайту та серверні тести прав.
 
