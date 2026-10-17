@@ -72,7 +72,7 @@
 - [ ] Додати браузерні тести дій користувача та завершити візуальний UX профілю після доступу до Figma.
 
 - [x] Адмінка отримала сторінковий список списків з кількістю елементів і дію приховування/публікації; дія записується в audit log. `AdminListIntegrationTests` пройшов на MySQL, frontend production build пройшов.
-- [x] Повний `mvnw -q test` після admin lists пройшов: усі 24 тести/сценарії без failures/errors; frontend production build також пройшов.
+- [x] Повний `mvnw -q test` після admin lists пройшов: усі 25 тестів/сценаріїв без failures/errors; frontend production build також пройшов.
 
 ## 6. Спільнота — в роботі
 
