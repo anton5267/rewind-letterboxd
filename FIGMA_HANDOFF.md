@@ -1,6 +1,8 @@
 # Rewind: підготовка до роботи з Figma
 
-Стан на 16.10.2026. Цей файл доповнює [PROJECT_MAP.md](PROJECT_MAP.md). Отримане ТЗ та завдання дизайнерів збережено в [PROJECT_REQUIREMENTS.md](PROJECT_REQUIREMENTS.md); поточну відповідність вимогам описано в [REQUIREMENTS_TRACE.md](REQUIREMENTS_TRACE.md). Три Figma-посилання отримано й відкрито в браузері. Жоден екран ще не звірено з макетом для реалізації. Плагін Figma знайдено в каталозі, але він не встановлений/не підключений; пропозицію підключити його вже надіслано.
+Стан на 17.10.2026. Цей файл доповнює [PROJECT_MAP.md](PROJECT_MAP.md). Отримане ТЗ та завдання дизайнерів збережено в [PROJECT_REQUIREMENTS.md](PROJECT_REQUIREMENTS.md); поточну відповідність вимогам описано в [REQUIREMENTS_TRACE.md](REQUIREMENTS_TRACE.md). Три Figma-посилання отримано й відкрито в браузері. Жоден екран ще не звірено з макетом для реалізації. Плагін Figma знайдено в каталозі, але він не встановлений/не підключений; пропозицію підключити його вже надіслано.
+
+Оновлення 17.10.2026: усі три посилання відкриті в Google Chrome. Основний Design-файл доступний для перегляду, а обидві FigJam-дошки показують режим `You can only view and comment on this file`; точний структурний handoff через Figma MCP все ще потребує Editor-доступу.
 
 ## Надані Figma-файли
 
@@ -9,6 +11,12 @@
 | Основний дизайн-файл | [Диплом_ItStep_2025](https://www.figma.com/design/orb73jiLJnIsZNCRtJsWgS/%D0%94%D0%B8%D0%BF%D0%BB%D0%BE%D0%BC_ItStep_2025?node-id=0-1&p=f&t=MrwgnpGt8D0uvYdX-0) — відкривається в Chrome; одна сторінка з великою кількістю фреймів, серед видимих у списку шарів є мобільні Films, Lists, Search, Reviews, створення списків, добірки, а на загальному полотні також видимі інші групи екранів та мудборд. Посилання веде на всю сторінку (`node-id=0-1`), не на окремий екран. |
 | Дошка проєкту | [Project - Rewind](https://www.figma.com/board/gPITmVEnT5L61gN7JiwIiX/Project---Rewind?node-id=0-1&p=f&t=kC1g3lLavOAd4VTL-0) — FigJam із дослідженнями/референсами та схемами. Відкривається в режимі перегляду й коментування. |
 | Інформаційна архітектура | [Інформаційна архітектура диплом](https://www.figma.com/board/qrrA6VTNZFiJstg1CsaOTo/%D0%86%D0%BD%D1%84%D0%BE%D1%80%D0%BC%D0%B0%D1%86%D1%96%D0%B9%D0%BD%D0%B0-%D0%B0%D1%80%D1%85%D1%96%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%B0-%D0%B4%D0%B8%D0%BF%D0%BB%D0%BE%D0%BC?node-id=1-2&t=Z5SB99JXWyALUifl-0) — FigJam зі схемою сторінок і переходів; посилання відкривається, елемент діаграми вибраний. Також лише перегляд і коментування. |
+
+## Інвентар, підтверджений у Chrome
+
+У Design-файлі на `Page 1` у дереві шарів видно такі групи сценаріїв: `All Films`, `Films`, `movie filter for phone`, `show results phone`, `Search`, `Lists`, `Featured lists`, `Popular lists`, `Popular reviewers`, `review page`, `Ranked list`, `Create your list`, `Create your list 2`, `Crew lists`, `Crew lists ''more tags''`, а також стани пошуку `Search Results "all"`, `journal articles`, `no matches`, `lists`, `tags`, `cast/ members`, `reviews`, `films` і `search lists by tags`. Це достатньо, щоб зіставити наступні browser/UI зрізи з конкретними сценаріями.
+
+Обмеження, які залишаються зафіксованими: загальний canvas відкривається на дуже малому масштабі, тому без конкретного `Copy link to selection` не можна достовірно зняти desktop/mobile розміри, кольори, типографіку, spacing або assets. Не переносимо ці параметри припущеннями.
 
 Великий дизайн-файл на загальному масштабі 2% і FigJam-дошки не дають надійно зчитати точні розміри, кольори та дрібний текст із загального огляду. Для кожного екрана, який беремо в роботу, потрібне посилання **Copy link to selection** на конкретний desktop-фрейм і, якщо існує, відповідний mobile-фрейм. Корисно також позначити потрібні стани та бажаний перший сценарій. Підключений Figma-плагін дасть структурні властивості, знімок фрейму й assets; доступу лише на перегляд достатньо для реалізації.
 
