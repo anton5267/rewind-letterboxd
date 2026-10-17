@@ -94,13 +94,14 @@ $env:E2E_BASE_URL = 'http://127.0.0.1:3000'
 npm run test:e2e
 ```
 
-The current verified slice is tracked in [PROGRESS.md](PROGRESS.md), while the API and database map is in [PROJECT_MAP.md](PROJECT_MAP.md).
+The current verified slice is tracked in [PROGRESS.md](PROGRESS.md), while the API and database map is in [PROJECT_MAP.md](PROJECT_MAP.md). The current migration-backed ER diagram is in [ER_DIAGRAM.md](ER_DIAGRAM.md); run `scripts/verify-er-schema.ps1` against Compose to check it.
 
 ## Project references
 
 - Product plan: [PLAN.md](PLAN.md)
 - Requirements trace: [REQUIREMENTS_TRACE.md](REQUIREMENTS_TRACE.md)
 - Local setup: [RUN_LOCAL.md](RUN_LOCAL.md)
+- Database ER diagram: [ER_DIAGRAM.md](ER_DIAGRAM.md)
 - Figma design file: <https://www.figma.com/design/orb73jiLJnIsZNCRtJsWgS/>
 - Project FigJam: <https://www.figma.com/board/gPITmVEnT5L61gN7JiwIiX/>
 - Information architecture FigJam: <https://www.figma.com/board/qrrA6VTNZFiJstg1CsaOTo/>
