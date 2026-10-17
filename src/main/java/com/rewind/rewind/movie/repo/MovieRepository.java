@@ -7,8 +7,19 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecificationExecutor<Movie> {
+
+    @Query("""
+        select distinct candidate from Movie candidate join candidate.genres candidateGenre
+        where candidate.id <> :movieId and candidateGenre in (
+            select sourceGenre from Movie source join source.genres sourceGenre where source.id = :movieId
+        )
+        order by candidate.rating desc nulls last, candidate.releaseDate desc nulls last
+        """)
+    Page<Movie> findGenreSimilar(@Param("movieId") Long movieId, Pageable pageable);
 
     @Modifying
     @Transactional

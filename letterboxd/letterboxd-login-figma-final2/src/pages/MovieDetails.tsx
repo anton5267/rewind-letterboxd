@@ -13,7 +13,7 @@ interface Movie {
   actors: { id: number; name: string; characterName: string | null }[];
   directors: { id: number; name: string }[];
   externalRatings: { source: string; rating: number }[];
-  similarMovies: { id: number; title: string; photoUrl: string | null }[];
+  similarMovies: { id: number; title: string; photoUrl: string | null; releaseDate: string | null; rating: number | null }[];
   myFlags: { watched: boolean; watchlist: boolean; favorites: boolean } | null;
 }
 interface Review { id: number; username: string; content: string; rating: number | null; userId: number }
@@ -158,7 +158,7 @@ export default function MovieDetails() {
           <p>{movie.genres.map(item => item.name).join(", ")}</p>
           <p>{movie.shortPlot}</p>
           <p>{t("directors")}: {movie.directors.length ? movie.directors.map(item => <Link key={item.id} to={path(`/people/director/${item.id}`)}>{item.name}</Link>).reduce<React.ReactNode[]>((all, node, index) => index ? [...all, ", ", node] : [node], []) : "—"}</p>
-          {movie.trailerUrl && <a href={movie.trailerUrl} target="_blank" rel="noopener noreferrer">{t("trailer")}</a>}
+          <section><h2>{t("trailer")}</h2>{movie.trailerUrl ? <a href={movie.trailerUrl} target="_blank" rel="noopener noreferrer">{t("watchTrailer")}</a> : <p>{t("trailerUnavailable")}</p>}</section>
           {movie.externalRatings.map(item => <p key={item.source}>{item.source}: {item.rating}</p>)}
         </div>
       </div>
@@ -178,7 +178,7 @@ export default function MovieDetails() {
         </div>
       </section>}
       <section><h2>{t("actors")}</h2><p>{movie.actors.length ? movie.actors.map(item => <Link key={item.id} to={path(`/people/actor/${item.id}`)}>{item.name}</Link>).reduce<React.ReactNode[]>((all, node, index) => index ? [...all, ", ", node] : [node], []) : "—"}</p></section>
-      <section><h2>{t("similarFilms")}</h2><ul>{movie.similarMovies.map(item => <li key={item.id}><Link to={path(`/films/${item.id}`)}>{item.title}</Link></li>)}</ul></section>
+      <section><h2>{t("similarFilms")}</h2>{movie.similarMovies.length === 0 ? <p>{t("noSimilarFilms")}</p> : <ul>{movie.similarMovies.map(item => <li key={item.id}>{item.photoUrl && <img src={item.photoUrl} alt="" width="48" />} <Link to={path(`/films/${item.id}`)}>{item.title}</Link>{item.releaseDate && ` (${item.releaseDate.slice(0, 4)})`}{item.rating !== null && ` · ★ ${item.rating}`}</li>)}</ul>}</section>
       <section><h2>{t("reviews")}</h2>
         {isAuth && myReview && <article>
           <h3>{t("yourReview")} · {myReview.rating ?? "—"}/5</h3>

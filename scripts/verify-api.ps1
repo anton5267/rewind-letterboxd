@@ -45,6 +45,9 @@ Write-Output 'public profile detail omits private fields'
 $filmResponse = Send 'GET' '/movies/1/details'
 Expect $filmResponse.StatusCode 200 'public film details'
 $film = $filmResponse.Content | ConvertFrom-Json
+if (($film.similarMovies | Where-Object { $_.id -eq $film.id }).Count -gt 0) { throw 'Movie was returned as similar to itself' }
+if ($film.similarMovies.Count -lt 1) { throw 'Genre similarity fallback returned no films' }
+Write-Output 'similar films fallback'
 $genresResponse = Send 'GET' '/genres'
 Expect $genresResponse.StatusCode 200 'public genres'
 if (($genresResponse.Content | ConvertFrom-Json).Count -lt 1) { throw 'Genre catalog is empty' }

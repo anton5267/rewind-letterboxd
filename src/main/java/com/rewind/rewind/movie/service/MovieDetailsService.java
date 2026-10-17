@@ -15,6 +15,7 @@ import com.rewind.rewind.user.repo.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
@@ -91,15 +92,15 @@ public class MovieDetailsService {
                 .toList();
 
         // Similar movies
-        var similar = similarMovies.findById_MovieId(movieId).stream()
+        var linkedSimilar = similarMovies.findById_MovieId(movieId).stream()
                 .map(sm -> sm.getSimilarMovie())
-                .map(x -> new MovieCardResponse(
-                        x.getId(),
-                        x.getTitle(),
-                        x.getReleaseDate(),
-                        x.getRating(),
-                        x.getPhotoUrl()
-                ))
+                .toList();
+        var similarSource = linkedSimilar.isEmpty()
+                ? movies.findGenreSimilar(movieId, PageRequest.of(0, 6)).getContent()
+                : linkedSimilar;
+        var similar = similarSource.stream()
+                .limit(6)
+                .map(x -> new MovieCardResponse(x.getId(), x.getTitle(), x.getReleaseDate(), x.getRating(), x.getPhotoUrl()))
                 .toList();
 
         // My flags (не валимо весь endpoint, якщо у юзера нема системних списків)
