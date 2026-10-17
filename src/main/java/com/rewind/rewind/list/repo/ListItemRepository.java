@@ -22,4 +22,5 @@ public interface ListItemRepository extends JpaRepository<ListItem, Long> {
 
     // ✅ для reorder
     List<ListItem> findAllByListId(Long listId);
+    long countByListId(Long listId);
 }

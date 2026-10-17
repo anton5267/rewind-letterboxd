@@ -39,6 +39,9 @@ $userId = ($registered.Content | ConvertFrom-Json).id
 $publicUser = (Send 'GET' "/users/$userId").Content | ConvertFrom-Json
 if ($null -ne $publicUser.email) { throw 'Public user endpoint exposed email' }
 Write-Output 'public profile omits email'
+$publicProfile = (Send 'GET' "/users/$userId/profile").Content | ConvertFrom-Json
+if ($null -ne $publicProfile.email -or $publicProfile.username -ne "verify$suffix") { throw 'Public profile exposed private data or had incorrect identity' }
+Write-Output 'public profile detail omits private fields'
 $filmResponse = Send 'GET' '/movies/1/details'
 Expect $filmResponse.StatusCode 200 'public film details'
 $film = $filmResponse.Content | ConvertFrom-Json

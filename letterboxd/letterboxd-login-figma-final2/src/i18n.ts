@@ -56,6 +56,7 @@ const messages: Record<Language, Record<string, string>> = {
     loadCommentsError: "Не вдалося завантажити коментарі.", createCommentError: "Не вдалося додати коментар.", updateCommentError: "Не вдалося оновити коментар.", deleteCommentError: "Не вдалося видалити коментар.",
     listBy: "Список від", emptyPublicList: "У цьому списку поки немає фільмів.", loadPublicListError: "Не вдалося завантажити публічний список.",
     description: "Опис", publicList: "Публічний список", listName: "Назва списку", updateListError: "Не вдалося оновити список.", reorderListError: "Не вдалося змінити порядок фільмів.", moveUp: "Перемістити вище", moveDown: "Перемістити нижче",
+    profileStats: "Статистика", publicLists: "Публічні списки", ratings: "Оцінки", loadPublicProfileError: "Не вдалося завантажити профіль користувача.",
     poster: "Постер", minutes: "хв", rateAs: "Оцінити на",
   },
   en: {
@@ -111,6 +112,7 @@ const messages: Record<Language, Record<string, string>> = {
     loadCommentsError: "Could not load comments.", createCommentError: "Could not add the comment.", updateCommentError: "Could not update the comment.", deleteCommentError: "Could not delete the comment.",
     listBy: "A list by", emptyPublicList: "This list has no films yet.", loadPublicListError: "Could not load the public list.",
     description: "Description", publicList: "Public list", listName: "List name", updateListError: "Could not update the list.", reorderListError: "Could not change the film order.", moveUp: "Move up", moveDown: "Move down",
+    profileStats: "Statistics", publicLists: "Public lists", ratings: "Ratings", loadPublicProfileError: "Could not load this user profile.",
     poster: "Poster", minutes: "min", rateAs: "Rate as",
   },
 };

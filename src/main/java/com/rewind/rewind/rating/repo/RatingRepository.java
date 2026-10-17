@@ -10,5 +10,6 @@ import java.util.Optional;
 public interface RatingRepository extends JpaRepository<Rating, Long> {
     Optional<Rating> findByUserIdAndMovieId(Long userId, Long movieId);
     Page<Rating> findAllByUserIdOrderByUpdatedAtDesc(Long userId, Pageable pageable);
+    long countByUserId(Long userId);
     void deleteByUserIdAndMovieId(Long userId, Long movieId);
 }

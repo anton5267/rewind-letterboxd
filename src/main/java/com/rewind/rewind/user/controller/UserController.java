@@ -4,6 +4,8 @@ import com.rewind.rewind.user.dto.UserResponse;
 import com.rewind.rewind.user.dto.PublicUserResponse;
 import com.rewind.rewind.user.entity.User;
 import com.rewind.rewind.user.repo.UserRepository;
+import com.rewind.rewind.profile.service.ProfileService;
+import com.rewind.rewind.user.dto.PublicProfileResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
@@ -13,9 +15,16 @@ import org.springframework.security.core.Authentication;
 public class UserController {
 
     private final UserRepository users;
+    private final ProfileService profiles;
 
-    public UserController(UserRepository users) {
+    public UserController(UserRepository users, ProfileService profiles) {
         this.users = users;
+        this.profiles = profiles;
+    }
+
+    @GetMapping("/{id}/profile")
+    public PublicProfileResponse publicProfile(@PathVariable Long id) {
+        return profiles.publicProfile(id);
     }
 
     @GetMapping("/{id}")

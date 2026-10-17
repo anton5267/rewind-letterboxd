@@ -9,6 +9,7 @@ interface Review {
   id: number;
   movieId: number;
   movieTitle: string;
+  userId: number;
   username: string;
   content: string;
   rating: number | null;
@@ -20,6 +21,7 @@ interface PublicList {
   name: string;
   description: string | null;
   ownerUsername: string;
+  ownerId: number;
 }
 
 interface Page<T> { content: T[] }
@@ -95,7 +97,7 @@ export default function Home() {
           {reviews.length === 0 ? <p>{t("noRecentReviews")}</p> : <div className={styles.stack}>{reviews.map(review => <article className={styles.review} key={review.id}>
             <p><Link to={path(`/films/${review.movieId}`)}>{review.movieTitle}</Link>{review.rating !== null && ` · ${review.rating}/5`}</p>
             <p className={styles.reviewText}>{review.content}</p>
-            <small>{review.username}</small>
+            <small><Link to={path(`/users/${review.userId}`)}>{review.username}</Link></small>
           </article>)}</div>}
         </div>
         <div className={styles.panel}>
@@ -103,7 +105,7 @@ export default function Home() {
           {lists.length === 0 ? <p>{t("noPublicLists")}</p> : <div className={styles.stack}>{lists.map(list => <article className={styles.list} key={list.id}>
             <h3><Link to={path(`/lists/public/${list.id}`)}>{list.name}</Link></h3>
             {list.description && <p>{list.description}</p>}
-            <small>{t("byUser")} {list.ownerUsername}</small>
+            <small>{t("byUser")} <Link to={path(`/users/${list.ownerId}`)}>{list.ownerUsername}</Link></small>
           </article>)}</div>}
         </div>
       </section>

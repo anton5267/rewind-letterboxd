@@ -11,6 +11,7 @@ import com.rewind.rewind.profile.dto.ProfileUpdateRequest;
 import com.rewind.rewind.rating.repo.RatingRepository;
 import com.rewind.rewind.review.repo.ReviewRepository;
 import com.rewind.rewind.user.repo.UserRepository;
+import com.rewind.rewind.user.dto.PublicProfileResponse;
 import org.springframework.data.domain.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -96,6 +97,34 @@ public class ProfileService {
                 recentRatings,
                 recentReviews
         );
+    }
+
+    @Transactional(readOnly = true)
+    public PublicProfileResponse publicProfile(Long userId) {
+        var user = users.findById(userId).orElseThrow();
+        var allLists = lists.findAllByUser(user);
+        var publicLists = allLists.stream()
+                .filter(list -> list.getListType() == ListType.CUSTOM && Boolean.TRUE.equals(list.getIsPublic()))
+                .map(list -> new PublicProfileResponse.PublicList(list.getId(), list.getName(), list.getDescription()))
+                .toList();
+        var reviewsPage = reviews.findAllByUserIdAndIsHidden(userId, false, PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "updatedAt")));
+        var publicReviews = reviewsPage.getContent().stream()
+                .map(review -> new PublicProfileResponse.PublicReview(review.getId(), review.getMovie().getId(),
+                        review.getMovie().getTitle(), review.getContent(),
+                        review.getRating() == null ? null : review.getRating().intValue(), review.getUpdatedAt()))
+                .toList();
+        long watched = collectionCount(allLists, ListType.WATCHED);
+        long watchlist = collectionCount(allLists, ListType.WATCHLIST);
+        long favorites = collectionCount(allLists, ListType.FAVORITES);
+        String displayName = user.getDisplayName() == null || user.getDisplayName().isBlank() ? user.getUsername() : user.getDisplayName();
+        return new PublicProfileResponse(user.getId(), user.getUsername(), displayName, user.getAvatarUrl(),
+                new PublicProfileResponse.Stats(ratings.countByUserId(userId), reviews.countByUserIdAndIsHiddenFalse(userId), watched, watchlist, favorites),
+                publicLists, publicReviews);
+    }
+
+    private long collectionCount(java.util.List<com.rewind.rewind.list.entity.MovieList> allLists, ListType type) {
+        return allLists.stream().filter(list -> list.getListType() == type).findFirst()
+                .map(list -> listItems.countByListId(list.getId())).orElse(0L);
     }
 
     public Page<MovieCardResponse> mySystemCollection(String email, ListType type, int page, int size) {
