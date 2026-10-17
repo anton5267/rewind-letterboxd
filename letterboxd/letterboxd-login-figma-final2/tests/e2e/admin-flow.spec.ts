@@ -69,13 +69,23 @@ test("admin can open the dashboard, manage a notification and manage a movie", a
     return response.status;
   }, { movieId: createdMovieData!.id, content: moderationContent, token: xsrf });
   expect(reviewResponse).toBe(200);
-
-  await page.reload();
+  const moderationComment = `Admin comment moderation ${Date.now()}`;
+  await page.goto(`/uk/films/${createdMovieData!.id}`);
+  await expect(page.getByText(moderationContent)).toBeVisible();
+  await page.getByRole("button", { name: "Показати коментарі" }).click();
+  await page.getByLabel("Ваш коментар").fill(moderationComment);
+  await page.getByRole("button", { name: "Надіслати" }).click();
+  await expect(page.getByText(moderationComment)).toBeVisible();
+  await page.goto("/uk/admin");
   const moderationSection = page.locator("section").filter({ has: page.getByRole("heading", { name: "Черга модерації" }) });
   const moderationItem = moderationSection.locator("li").filter({ hasText: moderationContent });
   await expect(moderationItem).toBeVisible();
   await moderationItem.getByRole("button", { name: "Приховати" }).click();
   await expect(moderationItem).toHaveCount(0);
+  const moderationCommentItem = moderationSection.locator("li").filter({ hasText: moderationComment });
+  await expect(moderationCommentItem).toBeVisible();
+  await moderationCommentItem.getByRole("button", { name: "Приховати" }).click();
+  await expect(moderationCommentItem).toHaveCount(0);
 
   page.once("dialog", dialog => dialog.accept());
   const refreshedMovieSection = page.locator("section").filter({ has: page.getByLabel("Назва фільму", { exact: true }) });
