@@ -26,6 +26,7 @@ interface PublicList {
 }
 
 interface Page<T> { content: T[] }
+interface Tag { id: number; name: string; slug: string }
 
 function MovieRow({ movies }: { movies: MovieCard[] }) {
   const { path, t } = useLocale();
@@ -47,6 +48,7 @@ export default function Home() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [lists, setLists] = useState<PublicList[]>([]);
   const [reviewers, setReviewers] = useState<PopularReviewer[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -61,13 +63,15 @@ export default function Home() {
       api.get<Page<Review>>("/reviews/recent", { params: { size: 4 } }),
       api.get<Page<PublicList>>("/lists/public", { params: { size: 4 } }),
       getPopularReviewers(),
-    ]).then(([popularResponse, newestResponse, reviewsResponse, listsResponse, reviewersResponse]) => {
+      api.get<Tag[]>("/tags/popular", { params: { size: 12 } }),
+    ]).then(([popularResponse, newestResponse, reviewsResponse, listsResponse, reviewersResponse, tagsResponse]) => {
       if (!current) return;
       setPopular((popularResponse.data as MoviePage).content);
       setNewest((newestResponse.data as MoviePage).content);
       setReviews(reviewsResponse.data.content);
       setLists(listsResponse.data.content);
       setReviewers(reviewersResponse.data);
+      setTags(tagsResponse.data);
     }).catch(() => { if (current) setError(true); })
       .finally(() => { if (current) setLoading(false); });
     return () => { current = false; };
@@ -118,6 +122,10 @@ export default function Home() {
             <h3><Link to={path(`/users/${reviewer.id}`)}>{reviewer.displayName || reviewer.username}</Link></h3>
             <small>{t("likes")}: {reviewer.likes}</small>
           </article>)}</div>}
+        </div>
+        <div className={styles.panel}>
+          <div className={styles.sectionHeading}><h2>{t("popularTags")}</h2><Link to={path("/lists/discover")}>{t("viewAll")}</Link></div>
+          {tags.length === 0 ? <p>{t("noTags")}</p> : <p style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>{tags.map(tag => <Link key={tag.id} to={path(`/lists/discover?tag=${encodeURIComponent(tag.slug)}`)}>#{tag.name}</Link>)}</p>}
         </div>
       </section>
     </>}

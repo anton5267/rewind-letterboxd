@@ -28,10 +28,11 @@ public class MovieListController {
     // All Lists (public lists of other users)
     @GetMapping("/public")
     public Page<PublicListCardResponse> publicLists(
+            @RequestParam(required = false) String tag,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        return service.publicLists(page, size);
+        return service.publicLists(tag, page, size);
     }
 
     @GetMapping("/public/{listId}")

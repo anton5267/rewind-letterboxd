@@ -2,11 +2,11 @@ import api from "./axios";
 
 export const getUserLists = () => api.get("/lists/my");
 
-export const createList = (name: string, description: string, isPublic: boolean) =>
-  api.post("/lists", { name, description: description || null, isPublic });
+export const createList = (name: string, description: string, isPublic: boolean, tags: string[]) =>
+  api.post("/lists", { name, description: description || null, isPublic, tags });
 
-export const updateList = (listId: number, name: string, description: string, isPublic: boolean) =>
-  api.patch(`/lists/${listId}`, { name, description: description || null, isPublic });
+export const updateList = (listId: number, name: string, description: string, isPublic: boolean, tags: string[]) =>
+  api.patch(`/lists/${listId}`, { name, description: description || null, isPublic, tags });
 
 export const getListItems = (listId: number) => api.get(`/lists/${listId}/items`);
 

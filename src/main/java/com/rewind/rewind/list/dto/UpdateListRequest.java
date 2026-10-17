@@ -2,6 +2,8 @@ package com.rewind.rewind.list.dto;
 
 import jakarta.validation.constraints.Size;
 
+import java.util.List;
+
 public class UpdateListRequest {
 
     @Size(min = 1, max = 120)
@@ -11,6 +13,8 @@ public class UpdateListRequest {
     private String description;
 
     private Boolean isPublic;
+    @Size(max = 10)
+    private List<@Size(min = 1, max = 50) String> tags;
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -20,4 +24,6 @@ public class UpdateListRequest {
 
     public Boolean getIsPublic() { return isPublic; }
     public void setIsPublic(Boolean isPublic) { this.isPublic = isPublic; }
+    public List<String> getTags() { return tags; }
+    public void setTags(List<String> tags) { this.tags = tags; }
 }

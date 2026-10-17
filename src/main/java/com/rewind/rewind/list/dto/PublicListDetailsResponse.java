@@ -10,5 +10,6 @@ public record PublicListDetailsResponse(
         Long ownerId,
         String ownerUsername,
         String ownerAvatarUrl,
+        List<String> tags,
         List<MovieCardResponse> movies
 ) {}

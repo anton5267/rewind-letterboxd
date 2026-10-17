@@ -51,7 +51,7 @@ class HomeFeedIntegrationTests {
         list.setDescription("Visible in public feed");
         list.setIsPublic(true);
         Long listId = lists.create(email, list).getId();
-        assertTrue(lists.publicLists(0, 6).getContent().stream()
+        assertTrue(lists.publicLists(null, 0, 6).getContent().stream()
                 .anyMatch(item -> item.getName().equals("Home list " + suffix)));
         AddListItemRequest listItem = new AddListItemRequest();
         listItem.setMovieId(movieId);

@@ -53,6 +53,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/reviews/*/comments").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/*/likes").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/genres").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/tags/popular").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/actors/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/directors/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/lists/public").permitAll()

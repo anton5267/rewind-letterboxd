@@ -11,6 +11,7 @@ import com.rewind.rewind.movie.repo.MovieRepository;
 import com.rewind.rewind.user.repo.UserRepository;
 import com.rewind.rewind.social.entity.ActivityType;
 import com.rewind.rewind.social.service.ActivityService;
+import com.rewind.rewind.tag.service.TagService;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,22 +29,26 @@ public class MovieListService {
     private final UserRepository users;
     private final MovieRepository movies;
     private final ActivityService activities;
+    private final TagService tags;
 
-    public MovieListService(MovieListRepository lists, ListItemRepository items, UserRepository users, MovieRepository movies, ActivityService activities) {
+    public MovieListService(MovieListRepository lists, ListItemRepository items, UserRepository users, MovieRepository movies, ActivityService activities, TagService tags) {
         this.lists = lists;
         this.items = items;
         this.users = users;
         this.movies = movies;
         this.activities = activities;
+        this.tags = tags;
     }
 
+    @Transactional(readOnly = true)
     public List<MovieListResponse> myLists(String email) {
         var user = users.findByEmail(email).orElseThrow();
         return lists.findAllByUser(user).stream()
-                .map(l -> new MovieListResponse(l.getId(), l.getName(), l.getDescription(), l.getListType(), l.getIsPublic()))
+                .map(l -> new MovieListResponse(l.getId(), l.getName(), l.getDescription(), l.getListType(), l.getIsPublic(), tagNames(l)))
                 .toList();
     }
 
+    @Transactional
     public MovieListResponse create(String email, CreateListRequest req) {
         var user = users.findByEmail(email).orElseThrow();
 
@@ -55,8 +60,10 @@ public class MovieListService {
         list.setIsPublic(req.getIsPublic() != null && req.getIsPublic());
 
         MovieList saved = lists.save(list);
+        tags.replaceTags(saved, req.getTags());
+        saved = lists.save(saved);
         if (Boolean.TRUE.equals(saved.getIsPublic())) activities.record(user.getId(), ActivityType.LIST, null, null, saved.getId(), null);
-        return new MovieListResponse(saved.getId(), saved.getName(), saved.getDescription(), saved.getListType(), saved.getIsPublic());
+        return new MovieListResponse(saved.getId(), saved.getName(), saved.getDescription(), saved.getListType(), saved.getIsPublic(), tagNames(saved));
     }
 
     // ===== Edit List (name/description/isPublic) =====
@@ -73,17 +80,21 @@ public class MovieListService {
         if (req.getName() != null) list.setName(req.getName());
         if (req.getDescription() != null) list.setDescription(req.getDescription());
         if (req.getIsPublic() != null) list.setIsPublic(req.getIsPublic());
+        if (req.getTags() != null) tags.replaceTags(list, req.getTags());
 
         MovieList saved = lists.save(list);
-        return new MovieListResponse(saved.getId(), saved.getName(), saved.getDescription(), saved.getListType(), saved.getIsPublic());
+        return new MovieListResponse(saved.getId(), saved.getName(), saved.getDescription(), saved.getListType(), saved.getIsPublic(), tagNames(saved));
     }
 
     // ===== All Lists (public lists catalog) =====
     @Transactional(readOnly = true)
-    public Page<PublicListCardResponse> publicLists(int page, int size) {
+    public Page<PublicListCardResponse> publicLists(String tag, int page, int size) {
         Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 50)),
                 Sort.by(Sort.Direction.DESC, "updatedAt"));
-        return lists.findAllByIsPublicTrueAndListType(ListType.CUSTOM, pageable)
+        Page<MovieList> source = tag == null || tag.isBlank()
+                ? lists.findAllByIsPublicTrueAndListType(ListType.CUSTOM, pageable)
+                : lists.findPublicByTag(ListType.CUSTOM, tag.trim().toLowerCase(), pageable);
+        return source
                 .map(l -> new PublicListCardResponse(
                         l.getId(),
                         l.getName(),
@@ -91,7 +102,8 @@ public class MovieListService {
                         l.getIsPublic(),
                         l.getUser().getId(),
                         l.getUser().getUsername(),
-                        l.getUser().getAvatarUrl()
+                        l.getUser().getAvatarUrl(),
+                        tagNames(l)
                 ));
     }
 
@@ -113,7 +125,7 @@ public class MovieListService {
                         item.getMovie().getReleaseDate(), item.getMovie().getRating(), item.getMovie().getPhotoUrl()))
                 .toList();
         return new PublicListDetailsResponse(list.getId(), list.getName(), list.getDescription(),
-                list.getUser().getId(), list.getUser().getUsername(), list.getUser().getAvatarUrl(), movies);
+                list.getUser().getId(), list.getUser().getUsername(), list.getUser().getAvatarUrl(), tagNames(list), movies);
     }
 
     public void addItem(String email, Long listId, AddListItemRequest req) {
@@ -220,5 +232,9 @@ public class MovieListService {
         int pos = 1;
         for (Long id : orderedIds) map.get(id).setPosition(pos++);
         items.saveAll(allItems);
+    }
+
+    private List<String> tagNames(MovieList list) {
+        return list.getTags().stream().map(com.rewind.rewind.tag.entity.Tag::getName).toList();
     }
 }

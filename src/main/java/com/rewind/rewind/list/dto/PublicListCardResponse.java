@@ -1,5 +1,7 @@
 package com.rewind.rewind.list.dto;
 
+import java.util.List;
+
 public class PublicListCardResponse {
 
     private Long id;
@@ -10,10 +12,11 @@ public class PublicListCardResponse {
     private Long ownerId;
     private String ownerUsername;
     private String ownerAvatarUrl;
+    private List<String> tags;
 
     public PublicListCardResponse(
             Long id, String name, String description, Boolean isPublic,
-            Long ownerId, String ownerUsername, String ownerAvatarUrl
+            Long ownerId, String ownerUsername, String ownerAvatarUrl, List<String> tags
     ) {
         this.id = id;
         this.name = name;
@@ -22,6 +25,7 @@ public class PublicListCardResponse {
         this.ownerId = ownerId;
         this.ownerUsername = ownerUsername;
         this.ownerAvatarUrl = ownerAvatarUrl;
+        this.tags = tags;
     }
 
     public Long getId() { return id; }
@@ -32,4 +36,5 @@ public class PublicListCardResponse {
     public Long getOwnerId() { return ownerId; }
     public String getOwnerUsername() { return ownerUsername; }
     public String getOwnerAvatarUrl() { return ownerAvatarUrl; }
+    public List<String> getTags() { return tags; }
 }

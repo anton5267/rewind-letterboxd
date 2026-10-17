@@ -4,7 +4,7 @@ import { createList, getListItems, getUserLists, removeMovieFromList, reorderLis
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
 
-interface List { id: number; name: string; description: string | null; listType: string; isPublic: boolean }
+interface List { id: number; name: string; description: string | null; listType: string; isPublic: boolean; tags: string[] }
 interface Item { id: number; position: number | null; movie: { id: number; title: string } }
 
 export default function UserLists() {
@@ -16,9 +16,11 @@ export default function UserLists() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isPublic, setIsPublic] = useState(false);
+  const [tags, setTags] = useState("");
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editPublic, setEditPublic] = useState(false);
+  const [editTags, setEditTags] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -35,12 +37,13 @@ export default function UserLists() {
     event.preventDefault();
     if (!name.trim()) return;
     try {
-      await createList(name.trim(), description.trim(), isPublic);
+      await createList(name.trim(), description.trim(), isPublic, tags.split(",").map(tag => tag.trim()).filter(Boolean));
       const { data } = await getUserLists();
       setLists(data);
       setName("");
       setDescription("");
       setIsPublic(false);
+      setTags("");
       setError("");
     } catch { setError(t("createListError")); }
   };
@@ -59,13 +62,14 @@ export default function UserLists() {
     setEditName(list.name);
     setEditDescription(list.description ?? "");
     setEditPublic(list.isPublic);
+    setEditTags(list.tags.join(", "));
   };
 
   const saveList = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!selectedList || selectedList.listType !== "CUSTOM" || !editName.trim()) return;
     try {
-      const { data } = await updateList(selectedList.id, editName.trim(), editDescription.trim(), editPublic);
+      const { data } = await updateList(selectedList.id, editName.trim(), editDescription.trim(), editPublic, editTags.split(",").map(tag => tag.trim()).filter(Boolean));
       setLists(lists.map(list => list.id === data.id ? data : list));
       setError("");
     } catch { setError(t("updateListError")); }
@@ -91,6 +95,7 @@ export default function UserLists() {
     <form onSubmit={create}>
       <label>{t("newList")} <input required value={name} maxLength={120} onChange={e => setName(e.target.value)} /></label>{" "}
       <label>{t("description")} <input value={description} maxLength={5000} onChange={e => setDescription(e.target.value)} /></label>{" "}
+      <label>{t("tags")} <input value={tags} maxLength={509} placeholder={t("tagsHint")} onChange={e => setTags(e.target.value)} /></label>{" "}
       <label><input type="checkbox" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} /> {t("publicList")}</label>{" "}
       <button type="submit">{t("create")}</button>
     </form>
@@ -102,6 +107,7 @@ export default function UserLists() {
       {selectedList.listType === "CUSTOM" && <form onSubmit={saveList} style={{ marginBottom: 16 }}>
         <label>{t("listName")} <input required maxLength={120} value={editName} onChange={event => setEditName(event.target.value)} /></label>{" "}
         <label>{t("description")} <input maxLength={5000} value={editDescription} onChange={event => setEditDescription(event.target.value)} /></label>{" "}
+        <label>{t("tags")} <input value={editTags} maxLength={509} placeholder={t("tagsHint")} onChange={event => setEditTags(event.target.value)} /></label>{" "}
         <label><input type="checkbox" checked={editPublic} onChange={event => setEditPublic(event.target.checked)} /> {t("publicList")}</label>{" "}
         <button type="submit">{t("save")}</button>
       </form>}

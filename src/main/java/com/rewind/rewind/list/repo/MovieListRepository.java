@@ -6,6 +6,8 @@ import com.rewind.rewind.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,4 +22,8 @@ public interface MovieListRepository extends JpaRepository<MovieList, Long> {
 
     // ✅ публічні кастомні списки інших (якщо треба "не мої")
     Page<MovieList> findAllByIsPublicTrueAndListTypeAndUserIdNot(ListType listType, Long userId, Pageable pageable);
+
+    @Query(value = "select distinct l from MovieList l join l.tags t where l.isPublic = true and l.listType = :type and t.slug = :slug",
+            countQuery = "select count(distinct l) from MovieList l join l.tags t where l.isPublic = true and l.listType = :type and t.slug = :slug")
+    Page<MovieList> findPublicByTag(@Param("type") ListType type, @Param("slug") String slug, Pageable pageable);
 }

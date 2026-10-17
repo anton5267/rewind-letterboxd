@@ -94,12 +94,17 @@ $newRefresh = ($webSession.Cookies.GetCookies([uri]"$BaseUrl/api/auth/refresh") 
 if (-not $newRefresh -or $newRefresh -eq $oldRefresh) { throw 'Refresh token did not rotate' }
 Write-Output 'refresh token rotated'
 
-$list = Send 'POST' '/lists' @{ name = 'Verification list'; isPublic = $true }
+$list = Send 'POST' '/lists' @{ name = 'Verification list'; isPublic = $true; tags = @('Verification', 'API') }
 Expect $list.StatusCode 200 'create list'
 $listId = ($list.Content | ConvertFrom-Json).id
 $publicLists = (Send 'GET' '/lists/public?size=20').Content | ConvertFrom-Json
 if ($publicLists.content.id -notcontains $listId) { throw 'Public list did not appear in public feed' }
 Write-Output 'public list feed'
+$taggedLists = (Send 'GET' '/lists/public?tag=verification&size=20').Content | ConvertFrom-Json
+if ($taggedLists.content.id -notcontains $listId) { throw 'Tagged public list did not appear in tag filter' }
+$popularTags = (Send 'GET' '/tags/popular?size=20').Content | ConvertFrom-Json
+if ($popularTags.slug -notcontains 'verification') { throw 'Popular tags did not include the public list tag' }
+Write-Output 'list tags'
 Expect (Send 'POST' "/lists/$listId/items" @{ movieId = 1 }).StatusCode 200 'add item'
 Expect (Send 'POST' "/lists/$listId/items" @{ movieId = 2 }).StatusCode 200 'add second item'
 $listItems = (Send 'GET' "/lists/$listId/items").Content | ConvertFrom-Json
@@ -113,6 +118,7 @@ Expect $updatedList.StatusCode 200 'edit list'
 if (($updatedList.Content | ConvertFrom-Json).name -ne 'Edited verification list') { throw 'List name did not update' }
 $publicList = (Send 'GET' "/lists/public/$listId").Content | ConvertFrom-Json
 if ($publicList.movies.id -notcontains 1) { throw 'Public list detail did not expose its film' }
+if ($publicList.tags -notcontains 'Verification') { throw 'Public list detail did not expose tags' }
 Write-Output 'public list detail'
 Expect (Send 'POST' '/movies/1/watchlist').StatusCode 200 'add watchlist'
 $watchlist = (Send 'GET' '/profile/me/watchlist?size=20').Content | ConvertFrom-Json
