@@ -60,6 +60,8 @@ V1 створює 14 таблиць: `users`, `movies`, `actors`, `directors`, `
 
 ## 3. Повна карта HTTP API
 
+Помилки API мають стабільний JSON-контракт `timestamp`, `status`, `error`, `message`, `path`, який формує `config/ApiExceptionHandler`.
+
 Запущений `/v3/api-docs` показує **50 операцій**. `P` = без токена, `U` = потрібен користувач, `A` = потрібен ADMIN. Позначення відображають фактичний `SecurityConfig`, а не коментарі в контролерах. Для сторінок відповідь — Spring `Page` з масивом `content`, метаданими сторінки й `totalElements`.
 
 | Доступ | Метод і шлях | Призначення |
