@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
 const publicRoutes = [
   "/uk/home",
@@ -98,5 +99,16 @@ test("public routes expose complete landmarks and image alternatives", async ({ 
     for (let index = 1; index < audit.headings.length; index++) {
       expect(audit.headings[index] - audit.headings[index - 1], `${route} heading jump`).toBeLessThanOrEqual(1);
     }
+  }
+});
+
+test("public routes pass the WCAG 2 A/AA axe audit", async ({ page }) => {
+  for (const route of publicRoutes) {
+    await page.goto(route);
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa"])
+      .analyze();
+
+    expect(results.violations, `${route} has axe violations`).toEqual([]);
   }
 });

@@ -146,7 +146,8 @@
 - [x] API production-like image тепер працює від non-root `appuser` (uid/gid 10001). Compose rebuild підтвердив `id=appuser`, health 200, security smoke і Redis cache smoke; browser набір після rebuild — **10 passed, 1 skipped**.
 - [x] Додано `compose.production.yaml` і `.env.production.example`: окремі MySQL/Redis volumes без published database ports, non-root/read-only API, secure cookies, Redis, SMTP і production error policy. `docker compose ... config --quiet` пройшов, production API та web images зібрані успішно; стек навмисно не запускався з прикладовими секретами.
 - [~] Залишаються глибші SQLi/XSS і права, production load та перевірка повного відновлення у тимчасову БД.
-- [~] Базову доступність, keyboard focus, mobile overflow, browser security headers, non-root runtime і admin/social browser flows перевірено; залишаються повний axe аудит, SQLi/XSS, права, production load та VPS/HTTPS.
+- [x] Додано `@axe-core/playwright` і повний WCAG 2 A/AA аудит для 7 публічних маршрутів; axe повернув 0 violations. Повний Playwright набір після цього має **11 passed, 1 skipped**; admin сценарій окремо лишається перевіряти fixture-скриптом.
+- [~] Базову доступність, keyboard focus, mobile overflow, browser security headers, non-root runtime і admin/social browser flows перевірено; залишаються глибші SQLi/XSS, права, production load та VPS/HTTPS.
 - [~] Production-like конфігурація і приватні DB/Redis volumes підготовлені. Залишаються Linux VPS, реальний домен/HTTPS, production secrets, monitoring/backup schedule і публічний запуск.
 
 ## 10. Захист і презентація — не почато
@@ -156,7 +157,7 @@
 
 ## Негайний наступний крок
 
-1. Додати повний axe аудит і production load/security checks.
+1. Розширити production load/security checks і перевірити сценарій відновлення у тимчасову БД.
 2. Розширити backend security/load checks та зберегти сценарій відновлення у тимчасову БД.
 3. Реалізувати контрольований TMDB update/import із зовнішніми ID та перевіркою якості каталогу.
 4. Після Editor-доступу зафіксувати точні Figma-фрейми, tokens і assets; до цього не підміняти макети припущеннями.
