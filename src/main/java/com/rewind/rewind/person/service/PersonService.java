@@ -46,13 +46,12 @@ public class PersonService {
     private PersonDetailsResponse.Film film(com.rewind.rewind.movie.entity.Movie movie, String characterName) {
         return new PersonDetailsResponse.Film(movie.getId(), movie.getTitle(), movie.getReleaseDate(), movie.getRating(), movie.getPhotoUrl(), characterName);
     }
-    @SuppressWarnings("null")
     private java.util.List<PersonDetailsResponse.Film> sorted(java.util.List<PersonDetailsResponse.Film> films, String sort) {
         Comparator<PersonDetailsResponse.Film> comparator = switch (sort == null ? "newest" : sort) {
-            case "oldest" -> Comparator.comparing(PersonDetailsResponse.Film::releaseDate, Comparator.nullsLast(Comparator.naturalOrder()));
-            case "title" -> Comparator.comparing(PersonDetailsResponse.Film::title, String.CASE_INSENSITIVE_ORDER);
-            case "rating" -> Comparator.comparing(PersonDetailsResponse.Film::rating, Comparator.nullsLast(Comparator.reverseOrder()));
-            default -> Comparator.comparing(PersonDetailsResponse.Film::releaseDate, Comparator.nullsLast(Comparator.reverseOrder()));
+            case "oldest" -> Comparator.comparing((PersonDetailsResponse.Film film) -> film.releaseDate(), Comparator.nullsLast(Comparator.naturalOrder()));
+            case "title" -> Comparator.comparing((PersonDetailsResponse.Film film) -> film.title(), String.CASE_INSENSITIVE_ORDER);
+            case "rating" -> Comparator.comparing((PersonDetailsResponse.Film film) -> film.rating(), Comparator.nullsLast(Comparator.reverseOrder()));
+            default -> Comparator.comparing((PersonDetailsResponse.Film film) -> film.releaseDate(), Comparator.nullsLast(Comparator.reverseOrder()));
         };
         return films.stream().sorted(comparator).toList();
     }

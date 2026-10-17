@@ -67,7 +67,6 @@ public class ActivityService {
         return toResponses(activities.findAllByUserIdInOrderByCreatedAtDesc(followedIds, pageable));
     }
 
-    @SuppressWarnings("null")
     private Page<ActivityResponse> toResponses(Page<UserActivity> page) {
         Collection<Long> userIds = page.getContent().stream()
                 .flatMap(activity -> java.util.stream.Stream.of(activity.getUserId(), activity.getRelatedUserId()))
@@ -75,10 +74,10 @@ public class ActivityService {
         Map<Long, User> usersById = new HashMap<>();
         users.findAllById(userIds).forEach(user -> usersById.put(user.getId(), user));
         Map<Long, Movie> moviesById = new HashMap<>();
-        movies.findAllById(page.getContent().stream().map(UserActivity::getMovieId).filter(java.util.Objects::nonNull).toList())
+        movies.findAllById(page.getContent().stream().map(activity -> activity.getMovieId()).filter(java.util.Objects::nonNull).toList())
                 .forEach(movie -> moviesById.put(movie.getId(), movie));
         Map<Long, com.rewind.rewind.list.entity.MovieList> listsById = new HashMap<>();
-        lists.findAllById(page.getContent().stream().map(UserActivity::getListId).filter(java.util.Objects::nonNull).toList())
+        lists.findAllById(page.getContent().stream().map(activity -> activity.getListId()).filter(java.util.Objects::nonNull).toList())
                 .forEach(list -> listsById.put(list.getId(), list));
         List<ActivityResponse> content = page.getContent().stream().map(activity -> {
             User actor = usersById.get(activity.getUserId());

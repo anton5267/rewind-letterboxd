@@ -64,7 +64,6 @@ public class JournalArticleService {
     }
 
     @Transactional(readOnly = true)
-    @SuppressWarnings("null")
     public List<JournalArchiveEntry> publicArchive(String language) {
         String lang = language.equals("en") ? "en" : "uk";
         List<JournalArticle> published = articles.findAllByLanguageAndIsPublishedTrueOrderByPublishedAtDesc(lang);
@@ -73,7 +72,7 @@ public class JournalArticleService {
         for (JournalArticle article : published) {
             if (article.getPublishedAt() != null) {
                 YearMonth month = YearMonth.from(article.getPublishedAt().atZone(java.time.ZoneOffset.UTC));
-                grouped.merge(month, 1L, Long::sum);
+                grouped.merge(month, 1L, (left, right) -> left + right);
             }
         }
         return grouped.entrySet().stream().map(entry -> new JournalArchiveEntry(entry.getKey().getYear(), entry.getKey().getMonthValue(), entry.getValue())).toList();

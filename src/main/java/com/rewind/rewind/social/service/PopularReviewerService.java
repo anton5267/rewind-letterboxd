@@ -23,11 +23,10 @@ public class PopularReviewerService {
     }
 
     @Transactional(readOnly = true)
-    @SuppressWarnings("null")
     public List<PopularReviewerResponse> popular(int size) {
         var rows = likes.findPopularReviewers(PageRequest.of(0, Math.max(1, Math.min(size, 20))));
         Map<Long, User> byId = new HashMap<>();
-        users.findAllById(rows.stream().map(ReviewLikeRepository.PopularReviewerRow::getUserId).toList())
+        users.findAllById(rows.stream().map(row -> row.getUserId()).toList())
                 .forEach(user -> byId.put(user.getId(), user));
         return rows.stream().map(row -> {
             User user = byId.get(row.getUserId());

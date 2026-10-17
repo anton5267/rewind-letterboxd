@@ -27,16 +27,15 @@ public class AdminModerationQueueService {
     }
 
     @Transactional(readOnly = true)
-    @SuppressWarnings("null")
     public Page<AdminModerationQueueItem> list(int page, int size) {
         int safePage = Math.max(0, page);
         int safeSize = Math.max(1, Math.min(size, 50));
         int fetchSize = Math.min(50, (safePage + 1) * safeSize);
         Pageable fetch = PageRequest.of(0, fetchSize);
         List<AdminModerationQueueItem> items = new ArrayList<>();
-        reviews.findAllByModeratedAtIsNullOrderByCreatedAtAsc(fetch).map(this::reviewItem).forEach(items::add);
-        comments.findAllByModeratedAtIsNullOrderByCreatedAtAsc(fetch).map(this::commentItem).forEach(items::add);
-        items.sort(Comparator.comparing(AdminModerationQueueItem::createdAt));
+        reviews.findAllByModeratedAtIsNullOrderByCreatedAtAsc(fetch).map(review -> reviewItem(review)).forEach(items::add);
+        comments.findAllByModeratedAtIsNullOrderByCreatedAtAsc(fetch).map(comment -> commentItem(comment)).forEach(items::add);
+        items.sort(Comparator.comparing((AdminModerationQueueItem item) -> item.createdAt()));
         int from = Math.min(safePage * safeSize, items.size());
         int to = Math.min(from + safeSize, items.size());
         return new PageImpl<>(items.subList(from, to), PageRequest.of(safePage, safeSize),

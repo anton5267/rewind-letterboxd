@@ -23,11 +23,10 @@ public class TagService {
     public TagService(TagRepository tags) { this.tags = tags; }
 
     @Transactional
-    @SuppressWarnings("null")
     public void replaceTags(MovieList list, List<String> values) {
         Map<String, String> normalized = normalize(values);
         Map<String, Tag> existing = tags.findAllBySlugIn(normalized.keySet()).stream()
-                .collect(Collectors.toMap(Tag::getSlug, tag -> tag));
+                .collect(Collectors.toMap(tag -> tag.getSlug(), tag -> tag));
         Set<Tag> resolved = normalized.entrySet().stream().map(entry -> existing.computeIfAbsent(entry.getKey(), slug -> {
             Tag tag = new Tag();
             tag.setName(entry.getValue());
@@ -44,9 +43,8 @@ public class TagService {
                 .stream().map(this::response).toList();
     }
 
-    @SuppressWarnings("null")
     public List<TagResponse> responses(java.util.Collection<Tag> source) {
-        return source.stream().map(this::response).toList();
+        return source.stream().map(tag -> response(tag)).toList();
     }
 
     private TagResponse response(Tag tag) { return new TagResponse(tag.getId(), tag.getName(), tag.getSlug()); }
