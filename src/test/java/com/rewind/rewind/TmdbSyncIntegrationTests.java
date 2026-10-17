@@ -11,6 +11,8 @@ import com.rewind.rewind.tmdb.TmdbClient;
 import com.rewind.rewind.tmdb.TmdbBatchSyncRequest;
 import com.rewind.rewind.tmdb.TmdbBatchSyncResponse;
 import com.rewind.rewind.tmdb.TmdbBatchSyncService;
+import com.rewind.rewind.tmdb.TmdbImportRequest;
+import com.rewind.rewind.tmdb.TmdbImportService;
 import com.rewind.rewind.tmdb.TmdbSyncRequest;
 import com.rewind.rewind.tmdb.TmdbSyncResponse;
 import com.rewind.rewind.tmdb.TmdbSyncService;
@@ -31,6 +33,7 @@ import static org.mockito.Mockito.when;
 class TmdbSyncIntegrationTests {
     @Autowired TmdbSyncService sync;
     @Autowired TmdbBatchSyncService batchSync;
+    @Autowired TmdbImportService importService;
     @Autowired MovieRepository movies;
     @Autowired MovieActorRepository movieActors;
     @Autowired MovieDirectorRepository movieDirectors;
@@ -120,5 +123,37 @@ class TmdbSyncIntegrationTests {
         assertEquals("FAILED", result.items().get(1).status());
         assertEquals(500L, movies.findById(firstId).orElseThrow().getTmdbId());
         assertNull(movies.findById(secondId).orElseThrow().getTmdbId());
+    }
+
+    @Test
+    @Transactional
+    void importCreatesNewMoviesAndRollsBackFailedItemsIndependently() {
+        when(tmdb.fetchMovie(700L)).thenReturn(new TmdbClient.MovieData(
+                700L, "tt0700700", "Imported title", 98, LocalDate.of(2023, 7, 8),
+                "Imported overview", null, null, null, new BigDecimal("7.1"), 700,
+                List.of(), List.of(), List.of(), List.of()));
+        when(tmdb.fetchMovie(701L)).thenThrow(new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.NOT_FOUND, "TMDB movie not found"));
+
+        TmdbBatchSyncResponse result = importService.importMovies(
+                new TmdbImportRequest(List.of(700L, 701L), false));
+
+        assertEquals(2, result.requested());
+        assertEquals(1, result.succeeded());
+        assertEquals(1, result.failed());
+        assertEquals("IMPORTED", result.items().get(0).status());
+        assertEquals("FAILED", result.items().get(1).status());
+        assertEquals(700L, movies.findByTmdbId(700L).orElseThrow().getTmdbId());
+        assertEquals("Imported title", movies.findByTmdbId(700L).orElseThrow().getTitle());
+        assertTrue(movies.findByTmdbId(701L).isEmpty());
+    }
+
+    @Test
+    void importRejectsDuplicateTmdbIds() {
+        org.springframework.web.server.ResponseStatusException error = assertThrows(
+                org.springframework.web.server.ResponseStatusException.class,
+                () -> importService.importMovies(new TmdbImportRequest(List.of(700L, 700L), false)));
+
+        assertEquals(org.springframework.http.HttpStatus.BAD_REQUEST, error.getStatusCode());
     }
 }

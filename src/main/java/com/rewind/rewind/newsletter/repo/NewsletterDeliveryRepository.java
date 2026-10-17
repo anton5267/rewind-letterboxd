@@ -2,7 +2,6 @@ package com.rewind.rewind.newsletter.repo;
 
 import com.rewind.rewind.newsletter.entity.NewsletterDelivery;
 import com.rewind.rewind.newsletter.entity.NewsletterDeliveryStatus;
-import java.time.Instant;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

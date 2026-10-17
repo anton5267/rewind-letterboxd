@@ -59,6 +59,17 @@ Content-Type: application/json
 
 The endpoint requires the normal admin cookie/CSRF contract. It never creates unverified similar movies; only already imported local movies with matching `tmdb_id` are linked.
 
+Для імпорту нових стрічок за TMDB ID використовуйте admin-only endpoint. Він створює відсутні локальні записи, повторно використовує вже імпортований фільм з таким самим `tmdb_id`, приймає максимум 20 ID і повертає окремий статус для кожного:
+
+```http
+POST /api/admin/movies/tmdb-import
+Content-Type: application/json
+
+{"tmdbIds":[550,603],"syncSimilar":true}
+```
+
+Якщо один ID не знайдено або TMDB тимчасово недоступний, інші елементи batch все одно обробляються. Зміни виконуються в окремих транзакціях, тому невдалий імпорт не залишає порожній локальний фільм.
+
 The Compose file uses public ECR mirrors for container images. Maven uses the configured public mirror in `.mvn/settings.xml` so a local Docker build does not depend on a single registry endpoint.
 
 ### Run services without Compose

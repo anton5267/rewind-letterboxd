@@ -12,10 +12,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminTmdbController {
     private final TmdbSyncService service;
     private final TmdbBatchSyncService batchSyncService;
+    private final TmdbImportService importService;
 
-    public AdminTmdbController(TmdbSyncService service, TmdbBatchSyncService batchSyncService) {
+    public AdminTmdbController(TmdbSyncService service, TmdbBatchSyncService batchSyncService,
+                               TmdbImportService importService) {
         this.service = service;
         this.batchSyncService = batchSyncService;
+        this.importService = importService;
     }
 
     @PostMapping("/{movieId}/tmdb-sync")
@@ -26,5 +29,10 @@ public class AdminTmdbController {
     @PostMapping("/tmdb-sync/batch")
     public TmdbBatchSyncResponse syncBatch(@Valid @RequestBody TmdbBatchSyncRequest request) {
         return batchSyncService.sync(request);
+    }
+
+    @PostMapping("/tmdb-import")
+    public TmdbBatchSyncResponse importMovies(@Valid @RequestBody TmdbImportRequest request) {
+        return importService.importMovies(request);
     }
 }

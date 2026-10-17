@@ -116,6 +116,19 @@ public class TmdbSyncService {
                 data.trailerUrl() != null && !data.trailerUrl().isBlank());
     }
 
+    @Transactional
+    @CacheEvict(cacheNames = "movieDetails", allEntries = true)
+    public TmdbSyncResponse importMovie(Long tmdbId, TmdbSyncRequest request) {
+        Movie existing = movies.findByTmdbId(tmdbId).orElse(null);
+        if (existing != null) {
+            return sync(existing.getId(), request);
+        }
+        Movie movie = new Movie();
+        movie.setTitle("TMDB " + tmdbId);
+        movies.saveAndFlush(movie);
+        return sync(movie.getId(), request);
+    }
+
     private Genre resolveGenre(TmdbClient.GenreData data) {
         Genre genre = genres.findByTmdbId(data.tmdbId())
                 .or(() -> genres.findByNameIgnoreCase(data.name()))
