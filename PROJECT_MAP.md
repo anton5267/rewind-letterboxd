@@ -81,7 +81,7 @@ V1 створює 14 таблиць: `users`, `movies`, `actors`, `directors`, `
 | U | `GET`, `PATCH /api/profile/me`; `PUT /api/profile/me/password` | Власний профіль, його редагування, зміна пароля |
 | U | `GET /api/profile/me/watched`, `/watchlist`, `/favorites` | Сторінки власних системних списків |
 | P | `GET /api/users/{id}`, `GET /api/users/me` | Перший відкритий усім; `/me` без токена повертає 401 у самому handler |
-| A | `POST /api/admin/movies`; `PUT`, `DELETE /api/admin/movies/{id}` | Створення, редагування, видалення фільму |
+| A | `GET`, `POST /api/admin/movies`; `PUT`, `DELETE /api/admin/movies/{id}` | Сторінковий список, створення, редагування, видалення фільму |
 | A | `GET /api/admin/users`, `GET`, `PATCH /api/admin/users/{id}` | Пошук, перегляд і редагування користувачів |
 | A | `POST /api/admin/users/{id}/activate`, `/deactivate` | Активація/деактивація |
 | A | `GET /api/admin/reviews`; `POST /api/admin/reviews/{id}/hide`, `/unhide`; `DELETE /api/admin/reviews/{id}` | Модерація відгуків; UI підключено до dashboard |
