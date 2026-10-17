@@ -80,6 +80,7 @@
 - [x] Повторний повний `mvnw -q test` після admin movie CRUD також пройшов: 25 тестів, 0 failures/errors.
 - [x] Фінальний повний `mvnw -q test` після admin communications, error contract та user search/blocking пройшов: 28 тестів, 0 failures/errors.
 - [x] Повний `mvnw -q test` після account deletion пройшов: 29 тестів, 0 failures/errors.
+- [x] Повний `mvnw -q test` після moderation queue пройшов: 30 тестів, 0 failures/errors; TypeScript і production build також пройшли.
 - [x] Повторний повний `mvnw -q test` після dev CORS-зміни пройшов: 29 тестів, 0 failures/errors; frontend `npm run build` також пройшов.
 
 ## 6. Спільнота — в роботі
