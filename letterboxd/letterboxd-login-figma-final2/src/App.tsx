@@ -14,6 +14,7 @@ import PublicLists from "./pages/PublicLists";
 import PublicProfile from "./pages/PublicProfile";
 import Person from "./pages/Person";
 import About from "./pages/About";
+import Notifications from "./pages/Notifications";
 import Layout from "./layout/Layout";
 
 function LegacyRedirect() {
@@ -36,6 +37,7 @@ function LocalizedApp() {
     <Route path="films" element={<Layout><Search /></Layout>} />
     <Route path="films/:id" element={<Layout><MovieDetails /></Layout>} />
     <Route path="profile" element={<Layout><Profile /></Layout>} />
+    <Route path="notifications" element={<Layout><Notifications /></Layout>} />
     <Route path="users/:id" element={<Layout><PublicProfile /></Layout>} />
     <Route path="people/:type/:id" element={<Layout><Person /></Layout>} />
     <Route path="lists" element={<Layout><UserLists /></Layout>} />

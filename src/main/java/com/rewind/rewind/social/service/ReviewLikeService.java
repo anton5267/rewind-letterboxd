@@ -6,6 +6,7 @@ import com.rewind.rewind.social.dto.ReviewLikeResponse;
 import com.rewind.rewind.social.entity.ReviewLike;
 import com.rewind.rewind.social.repo.ReviewLikeRepository;
 import com.rewind.rewind.user.repo.UserRepository;
+import com.rewind.rewind.notification.service.NotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,11 +15,13 @@ public class ReviewLikeService {
     private final ReviewLikeRepository likes;
     private final ReviewRepository reviews;
     private final UserRepository users;
+    private final NotificationService notifications;
 
-    public ReviewLikeService(ReviewLikeRepository likes, ReviewRepository reviews, UserRepository users) {
+    public ReviewLikeService(ReviewLikeRepository likes, ReviewRepository reviews, UserRepository users, NotificationService notifications) {
         this.likes = likes;
         this.reviews = reviews;
         this.users = users;
+        this.notifications = notifications;
     }
 
     @Transactional
@@ -30,6 +33,7 @@ public class ReviewLikeService {
         like.setReview(review);
         like.setUser(user);
         likes.save(like);
+        notifications.reviewLiked(review, user);
     }
 
     @Transactional

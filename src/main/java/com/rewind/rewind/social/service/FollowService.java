@@ -4,6 +4,7 @@ import com.rewind.rewind.social.dto.FollowStatusResponse;
 import com.rewind.rewind.social.entity.ActivityType;
 import com.rewind.rewind.social.entity.Follow;
 import com.rewind.rewind.social.repo.FollowRepository;
+import com.rewind.rewind.notification.service.NotificationService;
 import com.rewind.rewind.user.dto.PublicUserResponse;
 import com.rewind.rewind.user.entity.User;
 import com.rewind.rewind.user.repo.UserRepository;
@@ -18,11 +19,13 @@ public class FollowService {
     private final FollowRepository follows;
     private final UserRepository users;
     private final ActivityService activities;
+    private final NotificationService notifications;
 
-    public FollowService(FollowRepository follows, UserRepository users, ActivityService activities) {
+    public FollowService(FollowRepository follows, UserRepository users, ActivityService activities, NotificationService notifications) {
         this.follows = follows;
         this.users = users;
         this.activities = activities;
+        this.notifications = notifications;
     }
 
     @Transactional
@@ -40,6 +43,7 @@ public class FollowService {
         follow.setFollowing(target);
         follows.save(follow);
         activities.record(follower.getId(), ActivityType.FOLLOW, null, null, null, targetId);
+        notifications.follow(target, follower);
     }
 
     @Transactional

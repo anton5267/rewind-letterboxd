@@ -7,6 +7,8 @@ $networkEmail = "network-$suffix@example.invalid"
 $password = 'VerificationPass123!'
 $headers = @{}
 $webSession = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+$networkHeaders = @{}
+$networkSession = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 
 function Send([string]$Method, [string]$Path, $Body = $null) {
     if ($Method -notin @('GET', 'HEAD', 'OPTIONS')) {
@@ -14,6 +16,19 @@ function Send([string]$Method, [string]$Path, $Body = $null) {
         if ($csrfCookie) { $headers['X-XSRF-TOKEN'] = $csrfCookie.Value }
     }
     $args = @{ Method = $Method; Uri = "$BaseUrl/api$Path"; Headers = $headers; WebSession = $webSession; UseBasicParsing = $true }
+    if ($null -ne $Body) {
+        $args.ContentType = 'application/json'
+        $args.Body = ($Body | ConvertTo-Json -Compress)
+    }
+    return Invoke-WebRequest @args
+}
+
+function SendNetwork([string]$Method, [string]$Path, $Body = $null) {
+    if ($Method -notin @('GET', 'HEAD', 'OPTIONS')) {
+        $csrfCookie = $networkSession.Cookies.GetCookies([uri]"$BaseUrl/api$Path") | Where-Object Name -eq 'XSRF-TOKEN'
+        if ($csrfCookie) { $networkHeaders['X-XSRF-TOKEN'] = $csrfCookie.Value }
+    }
+    $args = @{ Method = $Method; Uri = "$BaseUrl/api$Path"; Headers = $networkHeaders; WebSession = $networkSession; UseBasicParsing = $true }
     if ($null -ne $Body) {
         $args.ContentType = 'application/json'
         $args.Body = ($Body | ConvertTo-Json -Compress)
@@ -87,6 +102,17 @@ if ($publicFollowers.content.id -notcontains $userId) { throw 'Followers were no
 $publicActivity = (Invoke-WebRequest -Method GET -Uri "$BaseUrl/api/users/$userId/activity?size=20" -UseBasicParsing).Content | ConvertFrom-Json
 if ($publicActivity.content.type -notcontains 'FOLLOW') { throw 'Public profile activity did not contain the follow event' }
 Write-Output 'public follow network'
+$null = SendNetwork 'GET' '/auth/csrf'
+Expect (SendNetwork 'POST' '/auth/login' @{ email = $networkEmail; password = $password }).StatusCode 200 'login network user'
+$networkNotifications = (SendNetwork 'GET' '/notifications?size=20').Content | ConvertFrom-Json
+if ($null -eq $networkNotifications.content) { throw 'Notifications response was malformed' }
+if (-not ($networkNotifications.content | Where-Object { "$($_.type)" -eq 'FOLLOW' })) { throw 'Follow notification was not delivered' }
+$networkUnread = (SendNetwork 'GET' '/notifications/unread-count').Content | ConvertFrom-Json
+if ([int64]$networkUnread.count -lt 1) { throw 'Unread notification count was not incremented' }
+Expect (SendNetwork 'POST' '/notifications/read-all').StatusCode 204 'mark notifications read'
+$networkUnreadAfter = (SendNetwork 'GET' '/notifications/unread-count').Content | ConvertFrom-Json
+if ([int64]$networkUnreadAfter.count -ne 0) { throw 'Read-all did not clear unread notifications' }
+Write-Output 'notifications read state'
 Expect (Send 'DELETE' "/users/$networkUserId/follow").StatusCode 204 'unfollow user'
 $oldRefresh = ($webSession.Cookies.GetCookies([uri]"$BaseUrl/api/auth/refresh") | Where-Object Name -eq 'rewind_refresh').Value
 Expect (Send 'POST' '/auth/refresh').StatusCode 204 'refresh session'

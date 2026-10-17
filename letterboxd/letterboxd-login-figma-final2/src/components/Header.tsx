@@ -40,6 +40,7 @@ export default function Header() {
           <>
             <Link to={path("/lists")}>{t("lists")}</Link>
             <Link to={path("/profile")}>{t("profile")}</Link>
+            <Link to={path("/notifications")}>{t("notifications")}</Link>
             <button type="button" onClick={() => { void handleLogout(); }}>{t("logout")}</button>
           </>
         ) : (

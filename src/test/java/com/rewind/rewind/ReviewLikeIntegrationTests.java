@@ -6,6 +6,7 @@ import com.rewind.rewind.review.dto.CreateReviewRequest;
 import com.rewind.rewind.review.service.ReviewService;
 import com.rewind.rewind.social.service.ReviewLikeService;
 import com.rewind.rewind.social.service.PopularReviewerService;
+import com.rewind.rewind.notification.service.NotificationService;
 import com.rewind.rewind.user.dto.UserRegisterRequest;
 import com.rewind.rewind.user.repo.UserRepository;
 import com.rewind.rewind.user.service.UserService;
@@ -25,6 +26,7 @@ class ReviewLikeIntegrationTests {
     @Autowired ReviewService reviews;
     @Autowired ReviewLikeService likes;
     @Autowired PopularReviewerService popularReviewers;
+    @Autowired NotificationService notifications;
     @Autowired UserRepository userRepository;
 
     @Test
@@ -44,6 +46,8 @@ class ReviewLikeIntegrationTests {
 
         likes.like(liker, reviewId);
         likes.like(liker, reviewId);
+        assertTrue(notifications.mine("author-" + suffix + "@example.invalid", 0, 20).getContent().stream()
+                .anyMatch(notification -> notification.type().name().equals("REVIEW_LIKED") && reviewId.equals(notification.reviewId())));
         assertEquals(1, likes.count(reviewId));
         assertTrue(likes.status(liker, reviewId).liked());
         assertTrue(popularReviewers.popular(10).stream()
