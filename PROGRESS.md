@@ -60,6 +60,7 @@
 - [x] У UI персоналій додано фільтр жанру, що передає `genreId` до публічного API; TypeScript і production build пройшли.
 - [x] Додано admin-only `POST /api/admin/movies/{movieId}/tmdb-sync`: явний `tmdbId`, V23 зовнішні ID для movies/genres/actors/directors, оновлення metadata/trailer, credits, TMDB external rating і similar links лише з локального каталогу. API вимкнено за замовчуванням без `TMDB_ENABLED=true` та `TMDB_API_KEY`.
 - [x] `TmdbSyncIntegrationTests` пройшов на MySQL; Docker API перебудований із V23, Flyway провалідовав 23 міграції, health повернув 200. Після зміни повний browser набір має **11 passed, 1 skipped**, включно з axe-аудитом.
+- [x] Після V23/non-root rebuild `scripts/verify-load.ps1 -Requests 200` повернув 200/2xx за 0.54 секунди, а `scripts/verify-security.ps1` знову підтвердив public 200, guest/protected 401 і login без CSRF 403. Це локальний smoke, не production load test.
 - [x] Міграція V7 виправила 14 подвійно закодованих імен у старій локальній БД; браузер показав `Zoe Saldaña`, `HEX(name)` і контрольний SQL підтвердили результат.
 - [~] Один фільм синхронізується контрольовано й перевірений `TmdbSyncIntegrationTests` на MySQL; залишаються пакетний імпорт каталогу, дедуплікація/якість всіх записів і ротація старого ключа провайдера.
 - [ ] Звірити desktop/mobile UI з Figma. IMDb показувати лише після дозволеного джерела й доступу.
