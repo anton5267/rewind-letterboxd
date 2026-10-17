@@ -15,6 +15,7 @@ export interface AdminNotification { id: number; recipientId: number; actorId: n
 export interface AdminNotificationWrite { recipientId: number; type: "FOLLOW" | "REVIEW_LIKED"; actorId?: number | null; relatedUserId?: number | null; reviewId?: number | null }
 export interface AdminNotificationFilters { type?: AdminNotificationWrite["type"]; read?: boolean; recipientId?: number }
 export interface AdminModerationQueueItem { type: "REVIEW" | "COMMENT"; id: number; parentId: number | null; movieId: number | null; subject: string; userId: number; username: string; content: string; createdAt: string }
+export interface AdminModerationFilters { type?: AdminModerationQueueItem["type"]; query?: string }
 export interface AdminSetting { key: string; value: string; updatedBy: number | null; updatedAt: string }
 export interface Page<T> { content: T[]; totalPages: number; totalElements: number }
 export const getAdminDashboard = () => api.get<AdminDashboard>("/admin/dashboard");
@@ -44,7 +45,8 @@ export const deleteAdminNotification = (id: number) => api.delete(`/admin/notifi
 export const setAdminNotificationRead = (id: number, read: boolean) => api.patch<AdminNotification>(`/admin/notifications/${id}/${read ? "read" : "unread"}`);
 export const markAdminNotificationsRead = (filters: Omit<AdminNotificationFilters, "read"> = {}) => api.patch<{ updated: number }>("/admin/notifications/read-all", null, { params: filters });
 export const deleteAdminNotifications = (filters: AdminNotificationFilters = {}) => api.delete<{ deleted: number }>("/admin/notifications", { params: filters });
-export const getAdminModerationQueue = () => api.get<Page<AdminModerationQueueItem>>("/admin/moderation/queue", { params: { size: 50 } });
+export const getAdminModerationQueue = (filters: AdminModerationFilters = {}) => api.get<Page<AdminModerationQueueItem>>("/admin/moderation/queue", { params: { size: 50, ...filters } });
 export const hideAdminModerationItem = (item: Pick<AdminModerationQueueItem, "type" | "id">, reason = "Moderated by administrator") => api.post(`/admin/moderation/${item.type}/${item.id}/hide`, { reason });
+export const bulkHideAdminModeration = (items: Array<Pick<AdminModerationQueueItem, "type" | "id">>, reason: string) => api.post<{ hidden: number }>("/admin/moderation/bulk-hide", { items, reason });
 export const getAdminSettings = () => api.get<AdminSetting[]>("/admin/settings");
 export const updateAdminSetting = (key: string, value: string) => api.put<AdminSetting>(`/admin/settings/${encodeURIComponent(key)}`, { value });
