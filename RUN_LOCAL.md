@@ -44,9 +44,9 @@ npm ci
 npm run dev -- --host 127.0.0.1
 ```
 
-Відкрийте `http://127.0.0.1:5173/uk/films`. Vite проксуює `/api` до `localhost:8080`. Якщо використовуєте іншу БД, встановіть `DB_URL`, `DB_USERNAME` і `DB_PASSWORD`. Не використовуйте тестовий JWT-секрет для публічного середовища.
+Відкрийте `http://127.0.0.1:5173/uk/films`. Vite проксуює `/api` до Compose API `127.0.0.1:8081`; для іншого API використовуйте `VITE_API_PROXY_TARGET`. Якщо використовуєте іншу БД, встановіть `DB_URL`, `DB_USERNAME` і `DB_PASSWORD`. Не використовуйте тестовий JWT-секрет для публічного середовища.
 
-Якщо окремі нові маршрути (наприклад `/api/journal/articles`) повертають 403, а старі сторінки працюють, на `8080` залишився старий Spring-процес. Зупиніть саме старий процес, повторно запустіть `spring-boot:run` з цього checkout і перезавантажте Vite; не перемикайте клієнт на іншу версію API.
+Якщо окремі нові маршрути (наприклад `/api/journal/articles`) повертають 403, перевірте, що Vite дивиться на актуальний API через `VITE_API_PROXY_TARGET`, а не на старий Spring-процес.
 
 ## Перевірка
 
@@ -59,7 +59,7 @@ npx tsc --noEmit
 npm run build
 ```
 
-Інтеграційні тести запускають Spring і Flyway на реальній MySQL та перевіряють видалення зі списків, оцінки, огляди, одноразовий токен відновлення й ротацію refresh token. Тестові зміни даних відкочуються. `scripts/verify-api.ps1 -BaseUrl http://localhost:8080` перевіряє реальний HTTP-сценарій, cookie, CSRF, повторне використання refresh token і logout. Скрипт створює тимчасовий обліковий запис: запускайте його на тестовій БД. Compose runtime перевірений локально: MySQL/Redis healthy, API health `200`, Web `200`; `docker compose config --quiet` також проходить.
+Інтеграційні тести запускають Spring і Flyway на реальній MySQL та перевіряють видалення зі списків, оцінки, огляди, одноразовий токен відновлення й ротацію refresh token. Тестові зміни відкочуються. `scripts/verify-api.ps1 -BaseUrl http://127.0.0.1:8081` перевіряє реальний HTTP-сценарій, cookie, CSRF, повторне використання refresh token і logout. Скрипт створює тимчасовий обліковий запис: запускайте його на тестовій БД. Compose runtime перевірений локально: MySQL/Redis healthy, API health `200`, Web `200`; `docker compose config --quiet` також проходить.
 
 Перевірка Redis cache hit/miss для гостьової деталки:
 
@@ -80,7 +80,7 @@ npm run test:e2e
 
 Тест створює тимчасовий акаунт і проходить реєстрацію, вхід, каталог, watchlist, оцінку, створення/редагування/видалення огляду, видалення оцінки та прибирання з watchlist.
 
-Окремий `scripts/verify-password-reset.ps1 -BaseUrl http://localhost:8080` пройшов із реальною SMTP-доставкою до Mailpit: однакова відповідь для відомого й невідомого email, одноразове посилання та вхід із новим паролем. Скрипти використовують тимчасові адреси `example.invalid`; запускайте їх на тестовій БД. Для локального перехоплення пошти використано [офіційний Docker-образ Mailpit](https://mailpit.axllent.org/docs/install/docker/).
+Окремий `scripts/verify-password-reset.ps1 -BaseUrl http://127.0.0.1:8081` пройшов із реальною SMTP-доставкою до Mailpit: однакова відповідь для відомого й невідомого email, одноразове посилання та вхід із новим паролем. Скрипти використовують тимчасові адреси `example.invalid`; запускайте їх на тестовій БД. Для локального перехоплення пошти використано [офіційний Docker-образ Mailpit](https://mailpit.axllent.org/docs/install/docker/).
 
 Для локального backup/restore використовуйте `scripts/backup-dev.ps1` і `scripts/restore-dev.ps1 -BackupPath .\backups\rewind-....sql -Confirm`. Backup робиться через `mysqldump --single-transaction`. Повний drill у Compose без зміни основної БД запускається так:
 

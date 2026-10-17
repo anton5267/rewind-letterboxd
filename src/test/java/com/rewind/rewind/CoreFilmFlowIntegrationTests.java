@@ -11,6 +11,7 @@ import com.rewind.rewind.list.service.system.SystemListItemService;
 import com.rewind.rewind.movie.entity.Movie;
 import com.rewind.rewind.movie.repo.MovieRepository;
 import com.rewind.rewind.rating.dto.UpsertRatingRequest;
+import com.rewind.rewind.rating.repo.RatingRepository;
 import com.rewind.rewind.rating.service.RatingService;
 import com.rewind.rewind.review.dto.CreateReviewRequest;
 import com.rewind.rewind.review.dto.ReviewResponse;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
@@ -45,6 +47,7 @@ class CoreFilmFlowIntegrationTests {
     @Autowired ListItemRepository items;
     @Autowired SystemListItemService systemLists;
     @Autowired RatingService ratings;
+    @Autowired RatingRepository ratingRepository;
     @Autowired ReviewService reviews;
     @Autowired ReviewRepository reviewRepository;
     @Autowired EntityManager entityManager;
@@ -181,6 +184,40 @@ class CoreFilmFlowIntegrationTests {
             assertEquals(1, conflicts);
             Long userId = userRepository.findByEmail(email).orElseThrow().getId();
             assertEquals(1, reviewRepository.countByUserIdAndMovieId(userId, movieId));
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void concurrentRatingUpsertsRemainOneAtomicRating() throws Exception {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String email = "rating-race-" + suffix + "@example.invalid";
+        UserRegisterRequest registration = new UserRegisterRequest();
+        registration.setUsername("rating_race_" + suffix);
+        registration.setEmail(email);
+        registration.setPassword("test-password-123");
+        users.register(registration);
+
+        Movie movie = new Movie();
+        movie.setTitle("Concurrent rating film " + suffix);
+        Long movieId = movies.saveAndFlush(movie).getId();
+        UpsertRatingRequest low = new UpsertRatingRequest();
+        low.setRating(2);
+        UpsertRatingRequest high = new UpsertRatingRequest();
+        high.setRating(5);
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            CompletableFuture<Void> first = CompletableFuture.runAsync(
+                    () -> ratings.upsert(email, movieId, low), executor);
+            CompletableFuture<Void> second = CompletableFuture.runAsync(
+                    () -> ratings.upsert(email, movieId, high), executor);
+            CompletableFuture.allOf(first, second).join();
+
+            Long userId = userRepository.findByEmail(email).orElseThrow().getId();
+            assertEquals(1, ratingRepository.countByUserIdAndMovieId(userId, movieId));
+            assertTrue(Set.of(2, 5).contains(ratings.getMyRating(email, movieId).orElseThrow()));
         } finally {
             executor.shutdownNow();
         }

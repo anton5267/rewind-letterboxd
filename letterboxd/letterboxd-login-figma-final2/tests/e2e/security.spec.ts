@@ -6,7 +6,11 @@ test("review text is rendered as text and search rejects no SQL input", async ({
   const password = "E2e-password-123!";
   const payload = `<img src=x onerror=alert(1)> review ${suffix}`;
   let dialogSeen = false;
-  page.on("dialog", async dialog => { dialogSeen = true; await dialog.dismiss(); });
+  page.on("dialog", async dialog => {
+    dialogSeen = true;
+    if (dialog.type() === "alert") await dialog.dismiss();
+    else await dialog.accept();
+  });
 
   await page.goto("/uk/register");
   await page.getByLabel("Нікнейм").fill(`security${suffix}`);
@@ -27,13 +31,18 @@ test("review text is rendered as text and search rejects no SQL input", async ({
   expect(dialogSeen).toBe(false);
   await expect(page.locator('img[src="x"]')).toHaveCount(0);
 
+  const ownReview = page.locator("article").filter({ hasText: payload });
   const commentPayload = `<img src=x onerror=alert(2)> comment ${suffix}`;
-  await page.getByRole("button", { name: "Показати коментарі" }).click();
-  await page.getByLabel("Ваш коментар").fill(commentPayload);
-  await page.getByRole("button", { name: "Надіслати" }).click();
-  await expect(page.getByText(commentPayload)).toBeVisible();
+  await ownReview.getByRole("button", { name: "Показати коментарі" }).click();
+  await ownReview.getByLabel("Ваш коментар").fill(commentPayload);
+  await ownReview.getByRole("button", { name: "Надіслати" }).click();
+  await expect(ownReview.getByText(commentPayload)).toBeVisible();
   expect(dialogSeen).toBe(false);
   await expect(page.locator('img[src="x"]')).toHaveCount(0);
+
+  await ownReview.getByRole("button", { name: "Видалити огляд" }).click();
+  await expect(ownReview).toHaveCount(0);
+  await page.getByRole("button", { name: "Видалити оцінку" }).click();
 
   const response = await page.goto(`/uk/films?q=${encodeURIComponent("' OR 1=1 --")}`);
   expect(response?.status()).toBe(200);

@@ -5,7 +5,7 @@
 ## Етапи
 
 - [~] **1. Основа й дизайн** — Git, CI, секрети й карта проєкту готові. Відкриті: ротація старого TMDB-ключа, Editor-доступ Figma і точна parity-перевірка.
-- [~] **2. Стабільний локальний продукт** — Compose, Flyway 27, API error contract, DELETE-виправлення, core browser flow і MySQL integration tests готові. Додано конкурентне створення огляду: один запис перемагає, другий отримує HTTP 409. Відкриті: повний контрактний аудит усіх endpoint'ів.
+- [~] **2. Стабільний локальний продукт** — Compose, Flyway 27, API error contract, DELETE-виправлення, core browser flow і MySQL integration tests готові. Додано конкурентне створення огляду: один запис перемагає, другий отримує HTTP 409; rating upsert використовує атомарний MySQL `ON DUPLICATE KEY UPDATE`. Відкриті: повний контрактний аудит усіх endpoint'ів.
 - [~] **3. Інтерфейс і акаунт** — UK/EN маршрути, cookie auth, reset, профіль і списки готові. Відкриті: повна локалізація даних, UX профілю й повний responsive-аудит.
 - [~] **4. Фільми й пошук** — home, каталог, фільтри, деталка, персоналії, рекомендації та admin TMDB import/sync/quality report готові. Відкриті: реальний контрольований batch після надання ключа, scheduler і Figma parity.
 - [~] **5. Особисті дії та списки** — watched/watchlist/favorites, ratings, reviews, comments і public lists підключені. Відкриті: повний browser UX-аудит профілю та списків.
@@ -18,12 +18,14 @@
 ## Останній перевірений зріз
 
 - `CoreFilmFlowIntegrationTests`: конкурентне створення одного review дає **1 успіх + 1 HTTP 409**, у БД залишається один запис.
+- `CoreFilmFlowIntegrationTests`: два одночасні rating upsert проходять без duplicate-key error і залишають один запис з останнім значенням.
 - Browser security: review/comment `<img onerror>` payload не створює DOM image або dialog; catalog/admin SQL-подібний пошук не дає 500.
 - Admin moderation: review і comment окремо приховуються з moderation queue.
+- Compose HTTP flow: `scripts/verify-api.ps1` за замовчуванням ходить на `127.0.0.1:8081` і проходить auth/catalog/lists/rating/review/comment/social/refresh сценарії.
 
 ## Наступна черга
 
-1. Додати contract smoke для решти public/protected endpoint'ів і конкурентного rating upsert.
+1. Додати contract smoke для решти public/protected endpoint'ів і конкурентного запису списків/соціальних дій.
 2. Закрити повну локалізацію й error/empty/loading стани незалежних від Figma екранів.
 3. Розширити production-like load/security matrix і перевірку bulk moderation прав.
 4. Після Editor-доступу зафіксувати точні Figma desktop/mobile фрейми, tokens, assets і screenshots.

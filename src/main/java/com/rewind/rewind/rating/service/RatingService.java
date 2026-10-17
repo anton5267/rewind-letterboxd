@@ -2,7 +2,6 @@ package com.rewind.rewind.rating.service;
 
 import com.rewind.rewind.movie.repo.MovieRepository;
 import com.rewind.rewind.rating.dto.UpsertRatingRequest;
-import com.rewind.rewind.rating.entity.Rating;
 import com.rewind.rewind.rating.repo.RatingRepository;
 import com.rewind.rewind.user.repo.UserRepository;
 import com.rewind.rewind.social.entity.ActivityType;
@@ -40,19 +39,9 @@ public class RatingService {
         var user = users.findByEmail(email).orElseThrow();
         var movie = movies.findById(movieId).orElseThrow(() -> new IllegalArgumentException("Movie not found"));
 
-        var existing = ratings.findByUserIdAndMovieId(user.getId(), movieId);
-
-        if (existing.isPresent()) {
-            Rating r = existing.get();
-            r.setRating(req.getRating().byteValue());
-            ratings.saveAndFlush(r);
-        } else {
-            Rating r = new Rating();
-            r.setUser(user);
-            r.setMovie(movie);
-            r.setRating(req.getRating().byteValue());
-            ratings.saveAndFlush(r);
-        }
+        // MySQL's unique key and atomic upsert make two simultaneous rating
+        // requests idempotent instead of racing through a read-then-insert.
+        ratings.upsertAtomic(user.getId(), movieId, req.getRating().byteValue());
 
         // ✅ перерахувати середнє і записати в movies.rating
         movies.recalcAverageRating(movieId);
