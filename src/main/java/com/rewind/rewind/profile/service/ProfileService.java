@@ -51,7 +51,8 @@ public class ProfileService {
     public ProfileResponse myProfile(String email) {
         var user = users.findByEmail(email).orElseThrow();
 
-        var profileLists = lists.findAllByUser(user).stream()
+        var allLists = lists.findAllByUser(user);
+        var profileLists = allLists.stream()
                 .map(l -> new ProfileResponse.ProfileListItem(
                         l.getId(), l.getName(), l.getListType(), l.getIsPublic()
                 ))
@@ -85,6 +86,12 @@ public class ProfileService {
         if (displayName == null || displayName.isBlank()) {
             displayName = user.getUsername();
         }
+        var stats = new ProfileResponse.ProfileStats(
+                ratings.countByUserId(user.getId()),
+                reviews.countByUserIdAndIsHiddenFalse(user.getId()),
+                collectionCount(allLists, ListType.WATCHED),
+                collectionCount(allLists, ListType.WATCHLIST),
+                collectionCount(allLists, ListType.FAVORITES));
 
         return new ProfileResponse(
                 user.getId(),
@@ -93,6 +100,7 @@ public class ProfileService {
                 user.getEmail(),
                 user.getRole().name(),
                 user.getAvatarUrl(),
+                stats,
                 profileLists,
                 recentRatings,
                 recentReviews

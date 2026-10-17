@@ -9,6 +9,7 @@ interface ProfileData {
   displayName: string;
   email: string;
   avatarUrl: string | null;
+  stats: { ratings: number; reviews: number; watched: number; watchlist: number; favorites: number };
   lists: { id: number; name: string }[];
   recentRatings: { movieId: number; movieTitle: string; rating: number }[];
   recentReviews: { reviewId: number; movieId: number; movieTitle: string; content: string }[];
@@ -73,6 +74,7 @@ export default function Profile() {
     {profile && <>
       {profile.avatarUrl && <img src={profile.avatarUrl} alt="" width="96" height="96" />}
       <p>@{profile.username} · {profile.email}</p>
+      <section><h2>{t("profileStats")}</h2><p>{t("watched")}: {profile.stats.watched} · {t("watchlist")}: {profile.stats.watchlist} · {t("favorite")}: {profile.stats.favorites} · {t("reviews")}: {profile.stats.reviews} · {t("ratings")}: {profile.stats.ratings}</p></section>
       <form onSubmit={saveName}>
         <label>{t("displayName")} <input value={displayName} minLength={2} maxLength={60} onChange={e => setDisplayName(e.target.value)} /></label>
         <label> {t("avatarUrl")} <input type="url" value={avatarUrl} maxLength={255} placeholder="https://…" onChange={e => setAvatarUrl(e.target.value)} /></label>

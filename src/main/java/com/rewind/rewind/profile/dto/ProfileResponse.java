@@ -13,6 +13,7 @@ public class ProfileResponse {
     private String email;
     private String role;
     private String avatarUrl;
+    private ProfileStats stats;
 
     private List<ProfileListItem> lists;
     private List<ProfileRatingItem> recentRatings;
@@ -25,6 +26,7 @@ public class ProfileResponse {
             String email,
             String role,
             String avatarUrl,
+            ProfileStats stats,
             List<ProfileListItem> lists,
             List<ProfileRatingItem> recentRatings,
             List<ProfileReviewItem> recentReviews
@@ -35,6 +37,7 @@ public class ProfileResponse {
         this.email = email;
         this.role = role;
         this.avatarUrl = avatarUrl;
+        this.stats = stats;
         this.lists = lists;
         this.recentRatings = recentRatings;
         this.recentReviews = recentReviews;
@@ -46,9 +49,26 @@ public class ProfileResponse {
     public String getEmail() { return email; }
     public String getRole() { return role; }
     public String getAvatarUrl() { return avatarUrl; }
+    public ProfileStats getStats() { return stats; }
     public List<ProfileListItem> getLists() { return lists; }
     public List<ProfileRatingItem> getRecentRatings() { return recentRatings; }
     public List<ProfileReviewItem> getRecentReviews() { return recentReviews; }
+
+    public static class ProfileStats {
+        private long ratings;
+        private long reviews;
+        private long watched;
+        private long watchlist;
+        private long favorites;
+        public ProfileStats(long ratings, long reviews, long watched, long watchlist, long favorites) {
+            this.ratings = ratings; this.reviews = reviews; this.watched = watched; this.watchlist = watchlist; this.favorites = favorites;
+        }
+        public long getRatings() { return ratings; }
+        public long getReviews() { return reviews; }
+        public long getWatched() { return watched; }
+        public long getWatchlist() { return watchlist; }
+        public long getFavorites() { return favorites; }
+    }
 
     public static class ProfileListItem {
         private Long id;

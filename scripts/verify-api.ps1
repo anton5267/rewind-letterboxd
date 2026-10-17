@@ -72,6 +72,9 @@ foreach ($name in @('rewind_access', 'rewind_refresh')) {
 }
 $null = Send 'GET' '/auth/csrf'
 Expect (Send 'GET' '/users/me').StatusCode 200 'cookie authentication'
+$myProfile = (Send 'GET' '/profile/me').Content | ConvertFrom-Json
+if ($null -eq $myProfile.stats -or $myProfile.stats.ratings -ne 0 -or $myProfile.stats.reviews -ne 0) { throw 'Profile statistics contract is missing or incorrect' }
+Write-Output 'profile statistics'
 $oldRefresh = ($webSession.Cookies.GetCookies([uri]"$BaseUrl/api/auth/refresh") | Where-Object Name -eq 'rewind_refresh').Value
 Expect (Send 'POST' '/auth/refresh').StatusCode 204 'refresh session'
 $newRefresh = ($webSession.Cookies.GetCookies([uri]"$BaseUrl/api/auth/refresh") | Where-Object Name -eq 'rewind_refresh').Value

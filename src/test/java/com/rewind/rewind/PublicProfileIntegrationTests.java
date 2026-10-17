@@ -69,5 +69,10 @@ class PublicProfileIntegrationTests {
         assertEquals(1, profile.lists().size());
         assertEquals("Public profile list", profile.lists().get(0).name());
         assertEquals("Visible profile review", profile.recentReviews().get(0).content());
+
+        var ownProfile = profiles.myProfile(email);
+        assertEquals(1, ownProfile.getStats().getWatched());
+        assertEquals(1, ownProfile.getStats().getRatings());
+        assertEquals(1, ownProfile.getStats().getReviews());
     }
 }
