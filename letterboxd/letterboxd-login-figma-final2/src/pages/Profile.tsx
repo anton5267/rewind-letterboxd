@@ -8,6 +8,7 @@ interface ProfileData {
   username: string;
   displayName: string;
   email: string;
+  avatarUrl: string | null;
   lists: { id: number; name: string }[];
   recentRatings: { movieId: number; movieTitle: string; rating: number }[];
   recentReviews: { reviewId: number; movieId: number; movieTitle: string; content: string }[];
@@ -19,6 +20,7 @@ export default function Profile() {
   const { path, t } = useLocale();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [displayName, setDisplayName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -29,6 +31,7 @@ export default function Profile() {
     getProfile().then(({ data }) => {
       setProfile(data);
       setDisplayName(data.displayName ?? "");
+      setAvatarUrl(data.avatarUrl ?? "");
     }).catch(() => setError(t("loadProfileError")));
   }, [isAuth]);
 
@@ -39,7 +42,8 @@ export default function Profile() {
     event.preventDefault();
     setError("");
     try {
-      const { data } = await updateProfile({ displayName });
+      if (avatarUrl && !/^https?:\/\//i.test(avatarUrl)) { setError(t("invalidAvatarUrl")); return; }
+      const { data } = await updateProfile({ displayName, avatarUrl });
       setProfile(data);
       setMessage(t("nameSaved"));
     } catch { setError(t("saveNameError")); }
@@ -67,9 +71,11 @@ export default function Profile() {
     {message && <p role="status">{message}</p>}
     {!profile && !error && <p>{t("loading")}</p>}
     {profile && <>
+      {profile.avatarUrl && <img src={profile.avatarUrl} alt="" width="96" height="96" />}
       <p>@{profile.username} · {profile.email}</p>
       <form onSubmit={saveName}>
         <label>{t("displayName")} <input value={displayName} minLength={2} maxLength={60} onChange={e => setDisplayName(e.target.value)} /></label>
+        <label> {t("avatarUrl")} <input type="url" value={avatarUrl} maxLength={255} placeholder="https://…" onChange={e => setAvatarUrl(e.target.value)} /></label>
         <button type="submit">{t("save")}</button>
       </form>
       <form onSubmit={savePassword} style={{ marginTop: 24 }}>
