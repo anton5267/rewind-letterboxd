@@ -82,6 +82,7 @@
 - [x] Повний `mvnw -q test` після account deletion пройшов: 29 тестів, 0 failures/errors.
 - [x] Повний `mvnw -q test` після moderation queue пройшов: 30 тестів, 0 failures/errors; TypeScript і production build також пройшли.
 - [x] Повний `mvnw -q test` після site settings/V21 пройшов: 31 тест, 0 failures/errors; TypeScript і production build також пройшли.
+- [x] Повторний повний `mvnw -q test` після journal category filter пройшов: 31 тест, 0 failures/errors.
 - [x] Повторний повний `mvnw -q test` після dev CORS-зміни пройшов: 29 тестів, 0 failures/errors; frontend `npm run build` також пройшов.
 
 ## 6. Спільнота — в роботі
