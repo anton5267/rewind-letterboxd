@@ -1,0 +1,12 @@
+package com.rewind.rewind.journal.repo;
+
+import com.rewind.rewind.journal.entity.JournalArticle;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.Optional;
+
+public interface JournalArticleRepository extends JpaRepository<JournalArticle, Long> {
+    Page<JournalArticle> findAllByLanguageAndIsPublishedTrueOrderByPublishedAtDesc(String language, Pageable pageable);
+    Optional<JournalArticle> findBySlugAndLanguageAndIsPublishedTrue(String slug, String language);
+    Page<JournalArticle> findAllByOrderByUpdatedAtDesc(Pageable pageable);
+}

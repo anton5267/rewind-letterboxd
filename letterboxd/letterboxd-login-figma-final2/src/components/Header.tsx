@@ -36,6 +36,7 @@ export default function Header() {
       <nav className={styles.nav}>
         <Link to={path("/home")}>{t("home")}</Link>
         <Link to={path("/films")}>{t("films")}</Link>
+        <Link to={path("/journal")}>{t("journal")}</Link>
         {isAuth ? (
           <>
             <Link to={path("/lists")}>{t("lists")}</Link>

@@ -17,6 +17,8 @@ import About from "./pages/About";
 import Notifications from "./pages/Notifications";
 import Messages from "./pages/Messages";
 import AdminDashboard from "./pages/AdminDashboard";
+import Journal from "./pages/Journal";
+import JournalArticle from "./pages/JournalArticle";
 import Layout from "./layout/Layout";
 
 function LegacyRedirect() {
@@ -42,6 +44,8 @@ function LocalizedApp() {
     <Route path="notifications" element={<Layout><Notifications /></Layout>} />
     <Route path="messages" element={<Layout><Messages /></Layout>} />
     <Route path="admin" element={<Layout><AdminDashboard /></Layout>} />
+    <Route path="journal" element={<Layout><Journal /></Layout>} />
+    <Route path="journal/:slug" element={<Layout><JournalArticle /></Layout>} />
     <Route path="users/:id" element={<Layout><PublicProfile /></Layout>} />
     <Route path="people/:type/:id" element={<Layout><Person /></Layout>} />
     <Route path="lists" element={<Layout><UserLists /></Layout>} />

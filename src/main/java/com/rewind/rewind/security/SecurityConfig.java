@@ -56,6 +56,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/tags/popular").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/actors/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/directors/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/journal/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/lists/public").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/lists/public/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
