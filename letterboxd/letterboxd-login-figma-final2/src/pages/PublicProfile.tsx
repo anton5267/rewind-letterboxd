@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import api from "../api/axios";
 import type { MoviePage } from "../api/search.api";
-import { follow, getFollowers, getFollowing, getFollowStatus, type FollowStatus, type NetworkPage, unfollow } from "../api/social.api";
+import { follow, getFollowers, getFollowing, getFollowStatus, getUserActivity, type ActivityPage, type FollowStatus, type NetworkPage, unfollow } from "../api/social.api";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
 
@@ -35,10 +35,21 @@ export default function PublicProfile() {
   const [followStatus, setFollowStatus] = useState<FollowStatus | null>(null);
   const [followBusy, setFollowBusy] = useState(false);
   const [followError, setFollowError] = useState(false);
+  const [activity, setActivity] = useState<ActivityPage | null>(null);
+  const [activityError, setActivityError] = useState(false);
 
   useEffect(() => {
     setProfile(null); setError(false);
     api.get<Profile>(`/users/${id}/profile`).then(({ data }) => setProfile(data)).catch(() => setError(true));
+  }, [id, lang]);
+
+  useEffect(() => {
+    if (!id) return;
+    let current = true;
+    setActivityError(false);
+    getUserActivity(id).then(({ data }) => { if (current) setActivity(data); })
+      .catch(() => { if (current) setActivityError(true); });
+    return () => { current = false; };
   }, [id, lang]);
 
   useEffect(() => {
@@ -132,6 +143,16 @@ export default function PublicProfile() {
     <section>
       <h2>{t("following")}</h2>
       {!networkError && following && (following.content.length === 0 ? <p>{t("noFollowing")}</p> : <ul>{following.content.map(networkUser => <li key={networkUser.id}><Link to={path(`/users/${networkUser.id}`)}>{networkUser.displayName || networkUser.username}</Link></li>)}</ul>)}
+    </section>
+    <section>
+      <h2>{t("recentActivity")}</h2>
+      {activityError && <p role="alert">{t("loadActivityError")}</p>}
+      {!activityError && activity && (activity.content.length === 0 ? <p>{t("noActivity")}</p> : <ul>{activity.content.map(item => <li key={item.id}>
+        {item.type === "FOLLOW" && <>{t("activityFollowed")} {item.relatedUser && <Link to={path(`/users/${item.relatedUser.id}`)}>{item.relatedUser.displayName || item.relatedUser.username}</Link>}</>}
+        {item.type === "RATING" && <>{t("activityRated")} {item.movie && <Link to={path(`/films/${item.movie.id}`)}>{item.movie.title}</Link>}</>}
+        {item.type === "REVIEW" && <>{t("activityReviewed")} {item.movie && <Link to={path(`/films/${item.movie.id}`)}>{item.movie.title}</Link>}</>}
+        {item.type === "LIST" && <>{t("activityCreatedList")} {item.list?.name}</>}
+      </li>)}</ul>)}
     </section>
     <section><h2>{t("publicLists")}</h2>{profile.lists.length === 0 ? <p>{t("noPublicLists")}</p> : <ul>{profile.lists.map(list => <li key={list.id}><Link to={path(`/lists/public/${list.id}`)}>{list.name}</Link>{list.description && ` — ${list.description}`}</li>)}</ul>}</section>
     <section><h2>{t("recentReviews")}</h2>{profile.recentReviews.length === 0 ? <p>{t("noReviews")}</p> : <ul>{profile.recentReviews.map(review => <li key={review.id}><Link to={path(`/films/${review.movieId}`)}>{review.movieTitle}</Link>{review.rating !== null && ` · ${review.rating}/5`}: {review.content}</li>)}</ul>}</section>

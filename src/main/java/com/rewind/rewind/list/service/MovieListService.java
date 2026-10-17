@@ -9,6 +9,8 @@ import com.rewind.rewind.list.repo.MovieListRepository;
 import com.rewind.rewind.movie.dto.MovieCardResponse;
 import com.rewind.rewind.movie.repo.MovieRepository;
 import com.rewind.rewind.user.repo.UserRepository;
+import com.rewind.rewind.social.entity.ActivityType;
+import com.rewind.rewind.social.service.ActivityService;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,12 +27,14 @@ public class MovieListService {
     private final ListItemRepository items;
     private final UserRepository users;
     private final MovieRepository movies;
+    private final ActivityService activities;
 
-    public MovieListService(MovieListRepository lists, ListItemRepository items, UserRepository users, MovieRepository movies) {
+    public MovieListService(MovieListRepository lists, ListItemRepository items, UserRepository users, MovieRepository movies, ActivityService activities) {
         this.lists = lists;
         this.items = items;
         this.users = users;
         this.movies = movies;
+        this.activities = activities;
     }
 
     public List<MovieListResponse> myLists(String email) {
@@ -51,6 +55,7 @@ public class MovieListService {
         list.setIsPublic(req.getIsPublic() != null && req.getIsPublic());
 
         MovieList saved = lists.save(list);
+        if (Boolean.TRUE.equals(saved.getIsPublic())) activities.record(user.getId(), ActivityType.LIST, null, null, saved.getId(), null);
         return new MovieListResponse(saved.getId(), saved.getName(), saved.getDescription(), saved.getListType(), saved.getIsPublic());
     }
 

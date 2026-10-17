@@ -62,6 +62,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/users/*/profile").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/followers").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/following").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/*/activity").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*").permitAll()
 
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

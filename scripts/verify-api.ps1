@@ -84,6 +84,8 @@ $followStatus = (Send 'GET' "/users/$networkUserId/follow-status").Content | Con
 if (-not $followStatus.following -or $followStatus.followers -ne 1) { throw 'Follow status is incorrect' }
 $publicFollowers = (Invoke-WebRequest -Method GET -Uri "$BaseUrl/api/users/$networkUserId/followers?size=20" -UseBasicParsing).Content | ConvertFrom-Json
 if ($publicFollowers.content.id -notcontains $userId) { throw 'Followers were not publicly readable' }
+$publicActivity = (Invoke-WebRequest -Method GET -Uri "$BaseUrl/api/users/$userId/activity?size=20" -UseBasicParsing).Content | ConvertFrom-Json
+if ($publicActivity.content.type -notcontains 'FOLLOW') { throw 'Public profile activity did not contain the follow event' }
 Write-Output 'public follow network'
 Expect (Send 'DELETE' "/users/$networkUserId/follow").StatusCode 204 'unfollow user'
 $oldRefresh = ($webSession.Cookies.GetCookies([uri]"$BaseUrl/api/auth/refresh") | Where-Object Name -eq 'rewind_refresh').Value

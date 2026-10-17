@@ -1,6 +1,7 @@
 package com.rewind.rewind.social.service;
 
 import com.rewind.rewind.social.dto.FollowStatusResponse;
+import com.rewind.rewind.social.entity.ActivityType;
 import com.rewind.rewind.social.entity.Follow;
 import com.rewind.rewind.social.repo.FollowRepository;
 import com.rewind.rewind.user.dto.PublicUserResponse;
@@ -16,10 +17,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class FollowService {
     private final FollowRepository follows;
     private final UserRepository users;
+    private final ActivityService activities;
 
-    public FollowService(FollowRepository follows, UserRepository users) {
+    public FollowService(FollowRepository follows, UserRepository users, ActivityService activities) {
         this.follows = follows;
         this.users = users;
+        this.activities = activities;
     }
 
     @Transactional
@@ -36,6 +39,7 @@ public class FollowService {
         follow.setFollower(follower);
         follow.setFollowing(target);
         follows.save(follow);
+        activities.record(follower.getId(), ActivityType.FOLLOW, null, null, null, targetId);
     }
 
     @Transactional

@@ -10,6 +10,8 @@ import com.rewind.rewind.review.dto.UpdateReviewRequest;
 import com.rewind.rewind.review.entity.Review;
 import com.rewind.rewind.review.repo.ReviewRepository;
 import com.rewind.rewind.user.repo.UserRepository;
+import com.rewind.rewind.social.entity.ActivityType;
+import com.rewind.rewind.social.service.ActivityService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -25,12 +27,14 @@ public class ReviewService {
     private final UserRepository users;
     private final MovieRepository movies;
     private final RatingService ratingService;
+    private final ActivityService activities;
 
-    public ReviewService(ReviewRepository reviews, UserRepository users, MovieRepository movies, RatingService ratingService) {
+    public ReviewService(ReviewRepository reviews, UserRepository users, MovieRepository movies, RatingService ratingService, ActivityService activities) {
         this.reviews = reviews;
         this.users = users;
         this.movies = movies;
         this.ratingService = ratingService;
+        this.activities = activities;
     }
 
     @Transactional
@@ -52,7 +56,8 @@ public class ReviewService {
         // ✅ синхронізуємо таблицю ratings + оновлюється movies.rating
         UpsertRatingRequest rr = new UpsertRatingRequest();
         rr.setRating(req.getRating());
-        ratingService.upsert(email, movieId, rr);
+        ratingService.upsertForReview(email, movieId, rr);
+        activities.record(user.getId(), ActivityType.REVIEW, movieId, saved.getId(), null, null);
 
         return new ReviewResponse(
                 saved.getId(),
@@ -120,7 +125,7 @@ public class ReviewService {
             // ✅ синхронізуємо ratings + оновлюємо movies.rating
             UpsertRatingRequest rr = new UpsertRatingRequest();
             rr.setRating(req.getRating());
-            ratingService.upsert(email, r.getMovie().getId(), rr);
+            ratingService.upsertForReview(email, r.getMovie().getId(), rr);
         }
 
         Review saved = reviews.save(r);
