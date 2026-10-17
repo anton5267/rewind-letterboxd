@@ -9,6 +9,7 @@ Rewind is a bilingual movie discovery and social review platform inspired by Let
 - Movie catalog, search, filters, pagination, people pages, ratings, reviews, comments, lists, profiles, follows, likes, activity, notifications, SSE, and private messages
 - Controlled admin-only TMDB synchronization for movie metadata, credits, trailer, external rating, and links to similar movies already in the local catalog
 - Journal articles with language fallback, category filtering, monthly archive navigation, and admin publishing
+- Newsletter opt-in/opt-out for users and audited admin delivery of published Newsletter/Бюлетень articles to active subscribers
 - Admin dashboard for users/HQ, movies, lists, reviews, comments, moderation queue, settings, communications, and audit logs
 - Flyway migrations and MySQL integration tests for the implemented API contracts
 

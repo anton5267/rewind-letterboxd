@@ -1,6 +1,6 @@
 # Rewind database ER diagram
 
-This diagram describes the schema after Flyway migrations **V1–V24**. The migration files in `src/main/resources/db/migration` remain the source of truth; this document is the review and presentation artifact.
+This diagram describes the schema after Flyway migrations **V1–V25**. The migration files in `src/main/resources/db/migration` remain the source of truth; this document is the review and presentation artifact.
 
 ```mermaid
 erDiagram
@@ -48,6 +48,7 @@ erDiagram
     MESSAGES { BIGINT id PK BIGINT conversation_id FK BIGINT sender_id FK TIMESTAMP read_at }
     ADMIN_AUDIT_LOGS { BIGINT id PK BIGINT admin_id FK VARCHAR action VARCHAR target_type BIGINT target_id }
     JOURNAL_ARTICLES { BIGINT id PK VARCHAR slug VARCHAR language VARCHAR category BIGINT author_id FK VARCHAR audio_url BOOLEAN is_published }
+    NEWSLETTER_SUBSCRIPTIONS { BIGINT id PK BIGINT user_id FK UK BOOLEAN is_subscribed TIMESTAMP subscribed_at TIMESTAMP updated_at }
     SITE_SETTINGS { VARCHAR setting_key PK VARCHAR setting_value BIGINT updated_by FK }
 
     USERS ||--o{ LISTS : owns
@@ -91,6 +92,7 @@ erDiagram
     USERS ||--o{ MESSAGES : sends
     USERS ||--o{ ADMIN_AUDIT_LOGS : performs
     USERS ||--o{ JOURNAL_ARTICLES : authors
+    USERS ||--o| NEWSLETTER_SUBSCRIPTIONS : opts_in
     USERS ||--o{ SITE_SETTINGS : updates
 ```
 

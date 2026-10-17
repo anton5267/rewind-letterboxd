@@ -94,6 +94,14 @@ Expect (Send 'GET' '/users/me').StatusCode 200 'cookie authentication'
 $myProfile = (Send 'GET' '/profile/me').Content | ConvertFrom-Json
 if ($null -eq $myProfile.stats -or $myProfile.stats.ratings -ne 0 -or $myProfile.stats.reviews -ne 0) { throw 'Profile statistics contract is missing or incorrect' }
 Write-Output 'profile statistics'
+Expect (Send 'GET' '/newsletter/subscription').StatusCode 200 'newsletter subscription read'
+$newsletterEnabled = Send 'PUT' '/newsletter/subscription' @{ subscribed = $true }
+Expect $newsletterEnabled.StatusCode 200 'newsletter subscription opt-in'
+if (-not ($newsletterEnabled.Content | ConvertFrom-Json).subscribed) { throw 'Newsletter opt-in did not enable subscription' }
+$newsletterDisabled = Send 'PUT' '/newsletter/subscription' @{ subscribed = $false }
+Expect $newsletterDisabled.StatusCode 200 'newsletter subscription opt-out'
+if (($newsletterDisabled.Content | ConvertFrom-Json).subscribed) { throw 'Newsletter opt-out did not disable subscription' }
+Write-Output 'newsletter subscription privacy and state'
 Expect (Send 'POST' "/users/$networkUserId/follow").StatusCode 204 'follow user'
 $followStatus = (Send 'GET' "/users/$networkUserId/follow-status").Content | ConvertFrom-Json
 if (-not $followStatus.following -or $followStatus.followers -ne 1) { throw 'Follow status is incorrect' }
