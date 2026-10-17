@@ -46,6 +46,7 @@ public class PersonService {
     private PersonDetailsResponse.Film film(com.rewind.rewind.movie.entity.Movie movie, String characterName) {
         return new PersonDetailsResponse.Film(movie.getId(), movie.getTitle(), movie.getReleaseDate(), movie.getRating(), movie.getPhotoUrl(), characterName);
     }
+    @SuppressWarnings("null")
     private java.util.List<PersonDetailsResponse.Film> sorted(java.util.List<PersonDetailsResponse.Film> films, String sort) {
         Comparator<PersonDetailsResponse.Film> comparator = switch (sort == null ? "newest" : sort) {
             case "oldest" -> Comparator.comparing(PersonDetailsResponse.Film::releaseDate, Comparator.nullsLast(Comparator.naturalOrder()));

@@ -1,6 +1,5 @@
 package com.rewind.rewind;
 
-import com.rewind.rewind.message.dto.CreateConversationRequest;
 import com.rewind.rewind.message.dto.SendMessageRequest;
 import com.rewind.rewind.message.service.MessageService;
 import com.rewind.rewind.user.dto.UserRegisterRequest;

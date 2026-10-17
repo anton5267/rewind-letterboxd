@@ -23,6 +23,7 @@ public class TagService {
     public TagService(TagRepository tags) { this.tags = tags; }
 
     @Transactional
+    @SuppressWarnings("null")
     public void replaceTags(MovieList list, List<String> values) {
         Map<String, String> normalized = normalize(values);
         Map<String, Tag> existing = tags.findAllBySlugIn(normalized.keySet()).stream()
@@ -43,6 +44,7 @@ public class TagService {
                 .stream().map(this::response).toList();
     }
 
+    @SuppressWarnings("null")
     public List<TagResponse> responses(java.util.Collection<Tag> source) {
         return source.stream().map(this::response).toList();
     }

@@ -88,7 +88,7 @@ V1 створює 14 таблиць: `users`, `movies`, `actors`, `directors`, `
 | A | `POST /api/admin/users/{id}/activate`, `/deactivate` | Активація/деактивація |
 | A | `GET /api/admin/reviews`; `POST /api/admin/reviews/{id}/hide`, `/unhide`; `DELETE /api/admin/reviews/{id}` | Модерація відгуків; UI підключено до dashboard |
 | A | `GET /api/admin/moderation/queue` | Об'єднана сторінкова черга немодерованих оглядів і коментарів |
-| P | `GET /api/journal/articles?category=...`, `GET /api/journal/articles/archive`, `GET /api/journal/articles/{slug}` | Публічний журнал із мовним fallback, фільтром розділу та архівом за місяцями |
+| P | `GET /api/journal/articles?category=...&year=...&month=...`, `GET /api/journal/articles/archive`, `GET /api/journal/articles/{slug}` | Публічний журнал із мовним fallback, фільтром розділу, архівом і навігацією за місяцями |
 | A | `GET`, `POST`, `PUT /api/admin/journal/articles` | Редактор і публікація статей із аудитом |
 | A | `GET /api/admin/dashboard`, `GET /api/admin/audit-logs` | Лічильники та журнал адміністративних дій |
 | A | `GET /api/admin/comments`; `POST /api/admin/comments/{id}/hide`, `/unhide`; `DELETE /api/admin/comments/{id}` | Модерація коментарів; UI підключено до dashboard |

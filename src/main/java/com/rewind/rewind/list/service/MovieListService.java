@@ -234,6 +234,7 @@ public class MovieListService {
         items.saveAll(allItems);
     }
 
+    @SuppressWarnings("null")
     private List<String> tagNames(MovieList list) {
         return list.getTags().stream().map(com.rewind.rewind.tag.entity.Tag::getName).toList();
     }

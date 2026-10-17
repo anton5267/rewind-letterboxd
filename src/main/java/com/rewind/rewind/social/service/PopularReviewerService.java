@@ -23,6 +23,7 @@ public class PopularReviewerService {
     }
 
     @Transactional(readOnly = true)
+    @SuppressWarnings("null")
     public List<PopularReviewerResponse> popular(int size) {
         var rows = likes.findPopularReviewers(PageRequest.of(0, Math.max(1, Math.min(size, 20))));
         Map<Long, User> byId = new HashMap<>();

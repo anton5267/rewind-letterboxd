@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.Instant;
 import java.time.YearMonth;
+import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.List;
@@ -22,26 +23,48 @@ public class JournalArticleService {
 
     @Transactional(readOnly = true)
     public Page<JournalArticleResponse> publicList(String language, int page, int size) {
-        return publicList(language, null, page, size);
+        return publicList(language, null, null, null, page, size);
     }
 
     @Transactional(readOnly = true)
     public Page<JournalArticleResponse> publicList(String language, String category, int page, int size) {
-        String lang = language.equals("en") ? "en" : "uk";
-        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 50)));
-        String normalizedCategory = category == null || category.isBlank() ? null : category.trim();
-        Page<JournalArticle> result = findPublished(lang, normalizedCategory, pageable);
-        if (result.isEmpty() && page == 0) result = findPublished(lang.equals("en") ? "uk" : "en", normalizedCategory, pageable);
-        return result.map(this::toResponse);
-    }
-
-    private Page<JournalArticle> findPublished(String language, String category, Pageable pageable) {
-        return category == null
-                ? articles.findAllByLanguageAndIsPublishedTrueOrderByPublishedAtDesc(language, pageable)
-                : articles.findAllByLanguageAndCategoryAndIsPublishedTrueOrderByPublishedAtDesc(language, category, pageable);
+        return publicList(language, category, null, null, page, size);
     }
 
     @Transactional(readOnly = true)
+    public Page<JournalArticleResponse> publicList(String language, String category, Integer year, Integer month, int page, int size) {
+        String lang = language.equals("en") ? "en" : "uk";
+        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 50)));
+        String normalizedCategory = category == null || category.isBlank() ? null : category.trim();
+        YearMonth archiveMonth = archiveMonth(year, month);
+        Page<JournalArticle> result = findPublished(lang, normalizedCategory, archiveMonth, pageable);
+        if (result.isEmpty() && page == 0) result = findPublished(lang.equals("en") ? "uk" : "en", normalizedCategory, archiveMonth, pageable);
+        return result.map(this::toResponse);
+    }
+
+    private Page<JournalArticle> findPublished(String language, String category, YearMonth archiveMonth, Pageable pageable) {
+        if (archiveMonth == null) {
+            return category == null
+                    ? articles.findAllByLanguageAndIsPublishedTrueOrderByPublishedAtDesc(language, pageable)
+                    : articles.findAllByLanguageAndCategoryAndIsPublishedTrueOrderByPublishedAtDesc(language, category, pageable);
+        }
+        Instant from = archiveMonth.atDay(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+        Instant to = archiveMonth.plusMonths(1).atDay(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+        return category == null
+                ? articles.findAllByLanguageAndIsPublishedTrueAndPublishedAtGreaterThanEqualAndPublishedAtLessThanOrderByPublishedAtDesc(language, from, to, pageable)
+                : articles.findAllByLanguageAndCategoryAndIsPublishedTrueAndPublishedAtGreaterThanEqualAndPublishedAtLessThanOrderByPublishedAtDesc(language, category, from, to, pageable);
+    }
+
+    private YearMonth archiveMonth(Integer year, Integer month) {
+        if (year == null && month == null) return null;
+        if (year == null || month == null || year < 1900 || year > 9999 || month < 1 || month > 12) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid archive month");
+        }
+        return YearMonth.of(year, month);
+    }
+
+    @Transactional(readOnly = true)
+    @SuppressWarnings("null")
     public List<JournalArchiveEntry> publicArchive(String language) {
         String lang = language.equals("en") ? "en" : "uk";
         List<JournalArticle> published = articles.findAllByLanguageAndIsPublishedTrueOrderByPublishedAtDesc(lang);

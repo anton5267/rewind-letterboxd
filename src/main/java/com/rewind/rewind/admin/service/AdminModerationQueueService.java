@@ -27,6 +27,7 @@ public class AdminModerationQueueService {
     }
 
     @Transactional(readOnly = true)
+    @SuppressWarnings("null")
     public Page<AdminModerationQueueItem> list(int page, int size) {
         int safePage = Math.max(0, page);
         int safeSize = Math.max(1, Math.min(size, 50));

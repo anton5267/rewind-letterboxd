@@ -67,6 +67,7 @@ public class ActivityService {
         return toResponses(activities.findAllByUserIdInOrderByCreatedAtDesc(followedIds, pageable));
     }
 
+    @SuppressWarnings("null")
     private Page<ActivityResponse> toResponses(Page<UserActivity> page) {
         Collection<Long> userIds = page.getContent().stream()
                 .flatMap(activity -> java.util.stream.Stream.of(activity.getUserId(), activity.getRelatedUserId()))
