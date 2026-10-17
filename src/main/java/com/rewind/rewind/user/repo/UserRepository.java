@@ -14,6 +14,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
     boolean existsByUsername(String username);
+    long countByIsActiveTrue();
+    long countByIsHqTrue();
 
     // ✅ Для адмінки: пошук по користувачах (q) + пагінація
     Page<User> findAllByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrDisplayNameContainingIgnoreCase(

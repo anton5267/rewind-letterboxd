@@ -5,7 +5,7 @@ import { useLocale } from "../i18n";
 import { useState } from "react";
 
 export default function Header() {
-  const { isAuth, logout } = useAuth();
+  const { isAuth, user, logout } = useAuth();
   const navigate = useNavigate();
   const { lang, path, t, otherLanguagePath } = useLocale();
   const [logoutError, setLogoutError] = useState(false);
@@ -42,6 +42,7 @@ export default function Header() {
             <Link to={path("/profile")}>{t("profile")}</Link>
             <Link to={path("/notifications")}>{t("notifications")}</Link>
             <Link to={path("/messages")}>{t("messages")}</Link>
+            {user?.role === "ADMIN" && <Link to={path("/admin")}>{t("adminDashboard")}</Link>}
             <button type="button" onClick={() => { void handleLogout(); }}>{t("logout")}</button>
           </>
         ) : (

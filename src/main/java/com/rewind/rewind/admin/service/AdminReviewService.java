@@ -7,6 +7,7 @@ import com.rewind.rewind.user.repo.UserRepository;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.rewind.rewind.admin.audit.service.AdminAuditLogService;
 
 import java.time.Instant;
 
@@ -15,10 +16,12 @@ public class AdminReviewService {
 
     private final ReviewRepository reviews;
     private final UserRepository users;
+    private final AdminAuditLogService audit;
 
-    public AdminReviewService(ReviewRepository reviews, UserRepository users) {
+    public AdminReviewService(ReviewRepository reviews, UserRepository users, AdminAuditLogService audit) {
         this.reviews = reviews;
         this.users = users;
+        this.audit = audit;
     }
 
     @Transactional(readOnly = true)
@@ -53,6 +56,7 @@ public class AdminReviewService {
         r.setModeratedBy(admin);
 
         reviews.save(r);
+        audit.record(adminEmail, "REVIEW_HIDDEN", "REVIEW", id, reason);
         return toDto(r);
     }
 
@@ -67,13 +71,15 @@ public class AdminReviewService {
         r.setModeratedBy(admin);
 
         reviews.save(r);
+        audit.record(adminEmail, "REVIEW_UNHIDDEN", "REVIEW", id, null);
         return toDto(r);
     }
 
     @Transactional
-    public void delete(Long id) {
+    public void delete(Long id, String adminEmail) {
         if (!reviews.existsById(id)) throw new IllegalArgumentException("Review not found");
         reviews.deleteById(id);
+        audit.record(adminEmail, "REVIEW_DELETED", "REVIEW", id, null);
     }
 
     private AdminReviewResponse toDto(Review r) {

@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/api/admin/users")
@@ -34,24 +35,24 @@ public class AdminUserController {
     }
 
     @PatchMapping("/{id}")
-    public AdminUserResponse update(@PathVariable Long id, @Valid @RequestBody AdminUpdateUserRequest req) {
-        return service.update(id, req);
+    public AdminUserResponse update(Authentication auth, @PathVariable Long id, @Valid @RequestBody AdminUpdateUserRequest req) {
+        return service.update(id, req, auth.getName());
     }
 
     @PostMapping("/{id}/deactivate")
-    public ResponseEntity<?> deactivate(@PathVariable Long id) {
-        service.deactivate(id);
+    public ResponseEntity<?> deactivate(Authentication auth, @PathVariable Long id) {
+        service.deactivate(id, auth.getName());
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/activate")
-    public ResponseEntity<?> activate(@PathVariable Long id) {
-        service.activate(id);
+    public ResponseEntity<?> activate(Authentication auth, @PathVariable Long id) {
+        service.activate(id, auth.getName());
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{id}/hq")
-    public AdminUserResponse setHq(@PathVariable Long id, @Valid @RequestBody AdminHqRequest request) {
-        return service.setHq(id, request.hq());
+    public AdminUserResponse setHq(Authentication auth, @PathVariable Long id, @Valid @RequestBody AdminHqRequest request) {
+        return service.setHq(id, request.hq(), auth.getName());
     }
 }

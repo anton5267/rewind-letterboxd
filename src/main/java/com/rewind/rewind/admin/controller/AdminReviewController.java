@@ -41,8 +41,8 @@ public class AdminReviewController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
-        service.delete(id);
+    public ResponseEntity<?> delete(Authentication auth, @PathVariable Long id) {
+        service.delete(id, auth.getName());
         return ResponseEntity.noContent().build();
     }
 }

@@ -8,14 +8,17 @@ import com.rewind.rewind.user.repo.UserRepository;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.rewind.rewind.admin.audit.service.AdminAuditLogService;
 
 @Service
 public class AdminUserService {
 
     private final UserRepository users;
+    private final AdminAuditLogService audit;
 
-    public AdminUserService(UserRepository users) {
+    public AdminUserService(UserRepository users, AdminAuditLogService audit) {
         this.users = users;
+        this.audit = audit;
     }
 
     @Transactional(readOnly = true)
@@ -41,6 +44,11 @@ public class AdminUserService {
 
     @Transactional
     public AdminUserResponse update(Long id, AdminUpdateUserRequest req) {
+        return update(id, req, null);
+    }
+
+    @Transactional
+    public AdminUserResponse update(Long id, AdminUpdateUserRequest req, String adminEmail) {
         User u = users.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         if (req.getUsername() != null) u.setUsername(req.getUsername());
@@ -57,21 +65,34 @@ public class AdminUserService {
         }
 
         users.save(u);
+        if (adminEmail != null) audit.record(adminEmail, "USER_UPDATED", "USER", id, null);
         return toDto(u);
     }
 
     @Transactional
     public void deactivate(Long id) {
+        deactivate(id, null);
+    }
+
+    @Transactional
+    public void deactivate(Long id, String adminEmail) {
         User u = users.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
         u.setIsActive(false);
         users.save(u);
+        if (adminEmail != null) audit.record(adminEmail, "USER_DEACTIVATED", "USER", id, null);
     }
 
     @Transactional
     public void activate(Long id) {
+        activate(id, null);
+    }
+
+    @Transactional
+    public void activate(Long id, String adminEmail) {
         User u = users.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
         u.setIsActive(true);
         users.save(u);
+        if (adminEmail != null) audit.record(adminEmail, "USER_ACTIVATED", "USER", id, null);
     }
 
     private AdminUserResponse toDto(User u) {
@@ -89,10 +110,14 @@ public class AdminUserService {
     }
 
     @Transactional
-    public AdminUserResponse setHq(Long id, boolean hq) {
+    public AdminUserResponse setHq(Long id, boolean hq) { return setHq(id, hq, null); }
+
+    @Transactional
+    public AdminUserResponse setHq(Long id, boolean hq, String adminEmail) {
         User user = users.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
         user.setIsHq(hq);
         users.save(user);
+        if (adminEmail != null) audit.record(adminEmail, hq ? "HQ_GRANTED" : "HQ_REVOKED", "USER", id, null);
         return toDto(user);
     }
 }
