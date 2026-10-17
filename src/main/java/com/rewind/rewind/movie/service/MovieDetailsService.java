@@ -55,7 +55,7 @@ public class MovieDetailsService {
     @Transactional(readOnly = true)
     @Cacheable(cacheNames = "movieDetails", key = "#movieId", condition = "#userEmailOrNull == null")
     public MovieDetailsResponse getDetails(Long movieId, String userEmailOrNull) {
-        Movie m = movies.findById(movieId)
+        Movie m = movies.findWithGenresById(movieId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie not found"));
 
         // Genres (ManyToMany може бути LAZY, але транзакція це покриє)

@@ -21,6 +21,7 @@ public interface ListItemRepository extends JpaRepository<ListItem, Long> {
     Page<Movie> findMoviesByListId(@Param("listId") Long listId, Pageable pageable);
 
     // ✅ для reorder
+    @EntityGraph(attributePaths = "movie")
     List<ListItem> findAllByListId(Long listId);
     long countByListId(Long listId);
 }
