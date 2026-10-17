@@ -93,6 +93,41 @@ class AdminModerationQueueIntegrationTests {
 
     @Test
     @Transactional
+    void hideActionRemovesCommentFromQueueAndRecordsModeration() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        UserRegisterRequest request = new UserRegisterRequest();
+        request.setUsername("moderation_comment_" + suffix);
+        request.setEmail("moderation_comment_" + suffix + "@example.invalid");
+        request.setPassword("test-password-123");
+        userService.register(request);
+
+        var user = users.findByEmail(request.getEmail()).orElseThrow();
+        var movie = movies.findAll().stream().findFirst().orElseThrow();
+        Review review = new Review();
+        review.setUser(user);
+        review.setMovie(movie);
+        review.setContent("comment parent review " + suffix);
+        review.setRating((byte) 4);
+        review = reviews.saveAndFlush(review);
+
+        ReviewComment comment = new ReviewComment();
+        comment.setReview(review);
+        comment.setUser(user);
+        comment.setContent("queue hide comment " + suffix);
+        comment = comments.saveAndFlush(comment);
+        Long commentId = comment.getId();
+
+        queue.hide("COMMENT", commentId, request.getEmail(), "comment policy");
+
+        ReviewComment hidden = comments.findById(commentId).orElseThrow();
+        assertEquals(Boolean.TRUE, hidden.getIsHidden());
+        assertEquals("comment policy", hidden.getModeratedReason());
+        assertTrue(queue.list("COMMENT", "queue hide comment", 0, 50).getContent().stream()
+                .noneMatch(item -> item.id().equals(commentId)));
+    }
+
+    @Test
+    @Transactional
     void bulkHideModerationItemsUsesTheSameServerSideModerationRules() {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         UserRegisterRequest request = new UserRegisterRequest();

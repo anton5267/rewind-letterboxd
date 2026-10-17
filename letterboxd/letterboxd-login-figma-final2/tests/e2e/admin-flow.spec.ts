@@ -41,7 +41,35 @@ test("admin can open the dashboard, manage a notification and manage a movie", a
   const createdMovie = movieSection.locator("li").filter({ hasText: title });
   await expect(createdMovie).toBeVisible();
 
+  const createdMovieData = await page.evaluate(async (movieTitle) => {
+    const response = await fetch("/api/admin/movies?size=50");
+    const data = await response.json();
+    return data.content.find((movie: { id: number; title: string }) => movie.title === movieTitle) as { id: number } | undefined;
+  }, title);
+  expect(createdMovieData?.id).toBeTruthy();
+  const moderationContent = `Admin moderation ${Date.now()}`;
+  const xsrf = await page.evaluate(() => decodeURIComponent(document.cookie.split("; ").find(value => value.startsWith("XSRF-TOKEN="))?.slice("XSRF-TOKEN=".length) ?? ""));
+  const reviewResponse = await page.evaluate(async ({ movieId, content, token }) => {
+    const response = await fetch(`/api/movies/${movieId}/reviews`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json", "X-XSRF-TOKEN": token },
+      body: JSON.stringify({ content, rating: 4 })
+    });
+    return response.status;
+  }, { movieId: createdMovieData!.id, content: moderationContent, token: xsrf });
+  expect(reviewResponse).toBe(200);
+
+  await page.reload();
+  const moderationSection = page.locator("section").filter({ has: page.getByRole("heading", { name: "Черга модерації" }) });
+  const moderationItem = moderationSection.locator("li").filter({ hasText: moderationContent });
+  await expect(moderationItem).toBeVisible();
+  await moderationItem.getByRole("button", { name: "Приховати" }).click();
+  await expect(moderationItem).toHaveCount(0);
+
   page.once("dialog", dialog => dialog.accept());
-  await createdMovie.getByRole("button", { name: "Видалити" }).click();
-  await expect(createdMovie).toHaveCount(0);
+  const refreshedMovieSection = page.locator("section").filter({ has: page.getByRole("heading", { name: "Фільми" }) });
+  const refreshedMovie = refreshedMovieSection.locator("li").filter({ hasText: title });
+  await refreshedMovie.getByRole("button", { name: "Видалити" }).click();
+  await expect(refreshedMovie).toHaveCount(0);
 });

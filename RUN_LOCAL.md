@@ -82,4 +82,10 @@ npm run test:e2e
 
 Окремий `scripts/verify-password-reset.ps1 -BaseUrl http://localhost:8080` пройшов із реальною SMTP-доставкою до Mailpit: однакова відповідь для відомого й невідомого email, одноразове посилання та вхід із новим паролем. Скрипти використовують тимчасові адреси `example.invalid`; запускайте їх на тестовій БД. Для локального перехоплення пошти використано [офіційний Docker-образ Mailpit](https://mailpit.axllent.org/docs/install/docker/).
 
-Для локального backup/restore використовуйте `scripts/backup-dev.ps1` і `scripts/restore-dev.ps1 -BackupPath .\backups\rewind-....sql -Confirm`. Backup робиться через `mysqldump --single-transaction`; перед production відновленням спочатку перевірте файл у тимчасовій базі.
+Для локального backup/restore використовуйте `scripts/backup-dev.ps1` і `scripts/restore-dev.ps1 -BackupPath .\backups\rewind-....sql -Confirm`. Backup робиться через `mysqldump --single-transaction`. Повний drill у Compose без зміни основної БД запускається так:
+
+```powershell
+./scripts/verify-backup-restore.ps1
+```
+
+Скрипт створює дамп, відновлює його в унікальну тимчасову БД, звіряє кількість фільмів, користувачів і міграцій та видаляє тимчасову БД. Для збереження дампа додайте `-KeepBackup -OutputPath .\backups\restore-drill.sql`.
