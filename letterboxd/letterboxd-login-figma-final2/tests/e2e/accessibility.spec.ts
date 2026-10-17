@@ -48,3 +48,21 @@ test("static app sends baseline browser security headers", async ({ page }) => {
   expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
   expect(headers["content-security-policy"]).toContain("object-src 'none'");
 });
+
+test("primary public routes have keyboard reachable controls", async ({ page }) => {
+  for (const route of ["/uk/home", "/uk/films", "/en/help"]) {
+    await page.goto(route);
+    const positiveTabIndexes = await page.locator("[tabindex]").evaluateAll(elements => elements
+      .filter(element => Number(element.getAttribute("tabindex")) > 0)
+      .map(element => element.outerHTML.slice(0, 120)));
+    expect(positiveTabIndexes, `${route} contains a positive tabindex`).toEqual([]);
+
+    const controlCount = await page.locator("a, button, input, textarea, select").count();
+    expect(controlCount, `${route} has no keyboard controls`).toBeGreaterThan(0);
+    for (let index = 0; index < Math.min(controlCount, 8); index++) {
+      await page.keyboard.press("Tab");
+      const activeIsControl = await page.evaluate(() => document.activeElement?.matches("a, button, input, textarea, select") ?? false);
+      expect(activeIsControl, `${route} tab ${index + 1} did not land on a control`).toBe(true);
+    }
+  }
+});

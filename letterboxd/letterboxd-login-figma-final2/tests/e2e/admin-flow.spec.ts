@@ -4,7 +4,7 @@ test("admin can open the dashboard, search a user and manage a movie", async ({ 
   const email = process.env.E2E_ADMIN_EMAIL;
   const password = process.env.E2E_ADMIN_PASSWORD;
   const username = process.env.E2E_ADMIN_USERNAME;
-  if (!email || !password || !username) throw new Error("Run scripts/verify-admin-browser.ps1 to provide E2E admin credentials.");
+  test.skip(!email || !password || !username, "Run scripts/verify-admin-browser.ps1 for the disposable ADMIN fixture.");
 
   await page.goto("/uk/login");
   await page.getByLabel("Електронна пошта").fill(email);

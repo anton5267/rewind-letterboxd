@@ -2,7 +2,7 @@
 
 Це робочий журнал для [повного плану розвитку](PLAN.md) і ТЗ. Оновлювати після **кожного перевіреного зрізу**: ставити `[x]` тільки коли є код, тест і відповідний наскрізний сценарій; `[ ]` означає відкриту роботу. Часткова реалізація зазначена в примітках і не робить етап завершеним.
 
-Останнє оновлення: **17.10.2026**. Вихідна точка Git: `bf6507f`; зафіксовані зрізи охоплюють auth, каталог, профілі, списки, соціальні модулі, журнал, адмінку, rate limit/cache, health/metrics/backup, V22 індекси/N+1 (`965a610`), browser security headers/accessibility (`377cef1`), social/XSS/SQLi smoke (`e6532a0`), локальний load smoke (`8540405`), SSE reconnect (`66e2250`), backend security smoke (`e62a56b`) і admin browser smoke (`поточний зріз`). Наступний зріз — повний keyboard/axe audit та production-like security/load checks.
+Останнє оновлення: **17.10.2026**. Вихідна точка Git: `bf6507f`; зафіксовані зрізи охоплюють auth, каталог, профілі, списки, соціальні модулі, журнал, адмінку, rate limit/cache, health/metrics/backup, V22 індекси/N+1 (`965a610`), browser security headers/accessibility (`377cef1`), social/XSS/SQLi smoke (`e6532a0`), локальний load smoke (`8540405`), SSE reconnect (`66e2250`), backend security smoke (`e62a56b`), admin browser smoke (`d7fdc99`) і keyboard smoke (`поточний зріз`). Наступний зріз — повний axe audit та production-like security/load checks.
 
 ## 1. Основа проєкту й дизайн — в роботі
 
@@ -138,12 +138,12 @@
 - [x] Додано Actuator health/metrics з публічним health і захищеними metrics та відтворювані `scripts/backup-dev.ps1`/`restore-dev.ps1`; runtime health повернув 200, metrics без auth — 401, backup перевірено через реальний MySQL контейнер із `mysqldump --single-transaction --no-tablespaces`, відновлення — у тимчасову БД із 30 таблицями та подальшим cleanup.
 - [x] Compose runtime перевірив Redis health (`redis-cli ping` → `PONG`) і запуск API з Redis service; `scripts/verify-cache.ps1` підтвердив гостьову деталку HTTP 200, Redis key `movieDetails::50`, TTL 599 секунд, `missDelta=1` і `hitDelta=3`. Під час перевірки виправлено JSON-серіалізацію кешованого `MovieDetailsResponse`, яка повертала 500 на другому запиті.
 - [x] Перевірено індекси й N+1 для основних read paths: Flyway V22 додав складені індекси для lists/list_items/reviews/ratings/movie_actors; `@EntityGraph` і fetch-план для movie details завантажують пов'язані дані одним запитом. На реальному MySQL `EXPLAIN` вибрав `idx_reviews_movie_visible_created`, `idx_lists_public_type_updated`, `idx_list_items_list_position`, `idx_ratings_user_updated` і `idx_movie_actors_movie_cast`; чистий Compose застосував V22, API health 200, details 200, Redis cache і 3 Playwright сценарії пройшли.
-- [x] Додано browser security headers у Nginx (`CSP`, `nosniff`, `SAMEORIGIN`, `Referrer-Policy`, `Permissions-Policy`). Новий Playwright accessibility smoke перевіряє 7 публічних маршрутів на named controls, один видимий `h1` і mobile overflow; окремо перевіряє всі заголовки.
+- [x] Додано browser security headers у Nginx (`CSP`, `nosniff`, `SAMEORIGIN`, `Referrer-Policy`, `Permissions-Policy`). Playwright accessibility smoke перевіряє 7 публічних маршрутів на named controls, один видимий `h1`, mobile overflow і keyboard focus; окремий тест перевіряє 3 основні public routes без positive tabindex.
 - [x] Security browser smoke перевіряє React escaping для review payload із `<img onerror>`, відсутність діалогу/XSS і пошук із SQL-подібним введенням без 500/alert; повний набір проходить **8/8**.
 - [x] Додано `scripts/verify-load.ps1`: 40 паралельних guest-запитів до каталогу й деталки фільму на Compose повернули 2xx за 0.24 секунди; це smoke-перевірка локального runtime, не production load test.
 - [x] Додано `scripts/verify-security.ps1`: public catalog/health повертають 200, guest profile/admin і metrics — 401, login без CSRF — 403. Це backend security smoke для локального runtime; повний penetration/load audit ще відкритий.
 - [~] Залишаються глибші SQLi/XSS і права, навантаження, повне відновлення у тимчасову БД та production-like конфігурація.
-- [~] Базову доступність, mobile overflow, browser security headers і admin/social browser flows перевірено; залишаються повний keyboard/axe аудит, SQLi/XSS, права, production load та VPS/HTTPS.
+- [~] Базову доступність, keyboard focus, mobile overflow, browser security headers і admin/social browser flows перевірено; залишаються повний axe аудит, SQLi/XSS, права, production load та VPS/HTTPS.
 - [ ] Production конфігурація, VPS, HTTPS, приватна БД і публічний запуск.
 
 ## 10. Захист і презентація — не почато
@@ -153,7 +153,7 @@
 
 ## Негайний наступний крок
 
-1. Додати повний keyboard/axe аудит і перевірки production-like конфігурації.
+1. Додати повний axe аудит і перевірки production-like конфігурації.
 2. Розширити backend security/load checks та зберегти сценарій відновлення у тимчасову БД.
 3. Реалізувати контрольований TMDB update/import із зовнішніми ID та перевіркою якості каталогу.
 4. Після Editor-доступу зафіксувати точні Figma-фрейми, tokens і assets; до цього не підміняти макети припущеннями.
