@@ -1,6 +1,6 @@
 # Rewind — карта проєкту
 
-Актуалізовано 16.10.2026 за кодом у цій папці, локальними збірками та відповідями запущеного API. Зовнішня папка `rewind-master` є обгорткою архіву; корінь Maven лежить тут. У цьому архіві немає `.git`, README, CI або конфігурації деплою. `target/`, frontend `dist/`, `node_modules/` і `src/.vs/` — локальні артефакти, а не вихідний код.
+Актуалізовано 17.10.2026 за кодом, локальними збірками, MySQL інтеграційними тестами та HTTP сценаріями. Зовнішня папка `rewind-master` є обгорткою архіву; корінь Maven лежить тут. Git історія вже контрольована; CI і production deployment ще не додані. `target/`, frontend `dist/`, `node_modules/` і `src/.vs/` — локальні артефакти, а не вихідний код.
 
 Надане замовником ТЗ збережено в [PROJECT_REQUIREMENTS.md](PROJECT_REQUIREMENTS.md), а порівняння вимог із кодом — у [REQUIREMENTS_TRACE.md](REQUIREMENTS_TRACE.md).
 
@@ -10,13 +10,13 @@ Rewind — каталог фільмів із обліковими записа�
 
 ```mermaid
 flowchart LR
-    Browser[React / Vite :5173] -->|Axios HTTP /api + Bearer JWT| API[Spring Boot :8080]
+    Browser[React / Vite :5173] -->|Axios HTTP /api + HttpOnly cookies| API[Spring Boot :8080]
     API --> Security[SecurityConfig + JwtAuthFilter]
     Security --> Controllers[Controllers]
     Controllers --> Services[Services]
     Services --> Repositories[Spring Data JPA repositories]
     Repositories --> MySQL[(MySQL :3306)]
-    Flyway[Flyway V1–V4] --> MySQL
+    Flyway[Flyway V1–V20] --> MySQL
     Seed[seed_50_real.sql] --> MySQL
 ```
 
@@ -24,20 +24,20 @@ flowchart LR
 | --- | --- |
 | `pom.xml`, `mvnw.cmd` | Залежності та запуск Maven/JDK 17 |
 | `src/main/java/com/rewind/rewind/RewindApplication.java` | Вхідна точка Spring, при старті друкує кількість користувачів |
-| `src/main/java/com/rewind/rewind/{auth,user,movie,list,rating,review,profile,admin,...}` | Функціональні модулі бекенду; у більшості є `controller`, `service`, `repo`, `entity`, `dto` |
+| `src/main/java/com/rewind/rewind/{auth,user,movie,list,rating,review,profile,admin,comment,message,notification,journal,...}` | Функціональні модулі бекенду; у більшості є `controller`, `service`, `repo`, `entity`, `dto` |
 | `src/main/java/com/rewind/rewind/security/` | Правила доступу, перевірка JWT, BCrypt |
 | `src/main/resources/application.yml` | База, Flyway, JPA, пошта, JWT |
-| `src/main/resources/db/migration/` | Чотири послідовні SQL міграції |
+| `src/main/resources/db/migration/` | Послідовні SQL міграції V1–V20 |
 | `src/main/resources/seed_50_real.sql`, `tmdb_seed_50.py` | Готове демо наповнення і його генератор |
 | `letterboxd/letterboxd-login-figma-final2/src/App.tsx` | Реальні маршрути фронтенду |
 | `letterboxd/letterboxd-login-figma-final2/src/api/` | Axios клієнт і виклики API |
-| `letterboxd/letterboxd-login-figma-final2/src/context/AuthContext.tsx` | Вхід/вихід і токен у `localStorage` |
+| `letterboxd/letterboxd-login-figma-final2/src/context/AuthContext.tsx` | Вхід/вихід і перевірка сесії через HttpOnly cookies |
 | `RUN_LOCAL.md` | Команди локального запуску на цьому комп'ютері |
 
 ### Ключові потоки
 
 1. **Реєстрація:** `AuthController` → `UserService.register` перевіряє унікальність email/username, хешує пароль BCrypt, створює `USER`; `SystemListService` створює WATCHLIST, WATCHED і FAVORITES. Поле `displayName` спочатку дорівнює username.
-2. **Вхід і доступ:** `UserService.login` перевіряє пароль і видає підписаний JWT з email як subject і роллю у claim. Фронтенд зберігає токен у `localStorage`; Axios додає `Authorization: Bearer ...`. `JwtAuthFilter` на кожному запиті перевіряє підпис, заново читає користувача з БД і бере актуальну роль/активність звідти. Термін JWT — 120 хвилин.
+2. **Вхід і доступ:** `UserService.login` перевіряє пароль і створює коротку cookie-сесію з відкличним refresh token. HttpOnly cookies додаються браузером автоматично; `JwtAuthFilter` на кожному запиті перевіряє access token, заново читає користувача з БД і бере актуальну роль/активність звідти.
 3. **Каталог:** `MovieController` повертає сторінку карток, `MovieSearchController` будує JPA specification для назви, року, мінімальної оцінки, жанру й сортування. `MovieDetailsService` збирає жанри, режисерів, акторів, зовнішні оцінки, схожі фільми й прапорці поточного користувача.
 4. **Власні дії:** системні списки зберігають переглянуте/бажане/улюблене. `RatingService` зберігає оцінку 1–5 і SQL запитом перераховує середнє в `movies.rating`. `ReviewService` створює текст+оцінку й синхронізує її з `ratings`.
 5. **Профіль і адміністрування:** `ProfileService` читає власні списки та 10 останніх оцінок/відгуків, змінює display name/avatar/пароль. Адміністратор керує фільмами, користувачами й модерацією відгуків.
@@ -84,6 +84,12 @@ V1 створює 14 таблиць: `users`, `movies`, `actors`, `directors`, `
 | A | `GET /api/admin/users`, `GET`, `PATCH /api/admin/users/{id}` | Пошук, перегляд і редагування користувачів |
 | A | `POST /api/admin/users/{id}/activate`, `/deactivate` | Активація/деактивація |
 | A | `GET /api/admin/reviews`; `POST /api/admin/reviews/{id}/hide`, `/unhide`; `DELETE /api/admin/reviews/{id}` | Модерація відгуків |
+| P | `GET /api/journal/articles`, `GET /api/journal/articles/{slug}` | Публічний журнал із мовним fallback |
+| A | `GET`, `POST`, `PUT /api/admin/journal/articles` | Редактор і публікація статей із аудитом |
+| A | `GET /api/admin/dashboard`, `GET /api/admin/audit-logs` | Лічильники та журнал адміністративних дій |
+| A | `GET /api/admin/comments`; `POST /api/admin/comments/{id}/hide`, `/unhide`; `DELETE /api/admin/comments/{id}` | Модерація коментарів |
+| U | `GET`, `POST /api/conversations`; `GET`, `POST /api/conversations/{id}/messages`; `POST /api/conversations/{id}/read` | Приватні діалоги й повідомлення |
+| U | `GET`, `PUT /api/notifications/preferences` | Налаштування сповіщень |
 
 Пошук приймає `q`, `genreId`, `tag`, `year`, `minRating`, `sort`, `page`, `size`. Сортування: `newest`, `oldest`, `rating_desc`, `rating_asc`, `title_asc`; search обмежує розмір сторінки до 1–50. Базовий каталог сортує за ID спадно. DTO запитів і відповідей лежать поряд із відповідними модулями; ключові форми: реєстрація `{username,email,password}`, оцінка `{rating}`, відгук `{content,rating}`, створення списку `{name,description,isPublic}`, перестановка `{orderedItemIds}`.
 
@@ -92,6 +98,8 @@ V1 створює 14 таблиць: `users`, `movies`, `actors`, `directors`, `
 ## 4. Фронтенд: що видно в браузері
 
 `main.tsx` монтує `BrowserRouter` + `AuthProvider` + `App`. У `App.tsx` є тільки такі маршрути:
+
+Актуальні локалізовані маршрути мають префікс `/uk` або `/en`: `/home`, `/films`, `/films/:id`, `/profile`, `/lists`, `/lists/discover`, `/lists/public/:id`, `/users/:id`, `/people/:type/:id`, `/notifications`, `/messages`, `/journal`, `/journal/:slug`, `/admin`, а також auth-маршрути. Старі URL перенаправляються на `/uk/...`.
 
 Для майбутнього перенесення макетів, поточного вигляду екранів і відповідності Figma фреймів файлам див. [FIGMA_HANDOFF.md](FIGMA_HANDOFF.md).
 
@@ -103,17 +111,17 @@ V1 створює 14 таблиць: `users`, `movies`, `actors`, `directors`, `
 | `/register` | `Register` | Викликає `/auth/register`; після успіху пропонує перейти на login |
 | `/forgot-password` | `ForgotPassword` | Форма є, але `/auth/forgot-password` у бекенді відсутній |
 
-`Header` показує Films та login/register або logout. Logout видаляє токен локально. `Footer` має декоративні посилання без `href`. Логотип фактично зберігається як `public/logo.png.png`, і компоненти звертаються саме до нього. Font Awesome підключено з CDN у `index.html`.
+`Header` показує Films, Journal та login/register або logout; для ADMIN доступна адмін-панель. Logout відкликає cookie-сесію. `Footer` має декоративні посилання без `href`. Логотип фактично зберігається як `public/logo.png.png`, і компоненти звертаються саме до нього. Font Awesome підключено з CDN у `index.html`.
 
 | Написаний, але не підключений код | Стан контракту з API |
 | --- | --- |
-| `pages/Profile.tsx` + `api/profile.api.ts` | Читає `/users/me`, але очікує `nickname`; оновлює через відсутній `PUT /users/me` з `nickname/password`. Робочі endpoint-и — `GET/PATCH /profile/me`, `PUT /profile/me/password` |
-| `pages/UserLists.tsx` + `api/lists.api.ts` | Базові `/lists/my`, створення й аліаси `/lists/{id}/movies` збігаються з API, але маршрутів і взаємодії з фільмами ще немає |
-| `components/Rating.tsx` + `api/ratings.api.ts` | Endpoint-и оцінок збігаються з API; компонент ніде не показується. API повертає 204, якщо оцінки немає, а компонент очікує тіло відповіді |
-| `pages/Comments.tsx` + `api/comments.api.ts` | Маршрут відсутній; backend не має таблиці/endpoint-ів коментарів |
-| `auth/ForgotPassword.module.tsx` | Другий, неімпортований варіант екрана відновлення |
+| `pages/Profile.tsx` + `api/profile.api.ts` | Профіль підключений до `GET/PATCH /profile/me` і `PUT /profile/me/password`; публічні колекції та статистика читаються окремо |
+| `pages/UserLists.tsx` + `api/lists.api.ts` | `/lists`, `/lists/discover`, `/lists/public/:id` підключають власні й публічні списки, теги та порядок елементів |
+| `components/Rating.tsx` + `api/ratings.api.ts` | Оцінка працює на сторінці фільму; відсутня оцінка нормалізується як `null` |
+| `pages/Comments.tsx` + `api/comments.api.ts` | Коментарі відображаються в контексті огляду; публічний список виключає приховані модерацією записи |
+| `auth/ForgotPassword.module.tsx` | Другий, неімпортований варіант екрана відновлення; робочий сценарій використовує `POST /auth/forgot-password` і одноразовий reset token |
 
-Axios має жорстко заданий base URL `http://localhost:8080/api`; Vite proxy або конфігурації URL для іншого середовища немає. `AuthContext` визначає `isAuth` за наявністю токена, без перевірки терміну дії чи відповіді сервера. `tsconfig.json` має `strict: false`; команда `vite build` сама не запускає `tsc`, тому обидві перевірки виконувалися окремо.
+Axios бере base URL із `VITE_API_URL` із fallback на `http://localhost:8080/api`; авторизація працює через HttpOnly cookies і `/users/me`. `tsconfig.json` має `strict: false`; команда `vite build` сама не запускає `tsc`, тому обидві перевірки виконуються окремо.
 
 ## 5. Локальний стан і перевірки
 
@@ -131,6 +139,8 @@ Axios має жорстко заданий base URL `http://localhost:8080/api`;
 Зелена збірка й context test **не** доводять, що всі функції API або непідключені екрани працюють. У проєкті немає змістовних інтеграційних API тестів і frontend тестів.
 
 Пізніший тестовий сценарій через живий API підтвердив реєстрацію, вхід, створення списку, додавання фільму, оцінку й відгук. Чотири операції видалення повернули **500**: CUSTOM елемент, системний елемент, оцінка й відгук. Точні результати та очищення тестових даних — у [API_AUDIT.md](API_AUDIT.md).
+
+Оновлення 17.10.2026: після цього аудиту транзакційні DELETE виправлені; `scripts/verify-api.ps1` і MySQL інтеграційні тести перевіряють реєстрацію → список → оцінку → огляд → редагування → видалення. Додані V5–V20, cookie auth, локалізовані маршрути, профілі, соціальні функції, повідомлення, HQ, адмін-аудит, модерація коментарів і журнал.
 
 ## 6. Конкретні проблеми та межі поточного стану
 
