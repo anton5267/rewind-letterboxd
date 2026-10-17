@@ -30,4 +30,10 @@
 .status { margin: 36px 0; }
 .status button { margin-left: 8px; }
 @media (max-width: 900px) { .movieRow { grid-template-columns: repeat(6, minmax(150px, 1fr)); } }
-@media (max-width: 680px) { .page { padding: 130px 16px 36px; } .hero { padding-top: 20px; } .grid { grid-template-columns: 1fr; } .movieRow { grid-template-columns: repeat(6, minmax(135px, 1fr)); } }
+@media (max-width: 680px) {
+  .page { padding: 130px 16px 36px; }
+  .hero { padding-top: 20px; }
+  .grid { grid-template-columns: 1fr; }
+  .movieRow { display: flex; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; }
+  .movieCard { flex: 0 0 135px; }
+}

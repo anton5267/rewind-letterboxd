@@ -11,8 +11,8 @@
 | Етап | Стан | Що вже є | Що тримає етап відкритим |
 | --- | --- | --- | --- |
 | 1. Основа й дизайн | `[~]` | Git, секрети, карта проєкту, CI | Editor-доступ до Figma, ротація старого TMDB-ключа, точна UI-звірка |
-| 2. Стабільний локальний продукт | `[~]` | API, MySQL, Flyway, DELETE-виправлення, інтеграційні тести, локальний Compose runtime, автоматизований основний browser-flow | контракти всіх API |
-| 3. Інтерфейс і акаунт | `[~]` | локалізовані маршрути, cookie auth, reset, профіль і списки | повна локалізація, responsive/a11y-аудит, Figma-візуал |
+| 2. Стабільний локальний продукт | `[~]` | API, MySQL, Flyway, DELETE-виправлення, інтеграційні тести, локальний Compose runtime, automated core/public/guard browser-flow | контракти всіх API |
+| 3. Інтерфейс і акаунт | `[~]` | локалізовані маршрути, cookie auth, reset, профіль і списки, mobile overflow smoke для public screens | повна локалізація, responsive/a11y-аудит, Figma-візуал |
 | 4. Фільми й пошук | `[~]` | home, каталог, фільтри, деталка, персоналії, рекомендації | TMDB import/update, external IDs, повна якість каталогу, Figma-звірка |
 | 5. Особисті дії та списки | `[~]` | watched/watchlist/favorites, ratings, reviews, comments, public lists, automated core flow | повні browser-регресії, фінальний UX профілю та списків |
 | 6. Спільнота | `[~]` | follows, likes, activity, tags, notifications/SSE, messages, HQ | browser-регресії й окремий тест розриву SSE |

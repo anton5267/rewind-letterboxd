@@ -10,7 +10,7 @@
 @media (max-width: 720px) {
   .footer { padding: 28px 16px; }
   .top { flex-wrap: wrap; gap: 14px; }
-  .nav { position: static; transform: none; }
+  .nav { position: static; transform: none; width: 100%; flex-wrap: wrap; justify-content: center; gap: 12px; }
 }
 
 /* TOP */
