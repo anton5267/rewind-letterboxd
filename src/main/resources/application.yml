@@ -52,6 +52,11 @@ management:
         enabled: true
 
 app:
+  newsletter:
+    delivery-interval-ms: ${NEWSLETTER_DELIVERY_INTERVAL_MS:30000}
+    delivery-batch-size: ${NEWSLETTER_DELIVERY_BATCH_SIZE:50}
+    max-attempts: ${NEWSLETTER_MAX_ATTEMPTS:5}
+    retry-delay-seconds: ${NEWSLETTER_RETRY_DELAY_SECONDS:300}
   tmdb:
     enabled: ${TMDB_ENABLED:false}
     api-key: ${TMDB_API_KEY:}

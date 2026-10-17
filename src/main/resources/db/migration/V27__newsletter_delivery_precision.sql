@@ -1,0 +1,2 @@
+ALTER TABLE newsletter_deliveries
+    MODIFY COLUMN available_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6);

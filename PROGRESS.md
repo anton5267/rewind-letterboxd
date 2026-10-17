@@ -2,7 +2,7 @@
 
 Це робочий журнал для [повного плану розвитку](PLAN.md) і ТЗ. Оновлювати після **кожного перевіреного зрізу**: ставити `[x]` тільки коли є код, тест і відповідний наскрізний сценарій; `[ ]` означає відкриту роботу. Часткова реалізація зазначена в примітках і не робить етап завершеним.
 
-Останнє оновлення: **17.10.2026**. Вихідна точка Git: `bf6507f`; зафіксовані зрізи охоплюють auth, каталог, профілі, списки, соціальні модулі, журнал, адмінку, rate limit/cache, health/metrics/backup, V22 індекси/N+1 (`965a610`), browser security headers/accessibility (`377cef1`), social/XSS/SQLi smoke (`e6532a0`), локальний load smoke (`8540405`), SSE reconnect (`66e2250`), backend security smoke (`e62a56`), admin browser smoke (`d7fdc99`), keyboard smoke (`0425783`), non-root API/розширений accessibility audit (`7b65a95`), production Compose overlay/secure profile (`22cc44a`), WCAG axe audit (`414234c`) і контрольований TMDB sync (`b6d5de2`). Поточні зрізи додають видалення кастомних списків, V24 podcast audio/newsletter, V25 newsletter subscriptions/delivery, hardening Redis cache/frontend dependencies, admin create/read/unread/delete notifications, notification filters/bulk actions, moderation queue filters/search/bulk hide, розширену authorization smoke, актуальну ER-діаграму зі schema verifier і production deployment runbook/config validator. `AdminListIntegrationTests`, `JournalArticleIntegrationTests`, `AdminCommunicationIntegrationTests`, `AdminModerationQueueIntegrationTests`, `NewsletterIntegrationTests`, TypeScript/Vite build, Docker API/Web з Flyway 25, Redis cache verifier, security smoke і admin browser smoke пройдені; повний Maven suite після V25 ще треба прогнати перед наступним релізним зрізом; пакетні коміти `c30720f`, `e91f554`, `ee20045`, `1a3a68e`, `8794507`, `06407b6`, `7d052c0` і `e619e5a` вже відправлені в GitHub.
+Останнє оновлення: **17.10.2026**. Вихідна точка Git: `bf6507f`; зафіксовані зрізи охоплюють auth, каталог, профілі, списки, соціальні модулі, журнал, адмінку, rate limit/cache, health/metrics/backup, V22 індекси/N+1 (`965a610`), browser security headers/accessibility (`377cef1`), social/XSS/SQLi smoke (`e6532a0`), локальний load smoke (`8540405`), SSE reconnect (`66e2250`), backend security smoke (`e62a56`), admin browser smoke (`d7fdc99`), keyboard smoke (`0425783`), non-root API/розширений accessibility audit (`7b65a95`), production Compose overlay/secure profile (`22cc44a`), WCAG axe audit (`414234c`) і контрольований TMDB sync (`b6d5de2`). Поточні зрізи додають видалення кастомних списків, V24 podcast audio/newsletter, V25 newsletter subscriptions, V26/V27 newsletter outbox з ідемпотентністю/повторними спробами, hardening Redis cache/frontend dependencies, admin create/read/unread/delete notifications, notification filters/bulk actions, moderation queue filters/search/bulk hide, розширену authorization smoke, актуальну ER-діаграму зі schema verifier і production deployment runbook/config validator. `AdminListIntegrationTests`, `JournalArticleIntegrationTests`, `AdminCommunicationIntegrationTests`, `AdminModerationQueueIntegrationTests`, `NewsletterIntegrationTests`, TypeScript/Vite build, Docker API/Web з Flyway 27, Redis cache verifier, security smoke і admin browser smoke пройдені; повний Maven suite після V27 також пройшов: **37 тестів, 0 failures/errors**; пакетні коміти `c30720f`, `e91f554`, `ee20045`, `1a3a68e`, `8794507`, `06407b6`, `7d052c0` і `e619e5a` вже відправлені в GitHub.
 
 ## 1. Основа проєкту й дизайн — в роботі
 
@@ -19,7 +19,7 @@
 - [x] Публічний профіль більше не розкриває email; публічні деталі фільму доступні гостю.
 - [x] Публічний профіль показує сторінкові watched, watchlist і favorites через `GET /api/users/{id}/collections/{collection}`. Маршрут відкритий тільки на читання; HTTP-сценарій підтверджує його доступність без cookie.
 - [x] Обмежено page/size для основних endpoint'ів; додано базові відповіді 400/404/409.
-- [x] `CoreFilmFlowIntegrationTests`, `PasswordResetIntegrationTests` і `RefreshSessionIntegrationTests` пройшли з реальною MySQL; `scripts/verify-api.ps1` перевірив cookie/CSRF, список, оцінку, створення/редагування/видалення огляду та refresh-сесії.
+- [x] `CoreFilmFlowIntegrationTests`, `PasswordResetIntegrationTests` і `RefreshSessionIntegrationTests` пройшли з реальною MySQL; `scripts/verify-api.ps1` перевірив cookie/CSRF, список, оцінку, створення/редагування/видалення огляду та refresh-сесію. Після V27 повний Maven suite також підтвердив 37 тестів без failures/errors.
 - [x] Додано базовий GitHub Actions CI для MySQL, Maven, TypeScript і Vite; локально виконано ті самі збірки.
 - [x] Dev-профіль на чистій MySQL сам застосував міграції й імпортував 50 фільмів.
 - [x] Перевірити локальний `docker compose up -d` після переходу на ECR-образи та Maven mirror. MySQL і Redis healthy, API `/actuator/health` повернув 200, Web повернув 200; API image зібрався з `BUILD SUCCESS`. Повністю чисту машину та production-параметри ще не заявляємо.
@@ -110,8 +110,9 @@
 
 ## 7. Журнал і службові розділи — в роботі
 
-- [x] V25 додає приватну підписку користувача на newsletter (`GET/PUT /api/newsletter/subscription`) без повернення email у відповіді. Адмін може надіслати опубліковану статтю категорії Newsletter/Бюлетень через `POST /api/admin/journal/articles/{id}/newsletter`; одержувачами стають лише активні opt-in користувачі, дія пишеться в audit log.
-- [x] `NewsletterIntegrationTests` перевіряє opt-in/opt-out і відправку тільки підписаному користувачу; Docker API успішно застосував Flyway V25. `scripts/verify-api.ps1` доповнений HTTP-перевіркою стану підписки.
+- [x] V25 додає приватну підписку користувача на newsletter (`GET/PUT /api/newsletter/subscription`) без повернення email у відповіді. Адмінський endpoint queue-ить опубліковану статтю категорії Newsletter/Бюлетень; одержувачами стають лише активні opt-in користувачі, дія пишеться в audit log.
+- [x] V26/V27 додають `newsletter_deliveries`: унікальність article/user, PENDING/SENDING/SENT/FAILED/CANCELLED, обмежені повторні спроби й scheduled worker. `GET /api/admin/journal/articles/{id}/newsletter` повертає агреговані статуси, повторне queue-натискання ідемпотентне; admin UI має кнопку та лічильники queue/sent/failed.
+- [x] `NewsletterIntegrationTests` перевіряє opt-in/opt-out, доставку тільки підписаному користувачу й ідемпотентність повторного queue; Docker API застосував Flyway V27. `scripts/verify-api.ps1` доповнений HTTP-перевіркою стану підписки.
 - [x] Профіль React отримав двомовний перемикач newsletter, підключений до V25 API; TypeScript і production Vite build пройшли.
 
 - [x] V20: мовні статті журналу `uk/en`, публічні list/detail endpoint-и з fallback поведінкою через language, адмінське створення/редагування/публікація з аудитом, UI `/uk|en/journal` і базовий редактор у `/uk|en/admin`; `JournalArticleIntegrationTests` та frontend build пройдені.
@@ -120,7 +121,7 @@
 - [x] Архівні місяці стали навігацією: `GET /api/journal/articles?year=...&month=...` фільтрує публікації з мовним fallback, а UI має кнопку очищення фільтра; інтеграційний тест перевіряє поточний місяць.
 - [x] Повторний повний `mvnw -q test` після архіву пройшов: 31 тест, 0 failures/errors; frontend `tsc --noEmit` і production build також пройдені.
 - [x] Додано локалізовані службові маршрути `/help`, `/contact`, `/rules`, `/privacy`, `/film-data`, `/delete-account` і робочі footer-посилання; TypeScript та production build пройдені.
-- [x] V24 додає `journal_articles.audio_url`, адмінський URL аудіо, podcast-плеєр на сторінці статті та локалізовані Podcasts/Newsletter фільтри. Повний backend (`mvnw -q test`), `JournalArticleIntegrationTests`, TypeScript/Vite build і Docker API зі схемою Flyway 24 пройдені. Email-розсилка бюлетеня поки не входить у цей зріз.
+- [x] V24 додає `journal_articles.audio_url`, адмінський URL аудіо, podcast-плеєр на сторінці статті та локалізовані Podcasts/Newsletter фільтри. Повний backend (`mvnw -q test`), `JournalArticleIntegrationTests`, TypeScript/Vite build і Docker API зі схемою Flyway 24 пройдені; відправку бюлетеня винесено в окремі V25–V27 зрізи.
 - [x] Допомога, контакти, правила, приватність і дані фільмів мають локалізовані службові маршрути та footer-посилання.
 - [x] Видалення акаунта стало реальним захищеним flow: DELETE `/api/profile/me` вимагає поточний пароль, відкликає refresh-сесії й каскадно видаляє дані; UI додає пароль, попередження та вихід. `AccountDeletionIntegrationTests` перевірив неправильний/правильний пароль і відсутність користувача, frontend build пройшов.
 - [x] Додано About/Credits, офіційний логотип TMDB і потрібне повідомлення про джерело; прибрано хибний підпис IMDb у футері. Точний дизайн ще залежить від Figma.
@@ -172,7 +173,7 @@
 ## 10. Захист і презентація — в роботі
 
 - [ ] Звірка з затвердженими Figma-фреймами та UX-сценаріями, дизайн-система, прототипи.
-- [x] Створено актуальну migration-backed ER-діаграму в `ER_DIAGRAM.md` для 32 прикладних таблиць і self-reference `similar_movies`; `scripts/verify-er-schema.ps1` на Compose перевірив 32 таблиці та 46 foreign-key relationships.
+- [x] Створено актуальну migration-backed ER-діаграму в `ER_DIAGRAM.md` для 33 прикладних таблиць і self-reference `similar_movies`; `scripts/verify-er-schema.ps1` на Compose перевіряє newsletter outbox та foreign-key relationships.
 - [ ] Демодані, фінальна відеопрезентація й точна Figma-звірка ще відкриті.
 
 ## Негайний наступний крок

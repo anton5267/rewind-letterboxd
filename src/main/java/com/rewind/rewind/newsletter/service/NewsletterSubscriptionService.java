@@ -1,7 +1,5 @@
 package com.rewind.rewind.newsletter.service;
 
-import com.rewind.rewind.journal.entity.JournalArticle;
-import com.rewind.rewind.journal.repo.JournalArticleRepository;
 import com.rewind.rewind.newsletter.dto.NewsletterSendResponse;
 import com.rewind.rewind.newsletter.dto.NewsletterSubscriptionResponse;
 import com.rewind.rewind.newsletter.entity.NewsletterSubscription;
@@ -10,8 +8,6 @@ import com.rewind.rewind.user.entity.User;
 import com.rewind.rewind.user.repo.UserRepository;
 import java.time.Instant;
 import org.springframework.http.HttpStatus;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -20,17 +16,14 @@ import org.springframework.web.server.ResponseStatusException;
 public class NewsletterSubscriptionService {
     private final NewsletterSubscriptionRepository subscriptions;
     private final UserRepository users;
-    private final JournalArticleRepository articles;
-    private final JavaMailSender mail;
+    private final NewsletterDeliveryService delivery;
 
     public NewsletterSubscriptionService(NewsletterSubscriptionRepository subscriptions,
                                          UserRepository users,
-                                         JournalArticleRepository articles,
-                                         JavaMailSender mail) {
+                                         NewsletterDeliveryService delivery) {
         this.subscriptions = subscriptions;
         this.users = users;
-        this.articles = articles;
-        this.mail = mail;
+        this.delivery = delivery;
     }
 
     @Transactional(readOnly = true)
@@ -56,27 +49,7 @@ public class NewsletterSubscriptionService {
 
     @Transactional
     public NewsletterSendResponse sendPublishedArticle(Long articleId) {
-        JournalArticle article = articles.findById(articleId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Article not found"));
-        if (!Boolean.TRUE.equals(article.getIsPublished()) || !isNewsletter(article.getCategory())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Only published Newsletter articles can be sent");
-        }
-        int sent = 0;
-        for (NewsletterSubscription subscription : subscriptions.findAllBySubscribedTrueAndUserIsActiveTrue()) {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(subscription.getUser().getEmail());
-            message.setSubject("[Rewind] " + article.getTitle());
-            message.setText(article.getContent() + "\n\nOpen the Rewind journal to read more and manage your newsletter preferences.");
-            mail.send(message);
-            sent++;
-        }
-        return new NewsletterSendResponse(article.getId(), sent);
-    }
-
-    private boolean isNewsletter(String category) {
-        if (category == null) return false;
-        return category.trim().equalsIgnoreCase("newsletter") || category.trim().equalsIgnoreCase("бюлетень");
+        return delivery.queuePublishedArticle(articleId);
     }
 
     private User user(String email) {

@@ -4,12 +4,15 @@ import com.rewind.rewind.journal.dto.AdminJournalArticleRequest;
 import com.rewind.rewind.journal.dto.JournalArticleResponse;
 import com.rewind.rewind.journal.service.JournalArticleService;
 import com.rewind.rewind.newsletter.service.NewsletterSubscriptionService;
+import com.rewind.rewind.newsletter.service.NewsletterDeliveryWorker;
+import com.rewind.rewind.newsletter.service.NewsletterDeliveryService;
 import com.rewind.rewind.user.dto.UserRegisterRequest;
 import com.rewind.rewind.user.repo.UserRepository;
 import com.rewind.rewind.user.service.UserService;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.persistence.EntityManager;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -27,6 +30,9 @@ class NewsletterIntegrationTests {
     @Autowired UserRepository userRepository;
     @Autowired JournalArticleService articles;
     @Autowired NewsletterSubscriptionService newsletter;
+    @Autowired NewsletterDeliveryWorker deliveryWorker;
+    @Autowired NewsletterDeliveryService deliveryService;
+    @Autowired EntityManager entityManager;
     @MockitoBean JavaMailSender mail;
 
     @Test
@@ -60,10 +66,15 @@ class NewsletterIntegrationTests {
         var result = newsletter.sendPublishedArticle(article.id());
 
         assertEquals(1, result.recipients());
+        entityManager.flush();
+        assertEquals(1, deliveryWorker.processPending());
         var message = org.mockito.ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(mail, times(1)).send(message.capture());
         assertArrayEquals(new String[]{subscribedEmail}, message.getValue().getTo());
         assertTrue(message.getValue().getText().contains("New films and reviews"));
+        assertEquals(1, deliveryService.status(article.id()).sent());
+        assertEquals(0, newsletter.sendPublishedArticle(article.id()).recipients(),
+                "Re-queueing an already queued article must be idempotent");
     }
 
     private void register(String username, String email) {
