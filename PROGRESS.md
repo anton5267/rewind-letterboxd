@@ -2,7 +2,7 @@
 
 Це робочий журнал для [повного плану розвитку](PLAN.md) і ТЗ. Оновлювати після **кожного перевіреного зрізу**: ставити `[x]` тільки коли є код, тест і відповідний наскрізний сценарій; `[ ]` означає відкриту роботу. Часткова реалізація зазначена в примітках і не робить етап завершеним.
 
-Останнє оновлення: **17.10.2026**. Вихідна точка Git: `bf6507f`; зафіксовані зрізи охоплюють auth, каталог, профілі, списки, соціальні модулі, журнал, адмінку, rate limit/cache, health/metrics/backup, V22 індекси/N+1 (`965a610`), browser security headers/accessibility (`377cef1`), social/XSS/SQLi smoke (`e6532a0`) і локальний load smoke (`8540405`). Наступний зріз — admin browser regressions, SSE reconnect і backend security checks.
+Останнє оновлення: **17.10.2026**. Вихідна точка Git: `bf6507f`; зафіксовані зрізи охоплюють auth, каталог, профілі, списки, соціальні модулі, журнал, адмінку, rate limit/cache, health/metrics/backup, V22 індекси/N+1 (`965a610`), browser security headers/accessibility (`377cef1`), social/XSS/SQLi smoke (`e6532a0`), локальний load smoke (`8540405`) і SSE reconnect (`поточний зріз`). Наступний зріз — admin browser regressions і backend security checks.
 
 ## 1. Основа проєкту й дизайн — в роботі
 
@@ -94,11 +94,11 @@
 - [x] Активність: Flyway V12 зберігає події follow, rating, review і створення публічного списку. Доступні публічна сторінкова історія профілю та авторизована стрічка підписок; публічний профіль показує останні події. MySQL-тест, HTTP-сценарій, TypeScript і production build пройшли.
 - [x] Популярні рецензенти: `GET /api/users/popular-reviewers` агрегує likes лише видимих оглядів одним group-by запитом, після чого завантажує публічні профілі пакетно. Блок головної веде на профілі; MySQL-тест, HTTP-сценарій, TypeScript і production build пройшли.
 - [x] Теги й добірки: Flyway V13 додає нормалізовані `tags`/`list_tags`; автор списку задає до 10 тегів, публічний API фільтрує списки за slug і повертає популярні теги. Хмара тегів на головній веде до локалізованого каталогу добірок. MySQL-тест, HTTP-сценарій, TypeScript і production build пройшли.
-- [x] Збережені сповіщення для нових підписок і вподобань оглядів: Flyway V14, сторінкова видача, unread/read/read-all, захист за recipient, локалізований `/notifications` і SSE-потік з повторним підключенням у клієнті. MySQL-тести та `scripts/verify-api.ps1` перевірили FOLLOW/read-all і REVIEW_LIKED; окремий тест фактичного розриву SSE ще не доданий.
+- [x] Збережені сповіщення для нових підписок і вподобань оглядів: Flyway V14, сторінкова видача, unread/read/read-all, захист за recipient, локалізований `/notifications` і SSE-потік з повторним підключенням у клієнті. MySQL-тести та `scripts/verify-api.ps1` перевірили FOLLOW/read-all і REVIEW_LIKED; Playwright-мок розриву EventSource перевірив close → retry → нове підключення.
 - [x] Налаштування отримання: Flyway V15 і захищений GET/PUT для follow/review-like подій; генерація подій перевіряє прапорці, UI дозволяє їх змінити. HTTP та MySQL перевірили значення за замовчуванням і оновлення.
 - [x] Приватні direct-діалоги: Flyway V16, унікальна пара користувачів, сторінкові повідомлення, mark-read і серверна перевірка членства; `/uk|en/messages` та перехід із публічного профілю. MySQL-тест і `scripts/verify-api.ps1` перевірили створення, повторне відкриття, надсилання, читання та відмову outsider.
 - [x] HQ-бейдж без платежів: Flyway V17 додає `users.is_hq`, admin-only `PUT /api/admin/users/{id}/hq`, публічний профіль повертає лише прапорець, UI показує HQ badge. MySQL-тест перевіряє призначення й відкликання; endpoint захищений загальним `/api/admin/**` правилом.
-- [x] Browser social smoke: два реальні акаунти проходять register/login → follow public profile → unfollow state → logout/login → отримання follow notification. Повний Playwright набір після цього зрізу проходить **7/7**.
+- [x] Browser social smoke: два реальні акаунти проходять register/login → follow public profile → unfollow state → logout/login → отримання follow notification. Повний Playwright набір після цього зрізу проходить **8/8**.
 
 ## 7. Журнал і службові розділи — в роботі
 
@@ -138,7 +138,7 @@
 - [x] Compose runtime перевірив Redis health (`redis-cli ping` → `PONG`) і запуск API з Redis service; `scripts/verify-cache.ps1` підтвердив гостьову деталку HTTP 200, Redis key `movieDetails::50`, TTL 599 секунд, `missDelta=1` і `hitDelta=3`. Під час перевірки виправлено JSON-серіалізацію кешованого `MovieDetailsResponse`, яка повертала 500 на другому запиті.
 - [x] Перевірено індекси й N+1 для основних read paths: Flyway V22 додав складені індекси для lists/list_items/reviews/ratings/movie_actors; `@EntityGraph` і fetch-план для movie details завантажують пов'язані дані одним запитом. На реальному MySQL `EXPLAIN` вибрав `idx_reviews_movie_visible_created`, `idx_lists_public_type_updated`, `idx_list_items_list_position`, `idx_ratings_user_updated` і `idx_movie_actors_movie_cast`; чистий Compose застосував V22, API health 200, details 200, Redis cache і 3 Playwright сценарії пройшли.
 - [x] Додано browser security headers у Nginx (`CSP`, `nosniff`, `SAMEORIGIN`, `Referrer-Policy`, `Permissions-Policy`). Новий Playwright accessibility smoke перевіряє 7 публічних маршрутів на named controls, один видимий `h1` і mobile overflow; окремо перевіряє всі заголовки.
-- [x] Security browser smoke перевіряє React escaping для review payload із `<img onerror>`, відсутність діалогу/XSS і пошук із SQL-подібним введенням без 500/alert; повний набір проходить **7/7**.
+- [x] Security browser smoke перевіряє React escaping для review payload із `<img onerror>`, відсутність діалогу/XSS і пошук із SQL-подібним введенням без 500/alert; повний набір проходить **8/8**.
 - [x] Додано `scripts/verify-load.ps1`: 40 паралельних guest-запитів до каталогу й деталки фільму на Compose повернули 2xx за 0.24 секунди; це smoke-перевірка локального runtime, не production load test.
 - [~] Залишаються глибші SQLi/XSS і права, навантаження, повне відновлення у тимчасову БД та admin/social browser-регресії.
 - [~] Базову доступність, mobile overflow і browser security headers перевірено; залишаються повний keyboard/axe аудит, SQLi/XSS, права, навантаження та admin/social browser-регресії.
@@ -151,7 +151,7 @@
 
 ## Негайний наступний крок
 
-1. Розширити Playwright перевірками admin сценаріїв і SSE reconnect.
+1. Розширити Playwright перевірками admin сценаріїв.
 2. Додати backend security/load checks та зберегти сценарій відновлення у тимчасову БД.
 3. Реалізувати контрольований TMDB update/import із зовнішніми ID та перевіркою якості каталогу.
 4. Після Editor-доступу зафіксувати точні Figma-фрейми, tokens і assets; до цього не підміняти макети припущеннями.
