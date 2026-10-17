@@ -1,0 +1,59 @@
+package com.rewind.rewind.social.service;
+
+import com.rewind.rewind.review.entity.Review;
+import com.rewind.rewind.review.repo.ReviewRepository;
+import com.rewind.rewind.social.dto.ReviewLikeResponse;
+import com.rewind.rewind.social.entity.ReviewLike;
+import com.rewind.rewind.social.repo.ReviewLikeRepository;
+import com.rewind.rewind.user.repo.UserRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class ReviewLikeService {
+    private final ReviewLikeRepository likes;
+    private final ReviewRepository reviews;
+    private final UserRepository users;
+
+    public ReviewLikeService(ReviewLikeRepository likes, ReviewRepository reviews, UserRepository users) {
+        this.likes = likes;
+        this.reviews = reviews;
+        this.users = users;
+    }
+
+    @Transactional
+    public void like(String email, Long reviewId) {
+        var user = users.findByEmail(email).orElseThrow();
+        Review review = visibleReview(reviewId);
+        if (likes.existsByReviewIdAndUserId(reviewId, user.getId())) return;
+        ReviewLike like = new ReviewLike();
+        like.setReview(review);
+        like.setUser(user);
+        likes.save(like);
+    }
+
+    @Transactional
+    public void unlike(String email, Long reviewId) {
+        var user = users.findByEmail(email).orElseThrow();
+        likes.deleteByReviewIdAndUserId(reviewId, user.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public long count(Long reviewId) {
+        visibleReview(reviewId);
+        return likes.countByReviewId(reviewId);
+    }
+
+    @Transactional(readOnly = true)
+    public ReviewLikeResponse status(String email, Long reviewId) {
+        var user = users.findByEmail(email).orElseThrow();
+        visibleReview(reviewId);
+        return new ReviewLikeResponse(likes.existsByReviewIdAndUserId(reviewId, user.getId()), likes.countByReviewId(reviewId));
+    }
+
+    private Review visibleReview(Long reviewId) {
+        Review review = reviews.findById(reviewId).orElseThrow();
+        if (Boolean.TRUE.equals(review.getIsHidden())) throw new IllegalArgumentException("Review not found");
+        return review;
+    }
+}

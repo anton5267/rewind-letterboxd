@@ -127,6 +127,14 @@ Write-Output 'rating history'
 $review = Send 'POST' '/movies/1/reviews' @{ content = 'Verification review'; rating = 5 }
 Expect $review.StatusCode 200 'create review'
 $reviewId = ($review.Content | ConvertFrom-Json).id
+$reviewLike = Send 'POST' "/reviews/$reviewId/likes"
+Expect $reviewLike.StatusCode 204 'like review'
+$reviewLikeStatus = (Send 'GET' "/reviews/$reviewId/like-status").Content | ConvertFrom-Json
+if (-not $reviewLikeStatus.liked -or $reviewLikeStatus.likes -ne 1) { throw 'Review like status is incorrect' }
+$publicLikeCount = Invoke-WebRequest -Method GET -Uri "$BaseUrl/api/reviews/$reviewId/likes" -UseBasicParsing
+if ([int]($publicLikeCount.Content | ConvertFrom-Json) -ne 1) { throw 'Public review like count is incorrect' }
+Write-Output 'review likes'
+Expect (Send 'DELETE' "/reviews/$reviewId/likes").StatusCode 204 'unlike review'
 $reviewHistory = (Send 'GET' '/profile/me/reviews?size=20').Content | ConvertFrom-Json
 if ($reviewHistory.content.reviewId -notcontains $reviewId) { throw 'Review did not appear in profile history' }
 Write-Output 'review history'
