@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import api from "../api/axios";
 import type { MoviePage } from "../api/search.api";
+import { follow, getFollowers, getFollowing, getFollowStatus, type FollowStatus, type NetworkPage, unfollow } from "../api/social.api";
+import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
 
 interface Profile {
@@ -19,6 +21,7 @@ type PublicCollection = "watched" | "watchlist" | "favorites";
 export default function PublicProfile() {
   const { id } = useParams();
   const { path, t, lang } = useLocale();
+  const { isAuth, user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState(false);
   const [collectionKind, setCollectionKind] = useState<PublicCollection>("watched");
@@ -26,6 +29,12 @@ export default function PublicProfile() {
   const [collectionPage, setCollectionPage] = useState(0);
   const [collectionLoading, setCollectionLoading] = useState(false);
   const [collectionError, setCollectionError] = useState(false);
+  const [followers, setFollowers] = useState<NetworkPage | null>(null);
+  const [following, setFollowing] = useState<NetworkPage | null>(null);
+  const [networkError, setNetworkError] = useState(false);
+  const [followStatus, setFollowStatus] = useState<FollowStatus | null>(null);
+  const [followBusy, setFollowBusy] = useState(false);
+  const [followError, setFollowError] = useState(false);
 
   useEffect(() => {
     setProfile(null); setError(false);
@@ -44,9 +53,51 @@ export default function PublicProfile() {
     return () => { current = false; };
   }, [id, lang, collectionKind, collectionPage]);
 
+  useEffect(() => {
+    if (!id) return;
+    let current = true;
+    setNetworkError(false);
+    Promise.all([getFollowers(id), getFollowing(id)])
+      .then(([followersResponse, followingResponse]) => {
+        if (!current) return;
+        setFollowers(followersResponse.data);
+        setFollowing(followingResponse.data);
+      })
+      .catch(() => { if (current) setNetworkError(true); });
+    return () => { current = false; };
+  }, [id, lang]);
+
+  useEffect(() => {
+    if (!id || !isAuth || user?.id === Number(id)) {
+      setFollowStatus(null);
+      return;
+    }
+    let current = true;
+    getFollowStatus(id).then(({ data }) => { if (current) setFollowStatus(data); })
+      .catch(() => { if (current) setFollowStatus(null); });
+    return () => { current = false; };
+  }, [id, isAuth, user?.id]);
+
   const chooseCollection = (kind: PublicCollection) => {
     setCollectionKind(kind);
     setCollectionPage(0);
+  };
+
+  const changeFollow = async () => {
+    if (!id || !followStatus) return;
+    setFollowBusy(true);
+    setFollowError(false);
+    try {
+      if (followStatus.following) await unfollow(id); else await follow(id);
+      const [{ data: status }, { data: followersData }, { data: followingData }] = await Promise.all([getFollowStatus(id), getFollowers(id), getFollowing(id)]);
+      setFollowStatus(status);
+      setFollowers(followersData);
+      setFollowing(followingData);
+    } catch {
+      setFollowError(true);
+    } finally {
+      setFollowBusy(false);
+    }
   };
 
   if (error) return <main style={{ padding: "110px 5% 40px" }}><p role="alert">{t("loadPublicProfileError")}</p></main>;
@@ -54,6 +105,8 @@ export default function PublicProfile() {
   return <main style={{ background: "#151515", color: "white", minHeight: "70vh", padding: "110px 5% 40px" }}>
     {profile.avatarUrl && <img src={profile.avatarUrl} alt="" width="96" height="96" />}
     <h1>{profile.displayName}</h1><p>@{profile.username}</p>
+    {isAuth && user?.id !== profile.id && followStatus && <button type="button" disabled={followBusy} onClick={() => void changeFollow()}>{followStatus.following ? t("unfollow") : t("follow")}</button>}
+    {followError && <p role="alert">{t("followError")}</p>}
     <section><h2>{t("profileStats")}</h2><p>{t("watched")}: {profile.stats.watched} · {t("watchlist")}: {profile.stats.watchlist} · {t("favorite")}: {profile.stats.favorites} · {t("reviews")}: {profile.stats.reviews} · {t("ratings")}: {profile.stats.ratings}</p></section>
     <section>
       <h2>{t("profileCollections")}</h2>
@@ -70,6 +123,15 @@ export default function PublicProfile() {
           <button type="button" disabled={collectionPage + 1 >= collection.totalPages} onClick={() => setCollectionPage(page => page + 1)}>{t("next")}</button>
         </nav>}
       </>}
+    </section>
+    <section>
+      <h2>{t("followers")}</h2>
+      {networkError && <p role="alert">{t("loadNetworkError")}</p>}
+      {!networkError && followers && (followers.content.length === 0 ? <p>{t("noFollowers")}</p> : <ul>{followers.content.map(networkUser => <li key={networkUser.id}><Link to={path(`/users/${networkUser.id}`)}>{networkUser.displayName || networkUser.username}</Link></li>)}</ul>)}
+    </section>
+    <section>
+      <h2>{t("following")}</h2>
+      {!networkError && following && (following.content.length === 0 ? <p>{t("noFollowing")}</p> : <ul>{following.content.map(networkUser => <li key={networkUser.id}><Link to={path(`/users/${networkUser.id}`)}>{networkUser.displayName || networkUser.username}</Link></li>)}</ul>)}
     </section>
     <section><h2>{t("publicLists")}</h2>{profile.lists.length === 0 ? <p>{t("noPublicLists")}</p> : <ul>{profile.lists.map(list => <li key={list.id}><Link to={path(`/lists/public/${list.id}`)}>{list.name}</Link>{list.description && ` — ${list.description}`}</li>)}</ul>}</section>
     <section><h2>{t("recentReviews")}</h2>{profile.recentReviews.length === 0 ? <p>{t("noReviews")}</p> : <ul>{profile.recentReviews.map(review => <li key={review.id}><Link to={path(`/films/${review.movieId}`)}>{review.movieTitle}</Link>{review.rating !== null && ` · ${review.rating}/5`}: {review.content}</li>)}</ul>}</section>

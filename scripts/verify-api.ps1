@@ -3,6 +3,7 @@ param([string]$BaseUrl = 'http://localhost:8080')
 $ErrorActionPreference = 'Stop'
 $suffix = [guid]::NewGuid().ToString('N').Substring(0, 12)
 $email = "verify-$suffix@example.invalid"
+$networkEmail = "network-$suffix@example.invalid"
 $password = 'VerificationPass123!'
 $headers = @{}
 $webSession = New-Object Microsoft.PowerShell.Commands.WebRequestSession
@@ -36,6 +37,9 @@ try {
 $registered = Send 'POST' '/auth/register' @{ username = "verify$suffix"; email = $email; password = $password }
 Expect $registered.StatusCode 200 'register'
 $userId = ($registered.Content | ConvertFrom-Json).id
+$networkUser = Send 'POST' '/auth/register' @{ username = "network$suffix"; email = $networkEmail; password = $password }
+Expect $networkUser.StatusCode 200 'register network user'
+$networkUserId = ($networkUser.Content | ConvertFrom-Json).id
 $publicUser = (Send 'GET' "/users/$userId").Content | ConvertFrom-Json
 if ($null -ne $publicUser.email) { throw 'Public user endpoint exposed email' }
 Write-Output 'public profile omits email'
@@ -75,6 +79,13 @@ Expect (Send 'GET' '/users/me').StatusCode 200 'cookie authentication'
 $myProfile = (Send 'GET' '/profile/me').Content | ConvertFrom-Json
 if ($null -eq $myProfile.stats -or $myProfile.stats.ratings -ne 0 -or $myProfile.stats.reviews -ne 0) { throw 'Profile statistics contract is missing or incorrect' }
 Write-Output 'profile statistics'
+Expect (Send 'POST' "/users/$networkUserId/follow").StatusCode 204 'follow user'
+$followStatus = (Send 'GET' "/users/$networkUserId/follow-status").Content | ConvertFrom-Json
+if (-not $followStatus.following -or $followStatus.followers -ne 1) { throw 'Follow status is incorrect' }
+$publicFollowers = (Invoke-WebRequest -Method GET -Uri "$BaseUrl/api/users/$networkUserId/followers?size=20" -UseBasicParsing).Content | ConvertFrom-Json
+if ($publicFollowers.content.id -notcontains $userId) { throw 'Followers were not publicly readable' }
+Write-Output 'public follow network'
+Expect (Send 'DELETE' "/users/$networkUserId/follow").StatusCode 204 'unfollow user'
 $oldRefresh = ($webSession.Cookies.GetCookies([uri]"$BaseUrl/api/auth/refresh") | Where-Object Name -eq 'rewind_refresh').Value
 Expect (Send 'POST' '/auth/refresh').StatusCode 204 'refresh session'
 $newRefresh = ($webSession.Cookies.GetCookies([uri]"$BaseUrl/api/auth/refresh") | Where-Object Name -eq 'rewind_refresh').Value
