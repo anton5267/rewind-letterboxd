@@ -59,6 +59,14 @@ npm run build
 
 Інтеграційні тести запускають Spring і Flyway на реальній MySQL та перевіряють видалення зі списків, оцінки, огляди, одноразовий токен відновлення й ротацію refresh token. Тестові зміни даних відкочуються. `scripts/verify-api.ps1 -BaseUrl http://localhost:8080` перевіряє реальний HTTP-сценарій, cookie, CSRF, повторне використання refresh token і logout. Скрипт створює тимчасовий обліковий запис: запускайте його на тестовій БД. Compose runtime перевірений локально: MySQL/Redis healthy, API health `200`, Web `200`; `docker compose config --quiet` також проходить.
 
+Перевірка Redis cache hit/miss для гостьової деталки:
+
+```powershell
+./scripts/verify-cache.ps1 -BaseUrl http://127.0.0.1:8081
+```
+
+Скрипт очищає один ключ деталки, виконує два HTTP-запити та перевіряє Redis `keyspace_misses`, `keyspace_hits`, наявність ключа й позитивний TTL. Він не змінює дані MySQL.
+
 Для автоматизованого браузерного сценарію потрібен запущений Compose і встановлений Google Chrome:
 
 ```powershell

@@ -1,13 +1,14 @@
 package com.rewind.rewind.config;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import com.rewind.rewind.movie.dto.MovieDetailsResponse;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
-import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
+import org.springframework.data.redis.serializer.JacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 
 import java.time.Duration;
@@ -16,12 +17,13 @@ import java.time.Duration;
 @EnableCaching
 public class CacheConfig {
     @Bean
-    @ConditionalOnBean(RedisConnectionFactory.class)
+    @ConditionalOnProperty(name = "spring.cache.type", havingValue = "redis")
     RedisCacheManager redisCacheManager(RedisConnectionFactory connectionFactory) {
         RedisCacheConfiguration defaults = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(10))
                 .disableCachingNullValues()
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(GenericJacksonJsonRedisSerializer.builder().build()));
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
+                        new JacksonJsonRedisSerializer<>(MovieDetailsResponse.class)));
         return RedisCacheManager.builder(connectionFactory).cacheDefaults(defaults).build();
     }
 }

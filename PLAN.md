@@ -18,7 +18,7 @@
 | 6. Спільнота | `[~]` | follows, likes, activity, tags, notifications/SSE, messages, HQ | browser-регресії й окремий тест розриву SSE |
 | 7. Журнал і службові сторінки | `[~]` | статті, категорії, archive, fallback, admin editor, help/legal | podcasts/newsletter та повна редакційна локалізація |
 | 8. Адмінка | `[~]` | dashboard, users/HQ, films, moderation, settings, audit, communications | повний CRUD списків/сповіщень і розширена moderation UX |
-| 9. Якість і реліз | `[~]` | rate limit, Redis service/cache profile, metrics, backup/restore scripts, runtime health | cache hit/miss, performance/security/a11y, VPS/HTTPS |
+| 9. Якість і реліз | `[~]` | rate limit, Redis service/cache profile, cache hit/miss, metrics, backup/restore scripts, runtime health | індекси/N+1, performance/security/a11y, VPS/HTTPS |
 | 10. Захист і презентація | `[ ]` | підготовлені README, карта, вимоги та ER-основа | Figma parity, фінальна ER-діаграма, демо і відео |
 
 Детальний чекліст із доказами, тестами та наступними діями ведеться у [PROGRESS.md](PROGRESS.md). Після кожного завершеного зрізу оновлюємо спочатку `PROGRESS.md`, а потім цей короткий статус.
