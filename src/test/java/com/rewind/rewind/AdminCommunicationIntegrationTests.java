@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
 class AdminCommunicationIntegrationTests {
@@ -60,6 +62,11 @@ class AdminCommunicationIntegrationTests {
 
         assertTrue(admin.conversations(0, 100).getContent().stream().anyMatch(row -> row.id().equals(conversation.getId())));
         assertTrue(admin.notifications(0, 100).getContent().stream().anyMatch(row -> row.id().equals(notification.getId())));
+
+        var read = admin.setNotificationRead(firstEmail, notification.getId(), true);
+        assertNotNull(read.readAt());
+        var unread = admin.setNotificationRead(firstEmail, notification.getId(), false);
+        assertNull(unread.readAt());
 
         admin.deleteConversation(firstEmail, conversation.getId());
         admin.deleteNotification(firstEmail, notification.getId());

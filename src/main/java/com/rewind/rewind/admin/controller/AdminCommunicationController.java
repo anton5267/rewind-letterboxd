@@ -33,4 +33,14 @@ public class AdminCommunicationController {
     public void deleteNotification(Authentication auth, @PathVariable Long id) {
         service.deleteNotification(auth.getName(), id);
     }
+
+    @PatchMapping("/notifications/{id}/read")
+    public AdminNotificationResponse setNotificationRead(Authentication auth, @PathVariable Long id) {
+        return service.setNotificationRead(auth.getName(), id, true);
+    }
+
+    @PatchMapping("/notifications/{id}/unread")
+    public AdminNotificationResponse setNotificationUnread(Authentication auth, @PathVariable Long id) {
+        return service.setNotificationRead(auth.getName(), id, false);
+    }
 }

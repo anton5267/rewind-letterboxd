@@ -38,6 +38,7 @@ export const getAdminConversations = () => api.get<Page<AdminConversation>>("/ad
 export const getAdminNotifications = () => api.get<Page<AdminNotification>>("/admin/notifications", { params: { size: 50 } });
 export const deleteAdminConversation = (id: number) => api.delete(`/admin/conversations/${id}`);
 export const deleteAdminNotification = (id: number) => api.delete(`/admin/notifications/${id}`);
+export const setAdminNotificationRead = (id: number, read: boolean) => api.patch<AdminNotification>(`/admin/notifications/${id}/${read ? "read" : "unread"}`);
 export const getAdminModerationQueue = () => api.get<Page<AdminModerationQueueItem>>("/admin/moderation/queue", { params: { size: 50 } });
 export const hideAdminModerationItem = (item: Pick<AdminModerationQueueItem, "type" | "id">, reason = "Moderated by administrator") => api.post(`/admin/moderation/${item.type}/${item.id}/hide`, { reason });
 export const getAdminSettings = () => api.get<AdminSetting[]>("/admin/settings");

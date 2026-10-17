@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
+
 @Service
 public class AdminCommunicationService {
     private final ConversationRepository conversations;
@@ -47,6 +49,17 @@ public class AdminCommunicationService {
         if (!notifications.existsById(id)) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Notification not found");
         notifications.deleteById(id);
         audit.record(adminEmail, "NOTIFICATION_DELETED", "NOTIFICATION", id, null);
+    }
+
+    @Transactional
+    public AdminNotificationResponse setNotificationRead(String adminEmail, Long id, boolean read) {
+        var notification = notifications.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Notification not found"));
+        notification.setReadAt(read ? (notification.getReadAt() == null ? Instant.now() : notification.getReadAt()) : null);
+        notifications.save(notification);
+        audit.record(adminEmail, read ? "NOTIFICATION_MARKED_READ" : "NOTIFICATION_MARKED_UNREAD", "NOTIFICATION", id, null);
+        return new AdminNotificationResponse(notification.getId(), notification.getRecipientId(), notification.getActorId(),
+                notification.getType(), notification.getReviewId(), notification.getCreatedAt(), notification.getReadAt());
     }
 
     private Pageable pageable(int page, int size) {
