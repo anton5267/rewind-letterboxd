@@ -1,4 +1,6 @@
 spring:
+  cache:
+    type: none
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/rewind?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC}
     username: ${DB_USERNAME:rewind}
@@ -39,6 +41,7 @@ app:
     refresh-days: 30
     cookie-secure: ${COOKIE_SECURE:true}
   security:
+    rate-limit-per-minute: 60
     reset-password:
       token-ttl-minutes: 30
       frontend-reset-url: ${FRONTEND_RESET_URL:http://localhost:3000/uk/reset-password}

@@ -6,6 +6,7 @@ import com.rewind.rewind.movie.dto.admin.UpdateMovieRequest;
 import com.rewind.rewind.movie.entity.Movie;
 import com.rewind.rewind.movie.repo.MovieRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.CacheEvict;
 
 @Service
 public class AdminMovieService {
@@ -33,6 +34,7 @@ public class AdminMovieService {
         return toCard(saved);
     }
 
+    @CacheEvict(cacheNames = "movieDetails", key = "#id")
     public MovieCardResponse update(Long id, UpdateMovieRequest req) {
         Movie m = movies.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Movie not found"));
@@ -52,6 +54,7 @@ public class AdminMovieService {
         return toCard(saved);
     }
 
+    @CacheEvict(cacheNames = "movieDetails", key = "#id")
     public void delete(Long id) {
         if (!movies.existsById(id)) {
             throw new IllegalArgumentException("Movie not found");

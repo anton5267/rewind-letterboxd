@@ -22,6 +22,17 @@ services:
     ports:
       - "127.0.0.1:3307:3306"
 
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - rewind-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   api:
     build:
       context: .
@@ -33,6 +44,8 @@ services:
       DB_PASSWORD: ${MYSQL_PASSWORD}
       JWT_SECRET: ${JWT_SECRET:?Run scripts/init-dev-env.ps1 first}
       COOKIE_SECURE: "false"
+      SPRING_CACHE_TYPE: redis
+      REDIS_URL: redis://redis:6379
       FRONTEND_RESET_URL: http://localhost:3000/uk/reset-password
       MAIL_HOST: mailpit
       MAIL_PORT: 1025
@@ -41,6 +54,8 @@ services:
         condition: service_healthy
       mailpit:
         condition: service_started
+      redis:
+        condition: service_healthy
     ports:
       - "127.0.0.1:8081:8080"
 
@@ -54,3 +69,4 @@ services:
 
 volumes:
   rewind-db:
+  rewind-redis:

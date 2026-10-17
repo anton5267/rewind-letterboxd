@@ -14,6 +14,7 @@ import com.rewind.rewind.similar.repo.SimilarMovieRepository;
 import com.rewind.rewind.user.repo.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.server.ResponseStatusException;
@@ -52,6 +53,7 @@ public class MovieDetailsService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "movieDetails", key = "#movieId", condition = "#userEmailOrNull == null")
     public MovieDetailsResponse getDetails(Long movieId, String userEmailOrNull) {
         Movie m = movies.findById(movieId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Movie not found"));
