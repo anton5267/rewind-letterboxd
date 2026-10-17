@@ -34,6 +34,11 @@ public class MovieListController {
         return service.publicLists(page, size);
     }
 
+    @GetMapping("/public/{listId}")
+    public PublicListDetailsResponse publicList(@PathVariable Long listId) {
+        return service.publicList(listId);
+    }
+
     @PostMapping
     public MovieListResponse create(Authentication auth, @Valid @RequestBody CreateListRequest req) {
         return service.create(auth.getName(), req);

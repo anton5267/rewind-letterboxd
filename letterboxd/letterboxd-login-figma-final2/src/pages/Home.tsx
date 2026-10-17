@@ -101,7 +101,7 @@ export default function Home() {
         <div className={styles.panel}>
           <div className={styles.sectionHeading}><h2>{t("popularLists")}</h2></div>
           {lists.length === 0 ? <p>{t("noPublicLists")}</p> : <div className={styles.stack}>{lists.map(list => <article className={styles.list} key={list.id}>
-            <h3>{list.name}</h3>
+            <h3><Link to={path(`/lists/public/${list.id}`)}>{list.name}</Link></h3>
             {list.description && <p>{list.description}</p>}
             <small>{t("byUser")} {list.ownerUsername}</small>
           </article>)}</div>}

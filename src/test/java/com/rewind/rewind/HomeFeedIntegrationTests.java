@@ -1,6 +1,7 @@
 package com.rewind.rewind;
 
 import com.rewind.rewind.list.dto.CreateListRequest;
+import com.rewind.rewind.list.dto.AddListItemRequest;
 import com.rewind.rewind.list.service.MovieListService;
 import com.rewind.rewind.movie.entity.Movie;
 import com.rewind.rewind.movie.repo.MovieRepository;
@@ -49,8 +50,12 @@ class HomeFeedIntegrationTests {
         list.setName("Home list " + suffix);
         list.setDescription("Visible in public feed");
         list.setIsPublic(true);
-        lists.create(email, list);
+        Long listId = lists.create(email, list).getId();
         assertTrue(lists.publicLists(0, 6).getContent().stream()
                 .anyMatch(item -> item.getName().equals("Home list " + suffix)));
+        AddListItemRequest listItem = new AddListItemRequest();
+        listItem.setMovieId(movieId);
+        lists.addItem(email, listId, listItem);
+        assertEquals(movieId, lists.publicList(listId).movies().get(0).getId());
     }
 }

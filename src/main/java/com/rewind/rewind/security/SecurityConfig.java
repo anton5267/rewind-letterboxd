@@ -53,6 +53,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/reviews/*/comments").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/genres").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/lists/public").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/lists/public/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/users/*").permitAll()
 

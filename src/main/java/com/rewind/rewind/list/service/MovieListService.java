@@ -12,6 +12,8 @@ import com.rewind.rewind.user.repo.UserRepository;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -86,6 +88,27 @@ public class MovieListService {
                         l.getUser().getUsername(),
                         l.getUser().getAvatarUrl()
                 ));
+    }
+
+    @Transactional(readOnly = true)
+    public PublicListDetailsResponse publicList(Long listId) {
+        var list = lists.findById(listId)
+                .filter(candidate -> Boolean.TRUE.equals(candidate.getIsPublic()) && candidate.getListType() == ListType.CUSTOM)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Public list not found"));
+        var movies = items.findAllByListId(listId).stream()
+                .sorted((left, right) -> {
+                    Integer a = left.getPosition();
+                    Integer b = right.getPosition();
+                    if (a == null && b == null) return 0;
+                    if (a == null) return 1;
+                    if (b == null) return -1;
+                    return a.compareTo(b);
+                })
+                .map(item -> new MovieCardResponse(item.getMovie().getId(), item.getMovie().getTitle(),
+                        item.getMovie().getReleaseDate(), item.getMovie().getRating(), item.getMovie().getPhotoUrl()))
+                .toList();
+        return new PublicListDetailsResponse(list.getId(), list.getName(), list.getDescription(),
+                list.getUser().getId(), list.getUser().getUsername(), list.getUser().getAvatarUrl(), movies);
     }
 
     public void addItem(String email, Long listId, AddListItemRequest req) {

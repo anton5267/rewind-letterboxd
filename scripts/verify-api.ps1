@@ -77,6 +77,9 @@ $publicLists = (Send 'GET' '/lists/public?size=20').Content | ConvertFrom-Json
 if ($publicLists.content.id -notcontains $listId) { throw 'Public list did not appear in public feed' }
 Write-Output 'public list feed'
 Expect (Send 'POST' "/lists/$listId/items" @{ movieId = 1 }).StatusCode 200 'add item'
+$publicList = (Send 'GET' "/lists/public/$listId").Content | ConvertFrom-Json
+if ($publicList.movies.id -notcontains 1) { throw 'Public list detail did not expose its film' }
+Write-Output 'public list detail'
 Expect (Send 'POST' '/movies/1/watchlist').StatusCode 200 'add watchlist'
 Expect (Send 'DELETE' '/movies/1/watchlist').StatusCode 204 'remove watchlist'
 Expect (Send 'PUT' '/movies/1/rating' @{ rating = 4 }).StatusCode 200 'rate film'
