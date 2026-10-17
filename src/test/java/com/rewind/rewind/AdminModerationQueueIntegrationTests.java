@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 class AdminModerationQueueIntegrationTests {
@@ -56,5 +57,31 @@ class AdminModerationQueueIntegrationTests {
         var result = queue.list(0, 20).getContent();
         assertTrue(result.stream().anyMatch(item -> item.type().equals("REVIEW") && item.id().equals(reviewId)));
         assertTrue(result.stream().anyMatch(item -> item.type().equals("COMMENT") && item.parentId().equals(reviewId)));
+    }
+
+    @Test
+    @Transactional
+    void hideActionRemovesReviewFromQueueAndRecordsModeration() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        UserRegisterRequest request = new UserRegisterRequest();
+        request.setUsername("moderation_hide_" + suffix);
+        request.setEmail("moderation_hide_" + suffix + "@example.invalid");
+        request.setPassword("test-password-123");
+        userService.register(request);
+
+        var user = users.findByEmail(request.getEmail()).orElseThrow();
+        var movie = movies.findAll().stream().findFirst().orElseThrow();
+        Review review = new Review();
+        review.setUser(user);
+        review.setMovie(movie);
+        review.setContent("queue hide review");
+        review.setRating((byte) 4);
+        review = reviews.saveAndFlush(review);
+
+        queue.hide("REVIEW", review.getId(), request.getEmail(), "policy");
+
+        assertEquals(Boolean.TRUE, reviews.findById(review.getId()).orElseThrow().getIsHidden());
+        Long reviewId = review.getId();
+        assertTrue(queue.list(0, 50).getContent().stream().noneMatch(item -> item.type().equals("REVIEW") && item.id().equals(reviewId)));
     }
 }

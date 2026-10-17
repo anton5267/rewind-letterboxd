@@ -20,10 +20,28 @@ import java.util.List;
 public class AdminModerationQueueService {
     private final ReviewRepository reviews;
     private final ReviewCommentRepository comments;
+    private final AdminReviewService reviewModeration;
+    private final AdminCommentService commentModeration;
 
-    public AdminModerationQueueService(ReviewRepository reviews, ReviewCommentRepository comments) {
+    public AdminModerationQueueService(ReviewRepository reviews, ReviewCommentRepository comments,
+                                       AdminReviewService reviewModeration, AdminCommentService commentModeration) {
         this.reviews = reviews;
         this.comments = comments;
+        this.reviewModeration = reviewModeration;
+        this.commentModeration = commentModeration;
+    }
+
+    @Transactional
+    public void hide(String type, Long id, String adminEmail, String reason) {
+        if ("REVIEW".equalsIgnoreCase(type)) {
+            reviewModeration.hide(id, adminEmail, reason);
+            return;
+        }
+        if ("COMMENT".equalsIgnoreCase(type)) {
+            commentModeration.hide(id, adminEmail, reason);
+            return;
+        }
+        throw new IllegalArgumentException("Unsupported moderation item type");
     }
 
     @Transactional(readOnly = true)
