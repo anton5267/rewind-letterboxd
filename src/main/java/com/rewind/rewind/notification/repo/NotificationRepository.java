@@ -12,6 +12,10 @@ import java.util.Optional;
 import java.time.Instant;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
+    @Query(value = "select n.id as id, n.recipientId as recipientId, n.actorId as actorId, n.type as type, n.reviewId as reviewId, n.createdAt as createdAt, n.readAt as readAt from Notification n order by n.createdAt desc",
+            countQuery = "select count(n) from Notification n")
+    Page<AdminNotificationProjection> findAdminRows(Pageable pageable);
+
     Page<Notification> findAllByRecipientIdOrderByCreatedAtDesc(Long recipientId, Pageable pageable);
     Optional<Notification> findByIdAndRecipientId(Long id, Long recipientId);
     long countByRecipientIdAndReadAtIsNull(Long recipientId);

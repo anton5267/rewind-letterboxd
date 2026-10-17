@@ -9,6 +9,8 @@ export interface AdminReview { id: number; movieId: number; movieTitle: string; 
 export interface AdminMovie { id: number; title: string; releaseDate: string | null; rating: number | null; photoUrl: string | null }
 export interface AdminMovieWrite { title: string; releaseDate?: string | null; rating?: number | null; photoUrl?: string | null }
 export interface AdminList { id: number; userId: number; username: string; name: string; description: string | null; listType: string; isPublic: boolean; itemCount: number; createdAt: string; updatedAt: string }
+export interface AdminConversation { id: number; userOneId: number; userTwoId: number; messageCount: number; createdAt: string; updatedAt: string; lastMessageAt: string | null }
+export interface AdminNotification { id: number; recipientId: number; actorId: number | null; type: string; reviewId: number | null; createdAt: string; readAt: string | null }
 export interface Page<T> { content: T[]; totalPages: number; totalElements: number }
 export const getAdminDashboard = () => api.get<AdminDashboard>("/admin/dashboard");
 export const getAdminUsers = () => api.get<Page<AdminUser>>("/admin/users", { params: { size: 50 } });
@@ -26,3 +28,5 @@ export const updateAdminMovie = (id: number, movie: Partial<AdminMovieWrite>) =>
 export const deleteAdminMovie = (id: number) => api.delete(`/admin/movies/${id}`);
 export const getAdminLists = () => api.get<Page<AdminList>>("/admin/lists", { params: { size: 50 } });
 export const setAdminListVisibility = (id: number, visible: boolean) => api.put<AdminList>(`/admin/lists/${id}/visibility`, null, { params: { visible } });
+export const getAdminConversations = () => api.get<Page<AdminConversation>>("/admin/conversations", { params: { size: 50 } });
+export const getAdminNotifications = () => api.get<Page<AdminNotification>>("/admin/notifications", { params: { size: 50 } });
