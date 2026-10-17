@@ -19,6 +19,42 @@ interface Movie {
 interface Review { id: number; username: string; content: string; rating: number | null; userId: number }
 interface List { id: number; name: string }
 
+function ReviewLikeButton({ reviewId }: { reviewId: number }) {
+  const { isAuth } = useAuth();
+  const { t } = useLocale();
+  const [likes, setLikes] = useState<number | null>(null);
+  const [liked, setLiked] = useState(false);
+  const [error, setError] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let current = true;
+    api.get<number>(`/reviews/${reviewId}/likes`).then(({ data }) => { if (current) setLikes(data); }).catch(() => { if (current) setError(true); });
+    if (isAuth) api.get<{ liked: boolean; likes: number }>(`/reviews/${reviewId}/like-status`).then(({ data }) => {
+      if (!current) return;
+      setLiked(data.liked);
+      setLikes(data.likes);
+    }).catch(() => { if (current) setError(true); });
+    return () => { current = false; };
+  }, [isAuth, reviewId]);
+
+  const toggle = async () => {
+    setBusy(true);
+    setError(false);
+    try {
+      await (liked ? api.delete(`/reviews/${reviewId}/likes`) : api.post(`/reviews/${reviewId}/likes`));
+      setLiked(value => !value);
+      setLikes(value => Math.max(0, (value ?? 0) + (liked ? -1 : 1)));
+    } catch {
+      setError(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return <p><span>{t("likes")}: {likes ?? "—"}</span>{isAuth && <> {" "}<button type="button" disabled={busy} aria-pressed={liked} onClick={() => void toggle()}>{liked ? t("unlike") : t("like")}</button></>}{error && <span role="alert"> {t("likeReviewError")}</span>}</p>;
+}
+
 export default function MovieDetails() {
   const { id } = useParams();
   const movieId = Number(id);
@@ -185,11 +221,12 @@ export default function MovieDetails() {
           {!editingReview && <><p>{myReview.content}</p>
             <button type="button" onClick={() => { setReviewText(myReview.content); setReviewRating(myReview.rating ?? rating); setEditingReview(true); }}>{t("editReview")}</button>{" "}
             <button type="button" onClick={() => void deleteReview()}>{t("deleteReview")}</button>
+            <ReviewLikeButton reviewId={myReview.id} />
             <Comments reviewId={myReview.id} />
           </>}
         </article>}
         {otherReviews.length === 0 && !myReview && <p>{t("noReviews")}</p>}
-        {otherReviews.map(item => <article key={item.id}><h3>{item.username} · {item.rating ?? "—"}/5</h3><p>{item.content}</p><Comments reviewId={item.id} /></article>)}
+        {otherReviews.map(item => <article key={item.id}><h3>{item.username} · {item.rating ?? "—"}/5</h3><p>{item.content}</p><ReviewLikeButton reviewId={item.id} /><Comments reviewId={item.id} /></article>)}
         {isAuth && !myReviewReady && <p>{t("loading")}</p>}
         {isAuth && myReviewError && <p role="alert">{t("loadMyReviewError")}</p>}
         {isAuth && myReviewReady && !myReviewError && (!myReview || editingReview) && <form onSubmit={createReview}>
