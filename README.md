@@ -81,6 +81,14 @@ Content-Type: application/json
 
 Це дозволяє адмінському імпорту рухатися сторінка за сторінкою та повторювати невдалі елементи без неконтрольованого масового заповнення каталогу.
 
+Для перевірки якості вже імпортованого каталогу використовуйте admin-only read endpoint:
+
+```http
+GET /api/admin/movies/tmdb-quality
+```
+
+Відповідь містить кількість фільмів у каталозі, TMDB-зв'язаних і повністю заповнених записів, відсутні постери/backdrop/описи/тривалості/трейлери/TMDB-рейтинги та відсотки покриття й повноти. Запит виконує один агрегований SQL без N+1 читань.
+
 The Compose file uses public ECR mirrors for container images. Maven uses the configured public mirror in `.mvn/settings.xml` so a local Docker build does not depend on a single registry endpoint.
 
 ### Run services without Compose

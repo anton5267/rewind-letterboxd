@@ -40,6 +40,7 @@ try {
         '/api/admin/comments?size=1',
         '/api/admin/reviews?size=1',
         '/api/admin/movies?size=1',
+        '/api/admin/movies/tmdb-quality',
         '/api/admin/lists?size=1',
         '/api/admin/conversations?size=1',
         '/api/admin/notifications?size=1',

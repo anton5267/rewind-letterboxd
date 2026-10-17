@@ -27,6 +27,31 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
 
     List<Movie> findAllByTmdbIdIn(Collection<Long> tmdbIds);
 
+    @Query(value = """
+        SELECT COUNT(*) AS totalMovies,
+               COALESCE(SUM(CASE WHEN m.tmdb_id IS NOT NULL THEN 1 ELSE 0 END), 0) AS tmdbLinkedMovies,
+               COALESCE(SUM(CASE WHEN m.tmdb_id IS NOT NULL AND NULLIF(TRIM(m.photo_url), '') IS NULL THEN 1 ELSE 0 END), 0) AS missingPoster,
+               COALESCE(SUM(CASE WHEN m.tmdb_id IS NOT NULL AND NULLIF(TRIM(m.backdrop_url), '') IS NULL THEN 1 ELSE 0 END), 0) AS missingBackdrop,
+               COALESCE(SUM(CASE WHEN m.tmdb_id IS NOT NULL AND NULLIF(TRIM(m.short_plot), '') IS NULL THEN 1 ELSE 0 END), 0) AS missingPlot,
+               COALESCE(SUM(CASE WHEN m.tmdb_id IS NOT NULL AND m.duration_minutes IS NULL THEN 1 ELSE 0 END), 0) AS missingRuntime,
+               COALESCE(SUM(CASE WHEN m.tmdb_id IS NOT NULL AND NULLIF(TRIM(m.trailer_url), '') IS NULL THEN 1 ELSE 0 END), 0) AS missingTrailer,
+               COALESCE(SUM(CASE WHEN m.tmdb_id IS NOT NULL AND NOT EXISTS (
+                   SELECT 1 FROM external_ratings er WHERE er.movie_id = m.id AND er.source = 'TMDB'
+               ) THEN 1 ELSE 0 END), 0) AS missingTmdbRating,
+               COALESCE(SUM(CASE WHEN m.tmdb_id IS NOT NULL
+                   AND NULLIF(TRIM(m.photo_url), '') IS NOT NULL
+                   AND NULLIF(TRIM(m.backdrop_url), '') IS NOT NULL
+                   AND NULLIF(TRIM(m.short_plot), '') IS NOT NULL
+                   AND m.duration_minutes IS NOT NULL
+                   AND NULLIF(TRIM(m.trailer_url), '') IS NOT NULL
+                   AND EXISTS (
+                       SELECT 1 FROM external_ratings er WHERE er.movie_id = m.id AND er.source = 'TMDB'
+                   )
+               THEN 1 ELSE 0 END), 0) AS completeTmdbMovies
+        FROM movies m
+        """, nativeQuery = true)
+    List<Object[]> findTmdbQualityMetrics();
+
     @Query("""
         select distinct candidate from Movie candidate join candidate.genres candidateGenre
         where candidate.id <> :movieId and candidateGenre in (

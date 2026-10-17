@@ -14,6 +14,7 @@ export interface TmdbImportItem { movieId: number | null; tmdbId: number; status
 export interface TmdbBatchSyncResponse { requested: number; succeeded: number; failed: number; items: TmdbImportItem[] }
 export interface TmdbDiscoveryRequest { page: number; year?: number; genreId?: number; minRating?: number; limit: number; syncSimilar?: boolean }
 export interface TmdbDiscoveryImportResponse { page: number; totalPages: number; totalResults: number; discovered: number; imports: TmdbBatchSyncResponse }
+export interface TmdbQualityReport { totalMovies: number; tmdbLinkedMovies: number; completeTmdbMovies: number; missingPoster: number; missingBackdrop: number; missingPlot: number; missingRuntime: number; missingTrailer: number; missingTmdbRating: number; linkedCoveragePercent: number; metadataCompletenessPercent: number }
 export interface AdminList { id: number; userId: number; username: string; name: string; description: string | null; listType: string; isPublic: boolean; itemCount: number; createdAt: string; updatedAt: string }
 export interface AdminConversation { id: number; userOneId: number; userTwoId: number; messageCount: number; createdAt: string; updatedAt: string; lastMessageAt: string | null }
 export interface AdminNotification { id: number; recipientId: number; actorId: number | null; type: string; reviewId: number | null; createdAt: string; readAt: string | null }
@@ -43,6 +44,7 @@ export const deleteAdminMovie = (id: number) => api.delete(`/admin/movies/${id}`
 export const syncAdminMovieTmdb = (id: number, tmdbId: number, syncSimilar = true) => api.post<TmdbSyncResponse>(`/admin/movies/${id}/tmdb-sync`, { tmdbId, syncSimilar });
 export const importAdminTmdb = (tmdbIds: number[], syncSimilar = true) => api.post<TmdbBatchSyncResponse>("/admin/movies/tmdb-import", { tmdbIds, syncSimilar });
 export const discoverAndImportAdminTmdb = (request: TmdbDiscoveryRequest) => api.post<TmdbDiscoveryImportResponse>("/admin/movies/tmdb-import/discover", { ...request, syncSimilar: request.syncSimilar ?? true });
+export const getAdminTmdbQuality = () => api.get<TmdbQualityReport>("/admin/movies/tmdb-quality");
 export const getAdminLists = () => api.get<Page<AdminList>>("/admin/lists", { params: { size: 50 } });
 export const setAdminListVisibility = (id: number, visible: boolean) => api.put<AdminList>(`/admin/lists/${id}/visibility`, null, { params: { visible } });
 export const deleteAdminList = (id: number) => api.delete(`/admin/lists/${id}`);

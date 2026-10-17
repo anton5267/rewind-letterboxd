@@ -15,6 +15,8 @@ import com.rewind.rewind.tmdb.TmdbImportRequest;
 import com.rewind.rewind.tmdb.TmdbImportService;
 import com.rewind.rewind.tmdb.TmdbDiscoveryImportResponse;
 import com.rewind.rewind.tmdb.TmdbDiscoveryRequest;
+import com.rewind.rewind.tmdb.TmdbQualityReport;
+import com.rewind.rewind.tmdb.TmdbQualityService;
 import com.rewind.rewind.tmdb.TmdbSyncRequest;
 import com.rewind.rewind.tmdb.TmdbSyncResponse;
 import com.rewind.rewind.tmdb.TmdbSyncService;
@@ -25,6 +27,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -36,6 +39,7 @@ class TmdbSyncIntegrationTests {
     @Autowired TmdbSyncService sync;
     @Autowired TmdbBatchSyncService batchSync;
     @Autowired TmdbImportService importService;
+    @Autowired TmdbQualityService quality;
     @Autowired MovieRepository movies;
     @Autowired MovieActorRepository movieActors;
     @Autowired MovieDirectorRepository movieDirectors;
@@ -182,5 +186,47 @@ class TmdbSyncIntegrationTests {
         assertEquals(1, result.imports().failed());
         assertEquals("Discovery hit", movies.findByTmdbId(800L).orElseThrow().getTitle());
         assertTrue(movies.findByTmdbId(801L).isEmpty());
+    }
+
+    @Test
+    @Transactional
+    void qualityReportCountsLinkedCompletenessWithoutNPlusOneReads() {
+        TmdbQualityReport before = quality.report();
+
+        Movie complete = new Movie();
+        complete.setTitle("Quality complete");
+        complete.setTmdbId(900L);
+        complete.setDurationMinutes(100);
+        complete.setReleaseDate(LocalDate.of(2024, 1, 2));
+        complete.setShortPlot("A complete synopsis");
+        complete.setPhotoUrl("https://image.tmdb.org/t/p/w500/complete.jpg");
+        complete.setBackdropUrl("https://image.tmdb.org/t/p/original/complete.jpg");
+        complete.setTrailerUrl("https://www.youtube.com/watch?v=complete");
+        complete = movies.saveAndFlush(complete);
+        externalRatings.saveAndFlush(new com.rewind.rewind.externalrating.entity.ExternalRating(
+                complete, ExternalRatingSource.TMDB, new BigDecimal("8.1"), 900, Instant.now()));
+
+        Movie incomplete = new Movie();
+        incomplete.setTitle("Quality incomplete");
+        incomplete.setTmdbId(901L);
+        movies.saveAndFlush(incomplete);
+
+        Movie localOnly = new Movie();
+        localOnly.setTitle("Quality local only");
+        movies.saveAndFlush(localOnly);
+
+        TmdbQualityReport after = quality.report();
+
+        assertEquals(before.totalMovies() + 3, after.totalMovies());
+        assertEquals(before.tmdbLinkedMovies() + 2, after.tmdbLinkedMovies());
+        assertEquals(before.completeTmdbMovies() + 1, after.completeTmdbMovies());
+        assertEquals(before.missingPoster() + 1, after.missingPoster());
+        assertEquals(before.missingBackdrop() + 1, after.missingBackdrop());
+        assertEquals(before.missingPlot() + 1, after.missingPlot());
+        assertEquals(before.missingRuntime() + 1, after.missingRuntime());
+        assertEquals(before.missingTrailer() + 1, after.missingTrailer());
+        assertEquals(before.missingTmdbRating() + 1, after.missingTmdbRating());
+        assertTrue(after.linkedCoveragePercent() > 0.0);
+        assertTrue(after.metadataCompletenessPercent() > 0.0);
     }
 }

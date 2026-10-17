@@ -16,6 +16,7 @@ test("admin can open the dashboard, manage a notification and manage a movie", a
   await expect(page.getByRole("heading", { name: "Панель адміністратора" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Користувачі" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Фільми" })).toBeVisible();
+  await expect(page.getByText("Якість каталогу TMDB", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Налаштування сайту" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Журнал дій" })).toBeVisible();
 
@@ -33,10 +34,10 @@ test("admin can open the dashboard, manage a notification and manage a movie", a
   await page.getByRole("button", { name: "Пошук" }).click();
   await expect(page.getByText(username, { exact: false }).first()).toBeVisible();
 
-  const movieSection = page.locator("section").filter({ has: page.getByRole("heading", { name: "Фільми" }) });
+  const movieSection = page.locator("section").filter({ has: page.getByLabel("Назва фільму", { exact: true }) });
   const title = `Admin browser ${Date.now()}`;
   await movieSection.getByLabel("Назва фільму").fill(title);
-  await movieSection.getByLabel("Рейтинг").fill("7.5");
+  await movieSection.getByLabel("Рейтинг", { exact: true }).fill("7.5");
   await movieSection.getByRole("button", { name: "Створити" }).click();
   const createdMovie = movieSection.locator("li").filter({ hasText: title });
   await expect(createdMovie).toBeVisible();
@@ -68,7 +69,7 @@ test("admin can open the dashboard, manage a notification and manage a movie", a
   await expect(moderationItem).toHaveCount(0);
 
   page.once("dialog", dialog => dialog.accept());
-  const refreshedMovieSection = page.locator("section").filter({ has: page.getByRole("heading", { name: "Фільми" }) });
+  const refreshedMovieSection = page.locator("section").filter({ has: page.getByLabel("Назва фільму", { exact: true }) });
   const refreshedMovie = refreshedMovieSection.locator("li").filter({ hasText: title });
   await refreshedMovie.getByRole("button", { name: "Видалити" }).click();
   await expect(refreshedMovie).toHaveCount(0);

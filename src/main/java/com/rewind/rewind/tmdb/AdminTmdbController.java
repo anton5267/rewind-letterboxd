@@ -2,6 +2,7 @@ package com.rewind.rewind.tmdb;
 
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,12 +14,14 @@ public class AdminTmdbController {
     private final TmdbSyncService service;
     private final TmdbBatchSyncService batchSyncService;
     private final TmdbImportService importService;
+    private final TmdbQualityService qualityService;
 
     public AdminTmdbController(TmdbSyncService service, TmdbBatchSyncService batchSyncService,
-                               TmdbImportService importService) {
+                               TmdbImportService importService, TmdbQualityService qualityService) {
         this.service = service;
         this.batchSyncService = batchSyncService;
         this.importService = importService;
+        this.qualityService = qualityService;
     }
 
     @PostMapping("/{movieId}/tmdb-sync")
@@ -39,5 +42,10 @@ public class AdminTmdbController {
     @PostMapping("/tmdb-import/discover")
     public TmdbDiscoveryImportResponse importDiscovered(@Valid @RequestBody TmdbDiscoveryRequest request) {
         return importService.importDiscovered(request);
+    }
+
+    @GetMapping("/tmdb-quality")
+    public TmdbQualityReport quality() {
+        return qualityService.report();
     }
 }
