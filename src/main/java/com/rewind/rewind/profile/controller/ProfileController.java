@@ -3,6 +3,7 @@ package com.rewind.rewind.profile.controller;
 import com.rewind.rewind.list.entity.ListType;
 import com.rewind.rewind.movie.dto.MovieCardResponse;
 import com.rewind.rewind.profile.dto.ChangePasswordRequest;
+import com.rewind.rewind.profile.dto.DeleteAccountRequest;
 import com.rewind.rewind.profile.dto.ProfileResponse;
 import com.rewind.rewind.profile.dto.ProfileUpdateRequest;
 import com.rewind.rewind.profile.service.ProfileService;
@@ -85,5 +86,11 @@ public class ProfileController {
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());
         }
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMe(Authentication auth, @Valid @RequestBody DeleteAccountRequest req) {
+        service.deleteMyAccount(auth.getName(), req);
+        return ResponseEntity.noContent().build();
     }
 }

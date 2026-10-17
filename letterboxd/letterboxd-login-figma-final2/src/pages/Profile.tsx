@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { changePassword, getProfile, getProfileCollection, getProfileRatings, getProfileReviews, type ProfileCollection, type ProfilePage, type ProfileRating, type ProfileReview, updateProfile } from "../api/profile.api";
+import { changePassword, deleteAccount, getProfile, getProfileCollection, getProfileRatings, getProfileReviews, type ProfileCollection, type ProfilePage, type ProfileRating, type ProfileReview, updateProfile } from "../api/profile.api";
 import type { MoviePage } from "../api/search.api";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
@@ -25,6 +25,7 @@ export default function Profile() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [collectionKind, setCollectionKind] = useState<ProfileCollection>("watched");
@@ -120,6 +121,13 @@ export default function Profile() {
       }
     } catch { setError(t("changePasswordError")); }
   };
+  const removeAccount = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError("");
+    if (!window.confirm(t("deleteAccountConfirm"))) return;
+    try { await deleteAccount(deletePassword); await logout(); navigate(path("/home"), { replace: true }); }
+    catch { setError(t("deleteAccountError")); }
+  };
 
   return <main style={{ background: "#151515", color: "white", minHeight: "70vh", padding: "110px 5% 40px" }}>
     <h1>{t("myProfile")}</h1>
@@ -140,6 +148,12 @@ export default function Profile() {
         <label>{t("currentPassword")} <input type="password" required value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} /></label>
         <label> {t("newPassword")} <input type="password" required value={newPassword} onChange={e => setNewPassword(e.target.value)} /></label>
         <button type="submit">{t("changePassword")}</button>
+      </form>
+      <form onSubmit={removeAccount} style={{ marginTop: 24 }}>
+        <h2>{t("deleteAccount")}</h2>
+        <p>{t("deleteAccountWarning")}</p>
+        <label>{t("currentPassword")} <input type="password" required value={deletePassword} onChange={e => setDeletePassword(e.target.value)} /></label>
+        <button type="submit">{t("deleteAccount")}</button>
       </form>
       <section style={{ marginTop: 24 }}>
         <h2>{t("profileCollections")}</h2>

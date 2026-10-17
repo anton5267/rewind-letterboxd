@@ -9,6 +9,9 @@ export const updateProfile = (data: { displayName?: string; avatarUrl?: string }
 export const changePassword = (currentPassword: string, newPassword: string) =>
   api.put("/profile/me/password", { currentPassword, newPassword });
 
+export const deleteAccount = (currentPassword: string) =>
+  api.delete("/profile/me", { data: { currentPassword } });
+
 export type ProfileCollection = "watched" | "watchlist" | "favorites";
 
 export interface ProfileRating {

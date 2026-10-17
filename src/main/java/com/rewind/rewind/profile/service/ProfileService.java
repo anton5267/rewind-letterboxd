@@ -6,6 +6,7 @@ import com.rewind.rewind.list.repo.ListItemRepository;
 import com.rewind.rewind.list.repo.MovieListRepository;
 import com.rewind.rewind.movie.dto.MovieCardResponse;
 import com.rewind.rewind.profile.dto.ChangePasswordRequest;
+import com.rewind.rewind.profile.dto.DeleteAccountRequest;
 import com.rewind.rewind.profile.dto.ProfileResponse;
 import com.rewind.rewind.profile.dto.ProfileUpdateRequest;
 import com.rewind.rewind.rating.repo.RatingRepository;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
 
 import java.util.stream.Collectors;
 
@@ -31,6 +33,7 @@ public class ProfileService {
     private final ListItemRepository listItems;
     private final PasswordEncoder passwordEncoder;
     private final RefreshSessionService sessions;
+    private final EntityManager entityManager;
 
     public ProfileService(
             UserRepository users,
@@ -39,7 +42,8 @@ public class ProfileService {
             ReviewRepository reviews,
             ListItemRepository listItems,
             PasswordEncoder passwordEncoder,
-            RefreshSessionService sessions
+            RefreshSessionService sessions,
+            EntityManager entityManager
     ) {
         this.users = users;
         this.lists = lists;
@@ -48,6 +52,7 @@ public class ProfileService {
         this.listItems = listItems;
         this.passwordEncoder = passwordEncoder;
         this.sessions = sessions;
+        this.entityManager = entityManager;
     }
 
     public ProfileResponse myProfile(String email) {
@@ -207,5 +212,19 @@ public class ProfileService {
         user.setPasswordHash(passwordEncoder.encode(req.getNewPassword()));
         users.save(user);
         sessions.revokeAllForUser(user.getId());
+    }
+
+    @Transactional
+    public void deleteMyAccount(String email, DeleteAccountRequest req) {
+        var user = users.findByEmail(email).orElseThrow();
+        if (!passwordEncoder.matches(req.getCurrentPassword(), user.getPasswordHash())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+        sessions.revokeAllForUser(user.getId());
+        entityManager.flush();
+        entityManager.createNativeQuery("delete from users where id = :id")
+                .setParameter("id", user.getId())
+                .executeUpdate();
+        entityManager.clear();
     }
 }

@@ -80,7 +80,7 @@ V1 створює 14 таблиць: `users`, `movies`, `actors`, `directors`, `
 | U | `GET`, `POST /api/lists/{listId}/items`; `DELETE /api/lists/{listId}/items/{movieId}` | Елементи власного списку |
 | U | `PUT /api/lists/{listId}/items/reorder` | Порядок елементів CUSTOM списку |
 | U | `POST /api/lists/{listId}/movies`; `DELETE /api/lists/{listId}/movies/{movieId}` | Аліаси для frontend клієнта |
-| U | `GET`, `PATCH /api/profile/me`; `PUT /api/profile/me/password` | Власний профіль, його редагування, зміна пароля |
+| U | `GET`, `PATCH /api/profile/me`; `PUT /api/profile/me/password`; `DELETE /api/profile/me` | Власний профіль, зміна пароля та захищене видалення акаунта з відкликанням сесій |
 | U | `GET /api/profile/me/watched`, `/watchlist`, `/favorites` | Сторінки власних системних списків |
 | P | `GET /api/users/{id}`, `GET /api/users/me` | Перший відкритий усім; `/me` без токена повертає 401 у самому handler |
 | A | `GET`, `POST /api/admin/movies`; `PUT`, `DELETE /api/admin/movies/{id}` | Сторінковий список, створення, редагування, видалення фільму; dashboard має CRUD-форму |
