@@ -11,7 +11,10 @@ $client = [System.Net.Http.HttpClient]::new()
 $client.Timeout = [TimeSpan]::FromSeconds($MaxSeconds)
 $endpoints = @(
     "$BaseUrl/api/movies?size=12",
-    "$BaseUrl/api/movies/50/details"
+    "$BaseUrl/api/movies/50/details",
+    "$BaseUrl/api/genres",
+    "$BaseUrl/api/journal/articles?language=uk&size=20",
+    "$BaseUrl/api/journal/articles/archive?language=uk"
 )
 $tasks = @()
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -31,8 +34,9 @@ try {
         throw "Load smoke exceeded ${MaxSeconds}s: $([math]::Round($stopwatch.Elapsed.TotalSeconds, 2))s"
     }
 
+    $distribution = $statuses | Group-Object | Sort-Object Name | ForEach-Object { "$($_.Name)=$($_.Count)" }
     Write-Output "Load smoke passed"
-    Write-Output "requests=$Requests elapsedSeconds=$([math]::Round($stopwatch.Elapsed.TotalSeconds, 2)) status=2xx"
+    Write-Output "requests=$Requests endpoints=$($endpoints.Count) elapsedSeconds=$([math]::Round($stopwatch.Elapsed.TotalSeconds, 2)) status=$($distribution -join ',')"
 }
 finally {
     $client.Dispose()
