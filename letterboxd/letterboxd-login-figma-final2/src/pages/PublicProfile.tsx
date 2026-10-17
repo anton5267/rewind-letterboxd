@@ -117,6 +117,7 @@ export default function PublicProfile() {
     {profile.avatarUrl && <img src={profile.avatarUrl} alt="" width="96" height="96" />}
     <h1>{profile.displayName}</h1><p>@{profile.username}</p>
     {isAuth && user?.id !== profile.id && followStatus && <button type="button" disabled={followBusy} onClick={() => void changeFollow()}>{followStatus.following ? t("unfollow") : t("follow")}</button>}
+    {isAuth && user?.id !== profile.id && <Link to={path(`/messages?user=${profile.id}`)} style={{ marginLeft: 8 }}>{t("sendMessage")}</Link>}
     {followError && <p role="alert">{t("followError")}</p>}
     <section><h2>{t("profileStats")}</h2><p>{t("watched")}: {profile.stats.watched} · {t("watchlist")}: {profile.stats.watchlist} · {t("favorite")}: {profile.stats.favorites} · {t("reviews")}: {profile.stats.reviews} · {t("ratings")}: {profile.stats.ratings}</p></section>
     <section>

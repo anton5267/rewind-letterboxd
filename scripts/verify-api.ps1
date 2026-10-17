@@ -119,6 +119,15 @@ $updatedNotificationPreferences = SendNetwork 'PUT' '/notifications/preferences'
 Expect $updatedNotificationPreferences.StatusCode 200 'update notification preferences'
 if (($updatedNotificationPreferences.Content | ConvertFrom-Json).followsEnabled) { throw 'Notification follow preference did not update' }
 Write-Output 'notification preferences'
+$conversation = SendNetwork 'POST' '/conversations' @{ userId = $userId }
+Expect $conversation.StatusCode 200 'start conversation'
+$conversationId = ($conversation.Content | ConvertFrom-Json).id
+$message = SendNetwork 'POST' "/conversations/$conversationId/messages" @{ body = 'Verification private message' }
+Expect $message.StatusCode 200 'send private message'
+$messages = (SendNetwork 'GET' "/conversations/$conversationId/messages?size=20").Content | ConvertFrom-Json
+if ($messages.content.body -notcontains 'Verification private message') { throw 'Private message did not appear in conversation' }
+Expect (SendNetwork 'POST' "/conversations/$conversationId/read").StatusCode 204 'mark conversation read'
+Write-Output 'private conversation'
 Expect (Send 'DELETE' "/users/$networkUserId/follow").StatusCode 204 'unfollow user'
 $oldRefresh = ($webSession.Cookies.GetCookies([uri]"$BaseUrl/api/auth/refresh") | Where-Object Name -eq 'rewind_refresh').Value
 Expect (Send 'POST' '/auth/refresh').StatusCode 204 'refresh session'
