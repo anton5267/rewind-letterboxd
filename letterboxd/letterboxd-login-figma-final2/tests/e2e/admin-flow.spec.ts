@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("admin can open the dashboard, search a user and manage a movie", async ({ page }) => {
+test("admin can open the dashboard, manage a notification and manage a movie", async ({ page }) => {
   const email = process.env.E2E_ADMIN_EMAIL;
   const password = process.env.E2E_ADMIN_PASSWORD;
   const username = process.env.E2E_ADMIN_USERNAME;
@@ -18,6 +18,16 @@ test("admin can open the dashboard, search a user and manage a movie", async ({ 
   await expect(page.getByRole("heading", { name: "Фільми" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Налаштування сайту" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Журнал дій" })).toBeVisible();
+
+  const adminUsers = await page.evaluate(async (query) => {
+    const response = await fetch(`/api/admin/users?q=${encodeURIComponent(query)}&size=10`);
+    return response.json();
+  }, username);
+  const recipientId = adminUsers.content[0].id as number;
+  const notificationSection = page.locator("section").filter({ has: page.getByRole("heading", { name: "Сповіщення" }) });
+  await notificationSection.getByLabel("ID отримувача").fill(String(recipientId));
+  await notificationSection.getByRole("button", { name: "Створити сповіщення" }).click();
+  await expect(notificationSection.getByText(`отримувач #${recipientId}`, { exact: false }).first()).toBeVisible();
 
   await page.getByLabel("Пошук користувача").fill(username);
   await page.getByRole("button", { name: "Пошук" }).click();

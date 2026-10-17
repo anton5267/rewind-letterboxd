@@ -11,6 +11,7 @@ import com.rewind.rewind.notification.dto.UpdateNotificationPreferencesRequest;
 import com.rewind.rewind.user.entity.User;
 import com.rewind.rewind.user.repo.UserRepository;
 import com.rewind.rewind.review.entity.Review;
+import com.rewind.rewind.review.repo.ReviewRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,12 +32,15 @@ public class NotificationService {
     private final NotificationRepository notifications;
     private final NotificationPreferenceRepository preferences;
     private final UserRepository users;
+    private final ReviewRepository reviews;
     private final Map<Long, CopyOnWriteArraySet<SseEmitter>> emitters = new ConcurrentHashMap<>();
 
-    public NotificationService(NotificationRepository notifications, NotificationPreferenceRepository preferences, UserRepository users) {
+    public NotificationService(NotificationRepository notifications, NotificationPreferenceRepository preferences,
+                               UserRepository users, ReviewRepository reviews) {
         this.notifications = notifications;
         this.preferences = preferences;
         this.users = users;
+        this.reviews = reviews;
     }
 
     @Transactional
@@ -64,6 +68,24 @@ public class NotificationService {
         notification.setType(NotificationType.REVIEW_LIKED);
         Notification saved = notifications.save(notification);
         publish(recipient.getId(), response(saved, actor));
+    }
+
+    @Transactional
+    public NotificationResponse createAdmin(Long recipientId, NotificationType type, Long actorId, Long relatedUserId, Long reviewId) {
+        User recipient = users.findById(recipientId).orElseThrow(() -> new IllegalArgumentException("Recipient not found"));
+        User actor = actorId == null ? null : users.findById(actorId).orElseThrow(() -> new IllegalArgumentException("Actor not found"));
+        if (relatedUserId != null && !users.existsById(relatedUserId)) throw new IllegalArgumentException("Related user not found");
+        if (reviewId != null && !reviews.existsById(reviewId)) throw new IllegalArgumentException("Review not found");
+        Notification notification = new Notification();
+        notification.setRecipientId(recipient.getId());
+        notification.setActorId(actor == null ? null : actor.getId());
+        notification.setRelatedUserId(relatedUserId);
+        notification.setReviewId(reviewId);
+        notification.setType(type);
+        Notification saved = notifications.save(notification);
+        NotificationResponse result = response(saved, actor);
+        publish(recipient.getId(), result);
+        return result;
     }
 
     @Transactional(readOnly = true)

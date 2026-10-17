@@ -2,7 +2,9 @@ package com.rewind.rewind.admin.controller;
 
 import com.rewind.rewind.admin.dto.AdminConversationResponse;
 import com.rewind.rewind.admin.dto.AdminNotificationResponse;
+import com.rewind.rewind.admin.dto.AdminCreateNotificationRequest;
 import com.rewind.rewind.admin.service.AdminCommunicationService;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +24,11 @@ public class AdminCommunicationController {
     @GetMapping("/notifications")
     public Page<AdminNotificationResponse> notifications(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "50") int size) {
         return service.notifications(page, size);
+    }
+
+    @PostMapping("/notifications")
+    public AdminNotificationResponse createNotification(Authentication auth, @Valid @RequestBody AdminCreateNotificationRequest request) {
+        return service.createNotification(auth.getName(), request);
     }
 
     @DeleteMapping("/conversations/{id}")

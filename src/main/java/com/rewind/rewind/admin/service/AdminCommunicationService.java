@@ -2,8 +2,10 @@ package com.rewind.rewind.admin.service;
 
 import com.rewind.rewind.admin.dto.AdminConversationResponse;
 import com.rewind.rewind.admin.dto.AdminNotificationResponse;
+import com.rewind.rewind.admin.dto.AdminCreateNotificationRequest;
 import com.rewind.rewind.admin.audit.service.AdminAuditLogService;
 import com.rewind.rewind.message.repo.ConversationRepository;
+import com.rewind.rewind.notification.service.NotificationService;
 import com.rewind.rewind.notification.repo.NotificationRepository;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
@@ -17,11 +19,14 @@ import java.time.Instant;
 public class AdminCommunicationService {
     private final ConversationRepository conversations;
     private final NotificationRepository notifications;
+    private final NotificationService notificationService;
     private final AdminAuditLogService audit;
 
-    public AdminCommunicationService(ConversationRepository conversations, NotificationRepository notifications, AdminAuditLogService audit) {
+    public AdminCommunicationService(ConversationRepository conversations, NotificationRepository notifications,
+                                     NotificationService notificationService, AdminAuditLogService audit) {
         this.conversations = conversations;
         this.notifications = notifications;
+        this.notificationService = notificationService;
         this.audit = audit;
     }
 
@@ -35,6 +40,16 @@ public class AdminCommunicationService {
     public Page<AdminNotificationResponse> notifications(int page, int size) {
         return notifications.findAdminRows(pageable(page, size)).map(row -> new AdminNotificationResponse(
                 row.getId(), row.getRecipientId(), row.getActorId(), row.getType(), row.getReviewId(), row.getCreatedAt(), row.getReadAt()));
+    }
+
+    @Transactional
+    public AdminNotificationResponse createNotification(String adminEmail, AdminCreateNotificationRequest request) {
+        var created = notificationService.createAdmin(request.recipientId(), request.type(), request.actorId(),
+                request.relatedUserId(), request.reviewId());
+        audit.record(adminEmail, "NOTIFICATION_CREATED", "NOTIFICATION", created.id(), null);
+        return new AdminNotificationResponse(created.id(), request.recipientId(),
+                created.actor() == null ? null : created.actor().id(), created.type(), created.reviewId(),
+                created.createdAt(), created.readAt());
     }
 
     @Transactional

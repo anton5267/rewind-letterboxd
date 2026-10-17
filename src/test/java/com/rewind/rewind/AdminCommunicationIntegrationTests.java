@@ -1,6 +1,8 @@
 package com.rewind.rewind;
 
 import com.rewind.rewind.admin.service.AdminCommunicationService;
+import com.rewind.rewind.admin.dto.AdminCreateNotificationRequest;
+import com.rewind.rewind.admin.audit.service.AdminAuditLogService;
 import com.rewind.rewind.message.entity.Conversation;
 import com.rewind.rewind.message.entity.Message;
 import com.rewind.rewind.message.repo.ConversationRepository;
@@ -30,6 +32,7 @@ class AdminCommunicationIntegrationTests {
     @Autowired MessageRepository messages;
     @Autowired NotificationRepository notifications;
     @Autowired AdminCommunicationService admin;
+    @Autowired AdminAuditLogService audit;
 
     @Test
     @Transactional
@@ -62,6 +65,11 @@ class AdminCommunicationIntegrationTests {
 
         assertTrue(admin.conversations(0, 100).getContent().stream().anyMatch(row -> row.id().equals(conversation.getId())));
         assertTrue(admin.notifications(0, 100).getContent().stream().anyMatch(row -> row.id().equals(notification.getId())));
+
+        var adminCreated = admin.createNotification(firstEmail,
+                new AdminCreateNotificationRequest(firstId, NotificationType.REVIEW_LIKED, secondId, secondId, null));
+        assertTrue(notifications.existsById(adminCreated.id()));
+        assertTrue(audit.list(0, 100).getContent().stream().anyMatch(row -> row.targetId().equals(adminCreated.id()) && row.action().equals("NOTIFICATION_CREATED")));
 
         var read = admin.setNotificationRead(firstEmail, notification.getId(), true);
         assertNotNull(read.readAt());

@@ -12,6 +12,7 @@ export interface TmdbSyncResponse { movieId: number; tmdbId: number; title: stri
 export interface AdminList { id: number; userId: number; username: string; name: string; description: string | null; listType: string; isPublic: boolean; itemCount: number; createdAt: string; updatedAt: string }
 export interface AdminConversation { id: number; userOneId: number; userTwoId: number; messageCount: number; createdAt: string; updatedAt: string; lastMessageAt: string | null }
 export interface AdminNotification { id: number; recipientId: number; actorId: number | null; type: string; reviewId: number | null; createdAt: string; readAt: string | null }
+export interface AdminNotificationWrite { recipientId: number; type: "FOLLOW" | "REVIEW_LIKED"; actorId?: number | null; relatedUserId?: number | null; reviewId?: number | null }
 export interface AdminModerationQueueItem { type: "REVIEW" | "COMMENT"; id: number; parentId: number | null; movieId: number | null; subject: string; userId: number; username: string; content: string; createdAt: string }
 export interface AdminSetting { key: string; value: string; updatedBy: number | null; updatedAt: string }
 export interface Page<T> { content: T[]; totalPages: number; totalElements: number }
@@ -36,6 +37,7 @@ export const setAdminListVisibility = (id: number, visible: boolean) => api.put<
 export const deleteAdminList = (id: number) => api.delete(`/admin/lists/${id}`);
 export const getAdminConversations = () => api.get<Page<AdminConversation>>("/admin/conversations", { params: { size: 50 } });
 export const getAdminNotifications = () => api.get<Page<AdminNotification>>("/admin/notifications", { params: { size: 50 } });
+export const createAdminNotification = (notification: AdminNotificationWrite) => api.post<AdminNotification>("/admin/notifications", notification);
 export const deleteAdminConversation = (id: number) => api.delete(`/admin/conversations/${id}`);
 export const deleteAdminNotification = (id: number) => api.delete(`/admin/notifications/${id}`);
 export const setAdminNotificationRead = (id: number, read: boolean) => api.patch<AdminNotification>(`/admin/notifications/${id}/${read ? "read" : "unread"}`);
