@@ -9,6 +9,8 @@ docker compose up --build
 
 Відкрийте `http://localhost:3000/uk/films`. Compose запускає MySQL 8.4, Redis, API і React через Nginx. MySQL доступний лише локально на порту `3307`, API — на `8081`. Міграції Flyway виконуються під час старту API; у профілі `dev` 50 демонстраційних фільмів імпортуються тільки в порожній каталог. Облікові дані випадково генеруються у `.env`, який ігнорується Git. Дані БД живуть у volume `rewind-db`; `docker compose down` його зберігає.
 
+Контрольований TMDB sync вимкнений за замовчуванням. Для локального admin-тесту додайте в `.env` `TMDB_ENABLED=true` і `TMDB_API_KEY=<ключ>`, перезапустіть API та викликайте `POST /api/admin/movies/{movieId}/tmdb-sync` з JSON `{"tmdbId":550,"syncSimilar":true}`. Endpoint оновлює тільки обраний фільм, його credits/трейлер/рейтинг і зв’язує схожі стрічки, які вже мають локальний `tmdb_id`.
+
 Для перевірки відновлення пароля відкрийте `http://localhost:8025`: локальний Mailpit перехоплює листи, а посилання з листа веде на форму нового пароля. Compose також запускає Redis для кешу гостьової деталки фільму. Health API доступний на `/actuator/health`, метрики — на захищеному `/actuator/metrics`. Для production налаштуйте справжній SMTP через `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`, `MAIL_SMTP_AUTH` і `MAIL_SMTP_STARTTLS`.
 
 Авторизація використовує короткий access token та відкличний refresh token у HttpOnly cookie. Запити, що змінюють дані, потребують CSRF cookie і заголовка `X-XSRF-TOKEN`; фронтенд додає його автоматично. У Compose `COOKIE_SECURE=false` лише для локального HTTP. Для HTTPS залишайте `COOKIE_SECURE=true`.

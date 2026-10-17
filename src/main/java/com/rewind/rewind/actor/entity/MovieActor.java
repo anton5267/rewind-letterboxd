@@ -26,6 +26,16 @@ public class MovieActor {
     @Column(name = "cast_order")
     private Integer castOrder;
 
+    public MovieActor() {}
+
+    public MovieActor(Movie movie, Actor actor, String characterName, Integer castOrder) {
+        this.movie = movie;
+        this.actor = actor;
+        this.id = new MovieActorId(movie.getId(), actor.getId());
+        this.characterName = characterName;
+        this.castOrder = castOrder;
+    }
+
     public Movie getMovie() { return movie; }
     public Actor getActor() { return actor; }
     public String getCharacterName() { return characterName; }

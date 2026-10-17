@@ -7,6 +7,7 @@ Rewind is a bilingual movie discovery and social review platform inspired by Let
 - Ukrainian and English routes under `/uk/...` and `/en/...`
 - Cookie-based access and refresh sessions with CSRF protection
 - Movie catalog, search, filters, pagination, people pages, ratings, reviews, comments, lists, profiles, follows, likes, activity, notifications, SSE, and private messages
+- Controlled admin-only TMDB synchronization for movie metadata, credits, trailer, external rating, and links to similar movies already in the local catalog
 - Journal articles with language fallback, category filtering, monthly archive navigation, and admin publishing
 - Admin dashboard for users/HQ, movies, lists, reviews, comments, moderation queue, settings, communications, and audit logs
 - Flyway migrations and MySQL integration tests for the implemented API contracts
@@ -36,6 +37,17 @@ Rewind is a bilingual movie discovery and social review platform inspired by Let
    ```
 
 3. Open the web app at `http://localhost:3000`. API health is available at `http://localhost:8081/actuator/health` and Mailpit at `http://localhost:8025`.
+
+TMDB synchronization is disabled by default. To enable it locally, set `TMDB_ENABLED=true` and `TMDB_API_KEY` in `.env`, restart the API, then an administrator can call:
+
+```http
+POST /api/admin/movies/{movieId}/tmdb-sync
+Content-Type: application/json
+
+{"tmdbId":550,"syncSimilar":true}
+```
+
+The endpoint requires the normal admin cookie/CSRF contract. It never creates unverified similar movies; only already imported local movies with matching `tmdb_id` are linked.
 
 The Compose file uses public ECR mirrors for container images. Maven uses the configured public mirror in `.mvn/settings.xml` so a local Docker build does not depend on a single registry endpoint.
 

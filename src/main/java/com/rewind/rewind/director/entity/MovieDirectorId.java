@@ -9,6 +9,13 @@ public class MovieDirectorId implements Serializable {
     private Long movieId;
     private Long directorId;
 
+    public MovieDirectorId() {}
+
+    public MovieDirectorId(Long movieId, Long directorId) {
+        this.movieId = movieId;
+        this.directorId = directorId;
+    }
+
     public Long getMovieId() { return movieId; }
     public Long getDirectorId() { return directorId; }
 

@@ -45,6 +45,10 @@ management:
         include: health,info,metrics
 
 app:
+  tmdb:
+    enabled: false
+    api-key:
+    base-url: https://api.themoviedb.org/3
   jwt:
     secret: test-only-signing-key-with-at-least-thirty-two-bytes
     expiration-minutes: 15

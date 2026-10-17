@@ -10,4 +10,5 @@ import java.util.List;
 public interface SimilarMovieRepository extends JpaRepository<SimilarMovie, SimilarMovieId> {
     @EntityGraph(attributePaths = "similarMovie")
     List<SimilarMovie> findById_MovieId(Long movieId);
+    void deleteByIdMovieId(Long movieId);
 }

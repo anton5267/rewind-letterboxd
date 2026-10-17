@@ -20,6 +20,9 @@ public class Movie {
     @Column(name = "imdb_id", unique = true, length = 20)
     private String imdbId;
 
+    @Column(name = "tmdb_id", unique = true)
+    private Long tmdbId;
+
     @Column(nullable = false, length = 255)
     private String title;
 
@@ -81,6 +84,9 @@ public class Movie {
 
     public String getImdbId() { return imdbId; }
     public void setImdbId(String imdbId) { this.imdbId = imdbId; }
+
+    public Long getTmdbId() { return tmdbId; }
+    public void setTmdbId(Long tmdbId) { this.tmdbId = tmdbId; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }

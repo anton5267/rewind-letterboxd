@@ -9,6 +9,13 @@ public class SimilarMovieId implements Serializable {
     private Long movieId;
     private Long similarMovieId;
 
+    public SimilarMovieId() {}
+
+    public SimilarMovieId(Long movieId, Long similarMovieId) {
+        this.movieId = movieId;
+        this.similarMovieId = similarMovieId;
+    }
+
     public Long getMovieId() { return movieId; }
     public Long getSimilarMovieId() { return similarMovieId; }
 

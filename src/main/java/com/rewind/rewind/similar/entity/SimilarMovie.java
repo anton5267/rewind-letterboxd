@@ -20,6 +20,14 @@ public class SimilarMovie {
     @JoinColumn(name = "similar_movie_id", nullable = false)
     private Movie similarMovie;
 
+    public SimilarMovie() {}
+
+    public SimilarMovie(Movie movie, Movie similarMovie) {
+        this.movie = movie;
+        this.similarMovie = similarMovie;
+        this.id = new SimilarMovieId(movie.getId(), similarMovie.getId());
+    }
+
     public Movie getMovie() { return movie; }
     public Movie getSimilarMovie() { return similarMovie; }
 }

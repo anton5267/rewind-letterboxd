@@ -20,6 +20,14 @@ public class MovieDirector {
     @JoinColumn(name = "director_id", nullable = false)
     private Director director;
 
+    public MovieDirector() {}
+
+    public MovieDirector(Movie movie, Director director) {
+        this.movie = movie;
+        this.director = director;
+        this.id = new MovieDirectorId(movie.getId(), director.getId());
+    }
+
     public Movie getMovie() { return movie; }
     public Director getDirector() { return director; }
 }

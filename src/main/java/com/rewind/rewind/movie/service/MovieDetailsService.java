@@ -122,7 +122,7 @@ public class MovieDetailsService {
         }
 
         return new MovieDetailsResponse(
-                m.getId(), m.getImdbId(), m.getTitle(), m.getDurationMinutes(), m.getReleaseDate(),
+                m.getId(), m.getImdbId(), m.getTmdbId(), m.getTitle(), m.getDurationMinutes(), m.getReleaseDate(),
                 m.getAgeRating(), m.getRating(), m.getShortPlot(),
                 m.getPhotoUrl(), m.getBackdropUrl(), m.getTrailerUrl(),
                 genres, directors, actors,

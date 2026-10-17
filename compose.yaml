@@ -47,6 +47,8 @@ services:
       SPRING_CACHE_TYPE: redis
       REDIS_URL: redis://redis:6379
       REDIS_HEALTH_ENABLED: "true"
+      TMDB_ENABLED: ${TMDB_ENABLED:-false}
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
       MAIL_HEALTH_ENABLED: "true"
       FRONTEND_RESET_URL: http://localhost:3000/uk/reset-password
       MAIL_HOST: mailpit

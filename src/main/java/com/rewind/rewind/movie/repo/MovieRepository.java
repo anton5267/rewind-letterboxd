@@ -12,12 +12,20 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.Optional;
+import java.util.Collection;
+import java.util.List;
 
 public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecificationExecutor<Movie> {
 
     @EntityGraph(attributePaths = "genres")
     @Query("select m from Movie m where m.id = :movieId")
     Optional<Movie> findWithGenresById(@Param("movieId") Long movieId);
+
+    Optional<Movie> findByTmdbId(Long tmdbId);
+
+    Optional<Movie> findByImdbId(String imdbId);
+
+    List<Movie> findAllByTmdbIdIn(Collection<Long> tmdbIds);
 
     @Query("""
         select distinct candidate from Movie candidate join candidate.genres candidateGenre

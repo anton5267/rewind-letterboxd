@@ -13,8 +13,14 @@ public class Genre {
     @Column(nullable = false, unique = true, length = 80)
     private String name;
 
+    @Column(name = "tmdb_id", unique = true)
+    private Long tmdbId;
+
     public Long getId() { return id; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
+    public Long getTmdbId() { return tmdbId; }
+    public void setTmdbId(Long tmdbId) { this.tmdbId = tmdbId; }
 }

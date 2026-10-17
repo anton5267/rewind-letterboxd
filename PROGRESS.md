@@ -2,7 +2,7 @@
 
 Це робочий журнал для [повного плану розвитку](PLAN.md) і ТЗ. Оновлювати після **кожного перевіреного зрізу**: ставити `[x]` тільки коли є код, тест і відповідний наскрізний сценарій; `[ ]` означає відкриту роботу. Часткова реалізація зазначена в примітках і не робить етап завершеним.
 
-Останнє оновлення: **17.10.2026**. Вихідна точка Git: `bf6507f`; зафіксовані зрізи охоплюють auth, каталог, профілі, списки, соціальні модулі, журнал, адмінку, rate limit/cache, health/metrics/backup, V22 індекси/N+1 (`965a610`), browser security headers/accessibility (`377cef1`), social/XSS/SQLi smoke (`e6532a0`), локальний load smoke (`8540405`), SSE reconnect (`66e2250`), backend security smoke (`e62a56b`), admin browser smoke (`d7fdc99`), keyboard smoke (`0425783`), non-root API/розширений accessibility audit (`7b65a95`) і production Compose overlay/secure profile (`22cc44a`). Наступний — повний axe audit, production load та контрольований TMDB import/update.
+Останнє оновлення: **17.10.2026**. Вихідна точка Git: `bf6507f`; зафіксовані зрізи охоплюють auth, каталог, профілі, списки, соціальні модулі, журнал, адмінку, rate limit/cache, health/metrics/backup, V22 індекси/N+1 (`965a610`), browser security headers/accessibility (`377cef1`), social/XSS/SQLi smoke (`e6532a0`), локальний load smoke (`8540405`), SSE reconnect (`66e2250`), backend security smoke (`e62a56b`), admin browser smoke (`d7fdc99`), keyboard smoke (`0425783`), non-root API/розширений accessibility audit (`7b65a95`), production Compose overlay/secure profile (`22cc44a`) і WCAG axe audit (`414234c`). Цей зріз додає контрольований TMDB sync; наступні — перевірка повного каталогу, dependency remediation та production load.
 
 ## 1. Основа проєкту й дизайн — в роботі
 
@@ -58,9 +58,10 @@
 - [x] Сторінки акторів і режисерів доступні гостю через `/api/actors/{id}` та `/api/directors/{id}` і маршрути `/people/actor|director/{id}`; сторінка фільму посилається на персоналії, фільмографія має сортування. MySQL-тест та HTTP-сценарій пройшли для обох типів.
 - [x] Деталка показує трейлер лише коли URL існує, інакше явний порожній стан; схожі фільми беруться зі `similar_movies`, а за відсутності зв’язків — до шести стрічок зі спільними жанрами. MySQL-тест і HTTP-перевірка підтвердили fallback без повернення самого фільму.
 - [x] У UI персоналій додано фільтр жанру, що передає `genreId` до публічного API; TypeScript і production build пройшли.
-- [ ] Контрольований імпорт TMDB для фактичного оновлення трейлерів та явних схожих зв’язків.
+- [x] Додано admin-only `POST /api/admin/movies/{movieId}/tmdb-sync`: явний `tmdbId`, V23 зовнішні ID для movies/genres/actors/directors, оновлення metadata/trailer, credits, TMDB external rating і similar links лише з локального каталогу. API вимкнено за замовчуванням без `TMDB_ENABLED=true` та `TMDB_API_KEY`.
+- [x] `TmdbSyncIntegrationTests` пройшов на MySQL; Docker API перебудований із V23, Flyway провалідовав 23 міграції, health повернув 200. Після зміни повний browser набір має **11 passed, 1 skipped**, включно з axe-аудитом.
 - [x] Міграція V7 виправила 14 подвійно закодованих імен у старій локальній БД; браузер показав `Zoe Saldaña`, `HEX(name)` і контрольний SQL підтвердили результат.
-- [ ] Контрольований TMDB імпорт/оновлення, зовнішні ID і перевірка якості всього каталогу.
+- [~] Один фільм синхронізується контрольовано й перевірений `TmdbSyncIntegrationTests` на MySQL; залишаються пакетний імпорт каталогу, дедуплікація/якість всіх записів і ротація старого ключа провайдера.
 - [ ] Звірити desktop/mobile UI з Figma. IMDb показувати лише після дозволеного джерела й доступу.
 
 ## 5. Особисті дії та списки — в роботі
@@ -160,5 +161,5 @@
 
 1. Розширити production load/security checks і перевірити сценарій відновлення у тимчасову БД.
 2. Розширити backend security/load checks та зберегти сценарій відновлення у тимчасову БД.
-3. Реалізувати контрольований TMDB update/import із зовнішніми ID та перевіркою якості каталогу.
+3. Перевірити пакетний TMDB import/update на контрольному наборі й додати звіт якості каталогу.
 4. Після Editor-доступу зафіксувати точні Figma-фрейми, tokens і assets; до цього не підміняти макети припущеннями.

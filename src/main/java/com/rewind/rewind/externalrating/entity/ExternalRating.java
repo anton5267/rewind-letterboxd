@@ -31,10 +31,23 @@ public class ExternalRating {
     @Column(name = "last_updated_at", nullable = false)
     private Instant lastUpdatedAt;
 
+    public ExternalRating() {}
+
+    public ExternalRating(Movie movie, ExternalRatingSource source, BigDecimal rating, Integer votesCount, Instant lastUpdatedAt) {
+        this.movie = movie;
+        this.source = source;
+        this.rating = rating;
+        this.votesCount = votesCount;
+        this.lastUpdatedAt = lastUpdatedAt;
+    }
+
     public Long getId() { return id; }
     public Movie getMovie() { return movie; }
     public ExternalRatingSource getSource() { return source; }
     public BigDecimal getRating() { return rating; }
     public Integer getVotesCount() { return votesCount; }
     public Instant getLastUpdatedAt() { return lastUpdatedAt; }
+    public void setRating(BigDecimal rating) { this.rating = rating; }
+    public void setVotesCount(Integer votesCount) { this.votesCount = votesCount; }
+    public void setLastUpdatedAt(Instant lastUpdatedAt) { this.lastUpdatedAt = lastUpdatedAt; }
 }
