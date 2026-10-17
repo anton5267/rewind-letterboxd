@@ -96,10 +96,10 @@
 - [x] V20: мовні статті журналу `uk/en`, публічні list/detail endpoint-и з fallback поведінкою через language, адмінське створення/редагування/публікація з аудитом, UI `/uk|en/journal` і базовий редактор у `/uk|en/admin`; `JournalArticleIntegrationTests` та frontend build пройдені.
 - [x] Додано локалізовані службові маршрути `/help`, `/contact`, `/rules`, `/privacy`, `/film-data`, `/delete-account` і робочі footer-посилання; TypeScript та production build пройдені.
 - [ ] Розширити журнал категоріями подкастів, архівом і бюлетенем; статті та двомовний редактор із fallback уже працюють.
-- [ ] Допомога, контакти, правила, приватність, дані фільмів і видалення акаунта.
+- [x] Допомога, контакти, правила, приватність, дані фільмів і видалення акаунта мають локалізовані службові маршрути та footer-посилання; поведінка видалення акаунта поки інформаційна й потребує серверного workflow.
 - [x] Додано About/Credits, офіційний логотип TMDB і потрібне повідомлення про джерело; прибрано хибний підпис IMDb у футері. Точний дизайн ще залежить від Figma.
 
-## 8. Повна адмінка — не завершено
+## 8. Повна адмінка — в роботі
 
 - [x] V18: аудит адміністративних дій, dashboard із агрегованими лічильниками, керування HQ і базовий UI `/uk/admin` та `/en/admin`; `AdminAuditIntegrationTests`, backend compile і frontend build пройдені.
 - [x] V19: приховування коментарів із публічного API, адмінські list/hide/unhide/delete endpoints, аудит дій і UI модерації коментарів; `ReviewCommentIntegrationTests` та frontend build пройдені.
@@ -109,10 +109,10 @@
 - [x] Додано admin-only сторінковий огляд діалогів і сповіщень з агрегованою кількістю повідомлень, статусом прочитання та ID учасників; email і пароль не повертаються. `AdminCommunicationIntegrationTests` перевірив MySQL-запити, TypeScript і production build пройшли.
 - [x] Dashboard, користувачі/HQ, огляди й коментарі мають базові admin API/UI та аудит.
 - [x] Users у dashboard отримали пошук за username/email/display name і activate/deactivate з аудитом; `AdminAuditIntegrationTests` перевіряє обидва переходи, TypeScript і production build пройшли.
-- [ ] Додати повні admin UI для фільмів, списків, повідомлень, сповіщень і розширеного пошуку користувачів.
+- [ ] Розширити admin UI для списків, повідомлень і сповіщень до повного керування; базові сторінкові огляди, CRUD фільмів і user search/blocking уже підключені.
 - [ ] Блокування, черга модерації, аудит дій, налаштування сайту та серверні тести прав.
 
-## 9. Якість і публічний реліз — не почато
+## 9. Якість і публічний реліз — в роботі
 
 - [x] Додано configurable auth rate limit для login/register/forgot-password/reset-password із 429 + `Retry-After`; unit test перевіряє квоту та розділення endpoint-ів.
 - [x] Додано optional Redis cache profile: compose піднімає Redis 7, API використовує Redis TTL 10 хв для гостьової деталки фільму й очищає кеш після admin update/delete; local tests працюють з `spring.cache.type=none`, compose config проходить.
