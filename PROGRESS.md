@@ -22,7 +22,7 @@
 - [x] `CoreFilmFlowIntegrationTests`, `PasswordResetIntegrationTests` і `RefreshSessionIntegrationTests` пройшли з реальною MySQL; `scripts/verify-api.ps1` перевірив cookie/CSRF, список, оцінку, створення/редагування/видалення огляду та refresh-сесії.
 - [x] Додано базовий GitHub Actions CI для MySQL, Maven, TypeScript і Vite; локально виконано ті самі збірки.
 - [x] Dev-профіль на чистій MySQL сам застосував міграції й імпортував 50 фільмів.
-- [ ] Перевірити **весь** `docker compose up --build` на чистій машині. На цьому ПК Docker Hub відмовив у завантаженні Maven/JRE/Nginx образів; `docker compose config --quiet` проходить.
+- [ ] Перевірити **весь** `docker compose up --build` на чистій машині. `docker compose config --quiet` проходить; повторна спроба `docker compose pull` 17.10.2026 зупинилася на Docker Hub anonymous token (`unexpected EOF` для `mysql:8.4`), тому clean runtime не підтверджений.
 - [ ] Автоматизувати браузерний тест сценарію реєстрація → список → оцінка → огляд → редагування → видалення. У Chrome вручну пройдено шлях від реєстрації до редагування огляду й видалення фільму зі списку; видалення огляду та оцінки перевірено HTTP-скриптом. Тестові акаунти видалено.
 - [x] Browser smoke на свіжому API/Vite пройшов реєстрацію → вхід → захищений профіль → `DELETE /api/profile/me` з правильним паролем: API повернув 204, logout завершився, а тестовий користувач зник із MySQL. Для браузерної локальної розробки Vite тепер змінює origin проксі, а Spring дозволяє `localhost/127.0.0.1:5174`.
 - [ ] Завершити єдиний формат помилок і контрактні тести для всіх API, включно з конкурентними записами.
