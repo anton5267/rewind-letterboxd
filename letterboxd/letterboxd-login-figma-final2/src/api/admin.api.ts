@@ -6,7 +6,7 @@ export interface AuditLog { id: number; adminId: number; action: string; targetT
 export interface AdminComment { id: number; reviewId: number; userId: number; username: string; content: string; isHidden: boolean; moderatedReason: string | null; moderatedAt: string | null; createdAt: string }
 export interface AdminArticle { id: number; slug: string; language: string; category: string; title: string; excerpt: string | null; content: string; coverUrl: string | null; publishedAt: string | null }
 export interface AdminReview { id: number; movieId: number; movieTitle: string; userId: number; username: string; content: string; rating: number | null; isHidden: boolean; moderatedReason: string | null; moderatedAt: string | null; createdAt: string }
-export interface AdminMovie { id: number; title: string; releaseDate: string | null; rating: number | null; photoUrl: string | null }
+export interface AdminMovie { id: number; tmdbId: number | null; title: string; releaseDate: string | null; rating: number | null; photoUrl: string | null }
 export interface AdminMovieWrite { title: string; releaseDate?: string | null; rating?: number | null; photoUrl?: string | null }
 export interface TmdbSyncResponse { movieId: number; tmdbId: number; title: string; genresUpdated: number; actorsUpdated: number; directorsUpdated: number; similarMoviesLinked: number; trailerUpdated: boolean }
 export interface AdminList { id: number; userId: number; username: string; name: string; description: string | null; listType: string; isPublic: boolean; itemCount: number; createdAt: string; updatedAt: string }

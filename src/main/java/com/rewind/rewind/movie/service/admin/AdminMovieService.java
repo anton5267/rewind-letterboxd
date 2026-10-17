@@ -71,6 +71,7 @@ public class AdminMovieService {
     private MovieCardResponse toCard(Movie m) {
         return new MovieCardResponse(
                 m.getId(),
+                m.getTmdbId(),
                 m.getTitle(),
                 m.getReleaseDate(),
                 m.getRating(),

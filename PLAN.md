@@ -17,7 +17,7 @@
 | 5. Особисті дії та списки | `[~]` | watched/watchlist/favorites, ratings, reviews, comments, public lists, automated core flow | повні browser-регресії, фінальний UX профілю та списків |
 | 6. Спільнота | `[~]` | follows, likes, activity, tags, notifications/SSE, messages, HQ, follow→notification browser smoke, SSE reconnect test | admin browser-регресії |
 | 7. Журнал і службові сторінки | `[~]` | статті, категорії, archive, fallback, admin editor, help/legal | podcasts/newsletter та повна редакційна локалізація |
-| 8. Адмінка | `[~]` | dashboard, users/HQ, films, moderation, settings, audit, communications, admin browser smoke | повний CRUD списків/сповіщень і розширена moderation UX |
+| 8. Адмінка | `[~]` | dashboard, users/HQ, films, moderation queue with hide actions, settings, audit, communications, admin browser smoke | повний CRUD списків/сповіщень і розширена moderation UX |
 | 9. Якість і реліз | `[~]` | rate limit, Redis service/cache profile, cache hit/miss, metrics, backup/restore scripts, runtime health, V22 індекси й N+1 fetch-плани, browser security headers, keyboard/accessibility smoke, WCAG 2 A/AA axe audit, 11 passing Playwright checks + admin smoke, local load/security smoke, non-root API image, production Compose overlay/read-only API/secure-cookie profile | dependency audit remediation, SQLi/XSS, production load, VPS/HTTPS |
 | 10. Захист і презентація | `[ ]` | підготовлені README, карта, вимоги та ER-основа | Figma parity, фінальна ER-діаграма, демо і відео |
 

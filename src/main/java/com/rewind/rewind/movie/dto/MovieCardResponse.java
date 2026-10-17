@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 public class MovieCardResponse {
 
     private Long id;
+    private Long tmdbId;
     private String title;
     private LocalDate releaseDate;
     private BigDecimal rating;
@@ -18,7 +19,19 @@ public class MovieCardResponse {
             BigDecimal rating,
             String photoUrl
     ) {
+        this(id, null, title, releaseDate, rating, photoUrl);
+    }
+
+    public MovieCardResponse(
+            Long id,
+            Long tmdbId,
+            String title,
+            LocalDate releaseDate,
+            BigDecimal rating,
+            String photoUrl
+    ) {
         this.id = id;
+        this.tmdbId = tmdbId;
         this.title = title;
         this.releaseDate = releaseDate;
         this.rating = rating;
@@ -26,6 +39,8 @@ public class MovieCardResponse {
     }
 
     public Long getId() { return id; }
+
+    public Long getTmdbId() { return tmdbId; }
 
     public String getTitle() { return title; }
 

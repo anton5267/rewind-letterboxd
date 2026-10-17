@@ -31,7 +31,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!isAuth || user?.role !== "ADMIN") return;
     Promise.all([getAdminDashboard(), getAdminUsers(), getAuditLogs(), getAdminComments(), getAdminArticles(), getAdminReviews(), getAdminMovies(), getAdminLists(), getAdminConversations(), getAdminNotifications(), getAdminModerationQueue(), getAdminSettings()]).then(([summary, usersResponse, logsResponse, commentsResponse, articlesResponse, reviewsResponse, moviesResponse, listsResponse, conversationsResponse, notificationsResponse, moderationResponse, settingsResponse]) => {
-      setDashboard(summary.data); setUsers(usersResponse.data.content); setLogs(logsResponse.data.content); setComments(commentsResponse.data.content); setArticles(articlesResponse.data.content); setReviews(reviewsResponse.data.content); setMovies(moviesResponse.data.content); setLists(listsResponse.data.content); setConversations(conversationsResponse.data.content); setNotifications(notificationsResponse.data.content); setModerationQueue(moderationResponse.data.content); setSettings(settingsResponse.data);
+      setDashboard(summary.data); setUsers(usersResponse.data.content); setLogs(logsResponse.data.content); setComments(commentsResponse.data.content); setArticles(articlesResponse.data.content); setReviews(reviewsResponse.data.content); setMovies(moviesResponse.data.content); setTmdbIds(Object.fromEntries(moviesResponse.data.content.filter(movie => movie.tmdbId !== null).map(movie => [movie.id, String(movie.tmdbId)]))); setLists(listsResponse.data.content); setConversations(conversationsResponse.data.content); setNotifications(notificationsResponse.data.content); setModerationQueue(moderationResponse.data.content); setSettings(settingsResponse.data);
     }).catch(() => setError(true));
   }, [isAuth, user?.role]);
 
@@ -101,6 +101,7 @@ export default function AdminDashboard() {
       setSyncMessage(`${t("tmdbSyncDone")}: ${data.title} · ${data.genresUpdated} ${t("genres")} · ${data.actorsUpdated} ${t("actors")} · ${data.directorsUpdated} ${t("directors")}`);
       const { data: refreshed } = await getAdminMovies();
       setMovies(refreshed.content);
+      setTmdbIds(current => ({ ...current, [movie.id]: String(data.tmdbId) }));
     } catch { setError(true); setSyncMessage(t("tmdbSyncError")); }
     finally { setSyncingMovieId(null); }
   };

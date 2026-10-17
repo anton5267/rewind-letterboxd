@@ -38,6 +38,7 @@
 - [~] Перевірити весь інтерфейс на 320px, 768px і desktop без горизонтального переповнення та з клавіатурою. Playwright підтвердив `/uk|en/home`, `/uk|en/films`, `/en/help`, `/uk/journal` на 320px без overflow; повний набір екранів і keyboard audit ще відкриті. Виправлено overflow home movie rows і footer nav.
 - [x] Browser smoke перевірив `/uk/help` і `/en/help`: локалізація, footer-посилання та `document.documentElement.lang` працюють; desktop `/uk/films` не має горизонтального переповнення.
 - [x] Повторний browser smoke через свіжий API `8093` і Vite `5174`: `/uk/journal` коректно показує empty state без статей, `/uk/films` показує 12 карток без overflow, `/en/help` має English heading/footer і `lang=en`. Старий процес на `8080` окремо повертав 403 для journal, тому локальний запуск має використовувати API з поточного коду.
+- [x] Повний Playwright regression після TMDB/admin змін: **11 passed, 1 skipped** за 29.4 секунди; accessibility, axe, keyboard, security, core film, social і SSE сценарії пройшли.
 - [x] Browser guard перевірено для `/uk/admin` без входу: маршрут перенаправляє на `/uk/home`, приватний dashboard не показується.
 - [x] Playwright suite має 3 passing сценарії: core film flow, двомовні public routes на 320px без overflow і guest redirects для profile/lists/messages/notifications/admin.
 - [x] Після додавання адмінського TMDB-контролю повторно пройшов guest guard Playwright: `/uk/admin` і приватні маршрути не відкриваються без входу (`1 passed`).
@@ -61,6 +62,7 @@
 - [x] У UI персоналій додано фільтр жанру, що передає `genreId` до публічного API; TypeScript і production build пройшли.
 - [x] Додано admin-only `POST /api/admin/movies/{movieId}/tmdb-sync`: явний `tmdbId`, V23 зовнішні ID для movies/genres/actors/directors, оновлення metadata/trailer, credits, TMDB external rating і similar links лише з локального каталогу. API вимкнено за замовчуванням без `TMDB_ENABLED=true` та `TMDB_API_KEY`.
 - [x] Адмінський React-екран показує для кожного фільму поле `TMDB ID`, кнопку синхронізації, стан виконання та результат із кількістю оновлених жанрів/акторів/режисерів. Клієнтний контракт додано в `admin.api.ts`; TypeScript і Vite production build пройшли.
+- [x] Admin movie response тепер повертає збережений `tmdbId`, а адмінський UI відновлює його після reload і після sync. `AdminMovieIntegrationTests`, TypeScript і Vite production build пройшли.
 - [x] Черга модерації тепер має серверну дію `POST /api/admin/moderation/{type}/{id}/hide`: вона перевикористовує audit-aware review/comment moderation services, прибирає елемент із черги й має кнопку в адмінському UI. `AdminModerationQueueIntegrationTests` (2 тести), TypeScript і Vite production build пройшли.
 - [x] Повний `./mvnw -q test` після moderation queue actions пройшов без failures/errors; результат збережено у локальному `full-backend-after-moderation.log` (ігнорується Git).
 - [x] `TmdbSyncIntegrationTests` пройшов на MySQL; Docker API перебудований із V23, Flyway провалідовав 23 міграції, health повернув 200. Після зміни повний browser набір має **11 passed, 1 skipped**, включно з axe-аудитом.
