@@ -7,6 +7,7 @@ import com.rewind.rewind.movie.entity.Movie;
 import com.rewind.rewind.movie.repo.MovieRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.data.domain.*;
 
 @Service
 public class AdminMovieService {
@@ -32,6 +33,11 @@ public class AdminMovieService {
 
         Movie saved = movies.save(m);
         return toCard(saved);
+    }
+
+    public Page<MovieCardResponse> list(int page, int size) {
+        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 100)), Sort.by(Sort.Direction.DESC, "id"));
+        return movies.findAll(pageable).map(this::toCard);
     }
 
     @CacheEvict(cacheNames = "movieDetails", key = "#id")

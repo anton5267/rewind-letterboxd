@@ -6,6 +6,7 @@ import com.rewind.rewind.movie.dto.admin.UpdateMovieRequest;
 import com.rewind.rewind.movie.service.admin.AdminMovieService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,6 +17,11 @@ public class AdminMovieController {
 
     public AdminMovieController(AdminMovieService service) {
         this.service = service;
+    }
+
+    @GetMapping
+    public Page<MovieCardResponse> list(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "50") int size) {
+        return service.list(page, size);
     }
 
     @PostMapping
