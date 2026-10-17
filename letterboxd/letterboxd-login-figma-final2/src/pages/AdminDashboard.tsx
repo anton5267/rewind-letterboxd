@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { createAdminArticle, getAdminArticles, getAdminComments, getAdminDashboard, getAdminLists, getAdminMovies, getAdminReviews, getAdminUsers, getAuditLogs, setAdminCommentHidden, setAdminHq, setAdminListVisibility, setAdminReviewHidden, type AdminArticle, type AdminComment, type AdminDashboard as Dashboard, type AdminList, type AdminMovie, type AdminReview, type AdminUser, type AuditLog } from "../api/admin.api";
+import { createAdminArticle, createAdminMovie, deleteAdminMovie, getAdminArticles, getAdminComments, getAdminDashboard, getAdminLists, getAdminMovies, getAdminReviews, getAdminUsers, getAuditLogs, setAdminCommentHidden, setAdminHq, setAdminListVisibility, setAdminReviewHidden, updateAdminMovie, type AdminArticle, type AdminComment, type AdminDashboard as Dashboard, type AdminList, type AdminMovie, type AdminMovieWrite, type AdminReview, type AdminUser, type AuditLog } from "../api/admin.api";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
 
@@ -15,6 +15,8 @@ export default function AdminDashboard() {
   const [movies, setMovies] = useState<AdminMovie[]>([]);
   const [lists, setLists] = useState<AdminList[]>([]);
   const [articles, setArticles] = useState<AdminArticle[]>([]);
+  const [movieDraft, setMovieDraft] = useState<AdminMovieWrite>({ title: "", releaseDate: "", rating: null, photoUrl: "" });
+  const [editingMovieId, setEditingMovieId] = useState<number | null>(null);
   const [article, setArticle] = useState({ slug: "", language: "uk", category: "Новини", title: "", excerpt: "", content: "", coverUrl: "", published: false });
   const [error, setError] = useState(false);
 
@@ -43,6 +45,22 @@ export default function AdminDashboard() {
     try { const { data } = await setAdminListVisibility(list.id, !list.isPublic); setLists(current => current.map(item => item.id === data.id ? data : item)); }
     catch { setError(true); }
   };
+  const resetMovieDraft = () => { setEditingMovieId(null); setMovieDraft({ title: "", releaseDate: "", rating: null, photoUrl: "" }); };
+  const editMovie = (movie: AdminMovie) => { setEditingMovieId(movie.id); setMovieDraft({ title: movie.title, releaseDate: movie.releaseDate ?? "", rating: movie.rating, photoUrl: movie.photoUrl ?? "" }); };
+  const saveMovie = async (event: React.FormEvent) => {
+    event.preventDefault();
+    try {
+      const payload = { ...movieDraft, title: movieDraft.title.trim(), releaseDate: movieDraft.releaseDate || null, photoUrl: movieDraft.photoUrl || null };
+      const { data } = editingMovieId === null ? await createAdminMovie(payload) : await updateAdminMovie(editingMovieId, payload);
+      setMovies(current => editingMovieId === null ? [data, ...current] : current.map(item => item.id === data.id ? data : item));
+      resetMovieDraft();
+    } catch { setError(true); }
+  };
+  const removeMovie = async (movie: AdminMovie) => {
+    if (!window.confirm(`${t("deleteMovieConfirm")} ${movie.title}?`)) return;
+    try { await deleteAdminMovie(movie.id); setMovies(current => current.filter(item => item.id !== movie.id)); }
+    catch { setError(true); }
+  };
   const publishArticle = async (event: React.FormEvent) => {
     event.preventDefault();
     try { const { data } = await createAdminArticle(article); setArticles(current => [data, ...current]); setArticle(current => ({ ...current, slug: "", title: "", excerpt: "", content: "", coverUrl: "" })); }
@@ -57,7 +75,7 @@ export default function AdminDashboard() {
     <section><h2>{t("adminUsers")}</h2><ul>{users.map(target => <li key={target.id} style={{ marginBottom: 8 }}>{target.displayName || target.username} · {target.role} <button type="button" onClick={() => { void toggleHq(target); }}>{target.isHq ? t("revokeHq") : t("grantHq")}</button></li>)}</ul></section>
     <section><h2>{t("adminComments")}</h2><ul>{comments.map(comment => <li key={comment.id} style={{ marginBottom: 8 }}>{comment.username}: {comment.content} · {comment.isHidden ? t("hiddenComment") : t("visibleComment")} <button type="button" onClick={() => { void toggleComment(comment); }}>{comment.isHidden ? t("unhideComment") : t("hideComment")}</button></li>)}</ul></section>
     <section><h2>{t("adminReviews")}</h2><ul>{reviews.map(review => <li key={review.id} style={{ marginBottom: 8 }}>{review.movieTitle} · {review.username}: {review.content} · {review.isHidden ? t("hiddenReview") : t("visibleReview")} <button type="button" onClick={() => { void toggleReview(review); }}>{review.isHidden ? t("unhideReview") : t("hideReview")}</button></li>)}</ul></section>
-    <section><h2>{t("adminMovies")}</h2><ul>{movies.map(movie => <li key={movie.id}>{movie.title} · {movie.releaseDate || "—"} · {movie.rating ?? "—"}</li>)}</ul></section>
+    <section><h2>{t("adminMovies")}</h2><form onSubmit={saveMovie} style={{ display: "grid", gap: 8, maxWidth: 700, marginBottom: 16 }}><label>{t("movieTitle")}<input required maxLength={255} value={movieDraft.title} onChange={event => setMovieDraft({ ...movieDraft, title: event.target.value })} /></label><label>{t("releaseDate")}<input type="date" value={movieDraft.releaseDate ?? ""} onChange={event => setMovieDraft({ ...movieDraft, releaseDate: event.target.value })} /></label><label>{t("rating")}<input type="number" min="0" max="10" step="0.1" value={movieDraft.rating ?? ""} onChange={event => setMovieDraft({ ...movieDraft, rating: event.target.value === "" ? null : Number(event.target.value) })} /></label><label>{t("posterUrl")}<input type="url" value={movieDraft.photoUrl ?? ""} onChange={event => setMovieDraft({ ...movieDraft, photoUrl: event.target.value })} /></label><div><button type="submit">{editingMovieId === null ? t("create") : t("save")}</button>{editingMovieId !== null && <button type="button" onClick={resetMovieDraft}>{t("cancel")}</button>}</div></form><ul>{movies.map(movie => <li key={movie.id} style={{ marginBottom: 8 }}>{movie.title} · {movie.releaseDate || "—"} · {movie.rating ?? "—"} <button type="button" onClick={() => editMovie(movie)}>{t("editMovie")}</button> <button type="button" onClick={() => { void removeMovie(movie); }}>{t("deleteMovie")}</button></li>)}</ul></section>
     <section><h2>{t("adminLists")}</h2><ul>{lists.map(list => <li key={list.id} style={{ marginBottom: 8 }}>{list.name} · {list.username} · {list.itemCount} {t("items")} · {list.isPublic ? t("publicList") : t("hiddenList")} <button type="button" onClick={() => { void toggleList(list); }}>{list.isPublic ? t("hideList") : t("publishList")}</button></li>)}</ul></section>
     <section><h2>{t("journalEditor")}</h2><form onSubmit={publishArticle} style={{ display: "grid", gap: 8, maxWidth: 700 }}><input required placeholder={t("articleSlug")} value={article.slug} onChange={event => setArticle({ ...article, slug: event.target.value })} /><input required placeholder={t("articleTitle")} value={article.title} onChange={event => setArticle({ ...article, title: event.target.value })} /><input required placeholder={t("articleCategory")} value={article.category} onChange={event => setArticle({ ...article, category: event.target.value })} /><select value={article.language} onChange={event => setArticle({ ...article, language: event.target.value })}><option value="uk">Українська</option><option value="en">English</option></select><input placeholder={t("articleExcerpt")} value={article.excerpt} onChange={event => setArticle({ ...article, excerpt: event.target.value })} /><textarea required placeholder={t("articleContent")} value={article.content} onChange={event => setArticle({ ...article, content: event.target.value })} rows={8} /><label><input type="checkbox" checked={article.published} onChange={event => setArticle({ ...article, published: event.target.checked })} /> {t("publishArticle")}</label><button type="submit">{t("create")}</button></form><ul>{articles.map(item => <li key={item.id}>{item.language} · {item.title}</li>)}</ul></section>
     <section><h2>{t("auditLogs")}</h2>{logs.length === 0 ? <p>{t("noAuditLogs")}</p> : <ul>{logs.map(log => <li key={log.id}>{log.action} · {log.targetType} #{log.targetId ?? "—"} · {new Date(log.createdAt).toLocaleString()}</li>)}</ul>}</section>

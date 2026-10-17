@@ -7,6 +7,7 @@ export interface AdminComment { id: number; reviewId: number; userId: number; us
 export interface AdminArticle { id: number; slug: string; language: string; category: string; title: string; excerpt: string | null; content: string; coverUrl: string | null; publishedAt: string | null }
 export interface AdminReview { id: number; movieId: number; movieTitle: string; userId: number; username: string; content: string; rating: number | null; isHidden: boolean; moderatedReason: string | null; moderatedAt: string | null; createdAt: string }
 export interface AdminMovie { id: number; title: string; releaseDate: string | null; rating: number | null; photoUrl: string | null }
+export interface AdminMovieWrite { title: string; releaseDate?: string | null; rating?: number | null; photoUrl?: string | null }
 export interface AdminList { id: number; userId: number; username: string; name: string; description: string | null; listType: string; isPublic: boolean; itemCount: number; createdAt: string; updatedAt: string }
 export interface Page<T> { content: T[]; totalPages: number; totalElements: number }
 export const getAdminDashboard = () => api.get<AdminDashboard>("/admin/dashboard");
@@ -20,5 +21,8 @@ export const createAdminArticle = (article: Omit<AdminArticle, "id" | "published
 export const getAdminReviews = () => api.get<Page<AdminReview>>("/admin/reviews", { params: { size: 50 } });
 export const setAdminReviewHidden = (id: number, hidden: boolean, reason = "") => api.post<AdminReview>(`/admin/reviews/${id}/${hidden ? "hide" : "unhide"}`, { reason });
 export const getAdminMovies = () => api.get<Page<AdminMovie>>("/admin/movies", { params: { size: 50 } });
+export const createAdminMovie = (movie: AdminMovieWrite) => api.post<AdminMovie>("/admin/movies", movie);
+export const updateAdminMovie = (id: number, movie: Partial<AdminMovieWrite>) => api.put<AdminMovie>(`/admin/movies/${id}`, movie);
+export const deleteAdminMovie = (id: number) => api.delete(`/admin/movies/${id}`);
 export const getAdminLists = () => api.get<Page<AdminList>>("/admin/lists", { params: { size: 50 } });
 export const setAdminListVisibility = (id: number, visible: boolean) => api.put<AdminList>(`/admin/lists/${id}/visibility`, null, { params: { visible } });
