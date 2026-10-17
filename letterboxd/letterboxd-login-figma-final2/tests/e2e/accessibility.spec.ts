@@ -71,6 +71,7 @@ test("primary public routes have keyboard reachable controls", async ({ page }) 
 test("public routes expose complete landmarks and image alternatives", async ({ page }) => {
   for (const route of publicRoutes) {
     await page.goto(route);
+    await expect(page.locator("h1").first()).toBeVisible();
     const audit = await page.evaluate(() => {
       const headings = [...document.querySelectorAll("h1, h2, h3, h4, h5, h6")].map(element => Number(element.tagName.slice(1)));
       const imagesWithoutAlt = [...document.images]
