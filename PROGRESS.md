@@ -169,10 +169,10 @@
 - [~] Базову доступність, keyboard focus, mobile overflow, browser security headers, non-root runtime і admin/social browser flows перевірено; залишаються глибші SQLi/XSS, права, production load та VPS/HTTPS.
 - [~] Production-like конфігурація, runbook, приватні DB/Redis volumes і backup/restore scripts підготовлені. Залишаються Linux VPS, реальний домен/HTTPS, production secrets, monitoring/backup schedule і публічний запуск.
 
-## 10. Захист і презентація — не почато
+## 10. Захист і презентація — в роботі
 
 - [ ] Звірка з затвердженими Figma-фреймами та UX-сценаріями, дизайн-система, прототипи.
-- [x] Створено актуальну migration-backed ER-діаграму в `ER_DIAGRAM.md` для 30 прикладних таблиць і self-reference `similar_movies`; `scripts/verify-er-schema.ps1` на Compose перевірив 31 таблицю разом із Flyway history та 45 foreign-key relationships.
+- [x] Створено актуальну migration-backed ER-діаграму в `ER_DIAGRAM.md` для 32 прикладних таблиць і self-reference `similar_movies`; `scripts/verify-er-schema.ps1` на Compose перевірив 32 таблиці та 46 foreign-key relationships.
 - [ ] Демодані, фінальна відеопрезентація й точна Figma-звірка ще відкриті.
 
 ## Негайний наступний крок
