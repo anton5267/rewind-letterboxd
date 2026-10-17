@@ -44,6 +44,8 @@ try {
         '/api/admin/conversations?size=1',
         '/api/admin/notifications?size=1',
         '/api/admin/moderation/queue?size=1',
+        '/api/admin/journal/articles?size=1',
+        '/api/admin/journal/articles/999999/newsletter',
         '/api/admin/settings',
         '/api/admin/audit-logs?size=1'
     )
@@ -74,6 +76,7 @@ try {
         @{ Name = 'POST /api/admin/moderation/bulk-hide'; Method = 'POST'; Route = '/api/admin/moderation/bulk-hide'; Body = '{"items":[],"reason":"security smoke"}' },
         @{ Name = 'POST /api/admin/notifications'; Method = 'POST'; Route = '/api/admin/notifications'; Body = '{}' },
         @{ Name = 'PATCH /api/admin/notifications/999999/read'; Method = 'PATCH'; Route = '/api/admin/notifications/999999/read'; Body = '' },
+        @{ Name = 'PATCH /api/admin/notifications/999999/unread'; Method = 'PATCH'; Route = '/api/admin/notifications/999999/unread'; Body = '' },
         @{ Name = 'PATCH /api/admin/notifications/read-all'; Method = 'PATCH'; Route = '/api/admin/notifications/read-all'; Body = '' },
         @{ Name = 'DELETE /api/admin/notifications'; Method = 'DELETE'; Route = '/api/admin/notifications'; Body = '{}' },
         @{ Name = 'DELETE /api/admin/notifications/999999'; Method = 'DELETE'; Route = '/api/admin/notifications/999999'; Body = '' },
