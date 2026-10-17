@@ -92,6 +92,7 @@
 
 - [x] V18: аудит адміністративних дій, dashboard із агрегованими лічильниками, керування HQ і базовий UI `/uk/admin` та `/en/admin`; `AdminAuditIntegrationTests`, backend compile і frontend build пройдені.
 - [x] V19: приховування коментарів із публічного API, адмінські list/hide/unhide/delete endpoints, аудит дій і UI модерації коментарів; `ReviewCommentIntegrationTests` та frontend build пройдені.
+- [x] Підключено наявну серверну модерацію оглядів до `/uk|en/admin`: сторінковий список, hide/unhide, reason і оновлення стану; frontend TypeScript і production build пройдені.
 - [ ] Dashboard; користувачі/HQ; фільми; огляди; коментарі; списки; повідомлення; сповіщення.
 - [ ] Блокування, черга модерації, аудит дій, налаштування сайту та серверні тести прав.
 
