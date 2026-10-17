@@ -48,6 +48,15 @@ Content-Type: application/json
 {"tmdbId":550,"syncSimilar":true}
 ```
 
+Для контрольного оновлення кількох уже створених локальних фільмів доступний admin-only batch endpoint. Він приймає максимум 20 пар за запит, ізолює помилку окремого фільму та повертає результат для кожного елемента:
+
+```http
+POST /api/admin/movies/tmdb-sync/batch
+Content-Type: application/json
+
+{"syncSimilar":true,"movies":[{"movieId":1,"tmdbId":550},{"movieId":2,"tmdbId":603}]}
+```
+
 The endpoint requires the normal admin cookie/CSRF contract. It never creates unverified similar movies; only already imported local movies with matching `tmdb_id` are linked.
 
 The Compose file uses public ECR mirrors for container images. Maven uses the configured public mirror in `.mvn/settings.xml` so a local Docker build does not depend on a single registry endpoint.

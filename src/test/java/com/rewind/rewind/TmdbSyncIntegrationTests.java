@@ -8,6 +8,9 @@ import com.rewind.rewind.movie.entity.Movie;
 import com.rewind.rewind.movie.repo.MovieRepository;
 import com.rewind.rewind.similar.repo.SimilarMovieRepository;
 import com.rewind.rewind.tmdb.TmdbClient;
+import com.rewind.rewind.tmdb.TmdbBatchSyncRequest;
+import com.rewind.rewind.tmdb.TmdbBatchSyncResponse;
+import com.rewind.rewind.tmdb.TmdbBatchSyncService;
 import com.rewind.rewind.tmdb.TmdbSyncRequest;
 import com.rewind.rewind.tmdb.TmdbSyncResponse;
 import com.rewind.rewind.tmdb.TmdbSyncService;
@@ -27,6 +30,7 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 class TmdbSyncIntegrationTests {
     @Autowired TmdbSyncService sync;
+    @Autowired TmdbBatchSyncService batchSync;
     @Autowired MovieRepository movies;
     @Autowired MovieActorRepository movieActors;
     @Autowired MovieDirectorRepository movieDirectors;
@@ -84,5 +88,37 @@ class TmdbSyncIntegrationTests {
                 .orElseThrow().getRating());
         assertEquals(1, similarMovies.findById_MovieId(movieId).size());
         assertEquals(existingSimilar.getId(), similarMovies.findById_MovieId(movieId).get(0).getSimilarMovie().getId());
+    }
+
+    @Test
+    @Transactional
+    void batchSyncKeepsPerMovieResultAndContinuesAfterProviderFailure() {
+        Movie first = new Movie();
+        first.setTitle("Batch first");
+        Long firstId = movies.saveAndFlush(first).getId();
+        Movie second = new Movie();
+        second.setTitle("Batch second");
+        Long secondId = movies.saveAndFlush(second).getId();
+
+        when(tmdb.fetchMovie(500L)).thenReturn(new TmdbClient.MovieData(
+                500L, "tt0500500", "Batch synced", 100, LocalDate.of(2024, 2, 3),
+                "Batch overview", null, null, null, new BigDecimal("6.8"), 42,
+                List.of(), List.of(), List.of(), List.of()));
+        when(tmdb.fetchMovie(501L)).thenThrow(new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.NOT_FOUND, "TMDB movie not found"));
+
+        TmdbBatchSyncRequest request = new TmdbBatchSyncRequest(List.of(
+                new TmdbBatchSyncRequest.MovieRequest(firstId, 500L),
+                new TmdbBatchSyncRequest.MovieRequest(secondId, 501L)
+        ), false);
+        TmdbBatchSyncResponse result = batchSync.sync(request);
+
+        assertEquals(2, result.requested());
+        assertEquals(1, result.succeeded());
+        assertEquals(1, result.failed());
+        assertEquals("SYNCED", result.items().get(0).status());
+        assertEquals("FAILED", result.items().get(1).status());
+        assertEquals(500L, movies.findById(firstId).orElseThrow().getTmdbId());
+        assertNull(movies.findById(secondId).orElseThrow().getTmdbId());
     }
 }
