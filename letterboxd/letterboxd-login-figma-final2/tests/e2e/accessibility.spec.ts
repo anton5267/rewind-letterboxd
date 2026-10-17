@@ -66,3 +66,37 @@ test("primary public routes have keyboard reachable controls", async ({ page }) 
     }
   }
 });
+
+test("public routes expose complete landmarks and image alternatives", async ({ page }) => {
+  for (const route of publicRoutes) {
+    await page.goto(route);
+    const audit = await page.evaluate(() => {
+      const headings = [...document.querySelectorAll("h1, h2, h3, h4, h5, h6")].map(element => Number(element.tagName.slice(1)));
+      const imagesWithoutAlt = [...document.images]
+        .filter(image => !image.hasAttribute("alt"))
+        .map(image => image.outerHTML.slice(0, 120));
+      const invalidLinks = [...document.querySelectorAll("a")]
+        .filter(link => !link.getAttribute("href"))
+        .map(link => link.outerHTML.slice(0, 120));
+      return {
+        main: document.querySelectorAll("main").length,
+        banner: document.querySelectorAll("header").length,
+        footer: document.querySelectorAll("footer").length,
+        h1: document.querySelectorAll("h1").length,
+        headings,
+        imagesWithoutAlt,
+        invalidLinks,
+      };
+    });
+    expect(audit.main, `${route} should expose one main landmark`).toBe(1);
+    expect(audit.banner, `${route} should expose one header`).toBe(1);
+    expect(audit.footer, `${route} should expose one footer`).toBe(1);
+    expect(audit.h1, `${route} should expose one h1`).toBe(1);
+    expect(audit.imagesWithoutAlt, `${route} has images without alt`).toEqual([]);
+    expect(audit.invalidLinks, `${route} has links without href`).toEqual([]);
+    expect(audit.headings, `${route} skips a heading level`).toEqual(expect.arrayContaining([1]));
+    for (let index = 1; index < audit.headings.length; index++) {
+      expect(audit.headings[index] - audit.headings[index - 1], `${route} heading jump`).toBeLessThanOrEqual(1);
+    }
+  }
+});
