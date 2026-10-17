@@ -99,7 +99,7 @@
 
 - [x] Додано configurable auth rate limit для login/register/forgot-password/reset-password із 429 + `Retry-After`; unit test перевіряє квоту та розділення endpoint-ів.
 - [x] Додано optional Redis cache profile: compose піднімає Redis 7, API використовує Redis TTL 10 хв для гостьової деталки фільму й очищає кеш після admin update/delete; local tests працюють з `spring.cache.type=none`, compose config проходить.
-- [x] Додано Actuator health/metrics з публічним health і захищеними metrics та відтворювані `scripts/backup-dev.ps1`/`restore-dev.ps1`; backup перевірено через реальний MySQL контейнер із `mysqldump --single-transaction --no-tablespaces`, відновлення — у тимчасову БД із 30 таблицями та подальшим cleanup.
+- [x] Додано Actuator health/metrics з публічним health і захищеними metrics та відтворювані `scripts/backup-dev.ps1`/`restore-dev.ps1`; runtime health повернув 200, metrics без auth — 401, backup перевірено через реальний MySQL контейнер із `mysqldump --single-transaction --no-tablespaces`, відновлення — у тимчасову БД із 30 таблицями та подальшим cleanup.
 - [ ] Перевірити Redis runtime, індекси й N+1, резервне відновлення у тимчасову БД та навантаження.
 - [ ] Доступність, SQLi/XSS, права, навантаження та браузерні регресії.
 - [ ] Production конфігурація, VPS, HTTPS, приватна БД і публічний запуск.

@@ -46,6 +46,8 @@ services:
       COOKIE_SECURE: "false"
       SPRING_CACHE_TYPE: redis
       REDIS_URL: redis://redis:6379
+      REDIS_HEALTH_ENABLED: "true"
+      MAIL_HEALTH_ENABLED: "true"
       FRONTEND_RESET_URL: http://localhost:3000/uk/reset-password
       MAIL_HOST: mailpit
       MAIL_PORT: 1025

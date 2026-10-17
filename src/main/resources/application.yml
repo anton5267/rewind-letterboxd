@@ -37,6 +37,11 @@ server:
     include-binding-errors: always
 
 management:
+  health:
+    redis:
+      enabled: ${REDIS_HEALTH_ENABLED:false}
+    mail:
+      enabled: ${MAIL_HEALTH_ENABLED:false}
   endpoints:
     web:
       exposure:
