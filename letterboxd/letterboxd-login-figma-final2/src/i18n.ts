@@ -4,7 +4,7 @@ export type Language = "uk" | "en";
 
 const messages: Record<Language, Record<string, string>> = {
   uk: {
-    journal: "Журнал", journalLoadError: "Не вдалося завантажити журнал.", noJournalArticles: "Опублікованих статей поки немає.",
+    journal: "Журнал", journalLoadError: "Не вдалося завантажити журнал.", noJournalArticles: "Опублікованих статей поки немає.", journalEditor: "Редактор журналу", articleSlug: "Slug статті", articleTitle: "Заголовок", articleCategory: "Категорія", articleExcerpt: "Короткий опис", articleContent: "Текст статті", publishArticle: "Опублікувати",
     home: "Головна", films: "Фільми", login: "Увійти", logout: "Вийти", logoutError: "Не вдалося вийти. Спробуйте ще раз.", register: "Реєстрація",
     lists: "Мої списки", profile: "Профіль", users: "Користувачі", browseFilms: "Переглянути фільми",
     searchFilms: "Пошук фільмів", search: "Пошук", loadingFilms: "Завантаження фільмів...",
@@ -71,7 +71,7 @@ const messages: Record<Language, Record<string, string>> = {
     poster: "Постер", minutes: "хв", rateAs: "Оцінити на",
   },
   en: {
-    journal: "Journal", journalLoadError: "Could not load the journal.", noJournalArticles: "No published articles yet.",
+    journal: "Journal", journalLoadError: "Could not load the journal.", noJournalArticles: "No published articles yet.", journalEditor: "Journal editor", articleSlug: "Article slug", articleTitle: "Title", articleCategory: "Category", articleExcerpt: "Excerpt", articleContent: "Article content", publishArticle: "Publish",
     home: "Home", films: "Films", login: "Log in", logout: "Log out", logoutError: "Could not log out. Please try again.", register: "Register",
     lists: "My lists", profile: "Profile", users: "Users", browseFilms: "Browse films",
     searchFilms: "Search films", search: "Search", loadingFilms: "Loading films...",
