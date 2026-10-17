@@ -18,7 +18,7 @@
 | 6. Спільнота | `[~]` | follows, likes, activity, tags, notifications/SSE, messages, HQ, follow→notification browser smoke, SSE reconnect test | admin browser-регресії |
 | 7. Журнал і службові сторінки | `[~]` | статті, категорії, archive, fallback, admin editor, help/legal | podcasts/newsletter та повна редакційна локалізація |
 | 8. Адмінка | `[~]` | dashboard, users/HQ, films, moderation, settings, audit, communications, admin browser smoke | повний CRUD списків/сповіщень і розширена moderation UX |
-| 9. Якість і реліз | `[~]` | rate limit, Redis service/cache profile, cache hit/miss, metrics, backup/restore scripts, runtime health, V22 індекси й N+1 fetch-плани, browser security headers, keyboard/accessibility smoke, 10 Playwright checks + admin smoke, local load/security smoke, non-root API image | SQLi/XSS, повний axe, production load, VPS/HTTPS |
+| 9. Якість і реліз | `[~]` | rate limit, Redis service/cache profile, cache hit/miss, metrics, backup/restore scripts, runtime health, V22 індекси й N+1 fetch-плани, browser security headers, keyboard/accessibility smoke, 10 Playwright checks + admin smoke, local load/security smoke, non-root API image, production Compose overlay/read-only API/secure-cookie profile | SQLi/XSS, повний axe, production load, VPS/HTTPS |
 | 10. Захист і презентація | `[ ]` | підготовлені README, карта, вимоги та ER-основа | Figma parity, фінальна ER-діаграма, демо і відео |
 
 Детальний чекліст із доказами, тестами та наступними діями ведеться у [PROGRESS.md](PROGRESS.md). Після кожного завершеного зрізу оновлюємо спочатку `PROGRESS.md`, а потім цей короткий статус.

@@ -2,7 +2,7 @@
 
 Це робочий журнал для [повного плану розвитку](PLAN.md) і ТЗ. Оновлювати після **кожного перевіреного зрізу**: ставити `[x]` тільки коли є код, тест і відповідний наскрізний сценарій; `[ ]` означає відкриту роботу. Часткова реалізація зазначена в примітках і не робить етап завершеним.
 
-Останнє оновлення: **17.10.2026**. Вихідна точка Git: `bf6507f`; зафіксовані зрізи охоплюють auth, каталог, профілі, списки, соціальні модулі, журнал, адмінку, rate limit/cache, health/metrics/backup, V22 індекси/N+1 (`965a610`), browser security headers/accessibility (`377cef1`), social/XSS/SQLi smoke (`e6532a0`), локальний load smoke (`8540405`), SSE reconnect (`66e2250`), backend security smoke (`e62a56b`), admin browser smoke (`d7fdc99`), keyboard smoke (`0425783`) і non-root API/розширений accessibility audit (`7b65a95`). Наступний зріз — повний axe audit та production-like security/load checks.
+Останнє оновлення: **17.10.2026**. Вихідна точка Git: `bf6507f`; зафіксовані зрізи охоплюють auth, каталог, профілі, списки, соціальні модулі, журнал, адмінку, rate limit/cache, health/metrics/backup, V22 індекси/N+1 (`965a610`), browser security headers/accessibility (`377cef1`), social/XSS/SQLi smoke (`e6532a0`), локальний load smoke (`8540405`), SSE reconnect (`66e2250`), backend security smoke (`e62a56b`), admin browser smoke (`d7fdc99`), keyboard smoke (`0425783`) і non-root API/розширений accessibility audit (`7b65a95`). Цей зріз додає production Compose overlay і secure production profile; наступний — повний axe audit, production load та контрольований TMDB import/update.
 
 ## 1. Основа проєкту й дизайн — в роботі
 
@@ -144,9 +144,10 @@
 - [x] Додано `scripts/verify-load.ps1`: 40 паралельних guest-запитів до каталогу й деталки фільму на Compose повернули 2xx за 0.24 секунди; це smoke-перевірка локального runtime, не production load test.
 - [x] Додано `scripts/verify-security.ps1`: public catalog/health повертають 200, guest profile/admin і metrics — 401, login без CSRF — 403. Це backend security smoke для локального runtime; повний penetration/load audit ще відкритий.
 - [x] API production-like image тепер працює від non-root `appuser` (uid/gid 10001). Compose rebuild підтвердив `id=appuser`, health 200, security smoke і Redis cache smoke; browser набір після rebuild — **10 passed, 1 skipped**.
-- [~] Залишаються глибші SQLi/XSS і права, навантаження, повне відновлення у тимчасову БД та production-like конфігурація.
+- [x] Додано `compose.production.yaml` і `.env.production.example`: окремі MySQL/Redis volumes без published database ports, non-root/read-only API, secure cookies, Redis, SMTP і production error policy. `docker compose ... config --quiet` пройшов, production API та web images зібрані успішно; стек навмисно не запускався з прикладовими секретами.
+- [~] Залишаються глибші SQLi/XSS і права, production load та перевірка повного відновлення у тимчасову БД.
 - [~] Базову доступність, keyboard focus, mobile overflow, browser security headers, non-root runtime і admin/social browser flows перевірено; залишаються повний axe аудит, SQLi/XSS, права, production load та VPS/HTTPS.
-- [ ] Production конфігурація, VPS, HTTPS, приватна БД і публічний запуск.
+- [~] Production-like конфігурація і приватні DB/Redis volumes підготовлені. Залишаються Linux VPS, реальний домен/HTTPS, production secrets, monitoring/backup schedule і публічний запуск.
 
 ## 10. Захист і презентація — не почато
 
@@ -155,7 +156,7 @@
 
 ## Негайний наступний крок
 
-1. Додати повний axe аудит і перевірки production-like конфігурації.
+1. Додати повний axe аудит і production load/security checks.
 2. Розширити backend security/load checks та зберегти сценарій відновлення у тимчасову БД.
 3. Реалізувати контрольований TMDB update/import із зовнішніми ID та перевіркою якості каталогу.
 4. Після Editor-доступу зафіксувати точні Figma-фрейми, tokens і assets; до цього не підміняти макети припущеннями.
