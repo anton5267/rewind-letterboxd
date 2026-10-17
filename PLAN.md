@@ -11,10 +11,10 @@
 | Етап | Стан | Що вже є | Що тримає етап відкритим |
 | --- | --- | --- | --- |
 | 1. Основа й дизайн | `[~]` | Git, секрети, карта проєкту, CI | Editor-доступ до Figma, ротація старого TMDB-ключа, точна UI-звірка |
-| 2. Стабільний локальний продукт | `[~]` | API, MySQL, Flyway, DELETE-виправлення, інтеграційні тести, локальний Compose runtime | повний browser-flow, контракти всіх API |
+| 2. Стабільний локальний продукт | `[~]` | API, MySQL, Flyway, DELETE-виправлення, інтеграційні тести, локальний Compose runtime, автоматизований основний browser-flow | контракти всіх API |
 | 3. Інтерфейс і акаунт | `[~]` | локалізовані маршрути, cookie auth, reset, профіль і списки | повна локалізація, responsive/a11y-аудит, Figma-візуал |
 | 4. Фільми й пошук | `[~]` | home, каталог, фільтри, деталка, персоналії, рекомендації | TMDB import/update, external IDs, повна якість каталогу, Figma-звірка |
-| 5. Особисті дії та списки | `[~]` | watched/watchlist/favorites, ratings, reviews, comments, public lists | browser-регресії, фінальний UX профілю та списків |
+| 5. Особисті дії та списки | `[~]` | watched/watchlist/favorites, ratings, reviews, comments, public lists, automated core flow | повні browser-регресії, фінальний UX профілю та списків |
 | 6. Спільнота | `[~]` | follows, likes, activity, tags, notifications/SSE, messages, HQ | browser-регресії й окремий тест розриву SSE |
 | 7. Журнал і службові сторінки | `[~]` | статті, категорії, archive, fallback, admin editor, help/legal | podcasts/newsletter та повна редакційна локалізація |
 | 8. Адмінка | `[~]` | dashboard, users/HQ, films, moderation, settings, audit, communications | повний CRUD списків/сповіщень і розширена moderation UX |

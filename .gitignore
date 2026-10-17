@@ -36,6 +36,8 @@ build/
 **/node_modules/
 **/dist/
 **/.vs/
+**/playwright-report/
+**/test-results/
 **/__pycache__/
 *.pyc
 .env

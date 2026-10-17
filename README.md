@@ -75,6 +75,13 @@ npx tsc --noEmit
 npm run build
 ```
 
+With the Compose stack running and Google Chrome installed, the main browser flow can be checked end to end:
+
+```powershell
+$env:E2E_BASE_URL = 'http://127.0.0.1:3000'
+npm run test:e2e
+```
+
 The current verified slice is tracked in [PROGRESS.md](PROGRESS.md), while the API and database map is in [PROJECT_MAP.md](PROJECT_MAP.md).
 
 ## Project references

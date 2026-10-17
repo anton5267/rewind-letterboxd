@@ -1,13 +1,13 @@
 # Локальний запуск Rewind
 
-Потрібні Docker Desktop і доступ до реєстру Docker Hub. З кореня репозиторію у PowerShell:
+Потрібні Docker Desktop і доступ до registry для образів (Compose використовує public ECR, Mailpit — GHCR). З кореня репозиторію у PowerShell:
 
 ```powershell
 .\scripts\init-dev-env.ps1
 docker compose up --build
 ```
 
-Відкрийте `http://localhost:3000/uk/films`. Compose запускає MySQL 8.4, API і React через Nginx. MySQL доступний лише локально на порту `3307`, API — на `8081`. Міграції Flyway виконуються під час старту API; у профілі `dev` 50 демонстраційних фільмів імпортуються тільки в порожній каталог. Облікові дані випадково генеруються у `.env`, який ігнорується Git. Дані БД живуть у volume `rewind-db`; `docker compose down` його зберігає.
+Відкрийте `http://localhost:3000/uk/films`. Compose запускає MySQL 8.4, Redis, API і React через Nginx. MySQL доступний лише локально на порту `3307`, API — на `8081`. Міграції Flyway виконуються під час старту API; у профілі `dev` 50 демонстраційних фільмів імпортуються тільки в порожній каталог. Облікові дані випадково генеруються у `.env`, який ігнорується Git. Дані БД живуть у volume `rewind-db`; `docker compose down` його зберігає.
 
 Для перевірки відновлення пароля відкрийте `http://localhost:8025`: локальний Mailpit перехоплює листи, а посилання з листа веде на форму нового пароля. Compose також запускає Redis для кешу гостьової деталки фільму. Health API доступний на `/actuator/health`, метрики — на захищеному `/actuator/metrics`. Для production налаштуйте справжній SMTP через `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`, `MAIL_SMTP_AUTH` і `MAIL_SMTP_STARTTLS`.
 
@@ -57,7 +57,18 @@ npx tsc --noEmit
 npm run build
 ```
 
-Інтеграційні тести запускають Spring і Flyway на реальній MySQL та перевіряють видалення зі списків, оцінки, огляди, одноразовий токен відновлення й ротацію refresh token. Тестові зміни даних відкочуються. `scripts/verify-api.ps1 -BaseUrl http://localhost:8080` перевіряє реальний HTTP-сценарій, cookie, CSRF, повторне використання refresh token і logout. Скрипт створює тимчасовий обліковий запис: запускайте його на тестовій БД. Повний Compose на поточному ПК ще не перевірений: Docker Hub повертав мережеву помилку під час завантаження базових образів. Конфігурацію перевірено командою `docker compose config --quiet`.
+Інтеграційні тести запускають Spring і Flyway на реальній MySQL та перевіряють видалення зі списків, оцінки, огляди, одноразовий токен відновлення й ротацію refresh token. Тестові зміни даних відкочуються. `scripts/verify-api.ps1 -BaseUrl http://localhost:8080` перевіряє реальний HTTP-сценарій, cookie, CSRF, повторне використання refresh token і logout. Скрипт створює тимчасовий обліковий запис: запускайте його на тестовій БД. Compose runtime перевірений локально: MySQL/Redis healthy, API health `200`, Web `200`; `docker compose config --quiet` також проходить.
+
+Для автоматизованого браузерного сценарію потрібен запущений Compose і встановлений Google Chrome:
+
+```powershell
+cd .\letterboxd\letterboxd-login-figma-final2
+npm ci
+$env:E2E_BASE_URL = 'http://127.0.0.1:3000'
+npm run test:e2e
+```
+
+Тест створює тимчасовий акаунт і проходить реєстрацію, вхід, каталог, watchlist, оцінку, створення/редагування/видалення огляду, видалення оцінки та прибирання з watchlist.
 
 Окремий `scripts/verify-password-reset.ps1 -BaseUrl http://localhost:8080` пройшов із реальною SMTP-доставкою до Mailpit: однакова відповідь для відомого й невідомого email, одноразове посилання та вхід із новим паролем. Скрипти використовують тимчасові адреси `example.invalid`; запускайте їх на тестовій БД. Для локального перехоплення пошти використано [офіційний Docker-образ Mailpit](https://mailpit.axllent.org/docs/install/docker/).
 
