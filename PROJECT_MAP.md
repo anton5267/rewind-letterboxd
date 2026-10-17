@@ -32,7 +32,8 @@ flowchart LR
 | `letterboxd/letterboxd-login-figma-final2/src/App.tsx` | Реальні маршрути фронтенду |
 | `letterboxd/letterboxd-login-figma-final2/src/api/` | Axios клієнт і виклики API |
 | `letterboxd/letterboxd-login-figma-final2/src/context/AuthContext.tsx` | Вхід/вихід і перевірка сесії через HttpOnly cookies |
-| `RUN_LOCAL.md` | Команди локального запуску на цьому комп'ютері |
+| `RUN_LOCAL.md` | Команди локального запуску, health/metrics і backup/restore |
+| `scripts/backup-dev.ps1`, `scripts/restore-dev.ps1` | Відтворюваний дамп і відновлення MySQL |
 
 ### Ключові потоки
 
@@ -83,15 +84,17 @@ V1 створює 14 таблиць: `users`, `movies`, `actors`, `directors`, `
 | A | `POST /api/admin/movies`; `PUT`, `DELETE /api/admin/movies/{id}` | Створення, редагування, видалення фільму |
 | A | `GET /api/admin/users`, `GET`, `PATCH /api/admin/users/{id}` | Пошук, перегляд і редагування користувачів |
 | A | `POST /api/admin/users/{id}/activate`, `/deactivate` | Активація/деактивація |
-| A | `GET /api/admin/reviews`; `POST /api/admin/reviews/{id}/hide`, `/unhide`; `DELETE /api/admin/reviews/{id}` | Модерація відгуків |
+| A | `GET /api/admin/reviews`; `POST /api/admin/reviews/{id}/hide`, `/unhide`; `DELETE /api/admin/reviews/{id}` | Модерація відгуків; UI підключено до dashboard |
 | P | `GET /api/journal/articles`, `GET /api/journal/articles/{slug}` | Публічний журнал із мовним fallback |
 | A | `GET`, `POST`, `PUT /api/admin/journal/articles` | Редактор і публікація статей із аудитом |
 | A | `GET /api/admin/dashboard`, `GET /api/admin/audit-logs` | Лічильники та журнал адміністративних дій |
-| A | `GET /api/admin/comments`; `POST /api/admin/comments/{id}/hide`, `/unhide`; `DELETE /api/admin/comments/{id}` | Модерація коментарів |
+| A | `GET /api/admin/comments`; `POST /api/admin/comments/{id}/hide`, `/unhide`; `DELETE /api/admin/comments/{id}` | Модерація коментарів; UI підключено до dashboard |
 | U | `GET`, `POST /api/conversations`; `GET`, `POST /api/conversations/{id}/messages`; `POST /api/conversations/{id}/read` | Приватні діалоги й повідомлення |
 | U | `GET`, `PUT /api/notifications/preferences` | Налаштування сповіщень |
 
 Пошук приймає `q`, `genreId`, `tag`, `year`, `minRating`, `sort`, `page`, `size`. Сортування: `newest`, `oldest`, `rating_desc`, `rating_asc`, `title_asc`; search обмежує розмір сторінки до 1–50. Базовий каталог сортує за ID спадно. DTO запитів і відповідей лежать поряд із відповідними модулями; ключові форми: реєстрація `{username,email,password}`, оцінка `{rating}`, відгук `{content,rating}`, створення списку `{name,description,isPublic}`, перестановка `{orderedItemIds}`.
+
+Операційні endpoint-и: `GET /actuator/health` і `/actuator/health/{liveness|readiness}` відкриті для перевірки сервісу; `/actuator/metrics` потребує авторизації. У Compose Redis вмикається через `SPRING_CACHE_TYPE=redis`, а локальні тести використовують `spring.cache.type=none`.
 
 Без авторизації поточний API повернув 200 для каталогу, пошуку, деталей та OpenAPI, 403 для `/api/lists/public`, `/api/movies/1/reviews` і `/api/profile/me`, 401 для `/api/users/me`. Ці статуси перевірені HTTP запитами; інші операції звірені з контролерами та security rules, але не проходили окремий наскрізний сценарій.
 
