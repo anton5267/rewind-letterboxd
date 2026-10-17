@@ -73,5 +73,6 @@ public class MovieList {
     public Boolean getIsPublic() { return isPublic; }
     public void setIsPublic(Boolean aPublic) { isPublic = aPublic; }
     public Set<Tag> getTags() { return tags; }
+    public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }

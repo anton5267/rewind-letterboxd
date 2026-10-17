@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { createAdminArticle, getAdminArticles, getAdminComments, getAdminDashboard, getAdminMovies, getAdminReviews, getAdminUsers, getAuditLogs, setAdminCommentHidden, setAdminHq, setAdminReviewHidden, type AdminArticle, type AdminComment, type AdminDashboard as Dashboard, type AdminMovie, type AdminReview, type AdminUser, type AuditLog } from "../api/admin.api";
+import { createAdminArticle, getAdminArticles, getAdminComments, getAdminDashboard, getAdminLists, getAdminMovies, getAdminReviews, getAdminUsers, getAuditLogs, setAdminCommentHidden, setAdminHq, setAdminListVisibility, setAdminReviewHidden, type AdminArticle, type AdminComment, type AdminDashboard as Dashboard, type AdminList, type AdminMovie, type AdminReview, type AdminUser, type AuditLog } from "../api/admin.api";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
 
@@ -13,14 +13,15 @@ export default function AdminDashboard() {
   const [comments, setComments] = useState<AdminComment[]>([]);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [movies, setMovies] = useState<AdminMovie[]>([]);
+  const [lists, setLists] = useState<AdminList[]>([]);
   const [articles, setArticles] = useState<AdminArticle[]>([]);
   const [article, setArticle] = useState({ slug: "", language: "uk", category: "Новини", title: "", excerpt: "", content: "", coverUrl: "", published: false });
   const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!isAuth || user?.role !== "ADMIN") return;
-    Promise.all([getAdminDashboard(), getAdminUsers(), getAuditLogs(), getAdminComments(), getAdminArticles(), getAdminReviews(), getAdminMovies()]).then(([summary, usersResponse, logsResponse, commentsResponse, articlesResponse, reviewsResponse, moviesResponse]) => {
-      setDashboard(summary.data); setUsers(usersResponse.data.content); setLogs(logsResponse.data.content); setComments(commentsResponse.data.content); setArticles(articlesResponse.data.content); setReviews(reviewsResponse.data.content); setMovies(moviesResponse.data.content);
+    Promise.all([getAdminDashboard(), getAdminUsers(), getAuditLogs(), getAdminComments(), getAdminArticles(), getAdminReviews(), getAdminMovies(), getAdminLists()]).then(([summary, usersResponse, logsResponse, commentsResponse, articlesResponse, reviewsResponse, moviesResponse, listsResponse]) => {
+      setDashboard(summary.data); setUsers(usersResponse.data.content); setLogs(logsResponse.data.content); setComments(commentsResponse.data.content); setArticles(articlesResponse.data.content); setReviews(reviewsResponse.data.content); setMovies(moviesResponse.data.content); setLists(listsResponse.data.content);
     }).catch(() => setError(true));
   }, [isAuth, user?.role]);
 
@@ -38,6 +39,10 @@ export default function AdminDashboard() {
     try { const { data } = await setAdminReviewHidden(review.id, !review.isHidden, review.isHidden ? "" : "Moderated by administrator"); setReviews(current => current.map(item => item.id === data.id ? data : item)); }
     catch { setError(true); }
   };
+  const toggleList = async (list: AdminList) => {
+    try { const { data } = await setAdminListVisibility(list.id, !list.isPublic); setLists(current => current.map(item => item.id === data.id ? data : item)); }
+    catch { setError(true); }
+  };
   const publishArticle = async (event: React.FormEvent) => {
     event.preventDefault();
     try { const { data } = await createAdminArticle(article); setArticles(current => [data, ...current]); setArticle(current => ({ ...current, slug: "", title: "", excerpt: "", content: "", coverUrl: "" })); }
@@ -53,6 +58,7 @@ export default function AdminDashboard() {
     <section><h2>{t("adminComments")}</h2><ul>{comments.map(comment => <li key={comment.id} style={{ marginBottom: 8 }}>{comment.username}: {comment.content} · {comment.isHidden ? t("hiddenComment") : t("visibleComment")} <button type="button" onClick={() => { void toggleComment(comment); }}>{comment.isHidden ? t("unhideComment") : t("hideComment")}</button></li>)}</ul></section>
     <section><h2>{t("adminReviews")}</h2><ul>{reviews.map(review => <li key={review.id} style={{ marginBottom: 8 }}>{review.movieTitle} · {review.username}: {review.content} · {review.isHidden ? t("hiddenReview") : t("visibleReview")} <button type="button" onClick={() => { void toggleReview(review); }}>{review.isHidden ? t("unhideReview") : t("hideReview")}</button></li>)}</ul></section>
     <section><h2>{t("adminMovies")}</h2><ul>{movies.map(movie => <li key={movie.id}>{movie.title} · {movie.releaseDate || "—"} · {movie.rating ?? "—"}</li>)}</ul></section>
+    <section><h2>{t("adminLists")}</h2><ul>{lists.map(list => <li key={list.id} style={{ marginBottom: 8 }}>{list.name} · {list.username} · {list.itemCount} {t("items")} · {list.isPublic ? t("publicList") : t("hiddenList")} <button type="button" onClick={() => { void toggleList(list); }}>{list.isPublic ? t("hideList") : t("publishList")}</button></li>)}</ul></section>
     <section><h2>{t("journalEditor")}</h2><form onSubmit={publishArticle} style={{ display: "grid", gap: 8, maxWidth: 700 }}><input required placeholder={t("articleSlug")} value={article.slug} onChange={event => setArticle({ ...article, slug: event.target.value })} /><input required placeholder={t("articleTitle")} value={article.title} onChange={event => setArticle({ ...article, title: event.target.value })} /><input required placeholder={t("articleCategory")} value={article.category} onChange={event => setArticle({ ...article, category: event.target.value })} /><select value={article.language} onChange={event => setArticle({ ...article, language: event.target.value })}><option value="uk">Українська</option><option value="en">English</option></select><input placeholder={t("articleExcerpt")} value={article.excerpt} onChange={event => setArticle({ ...article, excerpt: event.target.value })} /><textarea required placeholder={t("articleContent")} value={article.content} onChange={event => setArticle({ ...article, content: event.target.value })} rows={8} /><label><input type="checkbox" checked={article.published} onChange={event => setArticle({ ...article, published: event.target.checked })} /> {t("publishArticle")}</label><button type="submit">{t("create")}</button></form><ul>{articles.map(item => <li key={item.id}>{item.language} · {item.title}</li>)}</ul></section>
     <section><h2>{t("auditLogs")}</h2>{logs.length === 0 ? <p>{t("noAuditLogs")}</p> : <ul>{logs.map(log => <li key={log.id}>{log.action} · {log.targetType} #{log.targetId ?? "—"} · {new Date(log.createdAt).toLocaleString()}</li>)}</ul>}</section>
   </main>;
