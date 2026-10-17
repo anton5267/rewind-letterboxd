@@ -93,7 +93,7 @@ V1 створює 14 таблиць: `users`, `movies`, `actors`, `directors`, `
 | A | `GET /api/admin/dashboard`, `GET /api/admin/audit-logs` | Лічильники та журнал адміністративних дій |
 | A | `GET /api/admin/comments`; `POST /api/admin/comments/{id}/hide`, `/unhide`; `DELETE /api/admin/comments/{id}` | Модерація коментарів; UI підключено до dashboard |
 | A | `GET /api/admin/lists`; `PUT /api/admin/lists/{id}/visibility?visible=...` | Сторінковий список списків з кількістю фільмів; приховування/публікація з аудитом; UI підключено до dashboard |
-| A | `GET /api/admin/conversations`, `GET /api/admin/notifications` | Сторінковий адміністративний огляд діалогів і сповіщень без email та службових полів; UI підключено до dashboard |
+| A | `GET/DELETE /api/admin/conversations`, `GET/DELETE /api/admin/notifications` | Сторінковий адміністративний огляд і audit-видалення діалогів та сповіщень без email і службових полів; UI підключено до dashboard |
 | A | `GET /api/admin/settings`, `PUT /api/admin/settings/{key}` | Whitelist налаштувань сайту з аудитом; UI підключено до dashboard |
 | U | `GET`, `POST /api/conversations`; `GET`, `POST /api/conversations/{id}/messages`; `POST /api/conversations/{id}/read` | Приватні діалоги й повідомлення |
 | U | `GET`, `PUT /api/notifications/preferences` | Налаштування сповіщень |

@@ -2,20 +2,25 @@ package com.rewind.rewind.admin.service;
 
 import com.rewind.rewind.admin.dto.AdminConversationResponse;
 import com.rewind.rewind.admin.dto.AdminNotificationResponse;
+import com.rewind.rewind.admin.audit.service.AdminAuditLogService;
 import com.rewind.rewind.message.repo.ConversationRepository;
 import com.rewind.rewind.notification.repo.NotificationRepository;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class AdminCommunicationService {
     private final ConversationRepository conversations;
     private final NotificationRepository notifications;
+    private final AdminAuditLogService audit;
 
-    public AdminCommunicationService(ConversationRepository conversations, NotificationRepository notifications) {
+    public AdminCommunicationService(ConversationRepository conversations, NotificationRepository notifications, AdminAuditLogService audit) {
         this.conversations = conversations;
         this.notifications = notifications;
+        this.audit = audit;
     }
 
     @Transactional(readOnly = true)
@@ -28,6 +33,20 @@ public class AdminCommunicationService {
     public Page<AdminNotificationResponse> notifications(int page, int size) {
         return notifications.findAdminRows(pageable(page, size)).map(row -> new AdminNotificationResponse(
                 row.getId(), row.getRecipientId(), row.getActorId(), row.getType(), row.getReviewId(), row.getCreatedAt(), row.getReadAt()));
+    }
+
+    @Transactional
+    public void deleteConversation(String adminEmail, Long id) {
+        if (!conversations.existsById(id)) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation not found");
+        conversations.deleteById(id);
+        audit.record(adminEmail, "CONVERSATION_DELETED", "CONVERSATION", id, null);
+    }
+
+    @Transactional
+    public void deleteNotification(String adminEmail, Long id) {
+        if (!notifications.existsById(id)) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Notification not found");
+        notifications.deleteById(id);
+        audit.record(adminEmail, "NOTIFICATION_DELETED", "NOTIFICATION", id, null);
     }
 
     private Pageable pageable(int page, int size) {

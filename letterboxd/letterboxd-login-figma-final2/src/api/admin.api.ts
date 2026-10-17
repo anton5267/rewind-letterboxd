@@ -33,6 +33,8 @@ export const getAdminLists = () => api.get<Page<AdminList>>("/admin/lists", { pa
 export const setAdminListVisibility = (id: number, visible: boolean) => api.put<AdminList>(`/admin/lists/${id}/visibility`, null, { params: { visible } });
 export const getAdminConversations = () => api.get<Page<AdminConversation>>("/admin/conversations", { params: { size: 50 } });
 export const getAdminNotifications = () => api.get<Page<AdminNotification>>("/admin/notifications", { params: { size: 50 } });
+export const deleteAdminConversation = (id: number) => api.delete(`/admin/conversations/${id}`);
+export const deleteAdminNotification = (id: number) => api.delete(`/admin/notifications/${id}`);
 export const getAdminModerationQueue = () => api.get<Page<AdminModerationQueueItem>>("/admin/moderation/queue", { params: { size: 50 } });
 export const getAdminSettings = () => api.get<AdminSetting[]>("/admin/settings");
 export const updateAdminSetting = (key: string, value: string) => api.put<AdminSetting>(`/admin/settings/${encodeURIComponent(key)}`, { value });

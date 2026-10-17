@@ -4,6 +4,7 @@ import com.rewind.rewind.admin.dto.AdminConversationResponse;
 import com.rewind.rewind.admin.dto.AdminNotificationResponse;
 import com.rewind.rewind.admin.service.AdminCommunicationService;
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,5 +22,15 @@ public class AdminCommunicationController {
     @GetMapping("/notifications")
     public Page<AdminNotificationResponse> notifications(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "50") int size) {
         return service.notifications(page, size);
+    }
+
+    @DeleteMapping("/conversations/{id}")
+    public void deleteConversation(Authentication auth, @PathVariable Long id) {
+        service.deleteConversation(auth.getName(), id);
+    }
+
+    @DeleteMapping("/notifications/{id}")
+    public void deleteNotification(Authentication auth, @PathVariable Long id) {
+        service.deleteNotification(auth.getName(), id);
     }
 }
