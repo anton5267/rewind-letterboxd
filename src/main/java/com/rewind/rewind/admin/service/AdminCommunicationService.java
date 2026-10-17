@@ -7,6 +7,7 @@ import com.rewind.rewind.admin.audit.service.AdminAuditLogService;
 import com.rewind.rewind.message.repo.ConversationRepository;
 import com.rewind.rewind.notification.service.NotificationService;
 import com.rewind.rewind.notification.repo.NotificationRepository;
+import com.rewind.rewind.notification.entity.NotificationType;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,8 +39,29 @@ public class AdminCommunicationService {
 
     @Transactional(readOnly = true)
     public Page<AdminNotificationResponse> notifications(int page, int size) {
-        return notifications.findAdminRows(pageable(page, size)).map(row -> new AdminNotificationResponse(
+        return notifications(null, null, null, page, size);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<AdminNotificationResponse> notifications(NotificationType type, Boolean read, Long recipientId, int page, int size) {
+        return notifications.findAdminRows(type, read, recipientId, pageable(page, size)).map(row -> new AdminNotificationResponse(
                 row.getId(), row.getRecipientId(), row.getActorId(), row.getType(), row.getReviewId(), row.getCreatedAt(), row.getReadAt()));
+    }
+
+    @Transactional
+    public int markNotificationsRead(String adminEmail, NotificationType type, Long recipientId) {
+        int updated = notifications.markAdminRead(type, recipientId, Instant.now());
+        audit.record(adminEmail, "NOTIFICATIONS_MARKED_READ", "NOTIFICATION", null,
+                "count=" + updated + ";type=" + type + ";recipientId=" + recipientId);
+        return updated;
+    }
+
+    @Transactional
+    public int deleteNotifications(String adminEmail, NotificationType type, Boolean read, Long recipientId) {
+        int deleted = notifications.deleteAdmin(type, read, recipientId);
+        audit.record(adminEmail, "NOTIFICATIONS_BULK_DELETED", "NOTIFICATION", null,
+                "count=" + deleted + ";type=" + type + ";read=" + read + ";recipientId=" + recipientId);
+        return deleted;
     }
 
     @Transactional

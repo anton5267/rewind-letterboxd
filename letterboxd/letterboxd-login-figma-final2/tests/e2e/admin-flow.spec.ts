@@ -25,7 +25,7 @@ test("admin can open the dashboard, manage a notification and manage a movie", a
   }, username);
   const recipientId = adminUsers.content[0].id as number;
   const notificationSection = page.locator("section").filter({ has: page.getByRole("heading", { name: "Сповіщення" }) });
-  await notificationSection.getByLabel("ID отримувача").fill(String(recipientId));
+  await notificationSection.getByLabel("ID отримувача", { exact: true }).fill(String(recipientId));
   await notificationSection.getByRole("button", { name: "Створити сповіщення" }).click();
   await expect(notificationSection.getByText(`отримувач #${recipientId}`, { exact: false }).first()).toBeVisible();
 

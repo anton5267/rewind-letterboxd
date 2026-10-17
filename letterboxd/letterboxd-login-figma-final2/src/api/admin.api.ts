@@ -13,6 +13,7 @@ export interface AdminList { id: number; userId: number; username: string; name:
 export interface AdminConversation { id: number; userOneId: number; userTwoId: number; messageCount: number; createdAt: string; updatedAt: string; lastMessageAt: string | null }
 export interface AdminNotification { id: number; recipientId: number; actorId: number | null; type: string; reviewId: number | null; createdAt: string; readAt: string | null }
 export interface AdminNotificationWrite { recipientId: number; type: "FOLLOW" | "REVIEW_LIKED"; actorId?: number | null; relatedUserId?: number | null; reviewId?: number | null }
+export interface AdminNotificationFilters { type?: AdminNotificationWrite["type"]; read?: boolean; recipientId?: number }
 export interface AdminModerationQueueItem { type: "REVIEW" | "COMMENT"; id: number; parentId: number | null; movieId: number | null; subject: string; userId: number; username: string; content: string; createdAt: string }
 export interface AdminSetting { key: string; value: string; updatedBy: number | null; updatedAt: string }
 export interface Page<T> { content: T[]; totalPages: number; totalElements: number }
@@ -36,11 +37,13 @@ export const getAdminLists = () => api.get<Page<AdminList>>("/admin/lists", { pa
 export const setAdminListVisibility = (id: number, visible: boolean) => api.put<AdminList>(`/admin/lists/${id}/visibility`, null, { params: { visible } });
 export const deleteAdminList = (id: number) => api.delete(`/admin/lists/${id}`);
 export const getAdminConversations = () => api.get<Page<AdminConversation>>("/admin/conversations", { params: { size: 50 } });
-export const getAdminNotifications = () => api.get<Page<AdminNotification>>("/admin/notifications", { params: { size: 50 } });
+export const getAdminNotifications = (filters: AdminNotificationFilters = {}) => api.get<Page<AdminNotification>>("/admin/notifications", { params: { size: 50, ...filters } });
 export const createAdminNotification = (notification: AdminNotificationWrite) => api.post<AdminNotification>("/admin/notifications", notification);
 export const deleteAdminConversation = (id: number) => api.delete(`/admin/conversations/${id}`);
 export const deleteAdminNotification = (id: number) => api.delete(`/admin/notifications/${id}`);
 export const setAdminNotificationRead = (id: number, read: boolean) => api.patch<AdminNotification>(`/admin/notifications/${id}/${read ? "read" : "unread"}`);
+export const markAdminNotificationsRead = (filters: Omit<AdminNotificationFilters, "read"> = {}) => api.patch<{ updated: number }>("/admin/notifications/read-all", null, { params: filters });
+export const deleteAdminNotifications = (filters: AdminNotificationFilters = {}) => api.delete<{ deleted: number }>("/admin/notifications", { params: filters });
 export const getAdminModerationQueue = () => api.get<Page<AdminModerationQueueItem>>("/admin/moderation/queue", { params: { size: 50 } });
 export const hideAdminModerationItem = (item: Pick<AdminModerationQueueItem, "type" | "id">, reason = "Moderated by administrator") => api.post(`/admin/moderation/${item.type}/${item.id}/hide`, { reason });
 export const getAdminSettings = () => api.get<AdminSetting[]>("/admin/settings");

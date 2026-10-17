@@ -76,11 +76,19 @@ class AdminCommunicationIntegrationTests {
         var unread = admin.setNotificationRead(firstEmail, notification.getId(), false);
         assertNull(unread.readAt());
 
+        assertTrue(admin.notifications(NotificationType.FOLLOW, false, firstId, 0, 100).getContent().stream()
+                .anyMatch(row -> row.id().equals(notification.getId())));
+        assertTrue(admin.markNotificationsRead(firstEmail, NotificationType.FOLLOW, firstId) >= 1);
+        assertTrue(admin.notifications(NotificationType.FOLLOW, true, firstId, 0, 100).getContent().stream()
+                .anyMatch(row -> row.id().equals(notification.getId())));
+        assertTrue(admin.deleteNotifications(firstEmail, NotificationType.FOLLOW, true, firstId) >= 1);
+        assertFalse(notifications.existsById(notification.getId()));
+
         admin.deleteConversation(firstEmail, conversation.getId());
-        admin.deleteNotification(firstEmail, notification.getId());
         assertFalse(conversations.existsById(conversation.getId()));
         assertFalse(messages.existsById(message.getId()));
-        assertFalse(notifications.existsById(notification.getId()));
+        admin.deleteNotification(firstEmail, adminCreated.id());
+        assertFalse(notifications.existsById(adminCreated.id()));
     }
 
     private void register(String username, String email) {
