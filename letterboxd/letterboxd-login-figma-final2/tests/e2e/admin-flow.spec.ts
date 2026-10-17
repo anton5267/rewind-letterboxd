@@ -34,6 +34,15 @@ test("admin can open the dashboard, manage a notification and manage a movie", a
   await page.getByRole("button", { name: "Пошук" }).click();
   await expect(page.getByText(username, { exact: false }).first()).toBeVisible();
 
+  const adminSqlInjection = "' OR 1=1 --";
+  const adminUsersResponse = page.waitForResponse(response =>
+    response.url().includes("/api/admin/users") && response.request().method() === "GET"
+  );
+  await page.getByLabel("Пошук користувача").fill(adminSqlInjection);
+  await page.getByRole("button", { name: "Пошук" }).click();
+  expect((await adminUsersResponse).status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "Панель адміністратора" })).toBeVisible();
+
   const movieSection = page.locator("section").filter({ has: page.getByLabel("Назва фільму", { exact: true }) });
   const title = `Admin browser ${Date.now()}`;
   await movieSection.getByLabel("Назва фільму").fill(title);

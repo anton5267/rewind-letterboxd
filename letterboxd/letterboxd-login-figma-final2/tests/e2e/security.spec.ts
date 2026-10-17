@@ -20,9 +20,18 @@ test("review text is rendered as text and search rejects no SQL input", async ({
   await expect(page).toHaveURL(/\/uk\/films$/);
 
   await page.locator("main article h2 a").first().click();
+  await page.getByRole("button", { name: "Оцінити на 4" }).click();
   await page.getByRole("textbox", { name: "Ваш огляд" }).fill(payload);
   await page.getByRole("button", { name: "Опублікувати огляд" }).click();
   await expect(page.getByText(payload)).toBeVisible();
+  expect(dialogSeen).toBe(false);
+  await expect(page.locator('img[src="x"]')).toHaveCount(0);
+
+  const commentPayload = `<img src=x onerror=alert(2)> comment ${suffix}`;
+  await page.getByRole("button", { name: "Показати коментарі" }).click();
+  await page.getByLabel("Ваш коментар").fill(commentPayload);
+  await page.getByRole("button", { name: "Надіслати" }).click();
+  await expect(page.getByText(commentPayload)).toBeVisible();
   expect(dialogSeen).toBe(false);
   await expect(page.locator('img[src="x"]')).toHaveCount(0);
 
