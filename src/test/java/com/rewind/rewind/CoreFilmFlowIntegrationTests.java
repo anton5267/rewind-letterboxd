@@ -2,6 +2,8 @@ package com.rewind.rewind;
 
 import com.rewind.rewind.list.dto.AddListItemRequest;
 import com.rewind.rewind.list.dto.CreateListRequest;
+import com.rewind.rewind.list.dto.UpdateListRequest;
+import com.rewind.rewind.list.dto.ReorderListItemsRequest;
 import com.rewind.rewind.list.entity.ListType;
 import com.rewind.rewind.list.repo.ListItemRepository;
 import com.rewind.rewind.list.service.MovieListService;
@@ -66,6 +68,26 @@ class CoreFilmFlowIntegrationTests {
         itemRequest.setMovieId(movieId);
         lists.addItem(email, listId, itemRequest);
         assertTrue(items.existsByListIdAndMovieId(listId, movieId));
+        UpdateListRequest updateList = new UpdateListRequest();
+        updateList.setName("Renamed test list");
+        updateList.setDescription("A public description");
+        updateList.setIsPublic(true);
+        assertEquals("Renamed test list", lists.updateMyList(email, listId, updateList).getName());
+
+        Movie secondMovie = new Movie();
+        secondMovie.setTitle("Second integration film " + suffix);
+        Long secondMovieId = movies.saveAndFlush(secondMovie).getId();
+        AddListItemRequest secondItem = new AddListItemRequest();
+        secondItem.setMovieId(secondMovieId);
+        lists.addItem(email, listId, secondItem);
+        var orderedItems = items.findAllByListId(listId);
+        Long firstItemId = orderedItems.stream().filter(item -> item.getMovie().getId().equals(movieId)).findFirst().orElseThrow().getId();
+        Long secondItemId = orderedItems.stream().filter(item -> item.getMovie().getId().equals(secondMovieId)).findFirst().orElseThrow().getId();
+        ReorderListItemsRequest reorder = new ReorderListItemsRequest();
+        reorder.setOrderedItemIds(java.util.List.of(secondItemId, firstItemId));
+        lists.reorderMyListItems(email, listId, reorder);
+        assertEquals(secondMovieId, lists.myListItems(email, listId).get(0).getMovie().getId());
+
         lists.removeItem(email, listId, movieId);
         entityManager.flush();
         assertFalse(items.existsByListIdAndMovieId(listId, movieId));

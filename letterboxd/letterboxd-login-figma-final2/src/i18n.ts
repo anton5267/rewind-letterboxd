@@ -55,6 +55,7 @@ const messages: Record<Language, Record<string, string>> = {
     editComment: "Редагувати коментар", deleteComment: "Видалити коментар", deleteCommentConfirm: "Видалити цей коментар?", loginToComment: "Увійдіть, щоб залишити коментар.",
     loadCommentsError: "Не вдалося завантажити коментарі.", createCommentError: "Не вдалося додати коментар.", updateCommentError: "Не вдалося оновити коментар.", deleteCommentError: "Не вдалося видалити коментар.",
     listBy: "Список від", emptyPublicList: "У цьому списку поки немає фільмів.", loadPublicListError: "Не вдалося завантажити публічний список.",
+    description: "Опис", publicList: "Публічний список", listName: "Назва списку", updateListError: "Не вдалося оновити список.", reorderListError: "Не вдалося змінити порядок фільмів.", moveUp: "Перемістити вище", moveDown: "Перемістити нижче",
     poster: "Постер", minutes: "хв", rateAs: "Оцінити на",
   },
   en: {
@@ -109,6 +110,7 @@ const messages: Record<Language, Record<string, string>> = {
     editComment: "Edit comment", deleteComment: "Delete comment", deleteCommentConfirm: "Delete this comment?", loginToComment: "Log in to leave a comment.",
     loadCommentsError: "Could not load comments.", createCommentError: "Could not add the comment.", updateCommentError: "Could not update the comment.", deleteCommentError: "Could not delete the comment.",
     listBy: "A list by", emptyPublicList: "This list has no films yet.", loadPublicListError: "Could not load the public list.",
+    description: "Description", publicList: "Public list", listName: "List name", updateListError: "Could not update the list.", reorderListError: "Could not change the film order.", moveUp: "Move up", moveDown: "Move down",
     poster: "Poster", minutes: "min", rateAs: "Rate as",
   },
 };

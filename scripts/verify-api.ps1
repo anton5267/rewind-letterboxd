@@ -77,6 +77,16 @@ $publicLists = (Send 'GET' '/lists/public?size=20').Content | ConvertFrom-Json
 if ($publicLists.content.id -notcontains $listId) { throw 'Public list did not appear in public feed' }
 Write-Output 'public list feed'
 Expect (Send 'POST' "/lists/$listId/items" @{ movieId = 1 }).StatusCode 200 'add item'
+Expect (Send 'POST' "/lists/$listId/items" @{ movieId = 2 }).StatusCode 200 'add second item'
+$listItems = (Send 'GET' "/lists/$listId/items").Content | ConvertFrom-Json
+$firstListItem = $listItems | Where-Object { $_.movie.id -eq 1 } | Select-Object -First 1
+$secondListItem = $listItems | Where-Object { $_.movie.id -eq 2 } | Select-Object -First 1
+Expect (Send 'PUT' "/lists/$listId/items/reorder" @{ orderedItemIds = @($secondListItem.id, $firstListItem.id) }).StatusCode 200 'reorder list'
+$reorderedItems = (Send 'GET' "/lists/$listId/items").Content | ConvertFrom-Json
+if ($reorderedItems[0].movie.id -ne 2) { throw 'List order did not update' }
+$updatedList = Send 'PATCH' "/lists/$listId" @{ name = 'Edited verification list'; description = 'Updated through the API'; isPublic = $true }
+Expect $updatedList.StatusCode 200 'edit list'
+if (($updatedList.Content | ConvertFrom-Json).name -ne 'Edited verification list') { throw 'List name did not update' }
 $publicList = (Send 'GET' "/lists/public/$listId").Content | ConvertFrom-Json
 if ($publicList.movies.id -notcontains 1) { throw 'Public list detail did not expose its film' }
 Write-Output 'public list detail'
