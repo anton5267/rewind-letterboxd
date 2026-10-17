@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { changePassword, getProfile, updateProfile } from "../api/profile.api";
+import { changePassword, getProfile, getProfileCollection, type ProfileCollection, updateProfile } from "../api/profile.api";
+import type { MoviePage } from "../api/search.api";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
 
@@ -26,6 +27,11 @@ export default function Profile() {
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [collectionKind, setCollectionKind] = useState<ProfileCollection>("watched");
+  const [collection, setCollection] = useState<MoviePage | null>(null);
+  const [collectionPage, setCollectionPage] = useState(0);
+  const [collectionLoading, setCollectionLoading] = useState(false);
+  const [collectionError, setCollectionError] = useState(false);
 
   useEffect(() => {
     if (!isAuth) return;
@@ -35,6 +41,23 @@ export default function Profile() {
       setAvatarUrl(data.avatarUrl ?? "");
     }).catch(() => setError(t("loadProfileError")));
   }, [isAuth]);
+
+  useEffect(() => {
+    if (!isAuth) return;
+    let current = true;
+    setCollectionLoading(true);
+    setCollectionError(false);
+    getProfileCollection(collectionKind, collectionPage)
+      .then(({ data }) => { if (current) setCollection(data); })
+      .catch(() => { if (current) setCollectionError(true); })
+      .finally(() => { if (current) setCollectionLoading(false); });
+    return () => { current = false; };
+  }, [isAuth, collectionKind, collectionPage]);
+
+  const chooseCollection = (kind: ProfileCollection) => {
+    setCollectionKind(kind);
+    setCollectionPage(0);
+  };
 
   if (!ready) return <main>{t("loading")}</main>;
   if (!isAuth) return <Navigate to={path("/login")} replace />;
@@ -86,6 +109,26 @@ export default function Profile() {
         <label> {t("newPassword")} <input type="password" required value={newPassword} onChange={e => setNewPassword(e.target.value)} /></label>
         <button type="submit">{t("changePassword")}</button>
       </form>
+      <section style={{ marginTop: 24 }}>
+        <h2>{t("profileCollections")}</h2>
+        <div role="tablist" aria-label={t("profileCollections")} style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {(["watched", "watchlist", "favorites"] as const).map(kind => <button key={kind} type="button" role="tab" aria-selected={collectionKind === kind} onClick={() => chooseCollection(kind)}>
+            {kind === "favorites" ? t("favorite") : t(kind)}
+          </button>)}
+        </div>
+        {collectionLoading && <p>{t("loading")}</p>}
+        {collectionError && <p role="alert">{t("loadCollectionError")}</p>}
+        {!collectionLoading && !collectionError && collection && <>
+          {collection.content.length === 0 ? <p>{t("noCollectionFilms")}</p> : <ul>
+            {collection.content.map(movie => <li key={movie.id}><Link to={path(`/films/${movie.id}`)}>{movie.title}</Link>{movie.releaseDate ? ` (${movie.releaseDate.slice(0, 4)})` : ""}{movie.rating !== null ? ` · ★ ${movie.rating}` : ""}</li>)}
+          </ul>}
+          {collection.totalPages > 1 && <nav aria-label={t("pagination")} style={{ display: "flex", gap: 8 }}>
+            <button type="button" disabled={collectionPage === 0} onClick={() => setCollectionPage(page => page - 1)}>{t("previous")}</button>
+            <span>{t("page")} {collectionPage + 1} {t("of")} {collection.totalPages}</span>
+            <button type="button" disabled={collectionPage + 1 >= collection.totalPages} onClick={() => setCollectionPage(page => page + 1)}>{t("next")}</button>
+          </nav>}
+        </>}
+      </section>
       <h2>{t("lists")}</h2>
       <ul>{profile.lists.map(list => <li key={list.id}><Link to={path("/lists")}>{list.name}</Link></li>)}</ul>
       <h2>{t("recentRatings")}</h2>
