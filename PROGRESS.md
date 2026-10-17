@@ -147,6 +147,7 @@
 - [x] Додано `compose.production.yaml` і `.env.production.example`: окремі MySQL/Redis volumes без published database ports, non-root/read-only API, secure cookies, Redis, SMTP і production error policy. `docker compose ... config --quiet` пройшов, production API та web images зібрані успішно; стек навмисно не запускався з прикладовими секретами.
 - [~] Залишаються глибші SQLi/XSS і права, production load та перевірка повного відновлення у тимчасову БД.
 - [x] Додано `@axe-core/playwright` і повний WCAG 2 A/AA аудит для 7 публічних маршрутів; axe повернув 0 violations. Повний Playwright набір після цього має **11 passed, 1 skipped**; admin сценарій окремо лишається перевіряти fixture-скриптом.
+- [~] `npm audit --omit=dev` ще показує 6 production dependency advisories (Axios, React Router, form-data/follow-redirects); `npm audit fix` без `--force` не змінив lockfile, а `npm outdated` уперся в `ECONNRESET`. Це окремий пункт перед production deploy, force-upgrade не застосовую без перевірки сумісності.
 - [~] Базову доступність, keyboard focus, mobile overflow, browser security headers, non-root runtime і admin/social browser flows перевірено; залишаються глибші SQLi/XSS, права, production load та VPS/HTTPS.
 - [~] Production-like конфігурація і приватні DB/Redis volumes підготовлені. Залишаються Linux VPS, реальний домен/HTTPS, production secrets, monitoring/backup schedule і публічний запуск.
 
