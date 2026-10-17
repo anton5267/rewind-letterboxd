@@ -57,6 +57,7 @@ const messages: Record<Language, Record<string, string>> = {
     listBy: "Список від", emptyPublicList: "У цьому списку поки немає фільмів.", loadPublicListError: "Не вдалося завантажити публічний список.",
     description: "Опис", publicList: "Публічний список", listName: "Назва списку", updateListError: "Не вдалося оновити список.", reorderListError: "Не вдалося змінити порядок фільмів.", moveUp: "Перемістити вище", moveDown: "Перемістити нижче",
     profileStats: "Статистика", publicLists: "Публічні списки", ratings: "Оцінки", loadPublicProfileError: "Не вдалося завантажити профіль користувача.",
+    filmography: "Фільмографія", loadPersonError: "Не вдалося завантажити сторінку персоналії.",
     poster: "Постер", minutes: "хв", rateAs: "Оцінити на",
   },
   en: {
@@ -113,6 +114,7 @@ const messages: Record<Language, Record<string, string>> = {
     listBy: "A list by", emptyPublicList: "This list has no films yet.", loadPublicListError: "Could not load the public list.",
     description: "Description", publicList: "Public list", listName: "List name", updateListError: "Could not update the list.", reorderListError: "Could not change the film order.", moveUp: "Move up", moveDown: "Move down",
     profileStats: "Statistics", publicLists: "Public lists", ratings: "Ratings", loadPublicProfileError: "Could not load this user profile.",
+    filmography: "Filmography", loadPersonError: "Could not load this person page.",
     poster: "Poster", minutes: "min", rateAs: "Rate as",
   },
 };

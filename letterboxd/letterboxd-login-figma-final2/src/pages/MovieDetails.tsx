@@ -157,7 +157,7 @@ export default function MovieDetails() {
           <p>{movie.releaseDate?.slice(0, 4)} {movie.durationMinutes && ` · ${movie.durationMinutes} ${t("minutes")}`} {movie.rating != null && ` · ★ ${movie.rating}`}</p>
           <p>{movie.genres.map(item => item.name).join(", ")}</p>
           <p>{movie.shortPlot}</p>
-          <p>{t("directors")}: {movie.directors.map(item => item.name).join(", ") || "—"}</p>
+          <p>{t("directors")}: {movie.directors.length ? movie.directors.map(item => <Link key={item.id} to={path(`/people/director/${item.id}`)}>{item.name}</Link>).reduce<React.ReactNode[]>((all, node, index) => index ? [...all, ", ", node] : [node], []) : "—"}</p>
           {movie.trailerUrl && <a href={movie.trailerUrl} target="_blank" rel="noopener noreferrer">{t("trailer")}</a>}
           {movie.externalRatings.map(item => <p key={item.source}>{item.source}: {item.rating}</p>)}
         </div>
@@ -177,7 +177,7 @@ export default function MovieDetails() {
           <button type="button" disabled={!selectedList} onClick={() => void addToList()}>{t("add")}</button>
         </div>
       </section>}
-      <section><h2>{t("actors")}</h2><p>{movie.actors.map(item => item.name).join(", ") || "—"}</p></section>
+      <section><h2>{t("actors")}</h2><p>{movie.actors.length ? movie.actors.map(item => <Link key={item.id} to={path(`/people/actor/${item.id}`)}>{item.name}</Link>).reduce<React.ReactNode[]>((all, node, index) => index ? [...all, ", ", node] : [node], []) : "—"}</p></section>
       <section><h2>{t("similarFilms")}</h2><ul>{movie.similarMovies.map(item => <li key={item.id}><Link to={path(`/films/${item.id}`)}>{item.title}</Link></li>)}</ul></section>
       <section><h2>{t("reviews")}</h2>
         {isAuth && myReview && <article>

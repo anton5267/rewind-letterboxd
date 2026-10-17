@@ -48,6 +48,8 @@ $film = $filmResponse.Content | ConvertFrom-Json
 $genresResponse = Send 'GET' '/genres'
 Expect $genresResponse.StatusCode 200 'public genres'
 if (($genresResponse.Content | ConvertFrom-Json).Count -lt 1) { throw 'Genre catalog is empty' }
+Expect (Send 'GET' '/actors/1?sort=newest').StatusCode 200 'actor filmography'
+Expect (Send 'GET' '/directors/1?sort=rating').StatusCode 200 'director filmography'
 $pageOne = (Send 'GET' '/movies/search?page=0&size=12&sort=newest').Content | ConvertFrom-Json
 $pageTwo = (Send 'GET' '/movies/search?page=1&size=12&sort=newest').Content | ConvertFrom-Json
 if ($pageOne.content.Count -gt 12 -or $pageTwo.number -ne 1) { throw 'Movie pagination is broken' }

@@ -1,0 +1,59 @@
+package com.rewind.rewind.person.service;
+
+import com.rewind.rewind.actor.repo.ActorRepository;
+import com.rewind.rewind.actor.repo.MovieActorRepository;
+import com.rewind.rewind.director.repo.DirectorRepository;
+import com.rewind.rewind.director.repo.MovieDirectorRepository;
+import com.rewind.rewind.person.dto.PersonDetailsResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import java.util.Comparator;
+
+@Service
+public class PersonService {
+    private final ActorRepository actors;
+    private final DirectorRepository directors;
+    private final MovieActorRepository movieActors;
+    private final MovieDirectorRepository movieDirectors;
+
+    public PersonService(ActorRepository actors, DirectorRepository directors, MovieActorRepository movieActors, MovieDirectorRepository movieDirectors) {
+        this.actors = actors; this.directors = directors; this.movieActors = movieActors; this.movieDirectors = movieDirectors;
+    }
+
+    @Transactional(readOnly = true)
+    public PersonDetailsResponse actor(Long id, Long genreId, String sort) {
+        var actor = actors.findById(id).orElseThrow(() -> notFound("Actor"));
+        var films = movieActors.findById_ActorId(id).stream()
+                .filter(link -> hasGenre(link.getMovie(), genreId))
+                .map(link -> film(link.getMovie(), link.getCharacterName())).toList();
+        return new PersonDetailsResponse(actor.getId(), actor.getName(), actor.getPhotoUrl(), "ACTOR", sorted(films, sort));
+    }
+
+    @Transactional(readOnly = true)
+    public PersonDetailsResponse director(Long id, Long genreId, String sort) {
+        var director = directors.findById(id).orElseThrow(() -> notFound("Director"));
+        var films = movieDirectors.findById_DirectorId(id).stream()
+                .filter(link -> hasGenre(link.getMovie(), genreId))
+                .map(link -> film(link.getMovie(), null)).toList();
+        return new PersonDetailsResponse(director.getId(), director.getName(), director.getPhotoUrl(), "DIRECTOR", sorted(films, sort));
+    }
+
+    private boolean hasGenre(com.rewind.rewind.movie.entity.Movie movie, Long genreId) {
+        return genreId == null || movie.getGenres().stream().anyMatch(genre -> genre.getId().equals(genreId));
+    }
+    private PersonDetailsResponse.Film film(com.rewind.rewind.movie.entity.Movie movie, String characterName) {
+        return new PersonDetailsResponse.Film(movie.getId(), movie.getTitle(), movie.getReleaseDate(), movie.getRating(), movie.getPhotoUrl(), characterName);
+    }
+    private java.util.List<PersonDetailsResponse.Film> sorted(java.util.List<PersonDetailsResponse.Film> films, String sort) {
+        Comparator<PersonDetailsResponse.Film> comparator = switch (sort == null ? "newest" : sort) {
+            case "oldest" -> Comparator.comparing(PersonDetailsResponse.Film::releaseDate, Comparator.nullsLast(Comparator.naturalOrder()));
+            case "title" -> Comparator.comparing(PersonDetailsResponse.Film::title, String.CASE_INSENSITIVE_ORDER);
+            case "rating" -> Comparator.comparing(PersonDetailsResponse.Film::rating, Comparator.nullsLast(Comparator.reverseOrder()));
+            default -> Comparator.comparing(PersonDetailsResponse.Film::releaseDate, Comparator.nullsLast(Comparator.reverseOrder()));
+        };
+        return films.stream().sorted(comparator).toList();
+    }
+    private ResponseStatusException notFound(String type) { return new ResponseStatusException(HttpStatus.NOT_FOUND, type + " not found"); }
+}

@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface MovieDirectorRepository extends JpaRepository<MovieDirector, MovieDirectorId> {
     List<MovieDirector> findById_MovieId(Long movieId);
+    List<MovieDirector> findById_DirectorId(Long directorId);
 }

@@ -11,6 +11,7 @@ import Profile from "./pages/Profile";
 import UserLists from "./pages/UserLists";
 import PublicList from "./pages/PublicList";
 import PublicProfile from "./pages/PublicProfile";
+import Person from "./pages/Person";
 import About from "./pages/About";
 import Layout from "./layout/Layout";
 
@@ -35,6 +36,7 @@ function LocalizedApp() {
     <Route path="films/:id" element={<Layout><MovieDetails /></Layout>} />
     <Route path="profile" element={<Layout><Profile /></Layout>} />
     <Route path="users/:id" element={<Layout><PublicProfile /></Layout>} />
+    <Route path="people/:type/:id" element={<Layout><Person /></Layout>} />
     <Route path="lists" element={<Layout><UserLists /></Layout>} />
     <Route path="lists/public/:id" element={<Layout><PublicList /></Layout>} />
     <Route path="about" element={<Layout><About /></Layout>} />
