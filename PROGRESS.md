@@ -140,6 +140,7 @@
 - [x] Додано browser security headers у Nginx (`CSP`, `nosniff`, `SAMEORIGIN`, `Referrer-Policy`, `Permissions-Policy`). Новий Playwright accessibility smoke перевіряє 7 публічних маршрутів на named controls, один видимий `h1` і mobile overflow; окремо перевіряє всі заголовки.
 - [x] Security browser smoke перевіряє React escaping для review payload із `<img onerror>`, відсутність діалогу/XSS і пошук із SQL-подібним введенням без 500/alert; повний набір проходить **8/8**.
 - [x] Додано `scripts/verify-load.ps1`: 40 паралельних guest-запитів до каталогу й деталки фільму на Compose повернули 2xx за 0.24 секунди; це smoke-перевірка локального runtime, не production load test.
+- [x] Додано `scripts/verify-security.ps1`: public catalog/health повертають 200, guest profile/admin і metrics — 401, login без CSRF — 403. Це backend security smoke для локального runtime; повний penetration/load audit ще відкритий.
 - [~] Залишаються глибші SQLi/XSS і права, навантаження, повне відновлення у тимчасову БД та admin/social browser-регресії.
 - [~] Базову доступність, mobile overflow і browser security headers перевірено; залишаються повний keyboard/axe аудит, SQLi/XSS, права, навантаження та admin/social browser-регресії.
 - [ ] Production конфігурація, VPS, HTTPS, приватна БД і публічний запуск.
@@ -152,6 +153,6 @@
 ## Негайний наступний крок
 
 1. Розширити Playwright перевірками admin сценаріїв.
-2. Додати backend security/load checks та зберегти сценарій відновлення у тимчасову БД.
+2. Розширити backend security/load checks та зберегти сценарій відновлення у тимчасову БД.
 3. Реалізувати контрольований TMDB update/import із зовнішніми ID та перевіркою якості каталогу.
 4. Після Editor-доступу зафіксувати точні Figma-фрейми, tokens і assets; до цього не підміняти макети припущеннями.
