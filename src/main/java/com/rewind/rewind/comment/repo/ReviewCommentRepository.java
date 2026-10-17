@@ -9,4 +9,6 @@ public interface ReviewCommentRepository extends JpaRepository<ReviewComment, Lo
     Page<ReviewComment> findAllByReviewIdAndIsHiddenFalseOrderByCreatedAtAsc(Long reviewId, Pageable pageable);
     Page<ReviewComment> findAllByOrderByIdDesc(Pageable pageable);
     Page<ReviewComment> findAllByIsHidden(Boolean hidden, Pageable pageable);
+    Page<ReviewComment> findAllByModeratedAtIsNullOrderByCreatedAtAsc(Pageable pageable);
+    long countByModeratedAtIsNull();
 }
