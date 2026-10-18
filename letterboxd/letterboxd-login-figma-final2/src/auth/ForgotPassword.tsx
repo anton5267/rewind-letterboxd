@@ -26,7 +26,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className={styles.page}>
+    <main className={styles.page}>
       <div className={styles.card}>
 
         {/* ← BACK TO LOGIN */}
@@ -70,6 +70,6 @@ export default function ForgotPassword() {
         <Link className={styles.create} to={path("/register")}>{t("createAccount")}</Link>
 
       </div>
-    </div>
+    </main>
   );
 }

@@ -83,7 +83,8 @@ public class PasswordResetService {
     public void reset(String rawToken, String newPassword) {
         PasswordResetToken token = tokens.findByTokenHash(hash(rawToken))
                 .orElseThrow(this::invalidToken);
-        if (token.getUsedAt() != null || !token.getExpiresAt().isAfter(Instant.now())) {
+        if (token.getUsedAt() != null || !token.getExpiresAt().isAfter(Instant.now())
+                || !Boolean.TRUE.equals(token.getUser().getIsActive())) {
             throw invalidToken();
         }
         token.getUser().setPasswordHash(passwords.encode(newPassword));

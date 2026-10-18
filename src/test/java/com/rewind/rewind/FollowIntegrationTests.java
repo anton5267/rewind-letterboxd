@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -44,6 +45,35 @@ class FollowIntegrationTests {
         follows.unfollow(followerEmail, targetId);
         assertFalse(follows.status(followerEmail, targetId).following());
         assertEquals(0, follows.followers(targetId, 0, 20).getTotalElements());
+    }
+
+    @Test
+    @Transactional
+    void paginatesNetworkWithStableIdTieBreak() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String targetEmail = "network-target-" + suffix + "@example.invalid";
+        Long targetId = register("network_target_" + suffix, targetEmail);
+
+        for (int index = 0; index < 17; index++) {
+            String email = "network-follower-" + suffix + "-" + index + "@example.invalid";
+            Long followerId = register("network_follower_" + suffix + "_" + index, email);
+            follows.follow(email, targetId);
+            assertNotNull(followerId);
+        }
+
+        var first = follows.followers(targetId, 0, 8);
+        var second = follows.followers(targetId, 1, 8);
+        var third = follows.followers(targetId, 2, 8);
+        var ids = new HashSet<Long>();
+        first.getContent().forEach(user -> ids.add(user.id()));
+        second.getContent().forEach(user -> ids.add(user.id()));
+        third.getContent().forEach(user -> ids.add(user.id()));
+
+        assertEquals(17, first.getTotalElements());
+        assertEquals(8, first.getContent().size());
+        assertEquals(8, second.getContent().size());
+        assertEquals(1, third.getContent().size());
+        assertEquals(17, ids.size());
     }
 
     private Long register(String username, String email) {

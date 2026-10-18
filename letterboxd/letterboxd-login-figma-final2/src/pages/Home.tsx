@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import api from "../api/axios";
 import { searchMovies, type MovieCard, type MoviePage } from "../api/search.api";
 import { getPopularReviewers, type PopularReviewer } from "../api/social.api";
-import { useLocale } from "../i18n";
+import { getJournal, type JournalArticle } from "../api/journal.api";
+import { localizeJournalCategory, useLocale } from "../i18n";
 import styles from "./Home.module.css";
 
 interface Review {
@@ -27,6 +28,7 @@ interface PublicList {
 
 interface Page<T> { content: T[] }
 interface Tag { id: number; name: string; slug: string }
+interface RecentWatched { id: number; createdAt: string; actor: { id: number; username: string; displayName: string | null } | null; movie: { id: number; title: string } | null }
 
 function MovieRow({ movies }: { movies: MovieCard[] }) {
   const { path, t } = useLocale();
@@ -49,6 +51,8 @@ export default function Home() {
   const [lists, setLists] = useState<PublicList[]>([]);
   const [reviewers, setReviewers] = useState<PopularReviewer[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [recentWatched, setRecentWatched] = useState<RecentWatched[]>([]);
+  const [journal, setJournal] = useState<JournalArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -60,11 +64,13 @@ export default function Home() {
     Promise.all([
       searchMovies({ sort: "rating_desc", page: 0, size: 6 }),
       searchMovies({ sort: "newest", page: 0, size: 6 }),
-      api.get<Page<Review>>("/reviews/recent", { params: { size: 4 } }),
-      api.get<Page<PublicList>>("/lists/public", { params: { size: 4 } }),
+      api.get<Page<Review>>("/reviews/popular", { params: { size: 4 } }),
+      api.get<Page<PublicList>>("/lists/public/popular", { params: { size: 4 } }),
       getPopularReviewers(),
       api.get<Tag[]>("/tags/popular", { params: { size: 12 } }),
-    ]).then(([popularResponse, newestResponse, reviewsResponse, listsResponse, reviewersResponse, tagsResponse]) => {
+      api.get<Page<RecentWatched>>("/activity/recent-watched", { params: { size: 6 } }),
+      getJournal(lang),
+    ]).then(([popularResponse, newestResponse, reviewsResponse, listsResponse, reviewersResponse, tagsResponse, recentWatchedResponse, journalResponse]) => {
       if (!current) return;
       setPopular((popularResponse.data as MoviePage).content);
       setNewest((newestResponse.data as MoviePage).content);
@@ -72,6 +78,8 @@ export default function Home() {
       setLists(listsResponse.data.content);
       setReviewers(reviewersResponse.data);
       setTags(tagsResponse.data);
+      setRecentWatched(recentWatchedResponse.data.content);
+      setJournal(journalResponse.data.content.slice(0, 3));
     }).catch(() => { if (current) setError(true); })
       .finally(() => { if (current) setLoading(false); });
     return () => { current = false; };
@@ -99,9 +107,24 @@ export default function Home() {
         <div className={styles.sectionHeading}><h2>{t("newReleases")}</h2><Link to={path("/films")}>{t("viewAll")}</Link></div>
         <MovieRow movies={newest} />
       </section>
+      <section className={styles.section}>
+        <div className={styles.sectionHeading}><h2>{t("recentWatched")}</h2></div>
+        {recentWatched.length === 0 ? <p>{t("noRecentWatched")}</p> : <div className={styles.stack}>{recentWatched.map(item => item.movie && <article className={styles.review} key={item.id}>
+          <p><Link to={path(`/films/${item.movie.id}`)}>{item.movie.title}</Link></p>
+          {item.actor && <small><Link to={path(`/users/${item.actor.id}`)}>{item.actor.displayName || item.actor.username}</Link> {t("activityWatched")}</small>}
+        </article>)}</div>}
+      </section>
+      <section className={styles.section}>
+        <div className={styles.sectionHeading}><h2>{t("latestJournal")}</h2><Link to={path("/journal")}>{t("viewAll")}</Link></div>
+        {journal.length === 0 ? <p>{t("noLatestJournal")}</p> : <div className={styles.stack}>{journal.map(article => <article className={styles.list} key={article.id}>
+          <small>{localizeJournalCategory(article.category, t)}</small>
+          <h3><Link to={path(`/journal/${article.slug}`)}>{article.title}</Link></h3>
+          {article.excerpt && <p>{article.excerpt}</p>}
+        </article>)}</div>}
+      </section>
       <section className={styles.grid}>
         <div className={styles.panel}>
-          <div className={styles.sectionHeading}><h2>{t("homeRecentReviews")}</h2></div>
+          <div className={styles.sectionHeading}><h2>{t("homePopularReviews")}</h2></div>
           {reviews.length === 0 ? <p>{t("noRecentReviews")}</p> : <div className={styles.stack}>{reviews.map(review => <article className={styles.review} key={review.id}>
             <p><Link to={path(`/films/${review.movieId}`)}>{review.movieTitle}</Link>{review.rating !== null && ` · ${review.rating}/5`}</p>
             <p className={styles.reviewText}>{review.content}</p>

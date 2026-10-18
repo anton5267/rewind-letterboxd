@@ -1,62 +1,81 @@
-# Повний план розвитку Rewind
+# Rewind — актуальний робочий план
 
-## Мета й вихідна точка
+Оновлено **18.10.2026**. Ціль: довести Rewind до вимог [`docs/PROJECT_REQUIREMENTS.md`](docs/PROJECT_REQUIREMENTS.md), доступних Figma-макетів, перевірених наскрізних сценаріїв і готового public-release. Працюємо кодом; тести використовуємо після змін як доказ, а не як заміну реалізації.
 
-Будуємо весь продукт із ТЗ поетапно: двомовний сайт (українська й англійська), соціальні функції, журнал, адмінку, дизайн-артефакти та публічний запуск. `/films` буде одним із перших готових сценаріїв, але план охоплює весь застосунок. :codex-annotation{index="1"}
+## Поточний verified state
 
-## Поточний стан плану
+- Backend: **68 тестів, 0 failures, 0 errors, 0 skipped** у 36 test classes.
+- Database: Flyway **V1–V30**, schema **36 tables / 53 foreign keys**.
+- API: **155 operations / 126 paths**, Compose health `UP`.
+- Frontend: `tsc --noEmit`, Vite build (**150 modules**), Web container rebuild.
+- Runtime smoke: public/protected contract smoke green, public guards **5/5**, admin headed smoke **12/12**.
+- Backup/restore: **167 movies / 379 users / 30 migrations** у тимчасовій БД.
+- Останні кодові зрізи: list likes/feeds, активна privacy-фільтрація, популярні списки за лайками, public-list detail UX, journal per-slug locale fallback.
+- GitHub: **не пушити**, доки користувач окремо не скаже.
 
-Позначення: `[x]` — етап виконано за кодом і перевірками; `[~]` — основна частина зроблена, але залишилися підзадачі; `[ ]` — роботу ще не почато.
+## Порядок наступної роботи
 
-| Етап | Стан | Що вже є | Що тримає етап відкритим |
-| --- | --- | --- | --- |
-| 1. Основа й дизайн | `[~]` | Git, секрети, карта проєкту, CI | Editor-доступ до Figma, ротація старого TMDB-ключа, точна UI-звірка |
-| 2. Стабільний локальний продукт | `[~]` | API, MySQL, Flyway, DELETE-виправлення, інтеграційні тести, локальний Compose runtime, automated core/public/guard browser-flow | контракти всіх API |
-| 3. Інтерфейс і акаунт | `[~]` | локалізовані маршрути, cookie auth, reset, профіль і списки, mobile overflow smoke для public screens | повна локалізація, responsive/a11y-аудит, Figma-візуал |
-| 4. Фільми й пошук | `[~]` | home, каталог, фільтри, деталка, персоналії, рекомендації, admin-only TMDB sync/import із зовнішніми ID/credits/ratings/trailer, локальними similar links, batch-оновленням і discovery-імпортом до 20 записів | повний scheduler/crawl каталогу, якість даних, дозвіл/ротація ключа, Figma-звірка |
-| 5. Особисті дії та списки | `[~]` | watched/watchlist/favorites, ratings, reviews, comments, public lists, automated core flow | повні browser-регресії, фінальний UX профілю та списків |
-| 6. Спільнота | `[~]` | follows, likes, activity, tags, notifications/SSE, messages, HQ, follow→notification browser smoke, SSE reconnect test | admin browser-регресії |
-| 7. Журнал і службові сторінки | `[~]` | статті, категорії, archive, fallback, podcasts з audio URL, newsletter category/filter, admin editor, help/legal, підписка, UI налаштувань і outbox-доставка бюлетеня | повна редакційна локалізація та production SMTP/моніторинг доставки |
-| 8. Адмінка | `[~]` | dashboard, users/HQ, films, custom-list delete/visibility, notification create/read/unread/delete, server-side notification filters and bulk actions, moderation queue filters/search/bulk hide, settings, audit, communications, admin browser smoke, authorization matrix for every admin controller mapping | ширші moderation regression flows і повне UI-покриття адмінських дій |
-| 9. Якість і реліз | `[~]` | rate limit, Redis service/cache profile, cache hit/miss, metrics, backup/restore scripts, runtime health, V22 індекси й N+1 fetch-плани, browser security headers, keyboard/accessibility smoke, WCAG 2 A/AA axe audit, 11 passing Playwright checks + admin smoke, authorization matrix for every admin controller mapping, expanded local load matrix, non-root API image, production Compose overlay/read-only API/secure-cookie profile, production config validator, Linux backup/restore scripts, Axios/React Router 7 production dependencies, verified 0 production npm advisories | повний dev dependency audit (npm quick endpoint повертає 400), SQLi/XSS, production load, VPS/HTTPS execution |
-| 10. Захист і презентація | `[~]` | підготовлені README, карта, вимоги та актуальна migration-backed ER-діаграма з перевіркою Compose schema | Figma parity, демо-дані й відеопрезентація |
+### 1. Завершити локальний UX і браузерні сценарії — наступний кодовий етап
 
-Детальний журнал із доказами, тестами та ризиками ведеться у [PROGRESS.md](PROGRESS.md), а короткий контрольний чекліст — у [IMPLEMENTATION_CHECKLIST.md](IMPLEMENTATION_CHECKLIST.md). Після кожного завершеного зрізу оновлюємо обидва файли.
+- [ ] Профіль і списки: пройти всі loading/error/retry/empty стани, mutation locks, останню сторінку після delete та мобільні ширини 320/768 px.
+- [ ] Social: довести один headed flow для follow → notification → unread badge, block → message guard → unblock, public activity/network.
+- [ ] Public lists: перевірити discover → tag/feed → detail → author profile → movie detail, включно з UK/EN і keyboard navigation.
+- [ ] Admin: додати ширший browser flow для moderation, notifications, conversations, lists і останньої сторінки після дій.
+- [ ] Після коду оновити [`docs/PROGRESS.md`](docs/PROGRESS.md) та [`docs/IMPLEMENTATION_CHECKLIST.md`](docs/IMPLEMENTATION_CHECKLIST.md) фактичними результатами.
 
-Початкова карта фіксувала каталог і форми входу як основний стан, але після наступних зрізів підключено профіль, деталку фільму, списки, огляди, коментарі, соціальні модулі та адмінські блоки. Поточні залишки й докази ведуться у [карті проєкту](C:/Users/Legion/Downloads/rewind-master/rewind-master/PROJECT_MAP.md), [аудиті API](C:/Users/Legion/Downloads/rewind-master/rewind-master/API_AUDIT.md) та [журналі прогресу](C:/Users/Legion/Downloads/rewind-master/rewind-master/PROGRESS.md).
+### 2. Довести двомовність і редакційний контент
 
-## Технічні рішення
+- [x] UI має UK/EN маршрути, статичні labels і fallback для відомих enum/category значень.
+- [x] Public journal list/detail/archive мають server-side per-slug fallback перекладу.
+- [ ] Перевірити всі майбутні dynamic metadata/редакційні поля: не залишати порожній текст без явного fallback.
+- [ ] При додаванні нового UI спочатку додавати обидва словникові ключі, потім компонент.
 
-- Зберігаємо React + TypeScript, Spring Boot, MySQL і наявні маршрути `/api`, виправляючи їхні контракти. Нові зміни БД робимо тільки наступними міграціями Flyway; V1–V4 не переписуємо.
-- Робимо один активний огляд і одну оцінку користувача для кожного фільму. Створення або зміна огляду оновлює оцінку; видалення огляду залишає окремо поставлену оцінку. Це правило закріплюємо обмеженнями БД і тестами.
-- Публічні фільми, видимі огляди, списки та профілі читаються без входу; запис дозволений власнику або адміністратору. Email та службові поля не потрапляють у публічні відповіді.
-- TMDB використовуємо для каталогу й оновлення метаданих. IMDb-рейтинг підключаємо через дозволене джерело після отримання доступу; скрейпінг не використовуємо. До того поле не показує вигадане значення.
-- Для локального запуску готуємо Docker Compose; для публічного — Linux VPS, контейнери, HTTPS, резервні копії та тимчасову адресу до появи домену. Конкретний VPS-провайдер не впливає на структуру застосунку.
+### 3. Figma parity — після отримання доступу
 
-## Етапи роботи
+- [ ] Отримати Editor-доступ або конкретні frame links для Design і FigJam.
+- [ ] Зафіксувати desktop/mobile frames, tokens, typography, spacing, assets і стани.
+- [ ] Зіставити frames із React-сторінками та зробити visual audit у розмірах макетів.
+- [ ] Не вигадувати Figma-параметри, поки інтеграція повертає `don't have edit access`.
 
-1. `[~]` **Основа проєкту й дизайн.** Створити контрольовану історію Git, прибрати секрети з коду та ротувати вже записані ключі. Після надання Editor-доступу перевірити три Figma-файли через плагін, скласти перелік *затверджених* desktop/mobile фреймів, станів і assets. Зафіксувати відповідність фреймів сторінкам та компонентам; FigJam використовувати для навігації, ТЗ — для поведінки. Якщо макет не визначає стан, додати його в тій самій дизайн-системі.
+Документ передачі: [`docs/FIGMA_HANDOFF.md`](docs/FIGMA_HANDOFF.md).
 
-2. `[~]` **Стабільний локальний продукт.** Підняти API, фронтенд і MySQL однією відтворюваною інструкцією. Виправити чотири DELETE 500, транзакційність оглядів/оцінок, контракти профілю та списків, пагінацію й обробку помилок. Додати інтеграційні перевірки цих сценаріїв та базовий CI. Етап готовий, коли чисте локальне середовище проходить реєстрацію → список → оцінку → огляд → редагування → видалення без ручного ремонту БД.
+### 4. Production readiness — після надання зовнішніх даних
 
-3. `[~]` **Спільний інтерфейс і акаунт.** Перенести затверджені логотип, палітру, шрифти, компоненти, header/footer та адаптивні правила; усунути горизонтальне переповнення. Додати локалізацію з маршрутами `/uk/...` і `/en/...` та перенаправленням старих URL. Завершити вхід, реєстрацію, вихід, профіль, зміну даних і пароля, email-відновлення з одноразовим токеном. JWT прибрати з `localStorage`: короткий access token і відкличний refresh token передавати через захищені HttpOnly cookie, із захистом запитів на зміну даних.
+- [ ] Ротувати раніше розкритий TMDB key і перевірити всі secrets.
+- [ ] Отримати production TMDB/SMTP credentials, домен, VPS і HTTPS certificate.
+- [ ] Заповнити `.env.production` поза Git, пройти `verify-production-config.ps1` на реальному secure env.
+- [ ] Запустити production Compose overlay, scheduler з bounded batch, monitoring і backup schedule.
+- [ ] Перевірити реєстрацію, reset email, catalog, lists, social, moderation, обидві мови та restore drill на production-like середовищі.
 
-4. `[~]` **Фільми й пошук.** Реалізувати головну, каталог, фільтри, сортування, пагінацію, пошук і детальну сторінку. Показати акторів, режисерів, трейлер, жанри, тривалість, рейтинги та схожі фільми; додати сторінки персоналій і фільмографію. Налаштувати контрольований імпорт/оновлення TMDB, заповнення схожих фільмів і зв'язування зовнішніх ID. Картки, порожні результати, завантаження та помилки мають працювати і на desktop, і на mobile.
+Runbook: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
-5. `[~]` **Особисті дії та списки.** Підключити watched, watchlist, favorites, оцінки, огляди та коментарі. Завершити власні й публічні списки: створення, редагування, видимість, порядок і додавання/видалення фільмів. Профіль показує історію, списки, оцінки, огляди та статистику. Для коментарів і оглядів перевірити права власника, модерацію та XSS-захист.
+### 5. Фінальний реліз і захист
 
-6. `[~]` **Спільнота.** Додати підписки, вподобання, активність, популярних рецензентів, теги й добірки; зібрати відповідні блоки головної. Реалізувати приватні діалоги, сповіщення та керування їх отриманням. Для односторонніх оновлень стрічки й сповіщень використати SSE з повторним отриманням даних після розриву. HQ — статус, який призначає адміністратор, без платіжної системи.
+- [ ] Зібрати один clean release evidence bundle: build, API contracts, browser smoke, schema, backup/restore, accessibility/security.
+- [ ] Переглянути дипломні матеріали й локальний WebM recording.
+- [ ] Перевірити `git diff --check`, статус, секрети та список файлів.
+- [ ] Показати користувачу підсумок змін.
+- [ ] Зробити **один** commit/push лише після його команди.
 
-7. `[~]` **Журнал і службові розділи.** Зробити категорії журналу, статті, подкасти, архів і бюлетень; редактор публікацій в адмінці. Додати сторінки допомоги, контактів, правил, приватності, даних фільмів і видалення акаунта. Інтерфейс перекладений двома мовами; редакційний контент зберігає мовні версії та має явний fallback, якщо перекладу ще немає.
+## Правила роботи
 
-8. `[~]` **Повна адмінка.** Побудувати dashboard, керування користувачами/HQ, фільмами, оглядами, коментарями, списками, повідомленнями та сповіщеннями. Додати блокування, чергу модерації, журнал дій і налаштування сайту. Усі адміністративні дії перевіряються на сервері та записуються в аудит.
+1. Не переписувати Flyway V1–V4; зміни БД — тільки новою міграцією.
+2. Не скидати й не перезаписувати чужі незакомічені зміни.
+3. Спочатку реалізувати код, потім запускати targeted verification і лише після завершення зрізу — повний regression.
+4. Публічні responses не повинні розкривати email, службові поля або дані деактивованих авторів.
+5. Пагінація має бути server-side, зі стабільним tie-breaker; фільтри починаються з першої сторінки.
+6. Кожен новий текст UI має UK/EN label; кожна mutation має loading/error/lock стан.
+7. Не пушити GitHub без прямої команди користувача.
 
-9. `[~]` **Якість і публічний реліз.** Перевірити індекси й N+1 запити, додати кешування читання через Redis, обмеження частоти чутливих запитів, метрики, резервне копіювання та відновлення. Пройти перевірки доступності, клавіатурної навігації, SQLi/XSS, прав доступу й навантаження. Розгорнути сайт на VPS з HTTPS, приватною БД і окремими конфігураціями для розробки та production.
+## Definition of done
 
-10. `[ ]` **Захист і презентація.** Звірити реалізовані екрани із затвердженими Figma-фреймами та UX-сценаріями, доповнити дизайн-систему й прототипи. Підготувати ER-діаграму актуальної БД, інструкцію запуску, демонстраційні дані та відеопрезентацію ключових сценаріїв.
+Ціль можна закрити тільки коли:
 
-## Перевірка готовності
+- локальні функціональні вимоги з [`docs/PROJECT_REQUIREMENTS.md`](docs/PROJECT_REQUIREMENTS.md) мають код і наскрізний доказ;
+- основні user flows пройдені browser → API → MySQL;
+- Figma parity або чесно підтверджена неможливість через відсутній доступ;
+- production runbook виконаний на реальному secure env або явно заблокований відсутніми credentials;
+- documentation summary відповідає фактичному стану;
+- користувач погодив фінальний push.
 
-Кожен етап завершується працюючим наскрізним сценарієм **браузер → API → MySQL → відповідь**, а не лише успішною збіркою. Для зміненого API потрібні інтеграційні тести з MySQL; для основних шляхів користувача — браузерні тести. UI порівнюємо зі знімками відповідних Figma-фреймів на їхніх desktop/mobile розмірах. Публічний реліз вважаємо готовим після перевірки реєстрації, відновлення доступу, всіх дій із фільмом, соціальних сценаріїв, модерації, обох мов, резервного відновлення та запуску на чистому середовищі.
-
-**Перед точним перенесенням UI потрібен обіцяний Editor-доступ до трьох Figma-файлів:** плагін підключений, але зараз його запити до них повертають помилку прав. План спирається на ТЗ, код і доступний перегляд у браузері; конкретні фрейми та візуальні параметри фіксуємо на етапі 1.
+Детальні докази та історія змін: [`docs/PROGRESS.md`](docs/PROGRESS.md). Короткий checklist: [`docs/IMPLEMENTATION_CHECKLIST.md`](docs/IMPLEMENTATION_CHECKLIST.md). Вимоги: [`docs/PROJECT_REQUIREMENTS.md`](docs/PROJECT_REQUIREMENTS.md).

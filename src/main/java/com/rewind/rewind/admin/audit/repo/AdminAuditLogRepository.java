@@ -6,5 +6,5 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface AdminAuditLogRepository extends JpaRepository<AdminAuditLog, Long> {
-    Page<AdminAuditLog> findAllByOrderByCreatedAtDesc(Pageable pageable);
+    Page<AdminAuditLog> findAllByOrderByCreatedAtDescIdDesc(Pageable pageable);
 }

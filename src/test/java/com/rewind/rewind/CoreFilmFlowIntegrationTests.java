@@ -18,6 +18,13 @@ import com.rewind.rewind.review.dto.ReviewResponse;
 import com.rewind.rewind.review.dto.UpdateReviewRequest;
 import com.rewind.rewind.review.repo.ReviewRepository;
 import com.rewind.rewind.review.service.ReviewService;
+import com.rewind.rewind.social.repo.FollowRepository;
+import com.rewind.rewind.social.repo.ReviewLikeRepository;
+import com.rewind.rewind.social.repo.UserActivityRepository;
+import com.rewind.rewind.social.entity.ActivityType;
+import org.springframework.data.domain.PageRequest;
+import com.rewind.rewind.social.service.FollowService;
+import com.rewind.rewind.social.service.ReviewLikeService;
 import com.rewind.rewind.user.dto.UserRegisterRequest;
 import com.rewind.rewind.user.repo.UserRepository;
 import com.rewind.rewind.user.service.UserService;
@@ -50,6 +57,11 @@ class CoreFilmFlowIntegrationTests {
     @Autowired RatingRepository ratingRepository;
     @Autowired ReviewService reviews;
     @Autowired ReviewRepository reviewRepository;
+    @Autowired FollowService follows;
+    @Autowired FollowRepository followRepository;
+    @Autowired ReviewLikeService reviewLikes;
+    @Autowired ReviewLikeRepository reviewLikeRepository;
+    @Autowired UserActivityRepository activities;
     @Autowired EntityManager entityManager;
 
     @Test
@@ -106,6 +118,13 @@ class CoreFilmFlowIntegrationTests {
         systemLists.remove(email, movieId, ListType.WATCHLIST);
         entityManager.flush();
         assertFalse(items.existsByListIdAndMovieId(watchlistId, movieId));
+
+        systemLists.add(email, movieId, ListType.WATCHED);
+        assertEquals(1, activities.findAllByUserIdOrderByCreatedAtDescIdDesc(userId, PageRequest.of(0, 20))
+                .getContent().stream().filter(activity -> activity.getType() == ActivityType.WATCHED).count());
+        systemLists.add(email, movieId, ListType.WATCHED);
+        assertEquals(1, activities.findAllByUserIdOrderByCreatedAtDescIdDesc(userId, PageRequest.of(0, 20))
+                .getContent().stream().filter(activity -> activity.getType() == ActivityType.WATCHED).count());
 
         UpsertRatingRequest ratingRequest = new UpsertRatingRequest();
         ratingRequest.setRating(4);
@@ -221,5 +240,69 @@ class CoreFilmFlowIntegrationTests {
         } finally {
             executor.shutdownNow();
         }
+    }
+
+    @Test
+    void concurrentListFollowAndReviewLikeWritesAreIdempotent() throws Exception {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String email = "social-race-" + suffix + "@example.invalid";
+        String targetEmail = "social-target-" + suffix + "@example.invalid";
+        registerUser(email, "social_race_" + suffix);
+        Long targetId = registerUser(targetEmail, "social_target_" + suffix);
+
+        Movie movie = new Movie();
+        movie.setTitle("Concurrent social film " + suffix);
+        Long movieId = movies.saveAndFlush(movie).getId();
+        CreateListRequest listRequest = new CreateListRequest();
+        listRequest.setName("Concurrent social list");
+        Long listId = lists.create(email, listRequest).getId();
+        AddListItemRequest itemRequest = new AddListItemRequest();
+        itemRequest.setMovieId(movieId);
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            CompletableFuture.allOf(
+                    CompletableFuture.runAsync(() -> lists.addItem(email, listId, itemRequest), executor),
+                    CompletableFuture.runAsync(() -> lists.addItem(email, listId, itemRequest), executor)
+            ).join();
+            Long userId = userRepository.findByEmail(email).orElseThrow().getId();
+            assertEquals(1, items.countByListIdAndMovieId(listId, movieId));
+
+            CompletableFuture.allOf(
+                    CompletableFuture.runAsync(() -> systemLists.add(email, movieId, ListType.WATCHLIST), executor),
+                    CompletableFuture.runAsync(() -> systemLists.add(email, movieId, ListType.WATCHLIST), executor)
+            ).join();
+            Long watchlistId = lists.myLists(email).stream()
+                    .filter(list -> list.getListType() == ListType.WATCHLIST)
+                    .findFirst().orElseThrow().getId();
+            assertEquals(1, items.countByListIdAndMovieId(watchlistId, movieId));
+
+            CompletableFuture.allOf(
+                    CompletableFuture.runAsync(() -> follows.follow(email, targetId), executor),
+                    CompletableFuture.runAsync(() -> follows.follow(email, targetId), executor)
+            ).join();
+            assertEquals(1, followRepository.countByFollowerIdAndFollowingId(userId, targetId));
+
+            CreateReviewRequest reviewRequest = new CreateReviewRequest();
+            reviewRequest.setContent("Concurrent like review");
+            reviewRequest.setRating(4);
+            Long reviewId = reviews.create(email, movieId, reviewRequest).getId();
+            CompletableFuture.allOf(
+                    CompletableFuture.runAsync(() -> reviewLikes.like(email, reviewId), executor),
+                    CompletableFuture.runAsync(() -> reviewLikes.like(email, reviewId), executor)
+            ).join();
+            assertEquals(1, reviewLikeRepository.countByReviewIdAndUserId(reviewId, userId));
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    private Long registerUser(String email, String username) {
+        UserRegisterRequest registration = new UserRegisterRequest();
+        registration.setUsername(username);
+        registration.setEmail(email);
+        registration.setPassword("test-password-123");
+        users.register(registration);
+        return userRepository.findByEmail(email).orElseThrow().getId();
     }
 }

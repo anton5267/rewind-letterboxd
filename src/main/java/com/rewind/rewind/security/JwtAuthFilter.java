@@ -68,20 +68,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 return;
             }
 
-            // ✅ Якщо ти додав блокування через isBlocked
-            // Якщо такого поля немає — просто видали цей блок
-            try {
-                var m = user.getClass().getMethod("getIsBlocked");
-                Object val = m.invoke(user);
-                if (val instanceof Boolean b && b) {
-                    SecurityContextHolder.clearContext();
-                    chain.doFilter(request, response);
-                    return;
-                }
-            } catch (Exception ignore) {
-                // поля isBlocked може не бути — тоді просто ігноруємо
-            }
-
             String role = user.getRole().name();
 
             var auth = new UsernamePasswordAuthenticationToken(

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="uk">
+<head><meta charset="utf-8"><title>Rewind video encoder</title></head>
+<body>
+  <canvas id="canvas" width="1280" height="720"></canvas>
+  <button id="record" type="button">Record WebM</button>
+  <output id="status"></output>
+  <script>
+    const sources = [
+      "frames/01-uk-home.png", "frames/02-en-home.png", "frames/03-uk-films.png",
+      "frames/04-uk-film-details.png", "frames/05-uk-journal.png", "frames/06-uk-help.png"
+    ];
+    const canvas = document.querySelector("#canvas");
+    const context = canvas.getContext("2d");
+    const status = document.querySelector("#status");
+    const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+    window.addEventListener("error", event => {
+      document.querySelector("#record").disabled = false;
+      status.textContent = ` error: ${event.error?.message ?? event.message}`;
+    });
+    async function loadImages() {
+      return Promise.all(sources.map(src => new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = src;
+      })));
+    }
+    document.querySelector("#record").onclick = async () => {
+      document.querySelector("#record").disabled = true;
+      status.textContent = " loading";
+      const images = await loadImages();
+      const stream = canvas.captureStream(30);
+      const mimeType = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"]
+        .find(type => MediaRecorder.isTypeSupported(type));
+      if (!mimeType) throw new Error("This browser cannot encode WebM");
+      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2_500_000 });
+      const chunks = [];
+      recorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
+      const finished = new Promise(resolve => { recorder.onstop = resolve; });
+      let current = 0;
+      const draw = () => context.drawImage(images[current], 0, 0, canvas.width, canvas.height);
+      draw();
+      recorder.start(250);
+      for (current = 0; current < images.length; current += 1) {
+        draw();
+        await wait(3500);
+      }
+      current = images.length - 1;
+      draw();
+      await wait(750);
+      recorder.requestData();
+      await wait(250);
+      recorder.stop();
+      await finished;
+      stream.getTracks().forEach(track => track.stop());
+      const blob = new Blob(chunks, { type: mimeType });
+      if (!blob.size) throw new Error("The browser returned an empty recording");
+      const link = document.createElement("a");
+      link.id = "download";
+      link.textContent = "Download WebM";
+      link.href = URL.createObjectURL(blob);
+      link.download = "rewind-diploma-demo.webm";
+      document.body.append(" ", link);
+      status.textContent = ` ready ${blob.size}`;
+    };
+  </script>
+</body>
+</html>

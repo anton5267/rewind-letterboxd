@@ -14,8 +14,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -53,8 +55,10 @@ public class ActivityService {
 
     @Transactional(readOnly = true)
     public Page<ActivityResponse> profile(Long userId, int page, int size) {
-        if (!users.existsById(userId)) throw new IllegalArgumentException("User not found");
-        return toResponses(activities.findAllByUserIdOrderByCreatedAtDesc(userId, pageRequest(page, size)));
+        users.findById(userId)
+                .filter(user -> Boolean.TRUE.equals(user.getIsActive()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        return toResponses(activities.findAllByUserIdOrderByCreatedAtDescIdDesc(userId, pageRequest(page, size)));
     }
 
     @Transactional(readOnly = true)
@@ -64,7 +68,12 @@ public class ActivityService {
                 .map(follow -> follow.getFollowing().getId()).toList();
         Pageable pageable = pageRequest(page, size);
         if (followedIds.isEmpty()) return Page.empty(pageable);
-        return toResponses(activities.findAllByUserIdInOrderByCreatedAtDesc(followedIds, pageable));
+        return toResponses(activities.findAllByUserIdInOrderByCreatedAtDescIdDesc(followedIds, pageable));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ActivityResponse> recentWatched(int size) {
+        return toResponses(activities.findRecentByTypeAndActiveUser(ActivityType.WATCHED, pageRequest(0, size)));
     }
 
     private Page<ActivityResponse> toResponses(Page<UserActivity> page) {
@@ -72,7 +81,9 @@ public class ActivityService {
                 .flatMap(activity -> java.util.stream.Stream.of(activity.getUserId(), activity.getRelatedUserId()))
                 .filter(java.util.Objects::nonNull).toList();
         Map<Long, User> usersById = new HashMap<>();
-        users.findAllById(userIds).forEach(user -> usersById.put(user.getId(), user));
+        users.findAllById(userIds).stream()
+                .filter(user -> Boolean.TRUE.equals(user.getIsActive()))
+                .forEach(user -> usersById.put(user.getId(), user));
         Map<Long, Movie> moviesById = new HashMap<>();
         movies.findAllById(page.getContent().stream().map(activity -> activity.getMovieId()).filter(java.util.Objects::nonNull).toList())
                 .forEach(movie -> moviesById.put(movie.getId(), movie));

@@ -7,6 +7,7 @@ import com.rewind.rewind.movie.entity.Movie;
 import com.rewind.rewind.movie.repo.MovieRepository;
 import com.rewind.rewind.review.dto.CreateReviewRequest;
 import com.rewind.rewind.review.service.ReviewService;
+import com.rewind.rewind.social.service.ReviewLikeService;
 import com.rewind.rewind.user.dto.UserRegisterRequest;
 import com.rewind.rewind.user.service.UserService;
 import java.util.UUID;
@@ -22,6 +23,7 @@ class HomeFeedIntegrationTests {
     @Autowired UserService users;
     @Autowired MovieRepository movies;
     @Autowired ReviewService reviews;
+    @Autowired ReviewLikeService reviewLikes;
     @Autowired MovieListService lists;
 
     @Test
@@ -42,8 +44,11 @@ class HomeFeedIntegrationTests {
         CreateReviewRequest review = new CreateReviewRequest();
         review.setContent("A visible home review");
         review.setRating(4);
-        reviews.create(email, movieId, review);
+        Long reviewId = reviews.create(email, movieId, review).getId();
         assertTrue(reviews.recent(0, 6).getContent().stream()
+                .anyMatch(item -> item.movieId().equals(movieId) && item.content().equals("A visible home review")));
+        reviewLikes.like(email, reviewId);
+        assertTrue(reviews.popular(0, 6).getContent().stream()
                 .anyMatch(item -> item.movieId().equals(movieId) && item.content().equals("A visible home review")));
 
         CreateListRequest list = new CreateListRequest();
@@ -56,6 +61,8 @@ class HomeFeedIntegrationTests {
         AddListItemRequest listItem = new AddListItemRequest();
         listItem.setMovieId(movieId);
         lists.addItem(email, listId, listItem);
+        assertTrue(lists.popularPublicLists(0, 50).getContent().stream()
+                .anyMatch(item -> item.getName().equals("Home list " + suffix)));
         assertEquals(movieId, lists.publicList(listId).movies().get(0).getId());
     }
 }

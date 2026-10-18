@@ -35,12 +35,12 @@ $cacheKey = "movieDetails::$MovieId"
 
 $missesBefore = Get-RedisStat -Name "keyspace_misses"
 $hitsBefore = Get-RedisStat -Name "keyspace_hits"
-$first = Invoke-WebRequest -UseBasicParsing -SkipHttpErrorCheck -Uri "$BaseUrl/api/movies/$MovieId/details"
+$first = Invoke-WebRequest -UseBasicParsing -Uri "$BaseUrl/api/movies/$MovieId/details"
 $missesAfterFirst = Get-RedisStat -Name "keyspace_misses"
 $firstKeyExists = [int](Invoke-RedisCli -Arguments @("EXISTS", $cacheKey))
 $ttl = [int](Invoke-RedisCli -Arguments @("TTL", $cacheKey))
 
-$second = Invoke-WebRequest -UseBasicParsing -SkipHttpErrorCheck -Uri "$BaseUrl/api/movies/$MovieId/details"
+$second = Invoke-WebRequest -UseBasicParsing -Uri "$BaseUrl/api/movies/$MovieId/details"
 $hitsAfterSecond = Get-RedisStat -Name "keyspace_hits"
 
 if ($first.StatusCode -ne 200 -or $second.StatusCode -ne 200) {

@@ -1,12 +1,12 @@
 # Rewind — карта проєкту
 
-Актуалізовано 17.10.2026 за кодом, локальними збірками, MySQL інтеграційними тестами та HTTP сценаріями. Зовнішня папка `rewind-master` є обгорткою архіву; корінь Maven лежить тут. Git історія вже контрольована; CI і production deployment ще не додані. `target/`, frontend `dist/`, `node_modules/` і `src/.vs/` — локальні артефакти, а не вихідний код.
+Актуалізовано 18.10.2026 за кодом, локальними збірками, MySQL інтеграційними тестами та HTTP сценаріями. Зовнішня папка `rewind-master` є обгорткою архіву; корінь Maven лежить тут. Git історія вже контрольована; CI і production deployment ще не додані. `target/`, frontend `dist/`, `node_modules/` і `src/.vs/` — локальні артефакти, а не вихідний код.
 
 Надане замовником ТЗ збережено в [PROJECT_REQUIREMENTS.md](PROJECT_REQUIREMENTS.md), а порівняння вимог із кодом — у [REQUIREMENTS_TRACE.md](REQUIREMENTS_TRACE.md).
 
 ## 1. Що це і як частини спілкуються
 
-Rewind — каталог фільмів із обліковими записами, особистими оцінками, відгуками та списками. Бекенд: Java 17, Spring Boot 4.0.1, Spring MVC, Security, JPA, MySQL, Flyway, JWT. Фронтенд: React 18, TypeScript, React Router 6, Axios, Vite 5. Дані для демо зібрані з TMDB у готовому SQL файлі.
+Rewind — каталог фільмів із обліковими записами, особистими оцінками, відгуками та списками. Бекенд: Java 17, Spring Boot 4.0.1, Spring MVC, Security, JPA, MySQL, Flyway, JWT. Фронтенд: React 18, TypeScript, React Router 6, Axios, Vite 7.3.7. Дані для демо зібрані з TMDB у готовому SQL файлі.
 
 ```mermaid
 flowchart LR
@@ -16,7 +16,7 @@ flowchart LR
     Controllers --> Services[Services]
     Services --> Repositories[Spring Data JPA repositories]
     Repositories --> MySQL[(MySQL :3306)]
-    Flyway[Flyway V1–V21] --> MySQL
+    Flyway[Flyway V1–V30] --> MySQL
     Seed[seed_50_real.sql] --> MySQL
 ```
 
@@ -27,7 +27,7 @@ flowchart LR
 | `src/main/java/com/rewind/rewind/{auth,user,movie,list,rating,review,profile,admin,comment,message,notification,journal,...}` | Функціональні модулі бекенду; у більшості є `controller`, `service`, `repo`, `entity`, `dto` |
 | `src/main/java/com/rewind/rewind/security/` | Правила доступу, перевірка JWT, BCrypt |
 | `src/main/resources/application.yml` | База, Flyway, JPA, пошта, JWT |
-| `src/main/resources/db/migration/` | Послідовні SQL міграції V1–V21 |
+| `src/main/resources/db/migration/` | Послідовні SQL міграції V1–V30 |
 | `src/main/resources/seed_50_real.sql`, `tmdb_seed_50.py` | Готове демо наповнення і його генератор |
 | `letterboxd/letterboxd-login-figma-final2/src/App.tsx` | Реальні маршрути фронтенду |
 | `letterboxd/letterboxd-login-figma-final2/src/api/` | Axios клієнт і виклики API |
@@ -54,15 +54,15 @@ V1 створює 14 таблиць: `users`, `movies`, `actors`, `directors`, `
 | `V3__add_display_name_to_users.sql` | Додає `users.display_name` |
 | `V4__align_reviews_and_ratings.sql` | Додає оцінку й поля модерації до `reviews`, TMDB до enum зовнішніх оцінок, розширює точність `movies.rating` |
 
-`spring.jpa.hibernate.ddl-auto=validate`: Hibernate перевіряє схему, але не створює її. Flyway запускається при старті. SQL seed не є міграцією: його треба імпортувати окремо. Він містить 50 фільмів, жанри, акторів, режисерів, 50 зовнішніх TMDB оцінок і зв'язки; `similar_movies` він не наповнює. Локальна БД зараз має 50 фільмів, версію Flyway 4 і нуль користувачів. `movies.rating` у цих фільмів початково `null`, бо це середнє **користувацьких** оцінок, а TMDB зберігається окремо.
+`spring.jpa.hibernate.ddl-auto=validate`: Hibernate перевіряє схему, але не створює її. Flyway запускається при старті. SQL seed не є міграцією: його треба імпортувати окремо. Він містить 50 фільмів, жанри, акторів, режисерів, 50 зовнішніх TMDB оцінок і зв'язки; `similar_movies` він не наповнює. Стан локальної БД змінюється інтеграційними та browser fixtures, тому кількість рядків не є сталою; під час останньої backup/restore перевірки було 167 фільмів, 379 користувачів і застосовано Flyway V1–V30. `movies.rating` у seed-фільмів початково `null`, бо це середнє **користувацьких** оцінок, а TMDB зберігається окремо. V28 додає каскадні public social links користувача, V29 — направлені блокування користувачів, V30 — вподобання public lists.
 
-Генератор `tmdb_seed_50.py` звертається до TMDB `/configuration`, `/movie/popular`, деталей і credits; він формує `seed_50_real.sql`. У файлі генератора є API ключ. Під Python 3.11 синтаксичний розбір падає на рядку 141 через вкладений f-string; готовий SQL файл від цього не залежить.
+Генератор `tmdb_seed_50.py` звертається до TMDB `/configuration`, `/movie/popular`, деталей і credits; він формує `seed_50_real.sql`. Ключ не зберігається у репозиторії: генератор читає `TMDB_API_KEY` з environment і завершується з помилкою, якщо змінну не задано. Синтаксис перевірено на Python 3.11; готовий `seed_50_real.sql` дозволяє відтворити локальне демо без зовнішнього TMDB-запиту.
 
 ## 3. Повна карта HTTP API
 
 Помилки API мають стабільний JSON-контракт `timestamp`, `status`, `error`, `message`, `path`, який формує `config/ApiExceptionHandler`.
 
-Запущений `/v3/api-docs` показує **50 операцій**. `P` = без токена, `U` = потрібен користувач, `A` = потрібен ADMIN. Позначення відображають фактичний `SecurityConfig`, а не коментарі в контролерах. Для сторінок відповідь — Spring `Page` з масивом `content`, метаданими сторінки й `totalElements`.
+Запущений `/v3/api-docs` показує **155 операцій у 126 paths**. `P` = без токена, `U` = потрібен користувач, `A` = потрібен ADMIN. Позначення відображають фактичний `SecurityConfig`, а не коментарі в контролерах. Для сторінок відповідь — Spring `Page` з масивом `content`, метаданими сторінки й `totalElements`.
 
 | Доступ | Метод і шлях | Призначення |
 | --- | --- | --- |
@@ -73,18 +73,20 @@ V1 створює 14 таблиць: `users`, `movies`, `actors`, `directors`, `
 | U | `POST`, `DELETE /api/movies/{movieId}/watched` | Позначити/скасувати перегляд |
 | U | `POST`, `DELETE /api/movies/{movieId}/favorite` | Додати/забрати з улюбленого |
 | U | `PUT`, `DELETE /api/movies/{movieId}/rating`; `GET /api/movies/{movieId}/rating/me` | Власна оцінка |
-| U | `GET`, `POST /api/movies/{movieId}/reviews` | Список видимих відгуків і створення; GET теж захищений |
+| P/U | `GET`, `POST /api/movies/{movieId}/reviews` | Гостьовий список видимих відгуків і захищене створення |
 | U | `PATCH`, `DELETE /api/reviews/{reviewId}` | Зміна/видалення власного відгуку |
-| U | `GET /api/lists/my`, `GET /api/lists/public`, `POST /api/lists` | Власні списки, каталог публічних списків, створення; `/public` теж захищений |
+| U/P | `GET /api/lists/my`, `GET /api/lists/public`, `POST /api/lists` | Власні списки, гостьовий каталог публічних списків, створення |
+| P | `GET /api/lists/public/popular`, `/recently-liked`, `/team` | Популярні, нещодавно вподобані та HQ/team public-list feeds |
+| U | `GET /api/lists/public/{listId}/like-status`; `POST`, `DELETE /api/lists/{listId}/likes` | Статус і зміна вподобання public list |
 | U | `PATCH /api/lists/{listId}` | Зміна свого CUSTOM списку |
 | U | `GET`, `POST /api/lists/{listId}/items`; `DELETE /api/lists/{listId}/items/{movieId}` | Елементи власного списку |
 | U | `PUT /api/lists/{listId}/items/reorder` | Порядок елементів CUSTOM списку |
 | U | `POST /api/lists/{listId}/movies`; `DELETE /api/lists/{listId}/movies/{movieId}` | Аліаси для frontend клієнта |
-| U | `GET`, `PATCH /api/profile/me`; `PUT /api/profile/me/password`; `DELETE /api/profile/me` | Власний профіль, зміна пароля та захищене видалення акаунта з відкликанням сесій |
+| U | `GET`, `PATCH /api/profile/me`; `PUT /api/profile/me/password`; `DELETE /api/profile/me`; `GET`, `PUT /api/profile/me/social-links` | Власний профіль, social-links CRUD, зміна пароля та захищене видалення акаунта з відкликанням сесій |
 | U | `GET /api/profile/me/watched`, `/watchlist`, `/favorites` | Сторінки власних системних списків |
-| P | `GET /api/users/{id}`, `GET /api/users/me` | Перший відкритий усім; `/me` без токена повертає 401 у самому handler |
+| P/U | `GET /api/users/{id}`, `GET /api/users/me` | Публічний профіль; `/me` потребує авторизації й без токена повертає 401 |
 | A | `GET`, `POST /api/admin/movies`; `PUT`, `DELETE /api/admin/movies/{id}` | Сторінковий список, створення, редагування, видалення фільму; dashboard має CRUD-форму |
-| A | `GET /api/admin/users`, `GET`, `PATCH /api/admin/users/{id}` | Пошук, перегляд і редагування користувачів; dashboard підтримує пошук і activate/deactivate |
+| A | `GET /api/admin/users`, `GET`, `PATCH /api/admin/users/{id}` | Пошук, перегляд, USER/ADMIN role select і редагування користувачів; dashboard підтримує guard-овані activate/deactivate |
 | A | `POST /api/admin/users/{id}/activate`, `/deactivate` | Активація/деактивація |
 | A | `GET /api/admin/reviews`; `POST /api/admin/reviews/{id}/hide`, `/unhide`; `DELETE /api/admin/reviews/{id}` | Модерація відгуків; UI підключено до dashboard |
 | A | `GET /api/admin/moderation/queue` | Об'єднана сторінкова черга немодерованих оглядів і коментарів |
@@ -95,20 +97,21 @@ V1 створює 14 таблиць: `users`, `movies`, `actors`, `directors`, `
 | A | `GET /api/admin/lists`; `PUT /api/admin/lists/{id}/visibility?visible=...` | Сторінковий список списків з кількістю фільмів; приховування/публікація з аудитом; UI підключено до dashboard |
 | A | `GET/DELETE /api/admin/conversations`, `GET/DELETE /api/admin/notifications` | Сторінковий адміністративний огляд і audit-видалення діалогів та сповіщень без email і службових полів; UI підключено до dashboard |
 | A | `GET /api/admin/settings`, `PUT /api/admin/settings/{key}` | Whitelist налаштувань сайту з аудитом; UI підключено до dashboard |
-| U | `GET`, `POST /api/conversations`; `GET`, `POST /api/conversations/{id}/messages`; `POST /api/conversations/{id}/read` | Приватні діалоги й повідомлення |
+| U | `GET`, `POST /api/conversations`; `GET`, `POST /api/conversations/{id}/messages`; `POST /api/conversations/{id}/read` | Приватні діалоги й повідомлення; blocked pairs не можуть почати/читати/надсилати |
+| U | `GET /api/users/{id}/block-status`, `POST/DELETE /api/users/{id}/block` | Перевірка, встановлення й зняття блокування; блок також прибирає взаємні follow |
 | U | `GET`, `PUT /api/notifications/preferences` | Налаштування сповіщень |
 
 Пошук приймає `q`, `genreId`, `tag`, `year`, `minRating`, `sort`, `page`, `size`. Сортування: `newest`, `oldest`, `rating_desc`, `rating_asc`, `title_asc`; search обмежує розмір сторінки до 1–50. Базовий каталог сортує за ID спадно. DTO запитів і відповідей лежать поряд із відповідними модулями; ключові форми: реєстрація `{username,email,password}`, оцінка `{rating}`, відгук `{content,rating}`, створення списку `{name,description,isPublic}`, перестановка `{orderedItemIds}`.
 
 Операційні endpoint-и: `GET /actuator/health` і `/actuator/health/{liveness|readiness}` відкриті для перевірки сервісу; `/actuator/metrics` потребує авторизації. У Compose Redis вмикається через `SPRING_CACHE_TYPE=redis`, а локальні тести використовують `spring.cache.type=none`.
 
-Без авторизації поточний API повернув 200 для каталогу, пошуку, деталей та OpenAPI, 403 для `/api/lists/public`, `/api/movies/1/reviews` і `/api/profile/me`, 401 для `/api/users/me`. Ці статуси перевірені HTTP запитами; інші операції звірені з контролерами та security rules, але не проходили окремий наскрізний сценарій.
+Без авторизації поточний API повернув 200 для каталогу, пошуку, деталей, `/api/lists/public`, `/api/movies/1/reviews` та OpenAPI; `/api/profile/me` і `/api/users/me` повернули 401. Ці статуси перевірені HTTP запитами; інші операції звірені з контролерами та security rules, але не проходили окремий наскрізний сценарій.
 
 ## 4. Фронтенд: що видно в браузері
 
 `main.tsx` монтує `BrowserRouter` + `AuthProvider` + `App`. У `App.tsx` є тільки такі маршрути:
 
-Актуальні локалізовані маршрути мають префікс `/uk` або `/en`: `/home`, `/films`, `/films/:id`, `/profile`, `/lists`, `/lists/discover`, `/lists/public/:id`, `/users/:id`, `/people/:type/:id`, `/notifications`, `/messages`, `/journal`, `/journal/:slug`, `/admin`, а також auth-маршрути. Старі URL перенаправляються на `/uk/...`.
+Актуальні локалізовані маршрути мають префікс `/uk` або `/en`: `/home`, `/films`, `/films/:id`, `/profile`, `/lists`, `/lists/discover`, `/lists/public/:id`, `/users/:id`, `/community`, `/people/:type/:id`, `/notifications`, `/messages`, `/journal`, `/journal/:slug`, `/admin`, а також auth-маршрути. Старі URL перенаправляються на `/uk/...`.
 
 Для майбутнього перенесення макетів, поточного вигляду екранів і відповідності Figma фреймів файлам див. [FIGMA_HANDOFF.md](FIGMA_HANDOFF.md).
 
@@ -143,7 +146,7 @@ Axios бере base URL із `VITE_API_URL` із fallback на `http://localhost
 | `npx tsc --noEmit` | Пройшла |
 | `npm run build` | Пройшла, Vite зібрав 99 модулів |
 | HTTP smoke check | Каталог, пошук, фільм за ID, OpenAPI та правила доступу відповідають як описано вище |
-| Python 3.11 `ast.parse(tmdb_seed_50.py)` | Помилка синтаксису на рядку 141 |
+| Python 3.11 `py_compile tmdb_seed_50.py` | Пройшла; генератор синтаксично коректний і не містить ключа |
 
 Зелена збірка й context test **не** доводять, що всі функції API або непідключені екрани працюють. У проєкті немає змістовних інтеграційних API тестів і frontend тестів.
 

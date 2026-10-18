@@ -22,6 +22,19 @@ openssl rand -base64 64       # JWT_SECRET
 
 Set `PUBLIC_BASE_URL=https://your-domain`, real SMTP values, and `HTTP_PORT=127.0.0.1:8088`. The web container is intentionally loopback-only so the host HTTPS proxy owns ports 80/443.
 
+TMDB synchronization is disabled by default. Enable the provider only after setting a newly rotated `TMDB_API_KEY`; enable the scheduled crawl separately and keep its batch/interval bounded:
+
+```dotenv
+TMDB_ENABLED=true
+TMDB_API_KEY=<rotated-provider-key>
+TMDB_SCHEDULER_ENABLED=true
+TMDB_SCHEDULER_BATCH_SIZE=10
+TMDB_SCHEDULER_INTERVAL_MS=86400000
+TMDB_SCHEDULER_INITIAL_DELAY_MS=60000
+```
+
+The scheduler refreshes at most 20 already-linked movies per run, oldest `updatedAt` first, and isolates failures per movie. Leave `TMDB_SCHEDULER_ENABLED=false` until the provider quota, key rotation, and first controlled run have been verified.
+
 Before starting services on the VPS, run the PowerShell validator on a Windows checkout or reproduce its checks in CI. It rejects example secrets, HTTP base URLs, published DB/Redis/API ports, insecure cookies, writable API containers, and non-loopback web binding:
 
 ```powershell
@@ -40,7 +53,18 @@ The API and database are internal Compose services. Check API readiness from the
 
 ## 3. HTTPS reverse proxy
 
-Put Caddy, Nginx, or another managed TLS proxy on the host. Proxy the domain to `127.0.0.1:8088`, enable automatic certificate renewal, and preserve the `Host` and `X-Forwarded-Proto` headers. Keep `PUBLIC_BASE_URL` aligned with the canonical HTTPS URL. Do not expose port 8088 publicly.
+Put Caddy, Nginx, or another managed TLS proxy on the host. The repository includes [`Caddyfile.example`](../Caddyfile.example); copy it to `/etc/caddy/Caddyfile`, replace `rewind.example.com`, and validate/reload Caddy. Proxy the domain to `127.0.0.1:8088`, enable automatic certificate renewal, and preserve the `Host` and `X-Forwarded-Proto` headers. Keep `PUBLIC_BASE_URL` aligned with the canonical HTTPS URL. Do not expose port 8088 publicly.
+
+```sh
+sudo caddy validate --config /etc/caddy/Caddyfile
+
+Для локальної перевірки репозиторій має відтворюваний wrapper, який запускає Caddy у контейнері та не потребує встановлення binary на Windows:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\verify-caddy.ps1
+```
+sudo systemctl reload caddy
+```
 
 After DNS and TLS are ready, verify:
 

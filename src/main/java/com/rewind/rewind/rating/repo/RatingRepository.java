@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
+import java.util.List;
 
 public interface RatingRepository extends JpaRepository<Rating, Long> {
     Optional<Rating> findByUserIdAndMovieId(Long userId, Long movieId);
@@ -27,5 +28,7 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
     @EntityGraph(attributePaths = "movie")
     Page<Rating> findAllByUserIdOrderByUpdatedAtDesc(Long userId, Pageable pageable);
     long countByUserId(Long userId);
+    @Query("select r.rating, count(r) from Rating r where r.user.id = :userId group by r.rating order by r.rating")
+    List<Object[]> countDistributionByUserId(@Param("userId") Long userId);
     void deleteByUserIdAndMovieId(Long userId, Long movieId);
 }

@@ -3,7 +3,6 @@ package com.rewind.rewind.social.service;
 import com.rewind.rewind.review.entity.Review;
 import com.rewind.rewind.review.repo.ReviewRepository;
 import com.rewind.rewind.social.dto.ReviewLikeResponse;
-import com.rewind.rewind.social.entity.ReviewLike;
 import com.rewind.rewind.social.repo.ReviewLikeRepository;
 import com.rewind.rewind.user.repo.UserRepository;
 import com.rewind.rewind.notification.service.NotificationService;
@@ -28,11 +27,8 @@ public class ReviewLikeService {
     public void like(String email, Long reviewId) {
         var user = users.findByEmail(email).orElseThrow();
         Review review = visibleReview(reviewId);
-        if (likes.existsByReviewIdAndUserId(reviewId, user.getId())) return;
-        ReviewLike like = new ReviewLike();
-        like.setReview(review);
-        like.setUser(user);
-        likes.save(like);
+        int inserted = likes.insertIgnore(reviewId, user.getId());
+        if (inserted == 0) return;
         notifications.reviewLiked(review, user);
     }
 
@@ -52,12 +48,14 @@ public class ReviewLikeService {
     public ReviewLikeResponse status(String email, Long reviewId) {
         var user = users.findByEmail(email).orElseThrow();
         visibleReview(reviewId);
-        return new ReviewLikeResponse(likes.existsByReviewIdAndUserId(reviewId, user.getId()), likes.countByReviewId(reviewId));
+        return new ReviewLikeResponse(likes.existsByReviewIdAndUserId(reviewId, user.getId()), likes.countActiveByReviewId(reviewId));
     }
 
     private Review visibleReview(Long reviewId) {
         Review review = reviews.findById(reviewId).orElseThrow();
-        if (Boolean.TRUE.equals(review.getIsHidden())) throw new IllegalArgumentException("Review not found");
+        if (Boolean.TRUE.equals(review.getIsHidden()) || !Boolean.TRUE.equals(review.getUser().getIsActive())) {
+            throw new IllegalArgumentException("Review not found");
+        }
         return review;
     }
 }

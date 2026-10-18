@@ -1,4 +1,4 @@
-param([string]$BaseUrl = 'http://127.0.0.1:8081')
+param([string]$BaseUrl = 'http://127.0.0.1:8081', [switch]$Headed)
 
 $ErrorActionPreference = 'Stop'
 $suffix = [guid]::NewGuid().ToString('N').Substring(0, 12)
@@ -25,7 +25,9 @@ try {
         $env:E2E_ADMIN_EMAIL = $email
         $env:E2E_ADMIN_PASSWORD = $password
         $env:E2E_ADMIN_USERNAME = $username
-        npx playwright test tests/e2e/admin-flow.spec.ts
+        $playwrightArgs = @('playwright', 'test', 'tests/e2e/admin-flow.spec.ts')
+        if ($Headed) { $playwrightArgs += '--headed' }
+        npx @playwrightArgs
         if ($LASTEXITCODE -ne 0) { throw "Admin browser test failed with exit code $LASTEXITCODE" }
     }
     finally {

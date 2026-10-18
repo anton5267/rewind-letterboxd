@@ -2,7 +2,6 @@ package com.rewind.rewind.social.service;
 
 import com.rewind.rewind.social.dto.FollowStatusResponse;
 import com.rewind.rewind.social.entity.ActivityType;
-import com.rewind.rewind.social.entity.Follow;
 import com.rewind.rewind.social.repo.FollowRepository;
 import com.rewind.rewind.notification.service.NotificationService;
 import com.rewind.rewind.user.dto.PublicUserResponse;
@@ -11,8 +10,10 @@ import com.rewind.rewind.user.repo.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class FollowService {
@@ -20,28 +21,26 @@ public class FollowService {
     private final UserRepository users;
     private final ActivityService activities;
     private final NotificationService notifications;
+    private final BlockService blocks;
 
-    public FollowService(FollowRepository follows, UserRepository users, ActivityService activities, NotificationService notifications) {
+    public FollowService(FollowRepository follows, UserRepository users, ActivityService activities, NotificationService notifications, BlockService blocks) {
         this.follows = follows;
         this.users = users;
         this.activities = activities;
         this.notifications = notifications;
+        this.blocks = blocks;
     }
 
     @Transactional
     public void follow(String email, Long targetId) {
         User follower = users.findByEmail(email).orElseThrow();
-        User target = users.findById(targetId).orElseThrow();
+        User target = findActiveUser(targetId);
         if (follower.getId().equals(targetId)) {
             throw new IllegalArgumentException("You cannot follow yourself");
         }
-        if (follows.existsByFollowerIdAndFollowingId(follower.getId(), targetId)) {
-            return;
-        }
-        Follow follow = new Follow();
-        follow.setFollower(follower);
-        follow.setFollowing(target);
-        follows.save(follow);
+        blocks.requireInteractionAllowed(follower.getId(), targetId);
+        int inserted = follows.insertIgnore(follower.getId(), targetId);
+        if (inserted == 0) return;
         activities.record(follower.getId(), ActivityType.FOLLOW, null, null, null, targetId);
         notifications.follow(target, follower);
     }
@@ -55,24 +54,24 @@ public class FollowService {
     @Transactional(readOnly = true)
     public FollowStatusResponse status(String email, Long targetId) {
         User follower = users.findByEmail(email).orElseThrow();
-        users.findById(targetId).orElseThrow();
+        findActiveUser(targetId);
         return new FollowStatusResponse(
                 follows.existsByFollowerIdAndFollowingId(follower.getId(), targetId),
-                follows.countByFollowingId(targetId),
-                follows.countByFollowerId(targetId));
+                follows.countActiveFollowers(targetId),
+                follows.countActiveFollowing(targetId));
     }
 
     @Transactional(readOnly = true)
     public Page<PublicUserResponse> followers(Long userId, int page, int size) {
-        users.findById(userId).orElseThrow();
-        return follows.findAllByFollowingIdOrderByCreatedAtDesc(userId, pageRequest(page, size))
+        findActiveUser(userId);
+        return follows.findFollowersPage(userId, pageRequest(page, size))
                 .map(follow -> publicUser(follow.getFollower()));
     }
 
     @Transactional(readOnly = true)
     public Page<PublicUserResponse> following(Long userId, int page, int size) {
-        users.findById(userId).orElseThrow();
-        return follows.findAllByFollowerIdOrderByCreatedAtDesc(userId, pageRequest(page, size))
+        findActiveUser(userId);
+        return follows.findFollowingPage(userId, pageRequest(page, size))
                 .map(follow -> publicUser(follow.getFollowing()));
     }
 
@@ -82,5 +81,11 @@ public class FollowService {
 
     private PublicUserResponse publicUser(User user) {
         return new PublicUserResponse(user.getId(), user.getUsername(), user.getDisplayName(), user.getAvatarUrl());
+    }
+
+    private User findActiveUser(Long userId) {
+        return users.findById(userId)
+                .filter(user -> Boolean.TRUE.equals(user.getIsActive()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 }

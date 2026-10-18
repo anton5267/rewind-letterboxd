@@ -10,7 +10,7 @@ export default function About() {
       <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer">
         <img src="/tmdb-logo.svg" alt="TMDB" style={{ width: 150, maxWidth: "100%" }} />
       </a>
-      <p>This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+      <p>{t("tmdbDisclaimer")}</p>
     </section>
   </main>;
 }

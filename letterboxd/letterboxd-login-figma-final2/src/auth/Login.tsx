@@ -29,7 +29,7 @@ export default function Login() {
   };
 
   return (
-    <div className={styles.page}>
+    <main className={styles.page}>
       <div className={styles.card}>
         <h1 className={styles.title}>{t("welcome")}</h1>
         {searchParams.get("passwordChanged") === "1" && <p role="status">{t("passwordChangedSignIn")}</p>}
@@ -66,6 +66,6 @@ export default function Login() {
           {t("noAccount")} <Link to={path("/register")}>{t("createOne")}</Link>
         </p>
       </div>
-    </div>
+    </main>
   );
 }

@@ -6,6 +6,10 @@ export const getProfile = () => api.get("/profile/me");
 export const updateProfile = (data: { displayName?: string; avatarUrl?: string }) =>
   api.patch("/profile/me", data);
 
+export interface SocialLink { platform: string; url: string; }
+export const getSocialLinks = () => api.get<SocialLink[]>("/profile/me/social-links");
+export const updateSocialLinks = (links: SocialLink[]) => api.put<SocialLink[]>("/profile/me/social-links", links);
+
 export const changePassword = (currentPassword: string, newPassword: string) =>
   api.put("/profile/me/password", { currentPassword, newPassword });
 

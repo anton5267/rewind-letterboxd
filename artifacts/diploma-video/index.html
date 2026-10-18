@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rewind — дипломна демонстрація</title>
+  <style>
+    :root { color-scheme: dark; font-family: Arial, sans-serif; }
+    body { margin: 0; background: #101010; color: #fff; min-height: 100vh; display: grid; place-items: center; }
+    main { width: min(1280px, 100vw); }
+    figure { margin: 0; position: relative; }
+    img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: contain; background: #171717; }
+    figcaption { padding: 16px 20px 10px; font-size: clamp(16px, 2vw, 24px); }
+    .controls { display: flex; gap: 12px; align-items: center; padding: 0 20px 20px; }
+    button { border: 1px solid #666; border-radius: 6px; background: #202020; color: #fff; padding: 8px 14px; cursor: pointer; }
+    button:hover { border-color: #67d6ed; }
+    #progress { color: #9bdcea; margin-left: auto; }
+  </style>
+</head>
+<body>
+  <main aria-live="polite">
+    <figure>
+      <img id="frame" alt="Кадр демонстрації Rewind">
+      <figcaption id="caption"></figcaption>
+    </figure>
+    <div class="controls">
+      <button id="previous" type="button">Назад</button>
+      <button id="toggle" type="button">Пауза</button>
+      <button id="next" type="button">Далі</button>
+      <span id="progress"></span>
+    </div>
+  </main>
+  <script>
+    const slides = [
+      ["frames/01-uk-home.png", "Українська головна: каталог, списки та соціальні функції"],
+      ["frames/02-en-home.png", "English route: двомовний UI і перемикання мови"],
+      ["frames/03-uk-films.png", "Каталог: пошук, жанри, рік, рейтинг і пагінація"],
+      ["frames/04-uk-film-details.png", "Деталка фільму: метадані, дії користувача й огляди"],
+      ["frames/05-uk-journal.png", "Журнал: категорії, архів і редакційний контент"],
+      ["frames/06-uk-help.png", "Службова сторінка та чесні умови локального демо"]
+    ];
+    let index = 0;
+    let playing = true;
+    let timer;
+    const frame = document.querySelector("#frame");
+    const caption = document.querySelector("#caption");
+    const progress = document.querySelector("#progress");
+    function render() {
+      frame.src = slides[index][0];
+      caption.textContent = slides[index][1];
+      progress.textContent = `${index + 1} / ${slides.length}`;
+    }
+    function advance(step) { index = (index + step + slides.length) % slides.length; render(); }
+    function schedule() { clearInterval(timer); if (playing) timer = setInterval(() => advance(1), 5000); }
+    document.querySelector("#previous").onclick = () => { advance(-1); schedule(); };
+    document.querySelector("#next").onclick = () => { advance(1); schedule(); };
+    document.querySelector("#toggle").onclick = event => { playing = !playing; event.currentTarget.textContent = playing ? "Пауза" : "Відтворити"; schedule(); };
+    render();
+    schedule();
+  </script>
+</body>
+</html>

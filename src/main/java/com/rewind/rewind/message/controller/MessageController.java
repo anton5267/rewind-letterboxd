@@ -17,6 +17,9 @@ public class MessageController {
     @GetMapping
     public Page<ConversationResponse> mine(Authentication auth, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) { return messages.mine(auth.getName(), page, size); }
 
+    @GetMapping("/unread-count")
+    public java.util.Map<String, Long> unreadCount(Authentication auth) { return java.util.Map.of("count", messages.unreadCount(auth.getName())); }
+
     @PostMapping
     public ConversationResponse start(Authentication auth, @Valid @RequestBody CreateConversationRequest request) { return messages.start(auth.getName(), request.userId()); }
 

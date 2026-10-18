@@ -1,6 +1,32 @@
 # Rewind — відповідність поточного коду отриманому ТЗ
 
-Стан на 16.10.2026. Джерело вимог: [PROJECT_REQUIREMENTS.md](PROJECT_REQUIREMENTS.md). Технічна карта і фактичні API: [PROJECT_MAP.md](PROJECT_MAP.md); результати HTTP перевірки: [API_AUDIT.md](API_AUDIT.md). Статус «є в API» не означає, що функція доступна на сайті. Статус «не знайдено» означає, що реалізації немає в переглянутому проєкті, а не що пункт вилучено з ТЗ.
+Стан історичної таблиці нижче — 16.10.2026. Джерело вимог: [PROJECT_REQUIREMENTS.md](PROJECT_REQUIREMENTS.md). Технічна карта і фактичні API: [PROJECT_MAP.md](PROJECT_MAP.md); результати HTTP перевірки: [API_AUDIT.md](API_AUDIT.md). Статус «є в API» не означає, що функція доступна на сайті. Статус «не знайдено» означає, що реалізації немає у відповідному історичному baseline, а не що пункт вилучено з ТЗ.
+
+## Актуальний verified snapshot — 18.10.2026
+
+Цей блок має пріоритет для оцінки поточного стану коду; історичні таблиці нижче збережені для трасування початкового аудиту.
+
+| Вимога | Поточний перевірений стан | Доказ / що ще відкрито |
+| --- | --- | --- |
+| Реєстрація, вхід, reset password | **Працює в API та UI** | Cookie auth, CSRF, refresh rotation, Mailpit reset flow; потрібні лише Figma parity та production SMTP monitoring. |
+| Головна: популярне, останні перегляди, відгуки, списки, журнал | **Працює в API та UI** | Home має popular/new films, recent watched, popular reviews/lists/reviewers/tags і локалізований latest-journal block; public feeds виключають деактивованих авторів; точна Figma visual parity та ширші social browser-регресії відкриті. |
+| Каталог, пошук, фільтри, пагінація | **Працює в API та UI** | Genre/year/rating/sort/page, details, actors/directors, trailer/external rating, public-list catalog server pagination, loading/error/retry; TMDB scheduler/data-quality batch і Figma parity відкриті. |
+| Watched/watchlist/favorites, ratings, reviews | **Працює в API та UI** | Core Chrome flow і MySQL integration tests; стабільна review pagination, mutation locks; ширші browser UX-регресії відкриті. |
+| Коментарі до оглядів | **Працює в API та UI** | CRUD/moderation, pagination, visibility filters, active-author privacy filter, admin queue/bulk hide; ширше moderation regression coverage відкрите. |
+| Профіль, налаштування, списки | **Працює в API та UI** | Own/public profiles, account social-links CRUD/display, server pagination, loading/error/retry/empty, mobile flow; повна локалізація динамічних даних і Figma parity відкриті. |
+| Публічні списки/профілі | **Гостьовий read flow працює** | `permitAll` public collections/lists, profile browser flow, active-user guard для profile/network/activity/list catalog/detail, 320/768/1280px overflow checks; exact Figma visual/social UX audit відкритий. |
+| Соціальні функції | **Основний scope працює** | Follow/like/activity/tags, notifications/SSE, messages, HQ, stable pagination, user blocking with follow/message guards, public-list likes with recently-liked/team feeds; ширші social/browser-регресії відкриті. |
+| Журнал і службові сторінки | **Основний scope працює** | Journal/archive/server-paged catalog/podcast/newsletter/help/legal/admin editor; відкрита повна локалізація довільного editorial content і production SMTP monitoring. |
+| Адміністрування | **Основний scope працює** | Paged users/lists/reviews/comments/movies/conversations/notifications/articles/audit, moderation/settings; UI керує ролями USER/ADMIN, server guard не дозволяє self-removal або втрату останнього активного ADMIN, причина відмови локалізована в UI; headed Chrome **12/12**, ширше UI-покриття відкрите. |
+| Безпека й якість | **Локально перевірено** | V30 schema **36 tables / 53 FKs**, blocking/list-like integrations green, повний MySQL suite **68/0/0/0 у 36 класах**, `PublicProfileIntegrationTests` 5/5 для inactive-user public privacy, `PasswordResetIntegrationTests` 2/2, 12/12 admin Chrome, API payload matrix 12/12 HTTP 200, auth matrix, WCAG/axe, backup/restore **167|379|30**, **20/20 local load на 8 endpoint-групах за 0.16s**, clean Java compile of 254 files without javac warnings, Caddyfile validation; production capacity і VPS/HTTPS відкриті. |
+| Дизайн, бренд, адаптивність | **Частково** | Responsive/a11y smoke на 320/768/1280px, bilingual UI, diploma materials і локальний WebM demo готові; Figma Editor access, exact parity та design system відкриті. |
+
+## Поточна доказова база
+
+- `mvnw.cmd -q test` із Compose MySQL `127.0.0.1:3307`: **68 tests, 0 failures, 0 errors, 0 skipped** у 36 класах; окремий scheduler regression — `1/1`. Після V30 schema verifier підтвердив **36 tables / 53 foreign keys**, backup/restore — **167|379|30**.
+- Full headed public/core suite: **16 passed, 12 skipped, 0 failed за 1.1m**; `scripts/verify-admin-browser.ps1 -Headed`: **12 passed** у видимому Google Chrome.
+- API health `UP`; свіжі API/Web logs без `ERROR|Exception|connect() failed`; `git diff --check` без помилок.
+- Детальні дати й команди збережені у [PROGRESS.md](PROGRESS.md), короткий статус — у [IMPLEMENTATION_CHECKLIST.md](IMPLEMENTATION_CHECKLIST.md) та [PLAN.md](../PLAN.md).
 
 | Вимога | Поточний стан | Деталі / наступна точка інтеграції |
 | --- | --- | --- |
@@ -20,7 +46,7 @@
 | Адміністрування | **Частина API, UI немає** | Є API фільмів, користувачів і модерації відгуків. Dashboard, коментарі, списки, соціальні модулі, черга/логи модерації та налаштування сайту відсутні. |
 | Дизайн, бренд, адаптивність | **Початковий UI, чекає Figma** | Реальні екрани й дефекти верстки описані в `FIGMA_HANDOFF.md`; при вузькому viewport є горизонтальне переповнення. |
 | Пагінація, loading/empty/error | **Частково** | Backend повертає Spring `Page`, але каталог не дає перейти на інші сторінки; повний набір станів для екранів ще не реалізований. |
-| Ролі і захист доступу | **Базові механізми є; потрібен аудит** | Spring Security/JWT і `USER`/`ADMIN` присутні. Гостьовий доступ до оглядів та публічних списків не збігається з призначенням; відкритий `GET /users/{id}` показує email. Перевірки SQLi/XSS та всіх меж доступу не проведено. |
+| Ролі і захист доступу | **Базові механізми є; потрібен аудит** | Spring Security/JWT і `USER`/`ADMIN` присутні. Поточний `GET /users/{id}` використовує `PublicUserResponse` без email; це закріплено MockMvc-регресією в `PublicProfileIntegrationTests`. Ширший authorization/SQLi/XSS audit і production hardening залишаються відкритими. |
 | Продуктивність і масштабування | **Не підтверджено** | Є JPA репозиторії, але немає доказів виконання вимог до кешування, навантаження, профілювання запитів чи роботи в масштабі. |
 
 ## Розширені UX/UI сценарії з ТЗ

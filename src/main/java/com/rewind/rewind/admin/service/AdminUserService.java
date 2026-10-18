@@ -50,6 +50,7 @@ public class AdminUserService {
     @Transactional
     public AdminUserResponse update(Long id, AdminUpdateUserRequest req, String adminEmail) {
         User u = users.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        guardAdminAccountChange(u, req.getIsActive(), req.getRole(), adminEmail);
 
         if (req.getUsername() != null) u.setUsername(req.getUsername());
         if (req.getDisplayName() != null) u.setDisplayName(req.getDisplayName());
@@ -77,6 +78,7 @@ public class AdminUserService {
     @Transactional
     public void deactivate(Long id, String adminEmail) {
         User u = users.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        guardAdminAccountChange(u, false, null, adminEmail);
         u.setIsActive(false);
         users.save(u);
         if (adminEmail != null) audit.record(adminEmail, "USER_DEACTIVATED", "USER", id, null);
@@ -107,6 +109,21 @@ public class AdminUserService {
                 u.getIsHq(),
                 u.getCreatedAt()
         );
+    }
+
+    private void guardAdminAccountChange(User target, Boolean requestedActive, String requestedRole, String adminEmail) {
+        boolean self = adminEmail != null && adminEmail.equalsIgnoreCase(target.getEmail());
+        boolean deactivating = Boolean.FALSE.equals(requestedActive);
+        boolean demoting = requestedRole != null && UserRole.USER.name().equalsIgnoreCase(requestedRole.trim());
+        if (self && (deactivating || demoting)) {
+            throw new IllegalArgumentException("Administrators cannot deactivate or demote their own account");
+        }
+        boolean removingAdminPrivileges = target.getRole() == UserRole.ADMIN && (deactivating || demoting);
+        if (Boolean.TRUE.equals(target.getIsActive())
+                && removingAdminPrivileges
+                && users.findAllByRoleAndIsActiveTrue(UserRole.ADMIN).size() <= 1) {
+            throw new IllegalArgumentException("At least one active administrator is required");
+        }
     }
 
     @Transactional

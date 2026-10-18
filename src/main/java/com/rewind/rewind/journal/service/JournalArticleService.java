@@ -37,22 +37,16 @@ public class JournalArticleService {
         Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 50)));
         String normalizedCategory = category == null || category.isBlank() ? null : category.trim();
         YearMonth archiveMonth = archiveMonth(year, month);
-        Page<JournalArticle> result = findPublished(lang, normalizedCategory, archiveMonth, pageable);
-        if (result.isEmpty() && page == 0) result = findPublished(lang.equals("en") ? "uk" : "en", normalizedCategory, archiveMonth, pageable);
-        return result.map(this::toResponse);
-    }
-
-    private Page<JournalArticle> findPublished(String language, String category, YearMonth archiveMonth, Pageable pageable) {
+        String fallback = lang.equals("en") ? "uk" : "en";
+        Page<JournalArticle> result;
         if (archiveMonth == null) {
-            return category == null
-                    ? articles.findAllByLanguageAndIsPublishedTrueOrderByPublishedAtDesc(language, pageable)
-                    : articles.findAllByLanguageAndCategoryAndIsPublishedTrueOrderByPublishedAtDesc(language, category, pageable);
+            result = articles.findPublishedWithFallback(lang, fallback, normalizedCategory, pageable);
+        } else {
+            Instant from = archiveMonth.atDay(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+            Instant to = archiveMonth.plusMonths(1).atDay(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+            result = articles.findPublishedWithFallbackInRange(lang, fallback, normalizedCategory, from, to, pageable);
         }
-        Instant from = archiveMonth.atDay(1).atStartOfDay(ZoneOffset.UTC).toInstant();
-        Instant to = archiveMonth.plusMonths(1).atDay(1).atStartOfDay(ZoneOffset.UTC).toInstant();
-        return category == null
-                ? articles.findAllByLanguageAndIsPublishedTrueAndPublishedAtGreaterThanEqualAndPublishedAtLessThanOrderByPublishedAtDesc(language, from, to, pageable)
-                : articles.findAllByLanguageAndCategoryAndIsPublishedTrueAndPublishedAtGreaterThanEqualAndPublishedAtLessThanOrderByPublishedAtDesc(language, category, from, to, pageable);
+        return result.map(this::toResponse);
     }
 
     private YearMonth archiveMonth(Integer year, Integer month) {
@@ -66,8 +60,7 @@ public class JournalArticleService {
     @Transactional(readOnly = true)
     public List<JournalArchiveEntry> publicArchive(String language) {
         String lang = language.equals("en") ? "en" : "uk";
-        List<JournalArticle> published = articles.findAllByLanguageAndIsPublishedTrueOrderByPublishedAtDesc(lang);
-        if (published.isEmpty()) published = articles.findAllByLanguageAndIsPublishedTrueOrderByPublishedAtDesc(lang.equals("en") ? "uk" : "en");
+        List<JournalArticle> published = articles.findAllPublishedWithFallback(lang, lang.equals("en") ? "uk" : "en");
         Map<YearMonth, Long> grouped = new TreeMap<>((a, b) -> b.compareTo(a));
         for (JournalArticle article : published) {
             if (article.getPublishedAt() != null) {
@@ -101,7 +94,7 @@ public class JournalArticleService {
 
     @Transactional(readOnly = true)
     public Page<JournalArticleResponse> adminList(int page, int size) {
-        return articles.findAllByOrderByUpdatedAtDesc(PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 100)))).map(this::toResponse);
+        return articles.findAllByOrderByUpdatedAtDescIdDesc(PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 100)))).map(this::toResponse);
     }
 
     private void apply(JournalArticle article, AdminJournalArticleRequest request) {

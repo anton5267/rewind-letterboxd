@@ -93,7 +93,7 @@ The Compose file uses public ECR mirrors for container images. Maven uses the co
 
 ### Run services without Compose
 
-Start MySQL and set `DB_PASSWORD`, `JWT_SECRET`, and the other values described in [RUN_LOCAL.md](RUN_LOCAL.md), then run:
+Start MySQL and set `DB_PASSWORD`, `JWT_SECRET`, and the other values described in [docs/RUN_LOCAL.md](docs/RUN_LOCAL.md), then run:
 
 ```powershell
 $env:DB_PASSWORD = "rewinddev"
@@ -134,15 +134,16 @@ $env:E2E_BASE_URL = 'http://127.0.0.1:3000'
 npm run test:e2e
 ```
 
-The current verified slice is tracked in [PROGRESS.md](PROGRESS.md), while the API and database map is in [PROJECT_MAP.md](PROJECT_MAP.md). The current migration-backed ER diagram is in [ER_DIAGRAM.md](ER_DIAGRAM.md); run `scripts/verify-er-schema.ps1` against Compose to check it.
+The current verified slice is tracked in [docs/PROGRESS.md](docs/PROGRESS.md), while the API and database map is in [docs/PROJECT_MAP.md](docs/PROJECT_MAP.md). The current migration-backed ER diagram is in [docs/ER_DIAGRAM.md](docs/ER_DIAGRAM.md); run `scripts/verify-er-schema.ps1` against Compose to check it.
 
 ## Project references
 
 - Product plan: [PLAN.md](PLAN.md)
-- Requirements trace: [REQUIREMENTS_TRACE.md](REQUIREMENTS_TRACE.md)
-- Local setup: [RUN_LOCAL.md](RUN_LOCAL.md)
-- Database ER diagram: [ER_DIAGRAM.md](ER_DIAGRAM.md)
-- Production deployment: [DEPLOYMENT.md](DEPLOYMENT.md)
+- Requirements trace: [docs/REQUIREMENTS_TRACE.md](docs/REQUIREMENTS_TRACE.md)
+- Local setup: [docs/RUN_LOCAL.md](docs/RUN_LOCAL.md)
+- Database ER diagram: [docs/ER_DIAGRAM.md](docs/ER_DIAGRAM.md)
+- Production deployment: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+- Diploma and demo materials: [docs/diploma/DIPLOMA_MATERIALS.md](docs/diploma/DIPLOMA_MATERIALS.md)
 - Figma design file: <https://www.figma.com/design/orb73jiLJnIsZNCRtJsWgS/>
 - Project FigJam: <https://www.figma.com/board/gPITmVEnT5L61gN7JiwIiX/>
 - Information architecture FigJam: <https://www.figma.com/board/qrrA6VTNZFiJstg1CsaOTo/>

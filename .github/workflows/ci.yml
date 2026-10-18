@@ -4,9 +4,13 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       mysql:
         image: mysql:8.4
@@ -45,3 +49,9 @@ jobs:
           npm ci
           npx tsc --noEmit
           npm run build
+      - name: Validate HTTPS proxy configuration
+        run: |
+          docker run --rm \
+            -v "$PWD/Caddyfile.example:/etc/caddy/Caddyfile:ro" \
+            caddy:2-alpine \
+            caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile

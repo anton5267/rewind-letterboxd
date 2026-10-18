@@ -1,10 +1,7 @@
 package com.rewind.rewind;
 
-import com.rewind.rewind.user.repo.UserRepository;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
@@ -15,10 +12,4 @@ public class RewindApplication {
         SpringApplication.run(RewindApplication.class, args);
     }
 
-    @Bean
-    CommandLineRunner testDb(UserRepository users) {
-        return args -> {
-            System.out.println("Users count = " + users.count());
-        };
-    }
 }

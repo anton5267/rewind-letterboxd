@@ -10,6 +10,8 @@ import com.rewind.rewind.movie.dto.MovieCardResponse;
 import com.rewind.rewind.movie.repo.MovieRepository;
 import com.rewind.rewind.user.repo.UserRepository;
 import com.rewind.rewind.social.entity.ActivityType;
+import com.rewind.rewind.social.dto.ListLikeResponse;
+import com.rewind.rewind.social.repo.ListLikeRepository;
 import com.rewind.rewind.social.service.ActivityService;
 import com.rewind.rewind.tag.service.TagService;
 import org.springframework.data.domain.*;
@@ -20,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class MovieListService {
@@ -30,14 +33,16 @@ public class MovieListService {
     private final MovieRepository movies;
     private final ActivityService activities;
     private final TagService tags;
+    private final ListLikeRepository listLikes;
 
-    public MovieListService(MovieListRepository lists, ListItemRepository items, UserRepository users, MovieRepository movies, ActivityService activities, TagService tags) {
+    public MovieListService(MovieListRepository lists, ListItemRepository items, UserRepository users, MovieRepository movies, ActivityService activities, TagService tags, ListLikeRepository listLikes) {
         this.lists = lists;
         this.items = items;
         this.users = users;
         this.movies = movies;
         this.activities = activities;
         this.tags = tags;
+        this.listLikes = listLikes;
     }
 
     @Transactional(readOnly = true)
@@ -46,6 +51,13 @@ public class MovieListService {
         return lists.findAllByUser(user).stream()
                 .map(l -> new MovieListResponse(l.getId(), l.getName(), l.getDescription(), l.getListType(), l.getIsPublic(), tagNames(l)))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<MovieListResponse> myListsPage(String email, int page, int size) {
+        var user = users.findByEmail(email).orElseThrow();
+        return lists.findPageByUserOrderByUpdatedAtDescIdDesc(user, pageRequest(page, size))
+                .map(this::toResponse);
     }
 
     @Transactional
@@ -63,7 +75,7 @@ public class MovieListService {
         tags.replaceTags(saved, req.getTags());
         saved = lists.save(saved);
         if (Boolean.TRUE.equals(saved.getIsPublic())) activities.record(user.getId(), ActivityType.LIST, null, null, saved.getId(), null);
-        return new MovieListResponse(saved.getId(), saved.getName(), saved.getDescription(), saved.getListType(), saved.getIsPublic(), tagNames(saved));
+        return toResponse(saved);
     }
 
     // ===== Edit List (name/description/isPublic) =====
@@ -86,32 +98,49 @@ public class MovieListService {
         return new MovieListResponse(saved.getId(), saved.getName(), saved.getDescription(), saved.getListType(), saved.getIsPublic(), tagNames(saved));
     }
 
+    @Transactional
+    public void deleteMyList(String email, Long listId) {
+        var user = users.findByEmail(email).orElseThrow();
+        var list = lists.findByIdAndUser(listId, user)
+                .orElseThrow(() -> new IllegalArgumentException("List not found"));
+
+        if (list.getListType() != ListType.CUSTOM) {
+            throw new IllegalArgumentException("System list cannot be deleted");
+        }
+
+        lists.delete(list);
+    }
+
     // ===== All Lists (public lists catalog) =====
     @Transactional(readOnly = true)
     public Page<PublicListCardResponse> publicLists(String tag, int page, int size) {
-        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 50)),
-                Sort.by(Sort.Direction.DESC, "updatedAt"));
+        Pageable pageable = pageRequest(page, size);
         Page<MovieList> source = tag == null || tag.isBlank()
-                ? lists.findAllByIsPublicTrueAndListType(ListType.CUSTOM, pageable)
+                ? lists.findPublicCatalog(ListType.CUSTOM, pageable)
                 : lists.findPublicByTag(ListType.CUSTOM, tag.trim().toLowerCase(), pageable);
-        return source
-                .map(l -> new PublicListCardResponse(
-                        l.getId(),
-                        l.getName(),
-                        l.getDescription(),
-                        l.getIsPublic(),
-                        l.getUser().getId(),
-                        l.getUser().getUsername(),
-                        l.getUser().getAvatarUrl(),
-                        tagNames(l)
-                ));
+        return toPublicCards(source);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PublicListCardResponse> popularPublicLists(int page, int size) {
+        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 50)));
+        return toPublicCards(lists.findPopularPublic(ListType.CUSTOM.name(), pageable));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PublicListCardResponse> recentlyLikedPublicLists(int page, int size) {
+        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 50)));
+        return toPublicCards(listLikes.findRecentlyLikedPublic(ListType.CUSTOM.name(), pageable));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PublicListCardResponse> teamPublicLists(int page, int size) {
+        return toPublicCards(lists.findTeamPublic(ListType.CUSTOM, pageRequest(page, size)));
     }
 
     @Transactional(readOnly = true)
     public PublicListDetailsResponse publicList(Long listId) {
-        var list = lists.findById(listId)
-                .filter(candidate -> Boolean.TRUE.equals(candidate.getIsPublic()) && candidate.getListType() == ListType.CUSTOM)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Public list not found"));
+        var list = visiblePublicList(listId);
         var movies = items.findAllByListId(listId).stream()
                 .sorted((left, right) -> {
                     Integer a = left.getPosition();
@@ -125,22 +154,38 @@ public class MovieListService {
                         item.getMovie().getReleaseDate(), item.getMovie().getRating(), item.getMovie().getPhotoUrl()))
                 .toList();
         return new PublicListDetailsResponse(list.getId(), list.getName(), list.getDescription(),
-                list.getUser().getId(), list.getUser().getUsername(), list.getUser().getAvatarUrl(), tagNames(list), movies);
+                list.getUser().getId(), list.getUser().getUsername(), list.getUser().getAvatarUrl(), tagNames(list), listLikes.countActiveByListId(listId), movies);
     }
 
+    @Transactional
+    public void like(String email, Long listId) {
+        var user = users.findByEmail(email).orElseThrow();
+        visiblePublicList(listId);
+        listLikes.insertIgnore(listId, user.getId());
+    }
+
+    @Transactional
+    public void unlike(String email, Long listId) {
+        var user = users.findByEmail(email).orElseThrow();
+        visiblePublicList(listId);
+        listLikes.deleteByListIdAndUserId(listId, user.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public ListLikeResponse likeStatus(String email, Long listId) {
+        var user = users.findByEmail(email).orElseThrow();
+        visiblePublicList(listId);
+        return new ListLikeResponse(listLikes.existsByListIdAndUserId(listId, user.getId()), listLikes.countActiveByListId(listId));
+    }
+
+    @Transactional
     public void addItem(String email, Long listId, AddListItemRequest req) {
         var user = users.findByEmail(email).orElseThrow();
         var list = lists.findByIdAndUser(listId, user)
                 .orElseThrow(() -> new IllegalArgumentException("List not found"));
 
-        if (items.existsByListAndMovieId(list, req.getMovieId())) return;
-
         var movie = movies.findById(req.getMovieId())
                 .orElseThrow(() -> new IllegalArgumentException("Movie not found"));
-
-        ListItem item = new ListItem();
-        item.setList(list);
-        item.setMovie(movie);
 
         Integer pos = req.getPosition();
         if (pos == null) {
@@ -154,9 +199,7 @@ public class MovieListService {
             }
             pos = (max == null ? 0 : max) + 1;
         }
-        item.setPosition(pos);
-
-        items.save(item);
+        items.insertIgnore(list.getId(), movie.getId(), pos);
     }
 
     @Transactional
@@ -230,11 +273,48 @@ public class MovieListService {
         items.saveAll(allItems);
 
         int pos = 1;
-        for (Long id : orderedIds) map.get(id).setPosition(pos++);
+        for (Long id : orderedIds) {
+            ListItem item = map.get(id);
+            if (item == null) throw new IllegalArgumentException("Item does not belong to list: " + id);
+            item.setPosition(pos++);
+        }
         items.saveAll(allItems);
     }
 
     private List<String> tagNames(MovieList list) {
         return list.getTags().stream().map(tag -> tag.getName()).toList();
+    }
+
+    private Page<PublicListCardResponse> toPublicCards(Page<MovieList> source) {
+        List<Long> ids = source.getContent().stream().map(list -> list.getId()).toList();
+        Map<Long, Long> counts = new HashMap<>();
+        if (!ids.isEmpty()) {
+            listLikes.countByListIds(ids).forEach(row -> counts.put(row.getListId(), row.getLikes()));
+        }
+        return source.map(list -> toPublicCard(list, counts.getOrDefault(list.getId(), 0L)));
+    }
+
+    private PublicListCardResponse toPublicCard(MovieList list, long likeCount) {
+        return new PublicListCardResponse(
+                list.getId(), list.getName(), list.getDescription(), list.getIsPublic(),
+                list.getUser().getId(), list.getUser().getUsername(), list.getUser().getAvatarUrl(),
+                tagNames(list), likeCount);
+    }
+
+    private MovieList visiblePublicList(Long listId) {
+        return lists.findById(listId)
+                .filter(candidate -> Boolean.TRUE.equals(candidate.getIsPublic())
+                        && candidate.getListType() == ListType.CUSTOM
+                        && Boolean.TRUE.equals(candidate.getUser().getIsActive()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Public list not found"));
+    }
+
+    private MovieListResponse toResponse(MovieList list) {
+        return new MovieListResponse(list.getId(), list.getName(), list.getDescription(), list.getListType(), list.getIsPublic(), tagNames(list));
+    }
+
+    private Pageable pageRequest(int page, int size) {
+        return PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 50)),
+                Sort.by(Sort.Order.desc("updatedAt"), Sort.Order.desc("id")));
     }
 }

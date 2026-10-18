@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { addComment, deleteComment, getComments, updateComment } from "../api/comments.api";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
@@ -10,6 +10,7 @@ interface Comment {
   text: string;
 }
 interface Page<T> { content: T[] }
+interface CommentPage extends Page<Comment> { number: number; totalPages: number; totalElements: number }
 
 export default function Comments({ reviewId }: { reviewId: number }) {
   const { isAuth, user } = useAuth();
@@ -20,15 +21,26 @@ export default function Comments({ reviewId }: { reviewId: number }) {
   const [editing, setEditing] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const requestId = useRef(0);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
-  const load = async () => {
+  const load = async (requestedPage = page) => {
+    const currentRequest = ++requestId.current;
     setLoading(true);
     try {
-      const { data } = await getComments(reviewId);
-      setComments((data as Page<Comment>).content);
+      const { data } = await getComments(reviewId, requestedPage);
+      if (currentRequest !== requestId.current) return;
+      const response = data as CommentPage;
+      setComments(response.content);
+      setPage(response.number);
+      setTotalPages(response.totalPages);
       setError("");
-    } catch { setError(t("loadCommentsError")); }
-    finally { setLoading(false); }
+    } catch {
+      if (currentRequest === requestId.current) setError(t("loadCommentsError"));
+    } finally {
+      if (currentRequest === requestId.current) setLoading(false);
+    }
   };
 
   const toggle = () => {
@@ -52,7 +64,10 @@ export default function Comments({ reviewId }: { reviewId: number }) {
 
   const remove = async (id: number) => {
     if (!window.confirm(t("deleteCommentConfirm"))) return;
-    try { await deleteComment(id); await load(); }
+    try {
+      await deleteComment(id);
+      await load(page > 0 && comments.length === 1 ? page - 1 : page);
+    }
     catch { setError(t("deleteCommentError")); }
   };
 
@@ -60,7 +75,7 @@ export default function Comments({ reviewId }: { reviewId: number }) {
     <button type="button" onClick={toggle} aria-expanded={expanded}>{expanded ? t("hideComments") : t("showComments")}</button>
     {expanded && <div style={{ marginTop: 10 }}>
       {loading && <p>{t("loading")}</p>}
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert">{error} <button type="button" onClick={() => void load()} disabled={loading}>{t("retry")}</button></p>}
       {!loading && !error && comments.length === 0 && <p>{t("noComments")}</p>}
       <ul style={{ paddingLeft: 18 }}>
         {comments.map(comment => {
@@ -76,6 +91,11 @@ export default function Comments({ reviewId }: { reviewId: number }) {
           </li>;
         })}
       </ul>
+      {!loading && !error && totalPages > 1 && <nav aria-label={t("commentsPagination")} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <button type="button" disabled={page === 0} onClick={() => void load(page - 1)}>{t("previous")}</button>
+        <span role="status">{t("page")} {page + 1} {t("of")} {totalPages}</span>
+        <button type="button" disabled={page + 1 >= totalPages} onClick={() => void load(page + 1)}>{t("next")}</button>
+      </nav>}
       {isAuth ? <form onSubmit={submit}>
         <label>{t("yourComment")}<br /><textarea required maxLength={2000} value={editing === null ? text : ""} disabled={editing !== null} onChange={event => setText(event.target.value)} /></label>{" "}
         {editing === null && <button type="submit">{t("sendComment")}</button>}

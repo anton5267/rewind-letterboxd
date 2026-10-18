@@ -55,4 +55,24 @@ class PasswordResetIntegrationTests {
         assertThrows(ResponseStatusException.class, () -> sessions.refresh(previousSession.refresh()));
         assertThrows(ResponseStatusException.class, () -> reset.reset(token, "AnotherPassword123!"));
     }
+
+    @Test
+    void inactiveUserCannotUsePreviouslyIssuedResetToken() {
+        String email = "reset-inactive-" + UUID.randomUUID() + "@example.invalid";
+        User user = new User();
+        user.setUsername("resetinactive" + UUID.randomUUID().toString().substring(0, 10));
+        user.setEmail(email);
+        user.setPasswordHash(passwords.encode("OldPassword123!"));
+        users.saveAndFlush(user);
+
+        reset.request(email);
+        var captured = org.mockito.ArgumentCaptor.forClass(SimpleMailMessage.class);
+        verify(mail).send(captured.capture());
+        String token = captured.getValue().getText().split("token=")[1].split("\\s")[0];
+
+        user.setIsActive(false);
+        users.flush();
+
+        assertThrows(ResponseStatusException.class, () -> reset.reset(token, "NewPassword123!"));
+    }
 }

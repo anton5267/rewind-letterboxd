@@ -5,6 +5,7 @@ import com.rewind.rewind.message.entity.Conversation;
 import com.rewind.rewind.message.entity.Message;
 import com.rewind.rewind.message.repo.ConversationRepository;
 import com.rewind.rewind.message.repo.MessageRepository;
+import com.rewind.rewind.social.service.BlockService;
 import com.rewind.rewind.user.entity.User;
 import com.rewind.rewind.user.repo.UserRepository;
 import org.springframework.data.domain.Page;
@@ -18,18 +19,23 @@ public class MessageService {
     private final ConversationRepository conversations;
     private final MessageRepository messages;
     private final UserRepository users;
+    private final BlockService blocks;
 
-    public MessageService(ConversationRepository conversations, MessageRepository messages, UserRepository users) {
+    public MessageService(ConversationRepository conversations, MessageRepository messages, UserRepository users, BlockService blocks) {
         this.conversations = conversations;
         this.messages = messages;
         this.users = users;
+        this.blocks = blocks;
     }
 
     @Transactional
     public ConversationResponse start(String email, Long targetUserId) {
         User current = users.findByEmail(email).orElseThrow();
-        User target = users.findById(targetUserId).orElseThrow();
+        User target = users.findById(targetUserId)
+                .filter(user -> Boolean.TRUE.equals(user.getIsActive()))
+                .orElseThrow();
         if (current.getId().equals(target.getId())) throw new IllegalArgumentException("You cannot message yourself");
+        blocks.requireInteractionAllowed(current.getId(), target.getId());
         Long one = Math.min(current.getId(), target.getId());
         Long two = Math.max(current.getId(), target.getId());
         Conversation conversation = conversations.findByUserOneIdAndUserTwoId(one, two).orElseGet(() -> {
@@ -44,21 +50,28 @@ public class MessageService {
     @Transactional(readOnly = true)
     public Page<ConversationResponse> mine(String email, int page, int size) {
         User current = users.findByEmail(email).orElseThrow();
-        return conversations.findAllByUserOneIdOrUserTwoIdOrderByUpdatedAtDesc(current.getId(), current.getId(), pageRequest(page, size))
+        return conversations.findVisibleByUserId(current.getId(), pageRequest(page, size))
                 .map(conversation -> response(conversation, current.getId()));
+    }
+
+    @Transactional(readOnly = true)
+    public long unreadCount(String email) {
+        return messages.countUnreadForUser(users.findByEmail(email).orElseThrow().getId());
     }
 
     @Transactional(readOnly = true)
     public Page<MessageResponse> messages(String email, Long conversationId, int page, int size) {
         User current = users.findByEmail(email).orElseThrow();
-        requireMember(conversationId, current.getId());
-        return messages.findAllByConversationIdOrderByCreatedAtDesc(conversationId, pageRequest(page, size)).map(this::messageResponse);
+        Conversation conversation = requireMember(conversationId, current.getId());
+        blocks.requireInteractionAllowed(current.getId(), otherUserId(conversation, current.getId()));
+        return messages.findAllByConversationIdOrderByCreatedAtDescIdDesc(conversationId, pageRequest(page, size)).map(this::messageResponse);
     }
 
     @Transactional
     public MessageResponse send(String email, Long conversationId, SendMessageRequest request) {
         User current = users.findByEmail(email).orElseThrow();
         Conversation conversation = requireMember(conversationId, current.getId());
+        blocks.requireInteractionAllowed(current.getId(), otherUserId(conversation, current.getId()));
         Message message = new Message();
         message.setConversationId(conversation.getId());
         message.setSenderId(current.getId());
@@ -72,10 +85,9 @@ public class MessageService {
     @Transactional
     public void markRead(String email, Long conversationId) {
         User current = users.findByEmail(email).orElseThrow();
-        requireMember(conversationId, current.getId());
-        messages.findAllByConversationIdOrderByCreatedAtDesc(conversationId, PageRequest.of(0, 100)).forEach(message -> {
-            if (!current.getId().equals(message.getSenderId()) && message.getReadAt() == null) message.setReadAt(java.time.Instant.now());
-        });
+        Conversation conversation = requireMember(conversationId, current.getId());
+        blocks.requireInteractionAllowed(current.getId(), otherUserId(conversation, current.getId()));
+        messages.markUnreadAsRead(conversationId, current.getId());
     }
 
     private Conversation requireMember(Long conversationId, Long userId) {
@@ -84,10 +96,14 @@ public class MessageService {
         return conversation;
     }
 
+    private Long otherUserId(Conversation conversation, Long currentUserId) {
+        return currentUserId.equals(conversation.getUserOneId()) ? conversation.getUserTwoId() : conversation.getUserOneId();
+    }
+
     private ConversationResponse response(Conversation conversation, Long currentUserId) {
         Long otherId = currentUserId.equals(conversation.getUserOneId()) ? conversation.getUserTwoId() : conversation.getUserOneId();
         User other = users.findById(otherId).orElseThrow();
-        var last = messages.findTopByConversationIdOrderByCreatedAtDesc(conversation.getId()).map(message -> new ConversationResponse.MessageSummary(message.getId(), message.getSenderId(), message.getBody(), message.getCreatedAt(), message.getReadAt())).orElse(null);
+        var last = messages.findTopByConversationIdOrderByCreatedAtDescIdDesc(conversation.getId()).map(message -> new ConversationResponse.MessageSummary(message.getId(), message.getSenderId(), message.getBody(), message.getCreatedAt(), message.getReadAt())).orElse(null);
         return new ConversationResponse(conversation.getId(), new ConversationResponse.PublicUser(other.getId(), other.getUsername(), other.getDisplayName(), other.getAvatarUrl()), conversation.getUpdatedAt(), last);
     }
 

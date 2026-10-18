@@ -7,6 +7,7 @@ export interface Message { id: number; conversationId: number; senderId: number;
 export interface Page<T> { content: T[]; totalPages: number; totalElements: number }
 
 export const getConversations = (page = 0) => api.get<Page<Conversation>>("/conversations", { params: { page, size: 30 } });
+export const getUnreadMessageCount = () => api.get<{ count: number }>("/conversations/unread-count");
 export const startConversation = (userId: number) => api.post<Conversation>("/conversations", { userId });
 export const getMessages = (conversationId: number, page = 0) => api.get<Page<Message>>(`/conversations/${conversationId}/messages`, { params: { page, size: 50 } });
 export const sendMessage = (conversationId: number, body: string) => api.post<Message>(`/conversations/${conversationId}/messages`, { body });

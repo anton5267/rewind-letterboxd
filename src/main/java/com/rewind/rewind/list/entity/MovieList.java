@@ -3,6 +3,7 @@ package com.rewind.rewind.list.entity;
 import com.rewind.rewind.user.entity.User;
 import com.rewind.rewind.tag.entity.Tag;
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -34,6 +35,7 @@ public class MovieList {
     private Boolean isPublic = false;
 
     @ManyToMany
+    @BatchSize(size = 32)
     @JoinTable(name = "list_tags", joinColumns = @JoinColumn(name = "list_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private Set<Tag> tags = new LinkedHashSet<>();
 

@@ -16,6 +16,10 @@ import java.util.Optional;
 public interface MovieListRepository extends JpaRepository<MovieList, Long> {
     @EntityGraph(attributePaths = "tags")
     List<MovieList> findAllByUser(User user);
+
+    Page<MovieList> findPageByUserOrderByUpdatedAtDescIdDesc(User user, Pageable pageable);
+
+    Page<MovieList> findPageByUserIdAndListTypeAndIsPublicTrueOrderByUpdatedAtDescIdDesc(Long userId, ListType listType, Pageable pageable);
     Optional<MovieList> findByIdAndUser(Long id, User user);
     Optional<MovieList> findByUserAndListType(User user, ListType listType);
 
@@ -27,12 +31,32 @@ public interface MovieListRepository extends JpaRepository<MovieList, Long> {
     Optional<AdminListProjection> findAdminRowById(@Param("id") Long id);
 
     // ✅ публічні кастомні списки (для каталогу)
-    Page<MovieList> findAllByIsPublicTrueAndListType(ListType listType, Pageable pageable);
+    @Query("select l from MovieList l join l.user u where l.isPublic = true and l.listType = :listType "
+            + "and u.isActive = true")
+    Page<MovieList> findPublicCatalog(@Param("listType") ListType listType, Pageable pageable);
+
+    @Query(value = "SELECT l.* FROM lists l "
+            + "JOIN users u ON u.id = l.user_id "
+            + "LEFT JOIN list_likes ll ON ll.list_id = l.id "
+            + "LEFT JOIN users liker ON liker.id = ll.user_id AND liker.is_active = true "
+            + "WHERE l.is_public = true AND l.list_type = :listType AND u.is_active = true "
+            + "GROUP BY l.id "
+            + "ORDER BY COUNT(DISTINCT liker.id) DESC, l.updated_at DESC, l.id DESC",
+            countQuery = "SELECT COUNT(*) FROM lists l JOIN users u ON u.id = l.user_id "
+                    + "WHERE l.is_public = true AND l.list_type = :listType AND u.is_active = true",
+            nativeQuery = true)
+    Page<MovieList> findPopularPublic(@Param("listType") String listType, Pageable pageable);
 
     // ✅ публічні кастомні списки інших (якщо треба "не мої")
     Page<MovieList> findAllByIsPublicTrueAndListTypeAndUserIdNot(ListType listType, Long userId, Pageable pageable);
 
-    @Query(value = "select distinct l from MovieList l join l.tags t where l.isPublic = true and l.listType = :type and t.slug = :slug",
-            countQuery = "select count(distinct l) from MovieList l join l.tags t where l.isPublic = true and l.listType = :type and t.slug = :slug")
+    @Query(value = "select l from MovieList l join l.user u where l.isPublic = true and l.listType = :type and u.isActive = true and u.isHq = true order by l.updatedAt desc, l.id desc",
+            countQuery = "select count(l) from MovieList l join l.user u where l.isPublic = true and l.listType = :type and u.isActive = true and u.isHq = true")
+    Page<MovieList> findTeamPublic(@Param("type") ListType type, Pageable pageable);
+
+    @Query(value = "select distinct l from MovieList l join l.tags t join l.user u where l.isPublic = true "
+            + "and l.listType = :type and t.slug = :slug and u.isActive = true",
+            countQuery = "select count(distinct l) from MovieList l join l.tags t join l.user u where l.isPublic = true "
+                    + "and l.listType = :type and t.slug = :slug and u.isActive = true")
     Page<MovieList> findPublicByTag(@Param("type") ListType type, @Param("slug") String slug, Pageable pageable);
 }

@@ -2,6 +2,7 @@ package com.rewind.rewind.profile.service;
 
 import com.rewind.rewind.auth.RefreshSessionService;
 import com.rewind.rewind.list.entity.ListType;
+import com.rewind.rewind.list.dto.PublicListCardResponse;
 import com.rewind.rewind.list.repo.ListItemRepository;
 import com.rewind.rewind.list.repo.MovieListRepository;
 import com.rewind.rewind.movie.dto.MovieCardResponse;
@@ -13,18 +14,28 @@ import com.rewind.rewind.rating.repo.RatingRepository;
 import com.rewind.rewind.rating.entity.Rating;
 import com.rewind.rewind.review.repo.ReviewRepository;
 import com.rewind.rewind.review.entity.Review;
+import com.rewind.rewind.social.repo.ReviewLikeRepository;
+import com.rewind.rewind.profile.dto.SocialLinkRequest;
+import com.rewind.rewind.profile.dto.SocialLinkResponse;
+import com.rewind.rewind.profile.entity.UserSocialLink;
+import com.rewind.rewind.profile.repo.UserSocialLinkRepository;
 import com.rewind.rewind.user.repo.UserRepository;
 import com.rewind.rewind.user.dto.PublicProfileResponse;
 import org.springframework.data.domain.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import jakarta.persistence.EntityManager;
 
 import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Set;
 
 @Service
 public class ProfileService {
+    private static final Set<String> SUPPORTED_SOCIAL_PLATFORMS = Set.of("website", "instagram", "tiktok", "letterboxd");
 
     private final UserRepository users;
     private final MovieListRepository lists;
@@ -34,6 +45,8 @@ public class ProfileService {
     private final PasswordEncoder passwordEncoder;
     private final RefreshSessionService sessions;
     private final EntityManager entityManager;
+    private final ReviewLikeRepository reviewLikes;
+    private final UserSocialLinkRepository socialLinks;
 
     public ProfileService(
             UserRepository users,
@@ -43,7 +56,9 @@ public class ProfileService {
             ListItemRepository listItems,
             PasswordEncoder passwordEncoder,
             RefreshSessionService sessions,
-            EntityManager entityManager
+            EntityManager entityManager,
+            ReviewLikeRepository reviewLikes,
+            UserSocialLinkRepository socialLinks
     ) {
         this.users = users;
         this.lists = lists;
@@ -53,6 +68,8 @@ public class ProfileService {
         this.passwordEncoder = passwordEncoder;
         this.sessions = sessions;
         this.entityManager = entityManager;
+        this.reviewLikes = reviewLikes;
+        this.socialLinks = socialLinks;
     }
 
     public ProfileResponse myProfile(String email) {
@@ -104,7 +121,7 @@ public class ProfileService {
 
     @Transactional(readOnly = true)
     public PublicProfileResponse publicProfile(Long userId) {
-        var user = users.findById(userId).orElseThrow();
+        var user = findActivePublicUser(userId);
         var allLists = lists.findAllByUser(user);
         var publicLists = allLists.stream()
                 .filter(list -> list.getListType() == ListType.CUSTOM && Boolean.TRUE.equals(list.getIsPublic()))
@@ -120,9 +137,40 @@ public class ProfileService {
         long watchlist = collectionCount(allLists, ListType.WATCHLIST);
         long favorites = collectionCount(allLists, ListType.FAVORITES);
         String displayName = user.getDisplayName() == null || user.getDisplayName().isBlank() ? user.getUsername() : user.getDisplayName();
+        var ratingDistribution = ratings.countDistributionByUserId(userId).stream()
+                .map(row -> new PublicProfileResponse.RatingBucket(((Number) row[0]).intValue(), ((Number) row[1]).longValue()))
+                .toList();
         return new PublicProfileResponse(user.getId(), user.getUsername(), displayName, user.getAvatarUrl(), user.getIsHq(),
                 new PublicProfileResponse.Stats(ratings.countByUserId(userId), reviews.countByUserIdAndIsHiddenFalse(userId), watched, watchlist, favorites),
+                ratingDistribution,
+                socialLinks.findAllByUserIdOrderByPlatformAsc(userId).stream().map(link -> new SocialLinkResponse(link.getPlatform(), link.getUrl())).toList(),
                 publicLists, publicReviews);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SocialLinkResponse> mySocialLinks(String email) {
+        var user = users.findByEmail(email).orElseThrow();
+        return socialLinks.findAllByUserIdOrderByPlatformAsc(user.getId()).stream()
+                .map(link -> new SocialLinkResponse(link.getPlatform(), link.getUrl())).toList();
+    }
+
+    @Transactional
+    public List<SocialLinkResponse> updateMySocialLinks(String email, List<SocialLinkRequest> requests) {
+        if (requests == null || requests.size() > 8) throw new IllegalArgumentException("Too many social links");
+        var user = users.findByEmail(email).orElseThrow();
+        Set<String> platforms = requests.stream().map(request -> request.platform().trim().toLowerCase()).collect(Collectors.toSet());
+        if (platforms.size() != requests.size()) throw new IllegalArgumentException("Duplicate social platform");
+        if (!SUPPORTED_SOCIAL_PLATFORMS.containsAll(platforms)) throw new IllegalArgumentException("Unsupported social platform");
+        socialLinks.deleteAllByUserId(user.getId());
+        socialLinks.flush();
+        for (SocialLinkRequest request : requests) {
+            UserSocialLink link = new UserSocialLink();
+            link.setUser(user);
+            link.setPlatform(request.platform().trim().toLowerCase());
+            link.setUrl(request.url().trim());
+            socialLinks.save(link);
+        }
+        return mySocialLinks(email);
     }
 
     private long collectionCount(java.util.List<com.rewind.rewind.list.entity.MovieList> allLists, ListType type) {
@@ -137,8 +185,19 @@ public class ProfileService {
 
     @Transactional(readOnly = true)
     public Page<MovieCardResponse> publicSystemCollection(Long userId, ListType type, int page, int size) {
-        var user = users.findById(userId).orElseThrow();
+        var user = findActivePublicUser(userId);
         return systemCollection(user, type, page, size);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PublicListCardResponse> publicLists(Long userId, int page, int size) {
+        findActivePublicUser(userId);
+        return lists.findPageByUserIdAndListTypeAndIsPublicTrueOrderByUpdatedAtDescIdDesc(
+                        userId, ListType.CUSTOM, pageRequest(page, size))
+                .map(list -> new PublicListCardResponse(
+                        list.getId(), list.getName(), list.getDescription(), list.getIsPublic(),
+                        list.getUser().getId(), list.getUser().getUsername(), list.getUser().getAvatarUrl(),
+                        list.getTags().stream().map(tag -> tag.getName()).toList()));
     }
 
     private Page<MovieCardResponse> systemCollection(com.rewind.rewind.user.entity.User user, ListType type, int page, int size) {
@@ -152,6 +211,18 @@ public class ProfileService {
                         m.getRating(),
                         m.getPhotoUrl()
                 ));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PublicProfileResponse.PublicReview> publicLikedReviews(Long userId, int page, int size) {
+        findActivePublicUser(userId);
+        return reviewLikes.findVisibleReviewLikesByUserId(userId, pageRequest(page, size))
+                .map(like -> {
+                    var review = like.getReview();
+                    return new PublicProfileResponse.PublicReview(review.getId(), review.getMovie().getId(),
+                            review.getMovie().getTitle(), review.getContent(),
+                            review.getRating() == null ? null : review.getRating().intValue(), review.getUpdatedAt());
+                });
     }
 
     @Transactional(readOnly = true)
@@ -170,6 +241,12 @@ public class ProfileService {
 
     private Pageable pageRequest(int page, int size) {
         return PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 50)));
+    }
+
+    private com.rewind.rewind.user.entity.User findActivePublicUser(Long userId) {
+        return users.findById(userId)
+                .filter(user -> Boolean.TRUE.equals(user.getIsActive()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
     private ProfileResponse.ProfileRatingItem toProfileRating(Rating rating) {

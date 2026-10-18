@@ -92,7 +92,7 @@ public class NotificationService {
     public Page<NotificationResponse> mine(String email, int page, int size) {
         User user = users.findByEmail(email).orElseThrow();
         Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 50)));
-        return notifications.findAllByRecipientIdOrderByCreatedAtDesc(user.getId(), pageable).map(this::response);
+        return notifications.findAllByRecipientIdOrderByCreatedAtDescIdDesc(user.getId(), pageable).map(this::response);
     }
 
     @Transactional(readOnly = true)
@@ -120,9 +120,9 @@ public class NotificationService {
 
     private NotificationPreference preference(Long userId) {
         return preferences.findById(userId).orElseGet(() -> {
-            NotificationPreference created = new NotificationPreference();
-            created.setUserId(userId);
-            return preferences.save(created);
+            preferences.insertIgnore(userId);
+            return preferences.findForUpdate(userId)
+                    .orElseThrow(() -> new IllegalStateException("Notification preference was not persisted"));
         });
     }
 

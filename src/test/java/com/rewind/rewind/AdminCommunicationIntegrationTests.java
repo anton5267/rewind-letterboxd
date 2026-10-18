@@ -17,12 +17,19 @@ import com.rewind.rewind.user.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
 
 @SpringBootTest
 class AdminCommunicationIntegrationTests {
@@ -33,6 +40,7 @@ class AdminCommunicationIntegrationTests {
     @Autowired NotificationRepository notifications;
     @Autowired AdminCommunicationService admin;
     @Autowired AdminAuditLogService audit;
+    @Autowired JdbcTemplate jdbc;
 
     @Test
     @Transactional
@@ -89,6 +97,41 @@ class AdminCommunicationIntegrationTests {
         assertFalse(messages.existsById(message.getId()));
         admin.deleteNotification(firstEmail, adminCreated.id());
         assertFalse(notifications.existsById(adminCreated.id()));
+    }
+
+    @Test
+    @Transactional
+    void notificationPagesAreStableWhenCreatedAtTies() {
+        String suffix = String.valueOf(System.nanoTime());
+        String recipientEmail = "notification-pages-" + suffix + "@example.invalid";
+        register("notification-pages-" + suffix, recipientEmail);
+        Long recipientId = users.findByEmail(recipientEmail).orElseThrow().getId();
+
+        var created = new ArrayList<Notification>();
+        for (int index = 0; index < 51; index++) {
+            Notification notification = new Notification();
+            notification.setRecipientId(recipientId);
+            notification.setType(NotificationType.FOLLOW);
+            created.add(notification);
+        }
+        notifications.saveAllAndFlush(created);
+        Instant tiedAt = Instant.parse("2026-10-17T00:00:00Z");
+        for (Notification notification : created) {
+            jdbc.update("update notifications set created_at = ? where id = ?", Timestamp.from(tiedAt), notification.getId());
+        }
+
+        var expectedIds = new HashSet<Long>();
+        created.forEach(notification -> expectedIds.add(notification.getId()));
+        var firstPage = admin.notifications(NotificationType.FOLLOW, false, recipientId, 0, 50);
+        var secondPage = admin.notifications(NotificationType.FOLLOW, false, recipientId, 1, 50);
+        var actualIds = new HashSet<Long>();
+        firstPage.forEach(item -> actualIds.add(item.id()));
+        secondPage.forEach(item -> actualIds.add(item.id()));
+
+        assertEquals(51, firstPage.getTotalElements());
+        assertEquals(50, firstPage.getNumberOfElements());
+        assertEquals(1, secondPage.getNumberOfElements());
+        assertEquals(expectedIds, actualIds, "Notification pages must neither omit nor repeat equal-timestamp rows");
     }
 
     private void register(String username, String email) {

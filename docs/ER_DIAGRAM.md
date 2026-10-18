@@ -1,6 +1,6 @@
 # Rewind database ER diagram
 
-This diagram describes the schema after Flyway migrations **V1–V27**. The migration files in `src/main/resources/db/migration` remain the source of truth; this document is the review and presentation artifact.
+This diagram describes the schema after Flyway migrations **V1–V30**. The migration files in `src/main/resources/db/migration` remain the source of truth; this document is the review and presentation artifact.
 
 ```mermaid
 erDiagram
@@ -51,6 +51,9 @@ erDiagram
     NEWSLETTER_SUBSCRIPTIONS { BIGINT id PK BIGINT user_id FK UK BOOLEAN is_subscribed TIMESTAMP subscribed_at TIMESTAMP updated_at }
     NEWSLETTER_DELIVERIES { BIGINT id PK BIGINT article_id FK BIGINT user_id FK ENUM status INT attempts TIMESTAMP available_at TIMESTAMP sent_at VARCHAR last_error }
     SITE_SETTINGS { VARCHAR setting_key PK VARCHAR setting_value BIGINT updated_by FK }
+    USER_SOCIAL_LINKS { BIGINT id PK BIGINT user_id FK VARCHAR platform VARCHAR url }
+    USER_BLOCKS { BIGINT id PK BIGINT blocker_id FK BIGINT blocked_id FK TIMESTAMP created_at }
+    LIST_LIKES { BIGINT id PK BIGINT list_id FK BIGINT user_id FK TIMESTAMP created_at }
 
     USERS ||--o{ LISTS : owns
     LISTS ||--o{ LIST_ITEMS : contains
@@ -75,6 +78,9 @@ erDiagram
     REVIEWS ||--o{ REVIEW_LIKES : receives
     USERS ||--o{ REVIEW_LIKES : gives
     USERS ||--o{ USER_ACTIVITIES : creates
+    USERS ||--o{ USER_BLOCKS : blocks
+    LISTS ||--o{ LIST_LIKES : receives
+    USERS ||--o{ LIST_LIKES : gives
     MOVIES ||--o{ USER_ACTIVITIES : references
     REVIEWS ||--o{ USER_ACTIVITIES : references
     LISTS ||--o{ USER_ACTIVITIES : references
@@ -97,6 +103,7 @@ erDiagram
     JOURNAL_ARTICLES ||--o{ NEWSLETTER_DELIVERIES : delivers
     USERS ||--o{ NEWSLETTER_DELIVERIES : receives
     USERS ||--o{ SITE_SETTINGS : updates
+    USERS ||--o{ USER_SOCIAL_LINKS : publishes
 ```
 
 `REVIEW_ARCHIVE` is retained by migration V5 for historical duplicate reviews and is not referenced by the runtime API. `SIMILAR_MOVIES` is a self-referencing join table. Nullable moderator/author references use `ON DELETE SET NULL`; user-owned content uses the cascade rules declared in the migrations.

@@ -25,4 +25,9 @@ public class ActivityController {
     public Page<ActivityResponse> following(Authentication auth, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
         return activities.following(auth.getName(), page, size);
     }
+
+    @GetMapping("/activity/recent-watched")
+    public Page<ActivityResponse> recentWatched(@RequestParam(defaultValue = "6") int size) {
+        return activities.recentWatched(size);
+    }
 }

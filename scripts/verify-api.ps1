@@ -10,6 +10,18 @@ $webSession = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 $networkHeaders = @{}
 $networkSession = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 
+$openApi = Invoke-WebRequest -Method GET -Uri "$BaseUrl/v3/api-docs" -UseBasicParsing
+if ($openApi.StatusCode -ne 200) { throw "OpenAPI returned HTTP $($openApi.StatusCode)" }
+$openApiDocument = $openApi.Content | ConvertFrom-Json
+$openApiOperations = @($openApiDocument.paths.PSObject.Properties | ForEach-Object { @($_.Value.PSObject.Properties) } | Where-Object { $_.Name -in @('get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace') })
+if ($openApiOperations.Count -lt 100 -or -not ($openApiDocument.paths.PSObject.Properties.Name -contains '/api/profile/me/social-links')) { throw 'OpenAPI document is incomplete' }
+Write-Output "OpenAPI document : $($openApiOperations.Count) operations"
+$journalResponse = Invoke-WebRequest -Method GET -Uri "$BaseUrl/api/journal/articles?language=uk&size=3" -UseBasicParsing
+if ($journalResponse.StatusCode -ne 200) { throw "Public journal returned HTTP $($journalResponse.StatusCode)" }
+$journalDocument = $journalResponse.Content | ConvertFrom-Json
+if ($null -eq $journalDocument.content) { throw 'Public journal response is malformed' }
+Write-Output 'public journal : 200'
+
 function Send([string]$Method, [string]$Path, $Body = $null) {
     if ($Method -notin @('GET', 'HEAD', 'OPTIONS')) {
         $csrfCookie = $webSession.Cookies.GetCookies([uri]"$BaseUrl/api$Path") | Where-Object Name -eq 'XSRF-TOKEN'
@@ -18,7 +30,7 @@ function Send([string]$Method, [string]$Path, $Body = $null) {
     $args = @{ Method = $Method; Uri = "$BaseUrl/api$Path"; Headers = $headers; WebSession = $webSession; UseBasicParsing = $true }
     if ($null -ne $Body) {
         $args.ContentType = 'application/json'
-        $args.Body = ($Body | ConvertTo-Json -Compress)
+        $args.Body = (ConvertTo-Json -InputObject $Body -Compress)
     }
     return Invoke-WebRequest @args
 }
@@ -122,6 +134,15 @@ Expect (Send 'GET' '/users/me').StatusCode 200 'cookie authentication'
 $myProfile = (Send 'GET' '/profile/me').Content | ConvertFrom-Json
 if ($null -eq $myProfile.stats -or $myProfile.stats.ratings -ne 0 -or $myProfile.stats.reviews -ne 0) { throw 'Profile statistics contract is missing or incorrect' }
 Write-Output 'profile statistics'
+$socialLinksBody = New-Object 'System.Collections.Generic.List[object]'
+[void]$socialLinksBody.Add(@{ platform = 'website'; url = 'https://example.invalid/rewind-verification' })
+$socialLinks = Send 'PUT' '/profile/me/social-links' $socialLinksBody
+Expect $socialLinks.StatusCode 200 'save social links'
+$savedSocialLinks = (Send 'GET' '/profile/me/social-links').Content | ConvertFrom-Json
+if ($savedSocialLinks[0].platform -ne 'website' -or $savedSocialLinks[0].url -ne 'https://example.invalid/rewind-verification') { throw 'Social links did not persist' }
+$publicProfileWithLinks = (Send 'GET' "/users/$userId/profile").Content | ConvertFrom-Json
+if ($publicProfileWithLinks.socialLinks.url -notcontains 'https://example.invalid/rewind-verification') { throw 'Public profile did not expose social links' }
+Write-Output 'account social links privacy and state'
 Expect (Send 'GET' '/newsletter/subscription').StatusCode 200 'newsletter subscription read'
 $newsletterEnabled = Send 'PUT' '/newsletter/subscription' @{ subscribed = $true }
 Expect $newsletterEnabled.StatusCode 200 'newsletter subscription opt-in'
@@ -290,4 +311,8 @@ try {
     if ($_.Exception.Response.StatusCode.value__ -ne 401) { throw }
     Write-Output 'refresh after logout : 401'
 }
+Expect (Send 'POST' '/auth/login' @{ email = $email; password = $password }).StatusCode 200 'login for cleanup'
+Expect (Send 'DELETE' '/profile/me' @{ currentPassword = $password }).StatusCode 204 'delete verification user'
+Expect (SendNetwork 'DELETE' '/profile/me' @{ currentPassword = $password }).StatusCode 204 'delete network verification user'
+Write-Output 'disposable users cleaned up'
 Write-Output 'HTTP core flow passed.'

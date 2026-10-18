@@ -23,6 +23,19 @@ Expect-Status 'guest admin dashboard' (Get-Status { Invoke-WebRequest -UseBasicP
 Expect-Status 'protected metrics' (Get-Status { Invoke-WebRequest -UseBasicParsing "$BaseUrl/actuator/metrics" }) 401
 Expect-Status 'public health' (Get-Status { Invoke-WebRequest -UseBasicParsing "$BaseUrl/actuator/health" }) 200
 
+$queryPayloads = @(
+    "' OR 1=1 --",
+    "1); DROP TABLE movies;--",
+    '" UNION SELECT NULL--',
+    "<script>alert(1)</script>"
+)
+foreach ($payload in $queryPayloads) {
+    $encodedPayload = [uri]::EscapeDataString($payload)
+    Expect-Status "public movie search payload [$payload]" (Get-Status { Invoke-WebRequest -UseBasicParsing "$BaseUrl/api/movies/search?q=$encodedPayload&sort=newest&page=0&size=5" }) 200
+    Expect-Status "public journal category payload [$payload]" (Get-Status { Invoke-WebRequest -UseBasicParsing "$BaseUrl/api/journal/articles?language=uk&category=$encodedPayload&page=0&size=5" }) 200
+    Expect-Status "public list tag payload [$payload]" (Get-Status { Invoke-WebRequest -UseBasicParsing "$BaseUrl/api/lists/public?tag=$encodedPayload&page=0&size=5" }) 200
+}
+
 $userSuffix = [guid]::NewGuid().ToString('N').Substring(0, 12)
 $userEmail = "security$userSuffix@example.invalid"
 $userPassword = 'Security-user-password-123!'

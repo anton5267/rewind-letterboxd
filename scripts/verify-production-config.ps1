@@ -26,6 +26,15 @@ if ($values['DB_PASSWORD'] -eq $values['MYSQL_ROOT_PASSWORD']) { throw 'DB_PASSW
 if ($values['PUBLIC_BASE_URL'] -notmatch '^https://') { throw 'PUBLIC_BASE_URL must use HTTPS' }
 if (-not $values.ContainsKey('HTTP_PORT')) { throw 'HTTP_PORT must bind the web service to a loopback port behind the HTTPS proxy' }
 if ($values['HTTP_PORT'] -notmatch '^127\.0\.0\.1:\d+$') { throw 'HTTP_PORT must look like 127.0.0.1:8088 for the host HTTPS proxy' }
+$tmdbEnabled = $values.ContainsKey('TMDB_ENABLED') -and $values['TMDB_ENABLED'] -match '^(?i:true)$'
+$schedulerEnabled = $values.ContainsKey('TMDB_SCHEDULER_ENABLED') -and $values['TMDB_SCHEDULER_ENABLED'] -match '^(?i:true)$'
+if ($schedulerEnabled -and -not $tmdbEnabled) { throw 'TMDB_SCHEDULER_ENABLED=true requires TMDB_ENABLED=true' }
+if ($tmdbEnabled) {
+    if (-not $values.ContainsKey('TMDB_API_KEY') -or [string]::IsNullOrWhiteSpace($values['TMDB_API_KEY'])) { throw 'TMDB_API_KEY is required when TMDB_ENABLED=true' }
+    if ($values['TMDB_API_KEY'] -match 'replace-with|example|change-me|your-') { throw 'TMDB_API_KEY still contains an example placeholder' }
+}
+if ($values.ContainsKey('TMDB_SCHEDULER_BATCH_SIZE') -and $values['TMDB_SCHEDULER_BATCH_SIZE'] -notmatch '^([1-9]|1[0-9]|20)$') { throw 'TMDB_SCHEDULER_BATCH_SIZE must be between 1 and 20' }
+if ($values.ContainsKey('TMDB_SCHEDULER_INTERVAL_MS') -and ([int64]$values['TMDB_SCHEDULER_INTERVAL_MS'] -lt 60000)) { throw 'TMDB_SCHEDULER_INTERVAL_MS must be at least 60000' }
 
 $configJson = docker compose --env-file $envPath -f $ComposeFile config --format json | ConvertFrom-Json
 if ($configJson.services.db.ports -or $configJson.services.redis.ports -or $configJson.services.api.ports) {

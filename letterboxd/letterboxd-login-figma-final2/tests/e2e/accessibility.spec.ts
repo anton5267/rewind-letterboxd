@@ -9,14 +9,23 @@ const publicRoutes = [
   "/uk/journal",
   "/uk/about",
   "/en/help",
+  "/uk/contact",
+  "/uk/rules",
+  "/uk/privacy",
+  "/uk/film-data",
+  "/uk/delete-account",
+  "/en/login",
+  "/en/register",
+  "/en/forgot-password",
 ];
 
 test("public screens keep named controls and mobile layout", async ({ page }) => {
-  await page.setViewportSize({ width: 320, height: 800 });
+  for (const width of [320, 768, 1280]) {
+    await page.setViewportSize({ width, height: 800 });
 
-  for (const route of publicRoutes) {
-    await page.goto(route);
-    await expect(page.locator("h1").first()).toBeVisible();
+    for (const route of publicRoutes) {
+      await page.goto(route);
+      await expect(page.locator("h1").first()).toBeVisible();
 
     const unnamed = await page.locator("a, button, input, textarea, select").evaluateAll(elements => elements
       .filter(element => {
@@ -34,9 +43,10 @@ test("public screens keep named controls and mobile layout", async ({ page }) =>
       })
       .filter(Boolean));
 
-    expect(unnamed, `${route} contains unnamed interactive controls`).toEqual([]);
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-    expect(overflow, `${route} overflows horizontally by ${overflow}px`).toBeLessThanOrEqual(1);
+      expect(unnamed, `${route} at ${width}px contains unnamed interactive controls`).toEqual([]);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(overflow, `${route} at ${width}px overflows horizontally by ${overflow}px`).toBeLessThanOrEqual(1);
+    }
   }
 });
 

@@ -1,7 +1,7 @@
 import api from "./axios";
 
-export const getComments = (reviewId: number) =>
-  api.get(`/reviews/${reviewId}/comments`);
+export const getComments = (reviewId: number, page = 0, size = 20) =>
+  api.get(`/reviews/${reviewId}/comments`, { params: { page, size } });
 
 export const addComment = (reviewId: number, text: string) =>
   api.post(`/reviews/${reviewId}/comments`, { text });

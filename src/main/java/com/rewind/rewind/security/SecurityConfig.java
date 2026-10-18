@@ -27,8 +27,18 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.spa())
                 .cors(Customizer.withDefaults())
-                .exceptionHandling(errors -> errors.authenticationEntryPoint(
-                        (request, response, exception) -> response.sendError(401)))
+                .exceptionHandling(errors -> errors
+                        .authenticationEntryPoint((request, response, exception) -> {
+                            if (!response.isCommitted()) response.sendError(401);
+                        })
+                        .accessDeniedHandler((request, response, exception) -> {
+                            if (response.isCommitted()) return;
+                            if (request.getRequestURI().endsWith("/notifications/stream")) {
+                                response.setStatus(403);
+                                return;
+                            }
+                            response.sendError(403);
+                        }))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // ✅ щоб не маскувало помилки як 403
@@ -51,6 +61,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/movies/*/details").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/movies/*/reviews").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/recent").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/reviews/popular").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/*/comments").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/*/likes").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/genres").permitAll()
@@ -59,13 +70,21 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/directors/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/journal/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/lists/public").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/lists/public/popular").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/lists/public/recently-liked").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/lists/public/team").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/lists/public/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/users/hq").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/directory").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/collections/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/profile").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/*/liked-reviews").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/*/lists").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/followers").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/following").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*/activity").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/activity/recent-watched").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/*").permitAll()
 
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

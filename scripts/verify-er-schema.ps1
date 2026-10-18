@@ -16,7 +16,8 @@ $expectedTables = @(
     'lists', 'list_items', 'reviews', 'review_archive', 'ratings', 'external_ratings', 'similar_movies',
     'comments', 'follows', 'review_likes', 'user_activities', 'tags', 'list_tags', 'notifications',
     'notification_preferences', 'password_reset_tokens', 'refresh_sessions', 'conversations', 'messages',
-    'admin_audit_logs', 'journal_articles', 'newsletter_subscriptions', 'newsletter_deliveries', 'site_settings'
+    'admin_audit_logs', 'journal_articles', 'newsletter_subscriptions', 'newsletter_deliveries', 'site_settings',
+    'user_social_links', 'user_blocks', 'list_likes'
 )
 
 $tableOutput = docker compose -f $ComposeFile exec -T db mysql -N -B -urewind "-p$mysqlPassword" -D rewind -e "SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() ORDER BY table_name;"

@@ -24,7 +24,7 @@ public class AdminAuditLogService {
 
     @Transactional(readOnly = true)
     public Page<AdminAuditLogResponse> list(int page, int size) {
-        return logs.findAllByOrderByCreatedAtDesc(PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 100))))
+        return logs.findAllByOrderByCreatedAtDescIdDesc(PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 100))))
                 .map(log -> new AdminAuditLogResponse(log.getId(), log.getAdminId(), log.getAction(), log.getTargetType(), log.getTargetId(), log.getMetadata(), log.getCreatedAt()));
     }
 }

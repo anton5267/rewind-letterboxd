@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { getGenres, searchMovies, type Genre, type MoviePage, type MovieSearchParams } from "../api/search.api";
-import { useLocale } from "../i18n";
+import { localizeGenreName, useLocale } from "../i18n";
 
 const PAGE_SIZE = 12;
 const fieldStyle: CSSProperties = { display: "flex", flexDirection: "column", gap: 6, minWidth: 0 };
@@ -18,17 +18,19 @@ export default function Search() {
   const [sort, setSort] = useState(searchParams.get("sort") ?? "newest");
   const [genres, setGenres] = useState<Genre[]>([]);
   const [genreError, setGenreError] = useState(false);
+  const [genreRetry, setGenreRetry] = useState(0);
   const [results, setResults] = useState<MoviePage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
 
   useEffect(() => {
+    setGenreError(false);
     let current = true;
     getGenres().then(({ data }) => { if (current) setGenres(data); })
       .catch(() => { if (current) setGenreError(true); });
     return () => { current = false; };
-  }, []);
+  }, [lang, genreRetry]);
 
   useEffect(() => {
     const params = new URLSearchParams(searchKey);
@@ -82,7 +84,7 @@ export default function Search() {
       <label style={fieldStyle}>{t("genre")}
         <select value={genreId} onChange={event => setGenreId(event.target.value)} style={inputStyle}>
           <option value="">{t("allGenres")}</option>
-          {genres.map(genre => <option key={genre.id} value={genre.id}>{genre.name}</option>)}
+          {genres.map(genre => <option key={genre.id} value={genre.id}>{localizeGenreName(genre.name, lang)}</option>)}
         </select>
       </label>
       <label style={fieldStyle}>{t("year")}
@@ -105,7 +107,7 @@ export default function Search() {
       </label>
       <button type="submit" style={{ padding: "11px 16px", borderRadius: 6, cursor: "pointer" }}>{t("applyFilters")}</button>
     </form>
-    {genreError && <p role="alert">{t("loadGenresError")}</p>}
+    {genreError && <p role="alert">{t("loadGenresError")} <button type="button" onClick={() => setGenreRetry(value => value + 1)}>{t("retry")}</button></p>}
     {loading && <p>{t("loadingFilms")}</p>}
     {error && <p role="alert">{error} <button type="button" onClick={() => setRetry(value => value + 1)}>{t("retry")}</button></p>}
     {!loading && !error && results?.content.length === 0 && <p>{t("noFilms")}</p>}

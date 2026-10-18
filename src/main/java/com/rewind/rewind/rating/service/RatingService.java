@@ -37,7 +37,9 @@ public class RatingService {
 
     private void upsert(String email, Long movieId, UpsertRatingRequest req, boolean recordActivity) {
         var user = users.findByEmail(email).orElseThrow();
-        var movie = movies.findById(movieId).orElseThrow(() -> new IllegalArgumentException("Movie not found"));
+        if (!movies.existsById(movieId)) {
+            throw new IllegalArgumentException("Movie not found");
+        }
 
         // MySQL's unique key and atomic upsert make two simultaneous rating
         // requests idempotent instead of racing through a read-then-insert.

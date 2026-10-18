@@ -34,6 +34,7 @@
 
 .input {
   width: 100%;
+  box-sizing: border-box;
   padding: 20px 28px;
   margin-bottom: 26px;
 
@@ -85,4 +86,18 @@
 .error {
   color: #ff7a7a;
   margin-bottom: 15px;
+}
+
+@media (max-width: 720px) {
+  .page {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 90px 16px 24px;
+  }
+
+  .card {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 72px 24px 40px;
+  }
 }

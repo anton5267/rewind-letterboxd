@@ -31,7 +31,7 @@ public class ReviewCommentService {
     @Transactional(readOnly = true)
     public Page<CommentResponse> list(Long reviewId, int page, int size) {
         requireVisibleReview(reviewId);
-        return comments.findAllByReviewIdAndIsHiddenFalseOrderByCreatedAtAsc(reviewId,
+        return comments.findAllByReviewIdAndUserIsActiveTrueAndIsHiddenFalseOrderByCreatedAtAsc(reviewId,
                         PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 50))))
                 .map(this::toResponse);
     }
@@ -66,7 +66,7 @@ public class ReviewCommentService {
 
     private Review requireVisibleReview(Long reviewId) {
         Review review = reviews.findById(reviewId).orElseThrow(this::notFound);
-        if (Boolean.TRUE.equals(review.getIsHidden())) throw notFound();
+        if (Boolean.TRUE.equals(review.getIsHidden()) || !Boolean.TRUE.equals(review.getUser().getIsActive())) throw notFound();
         return review;
     }
 

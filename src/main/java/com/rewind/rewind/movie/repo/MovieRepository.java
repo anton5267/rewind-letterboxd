@@ -27,6 +27,8 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
 
     List<Movie> findAllByTmdbIdIn(Collection<Long> tmdbIds);
 
+    Page<Movie> findByTmdbIdIsNotNull(Pageable pageable);
+
     @Query(value = """
         SELECT COUNT(*) AS totalMovies,
                COALESCE(SUM(CASE WHEN m.tmdb_id IS NOT NULL THEN 1 ELSE 0 END), 0) AS tmdbLinkedMovies,

@@ -29,7 +29,7 @@ export default function Register() {
   // ✅ SUCCESS SCREEN
   if (success) {
     return (
-      <div className={styles.page}>
+      <main className={styles.page}>
         <div className={styles.card}>
           <h2 className={styles.title}>{t("accountCreated")} ✅</h2>
 
@@ -40,13 +40,13 @@ export default function Register() {
             {t("goToLogin")}
           </button>
         </div>
-      </div>
+      </main>
     );
   }
 
   // ✅ REGISTER FORM
   return (
-    <div className={styles.page}>
+    <main className={styles.page}>
       <div className={styles.card}>
         <h1 className={styles.title}>{t("createAccount")}</h1>
 
@@ -92,6 +92,6 @@ export default function Register() {
           {t("alreadyAccount")} <Link to={path("/login")}>{t("login")}</Link>
         </p>
       </div>
-    </div>
+    </main>
   );
 }

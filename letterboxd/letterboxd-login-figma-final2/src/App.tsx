@@ -14,6 +14,7 @@ import PublicLists from "./pages/PublicLists";
 import PublicProfile from "./pages/PublicProfile";
 import Person from "./pages/Person";
 import About from "./pages/About";
+import Community from "./pages/Community";
 import Notifications from "./pages/Notifications";
 import Messages from "./pages/Messages";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -24,7 +25,7 @@ import Layout from "./layout/Layout";
 
 function LegacyRedirect() {
   const location = useLocation();
-  const target = location.pathname === "/" ? "/uk/films" : `/uk${location.pathname}`;
+  const target = location.pathname === "/" ? "/uk/home" : `/uk${location.pathname}`;
   return <Navigate to={`${target}${location.search}${location.hash}`} replace />;
 }
 
@@ -59,6 +60,7 @@ function LocalizedApp() {
     <Route path="lists/discover" element={<Layout><PublicLists /></Layout>} />
     <Route path="lists/public/:id" element={<Layout><PublicList /></Layout>} />
     <Route path="about" element={<Layout><About /></Layout>} />
+    <Route path="community" element={<Layout><Community /></Layout>} />
     <Route path="login" element={<Layout><Login /></Layout>} />
     <Route path="register" element={<Layout><Register /></Layout>} />
     <Route path="forgot-password" element={<Layout><ForgotPassword /></Layout>} />

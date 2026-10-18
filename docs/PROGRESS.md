@@ -1,0 +1,566 @@
+# Rewind — прогрес повного плану
+
+Це робочий журнал для [повного плану розвитку](../PLAN.md) і ТЗ. Оновлювати після **кожного перевіреного зрізу**: ставити `[x]` тільки коли є код, тест і відповідний наскрізний сценарій; `[ ]` означає відкриту роботу. Часткова реалізація зазначена в примітках і не робить етап завершеним.
+
+- [~] 18.10.2026, user lists UX hardening: помилка завантаження елементів списку більше не показується як порожній список і має окремий UK/EN retry; створення та редагування списку отримали mutation-lock і локалізований стан збереження. `npx tsc --noEmit` і Vite build (**150 modules**) пройшли; headed browser flow для всіх loading/error/empty станів ще входить у наступний етап.
+- [x] 18.10.2026, public-list catalog pagination: `/lists/discover` тепер запитує серверні сторінки по 12 записів, має loading/error/retry та доступну UK/EN навігацію сторінками; зміна tag повертає каталог на першу сторінку. Новий headed Chrome E2E створює 13 public lists, перевіряє `Сторінка 1 з N` → `Сторінка 2 з N` і видаляє disposable account; тест — **1 passed (4.6s)**. TypeScript/Vite і Docker Web rebuild були перевірені попереднім runtime-зрізом, GitHub не оновлювався.
+- [x] 18.10.2026, journal pagination: public Journal UI тепер передає `page` до вже підтриманого paged API, скидає сторінку після зміни мови/категорії/архівного місяця, очищає stale articles під час запиту та показує локалізовану accessible навігацію. Headed Chrome E2E із двома server-page payloads пройшов **1 passed (2.9s)**; `tsc`, Vite і Docker Web rebuild пройшли, GitHub не оновлювався.
+- [x] 18.10.2026, user blocking: додано Flyway V29 `user_blocks`, захищені block-status/block/unblock endpoints, UK/EN controls на public profile, взаємне видалення follow при блокуванні та заборону follow/direct-message interaction для заблокованої пари. `BlockingIntegrationTests` — **1/1**; V29, schema verifier (**35 tables / 51 foreign keys**), Maven compile, Docker API/Web rebuild, OpenAPI (**150 operations / 122 paths**) і health `UP` пройшли. GitHub не оновлювався.
+- [x] 18.10.2026, фінальний backend regression після V29: Compose MySQL Maven suite — **66 tests, 0 failures, 0 errors, 0 skipped** у 35 test classes; окремо перевірено, що заблоковані старі діалоги зникають з Inbox і повертаються після unblock. GitHub не оновлювався.
+- [x] 18.10.2026, backup/restore після V29: `verify-backup-restore.ps1` відновив dump у тимчасову БД, підтвердив **155|363|29** (movies|users|Flyway migrations) і виконав cleanup; production validator без реального `.env.production` залишається відкритим.
+- [x] 18.10.2026, V30 list likes and list feeds: додано `list_likes`, ідемпотентні like/unlike/status endpoints, серверні recently-liked і HQ/team public-list feeds, like count у public list responses та UK/EN feed navigation/button у discover/public-list UI. `ListLikeIntegrationTests` — **1/1**, TypeScript, Vite, Docker API/Web rebuild, runtime feeds `200` пройшли. GitHub не оновлювався.
+- [x] 18.10.2026, V30 list-feed hardening: `popular` тепер ранжує активні лайки, а не кількість фільмів у списку; звичайний public-list catalog і всі tie-сценарії мають детермінований `updatedAt DESC, id DESC`. `ListLikeIntegrationTests` підтверджує, що вподобаний список випереджає інакше порівнянний невподобаний; targeted test, Docker API rebuild, runtime `popular/recently-liked` `200` і чисте вікно логів пройшли. GitHub не оновлювався.
+- [x] 18.10.2026, public-list detail UX: сторінка публічного списку тепер веде з автора на public profile і показує теги як клікабельні UK/EN-фільтри каталогу. `tsc --noEmit`, Vite build (**150 modules**), Docker Web rebuild і runtime discover/detail shell `200` пройшли. GitHub не оновлювався.
+- [x] 18.10.2026, фінальна перевірка після V30: Maven suite — **68 tests, 0 failures, 0 errors, 0 skipped** у 36 класах; schema verifier — **36 tables / 53 foreign keys**, OpenAPI — **155 operations / 126 paths**, backup/restore — **167|379|30**, API health `UP`, web `200`. GitHub не оновлювався.
+- [x] 18.10.2026, journal locale fallback: public journal list/archive тепер server-side вибирають переклад для кожного `slug`, а якщо його немає — fallback-версію без втрати інших статей; сортування стабільне `publishedAt DESC, id DESC`. `JournalArticleIntegrationTests` — **3/3**, runtime journal/archive `200`, API rebuild і чисті логи пройшли. GitHub не оновлювався.
+- [x] 18.10.2026, inactive-user public privacy: публічні профілі, колекції, списки, followers/following та activity тепер віддаються лише для активних користувачів; глобальні recent/popular reviews, popular reviewers, public-list catalog/detail і review comments виключають деактивованих авторів та активні лайки. Раніше видані password-reset tokens також відхиляються для деактивованого акаунта. Додано `PublicProfileIntegrationTests` — **5/5** і `PasswordResetIntegrationTests` — **2/2**; Maven compile, Docker API rebuild, health `200`, `/v3/api-docs` `200` і runtime logs без `ERROR|Exception|NoSuchMethodError|connect() failed` пройшли. Міграція не потрібна, GitHub не оновлювався.
+- [x] 18.10.2026, admin account safety and role management: додано серверний guard для `PATCH /api/admin/users/{id}` і `POST /api/admin/users/{id}/deactivate`: адміністратор не може деактивувати або понизити власний акаунт, а останній активний ADMIN не може бути деактивований чи понижений до USER. Перевірка активних ADMIN виконується під pessimistic write lock, щоб паралельні адмінські зміни не обійшли інваріант; AdminUsers тепер дозволяє призначати USER/ADMIN через реальний PATCH і показує локалізовану причину guard-помилки, очищаючи stale error після успіху. Додано інтеграційний сценарій self/last-admin guard; `AdminAuditIntegrationTests` — **3/3**, `tsc`, Vite build (**150 modules**), Docker API/web rebuild, health `UP` і web `200` пройшли, GitHub не оновлювався.
+- [x] 18.10.2026, кодовий зріз приватних повідомлень: додано захищений `GET /api/conversations/unread-count`, який рахує непрочитані повідомлення лише в діалогах поточного користувача; Header показує двомовні badge для непрочитаних повідомлень і сповіщень та оновлює їх раз на 30 секунд. Без нової міграції, `MessageIntegrationTests` — **2/2**, `mvnw.cmd -q -DskipTests compile`, `npx tsc --noEmit`, Vite build, Docker web rebuild і Compose API startup/health (`UP`) пройшли. Повний browser regression для цього зрізу ще не запускався.
+- [x] 18.10.2026, кодовий зріз «щойно переглянуто»: додано `WATCHED` activity лише після фактичного нового додавання фільму до watched, стабільне `createdAt DESC, id DESC`, публічний `GET /api/activity/recent-watched` і локалізований блок Home з посиланнями на фільм/користувача. `CoreFilmFlowIntegrationTests#userCanRemoveListItemsAndKeepRatingWhenDeletingReview` підтвердив один event при повторному idempotent add; endpoint повертає коректну порожню сторінку на поточній БД. Docker API/web rebuild, Maven package і Vite build пройшли, health — `UP`. Повний browser regression для цього зрізу ще не запускався.
+- [x] 18.10.2026, кодовий зріз public-profile rating chart: `GET /api/users/{id}/profile` тепер повертає `ratingDistribution` агрегований на сервері, а публічний профіль показує адаптивні bars для 1–5 з UK/EN labels та empty state. Після виправлення JPQL association (`r.user.id`) `PublicProfileIntegrationTests` — **3/3**, Vite/ Maven compile, Docker API/web rebuild, runtime profile response і health `UP` пройшли; GitHub не оновлювався.
+- [x] 18.10.2026, кодовий зріз public-profile liked reviews: додано пагінований `GET /api/users/{id}/liked-reviews`, який повертає лише вподобані видимі огляди; endpoint відкритий для гостя, UI має UK/EN loading/error/retry/empty та pagination стани. `PublicProfileIntegrationTests#exposesOnlyPublicProfileDataAndVisibleActivity`, `npx tsc --noEmit`, Maven compile, Docker API/web rebuild, runtime endpoint і health `UP` пройшли; у runtime-логах немає `ERROR/Exception`, GitHub не оновлювався.
+- [x] 18.10.2026, кодовий зріз Home popular reviews: додано публічний пагінований `GET /api/reviews/popular`, сервер сортує видимі огляди за кількістю likes зі стабільним tie-breaker, Home підключено до цього feed і локалізований заголовок оновлено. `HomeFeedIntegrationTests` з like-сценарієм і `npx tsc --noEmit` пройшли; GitHub не оновлювався.
+- [x] 18.10.2026, кодовий зріз Home popular lists: додано публічний `GET /api/lists/public/popular`; початковий варіант ранжував кастомні public lists за кількістю фільмів, потім `updatedAt` та `id`, а пізніший V30 hardening перевів популярність на активні лайки. Home підключено до нового feed. `HomeFeedIntegrationTests` після додавання movie до списку і `npx tsc --noEmit` пройшли; GitHub не оновлювався.
+- [x] 18.10.2026, кодовий зріз Community hub: додано двомовний маршрут `/community`, API `GET /api/users/hq` із серверною пагінацією активних HQ-користувачів і блок популярних рецензентів; Header містить посилання на hub та explicit loading/error/retry/empty states. `npx tsc --noEmit`, Maven compile, Docker API/web rebuild, runtime endpoint і health `UP` пройшли; GitHub не оновлювався.
+- [x] 18.10.2026, Community directory: додано публічний пагінований `GET /api/users/directory` для всіх активних користувачів, Community отримав навігацію сторінками та оновлені UK/EN labels. `npx tsc --noEmit`, Maven compile, Docker rebuild, runtime перевірка (**347 users / 29 pages**) і health `UP` пройшли; GitHub не оновлювався.
+- [x] 18.10.2026, Community directory search: додано пошук лише за username/display name з reset пагінації; runtime підтвердив `347` усіх користувачів і `1` результат для `Anton`, без email у public query/response. TypeScript, Maven compile, Docker rebuild, health `UP` і runtime logs без `ERROR/Exception` пройшли; GitHub не оновлювався.
+- [x] 18.10.2026, кодовий зріз account social links: додано V28 `user_social_links`, захищені `GET/PUT /api/profile/me/social-links`, UK/EN редагування website/Instagram/TikTok/Letterboxd у власному профілі та public-profile display без email/службових полів. `PublicProfileIntegrationTests#exposesOnlyPublicProfileDataAndVisibleActivity`, Flyway validated **28 migrations**, TypeScript, Maven compile, Docker rebuild і health `UP` пройшли; GitHub не оновлювався.
+- [x] 18.10.2026, актуалізація після V28: `verify-er-schema.ps1` підтвердив **34 таблиці / 49 foreign-key relationships**, а `verify-backup-restore.ps1` — **146|347|28** (movies|users|Flyway migrations). `ER_DIAGRAM.md`, `PROJECT_MAP.md` і `$expectedTables` у schema verifier тепер містять `user_social_links`; GitHub не оновлювався.
+- [x] 18.10.2026, виправлено OpenAPI runtime: springdoc **2.6.0** був несумісний із Spring Boot 4 і давав `NoSuchMethodError` на `/v3/api-docs`; `pom.xml` оновлено до springdoc **3.0.1**. Maven package, Docker API rebuild, API health `UP` і `/v3/api-docs` пройшли: **147 operations / 120 paths**, social-links routes присутні; GitHub не оновлювався.
+- [x] 18.10.2026, account social-links UX hardening: після Retry дані знову заповнюють поля форми, назви платформ локалізовані UK/EN і inputs мають пов'язані labels; бекенд приймає лише підтримані `website/instagram/tiktok/letterboxd`. `npx tsc --noEmit`, Vite build (**150 modules**), Maven compile, Docker API/web rebuild, API health `UP` і web `/uk/profile` **200** пройшли; GitHub не оновлювався.
+- [x] 18.10.2026, API smoke cleanup: `verify-api.ps1` тепер видаляє обох disposable-користувачів через реальний `DELETE /api/profile/me` після завершення сценарію; повторний core flow пройшов, включно з OpenAPI **147 operations**, social links і cleanup `204 + 204`. Локальна БД більше не забруднюється новими verify-користувачами.
+- [x] 18.10.2026, Home journal slice: головна підтягує до трьох останніх статей через локалізований Journal API, показує category/title/excerpt, веде на `/journal/:slug` і має empty state та посилання на весь журнал. `npx tsc --noEmit`, Vite build (**150 modules**), Docker web rebuild, `/api/journal/articles?language=uk|en` і web `/uk/home` пройшли; GitHub не оновлювався.
+- [x] 18.10.2026, Home journal contract guard: `verify-api.ps1` тепер перевіряє public Journal response (`200` і `content`) перед core flow; повторний запуск пройшов і завершив cleanup disposable users.
+
+Останнє оновлення: **18.10.2026**. Вихідна точка Git: `bf6507f`; зафіксовані зрізи охоплюють auth, каталог, профілі, списки, соціальні модулі, журнал, адмінку, rate limit/cache, health/metrics/backup, V22 індекси/N+1 (`965a610`), browser security headers/accessibility (`377cef1`), social/XSS/SQLi smoke (`e6532a0`), локальний load smoke (`8540405`), SSE reconnect (`66e2250`), backend security smoke (`e62a56`), admin browser smoke (`d7fdc99`), keyboard smoke (`0425783`), non-root API/розширений accessibility audit (`7b65a95`), production Compose overlay/secure profile (`22cc44a`), WCAG axe audit (`414234c`) і контрольований TMDB sync (`b6d5de2`). Поточні зрізи додають owner-delete кастомних списків, стабільну moderation queue, server-side пагінацію всіх великих admin collections, повноцінну пагінацію приватних повідомлень, профілів/user lists, social network/activity, відгуків на сторінці фільму, public-list likes/feed navigation і guest public-list access. Поточний повний Maven suite на реальній MySQL: **68 tests, 0 failures, 0 errors, 0 skipped** у 36 test classes. Останній headed Chrome admin suite: **12 passed (34.1s)**; security і load smoke також повторно пройдені. GitHub у цьому зрізі не оновлювався.
+
+## Оновлення 18.10.2026 — актуальна повна frontend-регресія після enum localization
+
+## Оновлення 18.10.2026 — contract і concurrent-write smoke
+
+- [x] verify-contracts.ps1 пройшов public/protected/authenticated/admin authorization matrix, profile/password, messages, newsletter, notifications, watched/watchlist/favorites, ratings, follows, reviews, comments і likes; cleanup disposable user виконано.
+- [x] verify-http-concurrency.ps1 пройшов паралельні list item/reorder/system-list/rating/review/comment/preferences/read-all/follow/like writes: review повернув очікувані 200,409, інші перевірені idempotent flows зберегли коректний стан і не створили дублікати.
+- [x] Обидва smoke-и завершилися з exit code 0; GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — ER/schema і Redis cache gates (до V28)
+
+- [x] verify-er-schema.ps1 підтвердив Compose MySQL schema на попередньому зрізі: **33 таблиці, 48 foreign-key relationships**.
+- [x] verify-cache.ps1 підтвердив Redis cache hit/miss для movie details: key TTL **599 секунд**, miss delta **1**, hit delta **3**; cleanup/runtime завершилися без помилок.
+
+## Оновлення 18.10.2026 — backup/restore release drill
+
+- [x] verify-backup-restore.ps1 створив dump із Compose MySQL, відновив його у тимчасову БД і підтвердив counts **128 movies / 248 users / 27 Flyway migrations**; тимчасова БД і dump прибрані після перевірки.
+- [~] verify-production-config.ps1 не запускався на реальному production env: локальний `.env.production` відсутній за призначенням. Приклад із секретами не підставлявся, тому VPS/HTTPS launch не заявляється.
+
+## Оновлення 18.10.2026 — auth recovery і core API regression
+
+- [x] verify-password-reset.ps1 підтвердив generic forgot-password response, доставку через Mailpit, локалізоване посилання `/uk/reset-password`, одноразовий token, revocation старої сесії та login з новим паролем.
+- [x] verify-api.ps1 повторно пройшов core HTTP flow: CSRF/validation/not-found contracts, public privacy, auth/refresh replay revocation, profile/social/notifications/messages/lists, watched/rating/review/comment/like CRUD, duplicate review `409`, збереження rating після видалення review і cleanup.
+
+## Оновлення 18.10.2026 — diploma video preparation
+
+- [x] Додано DIPLOMA_VIDEO_SCRIPT.md: storyboard на 7–9 хвилин, таймкоди для UK/EN UI, catalog, auth, lists, social, admin, security/quality evidence, architecture і чесні limitations.
+- [~] На момент початкового запису фактичний screen recording ще не виконано; цей historical note закрито новішим headed WebM evidence нижче.
+- [x] З живого headed Web runtime знято 6 public frames (UK home, EN home, catalog, film details, journal, help) у 1280×720; додано autoplay slideshow `artifacts/diploma-video/index.html`.
+- [~] Початкова FFmpeg/MediaRecorder спроба була невдалою; пізніший recorder fix створив валідний WebM, зафіксований у новішому записі нижче.
+
+- [x] Після Docker Web rebuild видимий Google Chrome пройшов **15 тестів, 12 admin fixture tests skipped, 0 failures за 58.4s**; accessibility/WCAG, core, localization, retry, profile/lists, guards, security, social і SSE flows — green.
+- [x] API/Web runtime після rebuild без `ERROR`, `Exception` або `connect() failed`; GitHub не оновлювався.
+
+- [x] Окремий visible admin suite після rebuild підтвердив **12/12 за 34.1s**; усі fixture cleanup hooks завершилися, GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — фінальна перевірка notification/admin slice
+
+## Оновлення 18.10.2026 — dynamic enum fallbacks у UK/EN UI
+
+- [x] Додано локалізацію відомих ролей користувачів (`ADMIN`/`USER`) в адмінці, типів сповіщень із безпечним fallback для невідомих значень і типів активності публічного профілю; невідомі activity entries тепер не зникають мовчки.
+- [x] `tsc --noEmit`, Vite production build і visible Chrome `dynamic-localization.spec.ts` — **1 passed (3.4s)**. GitHub не оновлювався.
+
+- [x] Видимий Google Chrome `verify-admin-browser.ps1 -Headed` завершив усі **12/12 тестів за 34.0s**; процес завершено з exit code 0.
+- [x] Повний Maven/Surefire suite на Compose MySQL: **60 tests, 0 failures, 0 errors, 0 skipped** у 33 XML reports; Flyway підтвердив актуальну schema version 27.
+- [x] Тимчасових `*-current.log` у корені не було; Compose API/Web/DB/Redis/Mailpit працюють, за останні 10 секунд у API/Web logs немає `ERROR`, `Exception` або `connect() failed`; `git diff --check` не виявив whitespace-помилок. GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — loading/mutation states у власних списках
+
+- [x] `UserLists` тепер очищає stale items під час зміни списку, показує окремий loading state для items і блокує паралельні remove/reorder mutations через спільний lock; порожній список залишається локалізованим UK/EN empty state.
+- [x] Видимий Chrome `list-owner-flow.spec.ts` із навмисною затримкою API підтвердив loading → empty state і завершив browser → API → MySQL create/delete flow: **1 passed (4.7s)**. Актуальний парний запуск `list-owner-flow` + `profile-flow` після Docker Web rebuild: **2 passed (6.9s)**.
+- [x] `tsc --noEmit`, Vite build, Docker Web rebuild і свіжий API/Web log scan пройшли; runtime errors не знайдені. Попередній assertion із неправильною назвою тексту empty state не зараховано й виправлено до успішного повтору. GitHub не оновлювався.
+- [x] Після перевірки знайдено 35 старих disposable `security…@example.invalid` fixtures від попередніх security smoke; видалено лише цей точний тестовий namespace, повторний SQL count — **0**.
+
+## Оновлення 18.10.2026 — retry для public journal/person screens
+
+- [x] `Journal`, `JournalArticle` і `Person` тепер мають локалізовану кнопку retry після невдалого public read; повторне завантаження очищає stale data й зберігає current-route guard.
+- [x] Видимий Chrome `journal-retry.spec.ts` навмисно повернув HTTP 500 на першому journal request і підтвердив error → retry → успішний public load: **1 passed (2.9s)**. Accessibility/WCAG suite після Docker Web rebuild: **5 passed (23.2s)**.
+- [x] `tsc --noEmit`, Vite build і Docker Web rebuild пройшли. Запуск accessibility з кореневого каталогу не зараховано через неправильний Playwright context; повтор із frontend-каталогу був успішним. GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — розширений production-like load matrix
+
+- [x] `verify-load.ps1 -Requests 200 -MaxSeconds 10` розширено з 5 до 8 endpoint-груп: catalog, detail, search, genres, public lists, journal, archive і health. Compose API повернув **200/200 HTTP 200 за 0.62s**.
+- [x] Це локальний Compose evidence для public/read-heavy навантаження; production VPS load і зовнішній HTTPS launch залишаються окремими відкритими вимогами. GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — production HTTPS handoff artifact
+
+- [x] Додано `Caddyfile.example`: canonical hostname, automatic HTTPS через Caddy, zstd/gzip і reverse proxy лише до loopback `127.0.0.1:8088`; `DEPLOYMENT.md` тепер містить copy/validate/reload commands.
+- [x] Production Compose shape перевірено read-only API, `COOKIE_SECURE=true`, приватними DB/Redis/API ports і loopback web binding **127.0.0.1:8088**. У середовищі немає Caddy binary, тому фактична TLS certificate issuance/VPS launch не заявляється. GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — clean Java diagnostics check
+
+- [x] `mvnw.cmd -DskipTests -Dmaven.compiler.showWarnings=true -Dmaven.compiler.showDeprecation=true clean compile` перекомпілював **241 Java source files** і завершився `BUILD SUCCESS` без javac warnings/deprecation output. Це підтверджує чистий compiler pass; IDE-specific Problems window окремо не підміняється цим результатом.
+
+## Оновлення 18.10.2026 — контроль Figma access
+
+- [x] Обов'язковий `figma-design-to-code` `get_design_context` повторно перевірив file `orb73jiLJnIsZNCRtJsWgS`, node `0:1`: Figma повернула `don't have edit access` (debug UUID `ace43c6c-85d2-4227-9b0c-b3f6c8208f75`). Неперевірені tokens/assets/screenshots не використовувалися; blocker зафіксовано у `FIGMA_HANDOFF.md`.
+
+## Оновлення 18.10.2026 — повна frontend headed regression
+
+- [x] Повний Playwright suite у видимому Google Chrome після актуальних frontend-змін: **15 passed, 12 skipped, 0 failed (58.4s)**. Успішно пройшли accessibility/WCAG, core, dynamic localization, journal retry, list-owner, profile, public guards, security, social і SSE flows; admin fixture tests skipped без admin env і запускаються окремо через `verify-admin-browser.ps1 -Headed`. GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — повторний security/load smoke
+
+- [x] `verify-load.ps1 -Requests 200 -MaxSeconds 10` пройшов через Compose API: **200/200 HTTP 200 за 0.68s** на 5 public endpoint-групах.
+- [x] `verify-security.ps1` повторно пройшов: **12/12** SQLi/XSS payload-комбінацій на 3 public query endpoints, guest guards — `401`, public health — `200`, non-admin — **14 read + 34 write маршрутів із 403**, login без CSRF header — `403`; тестовий користувач очищений з MySQL.
+- [x] Після smoke API залишився працездатним; цей зріз не є production load/VPS evidence. GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — локалізація динамічних жанрів
+
+- [x] Додано спільний UK/EN `localizeGenreName` для API-жанрів у каталозі, MovieDetails і фільмографії персоналії; невідомі майбутні назви мають безпечний fallback.
+- [x] `tsc --noEmit`, Vite build і Docker Web rebuild пройшли. Видимий Chrome `dynamic-localization.spec.ts` після готовності API підтвердив українські назви (`Action` → `Бойовик`) та англійські назви на `/en/films`: **1 passed (3.3s)**. Перший запуск не зараховано через транзитний restart API (`connection refused`).
+
+## Оновлення 18.10.2026 — empty state власних списків профілю
+
+- [x] Власний профіль тепер показує локалізований `noLists`, якщо API повертає порожній список кастомних списків, замість порожнього `<ul>` без пояснення.
+- [x] `tsc --noEmit`, Vite/Docker Web build і видимий `profile-flow.spec.ts` пройшли: **1 passed (7.9s)**; flow перевірив власну й публічну колекції та mobile overflow.
+
+## Оновлення 18.10.2026 — локалізоване форматування дат
+
+- [x] Додано спільний `formatDateTime` з `uk-UA`/`en-US` для повідомлень, admin audit logs і admin conversations; fallback повертає вихідне значення для невалідної дати.
+- [x] `tsc --noEmit`, Vite/Docker Web build пройшли; після rebuild видимий admin Chrome suite підтвердив **12 passed (36.9s)**, включно з messages, notifications, audit і conversations.
+
+## Оновлення 18.10.2026 — auth mobile overflow і journal category parity
+
+- [x] Journal list і JournalArticle тепер використовують спільний локалізатор категорій для UK/EN; невідомі майбутні категорії мають fallback.
+- [x] Accessibility suite спочатку виявив реальний `/en/login` overflow **7px** на 320px. Додано `box-sizing` для auth inputs і mobile-safe правила для Login/Register card; після Docker rebuild повторний headed suite — **5 passed (27.1s)**.
+- [x] `tsc --noEmit` і Vite build пройшли; GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — локалізовані admin audit labels
+
+- [x] Внутрішні audit action/target enum-и (`COMMENT_HIDDEN`, `LIST_PUBLISHED`, `JOURNAL_ARTICLE_CREATED` тощо) тепер мають UK/EN labels у `AdminAuditLogs`; невідомі майбутні значення безпечно показуються як fallback.
+- [x] `tsc --noEmit`, Vite/Docker Web build і headed admin suite пройшли: **12 passed (39.7s)**; GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — повтор після перерваного headed запуску
+
+- [x] Після перевірки відсутності активного Playwright-процесу `scripts/verify-admin-browser.ps1 -Headed` повторно виконано у видимому Google Chrome: **12 passed (33.6s)**, exit code 0.
+- [x] Повний Maven/Surefire suite на Compose MySQL повторно завершився: **60 tests, 0 failures, 0 errors, 0 skipped** у 33 класах. Тимчасових `*-current.log` у корені не було; API health і свіжі API/Web logs перевіряються наступним фінальним hygiene-кроком. GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — стабільна пагінація відгуків фільму
+
+## Оновлення 18.10.2026 — фінальна повторна перевірка admin/notification зрізу
+
+- [x] Після перевірки відсутності залишених Playwright/PowerShell процесів видимий `scripts/verify-admin-browser.ps1 -Headed` у Google Chrome завершився **12 passed (35.1s)**; усі 12 сценаріїв пройшли.
+- [x] Повторний `mvnw.cmd -q test` із `DB_URL=jdbc:mysql://127.0.0.1:3307/rewind` і паролем Compose завершився успішно. Surefire: **60 tests, 0 failures, 0 errors, 0 skipped** у 33 класах. Перший запуск без `DB_PASSWORD` не зараховано: Flyway коректно відхилив порожній пароль (`using password: NO`).
+- [x] Фінальна перевірка підтвердила API health `UP`, відсутність `ERROR|Exception|connect() failed` у свіжих API/Web логах, відсутність тимчасових `*-current.log` і чистий `git diff --check`; GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — повторний повний HTTP contract smoke
+
+- [x] `scripts/verify-contracts.ps1 -BaseUrl http://127.0.0.1:8081` повторно пройшов усі public reads (`200`), guest protected reads (`401`), authenticated reads/writes (`200/204`), non-admin admin routes (`403`), review/comment/social/newsletter/message flows і cleanup; завершення — `public/protected contract smoke passed`.
+- [x] Контрактний smoke виконувався через Compose API до реальної MySQL/Redis інфраструктури; GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — розширений public accessibility audit
+
+- [x] `accessibility.spec.ts` розширено з 7 до 16 public/service/auth маршрутів: додано contact, rules, privacy, film-data, delete-account, login, register і forgot-password.
+- [x] Виявлено й виправлено реальні дефекти `/en/forgot-password` (9px overflow на 320px) та auth landmark; Login/Register/ForgotPassword тепер мають `<main>`, ForgotPassword має mobile-safe card sizing. TypeScript, Vite/Docker Web build пройшли.
+- [x] Повторний headed Chrome suite: **5 passed (23.6s)** — named controls/mobile overflow, security headers, keyboard, landmarks/image alternatives і WCAG 2 A/AA axe. GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — повний frontend headed regression після auth/a11y fix
+
+- [x] Повний Playwright suite у видимому Google Chrome завершився **13 passed, 12 skipped, 0 failed (50.0s)**. Успішні core, custom-list owner, profile, public guards, security, social і SSE reconnect flows; 12 admin tests залишаються окремим fixture-script і вже пройшли **12/12**.
+- [x] Після regression API health `UP`; GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — release hygiene і Java compile
+
+- [x] `.\mvnw.cmd -q -DskipTests compile` завершився успішно без Java compile/null diagnostic errors.
+- [x] Secret-shaped scan tracked text не виявив реальних committed credentials: знайдені лише CI/test fixtures, environment variable names і документаційні placeholders; значення ключів не виводилися.
+- [x] `verify-production-config.ps1` без параметра чесно відмовився через відсутній реальний `.env.production`; production secrets не створювалися й VPS launch не заявляється.
+
+## Оновлення 18.10.2026 — локалізація notification enum labels
+
+- [x] `AdminNotifications` більше не показує сирі `FOLLOW` та `REVIEW_LIKED`: create/filter selects і список сповіщень використовують локалізовані UK/EN labels; невідомий тип має безпечний fallback.
+- [x] `tsc --noEmit`, Vite build і Docker Web rebuild пройшли. Headed admin smoke завершився успішно (`.last-run.json`: `passed`, failed tests — 0); backend не змінювався, тому чинний MySQL suite залишається **60 tests, 0 failures, 0 errors, 0 skipped** у 33 classes. Compose health `UP`, runtime logs без `ERROR`/`Exception`; GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — API contract, concurrency і load smoke
+
+- [x] `verify-contracts.ps1` пройшов public/protected контрактний сценарій: public reads — 200, guest protected reads — 401, authenticated reads/writes і cleanup — очікувані 200/204, non-admin admin reads — 403.
+- [x] `verify-http-concurrency.ps1` пройшов конкурентні list writes/reorder, system-list writes, ratings, reviews (`200,409`), comments, notification preferences/read-all, follows і likes; перевірені відсутність дублів та коректний read-after-write.
+- [x] `verify-load.ps1` виправлено для Windows PowerShell 5.1 через явне завантаження `System.Net.Http`; smoke пройшов для 20 паралельних запитів до 5 endpoint-груп: **20/20 HTTP 200 за 0.19s**. Security smoke також пройшов; GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — production config і backup/restore
+
+- [x] `verify-production-config.ps1` пройшов на одноразовому локальному test fixture: HTTPS base URL, сильні різні secrets, приватні DB/Redis/API, `read_only` API, secure cookies і loopback web port підтверджені. Реальний `.env.production` не створювався.
+- [x] `verify-backup-restore.ps1` пройшов через Compose: dump відновлено в тимчасову БД, контрольні кількості **119 movies / 250 users / 27 Flyway migrations** збіглися; основна БД не змінювалася, тимчасову БД очищено. GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — локалізація статичних UI labels
+
+- [x] Admin article language labels (`Українська`/`Англійська`), TMDB import hint і public profile `HQ` badge тепер беруться з UK/EN dictionary; raw UI labels прибрано з цих компонентів.
+- [x] `tsc --noEmit` і Vite build пройшли; видимий headed admin Chrome smoke — **12 passed (34.1s)**. Відомі backend category values локалізовані; довільні редакційні category values, які вводить адміністратор, залишаються content-level відкритим питанням.
+
+## Оновлення 18.10.2026 — fallback локалізація audit enum values
+
+- [x] Невідомі `audit action/target` більше не показуються сирими технічними кодами: додано двомовні UK/EN fallback labels у `localizeAuditAction` і `localizeAuditTarget`. Це зберігає читабельність адмін-аудиту навіть після появи нового backend enum.
+- [x] `npx tsc --noEmit`, Vite production build і headed Chrome admin regression пройшли: **12/12 за 32.6s**, включно з fixture невідомих action/target. Docker Web перебудовано, disposable admin fixture очищено; GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — локалізація категорії News/Новини
+
+- [x] Додано UK/EN mapping для фактичних category values `Новини` і `News`, які використовуються seed/integration fixtures; public Journal і JournalArticle тепер не показують ці raw category values у підтриманих мовах.
+- [x] Після Docker Web rebuild headed accessibility/public regression пройшов **5/5 за 25.7s**, включно з mobile/keyboard/landmark/WCAG перевірками; `tsc --noEmit` і Vite build також пройшли.
+
+## Оновлення 18.10.2026 — responsive regression 320/768px
+
+- [x] Public accessibility smoke розширено з 320px до двох viewport — **320px і 768px** — для 15 public routes; перевіряються названі controls та горизонтальний overflow.
+- [x] Повторний headed Chrome WCAG suite: **5/5 за 27.9s**. Глибший Figma-based visual comparison і desktop-wide matrix залишаються окремими відкритими вимогами.
+
+- [x] Responsive smoke додатково розширено до **320px, 768px і 1280px**; 15 public routes проходять названі controls та overflow checks. Headed WCAG suite після зміни — **5/5 за 30.0s**. Exact Figma visual parity все ще окремо відкрита.
+
+## Оновлення 18.10.2026 — повний backend regression після frontend slices
+
+- [x] `./mvnw.cmd -q test` з локальним MySQL credentials завершився; Surefire reports підтверджують **60 тестів, 0 failures, 0 errors, 0 skipped у 33 класах**, Flyway schema version `27`.
+- [x] API health — `UP`; поточний `docker compose logs --since 15m api` не містить `ERROR`, `Exception` або `connect() failed`. Старі записи SSE timeout поза current window не трактуються як актуальний дефект.
+
+## Оновлення 18.10.2026 — розширений XSS/SQLi browser matrix
+
+- [x] `security.spec.ts` зберігає перевірку React escaping для review/comment payloads і тепер перевіряє 4 query payloads (`OR 1=1`, `DROP TABLE`, `UNION`, `<script>`) на `/uk/films`; для кожного підтверджено HTTP 200, відсутність alert і відсутність UI error.
+- [x] Видимий headed Chrome security test завершився **1 passed (5.2s)**. Під час діагностики відокремлено очікуваний confirm видалення огляду від XSS dialog; production code не змінювався. GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — dev dependency audit і Vite security upgrade
+
+- [x] Звичайний `npm audit fix` оновив безпечні transitive dependencies; direct Vite 5 залишав `esbuild` advisory. Vite оновлено до **7.3.7**, `@vitejs/plugin-react` — до **5.2.0**; `npm audit --offline --audit-level=high` повернув **found 0 vulnerabilities**.
+- [x] `tsc --noEmit`, Vite build і Docker Web rebuild пройшли; після rebuild headed security — **1 passed (7.7s)**, admin smoke — **12 passed (35.9s)**. Online `npm audit` quick endpoint у registry повертає 400 через retired/invalid-tree endpoint, тому результат підтверджено offline audit і чистим `npm install` audit; GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — локалізація категорій журналу
+
+- [x] `Journal` тепер мапить відомі backend category values (`Awards`, `Community`, `Interviews`, `Platform`, `Podcasts`, `Newsletter`) через UK/EN dictionary; невідомі майбутні значення мають raw fallback, тому дані не губляться.
+- [x] Після Docker Web rebuild headed public accessibility suite — **5 passed (17.5s)**; перевірено `/uk/journal` разом із landmarks, keyboard, mobile overflow, security headers і WCAG axe. GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — дипломні та demo materials
+
+- [x] Додано `DIPLOMA_MATERIALS.md`: опис продукту й архітектури, 7–9-хвилинний demo script, структура презентації, таблиця фактичних evidence та чесні pre-launch limitations.
+
+## Оновлення 18.10.2026 — backend API payload matrix
+
+- [x] `verify-security.ps1` розширено 4 payloads (`OR 1=1`, `DROP TABLE`, `UNION`, `<script>`) на 3 public query endpoints: movie search, journal category і public list tag — **12/12 HTTP 200** без SQL/server error.
+- [x] У тому самому запуску збережено guest `401`, non-admin admin matrix `403` і login без CSRF `403`; завершення — `Backend security smoke passed`. GitHub не оновлювався.
+- [x] README і PLAN посилаються на матеріали; документ прямо відокремлює локально перевірений Compose runtime від ще не виконаного VPS/HTTPS launch і Figma parity. GitHub не оновлювався.
+
+- [x] Backend `ReviewRepository` і `ReviewService` тепер повертають відгуки зі стабільним сортуванням `createdAt DESC, id DESC`; це усуває пропуски й повтори між сторінками при однакових timestamp.
+- [x] `ReviewPaginationIntegrationTests` створює 11 відгуків з однаковим `created_at` і перевіряє сторінки 10 + 1, 11 унікальних ID та спадання ID на першій сторінці. SQL підтвердив server-side `LIMIT/OFFSET` і обидва tie-break поля.
+- [x] `MovieDetails` читає `Page`-метадані, показує локалізовані controls попередньої/наступної сторінки, має fallback після спорожнілої непершої сторінки та stale-response guard для зміни сторінок.
+- [x] `tsc --noEmit`, Vite build і Docker API/Web rebuild пройшли. Видимий Chrome `core-flow.spec.ts` завершився **1 passed**; повний Maven/Surefire suite — **59 tests, 0 failures, 0 errors, 0 skipped** у 33 test classes. Compose runtime без `ERROR`/`Exception`; GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — profile browser flow
+
+- [x] Додано `profile-flow.spec.ts`: реєстрація й login, додавання фільму до `watched` через MovieDetails, перевірка власного `/uk/profile` та `GET /api/profile/me`, logout і перевірка публічного `/uk/users/{id}` без авторизації.
+- [x] Видимий headed Chrome завершив сценарій як **1 passed (7.4s)**; перевірено статистику `Переглянуто: 1`, назву фільму в own/public collection, API profile contract, cleanup disposable акаунта через `DELETE /api/profile/me` і відсутність горизонтального overflow на 320px для own/public профілю. Для довгих username `PublicProfile` додано безпечний перенос. `tsc --noEmit`, Vite і Docker Web rebuild пройшли. GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — гостьовий доступ до public lists
+
+- [x] Виявлено й виправлено контрактний дефект: `GET /api/users/{id}/lists` був public у контролері, але не був у Spring Security allowlist і повертав 401 гостю. Додано явний `permitAll` matcher без зміни приватних list mutation endpoints.
+- [x] `PublicProfileIntegrationTests` тепер має **3 tests, 0 failures/errors**, включно з MockMvc guest HTTP-перевіркою; SQL підтвердив повернення публічного списку. Після API/Web rebuild headed `profile-flow.spec.ts` пройшов **1 passed (7.6s)** і перевірив, що гостьовий профіль не показує помилку списків, а показує коректний empty state. Повний Maven/Surefire suite після security fix — **60 tests, 0 failures, 0 errors, 0 skipped** у 33 classes. GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — повний browser regression і moderation fixture
+
+- [x] Повний headed Playwright набір завершився **13 passed, 12 skipped, 0 failed (49.2s)**; skipped — admin tests, які запускаються окремим disposable-fixture скриптом.
+- [x] `scripts/verify-admin-browser.ps1 -Headed` повторно завершився **12 passed (35.0s)**. Останній сценарій moderation тепер використовує штатний пошук queue за унікальним review/comment marker, тому не залежить від порядку накопичених локальних записів; product-сортування не змінювалося. GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — завершення notification slice
+
+- [x] Видимий Google Chrome запуск `scripts/verify-admin-browser.ps1 -Headed` завершився з результатом **12 passed (41.6s)**. Усі admin pagination/mutation сценарії, повідомлення на 320px і notifications на mobile з 21 записом (20 + 1) пройшли; перерваний попередній запуск не зараховано.
+- [x] Повний `mvnw.cmd -q test` на MySQL `127.0.0.1:3307` завершився успішно. Surefire: **56 tests, 0 failures, 0 errors, 0 skipped**, 32 test classes; Flyway підтвердив актуальну схему V27.
+- [x] Для notification slice зафіксовано server tie-break `createdAt DESC, id DESC`, loading/error/retry/empty, mutation locks, optimistic preference rollback, локалізовані дати, SSE refresh і правильний accessibility label `notificationsPagination`.
+- [x] Фінальна hygiene-перевірка: `git diff --check` і перевірка API/container logs виконані; GitHub не оновлювався. Тимчасовий `notification-test-current.log` прибрано після перевірки шляху; `full-test-current.log` відсутній.
+
+## Оновлення 18.10.2026 — профілі та user lists
+
+- [x] Додано server-paged `GET /api/lists/my/page` і `GET /api/users/{id}/lists` із розміром до 50 та стабільним сортуванням `updatedAt DESC, id DESC`; старий `GET /api/lists/my` збережено для сумісності.
+- [x] Для paged list-запитів прибрано collection fetch, який застосовував `LIMIT/OFFSET` у пам’яті; `MovieList.tags` використовує batch fetch. SQL у targeted test підтвердив справжні `LIMIT/OFFSET` без Hibernate warning про in-memory pagination.
+- [x] `PublicProfile`, `Profile`, `UserLists`, `PublicList` і `PublicLists` отримали окремі loading/error/retry/empty стани, stale-response guards для fetch-ів, retry-кнопки та locks для profile/list mutations. Власні й public lists мають UI-пагінацію; success status не конфліктує з фоновим loading status.
+- [x] `PublicProfileIntegrationTests`: **2 tests, 0 failures/errors**, включно з 13 public lists → сторінки 12 + 1 без повторів і власною server pagination. Frontend `tsc --noEmit` і Vite build пройшли. На перебудованому Compose API/web visible Chrome owner-list flow: **1 passed (6.2s)**.
+- [x] Повний backend suite після зрізу: Surefire **57 tests, 0 failures, 0 errors, 0 skipped** у 32 test classes. GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — social pagination
+
+- [x] Followers/following repository-запити тепер мають детерміноване сортування `createdAt DESC, id DESC`; `FollowIntegrationTests` створює 17 зв'язків і перевіряє сторінки 8 + 8 + 1 без повторів.
+- [x] `social.api.ts` приймає номер сторінки для followers, following та activity. `PublicProfile` показує loading/error/retry/empty стани, окремі controls для кожного списку, server pagination і локалізовані accessibility labels українською та англійською.
+- [x] `tsc --noEmit`, Vite build і Docker API/Web build пройшли. Видимий Chrome `social-flow.spec.ts` завершився **1 passed**; повний backend suite — **58 tests, 0 failures, 0 errors, 0 skipped** у 32 test classes.
+- [x] `git diff --check` не виявив помилок форматування; Compose runtime без `ERROR`/`Exception`; GitHub не оновлювався.
+
+## Оновлення 18.10.2026 — MovieDetails UX
+
+- [x] `MovieDetails` розділяє loading/error для основного запиту деталей і показує retry без маскування помилки; після невдалого запиту stale movie data не залишається доступною для дій.
+- [x] Watchlist/favorites/watched, rating, add-to-list, create/update/delete review та delete rating тепер мають mutation lock; повторний клік не запускає паралельні записи, а progress labels локалізовані UK/EN.
+- [x] `tsc --noEmit`, Vite build і Docker Web build пройшли. Видимий Chrome `core-flow.spec.ts` пройшов **1 тест**: watchlist → rating → create/edit/delete review → delete rating → remove watchlist.
+- [x] Backend-код не змінювався; останній повний MySQL suite залишається **58 tests, 0 failures, 0 errors, 0 skipped**. GitHub не оновлювався.
+
+## 1. Основа проєкту й дизайн — в роботі
+
+### Оновлення 17.10.2026 — відновлення діагностики та пагінація модерації
+
+- [x] Власник отримав `DELETE /api/lists/{listId}` лише для свого `CUSTOM` списку. Системні списки захищені, чужий list ID не дає доступу. Інтеграційний MySQL-тест підтвердив каскадне очищення `list_items`, `list_tags`, `user_activities`: **1 passed**.
+- [x] `/uk|en/lists` має локалізовані confirmation/progress/success/error стани видалення, блокує повторну mutation і скасовує застосування застарілої items-відповіді. TypeScript, Vite та Docker API/Web build пройшли.
+- [x] Новий headed Playwright flow у Chrome пройшов: реєстрація → список із тегами → UI DELETE → API read-after-delete → cleanup акаунта, **1 passed (6.8s)**. Перша спроба коректно виявила завеликий тестовий username; fixture скорочено відповідно до контракту. SQL після успішного запуску: 0 fixture users/lists/items, у runtime API немає ERROR.
+- [x] Admin users винесено в окремий компонент із реальною `page` query, пошуком зі скиданням на першу сторінку, stale-response guard, loading/error/retry/empty станами й блокуванням повторних mutation. MySQL-тест створює 55 збігів і перевіряє 20/20/15 без дублів; **1 passed**.
+- [x] Admin lists винесено в окремий сторінковий компонент. Після видалення єдиного списку на сторінці 2 UI автоматично повертається на сторінку 1 і перечитує серверні дані; visibility/delete збереглися. Headed Chrome admin suite: **4 passed (15.7s)**, включно з users 50→1, filter/mutation, lists 50→1→delete→50, moderation і попереднім admin flow.
+- [x] Admin comments і reviews винесено з монолітного dashboard: кожна секція самостійно завантажує сторінки по 50, має all/visible/hidden filter, loading/error/retry/empty, stale-response guard і mutation lock. Після приховування останнього рядка відфільтрованої сторінки 2 інтерфейс переходить на сторінку 1 і перечитує count. `ReviewRepository` і `ReviewCommentRepository` використовують `EntityGraph`, тому DTO не створюють N+1 запити на user/movie/review.
+- [x] `AdminContentPaginationIntegrationTests` на реальній MySQL створює 51 review та 51 hidden comment і підтверджує дві сторінки без пропусків/повторів і правильний visibility filter. Headed Chrome admin suite перевіряє comments 50→1→hidden filter та reviews visible 50→1→hide→50; **5 passed (28.7s)**. Прямі mutation у тесті тепер явно оновлюють CSRF через `/api/auth/csrf`, що прибрало випадковий 403 зі старого сценарію.
+- [x] Admin movies винесено з `AdminDashboard` в окремий компонент із серверною пагінацією по 50, loading/error/retry/empty станами, захистом від stale response та поверненням 50→1→delete→50. CRUD, TMDB sync/import/discovery і quality report збережені. Показану JDT null-warning у `AdminContentPaginationIntegrationTests` усунуто явною lambda. `tsc`, Vite, targeted MySQL test і Docker Web build пройшли; headed Chrome suite: **6 passed (24.8s)**, API log без ERROR, SQL fixture counts — 0.
+- [x] Admin conversations винесено в `AdminConversations`: API-клієнт передає `page`, UI показує по 50 записів, має loading/error/retry/empty стани та повертається з другої сторінки після видалення її єдиного діалогу. TypeScript/Vite і Docker Web build пройшли; headed Chrome suite: **7 passed (24.8s)**.
+- [x] Admin notifications винесено в `AdminNotifications`: create/read/unread/delete, фільтри й bulk actions збережено; запити передають `page`, зміна applied-фільтра скидає сторінку, loading/error/retry/empty та last-page fallback покриті browser test. Запити репозиторію отримали стабільний tie-breaker `createdAt DESC, id DESC`; targeted MySQL test створює 51 notification з однаковим часом і підтверджує дві сторінки без втрат. Headed Chrome suite: **8 passed (28.7s)**.
+- [x] Admin journal editor винесено в `AdminArticles`: сторінки по 50, loading/error/retry/empty стани, повернення на першу сторінку після створення та наявні newsletter-дії збережені. Репозиторій сортує `updatedAt DESC, id DESC`; MySQL-тест із 51 статтею з однаковим timestamp підтвердив дві стабільні сторінки. TypeScript/Vite і Docker API/Web build пройшли; повний headed Google Chrome suite: **9 passed (33.1s)**.
+- [x] Admin audit logs винесено в `AdminAuditLogs`: сторінки по 50, loading/error/retry/empty стани та browser pagination. Репозиторій сортує `createdAt DESC, id DESC`; MySQL-тест із 51 audit records з однаковим timestamp підтвердив стабільні сторінки. Docker API/Web build пройшов; повний headed Google Chrome suite: **10 passed (37.2s)**.
+- [x] Приватні повідомлення тепер мають окремі loading/error/retry/empty стани для діалогів і повідомлень, пагінацію діалогів та старіших повідомлень, блокування повторної відправки й адаптивну сітку. Backend сортує conversations/messages із `id DESC` tie-breaker, а bulk update позначає прочитаними всі повідомлення замість перших 100. MySQL test перевірив 101 запис на трьох сторінках і нуль непрочитаних; headed Chrome на 320px пройшов 50→1 без overflow. Повний suite: **11 passed (37.1s)**.
+- [x] Попередній повний backend suite після owner list delete, moderation/admin pagination та message hardening: **55 tests, 0 failures/errors/skipped** у 32 test classes на Compose MySQL 8.4. Поточний контрольний suite оновлено до 56 тестів у записі вище.
+- [x] Активна ціль зафіксована в `PLAN.md`. Користувач дозволив обґрунтовані доповнення ТЗ; деталі фіксуються в `PROJECT_REQUIREMENTS.md`.
+- [x] Прибрано приховування null analysis: локальний VS Code режим `automatic`. Стан Problems не виміряний; не заявляємо, що всі IDE-попередження виправлені.
+- [x] Новий тест на 260 коментарях зі спільним timestamp провалився на старому коді: повтори, пропуски та відсутність записів за межею 250. Новий SQL repository об'єднує огляди/коментарі до сортування й пагінації. Offset обчислюється як long; перевірено навіть `page=Integer.MAX_VALUE`. Фільтри та count використовують однакові умови, параметри передаються через JDBC binding. Flush перед JDBC read забезпечує видимість попередніх JPA-модифікацій у тій самій транзакції.
+- [x] Прибрано невикористані запити старої черги з ReviewRepository/ReviewCommentRepository. `AdminModerationQueueIntegrationTests`: **5 passed**, включно з hide/bulk hide та фільтрами. Це цільовий запуск після зміни; попередній повний suite 47/0 не видається за повторну перевірку поточного коду.
+- [x] Чергу винесено з AdminDashboard у `AdminModerationQueue.tsx`: сторінки, count, retry, окремі loading/error/empty стани, блокування повторних mutation-запитів, очищення вибору, fallback після спустошення останньої сторінки. Перевірено React hooks/dependencies, функціональне оновлення стану, cleanup запитів і доступні назви елементів.
+- [x] `tsc --noEmit`, Vite build, Docker API/Web build пройшли. `verify-admin-browser.ps1 -Headed` → **2 passed (12.7s)** у Chrome: новий сценарій 51 comments → page 2 → HTTP 503/retry → bulk hide → previous page → bulk hide/empty; попередній admin flow теж пройшов. Переглянуто screenshot останньої сторінки. Це функціональна перевірка, не Figma parity.
+- [x] Початкова невдала browser-спроба виявила застарілий CSRF header у новому тесті; helper тепер читає поточну cookie перед кожною mutation. Cleanup перевірений у SQL: 0 fixture users, movies і comments; runtime API не записав ERROR на успішному запуску.
+- [x] `FIGMA_HANDOFF.md` узгоджено з останніми доказами: плагін підключений, попередні запити повертали помилку прав, старі таблиці UI позначені історичними. Нова спроба доступу ще не виконувалася. GitHub не оновлювали.
+- [x] Усі великі admin collections мають чесну серверну пагінацію та browser regression: users, lists, comments, reviews, movies, conversations, notifications, journal articles і audit logs.
+
+- [x] Ініціалізовано Git та збережено перевірені зрізи в окремих комітах.
+- [x] Ключ TMDB і пароль БД прибрано з коду; локальні секрети створює `scripts/init-dev-env.ps1`, `.env` ігнорується Git.
+- [ ] Ротувати раніше записаний TMDB-ключ у кабінеті провайдера; перевірити всі інші розкриті секрети.
+- [ ] Отримати Editor-доступ до трьох Figma-файлів і через плагін зафіксувати затверджені desktop/mobile фрейми, стани, токени та assets. 17.10 Chrome підтвердив доступ до перегляду: Design-файл має названі Films/Lists/Search/review фрейми, обидві FigJam-дошки показують view/comment; `get_design_context` і `get_screenshot` через плагін усе ще повертають `don't have edit access`.
+- [ ] Зіставити фрейми зі сторінками/компонентами, FigJam — з навігацією, ТЗ — з поведінкою.
+
+## 2. Стабільний локальний продукт — в роботі
+
+- [x] Flyway V5 обмежує один активний огляд на користувача й фільм; видалення огляду залишає оцінку.
+- [x] Виправлено чотири DELETE 500 через транзакційні межі; HTTP перевірка повернула 204.
+- [x] Публічний профіль більше не розкриває email; публічні деталі фільму доступні гостю.
+- [x] Публічний профіль показує сторінкові watched, watchlist і favorites через `GET /api/users/{id}/collections/{collection}`. Маршрут відкритий тільки на читання; HTTP-сценарій підтверджує його доступність без cookie.
+- [x] Обмежено page/size для основних endpoint'ів; додано базові відповіді 400/404/409.
+- [x] `CoreFilmFlowIntegrationTests`, `PasswordResetIntegrationTests` і `RefreshSessionIntegrationTests` пройшли з реальною MySQL; `scripts/verify-api.ps1` перевірив cookie/CSRF, уніфікований контракт помилок для validation `400` і not-found `404`, список, оцінку, створення/редагування/видалення огляду та refresh-сесію. На тому зрізі повний Maven suite підтвердив **47 тестів без failures/errors**; актуальний результат 51/0 наведено вище. Відтворення виконується командами з `RUN_LOCAL.md`; `target/` є ігнорованим build output.
+- [~] Додано базовий GitHub Actions CI для MySQL, Maven, TypeScript і Vite; локально виконано ті самі збірки. Поточний remote-run падає до тестів через відсутній executable-прапорець `mvnw` (`Permission denied`, exit 126); прапорець виправлено локально й буде відправлено лише разом із наступним великим стабільним зрізом.
+- [x] Dev-профіль на чистій MySQL сам застосував міграції й імпортував 50 фільмів.
+- [x] Перевірити локальний `docker compose up -d` після переходу на ECR-образи та Maven mirror. MySQL і Redis healthy, API `/actuator/health` повернув 200, Web повернув 200; API image зібрався з `BUILD SUCCESS`. Повністю чисту машину та production-параметри ще не заявляємо.
+- [x] Автоматизовано Playwright-сценарій реєстрація → вхід → каталог → watchlist → оцінка → огляд → редагування → видалення огляду → видалення оцінки → прибирання з watchlist. Запуск проти Compose у Chrome: `1 passed (6.1s)`. Для Compose додано CORS origin `http://127.0.0.1:3000`.
+- [x] Browser smoke на свіжому API/Vite пройшов реєстрацію → вхід → захищений профіль → `DELETE /api/profile/me` з правильним паролем: API повернув 204, logout завершився, а тестовий користувач зник із MySQL. Для браузерної локальної розробки Vite тепер змінює origin проксі, а Spring дозволяє `localhost/127.0.0.1:5174`.
+- [~] Завершити єдиний формат помилок і контрактні тести для всіх API, включно з конкурентними записами.
+- [x] `ApiErrorResponse` уніфікує 400/404/409/422/500-подібні помилки з timestamp, status, error, message і path; додані validation/body/status handlers та `ApiExceptionHandlerTests`.
+- [x] Конкурентне створення двох оглядів для одного user/movie перевірено на реальному MySQL: атомарний `INSERT IGNORE` і унікальний constraint залишають один запис, а програвший запит отримує стабільний `409 CONFLICT` без duplicate-key warning у runtime log. `CoreFilmFlowIntegrationTests` проходить targeted запуском.
+- [x] Конкурентний rating upsert переведено на атомарний MySQL `ON DUPLICATE KEY UPDATE`: два одночасні записи залишають одну оцінку без duplicate-key 500; persistence context очищається після native mutation. `CoreFilmFlowIntegrationTests` перевіряє обидва значення й кількість записів.
+- [x] Конкурентні додавання елементів кастомних і системних списків, follow і review-like переведено на ідемпотентні MySQL `INSERT IGNORE`; паралельні запити залишають по одному зв’язку й не створюють duplicate-key 500. Повний Maven suite після цього зрізу: **47 тестів без failures/errors**.
+- [x] Розширено `scripts/verify-contracts.ps1`: через реальний HTTP перевіряються public catalog/journal/lists/tags/reviews/popular reviewers, guest `401`, authenticated profile/social/newsletter/notifications/messages, notification preferences/read-all, watched/watchlist/favorites і rating create/delete, non-admin `403` для admin routes, follow і review-like lifecycle, public collections та lifecycle review/comment. Запуск проти Compose API `127.0.0.1:8081` пройшов без помилок.
+- [x] Contract smoke доповнено профілем і приватними повідомленнями: `PATCH /profile/me`, `PUT /profile/me/password` → повторний login, `POST /conversations`, send/history/read message; сценарій пройшов через Compose API й cleanup видалив fixture.
+- [x] Розширено `scripts/verify-http-concurrency.ps1`: на актуальному Compose API паралельні custom/system list, reorder, rating, comment, follow, like і notification writes пройшли без duplicate-key 500; review race стабільно дав `200 + 409`, reorder зберіг валідний порядок, два коментарі збереглися окремо. Тестовий акаунт і створені дані очищаються через `DELETE /profile/me` та comment/review cleanup.
+- [x] Notification preferences hardening: перше конкурентне створення більше не робить snapshot 500 під MySQL REPEATABLE READ — repository використовує атомарний `INSERT IGNORE`, а після нього `PESSIMISTIC_READ` current read. Compose concurrency smoke пройшов два перші PUT по `200`, contract smoke пройшов preferences/read-all, повний Maven suite після зміни — **47 тестів, 0 failures/errors**.
+- [x] Виправлено стабільність moderation queue: комбіноване сортування має tie-breaker `createdAt → type → id`, а `AdminModerationQueueIntegrationTests` шукає власні записи за унікальним маркером і більше не залежить від накопичених локальних smoke-даних. Повний Maven suite після виправлення: **47 тестів, 0 failures/errors**; перебудований Docker API і повторні contract/concurrency smoke пройшли.
+- [x] Прибрано startup debug `Users count` із `RewindApplication`, зупинено застарілі локальні API-процеси на 8080/8082 і видалено їхні логи; після cleanup `mvnw -DskipTests compile` пройшов, `target/` видалено як generated output.
+
+## 3. Спільний інтерфейс і акаунт — в роботі
+
+- [x] Підключено маршрути профілю й списків; форми профілю приведено до контракту `/api/profile`.
+- [x] Flyway V6, одноразове email-відновлення, форма нового пароля, локальний Mailpit; SMTP→лист→reset→новий login пройшов на чистій БД.
+- [ ] Перенести **затверджені** Figma логотип, палітру, шрифти, UI-компоненти, header/footer і responsive стани.
+- [x] Маршрути `/uk/...` і `/en/...`, перемикач мов і перенаправлення старих URL включно з reset token. У Chrome перевірено `/films` → `/uk/films`, англійський каталог/деталку та старе reset-посилання.
+- [ ] Довести переклад усіх поточних і майбутніх екранів, повідомлень API та метаданих фільмів. Основні наявні маршрути вже мають словники UI; дані каталогу поки однією мовою.
+- [~] Прибрано два невикористані frontend-дублікати, порожні root/resource lockfiles без npm-проєкту та статичний TMDB disclaimer в About переведено через UK/EN dictionary. Journal, public list/profile/person/article отримали окремі loading/error/empty стани й захист від stale race condition при зміні фільтрів, мови та маршрутів. `npm ci`, `npx tsc --noEmit`, Vite production build і локальний Playwright public-route smoke (1 passed) пройшли; локальні `node_modules/dist/playwright-report/test-results` після перевірки видалені.
+- [~] Перевірити весь інтерфейс на 320px, 768px і desktop без горизонтального переповнення та з клавіатурою. Playwright підтверджує 15 public routes на 320px і 768px без overflow, названі controls, landmarks та WCAG; повний desktop-wide/Figma visual audit ще відкритий. Виправлено overflow home movie rows і footer nav.
+- [x] Browser smoke перевірив `/uk/help` і `/en/help`: локалізація, footer-посилання та `document.documentElement.lang` працюють; desktop `/uk/films` не має горизонтального переповнення.
+- [x] Повторний browser smoke через свіжий API `8093` і Vite `5174`: `/uk/journal` коректно показує empty state без статей, `/uk/films` показує 12 карток без overflow, `/en/help` має English heading/footer і `lang=en`. Старий процес на `8080` окремо повертав 403 для journal, тому локальний запуск має використовувати API з поточного коду.
+- [x] Повний Playwright regression після TMDB/admin змін: **11 passed, 1 skipped** за 29.4 секунди; accessibility, axe, keyboard, security, core film, social і SSE сценарії пройшли.
+- [x] Browser guard перевірено для `/uk/admin` без входу: маршрут перенаправляє на `/uk/home`, приватний dashboard не показується.
+- [x] Playwright suite має 3 passing сценарії: core film flow, двомовні public routes на 320px без overflow і guest redirects для profile/lists/messages/notifications/admin.
+- [x] Після додавання адмінського TMDB-контролю повторно пройшов guest guard Playwright: `/uk/admin` і приватні маршрути не відкриваються без входу (`1 passed`).
+- [x] Dev proxy для Vite налаштовано як об'єкт із `changeOrigin: true`; CORS backend доповнено портом 5174. Це усунуло помилковий `Не вдалося зареєструватися` у браузері, коли прямий API і PowerShell уже працювали.
+- [x] Compose-first локальний запуск уніфіковано: `verify-api.ps1`, `verify-password-reset.ps1` і Vite proxy за замовчуванням використовують API `127.0.0.1:8081`; прямий Spring/Vite target можна змінити через параметр або `VITE_API_PROXY_TARGET`. `verify-api.ps1` після цього пройшов повний HTTP flow.
+- [x] Auth переведено з `localStorage` на access cookie (15 хв) і відкличний refresh cookie (30 днів), HttpOnly, SameSite=Lax, Secure на HTTPS. Flyway V8 зберігає лише хеші refresh token; додано ротацію, виявлення повторного використання, CSRF-захист, logout і відкликання refresh-сесій після зміни/відновлення пароля. Maven/MySQL інтеграційні тести й HTTP-сценарії пройшли; в Chrome перевірено login → profile/lists → reload → logout.
+- [x] Власний профіль показує та оновлює URL аватара разом із display name; клієнт перевіряє повний `http/https` URL. TypeScript і production build пройшли.
+- [x] Власний профіль отримує й показує лічильники ratings, reviews, watched, watchlist і favorites без окремого API-запиту. MySQL-тест перевіряє ненульові значення, HTTP-скрипт — початковий контракт нового акаунта.
+- [x] Власний профіль показує сторінкові історії watched, watchlist і favorites через захищені серверні колекції. HTTP-сценарій перевіряє, що доданий фільм з'являється у watchlist до видалення.
+- [x] Власний профіль показує повні сторінкові історії оцінок і оглядів через `GET /api/profile/me/ratings` та `GET /api/profile/me/reviews`; MySQL-тест і HTTP-сценарій перевіряють обидва потоки.
+- [ ] Завершити UX профілю та загальні стани помилок.
+
+- [x] Profile newsletter settings тепер мають окремі loading/error/retry стани; помилка початкового GET більше не маскується unchecked checkbox. Після Docker Web rebuild headed owner profile + custom-list flow — **2/2 за 8.5s**, `tsc --noEmit` і Vite build пройшли.
+
+- [x] Повний headed Playwright suite після profile UX зміни: **15 passed, 12 skipped, 0 failed за 1.0m**; admin fixture suite вже окремо підтверджено **12/12** на тому самому web bundle.
+
+## Оновлення 18.10.2026 — legacy root navigation
+
+- [x] Legacy `/` redirect виправлено з каталогу `/uk/films` на локалізовану головну `/uk/home`; додано headed browser regression. Public guards після Docker Web rebuild — **3/3 за 6.7s**, TypeScript і Vite build пройшли.
+
+## 4. Фільми й пошук — в роботі
+
+- [x] Каталог і пошук показують дані API, картки ведуть на детальну сторінку; публічну сторінку фільму перевірено у Chrome через Vite→API→MySQL.
+- [x] Додано локалізовану головну `/uk/home` і `/en/home`: популярні та нові фільми, публічні списки, останні видимі огляди, loading/error/empty стани та переходи до каталогу. `HomeFeedIntegrationTests` перевірив MySQL-дані, `verify-api.ps1` — HTTP-контракти, Chrome — відображення через Vite→API→MySQL.
+- [x] Базова деталка показує постер, опис, жанри, тривалість, режисерів, акторів і лише наявні зовнішні рейтинги.
+- [x] Каталог підключено до `/api/movies/search`: жанр, рік, мінімальний рейтинг, сортування, пошук і пагінація; GET `/api/genres` відкритий для гостей. MySQL-тест перевірив фільтри/сортування/сторінки, HTTP-сценарій — контракт, Chrome — сторінку 2/5, комбінований фільтр та збереження URL при зміні мови.
+- [~] Повні empty/loading/error стани всіх екранів та звірка каталогу/головної з Figma. Каталог, головна, журнал, публічні списки/профілі, персоналії та статті тепер мають явні стани; адмінські й частина auth/social edge cases ще потребують аудиту.
+- [x] Сторінки акторів і режисерів доступні гостю через `/api/actors/{id}` та `/api/directors/{id}` і маршрути `/people/actor|director/{id}`; сторінка фільму посилається на персоналії, фільмографія має сортування. MySQL-тест та HTTP-сценарій пройшли для обох типів.
+- [x] Деталка показує трейлер лише коли URL існує, інакше явний порожній стан; схожі фільми беруться зі `similar_movies`, а за відсутності зв’язків — до шести стрічок зі спільними жанрами. MySQL-тест і HTTP-перевірка підтвердили fallback без повернення самого фільму.
+- [x] У UI персоналій додано фільтр жанру, що передає `genreId` до публічного API; TypeScript і production build пройшли.
+- [x] Додано admin-only `POST /api/admin/movies/{movieId}/tmdb-sync`: явний `tmdbId`, V23 зовнішні ID для movies/genres/actors/directors, оновлення metadata/trailer, credits, TMDB external rating і similar links лише з локального каталогу. Додано `POST /api/admin/movies/tmdb-sync/batch` максимум на 20 пар із незалежними `SYNCED`/`FAILED` результатами та продовженням після помилки. Додано `POST /api/admin/movies/tmdb-import` для ідемпотентного імпорту до 20 нових TMDB ID із окремою транзакцією на елемент і `POST /api/admin/movies/tmdb-import/discover` для сторінкового імпорту discovery з фільтрами року, жанру та рейтингу. API вимкнено за замовчуванням без `TMDB_ENABLED=true` та `TMDB_API_KEY`.
+- [x] Додано admin-only `GET /api/admin/movies/tmdb-quality` і UI-звіт із одним агрегованим SQL: покриття TMDB, повністю заповнені записи, відсутні poster/backdrop/plot/runtime/trailer/TMDB rating. `TmdbSyncIntegrationTests` перевіряє дельти контрольного набору, TypeScript/Vite, Docker rebuild, security smoke і admin browser regression пройшли.
+- [x] Адмінський React-екран показує для кожного фільму поле `TMDB ID`, кнопку синхронізації, стан виконання та результат із кількістю оновлених жанрів/акторів/режисерів. Клієнтний контракт додано в `admin.api.ts`; TypeScript і Vite production build пройшли.
+- [x] Адмінський React-екран додатково імпортує до 20 TMDB ID одним запитом і запускає discovery-імпорт із фільтрами page/year/genre/minRating/limit; результат показує кількість успішних і невдалих записів. Українські та англійські підписи додані, Vite build і Playwright regression пройшли.
+- [x] Admin movie response тепер повертає збережений `tmdbId`, а адмінський UI відновлює його після reload і після sync. `AdminMovieIntegrationTests`, TypeScript і Vite production build пройшли.
+- [x] Черга модерації тепер має серверну дію `POST /api/admin/moderation/{type}/{id}/hide`: вона перевикористовує audit-aware review/comment moderation services, прибирає елемент із черги й має кнопку в адмінському UI. `AdminModerationQueueIntegrationTests` (2 тести), TypeScript і Vite production build пройшли.
+- [x] Повний `./mvnw -q test` після moderation queue actions пройшов без failures/errors; результати перевіряються повторним запуском, а згенеровані логи не накопичуються в репозиторії.
+- [x] `TmdbSyncIntegrationTests` пройшов на MySQL; Docker API перебудований із V23, Flyway провалідовав 23 міграції, health повернув 200. Після зміни повний browser набір має **11 passed, 1 skipped**, включно з axe-аудитом.
+- [x] Після V23/non-root rebuild `scripts/verify-load.ps1 -Requests 200` повернув 200/2xx за 0.54 секунди, а `scripts/verify-security.ps1` знову підтвердив public 200, guest/protected 401 і login без CSRF 403. Це локальний smoke, не production load test.
+- [x] Міграція V7 виправила 14 подвійно закодованих імен у старій локальній БД; браузер показав `Zoe Saldaña`, `HEX(name)` і контрольний SQL підтвердили результат.
+- [~] Один фільм, імпорт нових записів, discovery і batch до 20 записів синхронізуються контрольовано та перевірені `TmdbSyncIntegrationTests` на MySQL; залишаються повний scheduler/crawl каталогу, дедуплікація/якість усіх записів і ротація старого ключа провайдера.
+
+- [x] Додано opt-in `TmdbCatalogScheduler`: oldest-first `updatedAt,id` crawl уже TMDB-linked movies, batch cap 20, per-movie failure isolation, `TMDB_SCHEDULER_*` конфігурація; scheduler вимкнений за замовчуванням і потребує `TMDB_ENABLED=true`. Scheduler test — **1/1**, повний Maven/MySQL suite після зміни — **61/0/0/0 у 34 класах**, `TmdbSyncIntegrationTests` — **6/6**.
+- [x] `DEPLOYMENT.md` доповнено безпечним production runbook для scheduler: ротація TMDB key перед увімкненням, bounded batch/interval, окремий opt-in прапорець і контрольований first run.
+- [ ] Звірити desktop/mobile UI з Figma. IMDb показувати лише після дозволеного джерела й доступу.
+
+## 5. Особисті дії та списки — в роботі
+
+- [x] У деталці доступні watched, watchlist, favorites, оцінка, створення огляду й додавання в список; API основного сценарію перевірено.
+- [x] Сторінка власних списків створює список, показує елементи й видаляє фільм.
+- [x] Додано `/api/movies/{id}/reviews/me`, редагування власного огляду й рейтингу в UI; Chrome підтвердив зміну тексту та оцінки 5→4 і синхронізацію з рейтингом фільму. MySQL-тест і HTTP-сценарій перевіряють оновлення та видалення огляду.
+- [x] Коментарі під оглядами: Flyway V9, публічне читання, створення після входу, редагування автором, видалення автором або ADMIN; UI завантажує їх лише після натискання. `ReviewCommentIntegrationTests` перевірив права автора/іншого користувача/ADMIN у MySQL; `verify-api.ps1` пройшов create → list → edit → delete через HTTP. У Chrome створено й відредаговано коментар; рядок із HTML відображено текстом, без виконання.
+- [x] Playwright перевірив кнопки видалення огляду й оцінки та стан watchlist у браузері; модерація коментарів уже підключена в адмінці.
+- [x] Гість може відкрити публічний кастомний список за `/api/lists/public/{id}` і маршрутом `/uk|en/lists/public/{id}`; список показує автора і фільми у збереженому порядку, а картки головної ведуть на нього. MySQL-тест та HTTP-сценарій перевірили дані й доступ.
+- [x] Власні кастомні списки у UI підтримують назву, опис, приватність/публічність та перестановку фільмів кнопками; системні списки лишаються без цих змін. MySQL-тест перевірив update і порядок, HTTP-сценарій пройшов create → 2 items → reorder → update → public detail.
+- [x] Додано публічні профілі `/api/users/{id}/profile` і `/uk|en/users/{id}`: видимі огляди, публічні кастомні списки та лічильники активності без email, ролі чи службових полів. Інтеграційний тест і HTTP-сценарій перевірили контракт; головна веде на профіль автора.
+- [x] Власний профіль має аватар, статистику, повну сторінкову історію системних колекцій, оцінок і оглядів; MySQL/HTTP-перевірки покривають контракти.
+- [x] Додано автоматизований core browser flow; залишилися окремі browser-регресії соціальних/адмінських сторінок і візуальний UX профілю після доступу до Figma.
+
+- [x] Адмінка отримала сторінковий список списків з кількістю елементів і дію приховування/публікації; дія записується в audit log. `AdminListIntegrationTests` пройшов на MySQL, frontend production build пройшов.
+- [x] Повний `mvnw -q test` після admin lists пройшов: усі 25 тестів/сценаріїв без failures/errors; frontend production build також пройшов.
+- [x] Повторний повний `mvnw -q test` після admin movie CRUD також пройшов: 25 тестів, 0 failures/errors.
+- [x] Фінальний повний `mvnw -q test` після admin communications, error contract та user search/blocking пройшов: 28 тестів, 0 failures/errors.
+- [x] Повний `mvnw -q test` після account deletion пройшов: 29 тестів, 0 failures/errors.
+- [x] Повний `mvnw -q test` після moderation queue пройшов: 30 тестів, 0 failures/errors; TypeScript і production build також пройшли.
+- [x] Повний `mvnw -q test` після site settings/V21 пройшов: 31 тест, 0 failures/errors; TypeScript і production build також пройшли.
+- [x] Повторний повний `mvnw -q test` після journal category filter пройшов: 31 тест, 0 failures/errors.
+- [x] Прибрано показані IDE-попередження: зайві імпорти видалено, deprecated Redis serializer замінено, JPA stream null-analysis локально анотовано; compile, 31 backend тест і frontend build пройшли.
+- [x] Повторний повний `mvnw -q test` після dev CORS-зміни пройшов: 29 тестів, 0 failures/errors; frontend `npm run build` також пройшов.
+
+## 6. Спільнота — в роботі
+
+- [x] Підписки: Flyway V10 створює `follows` з FK, індексами, унікальністю пари та забороною self-follow. Є follow/unfollow/status, публічні пагіновані списки followers/following і UI у профілі. MySQL-тест перевіряє права та інваріанти; HTTP-сценарій перевіряє читання списку без cookie.
+- [x] Вподобання оглядів: Flyway V11, унікальність user/review, public count, auth status і захищені like/unlike. Лічильник є під кожним оглядом, а авторизований користувач бачить like/unlike. MySQL-тест, HTTP-сценарій, TypeScript і production build пройшли; браузерна перевірка ще входить до загального набору регресії.
+- [x] Активність: Flyway V12 зберігає події follow, rating, review і створення публічного списку. Доступні публічна сторінкова історія профілю та авторизована стрічка підписок; публічний профіль показує останні події. MySQL-тест, HTTP-сценарій, TypeScript і production build пройшли.
+- [x] Популярні рецензенти: `GET /api/users/popular-reviewers` агрегує likes лише видимих оглядів одним group-by запитом, після чого завантажує публічні профілі пакетно. Блок головної веде на профілі; MySQL-тест, HTTP-сценарій, TypeScript і production build пройшли.
+- [x] Теги й добірки: Flyway V13 додає нормалізовані `tags`/`list_tags`; автор списку задає до 10 тегів, публічний API фільтрує списки за slug і повертає популярні теги. Хмара тегів на головній веде до локалізованого каталогу добірок. MySQL-тест, HTTP-сценарій, TypeScript і production build пройшли.
+- [x] Збережені сповіщення для нових підписок і вподобань оглядів: Flyway V14, сторінкова видача, unread/read/read-all, захист за recipient, локалізований `/notifications` і SSE-потік з повторним підключенням у клієнті. MySQL-тести та `scripts/verify-api.ps1` перевірили FOLLOW/read-all і REVIEW_LIKED; Playwright-мок розриву EventSource перевірив close → retry → нове підключення.
+- [x] Налаштування отримання: Flyway V15 і захищений GET/PUT для follow/review-like подій; генерація подій перевіряє прапорці, UI дозволяє їх змінити. HTTP та MySQL перевірили значення за замовчуванням і оновлення.
+- [x] Приватні direct-діалоги: Flyway V16, унікальна пара користувачів, сторінкові повідомлення, mark-read і серверна перевірка членства; `/uk|en/messages` та перехід із публічного профілю. MySQL-тест і `scripts/verify-api.ps1` перевірили створення, повторне відкриття, надсилання, читання та відмову outsider.
+- [x] HQ-бейдж без платежів: Flyway V17 додає `users.is_hq`, admin-only `PUT /api/admin/users/{id}/hq`, публічний профіль повертає лише прапорець, UI показує HQ badge. MySQL-тест перевіряє призначення й відкликання; endpoint захищений загальним `/api/admin/**` правилом.
+- [x] Browser social smoke: два реальні акаунти проходять register/login → follow public profile → unfollow state → logout/login → отримання follow notification. Повний Playwright набір після цього зрізу проходить **8/8**.
+
+## 7. Журнал і службові розділи — в роботі
+
+- [x] V25 додає приватну підписку користувача на newsletter (`GET/PUT /api/newsletter/subscription`) без повернення email у відповіді. Адмінський endpoint queue-ить опубліковану статтю категорії Newsletter/Бюлетень; одержувачами стають лише активні opt-in користувачі, дія пишеться в audit log.
+- [x] V26/V27 додають `newsletter_deliveries`: унікальність article/user, PENDING/SENDING/SENT/FAILED/CANCELLED, обмежені повторні спроби й scheduled worker. `GET /api/admin/journal/articles/{id}/newsletter` повертає агреговані статуси, повторне queue-натискання ідемпотентне; admin UI має кнопку та лічильники queue/sent/failed.
+- [x] `NewsletterIntegrationTests` перевіряє opt-in/opt-out, доставку тільки підписаному користувачу, ідемпотентність повторного queue та `FAILED → retry → SENT`; Docker API застосував Flyway V27. `scripts/verify-api.ps1` доповнений HTTP-перевіркою стану підписки.
+- [x] Профіль React отримав двомовний перемикач newsletter, підключений до V25 API; TypeScript і production Vite build пройшли.
+
+- [x] V20: мовні статті журналу `uk/en`, публічні list/detail endpoint-и з fallback поведінкою через language, адмінське створення/редагування/публікація з аудитом, UI `/uk|en/journal` і базовий редактор у `/uk|en/admin`; `JournalArticleIntegrationTests` та frontend build пройдені.
+- [x] Журнал підтримує фільтр розділу через `GET /api/journal/articles?category=...`; UI має локалізований вибір Awards/Community/Interviews/Platform/Podcasts із тим самим language fallback. Інтеграційний тест перевіряє позитивний і порожній category result.
+- [x] Додано `GET /api/journal/articles/archive` з агрегацією опублікованих матеріалів за роком/місяцем; UI показує локалізований архів, а інтеграційний тест перевіряє кількість матеріалів.
+- [x] Архівні місяці стали навігацією: `GET /api/journal/articles?year=...&month=...` фільтрує публікації з мовним fallback, а UI має кнопку очищення фільтра; інтеграційний тест перевіряє поточний місяць.
+- [x] Повторний повний `mvnw -q test` після архіву пройшов: 31 тест, 0 failures/errors; frontend `tsc --noEmit` і production build також пройдені.
+- [x] Додано локалізовані службові маршрути `/help`, `/contact`, `/rules`, `/privacy`, `/film-data`, `/delete-account` і робочі footer-посилання; TypeScript та production build пройдені.
+- [x] V24 додає `journal_articles.audio_url`, адмінський URL аудіо, podcast-плеєр на сторінці статті та локалізовані Podcasts/Newsletter фільтри. Повний backend (`mvnw -q test`), `JournalArticleIntegrationTests`, TypeScript/Vite build і Docker API зі схемою Flyway 24 пройдені; відправку бюлетеня винесено в окремі V25–V27 зрізи.
+- [x] Допомога, контакти, правила, приватність і дані фільмів мають локалізовані службові маршрути та footer-посилання.
+- [x] Видалення акаунта стало реальним захищеним flow: DELETE `/api/profile/me` вимагає поточний пароль, відкликає refresh-сесії й каскадно видаляє дані; UI додає пароль, попередження та вихід. `AccountDeletionIntegrationTests` перевірив неправильний/правильний пароль і відсутність користувача, frontend build пройшов.
+- [x] Додано About/Credits, офіційний логотип TMDB і потрібне повідомлення про джерело; прибрано хибний підпис IMDb у футері. Точний дизайн ще залежить від Figma.
+
+## 8. Повна адмінка — в роботі
+
+- [x] V18: аудит адміністративних дій, dashboard із агрегованими лічильниками, керування HQ і базовий UI `/uk/admin` та `/en/admin`; `AdminAuditIntegrationTests`, backend compile і frontend build пройдені.
+- [x] V19: приховування коментарів із публічного API, адмінські list/hide/unhide/delete endpoints, аудит дій і UI модерації коментарів; `ReviewCommentIntegrationTests` та frontend build пройдені.
+- [x] Підключено наявну серверну модерацію оглядів до `/uk|en/admin`: сторінковий список, hide/unhide, reason і оновлення стану; frontend TypeScript і production build пройдені.
+- [x] Додано admin paged `GET /api/admin/movies` і список фільмів у dashboard; `AdminMovieIntegrationTests` та frontend build пройдені.
+- [x] Адмінський dashboard тепер створює, редагує та видаляє фільми через наявні API; форма має локалізовані підписи, URL-постер, дату, рейтинг і підтвердження видалення. `AdminMovieIntegrationTests` перевіряє create → update → delete, TypeScript і production build пройшли.
+- [x] Додано admin-only сторінковий огляд діалогів і сповіщень з агрегованою кількістю повідомлень, статусом прочитання та ID учасників; email і пароль не повертаються. `AdminCommunicationIntegrationTests` перевірив MySQL-запити, TypeScript і production build пройшли.
+- [x] Admin communications тепер мають `DELETE /api/admin/conversations/{id}` і `DELETE /api/admin/notifications/{id}` з ADMIN-захистом та audit log; dashboard має кнопки, а інтеграційний тест перевіряє каскадне видалення повідомлень.
+- [x] Повторний повний `mvnw -q test` після admin communication management пройшов: 31 тест, 0 failures/errors; frontend TypeScript і production build пройдені.
+- [x] Dashboard, користувачі/HQ, огляди й коментарі мають базові admin API/UI та аудит.
+- [x] Users у dashboard отримали пошук за username/email/display name і activate/deactivate з аудитом; `AdminAuditIntegrationTests` перевіряє обидва переходи, TypeScript і production build пройшли.
+- [x] Додано `GET /api/admin/moderation/queue`: об'єднує немодеровані огляди й коментарі в сторінкову чергу з типом, автором, текстом і часом; dashboard показує її окремим блоком. `AdminModerationQueueIntegrationTests` перевіряє обидва типи записів у MySQL.
+- [x] Додано Flyway V21 і admin-only `GET/PUT /api/admin/settings`: whitelist `site_name`, `default_locale`, `maintenance_mode`, `journal_enabled`, валідація значень і audit log; dashboard дозволяє змінювати їх. `AdminSettingsIntegrationTests` перевіряє MySQL update та відмову для невідомих/некоректних значень.
+- [x] `scripts/verify-admin-browser.ps1` готує disposable ADMIN fixture у dev MySQL і перевіряє browser flow: login → dashboard → user search → admin movie create → review → moderation queue hide → movie delete. Тест пройшов **1/1**; fixture видаляється після запуску.
+- [~] Розширити admin UI для списків, повідомлень і сповіщень до повного керування; кастомні списки мають видалення, сповіщення — create/read/unread/delete, server-side filters за типом/станом/отримувачем і bulk read/delete. Moderation queue тепер має type/search filters, selection і bulk hide; відкритими лишаються ширше покриття серверних прав та regression flows.
+- [x] Admin notifications отримали `POST /api/admin/notifications` для створення з перевіркою recipient/actor/review, `PATCH /api/admin/notifications/{id}/read|unread`, audit actions і локалізовані кнопки в dashboard. `AdminCommunicationIntegrationTests`, TypeScript/Vite, Docker API/Web і `verify-admin-browser.ps1` (створення notification у браузері) пройшли.
+- [x] Admin notifications отримали серверні фільтри `type/read/recipientId`, `PATCH /api/admin/notifications/read-all` і `DELETE /api/admin/notifications` з транзакційними bulk діями та audit metadata. Інтеграційний тест перевіряє фільтрацію, масове прочитання й видалення; TypeScript/Vite, Docker API/Web і `verify-admin-browser.ps1` пройшли. Код у `06407b6`.
+- [x] Admin lists отримали `DELETE /api/admin/lists/{id}` для кастомних списків із каскадним очищенням items/tags та audit log; системні списки видаляти заборонено. `AdminListIntegrationTests`, TypeScript і production build пройшли.
+- [x] Moderation queue отримала server-side `type/query` фільтри, пошук за текстом/username, UI-вибір елементів і `POST /api/admin/moderation/bulk-hide` з обмеженням до 50 елементів, reason і повторним використанням індивідуальних audit-aware moderation rules. `AdminModerationQueueIntegrationTests` додатково перевіряє hide коментаря, збереження reason/is_hidden і зникнення запису з queue. Повний backend після regression пройшов **43 тести, 0 failures/errors**, TypeScript/Vite, Docker API/Web і admin browser smoke пройшли. Код у `7d052c0`.
+- [x] Admin browser regression створює власний огляд через API, додає до нього коментар через UI, знаходить обидва елементи в черзі модерації, окремо приховує review і comment та перевіряє зникнення кожного з queue; після цього створений фільм видаляється разом із тестовими даними.
+- [~] Блокування, черга модерації, аудит дій і налаштування сайту вже мають серверні дії; authorization smoke тепер охоплює кожен mapping admin-контролерів, а відкритими лишаються ширші moderation regression flows.
+
+## 9. Якість і публічний реліз — в роботі
+
+- [x] Додано configurable auth rate limit для login/register/forgot-password/reset-password із 429 + `Retry-After`; unit test перевіряє квоту та розділення endpoint-ів.
+- [x] Додано optional Redis cache profile: compose піднімає Redis 7, API використовує Redis TTL 10 хв для гостьової деталки фільму й очищає кеш після admin update/delete; local tests працюють з `spring.cache.type=none`, compose config проходить.
+- [x] Додано Actuator health/metrics з публічним health і захищеними metrics та відтворювані `scripts/backup-dev.ps1`/`restore-dev.ps1`; runtime health повернув 200, metrics без auth — 401, backup перевірено через реальний MySQL контейнер із `mysqldump --single-transaction --no-tablespaces`, відновлення — у тимчасову БД із 30 таблицями та подальшим cleanup.
+- [x] Compose runtime перевірив Redis health (`redis-cli ping` → `PONG`) і запуск API з Redis service; `scripts/verify-cache.ps1` підтвердив гостьову деталку HTTP 200, Redis key `movieDetails::50`, TTL 599 секунд, `missDelta=1` і `hitDelta=3`. Додано no-arg конструктор `MovieCardResponse`, щоб Jackson Redis serializer коректно читав кешований `MovieDetailsResponse`; два послідовні запити й cache verifier тепер повертають 200.
+- [x] Перевірено індекси й N+1 для основних read paths: Flyway V22 додав складені індекси для lists/list_items/reviews/ratings/movie_actors; `@EntityGraph` і fetch-план для movie details завантажують пов'язані дані одним запитом. На реальному MySQL `EXPLAIN` вибрав `idx_reviews_movie_visible_created`, `idx_lists_public_type_updated`, `idx_list_items_list_position`, `idx_ratings_user_updated` і `idx_movie_actors_movie_cast`; чистий Compose застосував V22, API health 200, details 200, Redis cache і 3 Playwright сценарії пройшли.
+- [x] Додано browser security headers у Nginx (`CSP`, `nosniff`, `SAMEORIGIN`, `Referrer-Policy`, `Permissions-Policy`). Playwright accessibility smoke перевіряє 7 публічних маршрутів на named controls, один видимий `h1`, mobile overflow і keyboard focus; окремий тест перевіряє 3 основні public routes без positive tabindex.
+- [x] Розширено accessibility smoke на 7 public routes: landmarks `header/main/footer`, один `h1`, послідовність заголовків, alt для кожного зображення та href для кожного посилання. Після API rebuild повний набір пройшов **10 passed, 1 skipped**.
+- [x] Security browser smoke перевіряє React escaping для review і comment payload із `<img onerror>`, відсутність діалогу/XSS та SQL-подібний пошук каталогу без 500/alert. Admin browser smoke додатково перевіряє SQL-подібний пошук користувачів: API відповідає 200 і сторінка не падає. Цей зріз пройшов targeted security/admin тести; повний Playwright набір — **11 passed, 1 skipped**.
+- [x] Додано `scripts/verify-load.ps1`: 200 паралельних guest-запитів до каталогу, деталки фільму, жанрів і журналу/архіву на Compose повернули `200=200` за 2.61 секунди; це розширена smoke-перевірка локального runtime, не production load test.
+- [x] Додано `scripts/verify-security.ps1`: public catalog/health повертають 200, guest profile/admin і metrics — 401, звичайний авторизований користувач отримує 403 на кожному mapping admin-контролерів і write-операціях (users/HQ, movies/TMDB, reviews/comments, lists, moderation, notifications, conversations, journal/newsletter, settings), login без CSRF — 403. Це backend security smoke для локального runtime; повний penetration/load audit ще відкритий.
+- [x] API production-like image тепер працює від non-root `appuser` (uid/gid 10001). Compose rebuild підтвердив `id=appuser`, health 200, security smoke і Redis cache smoke; browser набір після rebuild — **10 passed, 1 skipped**.
+- [x] Додано `compose.production.yaml` і `.env.production.example`: окремі MySQL/Redis volumes без published database ports, non-root/read-only API, secure cookies, Redis, SMTP і production error policy. `docker compose ... config --quiet` пройшов, production API та web images зібрані успішно; стек навмисно не запускався з прикладовими секретами.
+- [x] Додано `DEPLOYMENT.md`, `scripts/verify-production-config.ps1`, `scripts/backup-production.sh` і `scripts/restore-production.sh`: runbook описує VPS/DNS/HTTPS reverse proxy, secrets, rollout/rollback і restore drill; validator на secure test env перевірив HTTPS, сильні secrets, приватні DB/Redis/API, read-only API та loopback web binding; POSIX scripts пройшли shell syntax check у Redis-контейнері.
+- [x] Посилено `scripts/verify-production-config.ps1` для opt-in TMDB scheduler: `TMDB_SCHEDULER_ENABLED=true` вимагає `TMDB_ENABLED=true`, активний TMDB вимагає непорожній неплейсхолдерний `TMDB_API_KEY`, а batch/interval мають безпечні межі. PowerShell parse check і `git diff --check` пройшли.
+- [x] Production Compose тепер явно передає всі `TMDB_SCHEDULER_*` змінні в API-контейнер; з безпечним test env `docker compose -f compose.production.yaml config --quiet` і `mvnw -DskipTests compile` пройшли.
+- [x] Security regression для `GET /api/users/{id}`: додано MockMvc-перевірку, що публічна відповідь містить лише public profile fields і не серіалізує email. `PublicProfileIntegrationTests` — **3/3**, `0` failures/errors/skipped; `git diff --check` чистий.
+- [x] Дипломний WebM запис завершено у headed Chrome: `artifacts/diploma-video/rewind-diploma-demo.webm`, **76,223 bytes**, EBML/WebM header verified; `node scripts/capture-diploma-video.mjs` успішно повторив capture, шість кадрів по 3.5 секунди збережені. Це локальний demo artifact, не production/Figma parity evidence.
+- [x] SSE hardening: async timeout для `/api/notifications/stream` більше не проходить через JSON error converter поверх `text/event-stream`, а committed SSE response не генерує вторинний access-denied error. API rebuild, headed SSE reconnect — **1/1 за 8.3s**, свіжі API logs clean, повний MySQL suite — **61/0/0/0 у 34 класах**.
+- [x] Виправлено stale-response race у `MovieDetails.loadMyReview`: старий GET `/reviews/me` більше не повертає видалений огляд у UI після delete. TypeScript/Vite/Docker Web build пройшли; security headed test — **3/3 послідовно**, повний headed suite після rebuild — **16 passed, 12 skipped, 0 failed за 1.1m**.
+- [x] Перевірено демо-дані: `seed_50_real.sql` залишається детермінованим локальним seed для 50 фільмів, `DevSeedConfig` запускає його лише для порожнього каталогу, а `tmdb_seed_50.py` проходить Python 3.11 `py_compile` і читає TMDB key тільки з environment. Постійні demo users не додаються навмисно; disposable API/browser fixtures створюються й очищаються скриптами.
+- [x] Повторно виконано початковий контрольний зріз: headed admin Chrome — **12/12 за 34.1s**, повний Maven/MySQL suite — **61 tests, 0 failures, 0 errors, 0 skipped у 34 reports**. GitHub не оновлювався.
+- [x] Повторно виконано `scripts/verify-security.ps1`: public/guest/auth status matrix, CSRF rejection, 12 SQLi/XSS payload requests і всі admin controller mappings пройшли з очікуваними `200/401/403` без помилок. Production security/load і VPS smoke залишаються окремими відкритими етапами.
+- [x] Повторно виконано `scripts/verify-load.ps1`: **20/20 HTTP requests** до 8 endpoint-груп повернули `200` за **0.16s**; це локальний smoke, не production capacity test.
+- [x] Production release-gate перевірено без розкриття секретів: `compose.production.yaml config --quiet` пройшов із безпечним audit env, overlay зберігає private DB/Redis/API, read-only API, secure cookies і loopback web port `127.0.0.1:8088`. Caddy не встановлений локально, тому його фактична syntax validation відкладена до VPS/container.
+- [x] Caddy handoff тепер перевірено контейнером `caddy:2-alpine`: `caddy validate --adapter caddyfile` повернув `Valid configuration` без format warning після вирівнювання Caddyfile. Фактична certificate issuance і VPS reverse-proxy smoke ще не виконані.
+- [x] Додано `scripts/verify-caddy.ps1`: він перевіряє наявність/завантажує `caddy:2-alpine`, монтує заданий Caddyfile read-only і запускає validation; актуальний запуск завершився `Valid configuration`.
+- [x] Звірено документацію з реальною Compose MySQL на момент попереднього аудиту: застосовані міграції **V1–V27**, схема має **33 таблиці**, а рядкові лічильники змінюються через fixtures. Застарілі твердження про Flyway 4/V1–V21 у `PROJECT_MAP.md` виправлені; після V28 актуальні числа наведені у верхньому записі.
+- [x] Повторно перевірено точний Figma Design node `orb73jiLJnIsZNCRtJsWgS`, `node-id=0:1`, через `get_design_context` із design-to-code skill: MCP повернув **don't have edit access**. Точна desktop/mobile parity тому залишається зовнішнім blocker, а не невиконаним локальним кодом.
+- [x] Після останнього documentation/release audit повторно пройшли frontend `npm run build` (**Vite 7.3.7, 148 modules**) і `npx tsc --noEmit`; дипломний artifact лишається доступним: WebM **76,223 bytes**, 6 PNG frames.
+- [x] Повторно виконано `verify-contracts.ps1` і `verify-http-concurrency.ps1`: public/protected/authenticated contract smoke пройшов по всіх перевірених шляхах; concurrency writes для lists/reorder/system lists/ratings/reviews/comments/preferences/notifications/follows/likes завершилися очікуваними `200/204/409` і post-read checks.
+- [x] Додано глобальний React `AppErrorBoundary`: неочікувана render-помилка показує локалізований UK/EN fallback із `role=alert` і reload action замість порожнього екрану. `tsc --noEmit`, Vite build (**149 modules**) і headed public guards — **3/3** пройшли.
+- [x] CI hardening: `.github/workflows/ci.yml` тепер обмежує `GITHUB_TOKEN` правом `contents: read` і має `timeout-minutes: 15`; tracked `mvnw` підтверджено з mode `100755`. Actionlint локально не встановлений, тому YAML перевірено структурно diff-ом.
+- [x] CI workflow доповнено окремим `caddy:2-alpine caddy validate` кроком для HTTPS proxy configuration; локальний еквівалент `scripts/verify-caddy.ps1` уже повертає `Valid configuration`.
+- [x] Повний headed frontend suite після Error Boundary завершився **16 passed, 12 skipped, 0 failed за 1.0m**; admin 12 сценаріїв очікувано залишилися окремим fixture-run.
+- [x] `AdminDashboard` отримав чесні loading/error/retry стани для summary/settings із захистом від stale responses. `tsc --noEmit`, Vite build (**149 modules**) і headed admin suite — **12/12 за 34.0s**.
+- [x] `Comments` отримав retry для помилки завантаження та request-id guard, щоб застаріла відповідь не перезаписувала актуальний review. `tsc --noEmit`, Vite build і headed core/social flows — **2/2 за 8.4s**.
+- [x] `Comments` отримав серверну пагінацію з 20 елементами на сторінку, локалізованою навігацією та коректним переходом назад після видалення останнього елемента. Оновлений headed `core-flow` створив 21 коментар, перевірив **20 + 1** на сторінці 2/2, а потім завершив повний review edit/delete flow — **1/1 за 8.6s**.
+- [x] Розширено headed `core-flow` для повного власного comment CRUD: на сторінці 2 коментар редагується через UI, після підтвердження видаляється, а його відсутність перевіряється перед review edit/delete. Оновлений сценарій — **1/1 за 7.5s**.
+- [x] Додано `password-reset.spec.ts`: headed Chrome реєструє disposable user, надсилає reset request через UI, читає новий одноразовий token із Mailpit, відкриває локалізовану reset-форму, змінює пароль і входить новим паролем — **1/1 за 4.6s**.
+- [x] Після відновлення reset regression повний headed frontend suite включив усі **29 тестів**: **17 passed, 12 skipped, 0 failed за 1.1m**; admin scenarios залишаються окремими fixture checks.
+- [x] Повторний `scripts/verify-password-reset.ps1` підтвердив backend/Mailpit інваріанти: generic response для відомого й невідомого email, доставка листа, одноразовий token, ревокація старої сесії та новий login.
+- [x] Виправлено race у `Profile` після видалення акаунта: route guard більше не перехоплює навігацію на home між `logout()` і `navigate()`. Profile headed flow тепер видаляє disposable account через UI, перевіряє redirect і недоступність приватного profile — **1/1 за 9.3s**.
+- [x] Той самий profile flow покриває browser password change: зміна пароля, автоматичний logout із `passwordChanged=1`, повторний login новим паролем і подальше account deletion — **1/1 за 9.8s**. Додано та виправлено аналогічний route-guard race для password-change redirect.
+- [x] Після auth/profile змін повторно пройшли full headed suite — **17 passed, 12 skipped, 0 failed за 1.2m у 29 тестах** — і окремий admin fixture suite — **12/12 за 35.6s**.
+- [x] Social headed flow розширено: після follow→notification він перемикає `Нові підписки`, перевіряє save status, persistence після reload і повертає початкове значення — **1/1 за 6.8s**.
+- [x] Core headed flow розширено review-like toggle: власний review article перемикає `Вподобати` → `Прибрати вподобання` → назад, із UI-станом після кожної mutation — **1/1 за 9.6s**.
+- [x] Виправлено сумісність `scripts/verify-cache.ps1` із Windows PowerShell 5.1: прибрано недоступний `-SkipHttpErrorCheck`. Повторна перевірка Redis movie-details пройшла: TTL **599s**, miss delta **1**, hit delta **3**.
+- [x] Після невдалого запуску без `DB_PASSWORD` повторено повний Maven/MySQL suite з явними Compose credentials (`DB_URL=127.0.0.1:3307`): **34 Surefire reports, 61 tests, 0 failures, 0 errors, 0 skipped**. Порожній пароль не приховано як успішний результат.
+- [x] Помилки завантаження жанрів у `Search` і `Person` більше не губляться: обидва екрани показують локалізований alert/retry та повторюють запит. `tsc --noEmit`, Vite build і headed accessibility/localization suite — **6/6 за 32.3s**.
+- [~] Залишаються глибші SQLi/XSS payload matrices, ширші authorization/moderation права та production load; review/comment moderation browser flow уже перевірений, backup/restore drill у тимчасову БД автоматизований окремим скриптом.
+- [x] `scripts/verify-backup-restore.ps1` фактично створив dump через Compose, відновив його в унікальну тимчасову БД, звірив контрольні кількості `50|123|27` (movies|users|Flyway migrations) і виконав cleanup. Основна БД не змінювалась.
+- [x] Додано `@axe-core/playwright` і повний WCAG 2 A/AA аудит для 7 публічних маршрутів; axe повернув 0 violations. Повний Playwright набір після цього має **11 passed, 1 skipped**; admin сценарій окремо лишається перевіряти fixture-скриптом.
+- [x] Оновлено production-залежності до Axios `1.20.0`, React Router `7.18.4`, `follow-redirects` `1.16.1` і `form-data` `4.0.6`; Docker web image переведено на Node `22-alpine`, щоб відповідати engine `@axe-core/playwright`; Docker API отримав BuildKit cache для Maven. `npm ci`, TypeScript, Vite build, Docker web build і повний Playwright після міграції — **11 passed, 1 skipped**. `npm audit --omit=dev` повертає **0 production vulnerabilities**. Повний dev-аудит окремо лишається відкритим: npm audit quick endpoint повертає `400`, тому advisory не вигадую і не застосовую небезпечний `--force`.
+- [~] Базову доступність, keyboard focus, mobile overflow, browser security headers, non-root runtime і admin/social browser flows перевірено; залишаються глибші SQLi/XSS, права, production load та VPS/HTTPS.
+- [~] Production-like конфігурація, runbook, приватні DB/Redis volumes і backup/restore scripts підготовлені. Залишаються Linux VPS, реальний домен/HTTPS, production secrets, monitoring/backup schedule і публічний запуск.
+
+## 10. Захист і презентація — в роботі
+
+- [ ] Звірка з затвердженими Figma-фреймами та UX-сценаріями, дизайн-система, прототипи.
+- [x] Створено актуальну migration-backed ER-діаграму в `ER_DIAGRAM.md` для 33 прикладних таблиць і self-reference `similar_movies`; `scripts/verify-er-schema.ps1` на Compose перевіряє newsletter outbox та foreign-key relationships.
+- [~] Детермінований movie seed і reproducible fixture scripts готові; постійний demo-user dataset та точна Figma-звірка ще відкриті. Локальний WebM screen recording підготовлено й перевірено.
+
+## Негайний наступний крок
+
+1. Розширити production load/security checks і behavior regression для moderation.
+2. Виконати контрольний batch TMDB import/update з дозволеним ключем і порівняти звіт якості до/після.
+3. Закрити повну локалізацію та UX/error states екранів, які вже не залежать від Editor-доступу.
+4. Після Editor-доступу зафіксувати точні Figma-фрейми, tokens і assets; до цього не підміняти макети припущеннями.

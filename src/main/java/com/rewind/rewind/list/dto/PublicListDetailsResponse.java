@@ -11,5 +11,6 @@ public record PublicListDetailsResponse(
         String ownerUsername,
         String ownerAvatarUrl,
         List<String> tags,
+        long likeCount,
         List<MovieCardResponse> movies
 ) {}

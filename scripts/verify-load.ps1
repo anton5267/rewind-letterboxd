@@ -7,14 +7,19 @@ param(
 $ErrorActionPreference = "Stop"
 if ($Requests -lt 1 -or $Requests -gt 200) { throw "Requests must be between 1 and 200." }
 
+# Windows PowerShell 5.1 does not load System.Net.Http automatically.
+Add-Type -AssemblyName System.Net.Http
 $client = [System.Net.Http.HttpClient]::new()
 $client.Timeout = [TimeSpan]::FromSeconds($MaxSeconds)
 $endpoints = @(
     "$BaseUrl/api/movies?size=12",
     "$BaseUrl/api/movies/50/details",
+    "$BaseUrl/api/movies/search?q=the&sort=newest&page=0&size=12",
     "$BaseUrl/api/genres",
+    "$BaseUrl/api/lists/public?page=0&size=12",
     "$BaseUrl/api/journal/articles?language=uk&size=20",
-    "$BaseUrl/api/journal/articles/archive?language=uk"
+    "$BaseUrl/api/journal/articles/archive?language=uk",
+    "$BaseUrl/actuator/health"
 )
 $tasks = @()
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()

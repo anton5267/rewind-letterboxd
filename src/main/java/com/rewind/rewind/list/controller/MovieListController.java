@@ -25,6 +25,15 @@ public class MovieListController {
         return service.myLists(auth.getName());
     }
 
+    @GetMapping("/my/page")
+    public Page<MovieListResponse> myPage(
+            Authentication auth,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size
+    ) {
+        return service.myListsPage(auth.getName(), page, size);
+    }
+
     // All Lists (public lists of other users)
     @GetMapping("/public")
     public Page<PublicListCardResponse> publicLists(
@@ -35,9 +44,50 @@ public class MovieListController {
         return service.publicLists(tag, page, size);
     }
 
+    @GetMapping("/public/popular")
+    public Page<PublicListCardResponse> popularPublicLists(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return service.popularPublicLists(page, size);
+    }
+
+    @GetMapping("/public/recently-liked")
+    public Page<PublicListCardResponse> recentlyLikedPublicLists(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return service.recentlyLikedPublicLists(page, size);
+    }
+
+    @GetMapping("/public/team")
+    public Page<PublicListCardResponse> teamPublicLists(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return service.teamPublicLists(page, size);
+    }
+
     @GetMapping("/public/{listId}")
     public PublicListDetailsResponse publicList(@PathVariable Long listId) {
         return service.publicList(listId);
+    }
+
+    @GetMapping("/public/{listId}/like-status")
+    public com.rewind.rewind.social.dto.ListLikeResponse likeStatus(Authentication auth, @PathVariable Long listId) {
+        return service.likeStatus(auth.getName(), listId);
+    }
+
+    @PostMapping("/{listId}/likes")
+    public ResponseEntity<Void> like(Authentication auth, @PathVariable Long listId) {
+        service.like(auth.getName(), listId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{listId}/likes")
+    public ResponseEntity<Void> unlike(Authentication auth, @PathVariable Long listId) {
+        service.unlike(auth.getName(), listId);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping
@@ -49,6 +99,12 @@ public class MovieListController {
     @PatchMapping("/{listId}")
     public MovieListResponse update(Authentication auth, @PathVariable Long listId, @Valid @RequestBody UpdateListRequest req) {
         return service.updateMyList(auth.getName(), listId, req);
+    }
+
+    @DeleteMapping("/{listId}")
+    public ResponseEntity<Void> delete(Authentication auth, @PathVariable Long listId) {
+        service.deleteMyList(auth.getName(), listId);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{listId}/items")

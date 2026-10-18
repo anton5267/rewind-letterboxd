@@ -24,4 +24,12 @@ public class ReviewFeedController {
     ) {
         return reviews.recent(page, size);
     }
+
+    @GetMapping("/popular")
+    public Page<RecentReviewResponse> popular(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size
+    ) {
+        return reviews.popular(page, size);
+    }
 }

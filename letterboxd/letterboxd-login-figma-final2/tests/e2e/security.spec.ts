@@ -43,9 +43,19 @@ test("review text is rendered as text and search rejects no SQL input", async ({
   await ownReview.getByRole("button", { name: "Видалити огляд" }).click();
   await expect(ownReview).toHaveCount(0);
   await page.getByRole("button", { name: "Видалити оцінку" }).click();
+  dialogSeen = false;
 
-  const response = await page.goto(`/uk/films?q=${encodeURIComponent("' OR 1=1 --")}`);
-  expect(response?.status()).toBe(200);
-  await expect(page.getByRole("heading", { name: "Фільми" })).toBeVisible();
-  await expect(page.getByRole("alert")).toHaveCount(0);
+  const searchPayloads = [
+    "' OR 1=1 --",
+    "1); DROP TABLE movies;--",
+    "\\\" UNION SELECT NULL--",
+    "<script>alert(3)</script>",
+  ];
+  for (const searchPayload of searchPayloads) {
+    const response = await page.goto(`/uk/films?q=${encodeURIComponent(searchPayload)}`);
+    expect(response?.status()).toBe(200);
+    await expect(page.getByRole("heading", { name: "Фільми" })).toBeVisible();
+    await expect(page.getByRole("alert")).toHaveCount(0);
+    expect(dialogSeen, `unexpected dialog for search payload: ${searchPayload}`).toBe(false);
+  }
 });

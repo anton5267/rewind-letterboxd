@@ -13,10 +13,18 @@ public class PublicListCardResponse {
     private String ownerUsername;
     private String ownerAvatarUrl;
     private List<String> tags;
+    private Long likeCount;
 
     public PublicListCardResponse(
             Long id, String name, String description, Boolean isPublic,
             Long ownerId, String ownerUsername, String ownerAvatarUrl, List<String> tags
+    ) {
+        this(id, name, description, isPublic, ownerId, ownerUsername, ownerAvatarUrl, tags, null);
+    }
+
+    public PublicListCardResponse(
+            Long id, String name, String description, Boolean isPublic,
+            Long ownerId, String ownerUsername, String ownerAvatarUrl, List<String> tags, Long likeCount
     ) {
         this.id = id;
         this.name = name;
@@ -26,6 +34,7 @@ public class PublicListCardResponse {
         this.ownerUsername = ownerUsername;
         this.ownerAvatarUrl = ownerAvatarUrl;
         this.tags = tags;
+        this.likeCount = likeCount;
     }
 
     public Long getId() { return id; }
@@ -37,4 +46,5 @@ public class PublicListCardResponse {
     public String getOwnerUsername() { return ownerUsername; }
     public String getOwnerAvatarUrl() { return ownerAvatarUrl; }
     public List<String> getTags() { return tags; }
+    public Long getLikeCount() { return likeCount; }
 }

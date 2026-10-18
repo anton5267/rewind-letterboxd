@@ -30,6 +30,7 @@ test("user can follow another profile and receive a notification", async ({ page
   await expect(page).toHaveURL(/\/uk\/login$/);
 
   await registerAndLogin(page, suffix, "social-b");
+  const secondUser = await page.evaluate(async () => (await fetch("/api/users/me")).json() as { id: number });
   await page.goto(`/uk/users/${firstUser.id}`);
   await expect(page.getByRole("heading", { name: new RegExp(`social-a${suffix}`) })).toBeVisible();
   const followButton = page.getByRole("button", { name: "Підписатися" });
@@ -48,4 +49,29 @@ test("user can follow another profile and receive a notification", async ({ page
   await page.goto("/uk/notifications");
   await expect(page.getByRole("heading", { name: "Сповіщення" })).toBeVisible();
   await expect(page.getByText(/підписав/)).toBeVisible();
+
+  const followPreference = page.getByLabel("Нові підписки");
+  const originalFollowPreference = await followPreference.isChecked();
+  await followPreference.click();
+  await expect(page.getByRole("status")).toContainText("Налаштування збережено.");
+  await page.reload();
+  await expect(page.getByLabel("Нові підписки")).toBeChecked({ checked: !originalFollowPreference });
+  await page.getByLabel("Нові підписки").click();
+  await expect(page.getByRole("status")).toContainText("Налаштування збережено.");
+
+  const message = `E2E private message ${suffix}`;
+  await page.goto(`/uk/messages?user=${secondUser.id}`);
+  await expect(page.getByRole("heading", { name: "Повідомлення" })).toBeVisible();
+  await page.getByLabel("Текст повідомлення").fill(message);
+  await page.getByRole("button", { name: "Надіслати" }).click();
+  await expect(page.getByText(message)).toBeVisible();
+
+  await page.getByRole("button", { name: "Вийти" }).click();
+  await expect(page).toHaveURL(/\/uk\/login$/);
+  await page.getByLabel("Електронна пошта").fill(`${"social-b"}-${suffix}@example.invalid`);
+  await getByLabel(page, "Пароль").fill("E2e-password-123!");
+  await page.getByRole("button", { name: "Увійти" }).click();
+  await expect(page).toHaveURL(/\/uk\/films$/);
+  await page.goto("/uk/messages");
+  await expect(page.getByText(message)).toBeVisible();
 });

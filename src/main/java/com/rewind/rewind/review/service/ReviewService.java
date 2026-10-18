@@ -14,7 +14,6 @@ import com.rewind.rewind.social.entity.ActivityType;
 import com.rewind.rewind.social.service.ActivityService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
@@ -41,26 +40,14 @@ public class ReviewService {
     @Transactional
     public ReviewResponse create(String email, Long movieId, CreateReviewRequest req) {
         var user = users.findByEmail(email).orElseThrow();
-        var movie = movies.findById(movieId).orElseThrow(() -> new IllegalArgumentException("Movie not found"));
-        if (reviews.existsByUserIdAndMovieId(user.getId(), movieId)) {
+        movies.findById(movieId).orElseThrow(() -> new IllegalArgumentException("Movie not found"));
+        int inserted = reviews.insertIgnore(user.getId(), movieId, req.getContent(), req.getRating().byteValue());
+        if (inserted == 0) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "You already reviewed this movie");
         }
 
-        Review r = new Review();
-        r.setUser(user);
-        r.setMovie(movie);
-        r.setContent(req.getContent());
-        r.setRating(req.getRating().byteValue());
-
-        Review saved;
-        try {
-            // Flush here so a concurrent request that wins the unique
-            // (user_id, movie_id) constraint becomes a stable HTTP 409
-            // instead of surfacing as a late transaction/500 error.
-            saved = reviews.saveAndFlush(r);
-        } catch (DataIntegrityViolationException ex) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "You already reviewed this movie", ex);
-        }
+        Review saved = reviews.findByUserIdAndMovieId(user.getId(), movieId)
+                .orElseThrow(() -> new IllegalStateException("Review insert was not persisted"));
 
         // ✅ синхронізуємо таблицю ratings + оновлюється movies.rating
         UpsertRatingRequest rr = new UpsertRatingRequest();
@@ -80,7 +67,7 @@ public class ReviewService {
     }
 
     public Page<ReviewResponse> listByMovie(Long movieId, int page, int size) {
-        var p = reviews.findAllByMovieIdAndIsHiddenFalse(movieId,
+        var p = reviews.findVisibleByMovieId(movieId,
                 PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 50))));
         return p.map(r -> new ReviewResponse(
                 r.getId(),
@@ -95,7 +82,23 @@ public class ReviewService {
 
     @Transactional(readOnly = true)
     public Page<RecentReviewResponse> recent(int page, int size) {
-        return reviews.findAllByIsHiddenFalseOrderByCreatedAtDesc(
+        return reviews.findVisibleRecent(
+                        PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 20))))
+                .map(review -> new RecentReviewResponse(
+                        review.getId(),
+                        review.getMovie().getId(),
+                        review.getMovie().getTitle(),
+                        review.getUser().getId(),
+                        review.getUser().getUsername(),
+                        review.getContent(),
+                        review.getRating() == null ? null : review.getRating().intValue(),
+                        review.getCreatedAt()
+                ));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<RecentReviewResponse> popular(int page, int size) {
+        return reviews.findPopularVisible(
                         PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 20))))
                 .map(review -> new RecentReviewResponse(
                         review.getId(),

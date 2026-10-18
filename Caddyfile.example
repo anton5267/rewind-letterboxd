@@ -1,0 +1,8 @@
+# Copy to /etc/caddy/Caddyfile after replacing the hostname.
+# Caddy obtains and renews the HTTPS certificate automatically.
+rewind.example.com {
+	encode zstd gzip
+
+	# compose.production.yaml publishes only the web container on loopback.
+	reverse_proxy 127.0.0.1:8088
+}

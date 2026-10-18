@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import api from "../api/axios";
 import { addMovieToList, getUserLists } from "../api/lists.api";
 import { useAuth } from "../context/AuthContext";
-import { useLocale } from "../i18n";
+import { localizeGenreName, useLocale } from "../i18n";
 import Comments from "./Comments";
 
 interface Movie {
@@ -17,6 +17,7 @@ interface Movie {
   myFlags: { watched: boolean; watchlist: boolean; favorites: boolean } | null;
 }
 interface Review { id: number; username: string; content: string; rating: number | null; userId: number }
+interface ReviewPage { content: Review[]; number: number; totalPages: number; totalElements: number }
 interface List { id: number; name: string }
 
 function ReviewLikeButton({ reviewId }: { reviewId: number }) {
@@ -62,6 +63,8 @@ export default function MovieDetails() {
   const { lang, path, t } = useLocale();
   const [movie, setMovie] = useState<Movie | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsPage, setReviewsPage] = useState(0);
+  const [reviewsTotalPages, setReviewsTotalPages] = useState(0);
   const [myReview, setMyReview] = useState<Review | null>(null);
   const [myReviewReady, setMyReviewReady] = useState(false);
   const [myReviewError, setMyReviewError] = useState(false);
@@ -72,25 +75,50 @@ export default function MovieDetails() {
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [mutationBusy, setMutationBusy] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const loadRequest = useRef(0);
+  const myReviewRequest = useRef(0);
 
   const load = useCallback(async () => {
+    const requestId = ++loadRequest.current;
+    setLoading(true);
+    setLoadError("");
     try {
       const [details, reviewPage] = await Promise.all([
         api.get<Movie>(`/movies/${movieId}/details`),
-        api.get<{ content: Review[] }>(`/movies/${movieId}/reviews`),
+        api.get<ReviewPage>(`/movies/${movieId}/reviews`, { params: { page: reviewsPage, size: 10 } }),
       ]);
+      if (requestId !== loadRequest.current) return;
+      if (reviewsPage > 0 && reviewPage.data.content.length === 0) {
+        setReviewsPage(page => page - 1);
+        return;
+      }
       setMovie(details.data);
       setReviews(reviewPage.data.content);
-      setError("");
-    } catch { setError(t("loadMovieError")); }
-  }, [movieId, lang]);
+      setReviewsTotalPages(reviewPage.data.totalPages);
+    } catch { if (requestId === loadRequest.current) { setMovie(null); setLoadError(t("loadMovieError")); } }
+    finally { if (requestId === loadRequest.current) setLoading(false); }
+  }, [movieId, lang, loadAttempt, reviewsPage]);
 
   const loadMyReview = useCallback(async () => {
-    const response = await api.get<Review>(`/movies/${movieId}/reviews/me`);
-    setMyReview(response.status === 204 ? null : response.data);
-    setMyReviewError(false);
-    setMyReviewReady(true);
+    const requestId = ++myReviewRequest.current;
+    try {
+      const response = await api.get<Review>(`/movies/${movieId}/reviews/me`);
+      if (requestId !== myReviewRequest.current) return;
+      setMyReview(response.status === 204 ? null : response.data);
+      setMyReviewError(false);
+      setMyReviewReady(true);
+    } catch (requestError) {
+      if (requestId === myReviewRequest.current) {
+        setMyReviewError(true);
+        setMyReviewReady(true);
+      }
+      throw requestError;
+    }
   }, [movieId]);
 
   useEffect(() => {
@@ -100,21 +128,26 @@ export default function MovieDetails() {
       getUserLists().then(({ data }) => setLists(data)).catch(() => setLists([]));
       api.get<{ rating: number }>(`/movies/${movieId}/rating/me`).then(({ data }) => setRating(data?.rating ?? 0)).catch(() => setRating(0));
       setMyReviewReady(false);
-      void loadMyReview().catch(() => { setMyReviewError(true); setMyReviewReady(true); });
+      void loadMyReview().catch(() => undefined);
     } else {
       setMyReview(null);
     }
   }, [isAuth, load, loadMyReview, movieId]);
 
   const toggle = async (kind: "watched" | "watchlist" | "favorite", enabled: boolean) => {
+    if (mutationBusy) return;
+    setMutationBusy(kind);
     try {
       await (enabled ? api.delete(`/movies/${movieId}/${kind}`) : api.post(`/movies/${movieId}/${kind}`));
       await load();
       setMessage(t("saved"));
     } catch { setError(t("changeListError")); }
+    finally { setMutationBusy(null); }
   };
 
   const saveRating = async (value: number) => {
+    if (mutationBusy) return;
+    setMutationBusy("rating");
     try {
       if (myReview) {
         await api.patch(`/reviews/${myReview.id}`, { rating: value });
@@ -127,12 +160,15 @@ export default function MovieDetails() {
       await load();
       setError("");
     } catch { setError(t("saveRatingError")); }
+    finally { setMutationBusy(null); }
   };
 
   const createReview = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (mutationBusy) return;
     const chosenRating = editingReview ? reviewRating : rating;
     if (!chosenRating) { setError(t("rateFirst")); return; }
+    setMutationBusy("review");
     try {
       if (editingReview && myReview) {
         await api.patch(`/reviews/${myReview.id}`, { content: reviewText.trim(), rating: chosenRating });
@@ -146,10 +182,13 @@ export default function MovieDetails() {
       setError("");
       await Promise.all([load(), loadMyReview()]);
     } catch { setError(t(editingReview ? "updateReviewError" : "createReviewError")); }
+    finally { setMutationBusy(null); }
   };
 
   const deleteReview = async () => {
     if (!myReview || !window.confirm(t("deleteReviewConfirm"))) return;
+    if (mutationBusy) return;
+    setMutationBusy("delete-review");
     try {
       await api.delete(`/reviews/${myReview.id}`);
       setEditingReview(false);
@@ -158,9 +197,12 @@ export default function MovieDetails() {
       setError("");
       await Promise.all([load(), loadMyReview()]);
     } catch { setError(t("deleteReviewError")); }
+    finally { setMutationBusy(null); }
   };
 
   const deleteRating = async () => {
+    if (mutationBusy) return;
+    setMutationBusy("delete-rating");
     try {
       await api.delete(`/movies/${movieId}/rating`);
       setRating(0);
@@ -168,30 +210,34 @@ export default function MovieDetails() {
       setError("");
       await load();
     } catch { setError(t("deleteRatingError")); }
+    finally { setMutationBusy(null); }
   };
 
   const addToList = async () => {
-    if (!selectedList) return;
+    if (!selectedList || mutationBusy) return;
+    setMutationBusy("list");
     try {
       await addMovieToList(Number(selectedList), movieId);
       setMessage(t("filmAdded"));
     } catch { setError(t("addFilmError")); }
+    finally { setMutationBusy(null); }
   };
 
   const otherReviews = reviews.filter(item => item.id !== myReview?.id);
 
   if (!Number.isInteger(movieId) || movieId < 1) return <main>{t("invalidMovieId")}</main>;
   return <main style={{ background: "#151515", color: "white", minHeight: "75vh", padding: "110px 5% 40px" }}>
+    {loadError && <p role="alert">{loadError} <button type="button" onClick={() => setLoadAttempt(value => value + 1)}>{t("retry")}</button></p>}
     {error && <p role="alert">{error}</p>}
     {message && <p role="status">{message}</p>}
-    {!movie && !error && <p>{t("loading")}</p>}
+    {loading && !movie && <p aria-live="polite">{t("loading")}</p>}
     {movie && <>
       <div style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>
         {movie.photoUrl && <img src={movie.photoUrl} alt={`${t("poster")} ${movie.title}`} style={{ width: 220, maxWidth: "100%", alignSelf: "start" }} />}
         <div style={{ flex: "1 1 320px", minWidth: 0 }}>
           <h1>{movie.title}</h1>
           <p>{movie.releaseDate?.slice(0, 4)} {movie.durationMinutes && ` · ${movie.durationMinutes} ${t("minutes")}`} {movie.rating != null && ` · ★ ${movie.rating}`}</p>
-          <p>{movie.genres.map(item => item.name).join(", ")}</p>
+          <p>{movie.genres.map(item => localizeGenreName(item.name, lang)).join(", ")}</p>
           <p>{movie.shortPlot}</p>
           <p>{t("directors")}: {movie.directors.length ? movie.directors.map(item => <Link key={item.id} to={path(`/people/director/${item.id}`)}>{item.name}</Link>).reduce<React.ReactNode[]>((all, node, index) => index ? [...all, ", ", node] : [node], []) : "—"}</p>
           <section><h2>{t("trailer")}</h2>{movie.trailerUrl ? <a href={movie.trailerUrl} target="_blank" rel="noopener noreferrer">{t("watchTrailer")}</a> : <p>{t("trailerUnavailable")}</p>}</section>
@@ -201,16 +247,16 @@ export default function MovieDetails() {
       {isAuth && <section>
         <h2>{t("myActions")}</h2>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button type="button" onClick={() => void toggle("watched", movie.myFlags?.watched ?? false)} aria-pressed={movie.myFlags?.watched ?? false}>{t("watched")}</button>
-          <button type="button" onClick={() => void toggle("watchlist", movie.myFlags?.watchlist ?? false)} aria-pressed={movie.myFlags?.watchlist ?? false}>{t("watchlist")}</button>
-          <button type="button" onClick={() => void toggle("favorite", movie.myFlags?.favorites ?? false)} aria-pressed={movie.myFlags?.favorites ?? false}>{t("favorite")}</button>
+          <button type="button" disabled={mutationBusy !== null} onClick={() => void toggle("watched", movie.myFlags?.watched ?? false)} aria-pressed={movie.myFlags?.watched ?? false}>{t("watched")}</button>
+          <button type="button" disabled={mutationBusy !== null} onClick={() => void toggle("watchlist", movie.myFlags?.watchlist ?? false)} aria-pressed={movie.myFlags?.watchlist ?? false}>{t("watchlist")}</button>
+          <button type="button" disabled={mutationBusy !== null} onClick={() => void toggle("favorite", movie.myFlags?.favorites ?? false)} aria-pressed={movie.myFlags?.favorites ?? false}>{t("favorite")}</button>
         </div>
         <p>{t("myRating")}: {rating || t("none")}</p>
-        {[1, 2, 3, 4, 5].map(value => <button key={value} type="button" onClick={() => void saveRating(value)} aria-label={`${t("rateAs")} ${value}`} aria-pressed={rating === value}>{value} ★</button>)}
-        {rating > 0 && !myReview && <button type="button" onClick={() => void deleteRating()}>{t("deleteRating")}</button>}
+        {[1, 2, 3, 4, 5].map(value => <button key={value} type="button" disabled={mutationBusy !== null} onClick={() => void saveRating(value)} aria-label={`${t("rateAs")} ${value}`} aria-pressed={rating === value}>{value} ★</button>)}
+        {rating > 0 && !myReview && <button type="button" disabled={mutationBusy !== null} onClick={() => void deleteRating()}>{mutationBusy === "delete-rating" ? t("deleting") : t("deleteRating")}</button>}
         <div style={{ marginTop: 16 }}>
           <label>{t("addToList")} <select value={selectedList} onChange={event => setSelectedList(event.target.value)}><option value="">{t("chooseList")}</option>{lists.map(list => <option key={list.id} value={list.id}>{list.name}</option>)}</select></label>
-          <button type="button" disabled={!selectedList} onClick={() => void addToList()}>{t("add")}</button>
+          <button type="button" disabled={!selectedList || mutationBusy !== null} onClick={() => void addToList()}>{mutationBusy === "list" ? t("saving") : t("add")}</button>
         </div>
       </section>}
       <section><h2>{t("actors")}</h2><p>{movie.actors.length ? movie.actors.map(item => <Link key={item.id} to={path(`/people/actor/${item.id}`)}>{item.name}</Link>).reduce<React.ReactNode[]>((all, node, index) => index ? [...all, ", ", node] : [node], []) : "—"}</p></section>
@@ -219,20 +265,21 @@ export default function MovieDetails() {
         {isAuth && myReview && <article>
           <h3>{t("yourReview")} · {myReview.rating ?? "—"}/5</h3>
           {!editingReview && <><p>{myReview.content}</p>
-            <button type="button" onClick={() => { setReviewText(myReview.content); setReviewRating(myReview.rating ?? rating); setEditingReview(true); }}>{t("editReview")}</button>{" "}
-            <button type="button" onClick={() => void deleteReview()}>{t("deleteReview")}</button>
+            <button type="button" disabled={mutationBusy !== null} onClick={() => { setReviewText(myReview.content); setReviewRating(myReview.rating ?? rating); setEditingReview(true); }}>{t("editReview")}</button>{" "}
+            <button type="button" disabled={mutationBusy !== null} onClick={() => void deleteReview()}>{mutationBusy === "delete-review" ? t("deleting") : t("deleteReview")}</button>
             <ReviewLikeButton reviewId={myReview.id} />
             <Comments reviewId={myReview.id} />
           </>}
         </article>}
         {otherReviews.length === 0 && !myReview && <p>{t("noReviews")}</p>}
         {otherReviews.map(item => <article key={item.id}><h3>{item.username} · {item.rating ?? "—"}/5</h3><p>{item.content}</p><ReviewLikeButton reviewId={item.id} /><Comments reviewId={item.id} /></article>)}
+        {reviewsTotalPages > 1 && <nav aria-label={t("reviewsPagination")} style={{ display: "flex", gap: 8, alignItems: "center" }}><button type="button" disabled={reviewsPage === 0 || loading} onClick={() => setReviewsPage(page => page - 1)}>{t("previous")}</button><span>{t("page")} {reviewsPage + 1} {t("of")} {reviewsTotalPages}</span><button type="button" disabled={reviewsPage + 1 >= reviewsTotalPages || loading} onClick={() => setReviewsPage(page => page + 1)}>{t("next")}</button></nav>}
         {isAuth && !myReviewReady && <p>{t("loading")}</p>}
         {isAuth && myReviewError && <p role="alert">{t("loadMyReviewError")}</p>}
         {isAuth && myReviewReady && !myReviewError && (!myReview || editingReview) && <form onSubmit={createReview}>
           <label>{t("yourReview")}<br /><textarea required maxLength={5000} value={reviewText} onChange={event => setReviewText(event.target.value)} /></label><br />
           {editingReview && <label>{t("myRating")}: <select value={reviewRating} onChange={event => setReviewRating(Number(event.target.value))}>{[1, 2, 3, 4, 5].map(value => <option key={value} value={value}>{value}/5</option>)}</select></label>}{" "}
-          <button type="submit">{t(editingReview ? "saveReview" : "publishReview")}</button>{" "}
+          <button type="submit" disabled={mutationBusy !== null}>{mutationBusy === "review" ? t("saving") : t(editingReview ? "saveReview" : "publishReview")}</button>{" "}
           {editingReview && <button type="button" onClick={() => { setEditingReview(false); setReviewText(""); }}>{t("cancel")}</button>}
         </form>}
         {!isAuth && <p><Link to={path("/login")}>{t("login")}</Link> {t("signInToReview")}</p>}
