@@ -32,7 +32,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Query("select r from Review r where r.id = :id and r.isHidden = false and r.user.isActive = true")
     Optional<Review> findVisibleDetailsById(@Param("id") Long id);
     @EntityGraph(attributePaths = "movie")
-    Page<Review> findAllByUserIdOrderByUpdatedAtDesc(Long userId, Pageable pageable);
+    Page<Review> findAllByUserIdOrderByUpdatedAtDescIdDesc(Long userId, Pageable pageable);
     @EntityGraph(attributePaths = "user")
     @Query("select r from Review r where r.movie.id = :movieId and r.user.isActive = true and r.isHidden = false "
             + "order by r.createdAt desc, r.id desc")

@@ -1,5 +1,6 @@
 # Rewind — прогрес повного плану
 
+- [x] **19.10.2026, stable profile collection pagination:** private ratings and reviews now use `updatedAt DESC, id DESC` repository ordering for both summary and paged endpoints; API shape is unchanged and the local backend compile remains green.
 - [x] **19.10.2026, stable recent-review pagination:** public recent reviews now sort by `createdAt DESC, id DESC`, preventing equal-timestamp rows from moving between pages; API shape is unchanged and the local backend compile remains green.
 - [x] **19.10.2026, popular reviewer visibility race:** popular-reviewer hydration rechecks active users after the aggregate query and skips rows whose owner was deactivated between queries; public identity fields are not leaked and API shape is unchanged.
 - [x] **19.10.2026, activity list visibility:** activity responses now include list metadata only while the referenced list remains public and its owner active; a list made private after activity creation no longer leaks its name through profile/following feeds. The visibility predicate is batch-loaded in the repository to avoid lazy N+1 reads; API shape is unchanged and local backend compile remains green.

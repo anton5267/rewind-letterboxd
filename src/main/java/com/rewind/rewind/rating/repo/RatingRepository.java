@@ -26,7 +26,7 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
 
     long countByUserIdAndMovieId(Long userId, Long movieId);
     @EntityGraph(attributePaths = "movie")
-    Page<Rating> findAllByUserIdOrderByUpdatedAtDesc(Long userId, Pageable pageable);
+    Page<Rating> findAllByUserIdOrderByUpdatedAtDescIdDesc(Long userId, Pageable pageable);
     long countByUserId(Long userId);
     @Query("select r.rating, count(r) from Rating r where r.user.id = :userId group by r.rating order by r.rating")
     List<Object[]> countDistributionByUserId(@Param("userId") Long userId);

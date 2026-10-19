@@ -88,13 +88,13 @@ public class ProfileService {
                 ))
                 .collect(Collectors.toList());
 
-        var recentRatings = ratings.findAllByUserIdOrderByUpdatedAtDesc(user.getId(), PageRequest.of(0, 10))
+        var recentRatings = ratings.findAllByUserIdOrderByUpdatedAtDescIdDesc(user.getId(), PageRequest.of(0, 10))
                 .getContent()
                 .stream()
                 .map(rating -> toProfileRating(rating))
                 .collect(Collectors.toList());
 
-        var recentReviews = reviews.findAllByUserIdOrderByUpdatedAtDesc(user.getId(), PageRequest.of(0, 10))
+        var recentReviews = reviews.findAllByUserIdOrderByUpdatedAtDescIdDesc(user.getId(), PageRequest.of(0, 10))
                 .getContent()
                 .stream()
                 .map(review -> toProfileReview(review))
@@ -264,14 +264,14 @@ public class ProfileService {
     @Transactional(readOnly = true)
     public Page<ProfileResponse.ProfileRatingItem> myRatings(String email, int page, int size) {
         var user = users.findByEmail(email).orElseThrow();
-        return ratings.findAllByUserIdOrderByUpdatedAtDesc(user.getId(), pageRequest(page, size))
+        return ratings.findAllByUserIdOrderByUpdatedAtDescIdDesc(user.getId(), pageRequest(page, size))
                 .map(rating -> toProfileRating(rating));
     }
 
     @Transactional(readOnly = true)
     public Page<ProfileResponse.ProfileReviewItem> myReviews(String email, int page, int size) {
         var user = users.findByEmail(email).orElseThrow();
-        return reviews.findAllByUserIdOrderByUpdatedAtDesc(user.getId(), pageRequest(page, size))
+        return reviews.findAllByUserIdOrderByUpdatedAtDescIdDesc(user.getId(), pageRequest(page, size))
                 .map(review -> toProfileReview(review));
     }
 
