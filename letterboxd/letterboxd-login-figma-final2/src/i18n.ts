@@ -229,6 +229,12 @@ export function formatDateTime(value: string, lang: Language): string {
   return new Intl.DateTimeFormat(lang === "uk" ? "uk-UA" : "en-US", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
+export function formatArchiveMonth(year: number, month: number, lang: Language): string {
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) return `${year}-${month}`;
+  return new Intl.DateTimeFormat(lang === "uk" ? "uk-UA" : "en-US", { month: "long", year: "numeric", timeZone: "UTC" })
+    .format(new Date(Date.UTC(year, month - 1, 1)));
+}
+
 export function formatMovieCount(count: number, lang: Language): string {
   if (lang === "en") return `${count} ${count === 1 ? "film" : "films"}`;
   const mod10 = Math.abs(count) % 10;

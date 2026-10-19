@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getJournal, getJournalArchive, type JournalArticle, type JournalArchiveEntry } from "../api/journal.api";
 import ResilientImage from "../components/ResilientImage";
-import { editorialText, formatDateTime, localizeJournalCategory, useLocale } from "../i18n";
+import { editorialText, formatArchiveMonth, formatDateTime, localizeJournalCategory, useLocale } from "../i18n";
 import styles from "./Journal.module.css";
 
 export default function Journal() {
@@ -135,7 +135,7 @@ export default function Journal() {
               {archive.map(item => (
                 <li key={`${item.year}-${item.month}`}>
                   <button type="button" aria-pressed={archiveMonth?.year === item.year && archiveMonth.month === item.month} onClick={() => { setArchiveMonth({ year: item.year, month: item.month }); setPage(0); }}>
-                    {item.year}-{String(item.month).padStart(2, "0")} · {item.articleCount}
+                    {formatArchiveMonth(item.year, item.month, lang)} · {item.articleCount}
                   </button>
                 </li>
               ))}

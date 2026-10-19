@@ -2,6 +2,7 @@
 
 Цей файл — короткий навігатор по великому плану. Детальні докази, дати, команди й відкриті ризики залишаються у [PROGRESS.md](PROGRESS.md). Позначка `[x]` ставиться тільки після коду, тесту й наскрізної перевірки; `[~]` означає частково виконаний етап.
 
+- [x] **19.10.2026, localized Journal archive labels:** archive month navigation використовує locale-aware month/year labels для UK/EN замість raw `YYYY-MM`; invalid values мають safe fallback. API не змінювався, TypeScript green; local follow-up не пушився.
 - [x] **19.10.2026, explicit GitHub snapshot:** verified state один раз запушено в `origin/master` (`75f9d26`, `Complete Figma-driven UI and reliability pass`); наступні push потребують окремої команди.
 - [x] **19.10.2026, Movie Details mobile header offset:** 320–700px hero тепер стартує після фактичного 64px fixed header без зайвого чорного gap; bottom navigation-safe spacing збережено. API/route contract не змінювався; CSS visual audit green.
 - [x] **19.10.2026, resilient backdrop surfaces:** Movie Details, Public List і Review Details використовують `ResilientImage` для backdrop layers, тому missing/failed external image зберігає gradient hero fallback; API, layout і Figma visual direction не змінювалися. TypeScript/Vite green (**183 modules**), Chrome smoke affected real routes green.
