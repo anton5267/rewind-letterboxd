@@ -30,6 +30,13 @@ if ($values.ContainsKey('MAIL_PORT') -and ($values['MAIL_PORT'] -notmatch '^\d+$
 foreach ($booleanKey in @('MAIL_SMTP_AUTH', 'MAIL_SMTP_STARTTLS', 'TMDB_ENABLED', 'TMDB_SCHEDULER_ENABLED')) {
     if ($values.ContainsKey($booleanKey) -and $values[$booleanKey] -notmatch '^(?i:true|false)$') { throw "$booleanKey must be true or false" }
 }
+$smtpAuthEnabled = $values.ContainsKey('MAIL_SMTP_AUTH') -and $values['MAIL_SMTP_AUTH'] -match '^(?i:true)$'
+if ($smtpAuthEnabled) {
+    foreach ($key in @('MAIL_USERNAME', 'MAIL_PASSWORD')) {
+        if (-not $values.ContainsKey($key) -or [string]::IsNullOrWhiteSpace($values[$key])) { throw "$key is required when MAIL_SMTP_AUTH=true" }
+        if ($values[$key] -match 'replace-with|example\.com|change-me|your-') { throw "$key still contains an example placeholder" }
+    }
+}
 $tmdbEnabled = $values.ContainsKey('TMDB_ENABLED') -and $values['TMDB_ENABLED'] -match '^(?i:true)$'
 $schedulerEnabled = $values.ContainsKey('TMDB_SCHEDULER_ENABLED') -and $values['TMDB_SCHEDULER_ENABLED'] -match '^(?i:true)$'
 if ($schedulerEnabled -and -not $tmdbEnabled) { throw 'TMDB_SCHEDULER_ENABLED=true requires TMDB_ENABLED=true' }

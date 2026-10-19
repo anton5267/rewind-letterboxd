@@ -1,5 +1,6 @@
 # Rewind — прогрес повного плану
 
+- [x] **19.10.2026, production SMTP guard:** `verify-production-config.ps1` тепер вимагає реальні non-placeholder `MAIL_USERNAME` і `MAIL_PASSWORD`, коли `MAIL_SMTP_AUTH=true`; `.env.production.example` та deployment runbook узгоджені. Реальні production credentials не додавалися; PowerShell parse і `git diff --check` green. This local follow-up remains unpushed.
 - [x] **19.10.2026, localized Journal archive labels:** archive month buttons now use locale-aware `uk-UA`/`en-US` month-year formatting instead of raw `YYYY-MM`; invalid API month values retain a safe fallback. API contract and pagination are unchanged; TypeScript check green. This local follow-up remains unpushed.
 - [x] **19.10.2026, explicit GitHub snapshot:** поточний verified code/design/documentation state одним push відправлено в `origin/master` як `75f9d26` (`Complete Figma-driven UI and reliability pass`). Після цього запису нові локальні зміни не пушаться без окремої команди.
 - [x] **19.10.2026, Movie Details mobile header offset:** 320–700px layout більше не резервує зайві 132–160px під fixed header; hero починається одразу після реальних 64px mobile header, bottom navigation-safe content padding збережено. API та route contracts не змінювалися; Vite build після CSS pass green, visual artifact audit підтвердив усунення порожнього top gap.

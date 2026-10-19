@@ -41,7 +41,7 @@ Before starting services on the VPS, run the PowerShell validator on a Windows c
 ./scripts/verify-production-config.ps1 -EnvFile .env.production
 ```
 
-The validator also checks the SMTP port range and the SMTP/TMDB boolean flags before Compose resolution.
+The validator also checks the SMTP port range and the SMTP/TMDB boolean flags before Compose resolution. When `MAIL_SMTP_AUTH=true`, it requires non-placeholder `MAIL_USERNAME` and `MAIL_PASSWORD`; set both to the real provider credentials or explicitly use an unauthenticated relay with `MAIL_SMTP_AUTH=false`.
 
 ## 2. Start the stack
 
