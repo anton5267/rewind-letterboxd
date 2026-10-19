@@ -56,6 +56,8 @@
 .sectionHeader .eyebrow { margin-bottom: 8px; }
 .section h2 { margin: 0; font-size: clamp(28px, 4vw, 52px); line-height: .95; letter-spacing: -.05em; }
 .secondaryButton { border-color: rgba(255, 255, 255, .2) !important; background: transparent !important; color: #fff !important; }
+.dangerButton { border-color: #d47676 !important; background: #5a2529 !important; color: #ffd2d2 !important; }
+.dangerButton:hover:not(:disabled) { border-color: #ff9b9b !important; background: #733037 !important; }
 .emptyPreview { margin-top: 28px; padding: 36px 28px; border: 1px dashed rgba(212, 168, 95, .5); background: linear-gradient(135deg, #252525, #1f1f1f); text-align: center; }
 .emptyPreview strong { display: block; font-size: clamp(24px, 4vw, 42px); letter-spacing: -.04em; }
 .emptyPreview > p:not(.eyebrow) { max-width: 520px; margin: 10px auto 0; color: #aaa6a1; line-height: 1.5; }

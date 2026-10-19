@@ -116,26 +116,48 @@ export default function MovieDetails() {
   const loadRequest = useRef(0);
   const reviewsRequest = useRef(0);
   const myReviewRequest = useRef(0);
+  const currentMovieId = useRef(movieId);
+  currentMovieId.current = movieId;
+
+  useEffect(() => {
+    setMovie(null);
+    setReviews([]);
+    setReviewsPage(0);
+    setReviewsTotalPages(0);
+    setMyReview(null);
+    setMyReviewReady(false);
+    setMyReviewError(false);
+    setEditingReview(false);
+    setReviewText("");
+    setReviewRating(0);
+    setRating(0);
+    setRatingLoadError(false);
+    setSelectedList("");
+    setError("");
+    setMessage("");
+  }, [movieId]);
 
   const loadMovie = useCallback(async () => {
+    if (currentMovieId.current !== movieId) return;
     const requestId = ++loadRequest.current;
     setLoading(true);
     setLoadError("");
     try {
       const details = await api.get<Movie>(`/movies/${movieId}/details`);
-      if (requestId !== loadRequest.current) return;
+      if (requestId !== loadRequest.current || currentMovieId.current !== movieId) return;
       setMovie(details.data);
-    } catch { if (requestId === loadRequest.current) { setMovie(null); setLoadError(t("loadMovieError")); } }
-    finally { if (requestId === loadRequest.current) setLoading(false); }
+    } catch { if (requestId === loadRequest.current && currentMovieId.current === movieId) { setMovie(null); setLoadError(t("loadMovieError")); } }
+    finally { if (requestId === loadRequest.current && currentMovieId.current === movieId) setLoading(false); }
   }, [movieId, lang, loadAttempt]);
 
   const loadReviews = useCallback(async () => {
+    if (currentMovieId.current !== movieId) return;
     const requestId = ++reviewsRequest.current;
     setReviewsLoading(true);
     setReviewsLoadError(false);
     try {
       const reviewPage = await api.get<ReviewPage>(`/movies/${movieId}/reviews`, { params: { page: reviewsPage, size: 10 } });
-      if (requestId !== reviewsRequest.current) return;
+      if (requestId !== reviewsRequest.current || currentMovieId.current !== movieId) return;
       if (reviewsPage > 0 && reviewPage.data.content.length === 0) {
         setReviewsPage(page => page - 1);
         return;
@@ -143,11 +165,11 @@ export default function MovieDetails() {
       setReviews(reviewPage.data.content);
       setReviewsTotalPages(reviewPage.data.totalPages);
     } catch {
-      if (requestId !== reviewsRequest.current) return;
+      if (requestId !== reviewsRequest.current || currentMovieId.current !== movieId) return;
       setReviews([]);
       setReviewsTotalPages(0);
       setReviewsLoadError(true);
-    } finally { if (requestId === reviewsRequest.current) setReviewsLoading(false); }
+    } finally { if (requestId === reviewsRequest.current && currentMovieId.current === movieId) setReviewsLoading(false); }
   }, [movieId, reviewsAttempt, reviewsPage]);
 
   const load = useCallback(async () => {
@@ -155,15 +177,16 @@ export default function MovieDetails() {
   }, [loadMovie, loadReviews]);
 
   const loadMyReview = useCallback(async () => {
+    if (currentMovieId.current !== movieId) return;
     const requestId = ++myReviewRequest.current;
     try {
       const response = await api.get<Review>(`/movies/${movieId}/reviews/me`);
-      if (requestId !== myReviewRequest.current) return;
+      if (requestId !== myReviewRequest.current || currentMovieId.current !== movieId) return;
       setMyReview(response.status === 204 ? null : response.data);
       setMyReviewError(false);
       setMyReviewReady(true);
     } catch (requestError) {
-      if (requestId === myReviewRequest.current) {
+      if (requestId === myReviewRequest.current && currentMovieId.current === movieId) {
         setMyReviewError(true);
         setMyReviewReady(true);
       }
@@ -233,10 +256,11 @@ export default function MovieDetails() {
   }, [loadReviews, movieId]);
 
   const toggle = async (kind: "watched" | "watchlist" | "favorite", enabled: boolean) => {
-    if (mutationBusy) return;
+    if (mutationBusy || currentMovieId.current !== movieId) return;
     setMutationBusy(kind);
     try {
       await (enabled ? api.delete(`/movies/${movieId}/${kind}`) : api.post(`/movies/${movieId}/${kind}`));
+      if (currentMovieId.current !== movieId) return;
       await load();
       setMessage(t("saved"));
     } catch { setError(t("changeListError")); }
@@ -244,7 +268,7 @@ export default function MovieDetails() {
   };
 
   const saveRating = async (value: number) => {
-    if (mutationBusy) return;
+    if (mutationBusy || currentMovieId.current !== movieId) return;
     setMutationBusy("rating");
     try {
       if (myReview) {
@@ -253,6 +277,7 @@ export default function MovieDetails() {
       } else {
         await api.put(`/movies/${movieId}/rating`, { rating: value });
       }
+      if (currentMovieId.current !== movieId) return;
       setRating(value);
       if (editingReview) setReviewRating(value);
       await load();
@@ -263,7 +288,7 @@ export default function MovieDetails() {
 
   const createReview = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (mutationBusy) return;
+    if (mutationBusy || currentMovieId.current !== movieId) return;
     const chosenRating = editingReview ? reviewRating : rating;
     if (!chosenRating) { setError(t("rateFirst")); return; }
     setMutationBusy("review");
@@ -273,6 +298,7 @@ export default function MovieDetails() {
       } else {
         await api.post(`/movies/${movieId}/reviews`, { content: reviewText.trim(), rating: chosenRating });
       }
+      if (currentMovieId.current !== movieId) return;
       setRating(chosenRating);
       setReviewText("");
       setEditingReview(false);
@@ -284,11 +310,12 @@ export default function MovieDetails() {
   };
 
   const deleteReview = async () => {
-    if (!myReview || !window.confirm(t("deleteReviewConfirm"))) return;
+    if (!myReview || currentMovieId.current !== movieId || !window.confirm(t("deleteReviewConfirm"))) return;
     if (mutationBusy) return;
     setMutationBusy("delete-review");
     try {
       await api.delete(`/reviews/${myReview.id}`);
+      if (currentMovieId.current !== movieId) return;
       setEditingReview(false);
       setReviewText("");
       setMessage(t("reviewDeleted"));
@@ -299,10 +326,11 @@ export default function MovieDetails() {
   };
 
   const deleteRating = async () => {
-    if (mutationBusy) return;
+    if (mutationBusy || currentMovieId.current !== movieId) return;
     setMutationBusy("delete-rating");
     try {
       await api.delete(`/movies/${movieId}/rating`);
+      if (currentMovieId.current !== movieId) return;
       setRating(0);
       setMessage(t("ratingDeleted"));
       setError("");
@@ -312,10 +340,11 @@ export default function MovieDetails() {
   };
 
   const addToList = async () => {
-    if (!selectedList || mutationBusy) return;
+    if (!selectedList || mutationBusy || currentMovieId.current !== movieId) return;
     setMutationBusy("list");
     try {
       await addMovieToList(Number(selectedList), movieId);
+      if (currentMovieId.current !== movieId) return;
       setMessage(t("filmAdded"));
     } catch { setError(t("addFilmError")); }
     finally { setMutationBusy(null); }

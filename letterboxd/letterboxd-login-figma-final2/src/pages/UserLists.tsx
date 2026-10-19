@@ -214,7 +214,8 @@ export default function UserLists() {
         <label htmlFor="edit-list-tags">{t("tags")} <input id="edit-list-tags" value={editTags} maxLength={509} placeholder={t("tagsHint")} onChange={event => setEditTags(event.target.value)} /></label>
         <label><input type="checkbox" checked={editPublic} onChange={event => setEditPublic(event.target.checked)} /> {t("publicList")}</label>{" "}
         <button type="submit" aria-busy={saveBusy} disabled={saveBusy}>{saveBusy ? t("saving") : t("save")}</button>
-        {" "}<button type="button" aria-busy={deleting} disabled={deleting || saveBusy} onClick={() => void removeList()}>{deleting ? t("deletingList") : t("deleteList")}</button>
+        <button type="button" className={styles.secondaryButton} disabled={saveBusy || deleting} onClick={() => { setSelected(null); setError(""); }}>{t("cancel")}</button>
+        {" "}<button type="button" className={styles.dangerButton} aria-busy={deleting} disabled={deleting || saveBusy} onClick={() => void removeList()}>{deleting ? t("deletingList") : t("deleteList")}</button>
       </form>}
       {itemsLoading && <div className={styles.stateCard} role="status"><span className={styles.stateMark}>…</span><strong>{t("loading")}</strong></div>}
       {itemsLoadError && <div className={`${styles.stateCard} ${styles.stateError}`} role="alert"><strong>{t("loadItemsError")}</strong><button type="button" onClick={() => setItemsReload(value => value + 1)}>{t("retry")}</button></div>}
