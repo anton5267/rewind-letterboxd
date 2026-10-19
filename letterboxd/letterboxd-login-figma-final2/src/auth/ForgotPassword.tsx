@@ -59,6 +59,7 @@ export default function ForgotPassword() {
             aria-label={t("email")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
             maxLength={150}
             required
           />

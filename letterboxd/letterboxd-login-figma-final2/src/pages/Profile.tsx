@@ -320,16 +320,16 @@ export default function Profile() {
       <form className={styles.form} onSubmit={savePassword} aria-busy={passwordBusy}>
         <h2>{t("changePassword")}</h2>
         <label htmlFor="profile-current-password">{t("currentPassword")}</label>
-        <input id="profile-current-password" type="password" required value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} />
+        <input id="profile-current-password" type="password" required autoComplete="current-password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} />
         <label htmlFor="profile-new-password">{t("newPassword")}</label>
-        <input id="profile-new-password" type="password" required value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+        <input id="profile-new-password" type="password" required minLength={8} maxLength={72} autoComplete="new-password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
         <button className={styles.primaryButton} type="submit" disabled={passwordBusy}>{passwordBusy ? t("saving") : t("changePassword")}</button>
       </form>
       <form className={`${styles.form} ${styles.dangerForm}`} onSubmit={removeAccount} aria-busy={deleteBusy}>
         <h2>{t("deleteAccount")}</h2>
         <p>{t("deleteAccountWarning")}</p>
         <label htmlFor="profile-delete-password">{t("currentPassword")}</label>
-        <input id="profile-delete-password" type="password" required value={deletePassword} onChange={e => setDeletePassword(e.target.value)} />
+        <input id="profile-delete-password" type="password" required autoComplete="current-password" value={deletePassword} onChange={e => setDeletePassword(e.target.value)} />
         <button className={styles.dangerButton} type="submit" disabled={deleteBusy}>{deleteBusy ? t("deleting") : t("deleteAccount")}</button>
       </form>
       <section className={styles.section} aria-labelledby="profile-collections" aria-busy={collectionLoading}>

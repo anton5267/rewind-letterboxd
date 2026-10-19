@@ -11,7 +11,7 @@
 - [x] Shared admin moderation row layout: comments, reviews, lists, conversations and moderation queue separate row content from actions and stack controls below 520px; API and mutation behavior unchanged, local follow-up remains unpushed.
 - [x] Local Figma snapshot workflow: the repository provides a hidden-PAT REST export script for selected file/node JSON and PNG, with `figma/` ignored; no credentials or proprietary design data are committed.
 - [x] Admin notifications responsive layout: metadata/actions are separated and filter/action controls stack below 520px; API, pagination and mutation behavior unchanged, local follow-up remains unpushed.
-- [x] Auth identity input normalization: registration, login and password-reset email/username inputs are trimmed at the UI and backend boundaries; password values are preserved byte-for-byte and existing API contracts remain unchanged.
+- [x] Auth input normalization: registration, login and password-reset email/username inputs are trimmed at the UI and backend boundaries; password values are preserved byte-for-byte, auth/profile fields mirror backend bounds and autocomplete semantics, and existing API contracts remain unchanged.
 - [x] Nullable PATCH text guards: review content and admin movie title remain optional in partial updates but reject blank values when present; clearable optional fields remain nullable and API shape is unchanged.
 - [x] Movie Details route transition guard: changing the film route clears stale hero/review/action state and ignores late responses from the previous movie; API shape is unchanged.
 - [x] User Lists async state safety: item removal and list editing use functional state updates to avoid stale closure overwrites; API shape is unchanged.

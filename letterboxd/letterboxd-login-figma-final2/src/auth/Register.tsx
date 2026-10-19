@@ -63,6 +63,7 @@ export default function Register() {
             aria-label={t("username")}
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
+            autoComplete="username"
             minLength={3}
             maxLength={50}
             required
@@ -75,6 +76,7 @@ export default function Register() {
             aria-label={t("email")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
             maxLength={150}
             required
           />
@@ -86,6 +88,7 @@ export default function Register() {
             aria-label={t("password")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
             minLength={6}
             maxLength={100}
             required

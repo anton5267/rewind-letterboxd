@@ -42,6 +42,7 @@ export default function Login() {
             className={styles.input}
             value={email}
             onChange={(event) => setEmail(event.target.value)}
+            autoComplete="email"
             maxLength={150}
             required
           />
@@ -52,6 +53,8 @@ export default function Login() {
             className={styles.input}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
+            autoComplete="current-password"
+            minLength={6}
             maxLength={100}
             required
           />
