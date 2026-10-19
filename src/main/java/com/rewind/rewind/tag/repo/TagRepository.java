@@ -18,10 +18,10 @@ public interface TagRepository extends JpaRepository<Tag, Long> {
 
     @Query("select distinct t from Tag t join t.lists l join l.user u where l.isPublic = true "
             + "and l.listType = :type and u.isActive = true and (lower(t.name) like lower(concat('%', :q, '%')) "
-            + "or lower(t.slug) like lower(concat('%', :q, '%'))) order by t.name asc")
+            + "or lower(t.slug) like lower(concat('%', :q, '%'))) order by t.name asc, t.id asc")
     Page<Tag> searchPublic(@Param("q") String q, @Param("type") ListType type, Pageable pageable);
 
     @Query("select t from Tag t join t.lists l where l.isPublic = true and l.listType = :type " +
-            "group by t.id order by count(l.id) desc, t.name asc")
+            "group by t.id order by count(l.id) desc, t.name asc, t.id asc")
     List<Tag> findPopular(@Param("type") ListType type, Pageable pageable);
 }

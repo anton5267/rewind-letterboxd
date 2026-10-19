@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
 
 public interface ReviewCommentRepository extends JpaRepository<ReviewComment, Long> {
-    Page<ReviewComment> findAllByReviewIdAndUserIsActiveTrueAndIsHiddenFalseOrderByCreatedAtAsc(Long reviewId, Pageable pageable);
+    Page<ReviewComment> findAllByReviewIdAndUserIsActiveTrueAndIsHiddenFalseOrderByCreatedAtAscIdAsc(Long reviewId, Pageable pageable);
     @EntityGraph(attributePaths = {"review", "user"})
     Page<ReviewComment> findAllByOrderByIdDesc(Pageable pageable);
     @EntityGraph(attributePaths = {"review", "user"})

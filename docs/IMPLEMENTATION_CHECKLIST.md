@@ -15,6 +15,7 @@
 - [x] Stable profile collection pagination: private ratings and reviews use deterministic timestamp-plus-ID ordering for summary and paged views.
 - [x] Repository structure cleanup: unreferenced list/review/review-like query methods removed without changing API or database schema.
 - [x] Deterministic film ordering: all Films/Search sort variants and similar-film ranking include a stable movie-ID tie-breaker; public profile recent reviews are deterministic as well.
+- [x] Ordering consistency pass: comments, collection movies, public tags, admin lists and people filmographies include deterministic secondary-ID ordering.
 - [x] Основні API-backed visual slices готові: Home, Search, Global Search, Lists, Public List, Profiles, Community, Journal, Review Details, Movie Details і mobile navigation; exact pixel parity не заявляється без Figma Editor/node export access.
 - [x] Responsive/accessibility baseline перевірено для 320/393/768/1440 px; loading/error/empty/retry, overflow, keyboard focus і bilingual UK/EN surfaces присутні в реалізованих маршрутах.
 - [x] Frontend type-safety baseline закріплено в `tsconfig.json`: `strict`, `noUnusedLocals` і `noUnusedParameters` увімкнені; strict TypeScript compile exit 0.

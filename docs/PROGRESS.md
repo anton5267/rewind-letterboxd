@@ -1,5 +1,6 @@
 # Rewind — прогрес повного плану
 
+- [x] **19.10.2026, ordering consistency pass:** comments, profile collection movies, public tags, admin lists and people filmographies now use deterministic secondary ID ordering; API shape and schema are unchanged, and local backend compile remains green.
 - [x] **19.10.2026, deterministic film ordering:** Films/Search sort variants and similar-film ranking now append a stable movie-ID tie-breaker; public profile recent reviews also use timestamp-plus-ID ordering. API shape is unchanged and the local backend compile remains green.
 - [x] **19.10.2026, repository cleanup:** removed three unreferenced derived queries from list/review/review-like repositories; endpoint behavior and persisted schema are unchanged, and the local backend compile remains green.
 - [x] **19.10.2026, stable profile collection pagination:** private ratings and reviews now use `updatedAt DESC, id DESC` repository ordering for both summary and paged endpoints; API shape is unchanged and the local backend compile remains green.

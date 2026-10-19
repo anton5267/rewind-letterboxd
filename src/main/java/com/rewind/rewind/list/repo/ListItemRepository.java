@@ -25,7 +25,7 @@ public interface ListItemRepository extends JpaRepository<ListItem, Long> {
                      @Param("movieId") Long movieId,
                      @Param("position") Integer position);
 
-    @Query("select li.movie from ListItem li where li.list.id = :listId order by li.addedAt desc")
+    @Query("select li.movie from ListItem li where li.list.id = :listId order by li.addedAt desc, li.id desc")
     Page<Movie> findMoviesByListId(@Param("listId") Long listId, Pageable pageable);
 
     // ✅ для reorder

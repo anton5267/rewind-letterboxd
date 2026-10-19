@@ -69,7 +69,7 @@ public class PersonService {
             case "rating" -> Comparator.comparing((PersonDetailsResponse.Film film) -> film.rating(), Comparator.nullsLast(Comparator.reverseOrder()));
             default -> Comparator.comparing((PersonDetailsResponse.Film film) -> film.releaseDate(), Comparator.nullsLast(Comparator.reverseOrder()));
         };
-        return films.stream().sorted(comparator).toList();
+        return films.stream().sorted(comparator.thenComparingLong(PersonDetailsResponse.Film::id)).toList();
     }
     private ResponseStatusException notFound(String type) { return new ResponseStatusException(HttpStatus.NOT_FOUND, type + " not found"); }
 }
