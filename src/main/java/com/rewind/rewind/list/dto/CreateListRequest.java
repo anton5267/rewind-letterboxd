@@ -11,6 +11,7 @@ public class CreateListRequest {
     @Size(max = 120)
     private String name;
 
+    @Size(max = 5000)
     private String description;
     private Boolean isPublic;
     @Size(max = 10)
