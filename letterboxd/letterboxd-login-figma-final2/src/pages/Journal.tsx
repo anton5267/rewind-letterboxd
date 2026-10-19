@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getJournal, getJournalArchive, type JournalArticle, type JournalArchiveEntry } from "../api/journal.api";
 import ResilientImage from "../components/ResilientImage";
 import { editorialText, formatArchiveMonth, formatDateTime, localizeJournalCategory, useLocale } from "../i18n";
+import { safeHttpUrl } from "../utils/externalUrl";
 import styles from "./Journal.module.css";
 
 export default function Journal() {
@@ -96,6 +97,7 @@ export default function Journal() {
             {articles.map((article, index) => {
               const articlePath = path(`/journal/${encodeURIComponent(article.slug)}`);
               const title = editorialText(article.title, t("untitledArticle"));
+              const audioUrl = safeHttpUrl(article.audioUrl);
               return <article className={`${styles.card} ${index === 0 ? styles.feature : ""}`} key={article.id}>
                 <Link className={styles.cover} to={articlePath} aria-label={title}>
                   <ResilientImage src={article.coverUrl} alt="" loading={index === 0 ? "eager" : "lazy"} fallback={<span aria-hidden="true">REWIND</span>} />
@@ -109,7 +111,7 @@ export default function Journal() {
                   {article.excerpt?.trim() && <p>{article.excerpt.trim()}</p>}
                   <div className={styles.cardFooter}>
                     <Link className={styles.readLink} to={articlePath}>{t("journalRead")}</Link>
-                    <span className={styles.byline}>{article.audioUrl ? t("podcastAudio") : t("journalEyebrow")}</span>
+                    <span className={styles.byline}>{audioUrl ? t("podcastAudio") : t("journalEyebrow")}</span>
                   </div>
                 </div>
                 <Link className={styles.thumb} to={articlePath} aria-hidden="true" tabIndex={-1}>
