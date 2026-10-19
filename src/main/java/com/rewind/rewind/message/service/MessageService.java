@@ -11,8 +11,10 @@ import com.rewind.rewind.user.repo.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class MessageService {
@@ -63,7 +65,8 @@ public class MessageService {
     public Page<MessageResponse> messages(String email, Long conversationId, int page, int size) {
         User current = users.findByEmail(email).orElseThrow();
         Conversation conversation = requireMember(conversationId, current.getId());
-        blocks.requireInteractionAllowed(current.getId(), otherUserId(conversation, current.getId()));
+        Long otherId = requireActiveOtherUser(conversation, current.getId());
+        blocks.requireInteractionAllowed(current.getId(), otherId);
         return messages.findAllByConversationIdOrderByCreatedAtDescIdDesc(conversationId, pageRequest(page, size)).map(this::messageResponse);
     }
 
@@ -71,7 +74,8 @@ public class MessageService {
     public MessageResponse send(String email, Long conversationId, SendMessageRequest request) {
         User current = users.findByEmail(email).orElseThrow();
         Conversation conversation = requireMember(conversationId, current.getId());
-        blocks.requireInteractionAllowed(current.getId(), otherUserId(conversation, current.getId()));
+        Long otherId = requireActiveOtherUser(conversation, current.getId());
+        blocks.requireInteractionAllowed(current.getId(), otherId);
         Message message = new Message();
         message.setConversationId(conversation.getId());
         message.setSenderId(current.getId());
@@ -86,7 +90,8 @@ public class MessageService {
     public void markRead(String email, Long conversationId) {
         User current = users.findByEmail(email).orElseThrow();
         Conversation conversation = requireMember(conversationId, current.getId());
-        blocks.requireInteractionAllowed(current.getId(), otherUserId(conversation, current.getId()));
+        Long otherId = requireActiveOtherUser(conversation, current.getId());
+        blocks.requireInteractionAllowed(current.getId(), otherId);
         messages.markUnreadAsRead(conversationId, current.getId());
     }
 
@@ -96,13 +101,23 @@ public class MessageService {
         return conversation;
     }
 
+    private Long requireActiveOtherUser(Conversation conversation, Long currentUserId) {
+        Long otherId = otherUserId(conversation, currentUserId);
+        users.findById(otherId)
+                .filter(user -> Boolean.TRUE.equals(user.getIsActive()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation not found"));
+        return otherId;
+    }
+
     private Long otherUserId(Conversation conversation, Long currentUserId) {
         return currentUserId.equals(conversation.getUserOneId()) ? conversation.getUserTwoId() : conversation.getUserOneId();
     }
 
     private ConversationResponse response(Conversation conversation, Long currentUserId) {
         Long otherId = currentUserId.equals(conversation.getUserOneId()) ? conversation.getUserTwoId() : conversation.getUserOneId();
-        User other = users.findById(otherId).orElseThrow();
+        User other = users.findById(otherId)
+                .filter(user -> Boolean.TRUE.equals(user.getIsActive()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation not found"));
         var last = messages.findTopByConversationIdOrderByCreatedAtDescIdDesc(conversation.getId()).map(message -> new ConversationResponse.MessageSummary(message.getId(), message.getSenderId(), message.getBody(), message.getCreatedAt(), message.getReadAt())).orElse(null);
         return new ConversationResponse(conversation.getId(), new ConversationResponse.PublicUser(other.getId(), other.getUsername(), other.getDisplayName(), other.getAvatarUrl()), conversation.getUpdatedAt(), last);
     }

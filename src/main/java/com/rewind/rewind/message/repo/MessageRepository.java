@@ -12,7 +12,12 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     Page<Message> findAllByConversationIdOrderByCreatedAtDescIdDesc(Long conversationId, Pageable pageable);
     Optional<Message> findTopByConversationIdOrderByCreatedAtDescIdDesc(Long conversationId);
 
-    @Query("select count(m) from Message m, Conversation c where m.conversationId = c.id and (c.userOneId = :userId or c.userTwoId = :userId) and m.senderId <> :userId and m.readAt is null")
+    @Query("select count(m) from Message m, Conversation c where m.conversationId = c.id "
+            + "and ((c.userOneId = :userId and exists (select other.id from User other where other.id = c.userTwoId and other.isActive = true)) "
+            + "or (c.userTwoId = :userId and exists (select other.id from User other where other.id = c.userOneId and other.isActive = true))) "
+            + "and not exists (select b.id from UserBlock b where (b.blocker.id = c.userOneId and b.blocked.id = c.userTwoId) "
+            + "or (b.blocker.id = c.userTwoId and b.blocked.id = c.userOneId)) "
+            + "and m.senderId <> :userId and m.readAt is null")
     long countUnreadForUser(Long userId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
