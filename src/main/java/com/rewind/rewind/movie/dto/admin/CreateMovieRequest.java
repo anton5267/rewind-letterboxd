@@ -21,7 +21,8 @@ public class CreateMovieRequest {
     private String shortPlot;
     private String photoUrl;
     private String backdropUrl;
-    @Pattern(regexp = "https?://.+", message = "Trailer URL must use http or https")
+    @Size(max = 255)
+    @Pattern(regexp = "https?://\\S+", message = "Trailer URL must use http or https")
     private String trailerUrl;
 
     public String getTitle() { return title; }

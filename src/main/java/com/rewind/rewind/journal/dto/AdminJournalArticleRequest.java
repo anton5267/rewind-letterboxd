@@ -10,6 +10,6 @@ public record AdminJournalArticleRequest(
         @Size(max = 500) String excerpt,
         @NotBlank String content,
         @Size(max = 500) String coverUrl,
-        @Size(max = 500) @Pattern(regexp = "https?://.+", message = "Audio URL must use http or https") String audioUrl,
+        @Size(max = 500) @Pattern(regexp = "https?://\\S+", message = "Audio URL must use http or https") String audioUrl,
         boolean published
 ) {}
