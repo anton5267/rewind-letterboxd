@@ -1,13 +1,11 @@
 package com.rewind.rewind.list.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
 public class UpdateListRequest {
 
-    @NotBlank
     @Size(max = 120)
     private String name;
 
