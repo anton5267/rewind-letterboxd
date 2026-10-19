@@ -8,6 +8,7 @@
 
 - [x] Profile media URL hardening: profile/admin avatar inputs and social-link schemes are server-validated; shared image rendering rejects non-HTTP(S) legacy values before creating `<img>` requests. API shape unchanged; local follow-up не пушився.
 - [x] Read-only transaction boundaries: Profile and Review DTO-building reads explicitly use `@Transactional(readOnly = true)` so lazy relation access is scoped to the service operation rather than Open-Session-in-View behavior.
+- [x] Notification actor visibility: notification history and SSE keep events for deactivated actors but omit their public identity fields, matching the existing activity visibility rule.
 - [x] Основні API-backed visual slices готові: Home, Search, Global Search, Lists, Public List, Profiles, Community, Journal, Review Details, Movie Details і mobile navigation; exact pixel parity не заявляється без Figma Editor/node export access.
 - [x] Responsive/accessibility baseline перевірено для 320/393/768/1440 px; loading/error/empty/retry, overflow, keyboard focus і bilingual UK/EN surfaces присутні в реалізованих маршрутах.
 - [x] Frontend type-safety baseline закріплено в `tsconfig.json`: `strict`, `noUnusedLocals` і `noUnusedParameters` увімкнені; strict TypeScript compile exit 0.

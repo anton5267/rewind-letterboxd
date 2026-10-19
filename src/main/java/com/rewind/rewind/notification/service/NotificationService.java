@@ -177,8 +177,9 @@ public class NotificationService {
     }
 
     private NotificationResponse response(Notification notification, User actor) {
+        User visibleActor = actor != null && Boolean.TRUE.equals(actor.getIsActive()) ? actor : null;
         return new NotificationResponse(notification.getId(), notification.getType(), notification.getCreatedAt(), notification.getReadAt(),
-                actor == null ? null : new NotificationResponse.Actor(actor.getId(), actor.getUsername(), actor.getDisplayName(), actor.getAvatarUrl()),
+                visibleActor == null ? null : new NotificationResponse.Actor(visibleActor.getId(), visibleActor.getUsername(), visibleActor.getDisplayName(), visibleActor.getAvatarUrl()),
                 notification.getRelatedUserId(), notification.getReviewId());
     }
 }
