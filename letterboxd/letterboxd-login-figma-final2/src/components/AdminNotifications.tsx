@@ -165,7 +165,13 @@ export default function AdminNotifications() {
     {error && <div><p className={styles.error} role="alert">{t("adminLoadError")}</p><button type="button" onClick={() => setRevision(value => value + 1)}>{t("retry")}</button></div>}
     {data && data.content.length === 0 && <p>{t("noAdminNotifications")}</p>}
     {data && <>
-      <ul className={styles.notificationList}>{data.content.map(notification => <li className={styles.notificationRow} key={notification.id}>{notificationTypeLabel(notification.type, t)} · {t("notificationRecipient")} #{notification.recipientId} · {notification.actorId ? `${t("notificationActor")} #${notification.actorId}` : ""} · {notification.readAt ? t("read") : t("unread")} {" "}<button type="button" aria-busy={busy} disabled={busy} onClick={() => void toggleRead(notification)}>{busy ? t("loading") : notification.readAt ? t("markNotificationUnread") : t("markNotificationRead")}</button> <button type="button" aria-busy={busy} disabled={busy} onClick={() => void removeNotification(notification)}>{busy ? t("loading") : t("deleteNotification")}</button></li>)}</ul>
+      <ul className={styles.notificationList}>{data.content.map(notification => <li className={styles.notificationRow} key={notification.id}>
+        <div className={styles.notificationContent}>{notificationTypeLabel(notification.type, t)} · {t("notificationRecipient")} #{notification.recipientId} · {notification.actorId ? `${t("notificationActor")} #${notification.actorId}` : ""} · {notification.readAt ? t("read") : t("unread")}</div>
+        <div className={styles.notificationActions}>
+          <button type="button" aria-busy={busy} disabled={busy} onClick={() => void toggleRead(notification)}>{busy ? t("loading") : notification.readAt ? t("markNotificationUnread") : t("markNotificationRead")}</button>
+          <button type="button" aria-busy={busy} disabled={busy} onClick={() => void removeNotification(notification)}>{busy ? t("loading") : t("deleteNotification")}</button>
+        </div>
+      </li>)}</ul>
       <nav className={styles.pagination} aria-label={t("adminNotificationsPagination")}>
         <button type="button" disabled={loading || page === 0} onClick={() => setPage(value => Math.max(0, value - 1))}>{t("previous")}</button>
         <span role="status">{t("page")} {data.totalPages === 0 ? 0 : page + 1} {t("of")} {data.totalPages} · {data.totalElements}</span>

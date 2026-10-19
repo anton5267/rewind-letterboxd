@@ -33,6 +33,7 @@
 - **Admin user contract and mobile row layout:** admin user PATCH normalizes optional role, display name and media values at the service boundary, trims search terms, and rejects blank usernames/display names; the Users panel separates identity from actions and stacks controls below 520px without changing the API shape.
 - **Admin moderation row layout:** shared admin comment/review/list/conversation/moderation rows now use the same content/actions structure and stack action controls on narrow screens; mutation semantics, labels and API contracts remain unchanged.
 - **Figma snapshot workflow:** `scripts/sync-figma.ps1` can create a local REST snapshot for a selected file/node and PNG through a hidden PAT prompt; output lives in ignored `figma/`, so design data and credentials never enter source control.
+- **Admin notifications mobile layout:** notification metadata and read/delete actions now use separate responsive containers; filter controls become full-width below 520px without changing notification API or mutation semantics.
 - Усі ці зміни зберігаються локально окремими commit-ами, API/schema не розширювалися, новий push не виконується без прямої команди користувача.
 - GitHub: за прямою командою користувача verified стан один раз запушено в `origin/master` — commit `6b5d14e` (`Make backend casing locale independent`); наступні push без окремої команди не виконувати.
 

@@ -36,6 +36,18 @@
   flex: 1 1 160px;
 }
 
+.notificationContent {
+  min-width: 0;
+  flex: 1 1 260px;
+  overflow-wrap: anywhere;
+}
+
+.notificationActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .feedback {
   color: var(--rewind-muted);
 }
@@ -62,6 +74,27 @@
   border-radius: var(--rewind-radius-lg);
   background: var(--rewind-surface);
   overflow-wrap: anywhere;
+}
+
+@media (max-width: 520px) {
+  .filterForm {
+    display: grid;
+    align-items: stretch;
+  }
+
+  .filterForm > * {
+    width: 100%;
+  }
+
+  .notificationActions {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 1fr;
+  }
+
+  .notificationActions > * {
+    width: 100%;
+  }
 }
 
 .pagination {
