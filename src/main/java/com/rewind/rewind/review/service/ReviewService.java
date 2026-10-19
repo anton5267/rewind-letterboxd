@@ -76,6 +76,7 @@ public class ReviewService {
         );
     }
 
+    @Transactional(readOnly = true)
     public Page<ReviewResponse> listByMovie(Long movieId, int page, int size) {
         var p = reviews.findVisibleByMovieId(movieId,
                 PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 50))));

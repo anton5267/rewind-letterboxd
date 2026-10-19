@@ -77,6 +77,7 @@ public class ProfileService {
         this.socialLinks = socialLinks;
     }
 
+    @Transactional(readOnly = true)
     public ProfileResponse myProfile(String email) {
         var user = users.findByEmail(email).orElseThrow();
 
@@ -183,6 +184,7 @@ public class ProfileService {
                 .map(list -> listItems.countByListId(list.getId())).orElse(0L);
     }
 
+    @Transactional(readOnly = true)
     public Page<MovieCardResponse> mySystemCollection(String email, ListType type, int page, int size) {
         var user = users.findByEmail(email).orElseThrow();
         return systemCollection(user, type, page, size);
