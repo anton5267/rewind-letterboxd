@@ -96,7 +96,7 @@ export default function UserLists() {
     setItemsBusy(true);
     try {
       await removeMovieFromList(selected, movieId);
-      setItems(items.filter(item => item.movie.id !== movieId));
+      setItems(current => current.filter(item => item.movie.id !== movieId));
     } catch { setError(t("removeItemError")); }
     finally { setItemsBusy(false); }
   };
@@ -117,7 +117,7 @@ export default function UserLists() {
     setError("");
     try {
       const { data } = await updateList(selectedList.id, editName.trim(), editDescription.trim(), editPublic, editTags.split(",").map(tag => tag.trim()).filter(Boolean));
-      setLists(lists.map(list => list.id === data.id ? data : list));
+      setLists(current => current.map(list => list.id === data.id ? data : list));
       setError("");
       setStatus("");
     } catch { setError(t("updateListError")); }
