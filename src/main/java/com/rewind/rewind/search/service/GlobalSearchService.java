@@ -107,7 +107,9 @@ public class GlobalSearchService {
         producers.findByNameContainingIgnoreCase(q, pageable).forEach(producer -> result.add(new GlobalSearchPersonResponse(producer.getId(), producer.getName(), producer.getPhotoUrl(), "PRODUCER")));
         result.sort((left, right) -> {
             int byName = String.CASE_INSENSITIVE_ORDER.compare(left.name(), right.name());
-            return byName != 0 ? byName : left.type().compareTo(right.type());
+            if (byName != 0) return byName;
+            int byType = left.type().compareTo(right.type());
+            return byType != 0 ? byType : Long.compare(left.id(), right.id());
         });
         return result.size() <= size ? List.copyOf(result) : List.copyOf(result.subList(0, size));
     }
