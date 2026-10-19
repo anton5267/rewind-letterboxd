@@ -1,5 +1,6 @@
 # Rewind — прогрес повного плану
 
+- [x] **19.10.2026, popular reviewer visibility race:** popular-reviewer hydration rechecks active users after the aggregate query and skips rows whose owner was deactivated between queries; public identity fields are not leaked and API shape is unchanged.
 - [x] **19.10.2026, activity list visibility:** activity responses now include list metadata only while the referenced list remains public and its owner active; a list made private after activity creation no longer leaks its name through profile/following feeds. API shape is unchanged; local backend compile remains green.
 - [x] **19.10.2026, notification actor visibility:** notification history and SSE responses now hide username/avatar for deactivated actors while preserving the notification event and its unread state; API shape is unchanged and the local backend compile remains green.
 - [x] **19.10.2026, read-only transaction boundaries:** Profile and Review read methods now declare explicit `@Transactional(readOnly = true)` boundaries while hydrating lazy relations into API DTOs; endpoint contracts are unchanged and the local backend compile remains green.

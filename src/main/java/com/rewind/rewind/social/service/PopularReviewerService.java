@@ -27,10 +27,12 @@ public class PopularReviewerService {
         var rows = likes.findPopularReviewers(PageRequest.of(0, Math.max(1, Math.min(size, 20))));
         Map<Long, User> byId = new HashMap<>();
         users.findAllById(rows.stream().map(row -> row.getUserId()).toList())
+                .stream()
+                .filter(user -> Boolean.TRUE.equals(user.getIsActive()))
                 .forEach(user -> byId.put(user.getId(), user));
         return rows.stream().map(row -> {
             User user = byId.get(row.getUserId());
-            return new PopularReviewerResponse(user.getId(), user.getUsername(), user.getDisplayName(), user.getAvatarUrl(), row.getLikes());
-        }).toList();
+            return user == null ? null : new PopularReviewerResponse(user.getId(), user.getUsername(), user.getDisplayName(), user.getAvatarUrl(), row.getLikes());
+        }).filter(java.util.Objects::nonNull).toList();
     }
 }
