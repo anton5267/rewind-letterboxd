@@ -1,0 +1,338 @@
+/* Figma Community / Popular reviewers visual slice.
+   References: 1413:13364 (desktop) and 1480:7698 (phone). */
+.page {
+  min-height: 100vh;
+  padding: 80px 0 0;
+  background: #1f1f1f;
+  color: #f5f1eb;
+}
+
+.shell {
+  width: min(1440px, 100%);
+  padding: 0;
+}
+
+.hero {
+  display: flex;
+  min-height: 430px;
+  margin: 0;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  padding: 72px 24px;
+  border-radius: 0;
+  background:
+    radial-gradient(circle at 66% 12%, rgba(211, 153, 57, .55), transparent 34%),
+    radial-gradient(circle at 33% 10%, rgba(36, 103, 113, .65), transparent 42%),
+    linear-gradient(180deg, #1d3840 0%, #142126 48%, #080808 100%);
+  text-align: center;
+}
+
+.hero .eyebrow {
+  margin: 0 0 18px;
+  padding: 7px 12px;
+  background: var(--rewind-gold);
+  color: #171717;
+  font-size: 12px;
+  letter-spacing: .04em;
+}
+
+.hero h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(34px, 6vw, 74px);
+  line-height: .98;
+  letter-spacing: -.04em;
+  overflow-wrap: anywhere;
+}
+
+.hero > p:last-child {
+  max-width: 560px;
+  margin: 18px 0 0;
+  color: #d7dfdf;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--rewind-gold);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.loading,
+.alert {
+  max-width: 850px;
+  margin: 28px auto 0;
+  padding: 14px 16px;
+  border-radius: 2px;
+}
+
+.loading {
+  background: #292929;
+  color: #d5d0ca;
+}
+
+.alert {
+  border: 1px solid #9d5d5d;
+  background: #40282a;
+  color: #ffe3e3;
+}
+
+.alert button {
+  margin-left: 8px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 860px;
+  gap: 20px;
+  margin: 48px auto 0;
+  padding: 0 24px 72px;
+}
+
+.card,
+.directoryCard {
+  grid-column: auto;
+  min-width: 0;
+  padding: 28px;
+  border: 1px solid #393939;
+  border-radius: 2px;
+  background: #252525;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, .18);
+}
+
+.cardHeading {
+  margin-bottom: 20px;
+}
+
+.cardHeading .eyebrow {
+  color: var(--rewind-gold);
+}
+
+.cardHeading h2 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(22px, 3vw, 32px);
+  line-height: 1.05;
+}
+
+.empty {
+  margin: 0;
+  color: #b7b0a8;
+}
+
+.sectionStatus {
+  margin: 0;
+  color: #ffb8bd;
+}
+
+.sectionStatus button {
+  margin-left: 8px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list li.userRow {
+  display: flex;
+  min-height: 68px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #3b3b3b;
+  line-height: 1.5;
+}
+
+.list li.userRow:last-child {
+  border-bottom: 0;
+}
+
+.userLink {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+  text-decoration: none;
+}
+
+.userLink:hover strong,
+.userLink:focus-visible strong {
+  color: var(--rewind-gold);
+}
+
+.avatar,
+.avatarFallback {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatarFallback {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #315d68, #9f7543);
+  color: #fff;
+  font-weight: 700;
+}
+
+.userCopy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.userCopy strong,
+.userCopy span {
+  overflow-wrap: anywhere;
+}
+
+.userCopy strong {
+  color: #fff;
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.userCopy span,
+.rowMeta {
+  color: #c2bdb6;
+  font-size: 12px;
+}
+
+.rowMeta {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 14px;
+  text-align: right;
+}
+
+.rowAction {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid #646464;
+  border-radius: 50%;
+  color: #d7d2cb;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.searchForm {
+  display: grid;
+  gap: 8px;
+}
+
+.searchForm label {
+  color: #b7b0a8;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.searchForm > div {
+  display: flex;
+  gap: 8px;
+}
+
+.searchForm input {
+  min-width: 0;
+  min-height: 42px;
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid #4a4a4a;
+  border-radius: 3px;
+  background: #1d1d1d;
+  color: #fff;
+}
+
+.searchForm button,
+.pagination button {
+  min-height: 42px;
+  padding: 9px 15px;
+  border: 1px solid var(--rewind-gold);
+  border-radius: 3px;
+  background: var(--rewind-gold);
+  color: #171717;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.pagination span {
+  color: #b7b0a8;
+}
+
+.pagination button:disabled {
+  cursor: not-allowed;
+  opacity: .5;
+}
+
+.alert button:focus-visible,
+.sectionStatus button:focus-visible,
+.searchForm input:focus-visible,
+.searchForm button:focus-visible,
+.pagination button:focus-visible,
+.userLink:focus-visible {
+  outline: 2px solid var(--rewind-cyan);
+  outline-offset: 3px;
+}
+
+@media (max-width: 700px) {
+  .page { padding-top: 132px; }
+  .hero { min-height: 300px; padding: 48px 18px; }
+  .hero h1 { font-size: clamp(30px, 11vw, 48px); }
+  .grid { margin-top: 28px; padding: 0 14px 48px; }
+  .card,
+  .directoryCard { padding: 22px 16px; }
+  .searchForm > div { align-items: stretch; flex-direction: column; }
+  .searchForm button { width: 100%; }
+}
+
+@media (max-width: 400px) {
+  .page { padding-top: 160px; }
+  .hero { min-height: 270px; padding: 42px 14px; }
+  .hero > p:last-child { font-size: 14px; }
+  .grid { padding-inline: 10px; }
+  .card,
+  .directoryCard { padding: 18px 14px; }
+  .list li.userRow { align-items: flex-start; gap: 8px; }
+  .rowMeta { max-width: 36%; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+  .userCopy strong { font-size: 14px; }
+  .rowAction { width: 22px; height: 22px; }
+}

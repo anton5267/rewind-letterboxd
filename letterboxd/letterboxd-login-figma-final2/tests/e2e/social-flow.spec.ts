@@ -37,7 +37,10 @@ test("user can follow another profile and receive a notification", async ({ page
   await expect(followButton).toBeVisible();
   await followButton.click();
   await expect(page.getByRole("button", { name: "Відписатися" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Підписники" })).toBeVisible();
+  const followersSection = page.locator("section").filter({ has: page.getByRole("heading", { name: "Підписники" }) });
+  await expect(followersSection).toBeVisible();
+  await expect(followersSection.getByRole("link", { name: new RegExp(`social-b${suffix}`) })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Остання активність" })).toBeVisible();
 
   await page.getByRole("button", { name: "Вийти" }).click();
   await expect(page).toHaveURL(/\/uk\/login$/);
@@ -46,6 +49,7 @@ test("user can follow another profile and receive a notification", async ({ page
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/uk\/films$/);
   await expect(page.getByRole("button", { name: "Вийти" })).toBeVisible();
+  await expect(page.getByLabel(/не прочитано: \d+/)).toBeVisible();
   await page.goto("/uk/notifications");
   await expect(page.getByRole("heading", { name: "Сповіщення" })).toBeVisible();
   await expect(page.getByText(/підписав/)).toBeVisible();
@@ -63,8 +67,8 @@ test("user can follow another profile and receive a notification", async ({ page
   await page.goto(`/uk/messages?user=${secondUser.id}`);
   await expect(page.getByRole("heading", { name: "Повідомлення" })).toBeVisible();
   await page.getByLabel("Текст повідомлення").fill(message);
-  await page.getByRole("button", { name: "Надіслати" }).click();
-  await expect(page.getByText(message)).toBeVisible();
+  await page.getByRole("button", { name: "Написати" }).click();
+  await expect(page.getByText(message).last()).toBeVisible();
 
   await page.getByRole("button", { name: "Вийти" }).click();
   await expect(page).toHaveURL(/\/uk\/login$/);
@@ -72,6 +76,17 @@ test("user can follow another profile and receive a notification", async ({ page
   await getByLabel(page, "Пароль").fill("E2e-password-123!");
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/uk\/films$/);
+  await page.goto(`/uk/users/${firstUser.id}`);
+  await expect(page.getByRole("button", { name: "Заблокувати" })).toBeVisible();
+  await page.getByRole("button", { name: "Заблокувати" }).click();
+  await expect(page.getByRole("button", { name: "Розблокувати" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Написати" })).toHaveCount(0);
+  await page.goto(`/uk/messages?user=${firstUser.id}`);
+  await expect(page.getByRole("alert")).toContainText("Не вдалося завантажити діалоги.");
+  await page.goto(`/uk/users/${firstUser.id}`);
+  await page.getByRole("button", { name: "Розблокувати" }).click();
+  await expect(page.getByRole("button", { name: "Заблокувати" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Написати" })).toBeVisible();
   await page.goto("/uk/messages");
-  await expect(page.getByText(message)).toBeVisible();
+  await expect(page.getByText(message).last()).toBeVisible();
 });

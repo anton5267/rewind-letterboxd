@@ -16,7 +16,7 @@ export default function Footer() {
         </div>
 
         {/* NAV */}
-        <nav className={styles.nav}>
+        <nav className={styles.nav} aria-label={t("moreNavigation")}>
           <Link to={path("/about")}>{t("about")}</Link>
           <Link to={path("/help")}>{t("help")}</Link>
           <Link to={path("/contact")}>{t("contact")}</Link>
@@ -30,9 +30,9 @@ export default function Footer() {
 
       {/* SOCIAL — */}
       <div className={styles.socialCenter}>
-        <i className="fa-brands fa-x-twitter"></i>
-        <i className="fa-brands fa-instagram"></i>
-        <i className="fa-brands fa-youtube"></i>
+        <i className="fa-brands fa-x-twitter" aria-hidden="true"></i>
+        <i className="fa-brands fa-instagram" aria-hidden="true"></i>
+        <i className="fa-brands fa-youtube" aria-hidden="true"></i>
       </div>
 
       {/* BOTTOM */}

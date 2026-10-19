@@ -1,0 +1,28 @@
+.page {
+  min-height: 70vh;
+  box-sizing: border-box;
+  padding: 110px clamp(16px, 5vw, 80px) 60px;
+  background: var(--rewind-black);
+  color: #fff;
+}
+
+.content {
+  width: min(900px, 100%);
+  margin: 0 auto;
+}
+
+.title {
+  margin: 0 0 28px;
+  color: var(--rewind-paper);
+  font-size: clamp(30px, 5vw, 48px);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.body {
+  max-width: 72ch;
+  margin: 0;
+  color: var(--rewind-muted);
+  line-height: 1.75;
+  white-space: pre-wrap;
+}

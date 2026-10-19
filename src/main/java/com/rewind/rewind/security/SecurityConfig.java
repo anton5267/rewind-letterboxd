@@ -1,5 +1,6 @@
 package com.rewind.rewind.security;
 
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -41,6 +42,9 @@ public class SecurityConfig {
                         }))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // SSE завершуються внутрішнім async dispatch після закриття клієнтського з'єднання.
+                        // Це не новий зовнішній запит, тому не треба повторно вимагати JWT для цього dispatch.
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         // ✅ щоб не маскувало помилки як 403
                         .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
@@ -57,17 +61,20 @@ public class SecurityConfig {
                         // ✅ public movies endpoints (саме ці GET)
                         .requestMatchers(HttpMethod.GET, "/api/movies").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/movies/search").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/search/global").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/movies/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/movies/*/details").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/movies/*/reviews").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/recent").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/popular").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/reviews/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/*/comments").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/*/likes").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/genres").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/tags/popular").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/actors/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/directors/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/producers/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/journal/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/lists/public").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/lists/public/popular").permitAll()

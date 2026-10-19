@@ -35,6 +35,17 @@ public interface MovieListRepository extends JpaRepository<MovieList, Long> {
             + "and u.isActive = true")
     Page<MovieList> findPublicCatalog(@Param("listType") ListType listType, Pageable pageable);
 
+    @Query(value = "select l from MovieList l join l.user u where l.isPublic = true and l.listType = :listType "
+            + "and u.isActive = true and (:q is null or :q = '' or lower(l.name) like lower(concat('%', :q, '%')) "
+            + "or lower(coalesce(l.description, '')) like lower(concat('%', :q, '%')) "
+            + "or lower(u.username) like lower(concat('%', :q, '%'))) "
+            + "order by l.updatedAt desc, l.id desc",
+            countQuery = "select count(l) from MovieList l join l.user u where l.isPublic = true and l.listType = :listType "
+                    + "and u.isActive = true and (:q is null or :q = '' or lower(l.name) like lower(concat('%', :q, '%')) "
+                    + "or lower(coalesce(l.description, '')) like lower(concat('%', :q, '%')) "
+                    + "or lower(u.username) like lower(concat('%', :q, '%')))" )
+    Page<MovieList> findPublicCatalogByQuery(@Param("listType") ListType listType, @Param("q") String q, Pageable pageable);
+
     @Query(value = "SELECT l.* FROM lists l "
             + "JOIN users u ON u.id = l.user_id "
             + "LEFT JOIN list_likes ll ON ll.list_id = l.id "

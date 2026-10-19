@@ -134,6 +134,18 @@ $env:E2E_BASE_URL = 'http://127.0.0.1:3000'
 npm run test:e2e
 ```
 
+Для admin UI використовується окремий disposable fixture. Повний headed набір:
+
+```powershell
+.\scripts\verify-admin-browser.ps1 -Headed
+```
+
+Після зміни конкретного admin flow можна звузити запуск, наприклад:
+
+```powershell
+.\scripts\verify-admin-browser.ps1 -Headed -Grep "admin notification table"
+```
+
 The current verified slice is tracked in [docs/PROGRESS.md](docs/PROGRESS.md), while the API and database map is in [docs/PROJECT_MAP.md](docs/PROJECT_MAP.md). The current migration-backed ER diagram is in [docs/ER_DIAGRAM.md](docs/ER_DIAGRAM.md); run `scripts/verify-er-schema.ps1` against Compose to check it.
 
 ## Project references

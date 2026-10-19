@@ -14,7 +14,7 @@ Google Chrome
     ▼
 Nginx web container :3000 ── /api ──► Spring Boot API :8081
                                       │
-                                      ├── MySQL 8.4 :3307 + Flyway 30
+                                      ├── MySQL 8.4 :3307 + Flyway 31
                                       ├── Redis 7.4 cache
                                       └── Mailpit :8025 (local email)
 ```
@@ -40,16 +40,16 @@ Nginx web container :3000 ── /api ──► Spring Boot API :8081
 
 | Область | Фактичний доказ |
 | --- | --- |
-| Backend | MySQL Compose suite: **68 tests, 0 failures, 0 errors, 0 skipped** у 36 test classes |
-| Browser regression | headed Chrome: **16 passed, 12 skipped, 0 failed (1.1m)**; skipped — 12 admin fixture tests, які запускаються окремим скриптом |
-| Admin | `verify-admin-browser.ps1 -Headed`: **12 passed (34.1s)** |
+| Backend | MySQL Compose suite: **69 tests, 0 failures, 0 errors, 0 skipped** у 37 test classes |
+| Browser regression | Playwright: **28 passed, 12 skipped, 0 failed**; skipped — 12 admin fixture tests без окремих E2E credentials |
+| Admin | `verify-admin-browser.ps1 -Headed`: **12 passed (36.9s)** |
 | Accessibility | public accessibility/WCAG suite: **5 passed**; axe audit без violations у попередньому повному наборі |
 | Security | security browser matrix: review/comment escaping + 4 SQLi/XSS query payloads, **1 passed**; backend authorization smoke перевіряє guest `401` і non-admin `403` |
 | Concurrency | list/reorder/rating/review/comment/follow/like/notification writes; concurrent review дає очікувані `200 + 409`, дублікати не створюються |
 | Load | **200/200 HTTP 200 за 0.62s** на 8 public/health endpoint-групах у локальному Compose runtime |
-| Backup | актуальний dump/restore у тимчасову БД: **155 movies / 363 users / 29 migrations**, основна БД не змінювалася |
+| Backup | актуальний dump/restore у тимчасову БД: **188 movies / 448 users / 31 migrations**, основна БД не змінювалася |
 | Auth recovery / contracts | Mailpit one-time password reset із revocation старої сесії; core API contract regression успішний |
-| Schema / cache | актуальна ER/schema перевірка: **36 tables / 53 foreign keys**; Redis movie-details TTL **599s**, miss **1**, hits **3** |
+| Schema / cache | актуальна ER/schema перевірка: **38 tables / 55 foreign keys**; Redis movie-details TTL **599s**, miss **1**, hits **3** |
 | Dependencies | offline npm audit після Vite 7.3.7 upgrade: **0 vulnerabilities**; online npm quick endpoint registry повертає 400 |
 
 Команди й дати кожного зрізу збережені у [PROGRESS.md](../PROGRESS.md) та [IMPLEMENTATION_CHECKLIST.md](../IMPLEMENTATION_CHECKLIST.md).

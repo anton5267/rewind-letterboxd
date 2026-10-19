@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getJournalArticle, type JournalArticle as Article } from "../api/journal.api";
-import { localizeJournalCategory, useLocale } from "../i18n";
+import { editorialText, formatDateTime, localizeJournalCategory, useLocale } from "../i18n";
+import styles from "./JournalArticle.module.css";
+
 export default function JournalArticle() {
-  const { slug = "" } = useParams(); const { lang, path, t } = useLocale(); const [article, setArticle] = useState<Article | null>(null); const [error, setError] = useState(false); const [attempt, setAttempt] = useState(0);
+  const { slug = "" } = useParams();
+  const { lang, path, t } = useLocale();
+  const [article, setArticle] = useState<Article | null>(null);
+  const [error, setError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+
   useEffect(() => {
     let current = true;
     setArticle(null);
@@ -13,7 +20,37 @@ export default function JournalArticle() {
       .catch(() => { if (current) setError(true); });
     return () => { current = false; };
   }, [lang, slug, attempt]);
-  if (error) return <main style={{ padding: "110px 5%" }}><p role="alert">{t("journalLoadError")} <button type="button" onClick={() => setAttempt(value => value + 1)}>{t("retry")}</button></p><Link to={path("/journal")}>{t("journal")}</Link></main>;
-  if (!article) return <main aria-busy="true" style={{ padding: "110px 5%" }}><p role="status">{t("loading")}</p></main>;
-  return <main style={{ padding: "110px 5% 40px", background: "#151515", color: "white", minHeight: "70vh", maxWidth: 900 }}><small>{localizeJournalCategory(article.category, t)}</small><h1>{article.title}</h1>{article.excerpt && <p>{article.excerpt}</p>}{article.audioUrl && <audio controls preload="metadata" src={article.audioUrl} aria-label={t("podcastAudio")}>{t("podcastAudioUnavailable")}</audio>}<div style={{ whiteSpace: "pre-wrap", lineHeight: 1.7 }}>{article.content}</div></main>;
+
+  if (error) {
+    return (
+      <main className={styles.page}>
+        <h1 className={styles.stateTitle}>{t("journal")}</h1>
+        <div className={styles.error} role="alert">
+          {t("journalLoadError")} <button type="button" onClick={() => setAttempt(value => value + 1)}>{t("retry")}</button>
+          <div><Link to={path("/journal")}>{t("journal")}</Link></div>
+        </div>
+      </main>
+    );
+  }
+
+  if (!article) {
+    return <main className={styles.page} aria-busy={true}><h1 className={styles.stateTitle}>{t("journal")}</h1><p className={styles.status} role="status">{t("loading")}</p></main>;
+  }
+
+  return (
+    <main className={styles.page}>
+      <article className={styles.article}>
+        <Link className={styles.back} to={path("/journal")}>← {t("journal")}</Link>
+        <p className={styles.eyebrow}>{localizeJournalCategory(article.category, t)}</p>
+        <h1>{editorialText(article.title, t("untitledArticle"))}</h1>
+        <div className={styles.meta}>
+          {article.publishedAt && <time dateTime={article.publishedAt}>{formatDateTime(article.publishedAt, lang)}</time>}
+          {article.audioUrl && <span>{t("podcastAudio")}</span>}
+        </div>
+        {article.excerpt?.trim() && <p className={styles.excerpt}>{article.excerpt.trim()}</p>}
+        {article.audioUrl && <audio className={styles.audio} controls preload="metadata" src={article.audioUrl} aria-label={t("podcastAudio")}>{t("podcastAudioUnavailable")}</audio>}
+        <div className={styles.body}>{editorialText(article.content, t("noArticleContent"))}</div>
+      </article>
+    </main>
+  );
 }

@@ -9,7 +9,7 @@ export interface NewsletterDeliveryStatus { articleId: number; pending: number; 
 export interface AdminReview { id: number; movieId: number; movieTitle: string; userId: number; username: string; content: string; rating: number | null; isHidden: boolean; moderatedReason: string | null; moderatedAt: string | null; createdAt: string }
 export interface AdminMovie { id: number; tmdbId: number | null; title: string; releaseDate: string | null; rating: number | null; photoUrl: string | null }
 export interface AdminMovieWrite { title: string; releaseDate?: string | null; rating?: number | null; photoUrl?: string | null }
-export interface TmdbSyncResponse { movieId: number; tmdbId: number; title: string; genresUpdated: number; actorsUpdated: number; directorsUpdated: number; similarMoviesLinked: number; trailerUpdated: boolean }
+export interface TmdbSyncResponse { movieId: number; tmdbId: number; title: string; genresUpdated: number; actorsUpdated: number; directorsUpdated: number; producersUpdated: number; similarMoviesLinked: number; trailerUpdated: boolean }
 export interface TmdbImportItem { movieId: number | null; tmdbId: number; status: "IMPORTED" | "FAILED"; title: string | null; message: string }
 export interface TmdbBatchSyncResponse { requested: number; succeeded: number; failed: number; items: TmdbImportItem[] }
 export interface TmdbDiscoveryRequest { page: number; year?: number; genreId?: number; minRating?: number; limit: number; syncSimilar?: boolean }
@@ -58,7 +58,7 @@ export const setAdminNotificationRead = (id: number, read: boolean) => api.patch
 export const markAdminNotificationsRead = (filters: Omit<AdminNotificationFilters, "read"> = {}) => api.patch<{ updated: number }>("/admin/notifications/read-all", null, { params: filters });
 export const deleteAdminNotifications = (filters: AdminNotificationFilters = {}) => api.delete<{ deleted: number }>("/admin/notifications", { params: filters });
 export const getAdminModerationQueue = (filters: AdminModerationFilters = {}, page = 0) => api.get<Page<AdminModerationQueueItem>>("/admin/moderation/queue", { params: { size: 50, page, ...filters } });
-export const hideAdminModerationItem = (item: Pick<AdminModerationQueueItem, "type" | "id">, reason = "Moderated by administrator") => api.post(`/admin/moderation/${item.type}/${item.id}/hide`, { reason });
+export const hideAdminModerationItem = (item: Pick<AdminModerationQueueItem, "type" | "id">, reason: string) => api.post(`/admin/moderation/${item.type}/${item.id}/hide`, { reason });
 export const bulkHideAdminModeration = (items: Array<Pick<AdminModerationQueueItem, "type" | "id">>, reason: string) => api.post<{ hidden: number }>("/admin/moderation/bulk-hide", { items, reason });
 export const getAdminSettings = () => api.get<AdminSetting[]>("/admin/settings");
 export const updateAdminSetting = (key: string, value: string) => api.put<AdminSetting>(`/admin/settings/${encodeURIComponent(key)}`, { value });

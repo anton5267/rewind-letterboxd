@@ -57,7 +57,7 @@ public class MovieListService {
     public Page<MovieListResponse> myListsPage(String email, int page, int size) {
         var user = users.findByEmail(email).orElseThrow();
         return lists.findPageByUserOrderByUpdatedAtDescIdDesc(user, pageRequest(page, size))
-                .map(this::toResponse);
+                .map(list -> toResponse(list));
     }
 
     @Transactional
@@ -114,9 +114,17 @@ public class MovieListService {
     // ===== All Lists (public lists catalog) =====
     @Transactional(readOnly = true)
     public Page<PublicListCardResponse> publicLists(String tag, int page, int size) {
+        return publicLists(tag, null, page, size);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PublicListCardResponse> publicLists(String tag, String query, int page, int size) {
         Pageable pageable = pageRequest(page, size);
+        String normalizedQuery = query == null || query.isBlank() ? null : query.trim();
         Page<MovieList> source = tag == null || tag.isBlank()
-                ? lists.findPublicCatalog(ListType.CUSTOM, pageable)
+                ? normalizedQuery == null
+                    ? lists.findPublicCatalog(ListType.CUSTOM, pageable)
+                    : lists.findPublicCatalogByQuery(ListType.CUSTOM, normalizedQuery, pageable)
                 : lists.findPublicByTag(ListType.CUSTOM, tag.trim().toLowerCase(), pageable);
         return toPublicCards(source);
     }
@@ -288,17 +296,36 @@ public class MovieListService {
     private Page<PublicListCardResponse> toPublicCards(Page<MovieList> source) {
         List<Long> ids = source.getContent().stream().map(list -> list.getId()).toList();
         Map<Long, Long> counts = new HashMap<>();
+        Map<Long, Long> itemCounts = new HashMap<>();
+        Map<Long, List<MovieCardResponse>> previews = previewMovies(ids);
         if (!ids.isEmpty()) {
             listLikes.countByListIds(ids).forEach(row -> counts.put(row.getListId(), row.getLikes()));
+            items.countByListIds(ids).forEach(row -> itemCounts.put((Long) row[0], (Long) row[1]));
         }
-        return source.map(list -> toPublicCard(list, counts.getOrDefault(list.getId(), 0L)));
+        return source.map(list -> toPublicCard(list, counts.getOrDefault(list.getId(), 0L),
+                itemCounts.getOrDefault(list.getId(), 0L), previews.getOrDefault(list.getId(), List.of())));
     }
 
-    private PublicListCardResponse toPublicCard(MovieList list, long likeCount) {
+    private PublicListCardResponse toPublicCard(MovieList list, long likeCount, long itemCount, List<MovieCardResponse> previewMovies) {
         return new PublicListCardResponse(
                 list.getId(), list.getName(), list.getDescription(), list.getIsPublic(),
                 list.getUser().getId(), list.getUser().getUsername(), list.getUser().getAvatarUrl(),
-                tagNames(list), likeCount);
+                tagNames(list), likeCount, itemCount, previewMovies);
+    }
+
+    private Map<Long, List<MovieCardResponse>> previewMovies(List<Long> listIds) {
+        Map<Long, List<MovieCardResponse>> previews = new HashMap<>();
+        if (listIds.isEmpty()) return previews;
+
+        for (ListItem item : items.findAllByListIdsForPreview(listIds)) {
+            Long listId = item.getList().getId();
+            List<MovieCardResponse> listPreview = previews.computeIfAbsent(listId, ignored -> new java.util.ArrayList<>());
+            if (listPreview.size() < 3) {
+                var movie = item.getMovie();
+                listPreview.add(new MovieCardResponse(movie.getId(), movie.getTitle(), movie.getReleaseDate(), movie.getRating(), movie.getPhotoUrl()));
+            }
+        }
+        return previews;
     }
 
     private MovieList visiblePublicList(Long listId) {

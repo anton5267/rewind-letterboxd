@@ -25,6 +25,11 @@ public interface ReviewLikeRepository extends JpaRepository<ReviewLike, Long> {
     @Query("select count(rl.id) from ReviewLike rl where rl.review.id = :reviewId and rl.user.isActive = true")
     long countActiveByReviewId(@Param("reviewId") Long reviewId);
 
+    @EntityGraph(attributePaths = "user")
+    @Query("select rl from ReviewLike rl where rl.review.id = :reviewId and rl.user.isActive = true "
+            + "order by rl.createdAt desc, rl.id desc")
+    List<ReviewLike> findActiveByReviewId(@Param("reviewId") Long reviewId, Pageable pageable);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = "INSERT IGNORE INTO review_likes (review_id, user_id, created_at) "
             + "VALUES (:reviewId, :userId, CURRENT_TIMESTAMP)", nativeQuery = true)

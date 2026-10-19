@@ -1,0 +1,74 @@
+.section {
+  margin-top: 32px;
+}
+
+.title {
+  margin: 0 0 18px;
+  color: var(--rewind-paper);
+}
+
+.form {
+  display: grid;
+  gap: 10px;
+  max-width: 700px;
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--rewind-line);
+  border-radius: var(--rewind-radius);
+  background: var(--rewind-surface-raised);
+  color: #fff;
+}
+
+.textarea {
+  min-height: 180px;
+  resize: vertical;
+}
+
+.publishToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--rewind-muted);
+}
+
+.feedback {
+  color: var(--rewind-muted);
+}
+
+.error {
+  color: #ff9a9a;
+}
+
+.articleList {
+  display: grid;
+  gap: 10px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.articleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--rewind-line);
+  border-radius: var(--rewind-radius-lg);
+  background: var(--rewind-surface);
+  overflow-wrap: anywhere;
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}

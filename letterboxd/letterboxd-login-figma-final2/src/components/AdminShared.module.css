@@ -1,0 +1,95 @@
+.section {
+  margin-top: 32px;
+}
+
+.title {
+  margin: 0 0 18px;
+  color: var(--rewind-paper);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.control {
+  min-height: 40px;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid var(--rewind-line);
+  border-radius: var(--rewind-radius);
+  background: var(--rewind-surface-raised);
+  color: #fff;
+}
+
+.toolbar .control {
+  flex: 1 1 180px;
+}
+
+.filter {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  color: var(--rewind-muted);
+}
+
+.filterset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+}
+
+.filterset legend {
+  flex-basis: 100%;
+  margin-bottom: 2px;
+  color: var(--rewind-muted);
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  padding: 12px;
+  border: 1px solid var(--rewind-line);
+  border-radius: var(--rewind-radius-lg);
+  background: var(--rewind-surface);
+  overflow-wrap: anywhere;
+}
+
+.rowActions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.feedback {
+  color: var(--rewind-muted);
+}
+
+.error {
+  color: #ff9a9a;
+}

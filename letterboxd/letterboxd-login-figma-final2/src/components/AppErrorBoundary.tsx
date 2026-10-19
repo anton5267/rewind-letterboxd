@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import styles from "./AppErrorBoundary.module.css";
 
 interface Props { children: ReactNode }
 interface State { hasError: boolean }
@@ -18,9 +19,9 @@ export default class AppErrorBoundary extends Component<Props, State> {
     if (!this.state.hasError) return this.props.children;
     const english = document.documentElement.lang === "en";
     return (
-      <main role="alert" style={{ minHeight: "100vh", padding: "120px 6% 48px", background: "#151515", color: "white" }}>
-        <h1>{english ? "Something went wrong" : "Сталася помилка"}</h1>
-        <p>{english ? "Reload the page and try again." : "Перезавантажте сторінку та спробуйте ще раз."}</p>
+      <main className={styles.page} role="alert" aria-labelledby="app-error-title">
+        <h1 className={styles.title} id="app-error-title">{english ? "Something went wrong" : "Сталася помилка"}</h1>
+        <p className={styles.message}>{english ? "Reload the page and try again." : "Перезавантажте сторінку та спробуйте ще раз."}</p>
         <button type="button" onClick={() => window.location.reload()}>
           {english ? "Reload" : "Перезавантажити"}
         </button>

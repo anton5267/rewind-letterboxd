@@ -31,5 +31,14 @@ public interface ListItemRepository extends JpaRepository<ListItem, Long> {
     // ✅ для reorder
     @EntityGraph(attributePaths = "movie")
     List<ListItem> findAllByListId(Long listId);
+
+    @Query("select li from ListItem li join fetch li.list join fetch li.movie "
+            + "where li.list.id in :listIds "
+            + "order by li.list.id asc, li.position asc, li.id asc")
+    List<ListItem> findAllByListIdsForPreview(@Param("listIds") List<Long> listIds);
+
+    @Query("select li.list.id, count(li.id) from ListItem li where li.list.id in :listIds group by li.list.id")
+    List<Object[]> countByListIds(@Param("listIds") List<Long> listIds);
+
     long countByListId(Long listId);
 }

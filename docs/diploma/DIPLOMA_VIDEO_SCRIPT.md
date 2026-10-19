@@ -21,7 +21,7 @@
 | 03:35–04:25 | /uk/profile і public profile | Показати власні колекції, ratings, reviews, custom lists; відкрити public profile у guest context і показати, що email не є публічним полем. |
 | 04:25–05:15 | Social screens | Показати follow, notification, review like або comment. Пояснити, що SSE reconnect і mobile pagination мають окремі browser checks. |
 | 05:15–06:35 | /uk/admin | Увійти disposable admin fixture. Показати users, films, notifications, journal, moderation queue, pagination, hide/unhide і audit log. Не показувати зайві тестові адреси. |
-| 06:35–07:25 | Security/quality slide або terminal | Коротко показати API=UP, 60/0/0/0 Maven, 15 passed frontend, 12/12 admin, 200/200 load, concurrency 200/409, backup/restore counts. |
+| 06:35–07:25 | Security/quality slide або terminal | Коротко показати API=UP, 69/0/0/0 Maven, 28 passed + 12 skipped frontend, 12/12 admin, 200/200 load, concurrency 200/409, backup/restore counts. |
 | 07:25–08:10 | Architecture slide | Пояснити React/TypeScript → Nginx → Spring Boot → MySQL/Flyway, Redis cache і Mailpit у local profile; cookie auth, CSRF, authorization і rate limits. |
 | 08:10–08:45 | Limitations | Чесно назвати відкриті частини: Figma Editor parity, реальний VPS/domain/HTTPS/SMTP launch, TMDB key rotation і відмінність локального WebM demo від production launch. |
 

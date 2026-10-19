@@ -11,17 +11,22 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setMessage("");
     setError("");
+    setLoading(true);
 
     try {
       await forgotPassword(email);
       setMessage(t("resetSent"));
     } catch {
       setError(t("resetInvalid"));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -31,6 +36,7 @@ export default function ForgotPassword() {
 
         {/* ← BACK TO LOGIN */}
         <button
+          type="button"
           className={styles.back}
           onClick={() => navigate(path("/login"))}
         >
@@ -45,7 +51,7 @@ export default function ForgotPassword() {
           {t("forgotDescription")}
         </p>
 
-        <form onSubmit={submit}>
+        <form onSubmit={submit} aria-busy={loading}>
           <input
             className={styles.input}
             type="email"
@@ -56,11 +62,11 @@ export default function ForgotPassword() {
             required
           />
 
-          {message && <p className={styles.success}>{message}</p>}
-          {error && <p className={styles.error}>{error}</p>}
+          {message && <p className={styles.success} role="status">{message}</p>}
+          {error && <p className={styles.error} role="alert">{error}</p>}
 
-          <button className={styles.button} type="submit">
-            {t("resetPassword")}
+          <button className={styles.button} type="submit" aria-busy={loading} disabled={loading}>
+            {loading ? t("loading") : t("resetPassword")}
           </button>
         </form>
 

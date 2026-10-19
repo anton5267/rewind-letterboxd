@@ -1,4 +1,4 @@
-param([string]$BaseUrl = 'http://127.0.0.1:8081', [switch]$Headed)
+param([string]$BaseUrl = 'http://127.0.0.1:8081', [switch]$Headed, [string]$Grep = '')
 
 $ErrorActionPreference = 'Stop'
 $suffix = [guid]::NewGuid().ToString('N').Substring(0, 12)
@@ -27,6 +27,7 @@ try {
         $env:E2E_ADMIN_USERNAME = $username
         $playwrightArgs = @('playwright', 'test', 'tests/e2e/admin-flow.spec.ts')
         if ($Headed) { $playwrightArgs += '--headed' }
+        if ($Grep) { $playwrightArgs += @('-g', $Grep) }
         npx @playwrightArgs
         if ($LASTEXITCODE -ne 0) { throw "Admin browser test failed with exit code $LASTEXITCODE" }
     }

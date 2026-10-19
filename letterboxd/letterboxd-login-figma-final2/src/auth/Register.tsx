@@ -13,16 +13,21 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setError("");
+    setLoading(true);
 
     try {
       await register(email, password, nickname);
       setSuccess(true);
     } catch {
       setError(t("registrationError"));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -31,9 +36,10 @@ export default function Register() {
     return (
       <main className={styles.page}>
         <div className={styles.card}>
-          <h2 className={styles.title}>{t("accountCreated")} ✅</h2>
+          <h2 className={styles.title} aria-live="polite">{t("accountCreated")} ✅</h2>
 
           <button
+            type="button"
             className={styles.button}
             onClick={() => navigate(path("/login"))}
           >
@@ -50,7 +56,7 @@ export default function Register() {
       <div className={styles.card}>
         <h1 className={styles.title}>{t("createAccount")}</h1>
 
-        <form onSubmit={submit}>
+        <form onSubmit={submit} aria-busy={loading}>
           <input
             className={styles.input}
             placeholder={t("username")}
@@ -80,15 +86,15 @@ export default function Register() {
             required
           />
 
-          {error && <p className={styles.error}>{error}</p>}
+          {error && <p className={styles.error} role="alert">{error}</p>}
 
-          <button className={styles.button} type="submit">
-            {t("createAccount")}
+          <button className={styles.button} type="submit" aria-busy={loading} disabled={loading}>
+            {loading ? t("loading") : t("createAccount")}
           </button>
         </form>
 
         {/* ✅ BACK TO LOGIN */}
-        <p className={styles.footer} style={{ marginTop: "25px" }}>
+        <p className={styles.footer}>
           {t("alreadyAccount")} <Link to={path("/login")}>{t("login")}</Link>
         </p>
       </div>

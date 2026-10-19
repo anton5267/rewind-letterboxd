@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getAdminReviews, setAdminReviewHidden, type AdminReview, type Page } from "../api/admin.api";
 import { useLocale } from "../i18n";
+import styles from "./AdminShared.module.css";
 
 type VisibilityFilter = "all" | "visible" | "hidden";
 
@@ -14,6 +15,7 @@ export default function AdminReviews() {
   const [revision, setRevision] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [actionError, setActionError] = useState("");
   const [busyId, setBusyId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -36,8 +38,9 @@ export default function AdminReviews() {
   const toggleHidden = async (review: AdminReview) => {
     if (busyId !== null) return;
     setBusyId(review.id);
+    setActionError("");
     try {
-      const { data: updated } = await setAdminReviewHidden(review.id, !review.isHidden, review.isHidden ? "" : "Moderated by administrator");
+      const { data: updated } = await setAdminReviewHidden(review.id, !review.isHidden, review.isHidden ? "" : t("moderationDefaultReason"));
       const leavesFilter = filter !== "all" && updated.isHidden !== hiddenValue(filter);
       if (leavesFilter) {
         if (data?.content.length === 1 && page > 0) setPage(value => value - 1);
@@ -45,32 +48,32 @@ export default function AdminReviews() {
       } else {
         setData(current => current ? { ...current, content: current.content.map(item => item.id === updated.id ? updated : item) } : current);
       }
-      setError(false);
     } catch {
-      setError(true);
+      setActionError(t("adminReviewModerationError"));
     } finally {
       setBusyId(null);
     }
   };
 
-  return <section aria-label={t("adminReviews")} aria-busy={loading}>
-    <h2>{t("adminReviews")}</h2>
-    <label>{t("adminVisibilityFilter")}{" "}
-      <select value={filter} onChange={event => changeFilter(event.target.value as VisibilityFilter)}>
+  return <section className={styles.section} aria-label={t("adminReviews")} aria-busy={loading || busyId !== null}>
+    <h2 className={styles.title}>{t("adminReviews")}</h2>
+    {actionError && <p className={styles.error} role="alert">{actionError}</p>}
+    <label className={styles.filter}>{t("adminVisibilityFilter")}{" "}
+      <select className={styles.control} value={filter} onChange={event => changeFilter(event.target.value as VisibilityFilter)}>
         <option value="all">{t("allVisibilityStates")}</option>
         <option value="visible">{t("visibleOnly")}</option>
         <option value="hidden">{t("hiddenOnly")}</option>
       </select>
     </label>
-    {loading && <p>{t("loading")}</p>}
-    {error && <div><p role="alert">{t("adminLoadError")}</p><button type="button" onClick={() => setRevision(value => value + 1)}>{t("retry")}</button></div>}
+    {loading && <p className={styles.feedback}>{t("loading")}</p>}
+    {error && <div><p className={styles.error} role="alert">{t("adminLoadError")}</p><button type="button" onClick={() => setRevision(value => value + 1)}>{t("retry")}</button></div>}
     {data && data.content.length === 0 && <p>{t("noAdminReviews")}</p>}
     {data && <>
-      <ul>{data.content.map(review => <li key={review.id} style={{ marginBottom: 8 }}>
+      <ul className={styles.list}>{data.content.map(review => <li className={styles.row} key={review.id}>
         {review.movieTitle} · {review.username}: {review.content} · {review.isHidden ? t("hiddenReview") : t("visibleReview")}{" "}
-        <button type="button" disabled={busyId !== null} onClick={() => void toggleHidden(review)}>{review.isHidden ? t("unhideReview") : t("hideReview")}</button>
+        <button type="button" aria-busy={busyId === review.id} disabled={busyId !== null} onClick={() => void toggleHidden(review)}>{busyId === review.id ? t("loading") : review.isHidden ? t("unhideReview") : t("hideReview")}</button>
       </li>)}</ul>
-      <nav aria-label={t("adminReviewsPagination")} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      <nav className={styles.pagination} aria-label={t("adminReviewsPagination")}>
         <button type="button" disabled={loading || page === 0} onClick={() => setPage(value => Math.max(0, value - 1))}>{t("previous")}</button>
         <span role="status">{t("page")} {data.totalPages === 0 ? 0 : page + 1} {t("of")} {data.totalPages} · {data.totalElements}</span>
         <button type="button" disabled={loading || page + 1 >= data.totalPages} onClick={() => setPage(value => value + 1)}>{t("next")}</button>

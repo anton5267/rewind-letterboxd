@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+test.setTimeout(60_000);
+
 test("profile collection is visible in own and public profile", async ({ page }) => {
   const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
   const username = `profile${suffix.slice(-12)}`;
@@ -31,6 +33,7 @@ test("profile collection is visible in own and public profile", async ({ page })
     const firstFilm = page.locator("main article h2 a").first();
     await expect(firstFilm).toBeVisible();
     await firstFilm.click();
+    await expect(page).toHaveURL(/\/uk\/films\/\d+$/);
     const movieTitle = await page.getByRole("heading", { level: 1 }).textContent();
     expect(movieTitle).toBeTruthy();
     await page.getByRole("button", { name: "Переглянуто" }).click();
@@ -44,6 +47,7 @@ test("profile collection is visible in own and public profile", async ({ page })
     const ownOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(ownOverflow, `own profile overflows horizontally by ${ownOverflow}px`).toBeLessThanOrEqual(1);
     await expect(page.getByRole("heading", { name: "Мій профіль" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Підписки" })).toBeVisible();
     await expect(page.getByText(/Переглянуто:\s*1/)).toBeVisible();
     await expect(page.getByRole("tab", { name: "Переглянуто" })).toHaveAttribute("aria-selected", "true");
     await expect(page.getByRole("link", { name: movieTitle!.trim(), exact: true })).toBeVisible();
@@ -52,6 +56,8 @@ test("profile collection is visible in own and public profile", async ({ page })
     expect(ownProfile.ok()).toBeTruthy();
     expect((await ownProfile.json() as { stats: { watched: number } }).stats.watched).toBe(1);
 
+    await page.getByRole("button", { name: "Меню" }).click();
+    await expect(page.getByRole("button", { name: "Вийти" })).toBeVisible();
     await page.getByRole("button", { name: "Вийти" }).click();
     await expect(page).toHaveURL(/\/uk\/login$/);
     await page.goto(`/uk/users/${currentUser.id}`);

@@ -2,15 +2,15 @@
 
 Стан історичної таблиці нижче — 16.10.2026. Джерело вимог: [PROJECT_REQUIREMENTS.md](PROJECT_REQUIREMENTS.md). Технічна карта і фактичні API: [PROJECT_MAP.md](PROJECT_MAP.md); результати HTTP перевірки: [API_AUDIT.md](API_AUDIT.md). Статус «є в API» не означає, що функція доступна на сайті. Статус «не знайдено» означає, що реалізації немає у відповідному історичному baseline, а не що пункт вилучено з ТЗ.
 
-## Актуальний verified snapshot — 18.10.2026
+## Актуальний verified snapshot — 19.10.2026
 
 Цей блок має пріоритет для оцінки поточного стану коду; історичні таблиці нижче збережені для трасування початкового аудиту.
 
 | Вимога | Поточний перевірений стан | Доказ / що ще відкрито |
 | --- | --- | --- |
-| Реєстрація, вхід, reset password | **Працює в API та UI** | Cookie auth, CSRF, refresh rotation, Mailpit reset flow; потрібні лише Figma parity та production SMTP monitoring. |
+| Реєстрація, вхід, reset password | **Працює в API та UI** | Cookie auth, CSRF, refresh rotation, Mailpit reset flow через `/auth/forgot-password` і `/auth/reset-password`; потрібні лише Figma parity та production SMTP monitoring. |
 | Головна: популярне, останні перегляди, відгуки, списки, журнал | **Працює в API та UI** | Home має popular/new films, recent watched, popular reviews/lists/reviewers/tags і локалізований latest-journal block; public feeds виключають деактивованих авторів; точна Figma visual parity та ширші social browser-регресії відкриті. |
-| Каталог, пошук, фільтри, пагінація | **Працює в API та UI** | Genre/year/rating/sort/page, details, actors/directors, trailer/external rating, public-list catalog server pagination, loading/error/retry; TMDB scheduler/data-quality batch і Figma parity відкриті. |
+| Каталог, пошук, фільтри, пагінація | **Працює в API та UI** | Genre/year/rating/sort/page, details, actors/directors/producers and filmographies, trailer/external rating, public-list catalog server pagination, loading/error/retry; producer slice verified by `ProducerIntegrationTests` + browser flow. TMDB scheduler/data-quality batch і Figma parity відкриті. |
 | Watched/watchlist/favorites, ratings, reviews | **Працює в API та UI** | Core Chrome flow і MySQL integration tests; стабільна review pagination, mutation locks; ширші browser UX-регресії відкриті. |
 | Коментарі до оглядів | **Працює в API та UI** | CRUD/moderation, pagination, visibility filters, active-author privacy filter, admin queue/bulk hide; ширше moderation regression coverage відкрите. |
 | Профіль, налаштування, списки | **Працює в API та UI** | Own/public profiles, account social-links CRUD/display, server pagination, loading/error/retry/empty, mobile flow; повна локалізація динамічних даних і Figma parity відкриті. |
@@ -18,13 +18,15 @@
 | Соціальні функції | **Основний scope працює** | Follow/like/activity/tags, notifications/SSE, messages, HQ, stable pagination, user blocking with follow/message guards, public-list likes with recently-liked/team feeds; ширші social/browser-регресії відкриті. |
 | Журнал і службові сторінки | **Основний scope працює** | Journal/archive/server-paged catalog/podcast/newsletter/help/legal/admin editor; відкрита повна локалізація довільного editorial content і production SMTP monitoring. |
 | Адміністрування | **Основний scope працює** | Paged users/lists/reviews/comments/movies/conversations/notifications/articles/audit, moderation/settings; UI керує ролями USER/ADMIN, server guard не дозволяє self-removal або втрату останнього активного ADMIN, причина відмови локалізована в UI; headed Chrome **12/12**, ширше UI-покриття відкрите. |
-| Безпека й якість | **Локально перевірено** | V30 schema **36 tables / 53 FKs**, blocking/list-like integrations green, повний MySQL suite **68/0/0/0 у 36 класах**, `PublicProfileIntegrationTests` 5/5 для inactive-user public privacy, `PasswordResetIntegrationTests` 2/2, 12/12 admin Chrome, API payload matrix 12/12 HTTP 200, auth matrix, WCAG/axe, backup/restore **167|379|30**, **20/20 local load на 8 endpoint-групах за 0.16s**, clean Java compile of 254 files without javac warnings, Caddyfile validation; production capacity і VPS/HTTPS відкриті. |
-| Дизайн, бренд, адаптивність | **Частково** | Responsive/a11y smoke на 320/768/1280px, bilingual UI, diploma materials і локальний WebM demo готові; Figma Editor access, exact parity та design system відкриті. |
+| Безпека й якість | **Локально перевірено** | V31 schema **38 tables / 55 FKs**, producer/blocking/list-like integrations green, повний MySQL suite **69/0/0/0 у 37 класах**, producer browser flow 1/1, 12/12 admin Chrome у credentialed середовищі, WCAG/axe, backup/restore **188|448|31**, OpenAPI **156/127**; production capacity і VPS/HTTPS відкриті. |
+| Дизайн, бренд, адаптивність | **Visual alignment локально завершено** | Responsive matrix на 320/393/768/1440px, bilingual UI, accessibility/overflow evidence, diploma materials і локальний WebM demo готові; Chrome inventory підтвердив desktop Global Search `1480:7490`/`7445`/`7390`/`7311`/`7256`, search-by-tags `1480:6898`/phone `1480:8527` та journal-search `1480:7549`/phone `1480:8889`. Figma Editor access і pixel-perfect parity відкриті. |
 
 ## Поточна доказова база
 
-- `mvnw.cmd -q test` із Compose MySQL `127.0.0.1:3307`: **68 tests, 0 failures, 0 errors, 0 skipped** у 36 класах; окремий scheduler regression — `1/1`. Після V30 schema verifier підтвердив **36 tables / 53 foreign keys**, backup/restore — **167|379|30**.
-- Full headed public/core suite: **16 passed, 12 skipped, 0 failed за 1.1m**; `scripts/verify-admin-browser.ps1 -Headed`: **12 passed** у видимому Google Chrome.
+> Таблиця нижче — **історичний baseline станом на 16.10.2026**. Вона збережена для трасування початкового аудиту й не повинна використовуватися як поточний статус. Для release-рішень authoritative є verified snapshot вище, `PLAN.md`, `PROGRESS.md` і `RELEASE_EVIDENCE.md`.
+
+- `mvnw.cmd -q test` із Compose MySQL `127.0.0.1:3307`: **69 tests, 0 failures, 0 errors, 0 skipped** у 37 класах; producer + TMDB sync regression green. Після V31 schema verifier підтвердив **38 tables / 55 foreign keys**, backup/restore — **182|428|31**.
+- Full Playwright suite: **28 passed, 12 skipped, 0 failed**; producer flow — **1/1**, Journal design flow — **1/1**; admin suite skipped without dedicated E2E credentials, а credentialed headed run має **12/12**.
 - API health `UP`; свіжі API/Web logs без `ERROR|Exception|connect() failed`; `git diff --check` без помилок.
 - Детальні дати й команди збережені у [PROGRESS.md](PROGRESS.md), короткий статус — у [IMPLEMENTATION_CHECKLIST.md](IMPLEMENTATION_CHECKLIST.md) та [PLAN.md](../PLAN.md).
 

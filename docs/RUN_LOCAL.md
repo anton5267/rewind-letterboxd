@@ -80,6 +80,20 @@ npm run test:e2e
 
 Тест створює тимчасовий акаунт і проходить реєстрацію, вхід, каталог, watchlist, оцінку, створення/редагування/видалення огляду, видалення оцінки та прибирання з watchlist.
 
+Для окремого admin browser flow використовуйте disposable ADMIN fixture. Повний набір запускається так:
+
+```powershell
+.\scripts\verify-admin-browser.ps1 -Headed
+```
+
+Після зміни одного admin-екрана можна запускати лише відповідний сценарій через `-Grep`, наприклад:
+
+```powershell
+.\scripts\verify-admin-browser.ps1 -Headed -Grep "admin notification table"
+```
+
+Fixture створюється на початку й видаляється у `finally`; скрипт призначений для локальної тестової БД і не змінює GitHub.
+
 Окремий `scripts/verify-password-reset.ps1 -BaseUrl http://127.0.0.1:8081` пройшов із реальною SMTP-доставкою до Mailpit: однакова відповідь для відомого й невідомого email, одноразове посилання та вхід із новим паролем. Скрипти використовують тимчасові адреси `example.invalid`; запускайте їх на тестовій БД. Для локального перехоплення пошти використано [офіційний Docker-образ Mailpit](https://mailpit.axllent.org/docs/install/docker/).
 
 Для локального backup/restore використовуйте `scripts/backup-dev.ps1` і `scripts/restore-dev.ps1 -BackupPath .\backups\rewind-....sql -Confirm`. Backup робиться через `mysqldump --single-transaction`. Повний drill у Compose без зміни основної БД запускається так:

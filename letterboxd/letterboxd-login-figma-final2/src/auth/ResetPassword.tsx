@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { resetPassword } from "../api/auth.api";
 import { useLocale } from "../i18n";
+import styles from "./ResetPassword.module.css";
 
 export default function ResetPassword() {
   const { path, t } = useLocale();
@@ -11,25 +12,37 @@ export default function ResetPassword() {
   const [confirm, setConfirm] = useState("");
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (loading) return;
+    setError("");
     if (password !== confirm) { setError(t("confirmMismatch")); return; }
+    setLoading(true);
     try {
       await resetPassword(token, password);
       setDone(true);
-      setError("");
     } catch { setError(t("resetInvalid")); }
+    finally { setLoading(false); }
   };
 
-  return <main style={{ background: "#151515", color: "white", minHeight: "70vh", padding: "110px 5% 40px" }}>
-    <h1>{t("resetTitle")}</h1>
-    {!token && <p role="alert">{t("resetMissing")}</p>}
-    {done ? <p role="status">{t("resetSuccess")} <Link to={path("/login")}>{t("login")}</Link></p> : token && <form onSubmit={submit}>
-      <p><label>{t("newPassword")} <input type="password" required minLength={8} maxLength={128} autoComplete="new-password" value={password} onChange={event => setPassword(event.target.value)} /></label></p>
-      <p><label>{t("confirmPassword")} <input type="password" required minLength={8} maxLength={128} autoComplete="new-password" value={confirm} onChange={event => setConfirm(event.target.value)} /></label></p>
-      {error && <p role="alert">{error}</p>}
-      <button type="submit">{t("changePassword")}</button>
-    </form>}
+  return <main className={styles.page}>
+    <section className={styles.card}>
+      <h1 className={styles.title} id="reset-password-title">{t("resetTitle")}</h1>
+      {!token && <p className={styles.missing} role="alert">{t("resetMissing")}</p>}
+      {done ? <p className={styles.success} role="status">{t("resetSuccess")} <Link to={path("/login")}>{t("login")}</Link></p> : token && <form className={styles.form} onSubmit={submit} aria-busy={loading}>
+        <label className={styles.field} htmlFor="reset-password">
+          {t("newPassword")}
+          <input className={styles.input} id="reset-password" type="password" required minLength={8} maxLength={128} autoComplete="new-password" value={password} onChange={event => setPassword(event.target.value)} aria-invalid={Boolean(error)} />
+        </label>
+        <label className={styles.field} htmlFor="reset-password-confirm">
+          {t("confirmPassword")}
+          <input className={styles.input} id="reset-password-confirm" type="password" required minLength={8} maxLength={128} autoComplete="new-password" value={confirm} onChange={event => setConfirm(event.target.value)} aria-invalid={Boolean(error)} />
+        </label>
+        {error && <p className={styles.error} role="alert">{error}</p>}
+        <button className={styles.button} type="submit" disabled={loading}>{loading ? t("loading") : t("changePassword")}</button>
+      </form>}
+    </section>
   </main>;
 }

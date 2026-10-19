@@ -2,6 +2,7 @@ package com.rewind.rewind.review.controller;
 
 import com.rewind.rewind.review.dto.CreateReviewRequest;
 import com.rewind.rewind.review.dto.ReviewResponse;
+import com.rewind.rewind.review.dto.ReviewDetailsResponse;
 import com.rewind.rewind.review.dto.UpdateReviewRequest;
 import com.rewind.rewind.review.service.ReviewService;
 import jakarta.validation.Valid;
@@ -25,6 +26,11 @@ public class ReviewController {
                                      @RequestParam(defaultValue = "0") int page,
                                      @RequestParam(defaultValue = "10") int size) {
         return service.listByMovie(movieId, page, size);
+    }
+
+    @GetMapping("/api/reviews/{reviewId}")
+    public ReviewDetailsResponse details(@PathVariable Long reviewId) {
+        return service.details(reviewId);
     }
 
     @GetMapping("/api/movies/{movieId}/reviews/me")

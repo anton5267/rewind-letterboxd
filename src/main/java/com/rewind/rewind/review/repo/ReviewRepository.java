@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
@@ -24,6 +26,11 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Override
     @EntityGraph(attributePaths = {"user", "movie"})
     Page<Review> findAll(Pageable pageable);
+    @EntityGraph(attributePaths = {"user", "movie"})
+    List<Review> findAllByIdIn(Collection<Long> ids);
+    @EntityGraph(attributePaths = {"user", "movie"})
+    @Query("select r from Review r where r.id = :id and r.isHidden = false and r.user.isActive = true")
+    Optional<Review> findVisibleDetailsById(@Param("id") Long id);
     @EntityGraph(attributePaths = "movie")
     Page<Review> findAllByUserIdOrderByUpdatedAtDesc(Long userId, Pageable pageable);
     @EntityGraph(attributePaths = "user")
@@ -35,6 +42,18 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Query("select r from Review r where r.user.isActive = true and r.isHidden = false "
             + "order by r.createdAt desc")
     Page<Review> findVisibleRecent(Pageable pageable);
+
+    @EntityGraph(attributePaths = {"user", "movie"})
+    @Query(value = "select r from Review r join r.movie m join r.user u where r.isHidden = false and u.isActive = true "
+            + "and (lower(r.content) like lower(concat('%', :q, '%')) "
+            + "or lower(m.title) like lower(concat('%', :q, '%')) "
+            + "or lower(u.username) like lower(concat('%', :q, '%'))) "
+            + "order by r.updatedAt desc, r.id desc",
+            countQuery = "select count(r) from Review r join r.movie m join r.user u where r.isHidden = false and u.isActive = true "
+                    + "and (lower(r.content) like lower(concat('%', :q, '%')) "
+                    + "or lower(m.title) like lower(concat('%', :q, '%')) "
+                    + "or lower(u.username) like lower(concat('%', :q, '%')))" )
+    Page<Review> searchVisible(@Param("q") String q, Pageable pageable);
 
     @Query(value = "SELECT r.* FROM reviews r "
             + "LEFT JOIN review_likes rl ON rl.review_id = r.id "

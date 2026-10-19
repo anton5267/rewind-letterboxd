@@ -1,32 +1,41 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
-import Login from "./auth/Login";
-import Register from "./auth/Register";
-import ForgotPassword from "./auth/ForgotPassword";
-import ResetPassword from "./auth/ResetPassword";
-import Search from "./pages/Search";
-import Home from "./pages/Home";
-import MovieDetails from "./pages/MovieDetails";
-import Profile from "./pages/Profile";
-import UserLists from "./pages/UserLists";
-import PublicList from "./pages/PublicList";
-import PublicLists from "./pages/PublicLists";
-import PublicProfile from "./pages/PublicProfile";
-import Person from "./pages/Person";
-import About from "./pages/About";
-import Community from "./pages/Community";
-import Notifications from "./pages/Notifications";
-import Messages from "./pages/Messages";
-import AdminDashboard from "./pages/AdminDashboard";
-import Journal from "./pages/Journal";
-import JournalArticle from "./pages/JournalArticle";
-import ServicePage from "./pages/ServicePage";
+import { useLocale } from "./i18n";
 import Layout from "./layout/Layout";
+
+const Login = lazy(() => import("./auth/Login"));
+const Register = lazy(() => import("./auth/Register"));
+const ForgotPassword = lazy(() => import("./auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./auth/ResetPassword"));
+const Search = lazy(() => import("./pages/Search"));
+const GlobalSearch = lazy(() => import("./pages/GlobalSearch"));
+const Home = lazy(() => import("./pages/Home"));
+const MovieDetails = lazy(() => import("./pages/MovieDetails"));
+const ReviewDetails = lazy(() => import("./pages/ReviewDetails"));
+const Profile = lazy(() => import("./pages/Profile"));
+const UserLists = lazy(() => import("./pages/UserLists"));
+const PublicList = lazy(() => import("./pages/PublicList"));
+const PublicLists = lazy(() => import("./pages/PublicLists"));
+const PublicProfile = lazy(() => import("./pages/PublicProfile"));
+const Person = lazy(() => import("./pages/Person"));
+const About = lazy(() => import("./pages/About"));
+const Community = lazy(() => import("./pages/Community"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const Messages = lazy(() => import("./pages/Messages"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const Journal = lazy(() => import("./pages/Journal"));
+const JournalArticle = lazy(() => import("./pages/JournalArticle"));
+const ServicePage = lazy(() => import("./pages/ServicePage"));
 
 function LegacyRedirect() {
   const location = useLocation();
   const target = location.pathname === "/" ? "/uk/home" : `/uk${location.pathname}`;
   return <Navigate to={`${target}${location.search}${location.hash}`} replace />;
+}
+
+function RouteLoading() {
+  const { t } = useLocale();
+  return <main aria-busy={true}><p role="status">{t("loading")}</p></main>;
 }
 
 function LocalizedApp() {
@@ -37,11 +46,13 @@ function LocalizedApp() {
     return <Navigate to={`/uk${location.pathname}${location.search}${location.hash}`} replace />;
   }
 
-  return <Routes>
+  return <Suspense fallback={<RouteLoading />}><Routes>
     <Route index element={<Navigate to="home" replace />} />
     <Route path="home" element={<Layout><Home /></Layout>} />
     <Route path="films" element={<Layout><Search /></Layout>} />
+    <Route path="search" element={<Layout><GlobalSearch /></Layout>} />
     <Route path="films/:id" element={<Layout><MovieDetails /></Layout>} />
+    <Route path="reviews/:id" element={<Layout><ReviewDetails /></Layout>} />
     <Route path="profile" element={<Layout><Profile /></Layout>} />
     <Route path="notifications" element={<Layout><Notifications /></Layout>} />
     <Route path="messages" element={<Layout><Messages /></Layout>} />
@@ -66,7 +77,7 @@ function LocalizedApp() {
     <Route path="forgot-password" element={<Layout><ForgotPassword /></Layout>} />
     <Route path="reset-password" element={<Layout><ResetPassword /></Layout>} />
     <Route path="*" element={<Navigate to="films" replace />} />
-  </Routes>;
+  </Routes></Suspense>;
 }
 
 export default function App() {

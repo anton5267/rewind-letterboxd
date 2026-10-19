@@ -21,6 +21,14 @@ export interface PublicListLikeStatus {
   likes: number;
 }
 
+export interface MoviePreview {
+  id: number;
+  title: string;
+  releaseDate: string | null;
+  rating: number | null;
+  photoUrl: string | null;
+}
+
 export interface PublicList {
   id: number;
   name: string;
@@ -29,6 +37,8 @@ export interface PublicList {
   ownerUsername: string;
   tags: string[];
   likeCount?: number | null;
+  itemCount?: number | null;
+  previewMovies: MoviePreview[];
 }
 
 export interface Page<T> {
@@ -57,7 +67,7 @@ export const updateList = (listId: number, name: string, description: string, is
 
 export const deleteList = (listId: number) => api.delete(`/lists/${listId}`);
 
-export const getListItems = (listId: number) => api.get(`/lists/${listId}/items`);
+export const getListItems = (listId: number) => api.get<{ id: number; position: number | null; movie: MoviePreview }[]>(`/lists/${listId}/items`);
 
 export const addMovieToList = (listId: number, movieId: number) =>
   api.post(`/lists/${listId}/movies`, { movieId });

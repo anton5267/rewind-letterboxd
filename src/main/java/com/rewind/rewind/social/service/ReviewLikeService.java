@@ -41,7 +41,7 @@ public class ReviewLikeService {
     @Transactional(readOnly = true)
     public long count(Long reviewId) {
         visibleReview(reviewId);
-        return likes.countByReviewId(reviewId);
+        return likes.countActiveByReviewId(reviewId);
     }
 
     @Transactional(readOnly = true)

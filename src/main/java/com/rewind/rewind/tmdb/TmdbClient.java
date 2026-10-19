@@ -12,6 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 @Component
@@ -127,12 +128,17 @@ public class TmdbClient {
         }
 
         List<CrewData> directors = new ArrayList<>();
+        LinkedHashMap<Long, CrewData> producers = new LinkedHashMap<>();
         for (JsonNode node : body.path("credits").path("crew")) {
-            if (!"Director".equalsIgnoreCase(text(node, "job"))) continue;
             Long personId = longValue(node, "id");
             String name = text(node, "name");
             if (personId == null || name == null || name.isBlank()) continue;
-            directors.add(new CrewData(personId, name, imageUrl(text(node, "profile_path"), "w185")));
+            CrewData person = new CrewData(personId, name, imageUrl(text(node, "profile_path"), "w185"));
+            String job = text(node, "job");
+            if ("Director".equalsIgnoreCase(job)) directors.add(person);
+            if (job != null && job.toLowerCase(java.util.Locale.ROOT).contains("producer")) {
+                producers.putIfAbsent(personId, person);
+            }
         }
 
         String trailerUrl = null;
@@ -158,7 +164,7 @@ public class TmdbClient {
                 text(body, "overview"), imageUrl(text(body, "poster_path"), "w500"),
                 imageUrl(text(body, "backdrop_path"), "original"), trailerUrl,
                 decimalValue(body, "vote_average"), integerValue(body, "vote_count"),
-                genres, cast, directors, similarIds);
+                genres, cast, directors, List.copyOf(producers.values()), similarIds);
     }
 
     private static String text(JsonNode node, String field) {
@@ -200,6 +206,7 @@ public class TmdbClient {
             List<GenreData> genres,
             List<CastData> cast,
             List<CrewData> directors,
+            List<CrewData> producers,
             List<Long> similarTmdbIds
     ) {}
 

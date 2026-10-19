@@ -1,4 +1,5 @@
 import { useLocale } from "../i18n";
+import styles from "./ServicePage.module.css";
 
 type ServiceKind = "help" | "contact" | "rules" | "privacy" | "film-data" | "delete-account";
 const content: Record<ServiceKind, { title: string; body: string }> = {
@@ -9,5 +10,10 @@ const content: Record<ServiceKind, { title: string; body: string }> = {
 
 export default function ServicePage({ kind }: { kind: ServiceKind }) {
   const { t } = useLocale(); const copy = content[kind];
-  return <main style={{ padding: "110px 5% 60px", minHeight: "70vh", background: "#151515", color: "white", maxWidth: 900 }}><h1>{t(copy.title)}</h1><p style={{ whiteSpace: "pre-wrap", lineHeight: 1.7 }}>{t(copy.body)}</p></main>;
+  return <main className={styles.page}>
+    <article className={styles.content} aria-labelledby="service-page-title">
+      <h1 className={styles.title} id="service-page-title">{t(copy.title)}</h1>
+      <p className={styles.body}>{t(copy.body)}</p>
+    </article>
+  </main>;
 }

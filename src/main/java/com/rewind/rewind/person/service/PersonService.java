@@ -5,6 +5,8 @@ import com.rewind.rewind.actor.repo.MovieActorRepository;
 import com.rewind.rewind.director.repo.DirectorRepository;
 import com.rewind.rewind.director.repo.MovieDirectorRepository;
 import com.rewind.rewind.person.dto.PersonDetailsResponse;
+import com.rewind.rewind.producer.repo.MovieProducerRepository;
+import com.rewind.rewind.producer.repo.ProducerRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,9 +19,14 @@ public class PersonService {
     private final DirectorRepository directors;
     private final MovieActorRepository movieActors;
     private final MovieDirectorRepository movieDirectors;
+    private final ProducerRepository producers;
+    private final MovieProducerRepository movieProducers;
 
-    public PersonService(ActorRepository actors, DirectorRepository directors, MovieActorRepository movieActors, MovieDirectorRepository movieDirectors) {
+    public PersonService(ActorRepository actors, DirectorRepository directors, MovieActorRepository movieActors,
+                         MovieDirectorRepository movieDirectors, ProducerRepository producers,
+                         MovieProducerRepository movieProducers) {
         this.actors = actors; this.directors = directors; this.movieActors = movieActors; this.movieDirectors = movieDirectors;
+        this.producers = producers; this.movieProducers = movieProducers;
     }
 
     @Transactional(readOnly = true)
@@ -38,6 +45,15 @@ public class PersonService {
                 .filter(link -> hasGenre(link.getMovie(), genreId))
                 .map(link -> film(link.getMovie(), null)).toList();
         return new PersonDetailsResponse(director.getId(), director.getName(), director.getPhotoUrl(), "DIRECTOR", sorted(films, sort));
+    }
+
+    @Transactional(readOnly = true)
+    public PersonDetailsResponse producer(Long id, Long genreId, String sort) {
+        var producer = producers.findById(id).orElseThrow(() -> notFound("Producer"));
+        var films = movieProducers.findById_ProducerId(id).stream()
+                .filter(link -> hasGenre(link.getMovie(), genreId))
+                .map(link -> film(link.getMovie(), null)).toList();
+        return new PersonDetailsResponse(producer.getId(), producer.getName(), producer.getPhotoUrl(), "PRODUCER", sorted(films, sort));
     }
 
     private boolean hasGenre(com.rewind.rewind.movie.entity.Movie movie, Long genreId) {

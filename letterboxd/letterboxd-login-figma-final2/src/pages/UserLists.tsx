@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { createList, deleteList, getListItems, getUserListsPage, removeMovieFromList, reorderListItems, updateList, type UserList } from "../api/lists.api";
+import { createList, deleteList, getListItems, getUserListsPage, removeMovieFromList, reorderListItems, updateList, type MoviePreview, type UserList } from "../api/lists.api";
+import ResilientImage from "../components/ResilientImage";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
+import styles from "./UserLists.module.css";
 
-interface Item { id: number; position: number | null; movie: { id: number; title: string } }
+interface Item { id: number; position: number | null; movie: MoviePreview }
 
 export default function UserLists() {
   const { isAuth, ready } = useAuth();
@@ -41,6 +43,8 @@ export default function UserLists() {
     let active = true;
     setListsLoading(true);
     setListsLoadError(false);
+    setLists([]);
+    setSelected(null);
     getUserListsPage(listPage)
       .then(({ data }) => { if (active) { setLists(data.content); setListTotalPages(data.totalPages); setListTotalElements(data.totalElements); } })
       .catch(() => { if (active) setListsLoadError(true); })
@@ -157,49 +161,78 @@ export default function UserLists() {
     finally { setItemsBusy(false); }
   };
 
-  return <main style={{ background: "#151515", color: "white", minHeight: "70vh", padding: "110px 5% 40px" }}>
-    <h1>{t("lists")}</h1>
-    {error && <p role="alert">{error}</p>}
-    {status && <p role="status">{status}</p>}
-    <form onSubmit={create}>
-      <label>{t("newList")} <input required value={name} maxLength={120} onChange={e => setName(e.target.value)} /></label>{" "}
-      <label>{t("description")} <input value={description} maxLength={5000} onChange={e => setDescription(e.target.value)} /></label>{" "}
-      <label>{t("tags")} <input value={tags} maxLength={509} placeholder={t("tagsHint")} onChange={e => setTags(e.target.value)} /></label>{" "}
-      <label><input type="checkbox" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} /> {t("publicList")}</label>{" "}
-      <button type="submit" disabled={createBusy}>{createBusy ? t("saving") : t("create")}</button>
-    </form>
-    <section aria-labelledby="my-lists-heading" style={{ marginTop: 24 }}>
+  return <main className={styles.page} aria-busy={listsLoading || itemsLoading || itemsBusy || createBusy || saveBusy || deleting}>
+    <div className={styles.content}>
+    <header className={styles.hero}>
+      <p className={styles.eyebrow}>{t("listsEyebrow")}</p>
+      <h1>{selectedList?.name ?? t("newList")}</h1>
+      <p className={styles.heroCopy}>{selectedList?.description?.trim() || t("createListIntro")}</p>
+    </header>
+    {error && <p className={styles.alert} role="alert">{error}</p>}
+    {status && <p className={styles.status} role="status">{status}</p>}
+    {!selectedList && <form className={`${styles.form} ${styles.createForm}`} aria-busy={createBusy} onSubmit={create}>
+      <label htmlFor="new-list-name">{t("newList")} <input id="new-list-name" required value={name} maxLength={120} onChange={e => setName(e.target.value)} /></label>
+      <label htmlFor="new-list-description">{t("description")} <textarea id="new-list-description" rows={5} value={description} maxLength={5000} onChange={e => setDescription(e.target.value)} /></label>
+      <label htmlFor="new-list-tags">{t("tags")} <input id="new-list-tags" value={tags} maxLength={509} placeholder={t("tagsHint")} onChange={e => setTags(e.target.value)} /></label>
+      <label><input type="checkbox" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} /> {t("publicList")}</label>
+      <div className={styles.createActions}>
+        <button type="submit" aria-busy={createBusy} disabled={createBusy}>{createBusy ? t("saving") : t("create")}</button>
+        <span>{isPublic ? t("publicList") : t("privateList")}</span>
+      </div>
+    </form>}
+    {!selectedList && <aside className={styles.emptyPreview} aria-label={t("emptyList")}>
+      <p className={styles.eyebrow}>{t("previewLabel")}</p>
+      <strong>{name.trim() || t("newList")}</strong>
+      <p>{description.trim() || t("emptyList")}</p>
+      {tags.trim() && <div className={styles.previewTags}>{tags.split(",").map(tag => tag.trim()).filter(Boolean).map(tag => <span key={tag}>#{tag}</span>)}</div>}
+    </aside>}
+    <section className={styles.section} aria-labelledby="my-lists-heading" aria-busy={listsLoading}>
       <h2 id="my-lists-heading">{t("lists")}</h2>
       {listsLoading && <p aria-live="polite">{t("loading")}</p>}
-      {listsLoadError && <p role="alert">{t("loadListsError")} <button type="button" onClick={() => setListsReload(value => value + 1)}>{t("retry")}</button></p>}
+      {listsLoadError && <p className={styles.alert} role="alert">{t("loadListsError")} <button type="button" onClick={() => setListsReload(value => value + 1)}>{t("retry")}</button></p>}
       {!listsLoading && !listsLoadError && lists.length === 0 && <p>{t("noLists")}</p>}
-      {!listsLoading && !listsLoadError && <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      {!listsLoading && !listsLoadError && <div className={styles.listButtons}>
         {lists.map(list => <button key={list.id} type="button" onClick={() => select(list)} aria-pressed={selected === list.id}>{list.name}</button>)}
       </div>}
-      {!listsLoading && !listsLoadError && listTotalPages > 1 && <nav aria-label={t("listsPagination")} style={{ display: "flex", gap: 8, marginTop: 12 }}>
+      {!listsLoading && !listsLoadError && listTotalPages > 1 && <nav className={styles.pagination} aria-label={t("listsPagination")}>
         <button type="button" disabled={listPage === 0} onClick={() => { setSelected(null); setListPage(page => page - 1); }}>{t("previous")}</button>
         <span>{t("page")} {listPage + 1} {t("of")} {listTotalPages} · {listTotalElements}</span>
         <button type="button" disabled={listPage + 1 >= listTotalPages} onClick={() => { setSelected(null); setListPage(page => page + 1); }}>{t("next")}</button>
       </nav>}
     </section>
-    {selectedList && <section>
-      <h2>{selectedList.name}</h2>
-      {selectedList.listType === "CUSTOM" && <form onSubmit={saveList} style={{ marginBottom: 16 }}>
-        <label>{t("listName")} <input required maxLength={120} value={editName} onChange={event => setEditName(event.target.value)} /></label>{" "}
-        <label>{t("description")} <input maxLength={5000} value={editDescription} onChange={event => setEditDescription(event.target.value)} /></label>{" "}
-        <label>{t("tags")} <input value={editTags} maxLength={509} placeholder={t("tagsHint")} onChange={event => setEditTags(event.target.value)} /></label>{" "}
+    {selectedList && <section className={`${styles.section} ${styles.selectedSection}`} aria-labelledby="selected-list-heading" aria-busy={itemsLoading || itemsBusy || saveBusy || deleting}>
+      <div className={styles.sectionHeader}>
+        <div>
+          <p className={styles.eyebrow}>{selectedList.isPublic ? t("publicList") : t("privateList")}</p>
+          <h2 id="selected-list-heading">{selectedList.name}</h2>
+        </div>
+        <button type="button" className={styles.secondaryButton} onClick={() => setSelected(null)}>{t("newList")}</button>
+      </div>
+      {selectedList.listType === "CUSTOM" && <form className={`${styles.form} ${styles.editForm}`} aria-busy={saveBusy || deleting} onSubmit={saveList}>
+        <label htmlFor="edit-list-name">{t("listName")} <input id="edit-list-name" required maxLength={120} value={editName} onChange={event => setEditName(event.target.value)} /></label>
+        <label htmlFor="edit-list-description">{t("description")} <textarea id="edit-list-description" rows={5} maxLength={5000} value={editDescription} onChange={event => setEditDescription(event.target.value)} /></label>
+        <label htmlFor="edit-list-tags">{t("tags")} <input id="edit-list-tags" value={editTags} maxLength={509} placeholder={t("tagsHint")} onChange={event => setEditTags(event.target.value)} /></label>
         <label><input type="checkbox" checked={editPublic} onChange={event => setEditPublic(event.target.checked)} /> {t("publicList")}</label>{" "}
-        <button type="submit" disabled={saveBusy}>{saveBusy ? t("saving") : t("save")}</button>
-        {" "}<button type="button" disabled={deleting || saveBusy} onClick={() => void removeList()}>{deleting ? t("deletingList") : t("deleteList")}</button>
+        <button type="submit" aria-busy={saveBusy} disabled={saveBusy}>{saveBusy ? t("saving") : t("save")}</button>
+        {" "}<button type="button" aria-busy={deleting} disabled={deleting || saveBusy} onClick={() => void removeList()}>{deleting ? t("deletingList") : t("deleteList")}</button>
       </form>}
-      {itemsLoading && <p role="status">{t("loading")}</p>}
-      {itemsLoadError && <p role="alert">{t("loadItemsError")} <button type="button" onClick={() => setItemsReload(value => value + 1)}>{t("retry")}</button></p>}
-      {!itemsLoading && !itemsLoadError && items.length === 0 && <p>{t("emptyList")}</p>}
-      {!itemsLoading && !itemsLoadError && <ul>{items.map((item, index) => <li key={item.id}>
-        <Link to={path(`/films/${item.movie.id}`)}>{item.movie.title}</Link>{" "}
-        <button type="button" disabled={itemsBusy} onClick={() => void remove(item.movie.id)}>{t("remove")}</button>
-        {selectedList.listType === "CUSTOM" && <><button type="button" disabled={itemsBusy || index === 0} onClick={() => void move(item.id, -1)} aria-label={t("moveUp")}>↑</button>{" "}<button type="button" disabled={itemsBusy || index === items.length - 1} onClick={() => void move(item.id, 1)} aria-label={t("moveDown")}>↓</button></>}
+      {itemsLoading && <div className={styles.stateCard} role="status"><span className={styles.stateMark}>…</span><strong>{t("loading")}</strong></div>}
+      {itemsLoadError && <div className={`${styles.stateCard} ${styles.stateError}`} role="alert"><strong>{t("loadItemsError")}</strong><button type="button" onClick={() => setItemsReload(value => value + 1)}>{t("retry")}</button></div>}
+      {!itemsLoading && !itemsLoadError && items.length === 0 && <div className={`${styles.emptyPreview} ${styles.selectedEmpty}`}><p className={styles.eyebrow}>{t("emptyListLabel")}</p><strong>{selectedList.name}</strong><p>{t("emptyList")}</p></div>}
+      {!itemsLoading && !itemsLoadError && items.length > 0 && <ul className={styles.items}>{items.map((item, index) => <li className={styles.itemRow} key={item.id}>
+        <Link className={styles.itemPosterLink} to={path(`/films/${item.movie.id}`)} aria-label={`${item.movie.title} ${t("poster")}`}>
+          <ResilientImage className={styles.itemPoster} src={item.movie.photoUrl} alt="" fallback={<span className={styles.itemPosterFallback}>{item.movie.title}</span>} />
+        </Link>
+        <div className={styles.itemInfo}>
+          <Link className={styles.itemTitle} to={path(`/films/${item.movie.id}`)}>{item.movie.title}</Link>
+          <span className={styles.itemMeta}>{item.movie.releaseDate?.slice(0, 4) ?? "—"}{item.movie.rating !== null && <> · ★ {item.movie.rating}</>}</span>
+        </div>
+        <div className={styles.itemActions}>
+          <button type="button" aria-busy={itemsBusy} disabled={itemsBusy} onClick={() => void remove(item.movie.id)}>{t("remove")}</button>
+          {selectedList.listType === "CUSTOM" && <><button type="button" aria-busy={itemsBusy} disabled={itemsBusy || index === 0} onClick={() => void move(item.id, -1)} aria-label={t("moveUp")}>↑</button><button type="button" aria-busy={itemsBusy} disabled={itemsBusy || index === items.length - 1} onClick={() => void move(item.id, 1)} aria-label={t("moveDown")}>↓</button></>}
+        </div>
       </li>)}</ul>}
     </section>}
+    </div>
   </main>;
 }

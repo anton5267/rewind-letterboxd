@@ -10,5 +10,7 @@ public record RecentReviewResponse(
         String username,
         String content,
         Integer rating,
-        Instant createdAt
+        Instant createdAt,
+        String moviePhotoUrl,
+        String userAvatarUrl
 ) {}

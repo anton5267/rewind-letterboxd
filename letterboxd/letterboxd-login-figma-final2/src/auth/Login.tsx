@@ -16,6 +16,7 @@ export default function Login() {
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (loading) return;
     setError("");
     setLoading(true);
     try {
@@ -33,7 +34,7 @@ export default function Login() {
       <div className={styles.card}>
         <h1 className={styles.title}>{t("welcome")}</h1>
         {searchParams.get("passwordChanged") === "1" && <p role="status">{t("passwordChangedSignIn")}</p>}
-        <form onSubmit={submit}>
+        <form onSubmit={submit} aria-busy={loading}>
           <input
             type="email"
             placeholder={t("email")}
@@ -58,7 +59,7 @@ export default function Login() {
             </Link>
           </div>
           {error && <p role="alert">{error}</p>}
-          <button type="submit" className={styles.button} disabled={loading}>
+          <button type="submit" className={styles.button} aria-busy={loading} disabled={loading}>
             {loading ? t("loggingIn") : t("login")}
           </button>
         </form>

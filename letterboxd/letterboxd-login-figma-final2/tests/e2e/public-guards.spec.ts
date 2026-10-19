@@ -9,7 +9,7 @@ test("legacy root redirects to the localized home page", async ({ page }) => {
 test("public pages render in both locales without horizontal overflow", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 800 });
 
-  for (const route of ["/uk/home", "/en/home", "/uk/films", "/en/help", "/uk/journal"]) {
+  for (const route of ["/uk/home", "/en/home", "/uk/films", "/en/help", "/uk/journal", "/uk/community", "/en/community", "/uk/lists/discover", "/en/lists/discover"]) {
     await page.goto(route);
     await expect(page.locator("h1")).toBeVisible();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -42,6 +42,8 @@ test("public list catalog paginates server-side", async ({ page }) => {
   const password = "E2e-password-123!";
 
   const csrfHeaders = async () => {
+    const csrf = await page.request.get("/api/auth/csrf");
+    expect(csrf.status()).toBe(200);
     const cookie = (await page.context().cookies()).find(item => item.name === "XSRF-TOKEN");
     expect(cookie, "XSRF cookie must be present").toBeTruthy();
     return { "X-XSRF-TOKEN": decodeURIComponent(cookie!.value) };
@@ -85,7 +87,94 @@ test("public list catalog paginates server-side", async ({ page }) => {
       headers: await csrfHeaders(),
       data: { currentPassword: password },
     });
-    expect.soft(cleanup.ok(), "Disposable public-list account must be removed").toBeTruthy();
+    expect.soft(cleanup.ok(), `Disposable public-list account must be removed (status ${cleanup.status()})`).toBeTruthy();
+  }
+});
+
+test("public list discovery reaches tag, detail, author and movie in both locales", async ({ page }) => {
+  const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
+  const username = `journey${suffix.slice(-12)}`;
+  const email = `${username}@example.invalid`;
+  const password = "E2e-password-123!";
+  const listName = `Journey list ${suffix}`;
+  const tagName = `e2e-tag-${suffix.slice(-8)}`;
+  let listId: number | null = null;
+
+  const csrfHeaders = async () => {
+    const csrf = await page.request.get("/api/auth/csrf");
+    expect(csrf.status()).toBe(200);
+    const cookie = (await page.context().cookies()).find(item => item.name === "XSRF-TOKEN");
+    expect(cookie, "XSRF cookie must be present").toBeTruthy();
+    return { "X-XSRF-TOKEN": decodeURIComponent(cookie!.value) };
+  };
+
+  await page.goto("/uk/register");
+  await page.getByLabel("Нікнейм").fill(username);
+  await page.getByLabel("Електронна пошта").fill(email);
+  await page.getByLabel("Пароль").fill(password);
+  await page.getByRole("button", { name: "Створити акаунт" }).click();
+  await expect(page.getByRole("heading", { name: /Акаунт створено/ })).toBeVisible();
+  await page.getByRole("button", { name: "Перейти до входу" }).click();
+  await page.getByLabel("Електронна пошта").fill(email);
+  await page.getByLabel("Пароль").fill(password);
+  await page.getByRole("button", { name: "Увійти" }).click();
+  await expect(page).toHaveURL(/\/uk\/films$/);
+
+  try {
+    const moviesResponse = await page.request.get("/api/movies?page=0&size=1");
+    expect(moviesResponse.ok()).toBeTruthy();
+    const moviePage = await moviesResponse.json() as { content: { id: number; title: string }[] };
+    expect(moviePage.content.length).toBeGreaterThan(0);
+    const movie = moviePage.content[0];
+
+    const createResponse = await page.request.post("/api/lists", {
+      headers: await csrfHeaders(),
+      data: { name: listName, description: "Discovery journey", isPublic: true, tags: [tagName] },
+    });
+    expect(createResponse.ok()).toBeTruthy();
+    listId = (await createResponse.json() as { id: number }).id;
+    const addMovieResponse = await page.request.post(`/api/lists/${listId}/movies`, {
+      headers: await csrfHeaders(),
+      data: { movieId: movie.id, position: 1 },
+    });
+    expect(addMovieResponse.ok()).toBeTruthy();
+
+    await page.goto("/uk/lists/discover?feed=recent");
+    await expect(page.getByRole("heading", { name: listName })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Популярні" })).not.toHaveAttribute("aria-current", "page");
+    await page.getByRole("link", { name: "Популярні" }).click();
+    await expect(page.getByRole("link", { name: "Популярні" })).toHaveAttribute("aria-current", "page");
+
+    await page.goto(`/uk/lists/discover?feed=recent&tag=${encodeURIComponent(tagName.toLowerCase())}`);
+    await expect(page.getByRole("heading", { name: listName })).toBeVisible();
+    const listLink = page.getByRole("heading", { name: listName }).getByRole("link");
+    await listLink.focus();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(new RegExp(`/uk/lists/public/${listId}$`));
+    await expect(page.getByRole("heading", { name: listName })).toBeVisible();
+    await expect(page.getByRole("link", { name: username, exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: `#${tagName}`, exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: movie.title, exact: true })).toBeVisible();
+
+    await page.getByRole("link", { name: "EN", exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`/en/lists/public/${listId}$`));
+    await expect(page.getByRole("heading", { name: listName })).toBeVisible();
+    await page.getByRole("link", { name: username, exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`/en/users/\\d+$`));
+    await expect(page.getByRole("heading", { name: username })).toBeVisible();
+
+    await page.getByRole("link", { name: listName, exact: true }).first().click();
+    await expect(page).toHaveURL(new RegExp(`/en/lists/public/${listId}$`));
+    await page.getByRole("link", { name: movie.title, exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`/en/films/${movie.id}$`));
+    await expect(page.getByRole("heading", { name: movie.title, exact: true })).toBeVisible();
+  } finally {
+    await page.request.get("/api/auth/csrf");
+    const cleanup = await page.request.delete("/api/profile/me", {
+      headers: await csrfHeaders(),
+      data: { currentPassword: password },
+    });
+    expect.soft(cleanup.ok(), "Disposable public-list journey account must be removed").toBeTruthy();
   }
 });
 

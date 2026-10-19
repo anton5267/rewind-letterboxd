@@ -22,6 +22,7 @@ public class MovieDetailsResponse {
 
     private List<IdNameDto> genres;
     private List<PersonDto> directors;
+    private List<PersonDto> producers;
     private List<ActorRoleDto> actors;
 
     private List<ExternalRatingDto> externalRatings;
@@ -35,6 +36,7 @@ public class MovieDetailsResponse {
             String photoUrl, String backdropUrl, String trailerUrl,
             List<IdNameDto> genres,
             List<PersonDto> directors,
+            List<PersonDto> producers,
             List<ActorRoleDto> actors,
             List<ExternalRatingDto> externalRatings,
             List<MovieCardResponse> similarMovies,
@@ -54,6 +56,7 @@ public class MovieDetailsResponse {
         this.trailerUrl = trailerUrl;
         this.genres = genres;
         this.directors = directors;
+        this.producers = producers;
         this.actors = actors;
         this.externalRatings = externalRatings;
         this.similarMovies = similarMovies;
@@ -74,6 +77,7 @@ public class MovieDetailsResponse {
     public String getTrailerUrl() { return trailerUrl; }
     public List<IdNameDto> getGenres() { return genres; }
     public List<PersonDto> getDirectors() { return directors; }
+    public List<PersonDto> getProducers() { return producers; }
     public List<ActorRoleDto> getActors() { return actors; }
     public List<ExternalRatingDto> getExternalRatings() { return externalRatings; }
     public List<MovieCardResponse> getSimilarMovies() { return similarMovies; }

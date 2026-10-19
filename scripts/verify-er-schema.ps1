@@ -12,7 +12,7 @@ if (-not $mysqlPassword) {
 if (-not $mysqlPassword) { throw 'MYSQL_PASSWORD is required; run scripts/init-dev-env.ps1 or set the environment variable.' }
 
 $expectedTables = @(
-    'users', 'movies', 'actors', 'directors', 'genres', 'movie_actors', 'movie_directors', 'movie_genres',
+    'users', 'movies', 'actors', 'directors', 'producers', 'genres', 'movie_actors', 'movie_directors', 'movie_producers', 'movie_genres',
     'lists', 'list_items', 'reviews', 'review_archive', 'ratings', 'external_ratings', 'similar_movies',
     'comments', 'follows', 'review_likes', 'user_activities', 'tags', 'list_tags', 'notifications',
     'notification_preferences', 'password_reset_tokens', 'refresh_sessions', 'conversations', 'messages',

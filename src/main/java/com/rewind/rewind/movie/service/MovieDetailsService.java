@@ -10,6 +10,7 @@ import com.rewind.rewind.movie.dto.MovieCardResponse;
 import com.rewind.rewind.movie.dto.MovieDetailsResponse;
 import com.rewind.rewind.movie.entity.Movie;
 import com.rewind.rewind.movie.repo.MovieRepository;
+import com.rewind.rewind.producer.repo.MovieProducerRepository;
 import com.rewind.rewind.similar.repo.SimilarMovieRepository;
 import com.rewind.rewind.user.repo.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,7 @@ public class MovieDetailsService {
     private final MovieRepository movies;
     private final MovieActorRepository movieActors;
     private final MovieDirectorRepository movieDirectors;
+    private final MovieProducerRepository movieProducers;
     private final ExternalRatingRepository externalRatings;
     private final SimilarMovieRepository similarMovies;
 
@@ -36,6 +38,7 @@ public class MovieDetailsService {
             MovieRepository movies,
             MovieActorRepository movieActors,
             MovieDirectorRepository movieDirectors,
+            MovieProducerRepository movieProducers,
             ExternalRatingRepository externalRatings,
             SimilarMovieRepository similarMovies,
             UserRepository users,
@@ -45,6 +48,7 @@ public class MovieDetailsService {
         this.movies = movies;
         this.movieActors = movieActors;
         this.movieDirectors = movieDirectors;
+        this.movieProducers = movieProducers;
         this.externalRatings = externalRatings;
         this.similarMovies = similarMovies;
         this.users = users;
@@ -69,6 +73,14 @@ public class MovieDetailsService {
                         md.getDirector().getId(),
                         md.getDirector().getName(),
                         md.getDirector().getPhotoUrl()
+                ))
+                .toList();
+
+        var producers = movieProducers.findById_MovieId(movieId).stream()
+                .map(link -> new MovieDetailsResponse.PersonDto(
+                        link.getProducer().getId(),
+                        link.getProducer().getName(),
+                        link.getProducer().getPhotoUrl()
                 ))
                 .toList();
 
@@ -125,7 +137,7 @@ public class MovieDetailsService {
                 m.getId(), m.getImdbId(), m.getTmdbId(), m.getTitle(), m.getDurationMinutes(), m.getReleaseDate(),
                 m.getAgeRating(), m.getRating(), m.getShortPlot(),
                 m.getPhotoUrl(), m.getBackdropUrl(), m.getTrailerUrl(),
-                genres, directors, actors,
+                genres, directors, producers, actors,
                 ext, similar,
                 flags
         );

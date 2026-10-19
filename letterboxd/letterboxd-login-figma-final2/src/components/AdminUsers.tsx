@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getAdminUsers, setAdminHq, setAdminUserActive, updateAdminUser, type AdminUser, type Page } from "../api/admin.api";
 import { localizeUserRole, useLocale } from "../i18n";
+import styles from "./AdminShared.module.css";
 
 interface Props {
   onHqCountChange: (delta: number) => void;
@@ -22,7 +23,7 @@ export default function AdminUsers({ onHqCountChange }: Props) {
     const message = (reason as { response?: { data?: { message?: unknown } } })?.response?.data?.message;
     if (message === "Administrators cannot deactivate or demote their own account") return t("adminSelfChangeError");
     if (message === "At least one active administrator is required") return t("adminLastAdminError");
-    return t("adminLoadError");
+    return t("adminUserActionError");
   };
 
   useEffect(() => {
@@ -53,10 +54,8 @@ export default function AdminUsers({ onHqCountChange }: Props) {
       const { data: updated } = await setAdminHq(target.id, !target.isHq);
       setData(current => current ? { ...current, content: current.content.map(item => item.id === updated.id ? updated : item) } : current);
       onHqCountChange(updated.isHq ? 1 : -1);
-      setError(false);
       setActionError(null);
     } catch (reason) {
-      setError(true);
       setActionError(explainActionError(reason));
     } finally {
       setBusyId(null);
@@ -69,10 +68,8 @@ export default function AdminUsers({ onHqCountChange }: Props) {
     try {
       await setAdminUserActive(target.id, !target.isActive);
       setData(current => current ? { ...current, content: current.content.map(item => item.id === target.id ? { ...item, isActive: !target.isActive } : item) } : current);
-      setError(false);
       setActionError(null);
     } catch (reason) {
-      setError(true);
       setActionError(explainActionError(reason));
     } finally {
       setBusyId(null);
@@ -85,36 +82,35 @@ export default function AdminUsers({ onHqCountChange }: Props) {
     try {
       const { data: updated } = await updateAdminUser(target.id, { role });
       setData(current => current ? { ...current, content: current.content.map(item => item.id === updated.id ? updated : item) } : current);
-      setError(false);
       setActionError(null);
     } catch (reason) {
-      setError(true);
       setActionError(explainActionError(reason));
     } finally {
       setBusyId(null);
     }
   };
 
-  return <section aria-label={t("adminUsers")} aria-busy={loading}>
-    <h2>{t("adminUsers")}</h2>
-    <form onSubmit={search} style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-      <input aria-label={t("userSearch")} placeholder={t("userSearch")} value={draftQuery} onChange={event => setDraftQuery(event.target.value)} />
+  return <section className={styles.section} aria-label={t("adminUsers")} aria-busy={loading || busyId !== null}>
+    <h2 className={styles.title}>{t("adminUsers")}</h2>
+    {actionError && <p className={styles.error} role="alert">{actionError}</p>}
+    <form className={styles.toolbar} onSubmit={search} aria-busy={loading}>
+      <input className={styles.control} aria-label={t("userSearch")} placeholder={t("userSearch")} value={draftQuery} onChange={event => setDraftQuery(event.target.value)} />
       <button type="submit">{t("search")}</button>
     </form>
-    {loading && <p>{t("loading")}</p>}
-    {error && <div><p role="alert">{actionError || t("adminLoadError")}</p><button type="button" onClick={() => setRevision(value => value + 1)}>{t("retry")}</button></div>}
+    {loading && <p className={styles.feedback}>{t("loading")}</p>}
+    {error && <div><p className={styles.error} role="alert">{actionError || t("adminLoadError")}</p><button type="button" onClick={() => setRevision(value => value + 1)}>{t("retry")}</button></div>}
     {data && data.content.length === 0 && <p>{t("noAdminUsers")}</p>}
     {data && <>
-      <ul>{data.content.map(target => <li key={target.id} style={{ marginBottom: 8 }}>
+      <ul className={styles.list}>{data.content.map(target => <li className={styles.row} key={target.id}>
         {target.displayName || target.username} · {localizeUserRole(target.role, t)} · {target.isActive ? t("activeUser") : t("blockedUser")}{" "}
-        <select aria-label={`${t("userRole")}: ${target.username}`} value={target.role} disabled={busyId !== null} onChange={event => void updateRole(target, event.target.value as "USER" | "ADMIN")}>
+        <select className={styles.control} aria-label={`${t("userRole")}: ${target.username}`} value={target.role} disabled={busyId !== null} onChange={event => void updateRole(target, event.target.value as "USER" | "ADMIN")}>
           <option value="USER">{localizeUserRole("USER", t)}</option>
           <option value="ADMIN">{localizeUserRole("ADMIN", t)}</option>
         </select>{" "}
-        <button type="button" disabled={busyId !== null} onClick={() => void toggleHq(target)}>{target.isHq ? t("revokeHq") : t("grantHq")}</button>{" "}
-        <button type="button" disabled={busyId !== null} onClick={() => void toggleActive(target)}>{target.isActive ? t("blockUser") : t("activateUser")}</button>
+        <button type="button" aria-busy={busyId === target.id} disabled={busyId !== null} onClick={() => void toggleHq(target)}>{busyId === target.id ? t("loading") : target.isHq ? t("revokeHq") : t("grantHq")}</button>{" "}
+        <button type="button" aria-busy={busyId === target.id} disabled={busyId !== null} onClick={() => void toggleActive(target)}>{busyId === target.id ? t("loading") : target.isActive ? t("blockUser") : t("activateUser")}</button>
       </li>)}</ul>
-      <nav aria-label={t("adminUsersPagination")} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      <nav className={styles.pagination} aria-label={t("adminUsersPagination")}>
         <button type="button" disabled={loading || page === 0} onClick={() => setPage(value => Math.max(0, value - 1))}>{t("previous")}</button>
         <span role="status">{t("page")} {data.totalPages === 0 ? 0 : page + 1} {t("of")} {data.totalPages} · {data.totalElements}</span>
         <button type="button" disabled={loading || page + 1 >= data.totalPages} onClick={() => setPage(value => value + 1)}>{t("next")}</button>

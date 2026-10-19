@@ -1,6 +1,6 @@
 # Rewind database ER diagram
 
-This diagram describes the schema after Flyway migrations **V1–V30**. The migration files in `src/main/resources/db/migration` remain the source of truth; this document is the review and presentation artifact.
+This diagram describes the schema after Flyway migrations **V1–V31**. The migration files in `src/main/resources/db/migration` remain the source of truth; this document is the review and presentation artifact.
 
 ```mermaid
 erDiagram
@@ -23,9 +23,11 @@ erDiagram
     }
     ACTORS { BIGINT id PK VARCHAR name BIGINT tmdb_id UK }
     DIRECTORS { BIGINT id PK VARCHAR name BIGINT tmdb_id UK }
+    PRODUCERS { BIGINT id PK VARCHAR name BIGINT tmdb_id UK VARCHAR photo_url }
     GENRES { BIGINT id PK VARCHAR name UK BIGINT tmdb_id UK }
     MOVIE_ACTORS { BIGINT movie_id PK BIGINT actor_id PK VARCHAR character_name INT cast_order }
     MOVIE_DIRECTORS { BIGINT movie_id PK BIGINT director_id PK }
+    MOVIE_PRODUCERS { BIGINT movie_id PK BIGINT producer_id PK }
     MOVIE_GENRES { BIGINT movie_id PK BIGINT genre_id PK }
     LISTS { BIGINT id PK BIGINT user_id FK ENUM list_type BOOLEAN is_public }
     LIST_ITEMS { BIGINT id PK BIGINT list_id FK BIGINT movie_id FK INT position }
@@ -69,6 +71,8 @@ erDiagram
     ACTORS ||--o{ MOVIE_ACTORS : appears_in
     MOVIES ||--o{ MOVIE_DIRECTORS : crew
     DIRECTORS ||--o{ MOVIE_DIRECTORS : directs
+    MOVIES ||--o{ MOVIE_PRODUCERS : crew
+    PRODUCERS ||--o{ MOVIE_PRODUCERS : produces
     MOVIES ||--o{ MOVIE_GENRES : categorized
     GENRES ||--o{ MOVIE_GENRES : classifies
     REVIEWS ||--o{ COMMENTS : has
@@ -106,7 +110,7 @@ erDiagram
     USERS ||--o{ USER_SOCIAL_LINKS : publishes
 ```
 
-`REVIEW_ARCHIVE` is retained by migration V5 for historical duplicate reviews and is not referenced by the runtime API. `SIMILAR_MOVIES` is a self-referencing join table. Nullable moderator/author references use `ON DELETE SET NULL`; user-owned content uses the cascade rules declared in the migrations.
+`REVIEW_ARCHIVE` is retained by migration V5 for historical duplicate reviews and is not referenced by the runtime API. `SIMILAR_MOVIES` is a self-referencing join table. `MOVIE_PRODUCERS` was added in V31 and is populated by the explicit TMDB credits sync. Nullable moderator/author references use `ON DELETE SET NULL`; user-owned content uses the cascade rules declared in the migrations.
 
 ## Verification
 

@@ -6,6 +6,7 @@ import com.rewind.rewind.externalrating.entity.ExternalRatingSource;
 import com.rewind.rewind.externalrating.repo.ExternalRatingRepository;
 import com.rewind.rewind.movie.entity.Movie;
 import com.rewind.rewind.movie.repo.MovieRepository;
+import com.rewind.rewind.producer.repo.MovieProducerRepository;
 import com.rewind.rewind.similar.repo.SimilarMovieRepository;
 import com.rewind.rewind.tmdb.TmdbClient;
 import com.rewind.rewind.tmdb.TmdbBatchSyncRequest;
@@ -43,6 +44,7 @@ class TmdbSyncIntegrationTests {
     @Autowired MovieRepository movies;
     @Autowired MovieActorRepository movieActors;
     @Autowired MovieDirectorRepository movieDirectors;
+    @Autowired MovieProducerRepository movieProducers;
     @Autowired ExternalRatingRepository externalRatings;
     @Autowired SimilarMovieRepository similarMovies;
 
@@ -75,6 +77,7 @@ class TmdbSyncIntegrationTests {
                 List.of(new TmdbClient.GenreData(18L, "Drama")),
                 List.of(new TmdbClient.CastData(300L, "Actor One", "https://image.tmdb.org/t/p/w185/actor.jpg", "Lead", 0)),
                 List.of(new TmdbClient.CrewData(400L, "Director One", "https://image.tmdb.org/t/p/w185/director.jpg")),
+                List.of(new TmdbClient.CrewData(500L, "Producer One", "https://image.tmdb.org/t/p/w185/producer.jpg")),
                 List.of(200L, 999L)
         ));
 
@@ -89,10 +92,12 @@ class TmdbSyncIntegrationTests {
         assertEquals(1, result.genresUpdated());
         assertEquals(1, result.actorsUpdated());
         assertEquals(1, result.directorsUpdated());
+        assertEquals(1, result.producersUpdated());
         assertEquals(1, result.similarMoviesLinked());
         assertTrue(result.trailerUpdated());
         assertEquals(1, movieActors.findById_MovieIdOrderByCastOrderAsc(movieId).size());
         assertEquals(1, movieDirectors.findById_MovieId(movieId).size());
+        assertEquals(1, movieProducers.findById_MovieId(movieId).size());
         assertEquals(new BigDecimal("7.4"), externalRatings.findByMovieIdAndSource(movieId, ExternalRatingSource.TMDB)
                 .orElseThrow().getRating());
         assertEquals(1, similarMovies.findById_MovieId(movieId).size());
@@ -112,7 +117,7 @@ class TmdbSyncIntegrationTests {
         when(tmdb.fetchMovie(500L)).thenReturn(new TmdbClient.MovieData(
                 500L, "tt0500500", "Batch synced", 100, LocalDate.of(2024, 2, 3),
                 "Batch overview", null, null, null, new BigDecimal("6.8"), 42,
-                List.of(), List.of(), List.of(), List.of()));
+                List.of(), List.of(), List.of(), List.of(), List.of()));
         when(tmdb.fetchMovie(501L)).thenThrow(new org.springframework.web.server.ResponseStatusException(
                 org.springframework.http.HttpStatus.NOT_FOUND, "TMDB movie not found"));
 
@@ -137,7 +142,7 @@ class TmdbSyncIntegrationTests {
         when(tmdb.fetchMovie(700L)).thenReturn(new TmdbClient.MovieData(
                 700L, "tt0700700", "Imported title", 98, LocalDate.of(2023, 7, 8),
                 "Imported overview", null, null, null, new BigDecimal("7.1"), 700,
-                List.of(), List.of(), List.of(), List.of()));
+                List.of(), List.of(), List.of(), List.of(), List.of()));
         when(tmdb.fetchMovie(701L)).thenThrow(new org.springframework.web.server.ResponseStatusException(
                 org.springframework.http.HttpStatus.NOT_FOUND, "TMDB movie not found"));
 
@@ -171,7 +176,7 @@ class TmdbSyncIntegrationTests {
         when(tmdb.fetchMovie(800L)).thenReturn(new TmdbClient.MovieData(
                 800L, "tt0800800", "Discovery hit", 110, LocalDate.of(2024, 5, 6),
                 "Discovery overview", null, null, null, new BigDecimal("7.3"), 800,
-                List.of(), List.of(), List.of(), List.of()));
+                List.of(), List.of(), List.of(), List.of(), List.of()));
         when(tmdb.fetchMovie(801L)).thenThrow(new org.springframework.web.server.ResponseStatusException(
                 org.springframework.http.HttpStatus.NOT_FOUND, "TMDB movie not found"));
 

@@ -26,6 +26,10 @@ if ($values['DB_PASSWORD'] -eq $values['MYSQL_ROOT_PASSWORD']) { throw 'DB_PASSW
 if ($values['PUBLIC_BASE_URL'] -notmatch '^https://') { throw 'PUBLIC_BASE_URL must use HTTPS' }
 if (-not $values.ContainsKey('HTTP_PORT')) { throw 'HTTP_PORT must bind the web service to a loopback port behind the HTTPS proxy' }
 if ($values['HTTP_PORT'] -notmatch '^127\.0\.0\.1:\d+$') { throw 'HTTP_PORT must look like 127.0.0.1:8088 for the host HTTPS proxy' }
+if ($values.ContainsKey('MAIL_PORT') -and ($values['MAIL_PORT'] -notmatch '^\d+$' -or [int]$values['MAIL_PORT'] -lt 1 -or [int]$values['MAIL_PORT'] -gt 65535)) { throw 'MAIL_PORT must be an integer between 1 and 65535' }
+foreach ($booleanKey in @('MAIL_SMTP_AUTH', 'MAIL_SMTP_STARTTLS', 'TMDB_ENABLED', 'TMDB_SCHEDULER_ENABLED')) {
+    if ($values.ContainsKey($booleanKey) -and $values[$booleanKey] -notmatch '^(?i:true|false)$') { throw "$booleanKey must be true or false" }
+}
 $tmdbEnabled = $values.ContainsKey('TMDB_ENABLED') -and $values['TMDB_ENABLED'] -match '^(?i:true)$'
 $schedulerEnabled = $values.ContainsKey('TMDB_SCHEDULER_ENABLED') -and $values['TMDB_SCHEDULER_ENABLED'] -match '^(?i:true)$'
 if ($schedulerEnabled -and -not $tmdbEnabled) { throw 'TMDB_SCHEDULER_ENABLED=true requires TMDB_ENABLED=true' }

@@ -2,6 +2,7 @@ package com.rewind.rewind.profile.service;
 
 import com.rewind.rewind.auth.RefreshSessionService;
 import com.rewind.rewind.list.entity.ListType;
+import com.rewind.rewind.list.entity.MovieList;
 import com.rewind.rewind.list.dto.PublicListCardResponse;
 import com.rewind.rewind.list.repo.ListItemRepository;
 import com.rewind.rewind.list.repo.MovieListRepository;
@@ -30,7 +31,10 @@ import org.springframework.web.server.ResponseStatusException;
 import jakarta.persistence.EntityManager;
 
 import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -85,13 +89,13 @@ public class ProfileService {
         var recentRatings = ratings.findAllByUserIdOrderByUpdatedAtDesc(user.getId(), PageRequest.of(0, 10))
                 .getContent()
                 .stream()
-                .map(this::toProfileRating)
+                .map(rating -> toProfileRating(rating))
                 .collect(Collectors.toList());
 
         var recentReviews = reviews.findAllByUserIdOrderByUpdatedAtDesc(user.getId(), PageRequest.of(0, 10))
                 .getContent()
                 .stream()
-                .map(this::toProfileReview)
+                .map(review -> toProfileReview(review))
                 .collect(Collectors.toList());
 
         String displayName = user.getDisplayName();
@@ -192,12 +196,41 @@ public class ProfileService {
     @Transactional(readOnly = true)
     public Page<PublicListCardResponse> publicLists(Long userId, int page, int size) {
         findActivePublicUser(userId);
-        return lists.findPageByUserIdAndListTypeAndIsPublicTrueOrderByUpdatedAtDescIdDesc(
-                        userId, ListType.CUSTOM, pageRequest(page, size))
-                .map(list -> new PublicListCardResponse(
-                        list.getId(), list.getName(), list.getDescription(), list.getIsPublic(),
-                        list.getUser().getId(), list.getUser().getUsername(), list.getUser().getAvatarUrl(),
-                        list.getTags().stream().map(tag -> tag.getName()).toList()));
+        Page<MovieList> source =
+                lists.findPageByUserIdAndListTypeAndIsPublicTrueOrderByUpdatedAtDescIdDesc(
+                        userId, ListType.CUSTOM, pageRequest(page, size));
+        List<Long> listIds = new ArrayList<>(source.getContent().size());
+        for (MovieList list : source.getContent()) {
+            listIds.add(list.getId());
+        }
+        Map<Long, List<MovieCardResponse>> previews = previewMovies(
+                listIds);
+        Map<Long, Long> itemCounts = new HashMap<>();
+        if (!listIds.isEmpty()) {
+            listItems.countByListIds(listIds).forEach(row -> itemCounts.put((Long) row[0], (Long) row[1]));
+        }
+        return source.map(list -> new PublicListCardResponse(
+                list.getId(), list.getName(), list.getDescription(), list.getIsPublic(),
+                list.getUser().getId(), list.getUser().getUsername(), list.getUser().getAvatarUrl(),
+                list.getTags().stream().map(tag -> tag.getName()).toList(), null,
+                itemCounts.getOrDefault(list.getId(), 0L),
+                previews.getOrDefault(list.getId(), List.of())));
+    }
+
+    private Map<Long, List<MovieCardResponse>> previewMovies(List<Long> listIds) {
+        Map<Long, List<MovieCardResponse>> previews = new HashMap<>();
+        if (listIds.isEmpty()) return previews;
+
+        for (var item : listItems.findAllByListIdsForPreview(listIds)) {
+            Long listId = item.getList().getId();
+            List<MovieCardResponse> listPreview = previews.computeIfAbsent(listId, ignored -> new ArrayList<>());
+            if (listPreview.size() < 3) {
+                var movie = item.getMovie();
+                listPreview.add(new MovieCardResponse(movie.getId(), movie.getTitle(), movie.getReleaseDate(),
+                        movie.getRating(), movie.getPhotoUrl()));
+            }
+        }
+        return previews;
     }
 
     private Page<MovieCardResponse> systemCollection(com.rewind.rewind.user.entity.User user, ListType type, int page, int size) {
@@ -229,14 +262,14 @@ public class ProfileService {
     public Page<ProfileResponse.ProfileRatingItem> myRatings(String email, int page, int size) {
         var user = users.findByEmail(email).orElseThrow();
         return ratings.findAllByUserIdOrderByUpdatedAtDesc(user.getId(), pageRequest(page, size))
-                .map(this::toProfileRating);
+                .map(rating -> toProfileRating(rating));
     }
 
     @Transactional(readOnly = true)
     public Page<ProfileResponse.ProfileReviewItem> myReviews(String email, int page, int size) {
         var user = users.findByEmail(email).orElseThrow();
         return reviews.findAllByUserIdOrderByUpdatedAtDesc(user.getId(), pageRequest(page, size))
-                .map(this::toProfileReview);
+                .map(review -> toProfileReview(review));
     }
 
     private Pageable pageRequest(int page, int size) {

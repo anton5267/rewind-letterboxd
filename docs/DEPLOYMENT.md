@@ -41,6 +41,8 @@ Before starting services on the VPS, run the PowerShell validator on a Windows c
 ./scripts/verify-production-config.ps1 -EnvFile .env.production
 ```
 
+The validator also checks the SMTP port range and the SMTP/TMDB boolean flags before Compose resolution.
+
 ## 2. Start the stack
 
 ```sh
@@ -57,13 +59,13 @@ Put Caddy, Nginx, or another managed TLS proxy on the host. The repository inclu
 
 ```sh
 sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+```
 
-Для локальної перевірки репозиторій має відтворюваний wrapper, який запускає Caddy у контейнері та не потребує встановлення binary на Windows:
+For local validation, the repository includes a reproducible wrapper that runs Caddy in a container and does not require a Windows binary installation:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\verify-caddy.ps1
-```
-sudo systemctl reload caddy
 ```
 
 After DNS and TLS are ready, verify:

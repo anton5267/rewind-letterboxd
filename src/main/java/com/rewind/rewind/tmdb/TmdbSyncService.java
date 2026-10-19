@@ -15,6 +15,10 @@ import com.rewind.rewind.genre.entity.Genre;
 import com.rewind.rewind.genre.repo.GenreRepository;
 import com.rewind.rewind.movie.entity.Movie;
 import com.rewind.rewind.movie.repo.MovieRepository;
+import com.rewind.rewind.producer.entity.MovieProducer;
+import com.rewind.rewind.producer.entity.Producer;
+import com.rewind.rewind.producer.repo.MovieProducerRepository;
+import com.rewind.rewind.producer.repo.ProducerRepository;
 import com.rewind.rewind.similar.entity.SimilarMovie;
 import com.rewind.rewind.similar.repo.SimilarMovieRepository;
 import org.springframework.cache.annotation.CacheEvict;
@@ -37,6 +41,8 @@ public class TmdbSyncService {
     private final DirectorRepository directors;
     private final MovieActorRepository movieActors;
     private final MovieDirectorRepository movieDirectors;
+    private final ProducerRepository producers;
+    private final MovieProducerRepository movieProducers;
     private final ExternalRatingRepository externalRatings;
     private final SimilarMovieRepository similarMovies;
 
@@ -48,6 +54,8 @@ public class TmdbSyncService {
             DirectorRepository directors,
             MovieActorRepository movieActors,
             MovieDirectorRepository movieDirectors,
+            ProducerRepository producers,
+            MovieProducerRepository movieProducers,
             ExternalRatingRepository externalRatings,
             SimilarMovieRepository similarMovies
     ) {
@@ -58,6 +66,8 @@ public class TmdbSyncService {
         this.directors = directors;
         this.movieActors = movieActors;
         this.movieDirectors = movieDirectors;
+        this.producers = producers;
+        this.movieProducers = movieProducers;
         this.externalRatings = externalRatings;
         this.similarMovies = similarMovies;
     }
@@ -104,6 +114,12 @@ public class TmdbSyncService {
                 .toList();
         movieDirectors.saveAll(resolvedDirectors);
 
+        movieProducers.deleteByIdMovieId(movieId);
+        List<MovieProducer> resolvedProducers = data.producers().stream()
+                .map(crew -> new MovieProducer(movie, resolveProducer(crew)))
+                .toList();
+        movieProducers.saveAll(resolvedProducers);
+
         updateTmdbRating(movie, data);
 
         int linkedSimilar = 0;
@@ -112,7 +128,7 @@ public class TmdbSyncService {
         }
 
         return new TmdbSyncResponse(movieId, data.tmdbId(), movie.getTitle(), resolvedGenres.size(),
-                resolvedActors.size(), resolvedDirectors.size(), linkedSimilar,
+                resolvedActors.size(), resolvedDirectors.size(), resolvedProducers.size(), linkedSimilar,
                 data.trailerUrl() != null && !data.trailerUrl().isBlank());
     }
 
@@ -156,6 +172,16 @@ public class TmdbSyncService {
         director.setName(data.name());
         director.setPhotoUrl(data.photoUrl());
         return directors.save(director);
+    }
+
+    private Producer resolveProducer(TmdbClient.CrewData data) {
+        Producer producer = producers.findByTmdbId(data.tmdbId())
+                .or(() -> producers.findByNameIgnoreCase(data.name()))
+                .orElseGet(Producer::new);
+        producer.setTmdbId(data.tmdbId());
+        producer.setName(data.name());
+        producer.setPhotoUrl(data.photoUrl());
+        return producers.save(producer);
     }
 
     private void updateTmdbRating(Movie movie, TmdbClient.MovieData data) {

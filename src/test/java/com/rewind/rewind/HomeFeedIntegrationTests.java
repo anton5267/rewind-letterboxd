@@ -61,8 +61,12 @@ class HomeFeedIntegrationTests {
         AddListItemRequest listItem = new AddListItemRequest();
         listItem.setMovieId(movieId);
         lists.addItem(email, listId, listItem);
-        assertTrue(lists.popularPublicLists(0, 50).getContent().stream()
-                .anyMatch(item -> item.getName().equals("Home list " + suffix)));
+        var popularList = lists.popularPublicLists(0, 50).getContent().stream()
+                .filter(item -> item.getName().equals("Home list " + suffix))
+                .findFirst()
+                .orElseThrow();
+        assertEquals(1, popularList.getPreviewMovies().size());
+        assertEquals(movieId, popularList.getPreviewMovies().get(0).getId());
         assertEquals(movieId, lists.publicList(listId).movies().get(0).getId());
     }
 }

@@ -13,51 +13,87 @@ import AdminReviews from "../components/AdminReviews";
 import AdminUsers from "../components/AdminUsers";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
+import styles from "./AdminDashboard.module.css";
 
 export default function AdminDashboard() {
   const { isAuth, ready, user } = useAuth();
   const { path, t } = useLocale();
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [settings, setSettings] = useState<AdminSetting[]>([]);
-  const [error, setError] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [attempt, setAttempt] = useState(0);
+  const [dashboardError, setDashboardError] = useState(false);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [settingsError, setSettingsError] = useState(false);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [saveError, setSaveError] = useState(false);
+  const [failedSettingKey, setFailedSettingKey] = useState<string | null>(null);
+  const [saveBusyKey, setSaveBusyKey] = useState<string | null>(null);
+  const [dashboardAttempt, setDashboardAttempt] = useState(0);
+  const [settingsAttempt, setSettingsAttempt] = useState(0);
 
   useEffect(() => {
     if (!isAuth || user?.role !== "ADMIN") return;
     let current = true;
-    setLoading(true);
-    setError(false);
-    Promise.all([getAdminDashboard(), getAdminSettings()]).then(([summary, settingsResponse]) => {
-      if (!current) return;
-      setDashboard(summary.data); setSettings(settingsResponse.data);
-    }).catch(() => { if (current) setError(true); })
-      .finally(() => { if (current) setLoading(false); });
+    setDashboardLoading(true);
+    setDashboardError(false);
+    getAdminDashboard()
+      .then(({ data }) => { if (current) setDashboard(data); })
+      .catch(() => { if (current) setDashboardError(true); })
+      .finally(() => { if (current) setDashboardLoading(false); });
     return () => { current = false; };
-  }, [isAuth, user?.role, attempt]);
+  }, [isAuth, user?.role, dashboardAttempt]);
+
+  useEffect(() => {
+    if (!isAuth || user?.role !== "ADMIN") return;
+    let current = true;
+    setSettingsLoading(true);
+    setSettingsError(false);
+    getAdminSettings()
+      .then(({ data }) => { if (current) setSettings(data); })
+      .catch(() => { if (current) setSettingsError(true); })
+      .finally(() => { if (current) setSettingsLoading(false); });
+    return () => { current = false; };
+  }, [isAuth, user?.role, settingsAttempt]);
 
   const updateMovieCount = useCallback((movies: number) => {
     setDashboard(current => current ? { ...current, movies } : current);
   }, []);
 
-  if (!ready) return <main style={{ padding: "110px 5%" }}>{t("loading")}</main>;
+  if (!ready) return <main className={styles.page}><p className={styles.feedback} role="status">{t("loading")}</p></main>;
   if (!isAuth || user?.role !== "ADMIN") return <Navigate to={path("/home")} replace />;
   const saveSetting = async (setting: AdminSetting) => {
-    try { const { data } = await updateAdminSetting(setting.key, setting.value); setSettings(current => current.map(item => item.key === data.key ? data : item)); }
-    catch { setError(true); }
+    if (saveBusyKey !== null) return;
+    setSaveError(false);
+    setFailedSettingKey(null);
+    setSaveBusyKey(setting.key);
+    try {
+      const { data } = await updateAdminSetting(setting.key, setting.value);
+      setSettings(current => current.map(item => item.key === data.key ? data : item));
+    } catch {
+      setFailedSettingKey(setting.key);
+      setSaveError(true);
+    } finally {
+      setSaveBusyKey(null);
+    }
   };
-  return <main style={{ background: "#151515", color: "white", minHeight: "70vh", padding: "110px 5% 40px" }}>
-    <h1>{t("adminDashboard")}</h1>
-    {loading && <p role="status" aria-busy="true">{t("loading")}</p>}
-    {error && <p role="alert">{t("adminLoadError")} <button type="button" onClick={() => setAttempt(value => value + 1)}>{t("retry")}</button></p>}
-    {dashboard && <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 12 }}>
-      {([["users", dashboard.users], ["activeUsers", dashboard.activeUsers], ["hqUsers", dashboard.hqUsers], ["movies", dashboard.movies], ["reviews", dashboard.reviews], ["hiddenReviews", dashboard.hiddenReviews]] as const).map(([key, value]) => <div key={key} style={{ padding: 14, border: "1px solid #444", borderRadius: 8 }}><strong>{t(key)}</strong><div style={{ fontSize: 24 }}>{value}</div></div>)}
+
+  const retrySettingSave = () => {
+    if (!failedSettingKey) return;
+    const setting = settings.find(item => item.key === failedSettingKey);
+    if (setting) void saveSetting(setting);
+  };
+  return <main className={styles.page}>
+    <h1 className={styles.title}>{t("adminDashboard")}</h1>
+    {dashboardLoading && <p className={styles.feedback} role="status" aria-busy={true}>{t("loading")}</p>}
+    {dashboardError && <p className={styles.error} role="alert">{t("adminLoadError")} <button type="button" onClick={() => setDashboardAttempt(value => value + 1)}>{t("retry")}</button></p>}
+    {saveError && <p className={styles.error} role="alert">{t("adminSaveError")} {failedSettingKey && <button type="button" disabled={saveBusyKey !== null} aria-busy={saveBusyKey !== null} onClick={retrySettingSave}>{t("retry")}</button>}</p>}
+    {dashboard && <section className={styles.summary} aria-label={t("adminDashboard")}>
+      {([["users", dashboard.users], ["activeUsers", dashboard.activeUsers], ["hqUsers", dashboard.hqUsers], ["movies", dashboard.movies], ["reviews", dashboard.reviews], ["hiddenReviews", dashboard.hiddenReviews]] as const).map(([key, value]) => <div className={styles.summaryCard} key={key}><strong>{t(key)}</strong><div className={styles.summaryValue}>{value}</div></div>)}
     </section>}
     <AdminUsers onHqCountChange={delta => setDashboard(current => current ? { ...current, hqUsers: current.hqUsers + delta } : current)} />
     <AdminComments />
     <AdminReviews />
     <AdminModerationQueue />
-    <section><h2>{t("adminSettings")}</h2>{loading && settings.length === 0 ? <p role="status">{t("loading")}</p> : settings.length === 0 ? <p>{t("noAdminSettings")}</p> : <ul>{settings.map(setting => <li key={setting.key} style={{ marginBottom: 8 }}><label>{setting.key} <input value={setting.value} onChange={event => setSettings(current => current.map(item => item.key === setting.key ? { ...item, value: event.target.value } : item))} /></label> <button type="button" onClick={() => { void saveSetting(setting); }}>{t("saveSetting")}</button></li>)}</ul>}</section>
+    <section className={styles.settings} aria-labelledby="admin-settings-title" aria-busy={settingsLoading || saveBusyKey !== null}><h2 className={styles.settingsTitle} id="admin-settings-title">{t("adminSettings")}</h2>{settingsLoading && settings.length === 0 ? <p className={styles.feedback} role="status">{t("loading")}</p> : settingsError ? <p className={styles.error} role="alert">{t("adminLoadError")} <button type="button" onClick={() => setSettingsAttempt(value => value + 1)}>{t("retry")}</button></p> : settings.length === 0 ? <p>{t("noAdminSettings")}</p> : <ul className={styles.settingsList}>{settings.map(setting => <li className={styles.settingRow} key={setting.key}><label className={styles.settingField}>{setting.key}<input className={styles.settingInput} value={setting.value} onChange={event => setSettings(current => current.map(item => item.key === setting.key ? { ...item, value: event.target.value } : item))} /></label> <button type="button" disabled={saveBusyKey !== null} aria-busy={saveBusyKey === setting.key} onClick={() => { void saveSetting(setting); }}>{saveBusyKey === setting.key ? t("loading") : t("saveSetting")}</button></li>)}</ul>}</section>
     <AdminMovies onTotalChange={updateMovieCount} />
     <AdminLists />
     <AdminConversations />

@@ -15,6 +15,7 @@ import {
   type TmdbQualityReport,
 } from "../api/admin.api";
 import { useLocale } from "../i18n";
+import styles from "./AdminMovies.module.css";
 
 interface Props {
   onTotalChange: (total: number) => void;
@@ -30,6 +31,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
   const [qualityRevision, setQualityRevision] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [actionError, setActionError] = useState("");
   const [mutationBusy, setMutationBusy] = useState(false);
   const [movieDraft, setMovieDraft] = useState<AdminMovieWrite>(emptyMovie);
   const [editingMovieId, setEditingMovieId] = useState<number | null>(null);
@@ -40,7 +42,11 @@ export default function AdminMovies({ onTotalChange }: Props) {
   const [tmdbDiscoveryDraft, setTmdbDiscoveryDraft] = useState({ page: "1", year: "", genreId: "", minRating: "", limit: "20" });
   const [tmdbImportBusy, setTmdbImportBusy] = useState(false);
   const [tmdbImportMessage, setTmdbImportMessage] = useState<string | null>(null);
+  const [tmdbImportError, setTmdbImportError] = useState(false);
+  const [syncError, setSyncError] = useState(false);
   const [tmdbQuality, setTmdbQuality] = useState<TmdbQualityReport | null>(null);
+  const [qualityLoading, setQualityLoading] = useState(true);
+  const [qualityError, setQualityError] = useState(false);
 
   useEffect(() => {
     let current = true;
@@ -61,9 +67,12 @@ export default function AdminMovies({ onTotalChange }: Props) {
 
   useEffect(() => {
     let current = true;
+    setQualityLoading(true);
+    setQualityError(false);
     getAdminTmdbQuality()
       .then(({ data: response }) => { if (current) setTmdbQuality(response); })
-      .catch(() => { if (current) setError(true); });
+      .catch(() => { if (current) setQualityError(true); })
+      .finally(() => { if (current) setQualityLoading(false); });
     return () => { current = false; };
   }, [qualityRevision]);
 
@@ -86,6 +95,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
     event.preventDefault();
     if (mutationBusy) return;
     setMutationBusy(true);
+    setActionError("");
     try {
       const payload = { ...movieDraft, title: movieDraft.title.trim(), releaseDate: movieDraft.releaseDate || null, photoUrl: movieDraft.photoUrl || null };
       if (editingMovieId === null) {
@@ -98,7 +108,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
       resetMovieDraft();
       setError(false);
     } catch {
-      setError(true);
+      setActionError(editingMovieId === null ? t("adminMovieCreateError") : t("adminMovieSaveError"));
     } finally {
       setMutationBusy(false);
     }
@@ -107,6 +117,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
   const removeMovie = async (movie: AdminMovie) => {
     if (mutationBusy || !window.confirm(`${t("deleteMovieConfirm")} ${movie.title}?`)) return;
     setMutationBusy(true);
+    setActionError("");
     try {
       await deleteAdminMovie(movie.id);
       if (data?.content.length === 1 && page > 0) setPage(value => value - 1);
@@ -114,7 +125,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
       if (editingMovieId === movie.id) resetMovieDraft();
       setError(false);
     } catch {
-      setError(true);
+      setActionError(t("adminMovieDeleteError"));
     } finally {
       setMutationBusy(false);
     }
@@ -129,14 +140,16 @@ export default function AdminMovies({ onTotalChange }: Props) {
     if (syncingMovieId !== null) return;
     setSyncingMovieId(movie.id);
     setSyncMessage(null);
+    setSyncError(false);
+    setActionError("");
     try {
       const { data: response } = await syncAdminMovieTmdb(movie.id, tmdbId);
-      setSyncMessage(`${t("tmdbSyncDone")}: ${response.title} · ${response.genresUpdated} ${t("genres")} · ${response.actorsUpdated} ${t("actors")} · ${response.directorsUpdated} ${t("directors")}`);
+      setSyncMessage(`${t("tmdbSyncDone")}: ${response.title} · ${response.genresUpdated} ${t("genres")} · ${response.actorsUpdated} ${t("actors")} · ${response.directorsUpdated} ${t("directors")} · ${response.producersUpdated} ${t("producers")}`);
       setRevision(value => value + 1);
       setQualityRevision(value => value + 1);
       setError(false);
     } catch {
-      setError(true);
+      setSyncError(true);
       setSyncMessage(t("tmdbSyncError"));
     } finally {
       setSyncingMovieId(null);
@@ -154,6 +167,8 @@ export default function AdminMovies({ onTotalChange }: Props) {
     }
     setTmdbImportBusy(true);
     setTmdbImportMessage(null);
+    setTmdbImportError(false);
+    setActionError("");
     try {
       const { data: response } = await importAdminTmdb(ids);
       setTmdbImportMessage(`${t("tmdbImportDone")}: ${response.succeeded}/${response.requested}`);
@@ -161,7 +176,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
       setQualityRevision(value => value + 1);
       setError(false);
     } catch {
-      setError(true);
+      setTmdbImportError(true);
       setTmdbImportMessage(t("tmdbImportError"));
     } finally {
       setTmdbImportBusy(false);
@@ -185,6 +200,8 @@ export default function AdminMovies({ onTotalChange }: Props) {
     };
     setTmdbImportBusy(true);
     setTmdbImportMessage(null);
+    setTmdbImportError(false);
+    setActionError("");
     try {
       const { data: response } = await discoverAndImportAdminTmdb(request);
       setTmdbImportMessage(`${t("tmdbDiscoveryDone")}: ${response.imports.succeeded}/${response.discovered} · ${t("page")} ${response.page}/${response.totalPages}`);
@@ -192,7 +209,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
       setQualityRevision(value => value + 1);
       setError(false);
     } catch {
-      setError(true);
+      setTmdbImportError(true);
       setTmdbImportMessage(t("tmdbImportError"));
     } finally {
       setTmdbImportBusy(false);
@@ -201,41 +218,48 @@ export default function AdminMovies({ onTotalChange }: Props) {
 
   const retry = () => {
     setRevision(value => value + 1);
-    setQualityRevision(value => value + 1);
   };
 
-  return <section aria-label={t("adminMovies")} aria-busy={loading}>
-    <h2>{t("adminMovies")}</h2>
-    <form onSubmit={saveMovie} style={{ display: "grid", gap: 8, maxWidth: 700, marginBottom: 16 }}>
-      <label>{t("movieTitle")}<input required maxLength={255} value={movieDraft.title} onChange={event => setMovieDraft({ ...movieDraft, title: event.target.value })} /></label>
-      <label>{t("releaseDate")}<input type="date" value={movieDraft.releaseDate ?? ""} onChange={event => setMovieDraft({ ...movieDraft, releaseDate: event.target.value })} /></label>
-      <label>{t("rating")}<input type="number" min="0" max="10" step="0.1" value={movieDraft.rating ?? ""} onChange={event => setMovieDraft({ ...movieDraft, rating: event.target.value === "" ? null : Number(event.target.value) })} /></label>
-      <label>{t("posterUrl")}<input type="url" value={movieDraft.photoUrl ?? ""} onChange={event => setMovieDraft({ ...movieDraft, photoUrl: event.target.value })} /></label>
-      <div><button type="submit" disabled={mutationBusy}>{editingMovieId === null ? t("create") : t("save")}</button>{editingMovieId !== null && <button type="button" disabled={mutationBusy} onClick={resetMovieDraft}>{t("cancel")}</button>}</div>
-    </form>
-    <div style={{ display: "grid", gap: 12, maxWidth: 700, marginBottom: 16, padding: 12, border: "1px solid #444", borderRadius: 8 }}>
-      <h3>{t("tmdbImportTitle")}</h3>
-      {tmdbQuality && <div><strong>{t("tmdbQualityTitle")}</strong><p>{t("tmdbQualitySummary")}: {tmdbQuality.tmdbLinkedMovies}/{tmdbQuality.totalMovies} · {t("tmdbCoverage")}: {tmdbQuality.linkedCoveragePercent.toFixed(1)}% · {t("tmdbCompleteness")}: {tmdbQuality.metadataCompletenessPercent.toFixed(1)}%</p><ul><li>{t("tmdbMissingPoster")}: {tmdbQuality.missingPoster}</li><li>{t("tmdbMissingBackdrop")}: {tmdbQuality.missingBackdrop}</li><li>{t("tmdbMissingPlot")}: {tmdbQuality.missingPlot}</li><li>{t("tmdbMissingRuntime")}: {tmdbQuality.missingRuntime}</li><li>{t("tmdbMissingTrailer")}: {tmdbQuality.missingTrailer}</li><li>{t("tmdbMissingRating")}: {tmdbQuality.missingTmdbRating}</li></ul></div>}
-      <form onSubmit={importTmdbIds} style={{ display: "flex", flexWrap: "wrap", gap: 8 }}><label>{t("tmdbIds")}<input aria-label={t("tmdbIds")} placeholder={t("tmdbIdsHint")} value={tmdbImportIds} onChange={event => setTmdbImportIds(event.target.value)} /></label><button type="submit" disabled={tmdbImportBusy}>{tmdbImportBusy ? t("loading") : t("tmdbImport")}</button></form>
-      <form onSubmit={discoverAndImportTmdb} style={{ display: "flex", flexWrap: "wrap", gap: 8 }}><label>{t("page")}<input type="number" min="1" max="500" value={tmdbDiscoveryDraft.page} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, page: event.target.value })} /></label><label>{t("year")}<input type="number" min="1888" max="2100" value={tmdbDiscoveryDraft.year} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, year: event.target.value })} /></label><label>{t("genre")}<input type="number" min="1" value={tmdbDiscoveryDraft.genreId} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, genreId: event.target.value })} /></label><label>{t("minRating")}<input type="number" min="0" max="10" step="0.1" value={tmdbDiscoveryDraft.minRating} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, minRating: event.target.value })} /></label><label>{t("limit")}<input type="number" min="1" max="20" value={tmdbDiscoveryDraft.limit} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, limit: event.target.value })} /></label><button type="submit" disabled={tmdbImportBusy}>{tmdbImportBusy ? t("loading") : t("tmdbDiscoveryImport")}</button></form>
-      {tmdbImportMessage && <p role="status">{tmdbImportMessage}</p>}
-    </div>
-    {syncMessage && <p role="status">{syncMessage}</p>}
-    {loading && <p>{t("loading")}</p>}
-    {error && <div><p role="alert">{t("adminLoadError")}</p><button type="button" onClick={retry}>{t("retry")}</button></div>}
-    {data && data.content.length === 0 && <p>{t("noAdminMovies")}</p>}
-    {data && <>
-      <ul aria-label={t("adminMovieResults")}>{data.content.map(movie => <li key={movie.id} style={{ marginBottom: 12 }}>
-        {movie.title} · {movie.releaseDate || "—"} · {movie.rating ?? "—"}{" "}
-        <button type="button" disabled={mutationBusy} onClick={() => editMovie(movie)}>{t("editMovie")}</button>{" "}
-        <button type="button" disabled={mutationBusy} onClick={() => void removeMovie(movie)}>{t("deleteMovie")}</button>
-        <div style={{ display: "inline-flex", gap: 6, marginLeft: 8 }}><label>{t("tmdbId")}<input inputMode="numeric" pattern="[0-9]*" aria-label={`${t("tmdbId")} ${movie.title}`} value={tmdbIds[movie.id] ?? ""} onChange={event => setTmdbIds(current => ({ ...current, [movie.id]: event.target.value }))} style={{ width: 90 }} /></label><button type="button" disabled={syncingMovieId !== null} onClick={() => void syncMovie(movie)}>{syncingMovieId === movie.id ? t("loading") : t("syncTmdb")}</button></div>
-      </li>)}</ul>
-      <nav aria-label={t("adminMoviesPagination")} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <button type="button" disabled={loading || page === 0} onClick={() => setPage(value => Math.max(0, value - 1))}>{t("previous")}</button>
-        <span role="status">{t("page")} {data.totalPages === 0 ? 0 : page + 1} {t("of")} {data.totalPages} · {data.totalElements}</span>
-        <button type="button" disabled={loading || page + 1 >= data.totalPages} onClick={() => setPage(value => value + 1)}>{t("next")}</button>
-      </nav>
-    </>}
-  </section>;
+  const retryQuality = () => setQualityRevision(value => value + 1);
+
+  return (
+    <section className={styles.section} aria-label={t("adminMovies")} aria-busy={loading || qualityLoading || mutationBusy || tmdbImportBusy || syncingMovieId !== null}>
+      <h2 className={styles.title}>{t("adminMovies")}</h2>
+       {actionError && <p className={styles.error} role="alert">{actionError}</p>}
+       <form className={styles.movieForm} onSubmit={saveMovie} aria-busy={mutationBusy}>
+        <label className={styles.field}>{t("movieTitle")}<input required maxLength={255} value={movieDraft.title} onChange={event => setMovieDraft({ ...movieDraft, title: event.target.value })} /></label>
+        <label className={styles.field}>{t("releaseDate")}<input type="date" value={movieDraft.releaseDate ?? ""} onChange={event => setMovieDraft({ ...movieDraft, releaseDate: event.target.value })} /></label>
+        <label className={styles.field}>{t("rating")}<input type="number" min="0" max="10" step="0.1" value={movieDraft.rating ?? ""} onChange={event => setMovieDraft({ ...movieDraft, rating: event.target.value === "" ? null : Number(event.target.value) })} /></label>
+        <label className={styles.field}>{t("posterUrl")}<input type="url" value={movieDraft.photoUrl ?? ""} onChange={event => setMovieDraft({ ...movieDraft, photoUrl: event.target.value })} /></label>
+        <div className={styles.actions}><button type="submit" aria-busy={mutationBusy} disabled={mutationBusy}>{mutationBusy ? t("saving") : editingMovieId === null ? t("create") : t("save")}</button>{editingMovieId !== null && <button type="button" disabled={mutationBusy} onClick={resetMovieDraft}>{t("cancel")}</button>}</div>
+      </form>
+      <div className={styles.tmdbPanel}>
+        <h3 className={styles.tmdbTitle}>{t("tmdbImportTitle")}</h3>
+        {qualityLoading && !tmdbQuality && <p className={styles.feedback} role="status">{t("loading")}</p>}
+        {qualityError && <p className={styles.error} role="alert">{t("tmdbQualityError")} <button type="button" onClick={retryQuality}>{t("retry")}</button></p>}
+        {tmdbQuality && <div className={styles.quality}><strong>{t("tmdbQualityTitle")}</strong><p>{t("tmdbQualitySummary")}: {tmdbQuality.tmdbLinkedMovies}/{tmdbQuality.totalMovies} · {t("tmdbCoverage")}: {tmdbQuality.linkedCoveragePercent.toFixed(1)}% · {t("tmdbCompleteness")}: {tmdbQuality.metadataCompletenessPercent.toFixed(1)}%</p><ul className={styles.qualityList}><li>{t("tmdbMissingPoster")}: {tmdbQuality.missingPoster}</li><li>{t("tmdbMissingBackdrop")}: {tmdbQuality.missingBackdrop}</li><li>{t("tmdbMissingPlot")}: {tmdbQuality.missingPlot}</li><li>{t("tmdbMissingRuntime")}: {tmdbQuality.missingRuntime}</li><li>{t("tmdbMissingTrailer")}: {tmdbQuality.missingTrailer}</li><li>{t("tmdbMissingRating")}: {tmdbQuality.missingTmdbRating}</li></ul></div>}
+        <form className={styles.importForm} onSubmit={importTmdbIds}><label className={styles.inlineField}>{t("tmdbIds")}<input aria-label={t("tmdbIds")} placeholder={t("tmdbIdsHint")} value={tmdbImportIds} onChange={event => setTmdbImportIds(event.target.value)} /></label><button type="submit" disabled={tmdbImportBusy}>{tmdbImportBusy ? t("loading") : t("tmdbImport")}</button></form>
+        <form className={`${styles.importForm} ${styles.discoveryForm}`} onSubmit={discoverAndImportTmdb}><label className={styles.inlineField}>{t("page")}<input type="number" min="1" max="500" value={tmdbDiscoveryDraft.page} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, page: event.target.value })} /></label><label className={styles.inlineField}>{t("year")}<input type="number" min="1888" max="2100" value={tmdbDiscoveryDraft.year} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, year: event.target.value })} /></label><label className={styles.inlineField}>{t("genre")}<input type="number" min="1" value={tmdbDiscoveryDraft.genreId} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, genreId: event.target.value })} /></label><label className={styles.inlineField}>{t("minRating")}<input type="number" min="0" max="10" step="0.1" value={tmdbDiscoveryDraft.minRating} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, minRating: event.target.value })} /></label><label className={styles.inlineField}>{t("limit")}<input type="number" min="1" max="20" value={tmdbDiscoveryDraft.limit} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, limit: event.target.value })} /></label><button type="submit" disabled={tmdbImportBusy}>{tmdbImportBusy ? t("loading") : t("tmdbDiscoveryImport")}</button></form>
+        {tmdbImportMessage && <p role={tmdbImportError ? "alert" : "status"}>{tmdbImportMessage}</p>}
+      </div>
+       {syncMessage && <p role={syncError ? "alert" : "status"}>{syncMessage}</p>}
+      {loading && <p className={styles.feedback}>{t("loading")}</p>}
+      {error && <div><p className={styles.error} role="alert">{t("adminLoadError")}</p><button type="button" onClick={retry}>{t("retry")}</button></div>}
+      {data && data.content.length === 0 && <p>{t("noAdminMovies")}</p>}
+      {data && <>
+        <ul className={styles.movieList} aria-label={t("adminMovieResults")}>{data.content.map(movie => <li className={styles.movieRow} key={movie.id}>
+          <div className={styles.movieMeta}>{movie.title} · {movie.releaseDate || "—"} · {movie.rating ?? "—"}{" "}
+            <button type="button" disabled={mutationBusy} onClick={() => editMovie(movie)}>{t("editMovie")}</button>{" "}
+            <button type="button" disabled={mutationBusy} onClick={() => void removeMovie(movie)}>{t("deleteMovie")}</button>
+            <div className={styles.syncControls}><label className={styles.inlineField}>{t("tmdbId")}<input className={styles.tmdbIdInput} inputMode="numeric" pattern="[0-9]*" aria-label={`${t("tmdbId")} ${movie.title}`} value={tmdbIds[movie.id] ?? ""} onChange={event => setTmdbIds(current => ({ ...current, [movie.id]: event.target.value }))} /></label><button type="button" disabled={syncingMovieId !== null} onClick={() => void syncMovie(movie)}>{syncingMovieId === movie.id ? t("loading") : t("syncTmdb")}</button></div>
+          </div>
+        </li>)}</ul>
+        <nav className={styles.pagination} aria-label={t("adminMoviesPagination")}>
+          <button type="button" disabled={loading || page === 0} onClick={() => setPage(value => Math.max(0, value - 1))}>{t("previous")}</button>
+          <span role="status">{t("page")} {data.totalPages === 0 ? 0 : page + 1} {t("of")} {data.totalPages} · {data.totalElements}</span>
+          <button type="button" disabled={loading || page + 1 >= data.totalPages} onClick={() => setPage(value => value + 1)}>{t("next")}</button>
+        </nav>
+      </>}
+    </section>
+  );
 }

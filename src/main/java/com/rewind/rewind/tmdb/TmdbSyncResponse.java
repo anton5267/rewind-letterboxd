@@ -7,6 +7,7 @@ public record TmdbSyncResponse(
         int genresUpdated,
         int actorsUpdated,
         int directorsUpdated,
+        int producersUpdated,
         int similarMoviesLinked,
         boolean trailerUpdated
 ) {}
