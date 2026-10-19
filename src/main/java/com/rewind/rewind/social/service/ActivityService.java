@@ -88,12 +88,13 @@ public class ActivityService {
         movies.findAllById(page.getContent().stream().map(activity -> activity.getMovieId()).filter(java.util.Objects::nonNull).toList())
                 .forEach(movie -> moviesById.put(movie.getId(), movie));
         Map<Long, com.rewind.rewind.list.entity.MovieList> listsById = new HashMap<>();
-        lists.findAllById(page.getContent().stream().map(activity -> activity.getListId()).filter(java.util.Objects::nonNull).toList())
-                .stream()
-                .filter(list -> Boolean.TRUE.equals(list.getIsPublic())
-                        && list.getUser() != null
-                        && Boolean.TRUE.equals(list.getUser().getIsActive()))
-                .forEach(list -> listsById.put(list.getId(), list));
+        List<Long> listIds = page.getContent().stream()
+                .map(UserActivity::getListId)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        if (!listIds.isEmpty()) {
+            lists.findVisibleByIdIn(listIds).forEach(list -> listsById.put(list.getId(), list));
+        }
         List<ActivityResponse> content = page.getContent().stream().map(activity -> {
             User actor = usersById.get(activity.getUserId());
             User related = usersById.get(activity.getRelatedUserId());

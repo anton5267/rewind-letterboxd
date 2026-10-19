@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,6 +21,8 @@ public interface MovieListRepository extends JpaRepository<MovieList, Long> {
     Page<MovieList> findPageByUserOrderByUpdatedAtDescIdDesc(User user, Pageable pageable);
 
     Page<MovieList> findPageByUserIdAndListTypeAndIsPublicTrueOrderByUpdatedAtDescIdDesc(Long userId, ListType listType, Pageable pageable);
+    @Query("select l from MovieList l join l.user u where l.id in :ids and l.isPublic = true and u.isActive = true")
+    List<MovieList> findVisibleByIdIn(@Param("ids") Collection<Long> ids);
     Optional<MovieList> findByIdAndUser(Long id, User user);
     Optional<MovieList> findByUserAndListType(User user, ListType listType);
 
