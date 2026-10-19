@@ -52,16 +52,20 @@ public class MovieSearchService {
     }
 
     private Sort toSort(String sort) {
-        if (sort == null) return Sort.by(Sort.Direction.DESC, "releaseDate");
+        if (sort == null) return withIdTieBreak(Sort.by(Sort.Direction.DESC, "releaseDate"));
 
         return switch (sort) {
-            case "newest" -> Sort.by(Sort.Direction.DESC, "releaseDate");
-            case "oldest" -> Sort.by(Sort.Direction.ASC, "releaseDate");
-            case "rating_desc" -> Sort.by(Sort.Direction.DESC, "rating");
-            case "rating_asc" -> Sort.by(Sort.Direction.ASC, "rating");
-            case "title_asc" -> Sort.by(Sort.Direction.ASC, "title");
-            default -> Sort.by(Sort.Direction.DESC, "releaseDate");
+            case "newest" -> withIdTieBreak(Sort.by(Sort.Direction.DESC, "releaseDate"));
+            case "oldest" -> withIdTieBreak(Sort.by(Sort.Direction.ASC, "releaseDate"));
+            case "rating_desc" -> withIdTieBreak(Sort.by(Sort.Direction.DESC, "rating"));
+            case "rating_asc" -> withIdTieBreak(Sort.by(Sort.Direction.ASC, "rating"));
+            case "title_asc" -> withIdTieBreak(Sort.by(Sort.Direction.ASC, "title"));
+            default -> withIdTieBreak(Sort.by(Sort.Direction.DESC, "releaseDate"));
         };
+    }
+
+    private Sort withIdTieBreak(Sort primary) {
+        return primary.and(Sort.by(Sort.Direction.DESC, "id"));
     }
 
     private int clamp(int v, int min, int max) {

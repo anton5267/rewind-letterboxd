@@ -59,7 +59,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
         where candidate.id <> :movieId and candidateGenre in (
             select sourceGenre from Movie source join source.genres sourceGenre where source.id = :movieId
         )
-        order by candidate.rating desc nulls last, candidate.releaseDate desc nulls last
+        order by candidate.rating desc nulls last, candidate.releaseDate desc nulls last, candidate.id desc
         """)
     Page<Movie> findGenreSimilar(@Param("movieId") Long movieId, Pageable pageable);
 

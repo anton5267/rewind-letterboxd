@@ -133,7 +133,8 @@ public class ProfileService {
                 .filter(list -> list.getListType() == ListType.CUSTOM && Boolean.TRUE.equals(list.getIsPublic()))
                 .map(list -> new PublicProfileResponse.PublicList(list.getId(), list.getName(), list.getDescription()))
                 .toList();
-        var reviewsPage = reviews.findAllByUserIdAndIsHidden(userId, false, PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "updatedAt")));
+        var reviewsPage = reviews.findAllByUserIdAndIsHidden(userId, false, PageRequest.of(0, 10,
+                Sort.by(Sort.Order.desc("updatedAt"), Sort.Order.desc("id"))));
         var publicReviews = reviewsPage.getContent().stream()
                 .map(review -> new PublicProfileResponse.PublicReview(review.getId(), review.getMovie().getId(),
                         review.getMovie().getTitle(), review.getContent(),
