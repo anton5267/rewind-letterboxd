@@ -22,7 +22,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
                      @Param("content") String content,
                      @Param("rating") Byte rating);
 
-    Page<Review> findAllByMovieId(Long movieId, Pageable pageable);
     @Override
     @EntityGraph(attributePaths = {"user", "movie"})
     Page<Review> findAll(Pageable pageable);

@@ -14,7 +14,6 @@ import java.util.List;
 public interface ReviewLikeRepository extends JpaRepository<ReviewLike, Long> {
     boolean existsByReviewIdAndUserId(Long reviewId, Long userId);
     long countByReviewIdAndUserId(Long reviewId, Long userId);
-    long countByReviewId(Long reviewId);
     long deleteByReviewIdAndUserId(Long reviewId, Long userId);
 
     @Query("select rl from ReviewLike rl where rl.user.id = :userId and rl.review.isHidden = false "

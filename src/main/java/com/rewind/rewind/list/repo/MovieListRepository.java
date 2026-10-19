@@ -61,9 +61,6 @@ public interface MovieListRepository extends JpaRepository<MovieList, Long> {
             nativeQuery = true)
     Page<MovieList> findPopularPublic(@Param("listType") String listType, Pageable pageable);
 
-    // ✅ публічні кастомні списки інших (якщо треба "не мої")
-    Page<MovieList> findAllByIsPublicTrueAndListTypeAndUserIdNot(ListType listType, Long userId, Pageable pageable);
-
     @Query(value = "select l from MovieList l join l.user u where l.isPublic = true and l.listType = :type and u.isActive = true and u.isHq = true order by l.updatedAt desc, l.id desc",
             countQuery = "select count(l) from MovieList l join l.user u where l.isPublic = true and l.listType = :type and u.isActive = true and u.isHq = true")
     Page<MovieList> findTeamPublic(@Param("type") ListType type, Pageable pageable);

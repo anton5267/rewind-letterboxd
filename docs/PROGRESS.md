@@ -1,5 +1,6 @@
 # Rewind — прогрес повного плану
 
+- [x] **19.10.2026, repository cleanup:** removed three unreferenced derived queries from list/review/review-like repositories; endpoint behavior and persisted schema are unchanged, and the local backend compile remains green.
 - [x] **19.10.2026, stable profile collection pagination:** private ratings and reviews now use `updatedAt DESC, id DESC` repository ordering for both summary and paged endpoints; API shape is unchanged and the local backend compile remains green.
 - [x] **19.10.2026, stable recent-review pagination:** public recent reviews now sort by `createdAt DESC, id DESC`, preventing equal-timestamp rows from moving between pages; API shape is unchanged and the local backend compile remains green.
 - [x] **19.10.2026, popular reviewer visibility race:** popular-reviewer hydration rechecks active users after the aggregate query and skips rows whose owner was deactivated between queries; public identity fields are not leaked and API shape is unchanged.
