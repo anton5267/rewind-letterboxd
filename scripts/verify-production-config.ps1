@@ -52,10 +52,15 @@ if ($configJson.services.db.ports -or $configJson.services.redis.ports -or $conf
     throw 'Production database, Redis, and API services must not publish host ports'
 }
 if (-not $configJson.services.api.read_only) { throw 'Production API must use read_only: true' }
+if (-not $configJson.services.web.read_only) { throw 'Production web must use read_only: true' }
+$webTmpfs = @($configJson.services.web.tmpfs)
+if (-not ($webTmpfs -contains '/var/cache/nginx') -or -not ($webTmpfs -contains '/var/run')) {
+    throw 'Production web must provide tmpfs mounts for nginx cache and runtime state'
+}
 if ([string]$configJson.services.api.environment.COOKIE_SECURE -ne 'true') { throw 'Production API must set COOKIE_SECURE=true' }
 $webPorts = @($configJson.services.web.ports)
 if ($webPorts.Count -ne 1 -or [string]$webPorts[0].host_ip -ne '127.0.0.1' -or [string]$webPorts[0].published -notmatch '^\d+$' -or [int]$webPorts[0].target -ne 80) {
     throw 'Production web must publish exactly one loopback host port for the HTTPS proxy'
 }
 
-Write-Output "Production config verified: HTTPS base URL, strong secrets, private DB/Redis/API, read-only API, loopback web port"
+Write-Output "Production config verified: HTTPS base URL, strong secrets, private DB/Redis/API, read-only API/web, loopback web port"

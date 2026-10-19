@@ -4,7 +4,7 @@
 
 ## Current release snapshot — authoritative
 
-Станом на **19.10.2026** для рішень про готовність використовуються цей блок, `PLAN.md`, верхній verified snapshot у `PROGRESS.md` та [`RELEASE_EVIDENCE.md`](RELEASE_EVIDENCE.md). Записи після historical log — це трасування роботи, а не список невиконаних поточних задач.
+Станом на **19.10.2026** для рішень про готовність використовуються цей блок, `PLAN.md`, верхній verified snapshot у `PROGRESS.md` та [`RELEASE_EVIDENCE.md`](RELEASE_EVIDENCE.md). Записи під заголовком historical log — це трасування роботи, а не список невиконаних поточних задач.
 
 - [x] Основні API-backed visual slices готові: Home, Search, Global Search, Lists, Public List, Profiles, Community, Journal, Review Details, Movie Details і mobile navigation; exact pixel parity не заявляється без Figma Editor/node export access.
 - [x] Responsive/accessibility baseline перевірено для 320/393/768/1440 px; loading/error/empty/retry, overflow, keyboard focus і bilingual UK/EN surfaces присутні в реалізованих маршрутах.
@@ -13,6 +13,7 @@
 - [~] Exact Figma parity: потрібен Editor або frame-level export доступ.
 - [~] Production release: потрібні реальні TMDB/SMTP secrets, VPS, domain, HTTPS, monitoring і backup/restore drill на target infrastructure.
 - [ ] Editorial content gate: потрібні реальні UK/EN articles, covers, audio URLs і published dates.
+- [x] Production container hardening: API і nginx web мають read-only rootfs; nginx cache/runtime state винесені в tmpfs, а production validator перевіряє цю форму. Compose shape green з example env; secure env залишається зовнішнім blocker.
 
 ## Historical implementation log
 

@@ -51,7 +51,7 @@ docker compose --env-file .env.production -f compose.production.yaml ps
 docker compose --env-file .env.production -f compose.production.yaml logs --tail=100 api web
 ```
 
-The API and database are internal Compose services. Check API readiness from the container network and check the public web URL after the HTTPS proxy is active. Flyway applies pending migrations during API startup; never edit an already-applied migration.
+The API, database and Redis services are internal Compose services. Both API and web containers use read-only root filesystems; nginx receives only `/var/cache/nginx` and `/var/run` as writable tmpfs mounts. Check API readiness from the container network and check the public web URL after the HTTPS proxy is active. Flyway applies pending migrations during API startup; never edit an already-applied migration.
 
 ## 3. HTTPS reverse proxy
 

@@ -76,6 +76,10 @@ services:
     build:
       context: ./letterboxd/letterboxd-login-figma-final2
     restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
     depends_on:
       - api
     ports:
