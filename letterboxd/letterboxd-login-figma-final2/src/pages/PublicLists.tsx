@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import api from "../api/axios";
 import { getPublicListFeed, type PublicList } from "../api/lists.api";
+import { getPopularTags, type PopularTag } from "../api/tags.api";
 import ListPosterStack from "../components/ListPosterStack";
 import { formatMovieCount, useLocale } from "../i18n";
 import { toTagSlug } from "../utils/tagSlug";
 import styles from "./PublicLists.module.css";
 
-interface Tag { id: number; name: string; slug: string }
 type Feed = "recent" | "popular" | "recently-liked" | "team";
 
 export default function PublicLists() {
@@ -20,7 +19,7 @@ export default function PublicLists() {
   const feed: Feed = feedParam === "popular" || feedParam === "recently-liked" || feedParam === "team" ? feedParam : "recent";
   const isCompactFeed = feed === "popular" || feed === "recently-liked";
   const [lists, setLists] = useState<PublicList[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
+  const [tags, setTags] = useState<PopularTag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -60,7 +59,7 @@ export default function PublicLists() {
     setTagsLoading(true);
     setTagsError(false);
     setTags([]);
-    api.get<Tag[]>("/tags/popular", { params: { size: 30 } })
+    getPopularTags()
       .then(({ data }) => { if (current) setTags(data); })
       .catch(() => { if (current) setTagsError(true); })
       .finally(() => { if (current) setTagsLoading(false); });
