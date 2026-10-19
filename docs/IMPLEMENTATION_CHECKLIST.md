@@ -14,6 +14,7 @@
 - [~] Production release: потрібні реальні TMDB/SMTP secrets, VPS, domain, HTTPS, monitoring і backup/restore drill на target infrastructure.
 - [ ] Editorial content gate: потрібні реальні UK/EN articles, covers, audio URLs і published dates.
 - [x] Production container hardening: API і nginx web мають read-only rootfs; nginx cache/runtime state винесені в tmpfs, а production validator перевіряє цю форму. Compose shape green з example env; secure env залишається зовнішнім blocker.
+- [x] Locale-stable social normalization: social platform casing uses `Locale.ROOT`, so supported platform matching is independent of the JVM default locale; backend compile green, API unchanged, local follow-up не пушився.
 
 ## Historical implementation log
 

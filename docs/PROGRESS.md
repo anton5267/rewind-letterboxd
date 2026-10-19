@@ -1,5 +1,6 @@
 # Rewind — прогрес повного плану
 
+- [x] **19.10.2026, locale-stable social normalization:** `ProfileService` now normalizes social platforms with `Locale.ROOT` instead of JVM-default casing; backend compile green and API contract unchanged. This local follow-up remains unpushed.
 - [x] **19.10.2026, production web filesystem hardening:** production nginx service now uses a read-only root filesystem with `/var/cache/nginx` and `/var/run` tmpfs mounts; `verify-production-config.ps1` enforces both. Compose production config resolves with `.env.production.example` shape; real secure env remains external. This local follow-up remains unpushed.
 - [x] **19.10.2026, external URL guard build evidence:** після `safeHttpUrl` frontend TypeScript і Vite production build завершилися green; latest Vite output — **184 modules**, entry **310.05 kB**. Повний E2E не запускався для цього hardening pass; local follow-up remains unpushed.
 - [x] **19.10.2026, defensive external URL guard:** shared `safeHttpUrl` now filters legacy trailer, podcast audio and public social-link values to `http/https` before rendering; invalid legacy links fall back to the localized empty state. API contract unchanged; TypeScript green. This local follow-up remains unpushed.

@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -162,7 +163,7 @@ public class ProfileService {
     public List<SocialLinkResponse> updateMySocialLinks(String email, List<SocialLinkRequest> requests) {
         if (requests == null || requests.size() > 8) throw new IllegalArgumentException("Too many social links");
         var user = users.findByEmail(email).orElseThrow();
-        Set<String> platforms = requests.stream().map(request -> request.platform().trim().toLowerCase()).collect(Collectors.toSet());
+        Set<String> platforms = requests.stream().map(request -> request.platform().trim().toLowerCase(Locale.ROOT)).collect(Collectors.toSet());
         if (platforms.size() != requests.size()) throw new IllegalArgumentException("Duplicate social platform");
         if (!SUPPORTED_SOCIAL_PLATFORMS.containsAll(platforms)) throw new IllegalArgumentException("Unsupported social platform");
         socialLinks.deleteAllByUserId(user.getId());
@@ -170,7 +171,7 @@ public class ProfileService {
         for (SocialLinkRequest request : requests) {
             UserSocialLink link = new UserSocialLink();
             link.setUser(user);
-            link.setPlatform(request.platform().trim().toLowerCase());
+            link.setPlatform(request.platform().trim().toLowerCase(Locale.ROOT));
             link.setUrl(request.url().trim());
             socialLinks.save(link);
         }
