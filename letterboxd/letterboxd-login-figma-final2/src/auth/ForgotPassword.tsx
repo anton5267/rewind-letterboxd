@@ -21,7 +21,7 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      await forgotPassword(email);
+      await forgotPassword(email.trim());
       setMessage(t("resetSent"));
     } catch {
       setError(t("resetInvalid"));
@@ -59,6 +59,7 @@ export default function ForgotPassword() {
             aria-label={t("email")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            maxLength={150}
             required
           />
 

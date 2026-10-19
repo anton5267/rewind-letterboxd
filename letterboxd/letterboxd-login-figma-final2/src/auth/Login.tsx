@@ -20,7 +20,7 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email.trim(), password);
       navigate(path("/films"));
     } catch {
       setError(t("loginError"));
@@ -42,6 +42,7 @@ export default function Login() {
             className={styles.input}
             value={email}
             onChange={(event) => setEmail(event.target.value)}
+            maxLength={150}
             required
           />
           <input
@@ -51,6 +52,7 @@ export default function Login() {
             className={styles.input}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
+            maxLength={100}
             required
           />
           <div className={styles.row}>

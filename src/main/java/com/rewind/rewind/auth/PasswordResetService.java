@@ -53,7 +53,8 @@ public class PasswordResetService {
 
     @Transactional
     public void request(String email) {
-        users.findByEmail(email).filter(user -> Boolean.TRUE.equals(user.getIsActive())).ifPresent(user -> {
+        String normalizedEmail = email == null ? "" : email.trim();
+        users.findByEmail(normalizedEmail).filter(user -> Boolean.TRUE.equals(user.getIsActive())).ifPresent(user -> {
             byte[] bytes = new byte[32];
             random.nextBytes(bytes);
             String raw = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);

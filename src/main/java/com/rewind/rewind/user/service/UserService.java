@@ -28,20 +28,26 @@ public class UserService {
 
     @Transactional
     public UserResponse register(UserRegisterRequest request) {
-        if (users.existsByUsername(request.getUsername())) {
+        String username = request.getUsername() == null ? "" : request.getUsername().trim();
+        String email = request.getEmail() == null ? "" : request.getEmail().trim();
+        if (username.isBlank() || email.isBlank()) {
+            throw new IllegalArgumentException("Username and email are required");
+        }
+
+        if (users.existsByUsername(username)) {
             throw new IllegalArgumentException("Username already taken");
         }
-        if (users.existsByEmail(request.getEmail())) {
+        if (users.existsByEmail(email)) {
             throw new IllegalArgumentException("Email already in use");
         }
 
         User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
+        user.setUsername(username);
+        user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(UserRole.USER);
         user.setIsActive(true);
-        user.setDisplayName(request.getUsername());
+        user.setDisplayName(username);
 
 
         User saved = users.save(user);
@@ -58,7 +64,8 @@ public class UserService {
     }
 
     public UserLoginResponse login(UserLoginRequest request) {
-        var user = users.findByEmail(request.getEmail())
+        String email = request.getEmail() == null ? "" : request.getEmail().trim();
+        var user = users.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
 
         boolean passwordMatches = passwordEncoder.matches(
@@ -79,7 +86,7 @@ public class UserService {
     }
     public Long requireUserId() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String email = String.valueOf(principal);
+        String email = String.valueOf(principal).trim();
 
         return users.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"))

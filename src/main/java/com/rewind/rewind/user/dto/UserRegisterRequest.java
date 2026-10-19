@@ -21,11 +21,15 @@ public class UserRegisterRequest {
 
     public String getUsername() { return username; }
 
-    public void setUsername(String username) { this.username = username; }
+    public void setUsername(String username) {
+        this.username = username == null ? null : username.trim();
+    }
 
     public String getEmail() { return email; }
 
-    public void setEmail(String email) { this.email = email; }
+    public void setEmail(String email) {
+        this.email = email == null ? null : email.trim();
+    }
 
     public String getPassword() { return password; }
 

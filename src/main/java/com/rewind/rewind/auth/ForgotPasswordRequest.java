@@ -2,5 +2,10 @@ package com.rewind.rewind.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
-public record ForgotPasswordRequest(@NotBlank @Email String email) {}
+public record ForgotPasswordRequest(@NotBlank @Email @Size(max = 150) String email) {
+    public ForgotPasswordRequest {
+        email = email == null ? null : email.trim();
+    }
+}

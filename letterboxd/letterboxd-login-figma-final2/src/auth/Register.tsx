@@ -22,7 +22,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await register(email, password, nickname);
+      await register(email.trim(), password, nickname.trim());
       setSuccess(true);
     } catch {
       setError(t("registrationError"));
@@ -63,6 +63,8 @@ export default function Register() {
             aria-label={t("username")}
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
+            minLength={3}
+            maxLength={50}
             required
           />
 
@@ -73,6 +75,7 @@ export default function Register() {
             aria-label={t("email")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            maxLength={150}
             required
           />
 
@@ -83,6 +86,8 @@ export default function Register() {
             aria-label={t("password")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            minLength={6}
+            maxLength={100}
             required
           />
 
