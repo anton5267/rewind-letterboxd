@@ -18,7 +18,7 @@
 
 - [x] **19.10.2026, external URL guard build evidence:** після shared URL guard `npx tsc --noEmit` і Vite build green; latest build — **184 modules**, entry **310.05 kB**. Full E2E не запускався для цього hardening pass; local follow-up не пушився.
 - [x] **19.10.2026, defensive external URL guard:** trailer/audio/social-link values are rendered only when they are valid HTTP(S) URLs; invalid legacy values use existing localized fallback/empty states. API unchanged, TypeScript green; local follow-up не пушився.
-- [x] **19.10.2026, admin trailer URL validation:** movie create/update requests reject non-HTTP(S) trailer URLs before persistence; poster/backdrop behavior is unchanged. Backend compile green; local follow-up не пушився.
+- [x] **19.10.2026, admin external media URL validation:** movie create/update requests reject non-HTTP(S) trailer URLs and journal article audio URLs before persistence; poster/backdrop behavior is unchanged. Backend compile green; local follow-up не пушився.
 - [x] **19.10.2026, production SMTP guard:** production validator вимагає SMTP credentials при `MAIL_SMTP_AUTH=true`, example і runbook узгоджені; реальні secrets не додавалися. PowerShell parse і `git diff --check` green; local follow-up не пушився.
 - [x] **19.10.2026, localized Journal archive labels:** archive month navigation використовує locale-aware month/year labels для UK/EN замість raw `YYYY-MM`; invalid values мають safe fallback. API не змінювався, TypeScript green; local follow-up не пушився.
 - [x] **19.10.2026, explicit GitHub snapshot:** verified state один раз запушено в `origin/master` (`75f9d26`, `Complete Figma-driven UI and reliability pass`); наступні push потребують окремої команди.
