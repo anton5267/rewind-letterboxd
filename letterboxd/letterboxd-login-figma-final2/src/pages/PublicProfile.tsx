@@ -1,8 +1,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { Link, useParams } from "react-router-dom";
-import api from "../api/axios";
+import { getPublicProfile, getPublicProfileCollection, getPublicProfileLikedReviews, getPublicProfileLists, type PublicCollection, type PublicProfileListPage, type PublicProfileResponse, type PublicProfileReviewPage } from "../api/profile.api";
 import type { MoviePage } from "../api/search.api";
-import type { MoviePreview } from "../api/lists.api";
 import { blockUser, follow, getBlockStatus, getFollowers, getFollowing, getFollowStatus, getUserActivity, type ActivityPage, type BlockStatus, type FollowStatus, type NetworkPage, unblockUser, unfollow } from "../api/social.api";
 import ResilientImage from "../components/ResilientImage";
 import { useAuth } from "../context/AuthContext";
@@ -11,28 +10,6 @@ import ListPosterStack from "../components/ListPosterStack";
 import { toTagSlug } from "../utils/tagSlug";
 import { safeHttpUrl } from "../utils/externalUrl";
 import styles from "./PublicProfile.module.css";
-
-interface Profile {
-  id: number;
-  username: string;
-  displayName: string;
-  avatarUrl: string | null;
-  hq: boolean;
-  stats: { ratings: number; reviews: number; watched: number; watchlist: number; favorites: number };
-  ratingDistribution: { rating: number; count: number }[];
-  socialLinks: { platform: string; url: string }[];
-  lists: { id: number; name: string; description: string | null }[];
-  recentReviews: { id: number; movieId: number; movieTitle: string; content: string; rating: number | null }[];
-}
-
-interface PublicListPage {
-  content: { id: number; name: string; description: string | null; ownerId: number; ownerUsername: string; tags: string[]; itemCount?: number | null; previewMovies: MoviePreview[] }[];
-  number: number;
-  totalPages: number;
-  totalElements: number;
-}
-
-type PublicCollection = "watched" | "watchlist" | "favorites";
 
 function Pagination({ page, totalPages, label, onPageChange }: { page: number; totalPages: number; label: string; onPageChange: (page: number) => void }) {
   const { t } = useLocale();
@@ -48,7 +25,7 @@ export default function PublicProfile() {
   const { id } = useParams();
   const { path, t, lang } = useLocale();
   const { isAuth, user } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<PublicProfileResponse | null>(null);
   const [error, setError] = useState(false);
   const [profileAttempt, setProfileAttempt] = useState(0);
   const [collectionKind, setCollectionKind] = useState<PublicCollection>("watched");
@@ -78,12 +55,12 @@ export default function PublicProfile() {
   const [activityLoading, setActivityLoading] = useState(false);
   const [activityError, setActivityError] = useState(false);
   const [activityAttempt, setActivityAttempt] = useState(0);
-  const [publicLists, setPublicLists] = useState<PublicListPage | null>(null);
+  const [publicLists, setPublicLists] = useState<PublicProfileListPage | null>(null);
   const [publicListsLoading, setPublicListsLoading] = useState(false);
   const [publicListsError, setPublicListsError] = useState(false);
   const [publicListsPage, setPublicListsPage] = useState(0);
   const [publicListsAttempt, setPublicListsAttempt] = useState(0);
-  const [likedReviews, setLikedReviews] = useState<{ content: Profile["recentReviews"]; totalPages: number } | null>(null);
+  const [likedReviews, setLikedReviews] = useState<PublicProfileReviewPage | null>(null);
   const [likedReviewsPage, setLikedReviewsPage] = useState(0);
   const [likedReviewsLoading, setLikedReviewsLoading] = useState(false);
   const [likedReviewsError, setLikedReviewsError] = useState(false);
@@ -93,7 +70,11 @@ export default function PublicProfile() {
     let current = true;
     setProfile(null);
     setError(false);
-    api.get<Profile>(`/users/${id}/profile`)
+    if (!id) {
+      setError(true);
+      return;
+    }
+    getPublicProfile(id)
       .then(({ data }) => { if (current) setProfile(data); })
       .catch(() => { if (current) setError(true); });
     return () => { current = false; };
@@ -117,7 +98,7 @@ export default function PublicProfile() {
     setCollectionLoading(true);
     setCollection(null);
     setCollectionError(false);
-    api.get<MoviePage>(`/users/${id}/collections/${collectionKind}`, { params: { page: collectionPage, size: 12 } })
+    getPublicProfileCollection(id, collectionKind, collectionPage)
       .then(({ data }) => { if (current) setCollection(data); })
       .catch(() => { if (current) setCollectionError(true); })
       .finally(() => { if (current) setCollectionLoading(false); });
@@ -156,7 +137,7 @@ export default function PublicProfile() {
     setPublicListsLoading(true);
     setPublicLists(null);
     setPublicListsError(false);
-    api.get<PublicListPage>(`/users/${id}/lists`, { params: { page: publicListsPage, size: 12 } })
+    getPublicProfileLists(id, publicListsPage)
       .then(({ data }) => { if (current) setPublicLists(data); })
       .catch(() => { if (current) setPublicListsError(true); })
       .finally(() => { if (current) setPublicListsLoading(false); });
@@ -169,7 +150,7 @@ export default function PublicProfile() {
     setLikedReviewsLoading(true);
     setLikedReviews(null);
     setLikedReviewsError(false);
-    api.get<{ content: Profile["recentReviews"]; totalPages: number }>(`/users/${id}/liked-reviews`, { params: { page: likedReviewsPage, size: 10 } })
+    getPublicProfileLikedReviews(id, likedReviewsPage)
       .then(({ data }) => { if (current) setLikedReviews(data); })
       .catch(() => { if (current) setLikedReviewsError(true); })
       .finally(() => { if (current) setLikedReviewsLoading(false); });

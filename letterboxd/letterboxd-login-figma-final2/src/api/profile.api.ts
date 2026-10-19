@@ -1,4 +1,5 @@
 import api from "./axios";
+import type { MoviePreview } from "./lists.api";
 import type { MoviePage } from "./search.api";
 
 export const getProfile = () => api.get("/profile/me");
@@ -49,3 +50,53 @@ export const getProfileRatings = (page: number) =>
 
 export const getProfileReviews = (page: number) =>
   api.get<ProfilePage<ProfileReview>>("/profile/me/reviews", { params: { page, size: 12 } });
+
+export type PublicCollection = "watched" | "watchlist" | "favorites";
+
+export interface PublicProfileReview {
+  id: number;
+  movieId: number;
+  movieTitle: string;
+  content: string;
+  rating: number | null;
+  updatedAt?: string;
+}
+
+export interface PublicProfileResponse {
+  id: number;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  hq: boolean;
+  stats: { ratings: number; reviews: number; watched: number; watchlist: number; favorites: number };
+  ratingDistribution: { rating: number; count: number }[];
+  socialLinks: SocialLink[];
+  lists: { id: number; name: string; description: string | null }[];
+  recentReviews: PublicProfileReview[];
+}
+
+export interface PublicProfileList {
+  id: number;
+  name: string;
+  description: string | null;
+  ownerId: number;
+  ownerUsername: string;
+  tags: string[];
+  itemCount?: number | null;
+  previewMovies: MoviePreview[];
+}
+
+export type PublicProfileListPage = ProfilePage<PublicProfileList>;
+export type PublicProfileReviewPage = ProfilePage<PublicProfileReview>;
+
+export const getPublicProfile = (userId: string | number) =>
+  api.get<PublicProfileResponse>(`/users/${userId}/profile`);
+
+export const getPublicProfileCollection = (userId: string | number, collection: PublicCollection, page: number) =>
+  api.get<MoviePage>(`/users/${userId}/collections/${collection}`, { params: { page, size: 12 } });
+
+export const getPublicProfileLists = (userId: string | number, page: number) =>
+  api.get<PublicProfileListPage>(`/users/${userId}/lists`, { params: { page, size: 12 } });
+
+export const getPublicProfileLikedReviews = (userId: string | number, page: number) =>
+  api.get<PublicProfileReviewPage>(`/users/${userId}/liked-reviews`, { params: { page, size: 10 } });
