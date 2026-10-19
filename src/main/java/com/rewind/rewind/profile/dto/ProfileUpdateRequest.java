@@ -1,5 +1,6 @@
 package com.rewind.rewind.profile.dto;
 
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class ProfileUpdateRequest {
@@ -8,6 +9,7 @@ public class ProfileUpdateRequest {
     private String displayName;
 
     @Size(max = 255)
+    @Pattern(regexp = "^$|https?://\\S+$", message = "Avatar URL must use http or https")
     private String avatarUrl;
 
     public String getDisplayName() { return displayName; }

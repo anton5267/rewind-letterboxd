@@ -1,5 +1,6 @@
 package com.rewind.rewind.admin.dto;
 
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class AdminUpdateUserRequest {
@@ -10,6 +11,8 @@ public class AdminUpdateUserRequest {
     @Size(max = 60)
     private String displayName;   // optional
 
+    @Size(max = 255)
+    @Pattern(regexp = "^$|https?://\\S+$", message = "Avatar URL must use http or https")
     private String avatarUrl;     // optional
 
     // "USER" або "ADMIN" (як у твоєму enum UserRole)

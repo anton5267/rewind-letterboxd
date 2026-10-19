@@ -6,5 +6,5 @@ import jakarta.validation.constraints.Size;
 
 public record SocialLinkRequest(
         @NotBlank @Size(max = 30) String platform,
-        @NotBlank @Size(max = 255) @Pattern(regexp = "https?://.+", message = "URL must use http or https") String url
+        @NotBlank @Size(max = 255) @Pattern(regexp = "https?://\\S+", message = "URL must use http or https") String url
 ) {}

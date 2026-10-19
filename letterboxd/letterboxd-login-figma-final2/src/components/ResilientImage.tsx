@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { ImgHTMLAttributes, ReactNode } from "react";
+import { safeHttpUrl } from "../utils/externalUrl";
 
 interface Props extends Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> {
   src?: string | null;
@@ -13,15 +14,16 @@ interface Props extends Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> {
  */
 export default function ResilientImage({ src, fallback, onError, ...props }: Props) {
   const [failedSource, setFailedSource] = useState<string | null>(null);
+  const safeSource = safeHttpUrl(src);
 
-  if (!src || failedSource === src) return <>{fallback}</>;
+  if (!safeSource || failedSource === safeSource) return <>{fallback}</>;
 
   return (
     <img
       {...props}
-      src={src}
+      src={safeSource}
       onError={event => {
-        setFailedSource(src);
+        setFailedSource(safeSource);
         onError?.(event);
       }}
     />
