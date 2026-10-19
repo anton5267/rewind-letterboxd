@@ -1,14 +1,10 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import api from "../api/axios";
 import ResilientImage from "../components/ResilientImage";
-import { getPopularReviewers, type PopularReviewer } from "../api/social.api";
+import { getDirectoryUsers, getHqUsers, getPopularReviewers, type CommunityUser, type CommunityUserPage, type PopularReviewer } from "../api/social.api";
 import { useLocale } from "../i18n";
 import styles from "./Community.module.css";
 
-interface Page<T> { content: T[]; totalPages: number }
-interface HqUser { id: number; username: string; displayName: string | null; avatarUrl: string | null }
-type CommunityUser = Pick<HqUser, "id" | "username" | "displayName" | "avatarUrl">;
 type CommunitySection = "reviewers" | "hq" | "directory";
 type CommunitySectionErrors = Partial<Record<CommunitySection, true>>;
 
@@ -38,8 +34,8 @@ function UserRow({ user, href, meta }: { user: CommunityUser; href: string; meta
 export default function Community() {
   const { path, t, lang } = useLocale();
   const [reviewers, setReviewers] = useState<PopularReviewer[]>([]);
-  const [hqUsers, setHqUsers] = useState<Page<HqUser> | null>(null);
-  const [directory, setDirectory] = useState<Page<HqUser> | null>(null);
+  const [hqUsers, setHqUsers] = useState<CommunityUserPage | null>(null);
+  const [directory, setDirectory] = useState<CommunityUserPage | null>(null);
   const [directoryPage, setDirectoryPage] = useState(0);
   const [directoryQuery, setDirectoryQuery] = useState("");
   const [directorySearch, setDirectorySearch] = useState("");
@@ -64,7 +60,7 @@ export default function Community() {
     setSectionLoading(value => ({ ...value, hq: true }));
     setSectionErrors(value => { const next = { ...value }; delete next.hq; return next; });
     setHqUsers(null);
-    api.get<Page<HqUser>>("/users/hq", { params: { page: 0, size: 12 } })
+    getHqUsers()
       .then(({ data }) => { if (current) setHqUsers(data); })
       .catch(() => { if (current) setSectionErrors(value => ({ ...value, hq: true })); })
       .finally(() => { if (current) setSectionLoading(value => ({ ...value, hq: false })); });
@@ -76,7 +72,7 @@ export default function Community() {
     setSectionLoading(value => ({ ...value, directory: true }));
     setSectionErrors(value => { const next = { ...value }; delete next.directory; return next; });
     setDirectory(null);
-    api.get<Page<HqUser>>("/users/directory", { params: { q: directorySearch || undefined, page: directoryPage, size: 12 } })
+    getDirectoryUsers(directorySearch, directoryPage)
       .then(({ data }) => { if (current) setDirectory(data); })
       .catch(() => { if (current) setSectionErrors(value => ({ ...value, directory: true })); })
       .finally(() => { if (current) setSectionLoading(value => ({ ...value, directory: false })); });

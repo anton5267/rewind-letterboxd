@@ -16,6 +16,26 @@ export interface MovieReviewPage {
   totalElements: number;
 }
 
+export interface RecentReview {
+  id: number;
+  movieId: number;
+  movieTitle: string;
+  userId: number;
+  username: string;
+  content: string;
+  rating: number | null;
+  createdAt: string;
+  moviePhotoUrl: string | null;
+  userAvatarUrl: string | null;
+}
+
+export interface ReviewFeedPage {
+  content: RecentReview[];
+  number: number;
+  totalPages: number;
+  totalElements: number;
+}
+
 export interface ReviewDetails {
   id: number;
   content: string;
@@ -37,6 +57,7 @@ export interface ReviewDetails {
 }
 
 export const getReviewDetails = (id: number) => api.get<ReviewDetails>(`/reviews/${id}`);
+export const getPopularReviews = (size = 4) => api.get<ReviewFeedPage>("/reviews/popular", { params: { size } });
 export const getReviewLikeStatus = (id: number) => api.get<{ liked: boolean; likes: number }>(`/reviews/${id}/like-status`);
 export const getReviewLikes = (id: number) => api.get<number>(`/reviews/${id}/likes`);
 export const likeReview = (id: number) => api.post<void>(`/reviews/${id}/likes`);

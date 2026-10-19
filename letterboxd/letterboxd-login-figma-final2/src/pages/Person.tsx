@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import api from "../api/axios";
+import { getPersonFilmography, type PersonFilmography, type PersonType } from "../api/people.api";
 import ResilientImage from "../components/ResilientImage";
+import { getGenres, type Genre } from "../api/search.api";
 import { editorialText, localizeGenreName, useLocale } from "../i18n";
 import styles from "./Person.module.css";
 
-interface Person { name: string; photoUrl: string | null; type: string; films: { id: number; title: string; releaseDate: string | null; rating: number | null; photoUrl: string | null; characterName: string | null }[] }
-interface Genre { id: number; name: string }
 export default function Person() {
   const { type, id } = useParams();
   const { path, t, lang } = useLocale();
-  const [person, setPerson] = useState<Person | null>(null);
+  const [person, setPerson] = useState<PersonFilmography | null>(null);
   const [sort, setSort] = useState("newest");
   const [genreId, setGenreId] = useState("");
   const [genres, setGenres] = useState<Genre[]>([]);
@@ -24,7 +23,7 @@ export default function Person() {
     let current = true;
     setGenresLoading(true);
     setGenreError(false);
-    api.get<Genre[]>("/genres")
+    getGenres()
       .then(({ data }) => { if (current) setGenres(data); })
       .catch(() => { if (current) { setGenres([]); setGenreError(true); } })
       .finally(() => { if (current) setGenresLoading(false); });
@@ -34,7 +33,12 @@ export default function Person() {
     let current = true;
     setLoading(true);
     setError(false);
-    api.get<Person>(`/${type}s/${id}`, { params: { sort, genreId: genreId || undefined } })
+    if (!type || !id || !["actor", "director", "producer"].includes(type)) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
+    getPersonFilmography(type as PersonType, id, sort, genreId)
       .then(({ data }) => { if (current) setPerson(data); })
       .catch(() => { if (current) setError(true); })
       .finally(() => { if (current) setLoading(false); });

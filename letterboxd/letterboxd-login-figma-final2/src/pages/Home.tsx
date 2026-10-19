@@ -1,37 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import api from "../api/axios";
 import ResilientImage from "../components/ResilientImage";
+import { getPublicListFeed, type PublicList } from "../api/lists.api";
+import { getPopularReviews, type RecentReview } from "../api/reviews.api";
 import { searchMovies, type MovieCard } from "../api/search.api";
-import { getPopularReviewers, type PopularReviewer } from "../api/social.api";
+import { getPopularReviewers, getRecentWatched, type PopularReviewer, type RecentWatchedActivity } from "../api/social.api";
+import { getPopularTags, type PopularTag } from "../api/tags.api";
 import { getJournal, type JournalArticle } from "../api/journal.api";
 import { editorialText, localizeJournalCategory, useLocale } from "../i18n";
 import styles from "./Home.module.css";
 
-interface Review {
-  id: number;
-  movieId: number;
-  movieTitle: string;
-  userId: number;
-  username: string;
-  content: string;
-  rating: number | null;
-  createdAt: string;
-  moviePhotoUrl: string | null;
-  userAvatarUrl: string | null;
-}
-
-interface PublicList {
-  id: number;
-  name: string;
-  description: string | null;
-  ownerUsername: string;
-  ownerId: number;
-}
-
-interface Page<T> { content: T[] }
-interface Tag { id: number; name: string; slug: string }
-interface RecentWatched { id: number; createdAt: string; actor: { id: number; username: string; displayName: string | null } | null; movie: { id: number; title: string } | null }
 type HomeSection = "popular" | "newest" | "reviews" | "lists" | "reviewers" | "tags" | "recentWatched" | "journal";
 type HomeSectionErrors = Partial<Record<HomeSection, true>>;
 const HOME_SECTION_LOADING: Record<HomeSection, boolean> = {
@@ -66,11 +44,11 @@ export default function Home() {
   const { path, t, lang } = useLocale();
   const [popular, setPopular] = useState<MovieCard[]>([]);
   const [newest, setNewest] = useState<MovieCard[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviews, setReviews] = useState<RecentReview[]>([]);
   const [lists, setLists] = useState<PublicList[]>([]);
   const [reviewers, setReviewers] = useState<PopularReviewer[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [recentWatched, setRecentWatched] = useState<RecentWatched[]>([]);
+  const [tags, setTags] = useState<PopularTag[]>([]);
+  const [recentWatched, setRecentWatched] = useState<RecentWatchedActivity[]>([]);
   const [journal, setJournal] = useState<JournalArticle[]>([]);
   const [sectionLoading, setSectionLoading] = useState<Record<HomeSection, boolean>>(HOME_SECTION_LOADING);
   const [sectionErrors, setSectionErrors] = useState<HomeSectionErrors>({});
@@ -97,11 +75,11 @@ export default function Home() {
 
     runSection("popular", searchMovies({ sort: "rating_desc", page: 0, size: 6 }), data => setPopular(data.content));
     runSection("newest", searchMovies({ sort: "newest", page: 0, size: 6 }), data => setNewest(data.content));
-    runSection("reviews", api.get<Page<Review>>("/reviews/popular", { params: { size: 4 } }), data => setReviews(data.content));
-    runSection("lists", api.get<Page<PublicList>>("/lists/public/popular", { params: { size: 4 } }), data => setLists(data.content));
+    runSection("reviews", getPopularReviews(), data => setReviews(data.content));
+    runSection("lists", getPublicListFeed("popular", 0, undefined, 4), data => setLists(data.content));
     runSection("reviewers", getPopularReviewers(), data => setReviewers(data));
-    runSection("tags", api.get<Tag[]>("/tags/popular", { params: { size: 12 } }), data => setTags(data));
-    runSection("recentWatched", api.get<Page<RecentWatched>>("/activity/recent-watched", { params: { size: 6 } }), data => setRecentWatched(data.content));
+    runSection("tags", getPopularTags(12), data => setTags(data));
+    runSection("recentWatched", getRecentWatched(), data => setRecentWatched(data.content));
     runSection("journal", getJournal(lang), data => setJournal(data.content.slice(0, 3)));
     return () => { current = false; };
   }, [lang, retry]);
