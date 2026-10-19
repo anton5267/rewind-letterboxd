@@ -35,7 +35,7 @@ public class MessageService {
         User current = users.findByEmail(email).orElseThrow();
         User target = users.findById(targetUserId)
                 .filter(user -> Boolean.TRUE.equals(user.getIsActive()))
-                .orElseThrow();
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         if (current.getId().equals(target.getId())) throw new IllegalArgumentException("You cannot message yourself");
         blocks.requireInteractionAllowed(current.getId(), target.getId());
         Long one = Math.min(current.getId(), target.getId());
@@ -96,8 +96,11 @@ public class MessageService {
     }
 
     private Conversation requireMember(Long conversationId, Long userId) {
-        Conversation conversation = conversations.findById(conversationId).orElseThrow();
-        if (!userId.equals(conversation.getUserOneId()) && !userId.equals(conversation.getUserTwoId())) throw new IllegalArgumentException("Conversation not found");
+        Conversation conversation = conversations.findById(conversationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation not found"));
+        if (!userId.equals(conversation.getUserOneId()) && !userId.equals(conversation.getUserTwoId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Conversation not found");
+        }
         return conversation;
     }
 
