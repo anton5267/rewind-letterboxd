@@ -1,27 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import api from "../api/axios";
+import { clearMovieFlag, getMovieDetails, setMovieFlag, type MovieDetails as MovieDetailsResponse } from "../api/movies.api";
 import ResilientImage from "../components/ResilientImage";
 import { addMovieToList, getUserLists } from "../api/lists.api";
+import { deleteRating as deleteMovieRating, getUserRating, setRating as setMovieRating } from "../api/ratings.api";
+import { createMovieReview, deleteReview as deleteReviewRequest, getMovieReviews, getMyMovieReview, getReviewLikeStatus, getReviewLikes, likeReview, unlikeReview, updateReview, type MovieReview } from "../api/reviews.api";
 import { useAuth } from "../context/AuthContext";
 import { localizeGenreName, useLocale } from "../i18n";
 import { safeHttpUrl } from "../utils/externalUrl";
 import Comments from "./Comments";
 import styles from "./MovieDetails.module.css";
 
-interface Movie {
-  id: number; title: string; shortPlot: string | null; photoUrl: string | null; backdropUrl: string | null;
-  releaseDate: string | null; durationMinutes: number | null; rating: number | null;
-  trailerUrl: string | null; genres: { id: number; name: string }[];
-  actors: { id: number; name: string; characterName: string | null }[];
-  directors: { id: number; name: string }[];
-  producers: { id: number; name: string }[];
-  externalRatings: { source: string; rating: number }[];
-  similarMovies: { id: number; title: string; photoUrl: string | null; releaseDate: string | null; rating: number | null }[];
-  myFlags: { watched: boolean; watchlist: boolean; favorites: boolean } | null;
-}
-interface Review { id: number; username: string; content: string; rating: number | null; userId: number }
-interface ReviewPage { content: Review[]; number: number; totalPages: number; totalElements: number }
 interface List { id: number; name: string }
 
 function ReviewLikeButton({ reviewId }: { reviewId: number }) {
@@ -43,12 +32,12 @@ function ReviewLikeButton({ reviewId }: { reviewId: number }) {
     setStatusError(false);
     setActionError(false);
     const request = isAuth
-      ? api.get<{ liked: boolean; likes: number }>(`/reviews/${reviewId}/like-status`).then(({ data }) => {
+      ? getReviewLikeStatus(reviewId).then(({ data }) => {
         if (!current) return;
         setLiked(data.liked);
         setLikes(data.likes);
       })
-      : api.get<number>(`/reviews/${reviewId}/likes`).then(({ data }) => { if (current) setLikes(data); });
+      : getReviewLikes(reviewId).then(({ data }) => { if (current) setLikes(data); });
     request
       .catch(() => { if (current) setStatusError(true); })
       .finally(() => { if (current) setStatusLoading(false); });
@@ -60,7 +49,7 @@ function ReviewLikeButton({ reviewId }: { reviewId: number }) {
     setBusy(true);
     setActionError(false);
     try {
-      await (liked ? api.delete(`/reviews/${reviewId}/likes`) : api.post(`/reviews/${reviewId}/likes`));
+      await (liked ? unlikeReview(reviewId) : likeReview(reviewId));
       setLiked(value => !value);
       setLikes(value => Math.max(0, (value ?? 0) + (liked ? -1 : 1)));
     } catch {
@@ -84,11 +73,11 @@ export default function MovieDetails() {
   const movieId = Number(id);
   const { isAuth } = useAuth();
   const { lang, path, t } = useLocale();
-  const [movie, setMovie] = useState<Movie | null>(null);
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [movie, setMovie] = useState<MovieDetailsResponse | null>(null);
+  const [reviews, setReviews] = useState<MovieReview[]>([]);
   const [reviewsPage, setReviewsPage] = useState(0);
   const [reviewsTotalPages, setReviewsTotalPages] = useState(0);
-  const [myReview, setMyReview] = useState<Review | null>(null);
+  const [myReview, setMyReview] = useState<MovieReview | null>(null);
   const [myReviewReady, setMyReviewReady] = useState(false);
   const [myReviewError, setMyReviewError] = useState(false);
   const [myReviewAttempt, setMyReviewAttempt] = useState(0);
@@ -143,7 +132,7 @@ export default function MovieDetails() {
     setLoading(true);
     setLoadError("");
     try {
-      const details = await api.get<Movie>(`/movies/${movieId}/details`);
+      const details = await getMovieDetails(movieId);
       if (requestId !== loadRequest.current || currentMovieId.current !== movieId) return;
       setMovie(details.data);
     } catch { if (requestId === loadRequest.current && currentMovieId.current === movieId) { setMovie(null); setLoadError(t("loadMovieError")); } }
@@ -156,7 +145,7 @@ export default function MovieDetails() {
     setReviewsLoading(true);
     setReviewsLoadError(false);
     try {
-      const reviewPage = await api.get<ReviewPage>(`/movies/${movieId}/reviews`, { params: { page: reviewsPage, size: 10 } });
+      const reviewPage = await getMovieReviews(movieId, reviewsPage);
       if (requestId !== reviewsRequest.current || currentMovieId.current !== movieId) return;
       if (reviewsPage > 0 && reviewPage.data.content.length === 0) {
         setReviewsPage(page => page - 1);
@@ -180,7 +169,7 @@ export default function MovieDetails() {
     if (currentMovieId.current !== movieId) return;
     const requestId = ++myReviewRequest.current;
     try {
-      const response = await api.get<Review>(`/movies/${movieId}/reviews/me`);
+      const response = await getMyMovieReview(movieId);
       if (requestId !== myReviewRequest.current || currentMovieId.current !== movieId) return;
       setMyReview(response.status === 204 ? null : response.data);
       setMyReviewError(false);
@@ -228,7 +217,7 @@ export default function MovieDetails() {
 
     setRatingLoading(true);
     setRatingLoadError(false);
-    api.get<{ rating: number }>(`/movies/${movieId}/rating/me`)
+    getUserRating(movieId)
       .then(({ data }) => { if (current) setRating(data?.rating ?? 0); })
       .catch(() => {
         if (!current) return;
@@ -259,7 +248,7 @@ export default function MovieDetails() {
     if (mutationBusy || currentMovieId.current !== movieId) return;
     setMutationBusy(kind);
     try {
-      await (enabled ? api.delete(`/movies/${movieId}/${kind}`) : api.post(`/movies/${movieId}/${kind}`));
+      await (enabled ? clearMovieFlag(movieId, kind) : setMovieFlag(movieId, kind));
       if (currentMovieId.current !== movieId) return;
       await load();
       setMessage(t("saved"));
@@ -272,10 +261,10 @@ export default function MovieDetails() {
     setMutationBusy("rating");
     try {
       if (myReview) {
-        await api.patch(`/reviews/${myReview.id}`, { rating: value });
+        await updateReview(myReview.id, { rating: value });
         await loadMyReview();
       } else {
-        await api.put(`/movies/${movieId}/rating`, { rating: value });
+        await setMovieRating(movieId, value);
       }
       if (currentMovieId.current !== movieId) return;
       setRating(value);
@@ -294,9 +283,9 @@ export default function MovieDetails() {
     setMutationBusy("review");
     try {
       if (editingReview && myReview) {
-        await api.patch(`/reviews/${myReview.id}`, { content: reviewText.trim(), rating: chosenRating });
+        await updateReview(myReview.id, { content: reviewText.trim(), rating: chosenRating });
       } else {
-        await api.post(`/movies/${movieId}/reviews`, { content: reviewText.trim(), rating: chosenRating });
+        await createMovieReview(movieId, reviewText.trim(), chosenRating);
       }
       if (currentMovieId.current !== movieId) return;
       setRating(chosenRating);
@@ -314,7 +303,7 @@ export default function MovieDetails() {
     if (mutationBusy) return;
     setMutationBusy("delete-review");
     try {
-      await api.delete(`/reviews/${myReview.id}`);
+      await deleteReviewRequest(myReview.id);
       if (currentMovieId.current !== movieId) return;
       setEditingReview(false);
       setReviewText("");
@@ -329,7 +318,7 @@ export default function MovieDetails() {
     if (mutationBusy || currentMovieId.current !== movieId) return;
     setMutationBusy("delete-rating");
     try {
-      await api.delete(`/movies/${movieId}/rating`);
+      await deleteMovieRating(movieId);
       if (currentMovieId.current !== movieId) return;
       setRating(0);
       setMessage(t("ratingDeleted"));

@@ -1,5 +1,21 @@
 import api from "./axios";
 
+export interface MovieReview {
+  id: number;
+  userId: number;
+  username: string;
+  content: string;
+  rating: number | null;
+  createdAt: string;
+}
+
+export interface MovieReviewPage {
+  content: MovieReview[];
+  number: number;
+  totalPages: number;
+  totalElements: number;
+}
+
 export interface ReviewDetails {
   id: number;
   content: string;
@@ -22,5 +38,21 @@ export interface ReviewDetails {
 
 export const getReviewDetails = (id: number) => api.get<ReviewDetails>(`/reviews/${id}`);
 export const getReviewLikeStatus = (id: number) => api.get<{ liked: boolean; likes: number }>(`/reviews/${id}/like-status`);
+export const getReviewLikes = (id: number) => api.get<number>(`/reviews/${id}/likes`);
 export const likeReview = (id: number) => api.post<void>(`/reviews/${id}/likes`);
 export const unlikeReview = (id: number) => api.delete<void>(`/reviews/${id}/likes`);
+
+export const getMovieReviews = (movieId: number, page: number) =>
+  api.get<MovieReviewPage>(`/movies/${movieId}/reviews`, { params: { page, size: 10 } });
+
+export const getMyMovieReview = (movieId: number) =>
+  api.get<MovieReview>(`/movies/${movieId}/reviews/me`);
+
+export const createMovieReview = (movieId: number, content: string, rating: number) =>
+  api.post<MovieReview>(`/movies/${movieId}/reviews`, { content, rating });
+
+export const updateReview = (reviewId: number, data: { content?: string; rating?: number | null }) =>
+  api.patch<MovieReview>(`/reviews/${reviewId}`, data);
+
+export const deleteReview = (reviewId: number) =>
+  api.delete(`/reviews/${reviewId}`);
