@@ -1,5 +1,6 @@
 # Rewind — прогрес повного плану
 
+- [x] **19.10.2026, activity list visibility:** activity responses now include list metadata only while the referenced list remains public and its owner active; a list made private after activity creation no longer leaks its name through profile/following feeds. API shape is unchanged; local backend compile remains green.
 - [x] **19.10.2026, notification actor visibility:** notification history and SSE responses now hide username/avatar for deactivated actors while preserving the notification event and its unread state; API shape is unchanged and the local backend compile remains green.
 - [x] **19.10.2026, read-only transaction boundaries:** Profile and Review read methods now declare explicit `@Transactional(readOnly = true)` boundaries while hydrating lazy relations into API DTOs; endpoint contracts are unchanged and the local backend compile remains green.
 - [x] **19.10.2026, profile media URL hardening:** profile/admin avatar DTOs now accept only blank or HTTP(S) URLs, social links reject whitespace-tainted schemes, and shared `ResilientImage` filters legacy/non-HTTP(S) image values before rendering. API payload shape is unchanged; Maven compile, strict TypeScript compile and Vite build (**184 modules**, **3.24s**) are green; local follow-up remains unpushed.
