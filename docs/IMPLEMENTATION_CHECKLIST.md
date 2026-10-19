@@ -2,6 +2,7 @@
 
 Цей файл — короткий навігатор по великому плану. Детальні докази, дати, команди й відкриті ризики залишаються у [PROGRESS.md](PROGRESS.md). Позначка `[x]` ставиться тільки після коду, тесту й наскрізної перевірки; `[~]` означає частково виконаний етап.
 
+- [x] **19.10.2026, external URL guard build evidence:** після shared URL guard `npx tsc --noEmit` і Vite build green; latest build — **184 modules**, entry **310.05 kB**. Full E2E не запускався для цього hardening pass; local follow-up не пушився.
 - [x] **19.10.2026, defensive external URL guard:** trailer/audio/social-link values are rendered only when they are valid HTTP(S) URLs; invalid legacy values use existing localized fallback/empty states. API unchanged, TypeScript green; local follow-up не пушився.
 - [x] **19.10.2026, admin trailer URL validation:** movie create/update requests reject non-HTTP(S) trailer URLs before persistence; poster/backdrop behavior is unchanged. Backend compile green; local follow-up не пушився.
 - [x] **19.10.2026, production SMTP guard:** production validator вимагає SMTP credentials при `MAIL_SMTP_AUTH=true`, example і runbook узгоджені; реальні secrets не додавалися. PowerShell parse і `git diff --check` green; local follow-up не пушився.
