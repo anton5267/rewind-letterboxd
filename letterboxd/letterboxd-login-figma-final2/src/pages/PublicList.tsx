@@ -1,23 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import api from "../api/axios";
-import { getPublicListLikeStatus, likePublicList, unlikePublicList, type MoviePreview, type PublicListLikeStatus } from "../api/lists.api";
+import { getPublicList, getPublicListLikeStatus, likePublicList, unlikePublicList, type MoviePreview, type PublicListDetails, type PublicListLikeStatus } from "../api/lists.api";
 import ResilientImage from "../components/ResilientImage";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
 import { toTagSlug } from "../utils/tagSlug";
 import styles from "./PublicList.module.css";
-
-interface PublicList {
-  id: number;
-  name: string;
-  description: string | null;
-  ownerId: number;
-  likeCount: number;
-  ownerUsername: string;
-  tags: string[];
-  movies: MoviePreview[];
-}
 
 function MoviePoster({ movie }: { movie: MoviePreview }) {
   return <ResilientImage className={styles.moviePoster} src={movie.photoUrl} alt="" fallback={<div className={styles.moviePosterFallback}>{movie.title}</div>} />;
@@ -27,7 +15,7 @@ export default function PublicList() {
   const { id } = useParams();
   const { path, t, lang } = useLocale();
   const { isAuth } = useAuth();
-  const [list, setList] = useState<PublicList | null>(null);
+  const [list, setList] = useState<PublicListDetails | null>(null);
   const [likeStatus, setLikeStatus] = useState<PublicListLikeStatus | null>(null);
   const [likeStatusLoading, setLikeStatusLoading] = useState(false);
   const [likeStatusLoadError, setLikeStatusLoadError] = useState(false);
@@ -43,7 +31,12 @@ export default function PublicList() {
     setList(null);
     setLoading(true);
     setError(false);
-    api.get<PublicList>(`/lists/public/${id}`)
+    if (!id) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
+    getPublicList(id)
       .then(({ data }) => { if (current) setList(data); })
       .catch(() => { if (current) setError(true); })
       .finally(() => { if (current) setLoading(false); });

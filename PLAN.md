@@ -36,6 +36,7 @@
 - **Admin notifications mobile layout:** notification metadata and read/delete actions now use separate responsive containers; filter controls become full-width below 520px without changing notification API or mutation semantics.
 - **Auth input contract:** register, login and forgot-password email/username values are trimmed in the browser, API client, request DTOs and service boundary; password values are never transformed, auth forms mirror the existing password bounds and autocomplete semantics, and the auth API shape is unchanged.
 - **Release verification rerun:** після узгодження stale message-membership assertion із чинним `404` контрактом backend повторно пройшов **69/0/0/0**, headed admin smoke — **12/12 за 52.9s**; Compose API/Web працюють, health/Web повертають `200`, за останні 20 хвилин у runtime logs немає `ERROR|Exception`, тимчасових current logs немає.
+- **Lists API contract organization:** detail response, user-list item response і `getPublicList` зібрані в `src/api/lists.api.ts`; `PublicList` та `UserLists` більше не дублюють DTO і не обходять API layer. Endpoint/data shape не змінювалися; missing route `:id` має локальний error state; strict TypeScript і Vite build green.
 - Усі ці зміни зберігаються локально окремими commit-ами, API/schema не розширювалися, новий push не виконується без прямої команди користувача.
 - GitHub: за прямою командою користувача verified стан один раз запушено в `origin/master` — commit `6b5d14e` (`Make backend casing locale independent`); наступні push без окремої команди не виконувати.
 

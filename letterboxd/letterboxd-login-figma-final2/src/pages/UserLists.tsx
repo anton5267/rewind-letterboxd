@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { createList, deleteList, getListItems, getUserListsPage, removeMovieFromList, reorderListItems, updateList, type MoviePreview, type UserList } from "../api/lists.api";
+import { createList, deleteList, getListItems, getUserListsPage, removeMovieFromList, reorderListItems, updateList, type UserList, type UserListItem } from "../api/lists.api";
 import ResilientImage from "../components/ResilientImage";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
 import styles from "./UserLists.module.css";
-
-interface Item { id: number; position: number | null; movie: MoviePreview }
 
 export default function UserLists() {
   const { isAuth, ready } = useAuth();
@@ -19,7 +17,7 @@ export default function UserLists() {
   const [listsLoadError, setListsLoadError] = useState(false);
   const [listsReload, setListsReload] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
-  const [items, setItems] = useState<Item[]>([]);
+  const [items, setItems] = useState<UserListItem[]>([]);
   const [itemsLoading, setItemsLoading] = useState(false);
   const [itemsLoadError, setItemsLoadError] = useState(false);
   const [itemsReload, setItemsReload] = useState(0);

@@ -41,6 +41,24 @@ export interface PublicList {
   previewMovies: MoviePreview[];
 }
 
+export interface PublicListDetails {
+  id: number;
+  name: string;
+  description: string | null;
+  ownerId: number;
+  ownerUsername: string;
+  ownerAvatarUrl: string | null;
+  tags: string[];
+  likeCount: number;
+  movies: MoviePreview[];
+}
+
+export interface UserListItem {
+  id: number;
+  position: number | null;
+  movie: MoviePreview;
+}
+
 export interface Page<T> {
   content: T[];
   totalPages: number;
@@ -55,6 +73,7 @@ export const getPublicListFeed = (feed: "recent" | "popular" | "recently-liked" 
       : feed === "team" ? "/lists/public/team" : "/lists/public";
   return api.get<Page<PublicList>>(endpoint, { params: { page, size: 12, ...(feed === "recent" && tag ? { tag } : {}) } });
 };
+export const getPublicList = (listId: string | number) => api.get<PublicListDetails>(`/lists/public/${listId}`);
 export const getPublicListLikeStatus = (listId: string | number) => api.get<PublicListLikeStatus>(`/lists/public/${listId}/like-status`);
 export const likePublicList = (listId: string | number) => api.post(`/lists/${listId}/likes`);
 export const unlikePublicList = (listId: string | number) => api.delete(`/lists/${listId}/likes`);
@@ -67,7 +86,7 @@ export const updateList = (listId: number, name: string, description: string, is
 
 export const deleteList = (listId: number) => api.delete(`/lists/${listId}`);
 
-export const getListItems = (listId: number) => api.get<{ id: number; position: number | null; movie: MoviePreview }[]>(`/lists/${listId}/items`);
+export const getListItems = (listId: number) => api.get<UserListItem[]>(`/lists/${listId}/items`);
 
 export const addMovieToList = (listId: number, movieId: number) =>
   api.post(`/lists/${listId}/movies`, { movieId });
