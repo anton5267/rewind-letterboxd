@@ -1,12 +1,14 @@
 package com.rewind.rewind.list.dto;
 
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 
 import java.util.List;
 
 public class UpdateListRequest {
 
     @Size(max = 120)
+    @Pattern(regexp = ".*\\S.*", message = "name must not be blank")
     private String name;
 
     @Size(max = 5000)

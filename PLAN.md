@@ -23,7 +23,7 @@
 - **Privacy/integrity:** inactive actors і приватні списки прибираються з public social projections; activity list visibility batch-loaded; profile/review pagination, comments, tags, admin lists, filmographies і Global Search people мають deterministic ID tie-breakers; unused repository queries прибрані.
 - **Social/auth:** JWT fail-closed для missing/disabled `isActive`; blocked/deactivated conversations виключені з lists/messages/unread counts; auth rate limiter періодично видаляє expired IP/route windows без нової dependency.
 - **Input boundaries:** list reorder/add-item і direct-conversation DTOs відхиляють oversized/non-positive identifiers; list name/description limits, admin trailer/audio URL guards і movie create/update schema-aligned bounds (`duration`, rating `0..10`, IDs/media/text) перевіряються до persistence.
-- **PATCH semantics:** `UpdateListRequest` зберігає незалежне часткове оновлення полів; `name` має лише `max=120`, тоді як `CreateListRequest` і далі вимагає непорожню назву.
+- **PATCH semantics:** `UpdateListRequest` зберігає незалежне часткове оновлення полів; `name` nullable, але при передачі має непробільний символ і `max=120`, тоді як `CreateListRequest` і далі вимагає непорожню назву.
 - Усі ці зміни зберігаються локально окремими commit-ами, API/schema не розширювалися, новий push не виконується без прямої команди користувача.
 - GitHub: за прямою командою користувача verified стан один раз запушено в `origin/master` — commit `6b5d14e` (`Make backend casing locale independent`); наступні push без окремої команди не виконувати.
 
