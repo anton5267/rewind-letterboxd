@@ -11,6 +11,7 @@
 - [x] Notification actor visibility: notification history and SSE keep events for deactivated actors but omit their public identity fields, matching the existing activity visibility rule.
 - [x] Activity list visibility: activity DTOs expose list metadata only for currently public lists with active owners, including activities created before a list was made private.
 - [x] Popular reviewer visibility: aggregate results are rechecked against active users before public identity fields are hydrated, covering deactivation races without changing response shape.
+- [x] Stable recent-review pagination: public recent reviews use a deterministic timestamp-plus-ID ordering for repeatable page boundaries.
 - [x] Основні API-backed visual slices готові: Home, Search, Global Search, Lists, Public List, Profiles, Community, Journal, Review Details, Movie Details і mobile navigation; exact pixel parity не заявляється без Figma Editor/node export access.
 - [x] Responsive/accessibility baseline перевірено для 320/393/768/1440 px; loading/error/empty/retry, overflow, keyboard focus і bilingual UK/EN surfaces присутні в реалізованих маршрутах.
 - [x] Frontend type-safety baseline закріплено в `tsconfig.json`: `strict`, `noUnusedLocals` і `noUnusedParameters` увімкнені; strict TypeScript compile exit 0.

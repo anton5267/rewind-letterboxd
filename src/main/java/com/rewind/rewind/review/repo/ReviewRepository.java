@@ -40,7 +40,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @EntityGraph(attributePaths = {"user", "movie"})
     @Query("select r from Review r where r.user.isActive = true and r.isHidden = false "
-            + "order by r.createdAt desc")
+            + "order by r.createdAt desc, r.id desc")
     Page<Review> findVisibleRecent(Pageable pageable);
 
     @EntityGraph(attributePaths = {"user", "movie"})
