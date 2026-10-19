@@ -48,8 +48,10 @@ export default function AdminConversations() {
     {data && data.content.length === 0 && <p>{t("noAdminConversations")}</p>}
     {data && <>
       <ul className={styles.list}>{data.content.map(conversation => <li className={styles.row} key={conversation.id}>
-        {t("conversationUsers")} #{conversation.userOneId} / #{conversation.userTwoId} · {conversation.messageCount} {t("messagesCount")} · {formatDateTime(conversation.updatedAt, lang)} {" "}
-        <button type="button" aria-busy={deletingId === conversation.id} disabled={deletingId !== null} onClick={() => void removeConversation(conversation)}>{deletingId === conversation.id ? t("loading") : t("deleteConversation")}</button>
+        <div className={styles.rowContent}>{t("conversationUsers")} #{conversation.userOneId} / #{conversation.userTwoId} · {conversation.messageCount} {t("messagesCount")} · {formatDateTime(conversation.updatedAt, lang)}</div>
+        <div className={styles.rowActions}>
+          <button type="button" aria-busy={deletingId === conversation.id} disabled={deletingId !== null} onClick={() => void removeConversation(conversation)}>{deletingId === conversation.id ? t("loading") : t("deleteConversation")}</button>
+        </div>
       </li>)}</ul>
       <nav className={styles.pagination} aria-label={t("adminConversationsPagination")}>
         <button type="button" disabled={loading || page === 0} onClick={() => setPage(value => Math.max(0, value - 1))}>{t("previous")}</button>

@@ -8,6 +8,8 @@
 
 - [x] Partial list PATCH contract: `UpdateListRequest` дозволяє змінювати окремі поля без штучного `name` requirement, але відхиляє порожню/пробільну назву, якщо її передано, і зберігає максимальну довжину; API shape unchanged, local follow-up remains unpushed.
 - [x] Admin user input and responsive rows: optional admin role/display/avatar updates are normalized at the service boundary, blank identity values are rejected or cleared consistently, search terms are trimmed, and the Users action cluster becomes full-width below 520px; API shape unchanged, local follow-up remains unpushed.
+- [x] Shared admin moderation row layout: comments, reviews, lists, conversations and moderation queue separate row content from actions and stack controls below 520px; API and mutation behavior unchanged, local follow-up remains unpushed.
+- [x] Local Figma snapshot workflow: the repository provides a hidden-PAT REST export script for selected file/node JSON and PNG, with `figma/` ignored; no credentials or proprietary design data are committed.
 - [x] Nullable PATCH text guards: review content and admin movie title remain optional in partial updates but reject blank values when present; clearable optional fields remain nullable and API shape is unchanged.
 - [x] Movie Details route transition guard: changing the film route clears stale hero/review/action state and ignores late responses from the previous movie; API shape is unchanged.
 - [x] User Lists async state safety: item removal and list editing use functional state updates to avoid stale closure overwrites; API shape is unchanged.

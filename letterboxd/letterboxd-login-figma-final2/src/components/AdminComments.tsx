@@ -70,8 +70,10 @@ export default function AdminComments() {
     {data && data.content.length === 0 && <p>{t("noAdminComments")}</p>}
     {data && <>
       <ul className={styles.list}>{data.content.map(comment => <li className={styles.row} key={comment.id}>
-        {comment.username}: {comment.content} · {comment.isHidden ? t("hiddenComment") : t("visibleComment")}{" "}
-        <button type="button" aria-busy={busyId === comment.id} disabled={busyId !== null} onClick={() => void toggleHidden(comment)}>{busyId === comment.id ? t("loading") : comment.isHidden ? t("unhideComment") : t("hideComment")}</button>
+        <div className={styles.rowContent}>{comment.username}: {comment.content} · {comment.isHidden ? t("hiddenComment") : t("visibleComment")}</div>
+        <div className={styles.rowActions}>
+          <button type="button" aria-busy={busyId === comment.id} disabled={busyId !== null} onClick={() => void toggleHidden(comment)}>{busyId === comment.id ? t("loading") : comment.isHidden ? t("unhideComment") : t("hideComment")}</button>
+        </div>
       </li>)}</ul>
       <nav className={styles.pagination} aria-label={t("adminCommentsPagination")}>
         <button type="button" disabled={loading || page === 0} onClick={() => setPage(value => Math.max(0, value - 1))}>{t("previous")}</button>

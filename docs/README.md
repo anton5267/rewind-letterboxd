@@ -8,7 +8,7 @@
 історичний журнал фактичних змін і перевірок, а `IMPLEMENTATION_CHECKLIST.md` —
 короткий release-oriented список завершених зрізів. `FIGMA_HANDOFF.md` — єдина
 актуальна таблиця відповідності Figma frame → node/size → React route → evidence
-→ gap. `RELEASE_EVIDENCE.md` містить останній локальний evidence bundle; він не
+→ gap і безпечний локальний snapshot workflow. `RELEASE_EVIDENCE.md` містить останній локальний evidence bundle; він не
 замінює production sign-off.
 
 Для зміненого admin flow спочатку використовуйте targeted запуск

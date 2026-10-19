@@ -62,9 +62,11 @@ export default function AdminLists() {
     {data && data.content.length === 0 && <p>{t("noAdminLists")}</p>}
     {data && <>
       <ul className={styles.list}>{data.content.map(list => <li className={styles.row} key={list.id}>
-        {list.name} · {list.username} · {list.itemCount} {t("items")} · {list.isPublic ? t("publicList") : t("hiddenList")}{" "}
-        <button type="button" aria-busy={busyId === list.id} disabled={busyId !== null} onClick={() => void toggleVisibility(list)}>{busyId === list.id ? t("loading") : list.isPublic ? t("hideList") : t("publishList")}</button>
-        {list.listType === "CUSTOM" && <button type="button" aria-busy={busyId === list.id} disabled={busyId !== null} onClick={() => void remove(list)}>{busyId === list.id ? t("loading") : t("deleteList")}</button>}
+        <div className={styles.rowContent}>{list.name} · {list.username} · {list.itemCount} {t("items")} · {list.isPublic ? t("publicList") : t("hiddenList")}</div>
+        <div className={styles.rowActions}>
+          <button type="button" aria-busy={busyId === list.id} disabled={busyId !== null} onClick={() => void toggleVisibility(list)}>{busyId === list.id ? t("loading") : list.isPublic ? t("hideList") : t("publishList")}</button>
+          {list.listType === "CUSTOM" && <button type="button" aria-busy={busyId === list.id} disabled={busyId !== null} onClick={() => void remove(list)}>{busyId === list.id ? t("loading") : t("deleteList")}</button>}
+        </div>
       </li>)}</ul>
       <nav className={styles.pagination} aria-label={t("adminListsPagination")}>
         <button type="button" disabled={loading || page === 0} onClick={() => setPage(value => Math.max(0, value - 1))}>{t("previous")}</button>

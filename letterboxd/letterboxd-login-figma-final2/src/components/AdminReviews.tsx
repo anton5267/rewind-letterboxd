@@ -70,8 +70,10 @@ export default function AdminReviews() {
     {data && data.content.length === 0 && <p>{t("noAdminReviews")}</p>}
     {data && <>
       <ul className={styles.list}>{data.content.map(review => <li className={styles.row} key={review.id}>
-        {review.movieTitle} · {review.username}: {review.content} · {review.isHidden ? t("hiddenReview") : t("visibleReview")}{" "}
-        <button type="button" aria-busy={busyId === review.id} disabled={busyId !== null} onClick={() => void toggleHidden(review)}>{busyId === review.id ? t("loading") : review.isHidden ? t("unhideReview") : t("hideReview")}</button>
+        <div className={styles.rowContent}>{review.movieTitle} · {review.username}: {review.content} · {review.isHidden ? t("hiddenReview") : t("visibleReview")}</div>
+        <div className={styles.rowActions}>
+          <button type="button" aria-busy={busyId === review.id} disabled={busyId !== null} onClick={() => void toggleHidden(review)}>{busyId === review.id ? t("loading") : review.isHidden ? t("unhideReview") : t("hideReview")}</button>
+        </div>
       </li>)}</ul>
       <nav className={styles.pagination} aria-label={t("adminReviewsPagination")}>
         <button type="button" disabled={loading || page === 0} onClick={() => setPage(value => Math.max(0, value - 1))}>{t("previous")}</button>

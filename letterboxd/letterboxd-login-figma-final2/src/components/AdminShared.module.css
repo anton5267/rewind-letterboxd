@@ -86,6 +86,11 @@
   overflow-wrap: anywhere;
 }
 
+.rowContent {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .rowActions {
   display: flex;
   flex-wrap: wrap;

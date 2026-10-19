@@ -47,3 +47,5 @@ build/
 *.log
 *.err
 backups/
+# Local Figma REST snapshots may contain proprietary design data and must never be committed.
+figma/
