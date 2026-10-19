@@ -8,6 +8,7 @@
 
 - [x] Основні API-backed visual slices готові: Home, Search, Global Search, Lists, Public List, Profiles, Community, Journal, Review Details, Movie Details і mobile navigation; exact pixel parity не заявляється без Figma Editor/node export access.
 - [x] Responsive/accessibility baseline перевірено для 320/393/768/1440 px; loading/error/empty/retry, overflow, keyboard focus і bilingual UK/EN surfaces присутні в реалізованих маршрутах.
+- [x] Frontend type-safety baseline закріплено в `tsconfig.json`: `strict`, `noUnusedLocals` і `noUnusedParameters` увімкнені; strict TypeScript compile exit 0.
 - [x] Backend/API локально перевірені: schema V1–V31, compile, integration regression, security/contract/backup evidence і Compose runtime; production launch не заявляється.
 - [x] Поточний verified snapshot один раз запушено в `origin/master` як `6b5d14e` (`Make backend casing locale independent`); наступні push без окремої команди не виконуються.
 - [~] Exact Figma parity: потрібен Editor або frame-level export доступ.

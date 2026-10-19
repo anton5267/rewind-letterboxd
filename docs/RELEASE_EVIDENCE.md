@@ -6,7 +6,7 @@
 
 | Область | Evidence | Результат |
 | --- | --- | --- |
-| Frontend type/build | `letterboxd/letterboxd-login-figma-final2`: `npx tsc --noEmit`, `npm run build` | green; latest Vite build **184 modules**, entry **310.05 kB** |
+| Frontend type/build | `letterboxd/letterboxd-login-figma-final2`: `npx tsc --noEmit --strict`, `npm run build` | green; `strict`, `noUnusedLocals` and `noUnusedParameters` enabled; latest Vite build **184 modules**, entry **310.05 kB** |
 | Localization/accessibility | `tests/e2e/localization-labels.spec.ts` against rebuilt Docker runtime | UK/EN Lists/Search labels and intros, Journal byline/category, person types and poster aria-labels use locale keys; **1/1 in 4.3s**, TypeScript/Vite green |
 | Home/public smoke | `tests/e2e/public-guards.spec.ts` | **6/6 passed in 13.6s** after Home partial-failure rendering and independent Lists feed/tags states |
 | Community/accessibility smoke | `tests/e2e/public-guards.spec.ts tests/e2e/accessibility.spec.ts` | **11/11 passed** after independent reviewers/HQ/directory state handling |
