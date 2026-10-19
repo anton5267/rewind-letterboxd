@@ -44,7 +44,16 @@ export default function AdminArticles() {
     setCreating(true);
     setActionError("");
     try {
-      await createAdminArticle(article);
+      await createAdminArticle({
+        ...article,
+        slug: article.slug.trim(),
+        category: article.category.trim(),
+        title: article.title.trim(),
+        excerpt: article.excerpt.trim() || null,
+        content: article.content.trim(),
+        coverUrl: article.coverUrl.trim() || null,
+        audioUrl: article.audioUrl.trim() || null,
+      });
       setArticle(current => ({ ...emptyArticle, language: current.language, category: current.category }));
       if (page === 0) setRevision(value => value + 1); else setPage(0);
     } catch {
@@ -73,12 +82,12 @@ export default function AdminArticles() {
     <h2 className={styles.title}>{t("journalEditor")}</h2>
     {actionError && <p className={styles.error} role="alert">{actionError}</p>}
     <form className={styles.form} onSubmit={publishArticle} aria-busy={creating}>
-      <input className={styles.input} required aria-label={t("articleSlug")} placeholder={t("articleSlug")} value={article.slug} onChange={event => setArticle({ ...article, slug: event.target.value })} />
-      <input className={styles.input} required aria-label={t("articleTitle")} placeholder={t("articleTitle")} value={article.title} onChange={event => setArticle({ ...article, title: event.target.value })} />
-      <input className={styles.input} required aria-label={t("articleCategory")} placeholder={t("articleCategory")} value={article.category} onChange={event => setArticle({ ...article, category: event.target.value })} />
+      <input className={styles.input} required maxLength={180} aria-label={t("articleSlug")} placeholder={t("articleSlug")} value={article.slug} onChange={event => setArticle({ ...article, slug: event.target.value })} />
+      <input className={styles.input} required maxLength={255} aria-label={t("articleTitle")} placeholder={t("articleTitle")} value={article.title} onChange={event => setArticle({ ...article, title: event.target.value })} />
+      <input className={styles.input} required maxLength={80} aria-label={t("articleCategory")} placeholder={t("articleCategory")} value={article.category} onChange={event => setArticle({ ...article, category: event.target.value })} />
       <select className={styles.select} aria-label={t("articleLanguage")} value={article.language} onChange={event => setArticle({ ...article, language: event.target.value })}><option value="uk">{t("articleLanguageUk")}</option><option value="en">{t("articleLanguageEn")}</option></select>
-      <input className={styles.input} aria-label={t("articleExcerpt")} placeholder={t("articleExcerpt")} value={article.excerpt} onChange={event => setArticle({ ...article, excerpt: event.target.value })} />
-      <input className={styles.input} type="url" aria-label={t("audioUrl")} placeholder={t("audioUrl")} value={article.audioUrl} onChange={event => setArticle({ ...article, audioUrl: event.target.value })} />
+      <input className={styles.input} maxLength={500} aria-label={t("articleExcerpt")} placeholder={t("articleExcerpt")} value={article.excerpt} onChange={event => setArticle({ ...article, excerpt: event.target.value })} />
+      <input className={styles.input} type="url" maxLength={500} aria-label={t("audioUrl")} placeholder={t("audioUrl")} value={article.audioUrl} onChange={event => setArticle({ ...article, audioUrl: event.target.value })} />
       <textarea className={styles.textarea} required aria-label={t("articleContent")} placeholder={t("articleContent")} value={article.content} onChange={event => setArticle({ ...article, content: event.target.value })} rows={8} />
       <label className={styles.publishToggle}><input type="checkbox" checked={article.published} onChange={event => setArticle({ ...article, published: event.target.checked })} /> {t("publishArticle")}</label>
       <button type="submit" aria-busy={creating} disabled={creating}>{creating ? t("loading") : t("create")}</button>
