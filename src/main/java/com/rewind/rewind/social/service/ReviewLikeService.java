@@ -6,8 +6,10 @@ import com.rewind.rewind.social.dto.ReviewLikeResponse;
 import com.rewind.rewind.social.repo.ReviewLikeRepository;
 import com.rewind.rewind.user.repo.UserRepository;
 import com.rewind.rewind.notification.service.NotificationService;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ReviewLikeService {
@@ -53,9 +55,10 @@ public class ReviewLikeService {
     }
 
     private Review visibleReview(Long reviewId) {
-        Review review = reviews.findById(reviewId).orElseThrow();
+        Review review = reviews.findById(reviewId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Review not found"));
         if (Boolean.TRUE.equals(review.getIsHidden()) || !Boolean.TRUE.equals(review.getUser().getIsActive())) {
-            throw new IllegalArgumentException("Review not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Review not found");
         }
         return review;
     }
