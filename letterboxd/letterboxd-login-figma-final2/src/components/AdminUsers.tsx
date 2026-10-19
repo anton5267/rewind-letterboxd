@@ -102,13 +102,18 @@ export default function AdminUsers({ onHqCountChange }: Props) {
     {data && data.content.length === 0 && <p>{t("noAdminUsers")}</p>}
     {data && <>
       <ul className={styles.list}>{data.content.map(target => <li className={styles.row} key={target.id}>
-        {target.displayName || target.username} · {localizeUserRole(target.role, t)} · {target.isActive ? t("activeUser") : t("blockedUser")}{" "}
-        <select className={styles.control} aria-label={`${t("userRole")}: ${target.username}`} value={target.role} disabled={busyId !== null} onChange={event => void updateRole(target, event.target.value as "USER" | "ADMIN")}>
-          <option value="USER">{localizeUserRole("USER", t)}</option>
-          <option value="ADMIN">{localizeUserRole("ADMIN", t)}</option>
-        </select>{" "}
-        <button type="button" aria-busy={busyId === target.id} disabled={busyId !== null} onClick={() => void toggleHq(target)}>{busyId === target.id ? t("loading") : target.isHq ? t("revokeHq") : t("grantHq")}</button>{" "}
-        <button type="button" aria-busy={busyId === target.id} disabled={busyId !== null} onClick={() => void toggleActive(target)}>{busyId === target.id ? t("loading") : target.isActive ? t("blockUser") : t("activateUser")}</button>
+        <div className={styles.userSummary}>
+          <strong className={styles.userName}>{target.displayName || target.username}</strong>
+          <span className={styles.userMeta}>{localizeUserRole(target.role, t)} · {target.isActive ? t("activeUser") : t("blockedUser")}</span>
+        </div>
+        <div className={styles.rowActions}>
+          <select className={styles.control} aria-label={`${t("userRole")}: ${target.username}`} value={target.role} disabled={busyId !== null} onChange={event => void updateRole(target, event.target.value as "USER" | "ADMIN")}>
+            <option value="USER">{localizeUserRole("USER", t)}</option>
+            <option value="ADMIN">{localizeUserRole("ADMIN", t)}</option>
+          </select>
+          <button type="button" aria-busy={busyId === target.id} disabled={busyId !== null} onClick={() => void toggleHq(target)}>{busyId === target.id ? t("loading") : target.isHq ? t("revokeHq") : t("grantHq")}</button>
+          <button type="button" aria-busy={busyId === target.id} disabled={busyId !== null} onClick={() => void toggleActive(target)}>{busyId === target.id ? t("loading") : target.isActive ? t("blockUser") : t("activateUser")}</button>
+        </div>
       </li>)}</ul>
       <nav className={styles.pagination} aria-label={t("adminUsersPagination")}>
         <button type="button" disabled={loading || page === 0} onClick={() => setPage(value => Math.max(0, value - 1))}>{t("previous")}</button>

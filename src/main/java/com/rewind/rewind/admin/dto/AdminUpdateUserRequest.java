@@ -6,9 +6,11 @@ import jakarta.validation.constraints.Size;
 public class AdminUpdateUserRequest {
 
     @Size(min = 3, max = 50)
+    @Pattern(regexp = ".*\\S.*", message = "username must not be blank")
     private String username;      // optional
 
     @Size(max = 60)
+    @Pattern(regexp = "^$|(?=.{2,60}$)(?=.*\\S).*$", message = "displayName must be empty or at least 2 non-blank characters")
     private String displayName;   // optional
 
     @Size(max = 255)

@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.rewind.rewind.admin.audit.service.AdminAuditLogService;
 
+import java.util.Locale;
+
 @Service
 public class AdminUserService {
 
@@ -24,13 +26,14 @@ public class AdminUserService {
     @Transactional(readOnly = true)
     public Page<AdminUserResponse> list(String q, int page, int size) {
         Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, Math.min(size, 50)), Sort.by(Sort.Direction.DESC, "id"));
+        String query = q == null ? null : q.trim();
 
         Page<User> p;
-        if (q == null || q.isBlank()) {
+        if (query == null || query.isBlank()) {
             p = users.findAll(pageable);
         } else {
             p = users.findAllByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrDisplayNameContainingIgnoreCase(
-                    q, q, q, pageable
+                    query, query, query, pageable
             );
         }
 
@@ -50,16 +53,17 @@ public class AdminUserService {
     @Transactional
     public AdminUserResponse update(Long id, AdminUpdateUserRequest req, String adminEmail) {
         User u = users.findById(id).orElseThrow(() -> new IllegalArgumentException("User not found"));
-        guardAdminAccountChange(u, req.getIsActive(), req.getRole(), adminEmail);
+        String requestedRole = normalizeRole(req.getRole());
+        guardAdminAccountChange(u, req.getIsActive(), requestedRole, adminEmail);
 
-        if (req.getUsername() != null) u.setUsername(req.getUsername());
-        if (req.getDisplayName() != null) u.setDisplayName(req.getDisplayName());
-        if (req.getAvatarUrl() != null) u.setAvatarUrl(req.getAvatarUrl());
+        if (req.getUsername() != null) u.setUsername(req.getUsername().trim());
+        if (req.getDisplayName() != null) u.setDisplayName(blankToNull(req.getDisplayName()));
+        if (req.getAvatarUrl() != null) u.setAvatarUrl(blankToNull(req.getAvatarUrl()));
         if (req.getIsActive() != null) u.setIsActive(req.getIsActive());
 
-        if (req.getRole() != null) {
+        if (requestedRole != null) {
             try {
-                u.setRole(UserRole.valueOf(req.getRole()));
+                u.setRole(UserRole.valueOf(requestedRole));
             } catch (Exception e) {
                 throw new IllegalArgumentException("Invalid role. Use USER or ADMIN");
             }
@@ -68,6 +72,15 @@ public class AdminUserService {
         users.save(u);
         if (adminEmail != null) audit.record(adminEmail, "USER_UPDATED", "USER", id, null);
         return toDto(u);
+    }
+
+    private String normalizeRole(String role) {
+        return role == null ? null : role.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private String blankToNull(String value) {
+        String normalized = value.trim();
+        return normalized.isBlank() ? null : normalized;
     }
 
     @Transactional

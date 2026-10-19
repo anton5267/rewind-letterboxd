@@ -70,12 +70,43 @@
   overflow-wrap: anywhere;
 }
 
+.userSummary {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.userName {
+  color: var(--rewind-paper);
+  overflow-wrap: anywhere;
+}
+
+.userMeta {
+  color: var(--rewind-muted);
+  overflow-wrap: anywhere;
+}
+
 .rowActions {
-  display: inline-flex;
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   margin-top: 8px;
+}
+
+.rowActions .control {
+  min-width: 128px;
+}
+
+@media (max-width: 520px) {
+  .rowActions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .rowActions > * {
+    width: 100%;
+  }
 }
 
 .pagination {

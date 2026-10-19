@@ -7,6 +7,7 @@
 Станом на **19.10.2026** для рішень про готовність використовуються цей блок, `PLAN.md`, верхній verified snapshot у `PROGRESS.md` та [`RELEASE_EVIDENCE.md`](RELEASE_EVIDENCE.md). Записи під заголовком historical log — це трасування роботи, а не список невиконаних поточних задач.
 
 - [x] Partial list PATCH contract: `UpdateListRequest` дозволяє змінювати окремі поля без штучного `name` requirement, але відхиляє порожню/пробільну назву, якщо її передано, і зберігає максимальну довжину; API shape unchanged, local follow-up remains unpushed.
+- [x] Admin user input and responsive rows: optional admin role/display/avatar updates are normalized at the service boundary, blank identity values are rejected or cleared consistently, search terms are trimmed, and the Users action cluster becomes full-width below 520px; API shape unchanged, local follow-up remains unpushed.
 - [x] Nullable PATCH text guards: review content and admin movie title remain optional in partial updates but reject blank values when present; clearable optional fields remain nullable and API shape is unchanged.
 - [x] Movie Details route transition guard: changing the film route clears stale hero/review/action state and ignores late responses from the previous movie; API shape is unchanged.
 - [x] User Lists async state safety: item removal and list editing use functional state updates to avoid stale closure overwrites; API shape is unchanged.

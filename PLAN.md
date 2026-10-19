@@ -30,6 +30,7 @@
 - **Malformed request safety:** query/path type mismatches and missing required query parameters are normalized to structured HTTP 400 responses through the shared API exception handler.
 - **Editorial form contract:** Admin Articles normalizes blank optional excerpt/cover/audio fields to `null` and mirrors persisted length limits, so optional podcast media remains compatible with backend validation.
 - **Profile identity contract:** optional `displayName` may be cleared explicitly, while non-empty values remain 2–60 characters with a nonblank guard; the UI and backend now agree on that behavior.
+- **Admin user contract and mobile row layout:** admin user PATCH normalizes optional role, display name and media values at the service boundary, trims search terms, and rejects blank usernames/display names; the Users panel separates identity from actions and stacks controls below 520px without changing the API shape.
 - Усі ці зміни зберігаються локально окремими commit-ами, API/schema не розширювалися, новий push не виконується без прямої команди користувача.
 - GitHub: за прямою командою користувача verified стан один раз запушено в `origin/master` — commit `6b5d14e` (`Make backend casing locale independent`); наступні push без окремої команди не виконувати.
 
