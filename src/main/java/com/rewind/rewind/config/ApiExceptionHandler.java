@@ -4,6 +4,8 @@ import java.util.NoSuchElementException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -47,6 +49,16 @@ public class ApiExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiErrorResponse> unreadable(HttpMessageNotReadableException exception, HttpServletRequest request) {
         return response(HttpStatus.BAD_REQUEST, "Bad Request", "Request body is invalid", request);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiErrorResponse> parameterTypeMismatch(MethodArgumentTypeMismatchException exception, HttpServletRequest request) {
+        return response(HttpStatus.BAD_REQUEST, "Bad Request", "Request parameter has an invalid value", request);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiErrorResponse> missingParameter(MissingServletRequestParameterException exception, HttpServletRequest request) {
+        return response(HttpStatus.BAD_REQUEST, "Bad Request", "Required request parameter is missing", request);
     }
 
     @ExceptionHandler(AsyncRequestTimeoutException.class)

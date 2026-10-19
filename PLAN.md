@@ -27,6 +27,7 @@
 - **Nullable text semantics:** review content і admin movie title мають такий самий nullable-safe nonblank guard під час часткового оновлення; поля, які за контрактом можна очистити, не блокуються.
 - **Route transition safety:** Movie Details очищує старий surface при зміні фільму й не приймає late responses/refreshes від попереднього `movieId`.
 - **Async UI state safety:** User Lists remove/edit mutations use functional state updates, so late responses do not overwrite newer local state.
+- **Malformed request safety:** query/path type mismatches and missing required query parameters are normalized to structured HTTP 400 responses through the shared API exception handler.
 - Усі ці зміни зберігаються локально окремими commit-ами, API/schema не розширювалися, новий push не виконується без прямої команди користувача.
 - GitHub: за прямою командою користувача verified стан один раз запушено в `origin/master` — commit `6b5d14e` (`Make backend casing locale independent`); наступні push без окремої команди не виконувати.
 
