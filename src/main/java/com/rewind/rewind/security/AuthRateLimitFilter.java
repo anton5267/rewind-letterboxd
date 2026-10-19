@@ -14,6 +14,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Small single-node guard for credential and password-reset endpoints.
@@ -22,9 +23,11 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class AuthRateLimitFilter extends OncePerRequestFilter {
     private static final long WINDOW_SECONDS = 60;
+    private static final long CLEANUP_EVERY_REQUESTS = 256;
     private final int limit;
     private final Clock clock;
     private final Map<String, Window> windows = new ConcurrentHashMap<>();
+    private final AtomicLong requestCount = new AtomicLong();
 
     @Autowired
     public AuthRateLimitFilter(@Value("${app.security.rate-limit-per-minute:60}") int limit) {
@@ -50,8 +53,12 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        String key = request.getRemoteAddr() + ":" + request.getRequestURI();
         Instant now = clock.instant();
+        if (requestCount.incrementAndGet() % CLEANUP_EVERY_REQUESTS == 0) {
+            windows.entrySet().removeIf(entry -> now.getEpochSecond() - entry.getValue().startedAt >= WINDOW_SECONDS);
+        }
+
+        String key = request.getRemoteAddr() + ":" + request.getRequestURI();
         Window window = windows.compute(key, (ignored, current) -> {
             if (current == null || now.getEpochSecond() - current.startedAt >= WINDOW_SECONDS) {
                 return new Window(now.getEpochSecond(), 1);
