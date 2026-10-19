@@ -24,6 +24,14 @@ if ($values['MYSQL_ROOT_PASSWORD'].Length -lt 24) { throw 'MYSQL_ROOT_PASSWORD m
 if ($values['JWT_SECRET'].Length -lt 48) { throw 'JWT_SECRET must be at least 48 characters' }
 if ($values['DB_PASSWORD'] -eq $values['MYSQL_ROOT_PASSWORD']) { throw 'DB_PASSWORD and MYSQL_ROOT_PASSWORD must differ' }
 if ($values['PUBLIC_BASE_URL'] -notmatch '^https://') { throw 'PUBLIC_BASE_URL must use HTTPS' }
+if ($values.ContainsKey('APP_CORS_ALLOWED_ORIGINS') -and -not [string]::IsNullOrWhiteSpace($values['APP_CORS_ALLOWED_ORIGINS'])) {
+    foreach ($origin in $values['APP_CORS_ALLOWED_ORIGINS'] -split ',') {
+        $normalizedOrigin = $origin.Trim()
+        if ($normalizedOrigin -notmatch '^https://[^/]+$') {
+            throw 'APP_CORS_ALLOWED_ORIGINS must contain only comma-separated HTTPS origins without paths'
+        }
+    }
+}
 if (-not $values.ContainsKey('HTTP_PORT')) { throw 'HTTP_PORT must bind the web service to a loopback port behind the HTTPS proxy' }
 if ($values['HTTP_PORT'] -notmatch '^127\.0\.0\.1:\d+$') { throw 'HTTP_PORT must look like 127.0.0.1:8088 for the host HTTPS proxy' }
 if ($values.ContainsKey('MAIL_PORT') -and ($values['MAIL_PORT'] -notmatch '^\d+$' -or [int]$values['MAIL_PORT'] -lt 1 -or [int]$values['MAIL_PORT'] -gt 65535)) { throw 'MAIL_PORT must be an integer between 1 and 65535' }

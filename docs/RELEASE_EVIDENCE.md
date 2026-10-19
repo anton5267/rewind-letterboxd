@@ -28,6 +28,7 @@
 | Runtime | `docker compose ps` and API/Web health checks | API, Web, MySQL, Redis and Mailpit up; DB/Mailpit healthy |
 | Current local port mapping | `compose.yaml`, `docker compose ps`, post-rebuild smoke | Web `127.0.0.1:3000 → nginx:80`; API `127.0.0.1:8081 → Spring:8080`; API health `200`, Web `200`, no API/Web errors in the 30-second post-start window |
 | Production wiring audit | `docker compose -f compose.production.yaml config --quiet` with audit-only values; `scripts/verify-caddy.ps1` | Compose config valid; Caddyfile valid; real production env was not created |
+| Production origin/media config | `mvnw.cmd -q -DskipTests compile`, Compose resolution with `.env.production.example`, PowerShell parse and nginx config review | CORS is env-driven with empty same-origin production default, production validator requires HTTPS origins for cross-origin use, and CSP allows HTTPS journal audio |
 | Editorial content | `GET /api/journal/articles?language=uk|en` and `/archive` | runtime currently returns **0 published articles / 0 archive entries** for both locales; UI empty/fallback states are verified, real editorial content is still required |
 | Diploma artifact | `artifacts/diploma-video/slideshow-check.png` and `rewind-diploma-demo.webm` | slideshow reviewed; WebM is **76,223 bytes** with valid EBML/WebM header `1A 45 DF A3`; local demo only |
 | Hygiene | `git diff --check` and tracked-secret scan | no whitespace errors; no real secret added |
@@ -54,4 +55,4 @@ The local evidence and local production wiring audit are complete, but the follo
 - execute production Compose, scheduler, monitoring, mail delivery and backup/restore checks on the target infrastructure;
 - obtain Figma Editor access or exact frame-level export access for pixel-level parity claims.
 
-GitHub was updated once by explicit user command after this evidence bundle was assembled: `origin/master` points to `75f9d26` (`Complete Figma-driven UI and reliability pass`). No further push is implied by this document.
+GitHub was updated once by explicit user command after this evidence bundle was assembled: `origin/master` points to `6b5d14e` (`Make backend casing locale independent`). No further push is implied by this document.

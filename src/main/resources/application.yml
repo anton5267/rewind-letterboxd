@@ -52,6 +52,10 @@ management:
         enabled: true
 
 app:
+  cors:
+    # Local Vite origins. Production Compose overrides this with an explicit
+    # comma-separated allowlist; empty means same-origin web/API traffic only.
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174}
   newsletter:
     delivery-interval-ms: ${NEWSLETTER_DELIVERY_INTERVAL_MS:30000}
     delivery-batch-size: ${NEWSLETTER_DELIVERY_BATCH_SIZE:50}

@@ -9,12 +9,13 @@
 - [x] Основні API-backed visual slices готові: Home, Search, Global Search, Lists, Public List, Profiles, Community, Journal, Review Details, Movie Details і mobile navigation; exact pixel parity не заявляється без Figma Editor/node export access.
 - [x] Responsive/accessibility baseline перевірено для 320/393/768/1440 px; loading/error/empty/retry, overflow, keyboard focus і bilingual UK/EN surfaces присутні в реалізованих маршрутах.
 - [x] Backend/API локально перевірені: schema V1–V31, compile, integration regression, security/contract/backup evidence і Compose runtime; production launch не заявляється.
-- [x] Поточний verified snapshot один раз запушено в `origin/master` як `75f9d26`; локальні hardening commits після цього (`e0e745b`…`76b0c74`) навмисно не пушилися.
+ - [x] Поточний verified snapshot один раз запушено в `origin/master` як `6b5d14e` (`Make backend casing locale independent`); наступні push без окремої команди не виконуються.
 - [~] Exact Figma parity: потрібен Editor або frame-level export доступ.
 - [~] Production release: потрібні реальні TMDB/SMTP secrets, VPS, domain, HTTPS, monitoring і backup/restore drill на target infrastructure.
 - [ ] Editorial content gate: потрібні реальні UK/EN articles, covers, audio URLs і published dates.
 - [x] Production container hardening: API і nginx web мають read-only rootfs; nginx cache/runtime state винесені в tmpfs, а production validator перевіряє цю форму. Compose shape green з example env; secure env залишається зовнішнім blocker.
-- [x] Locale-stable normalization sweep: social platforms, default locale settings, movie search terms and public-list tag matching use `Locale.ROOT`, independent of JVM default locale; backend compile green, API unchanged, local follow-up не пушився.
+ - [x] Locale-stable normalization sweep: social platforms, default locale settings, movie search terms and public-list tag matching use `Locale.ROOT`, independent of JVM default locale; backend compile green, API unchanged, local follow-up не пушився.
+ - [x] Production origin/media hardening: CORS origins are env-driven with same-origin-safe production defaults, production validation accepts only HTTPS origins, and nginx CSP explicitly permits HTTPS journal audio; API contracts and local development origins remain unchanged.
 
 ## Historical implementation log
 
@@ -23,7 +24,7 @@
 - [x] **19.10.2026, admin external media URL validation:** movie create/update requests reject non-HTTP(S) trailer URLs and journal article audio URLs before persistence; poster/backdrop behavior is unchanged. Backend compile green; local follow-up не пушився.
 - [x] **19.10.2026, production SMTP guard:** production validator вимагає SMTP credentials при `MAIL_SMTP_AUTH=true`, example і runbook узгоджені; реальні secrets не додавалися. PowerShell parse і `git diff --check` green; local follow-up не пушився.
 - [x] **19.10.2026, localized Journal archive labels:** archive month navigation використовує locale-aware month/year labels для UK/EN замість raw `YYYY-MM`; invalid values мають safe fallback. API не змінювався, TypeScript green; local follow-up не пушився.
-- [x] **19.10.2026, explicit GitHub snapshot:** verified state один раз запушено в `origin/master` (`75f9d26`, `Complete Figma-driven UI and reliability pass`); наступні push потребують окремої команди.
+- [x] **19.10.2026, explicit GitHub snapshot:** verified state один раз запушено в `origin/master` (`6b5d14e`, `Make backend casing locale independent`); наступні push потребують окремої команди.
 - [x] **19.10.2026, Movie Details mobile header offset:** 320–700px hero тепер стартує після фактичного 64px fixed header без зайвого чорного gap; bottom navigation-safe spacing збережено. API/route contract не змінювався; CSS visual audit green.
 - [x] **19.10.2026, resilient backdrop surfaces:** Movie Details, Public List і Review Details використовують `ResilientImage` для backdrop layers, тому missing/failed external image зберігає gradient hero fallback; API, layout і Figma visual direction не змінювалися. TypeScript/Vite green (**183 modules**), Chrome smoke affected real routes green.
 - [x] **19.10.2026, shared resilient image renderer:** `ResilientImage` централізує runtime image-error fallback для Movie Details, Public List/list stacks, Person, Review Details, Search, Global Search і Home; сторінкові fallback styles збережені, API/assets не змінювалися. `npx tsc --noEmit` exit 0 і Vite build green (**183 modules**); targeted E2E не запускався.

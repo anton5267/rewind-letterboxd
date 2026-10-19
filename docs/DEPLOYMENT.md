@@ -20,7 +20,7 @@ openssl rand -base64 36       # MYSQL_ROOT_PASSWORD
 openssl rand -base64 64       # JWT_SECRET
 ```
 
-Set `PUBLIC_BASE_URL=https://your-domain`, real SMTP values, and `HTTP_PORT=127.0.0.1:8088`. The web container is intentionally loopback-only so the host HTTPS proxy owns ports 80/443.
+Set `PUBLIC_BASE_URL=https://your-domain`, real SMTP values, and `HTTP_PORT=127.0.0.1:8088`. Leave `APP_CORS_ALLOWED_ORIGINS` empty when nginx serves the frontend and API from the same public origin. If the frontend is hosted separately, set a comma-separated list of HTTPS origins without paths. The web container is intentionally loopback-only so the host HTTPS proxy owns ports 80/443.
 
 TMDB synchronization is disabled by default. Enable the provider only after setting a newly rotated `TMDB_API_KEY`; enable the scheduled crawl separately and keep its batch/interval bounded:
 
