@@ -34,7 +34,7 @@
 - **Admin moderation row layout:** shared admin comment/review/list/conversation/moderation rows now use the same content/actions structure and stack action controls on narrow screens; mutation semantics, labels and API contracts remain unchanged.
 - **Figma snapshot workflow:** `scripts/sync-figma.ps1` can create a local REST snapshot for a selected file/node and PNG through a hidden PAT prompt; output lives in ignored `figma/`, so design data and credentials never enter source control.
 - **Admin notifications mobile layout:** notification metadata and read/delete actions now use separate responsive containers; filter controls become full-width below 520px without changing notification API or mutation semantics.
-- **Auth input contract:** register, login and forgot-password email/username values are trimmed in the browser, request DTOs and service boundary; password values are never transformed, auth forms mirror the existing password bounds and autocomplete semantics, and the auth API shape is unchanged.
+- **Auth input contract:** register, login and forgot-password email/username values are trimmed in the browser, API client, request DTOs and service boundary; password values are never transformed, auth forms mirror the existing password bounds and autocomplete semantics, and the auth API shape is unchanged.
 - Усі ці зміни зберігаються локально окремими commit-ами, API/schema не розширювалися, новий push не виконується без прямої команди користувача.
 - GitHub: за прямою командою користувача verified стан один раз запушено в `origin/master` — commit `6b5d14e` (`Make backend casing locale independent`); наступні push без окремої команди не виконувати.
 
