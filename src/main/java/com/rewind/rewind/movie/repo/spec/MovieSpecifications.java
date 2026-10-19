@@ -5,13 +5,14 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Locale;
 
 public class MovieSpecifications {
 
     public static Specification<Movie> titleContains(String q) {
         return (root, query, cb) -> {
             if (q == null || q.isBlank()) return cb.conjunction();
-            String like = "%" + q.trim().toLowerCase() + "%";
+            String like = "%" + q.trim().toLowerCase(Locale.ROOT) + "%";
             return cb.like(cb.lower(root.get("title")), like);
         };
     }
@@ -45,7 +46,7 @@ public class MovieSpecifications {
             if (tag == null || tag.isBlank()) return cb.conjunction();
             query.distinct(true);
             var genresJoin = root.join("genres");
-            return cb.like(cb.lower(genresJoin.get("name")), "%" + tag.trim().toLowerCase() + "%");
+            return cb.like(cb.lower(genresJoin.get("name")), "%" + tag.trim().toLowerCase(Locale.ROOT) + "%");
         };
     }
 

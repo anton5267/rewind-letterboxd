@@ -22,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Service
@@ -125,7 +126,7 @@ public class MovieListService {
                 ? normalizedQuery == null
                     ? lists.findPublicCatalog(ListType.CUSTOM, pageable)
                     : lists.findPublicCatalogByQuery(ListType.CUSTOM, normalizedQuery, pageable)
-                : lists.findPublicByTag(ListType.CUSTOM, tag.trim().toLowerCase(), pageable);
+                : lists.findPublicByTag(ListType.CUSTOM, tag.trim().toLowerCase(Locale.ROOT), pageable);
         return toPublicCards(source);
     }
 

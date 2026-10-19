@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 @Service
@@ -48,7 +49,7 @@ public class AdminSiteSettingsService {
         if ((key.equals("maintenance_mode") || key.equals("journal_enabled")) && !value.equalsIgnoreCase("true") && !value.equalsIgnoreCase("false")) {
             throw new IllegalArgumentException("Boolean site setting must be true or false");
         }
-        if (key.equals("default_locale") && !Set.of("uk", "en").contains(value.toLowerCase())) {
+        if (key.equals("default_locale") && !Set.of("uk", "en").contains(value.toLowerCase(Locale.ROOT))) {
             throw new IllegalArgumentException("Default locale must be uk or en");
         }
     }
