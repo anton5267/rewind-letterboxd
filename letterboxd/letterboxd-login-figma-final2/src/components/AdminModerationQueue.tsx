@@ -99,7 +99,7 @@ export default function AdminModerationQueue() {
     {loading ? <p role="status">{t("loading")}</p> : !error && data && <>
       {data.content.length === 0 ? <p>{t("noModerationItems")}</p> : <ul className={styles.list}>{data.content.map(item => <li className={styles.row} key={itemKey(item)}>
         <label><input type="checkbox" disabled={busy} checked={selected.includes(itemKey(item))} onChange={() => toggle(item)} /> {item.type === "REVIEW" ? t("moderationReview") : t("moderationComment")} · {item.subject} · {item.username}: {item.content}</label>{" "}
-        <button type="button" aria-busy={mutating} disabled={busy} onClick={() => void hide([item], false)}>{mutating ? t("loading") : t("hideComment")}</button>
+        <button type="button" aria-busy={mutating} disabled={busy} onClick={() => void hide([item], false)}>{mutating ? t("loading") : item.type === "REVIEW" ? t("hideReview") : t("hideComment")}</button>
       </li>)}</ul>}
       <nav className={styles.pagination} aria-label={t("moderationQueue")}>
         <button type="button" disabled={busy || page === 0} onClick={() => changePage(page - 1)}>{t("previous")}</button>

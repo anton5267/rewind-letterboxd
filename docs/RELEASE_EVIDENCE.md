@@ -54,4 +54,4 @@ The local evidence and local production wiring audit are complete, but the follo
 - execute production Compose, scheduler, monitoring, mail delivery and backup/restore checks on the target infrastructure;
 - obtain Figma Editor access or exact frame-level export access for pixel-level parity claims.
 
-GitHub was not updated, committed or pushed during this evidence refresh.
+GitHub was updated once by explicit user command after this evidence bundle was assembled: `origin/master` points to `75f9d26` (`Complete Figma-driven UI and reliability pass`). No further push is implied by this document.
