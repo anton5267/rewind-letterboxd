@@ -9,16 +9,17 @@
 - [x] Основні API-backed visual slices готові: Home, Search, Global Search, Lists, Public List, Profiles, Community, Journal, Review Details, Movie Details і mobile navigation; exact pixel parity не заявляється без Figma Editor/node export access.
 - [x] Responsive/accessibility baseline перевірено для 320/393/768/1440 px; loading/error/empty/retry, overflow, keyboard focus і bilingual UK/EN surfaces присутні в реалізованих маршрутах.
 - [x] Backend/API локально перевірені: schema V1–V31, compile, integration regression, security/contract/backup evidence і Compose runtime; production launch не заявляється.
- - [x] Поточний verified snapshot один раз запушено в `origin/master` як `6b5d14e` (`Make backend casing locale independent`); наступні push без окремої команди не виконуються.
+- [x] Поточний verified snapshot один раз запушено в `origin/master` як `6b5d14e` (`Make backend casing locale independent`); наступні push без окремої команди не виконуються.
 - [~] Exact Figma parity: потрібен Editor або frame-level export доступ.
 - [~] Production release: потрібні реальні TMDB/SMTP secrets, VPS, domain, HTTPS, monitoring і backup/restore drill на target infrastructure.
 - [ ] Editorial content gate: потрібні реальні UK/EN articles, covers, audio URLs і published dates.
 - [x] Production container hardening: API і nginx web мають read-only rootfs; nginx cache/runtime state винесені в tmpfs, а production validator перевіряє цю форму. Compose shape green з example env; secure env залишається зовнішнім blocker.
- - [x] Locale-stable normalization sweep: social platforms, default locale settings, movie search terms and public-list tag matching use `Locale.ROOT`, independent of JVM default locale; backend compile green, API unchanged, local follow-up не пушився.
- - [x] Production origin/media hardening: CORS origins are env-driven with same-origin-safe production defaults, production validation accepts only HTTPS origins, and nginx CSP explicitly permits HTTPS journal audio; API contracts and local development origins remain unchanged.
+- [x] Locale-stable normalization sweep: social platforms, default locale settings, movie search terms and public-list tag matching use `Locale.ROOT`, independent of JVM default locale; backend compile green, API unchanged, local follow-up не пушився.
+- [x] Production origin/media hardening: CORS origins are env-driven with same-origin-safe production defaults, production validation accepts only HTTPS origins, and nginx CSP explicitly permits HTTPS journal audio; API contracts and local development origins remain unchanged.
 
 ## Historical implementation log
 
+- [x] **19.10.2026, frontend dead-state cleanup:** unused `Home` import and unused private Profile social-links state removed; social-link save reuses one normalization helper. Strict TypeScript unused-symbol check passes; API and visual behavior unchanged, local follow-up не пушився.
 - [x] **19.10.2026, external URL guard build evidence:** після shared URL guard `npx tsc --noEmit` і Vite build green; latest build — **184 modules**, entry **310.05 kB**. Full E2E не запускався для цього hardening pass; local follow-up не пушився.
 - [x] **19.10.2026, defensive external URL guard:** trailer/audio/social-link values are rendered only when they are valid HTTP(S) URLs; invalid legacy values use existing localized fallback/empty states. API unchanged, TypeScript green; local follow-up не пушився.
 - [x] **19.10.2026, admin external media URL validation:** movie create/update requests reject non-HTTP(S) trailer URLs and journal article audio URLs before persistence; poster/backdrop behavior is unchanged. Backend compile green; local follow-up не пушився.

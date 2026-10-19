@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/axios";
 import ResilientImage from "../components/ResilientImage";
-import { searchMovies, type MovieCard, type MoviePage } from "../api/search.api";
+import { searchMovies, type MovieCard } from "../api/search.api";
 import { getPopularReviewers, type PopularReviewer } from "../api/social.api";
 import { getJournal, type JournalArticle } from "../api/journal.api";
 import { editorialText, localizeJournalCategory, useLocale } from "../i18n";

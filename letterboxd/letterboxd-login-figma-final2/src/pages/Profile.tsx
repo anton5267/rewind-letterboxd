@@ -63,7 +63,6 @@ export default function Profile() {
   const [newsletterBusy, setNewsletterBusy] = useState(false);
   const [newsletterRetry, setNewsletterRetry] = useState<boolean | null>(null);
   const [newsletterSaveError, setNewsletterSaveError] = useState(false);
-  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [socialLinkValues, setSocialLinkValues] = useState<Record<string, string>>({ website: "", instagram: "", tiktok: "", letterboxd: "" });
   const [socialLinksLoading, setSocialLinksLoading] = useState(false);
   const [socialLinksError, setSocialLinksError] = useState(false);
@@ -77,7 +76,6 @@ export default function Profile() {
   const socialLinkLabelKeys: Record<string, string> = { website: "socialWebsite", instagram: "socialInstagram", tiktok: "socialTiktok", letterboxd: "socialLetterboxd" };
 
   const applySocialLinks = (data: SocialLink[]) => {
-    setSocialLinks(data);
     setSocialLinkValues({
       website: data.find(link => link.platform === "website")?.url ?? "",
       instagram: data.find(link => link.platform === "instagram")?.url ?? "",
@@ -118,7 +116,6 @@ export default function Profile() {
     let current = true;
     setSocialLinksLoading(true);
     setSocialLinksError(false);
-    setSocialLinks([]);
     getSocialLinks().then(({ data }) => {
       if (!current) return;
       applySocialLinks(data);
@@ -259,7 +256,7 @@ export default function Profile() {
     try {
       const links = Object.entries(socialLinkValues).filter(([, url]) => url.trim()).map(([platform, url]) => ({ platform, url: url.trim() }));
       const { data } = await updateSocialLinks(links);
-      setSocialLinks(data);
+      applySocialLinks(data);
       setMessage(t("socialLinksSaved"));
     } catch { setError(t("socialLinksSaveError")); }
     finally { setSocialLinksBusy(false); }
