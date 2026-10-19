@@ -20,6 +20,8 @@
 
 ## Historical implementation log
 
+- [x] **19.10.2026, review-like visibility symmetry:** unlike uses the same visible-review guard as the other review-like operations; hidden/inactive review mutations are rejected consistently, API contract unchanged, local follow-up не пушився.
+- [x] **19.10.2026, CSRF cookie parsing hardening:** shared Axios cookie parsing now tolerates malformed encoded values without throwing; API behavior unchanged, TypeScript compile green, local follow-up не пушився.
 - [x] **19.10.2026, frontend dead-state cleanup:** unused `Home` import and unused private Profile social-links state removed; social-link save reuses one normalization helper. Strict TypeScript unused-symbol check passes; API and visual behavior unchanged, local follow-up не пушився.
 - [x] **19.10.2026, external URL guard build evidence:** після shared URL guard `npx tsc --noEmit` і Vite build green; latest build — **184 modules**, entry **310.05 kB**. Full E2E не запускався для цього hardening pass; local follow-up не пушився.
 - [x] **19.10.2026, defensive external URL guard:** trailer/audio/social-link values are rendered only when they are valid HTTP(S) URLs; invalid legacy values use existing localized fallback/empty states. API unchanged, TypeScript green; local follow-up не пушився.

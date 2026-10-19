@@ -35,6 +35,7 @@ public class ReviewLikeService {
     @Transactional
     public void unlike(String email, Long reviewId) {
         var user = users.findByEmail(email).orElseThrow();
+        visibleReview(reviewId);
         likes.deleteByReviewIdAndUserId(reviewId, user.getId());
     }
 

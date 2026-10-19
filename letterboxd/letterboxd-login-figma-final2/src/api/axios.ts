@@ -8,7 +8,12 @@ let refreshRequest: Promise<void> | null = null;
 
 function cookie(name: string) {
   const entry = document.cookie.split("; ").find(part => part.startsWith(`${name}=`));
-  return entry ? decodeURIComponent(entry.slice(name.length + 1)) : null;
+  if (!entry) return null;
+  try {
+    return decodeURIComponent(entry.slice(name.length + 1));
+  } catch {
+    return null;
+  }
 }
 
 async function ensureCsrf() {
