@@ -1,6 +1,9 @@
 package com.rewind.rewind.movie.dto.admin;
 
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -8,14 +11,23 @@ import java.time.LocalDate;
 
 public class UpdateMovieRequest {
 
+    @Size(max = 255)
     private String title;
+    @Size(max = 20)
     private String imdbId;
+    @Positive
     private Integer durationMinutes;
     private LocalDate releaseDate;
+    @Size(max = 10)
     private String ageRating;
+    @DecimalMin("0.0")
+    @DecimalMax("10.0")
     private BigDecimal rating;
+    @Size(max = 10000)
     private String shortPlot;
+    @Size(max = 255)
     private String photoUrl;
+    @Size(max = 255)
     private String backdropUrl;
     @Size(max = 255)
     @Pattern(regexp = "https?://\\S+", message = "Trailer URL must use http or https")

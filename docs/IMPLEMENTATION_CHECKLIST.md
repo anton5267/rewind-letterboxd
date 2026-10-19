@@ -11,6 +11,7 @@
 - [x] Auth limiter lifecycle hardening: expired in-memory credential/reset windows are periodically evicted to avoid retaining stale IP/route keys in a long-running node; request contract unchanged, backend compile green, local follow-up не пушився.
 - [x] List input contract hardening: reorder IDs are bounded and positive/non-null; add-item movie/position, conversation target and create/update list text fields have explicit validation. Successful API shapes unchanged; Maven compile green; local follow-up не пушився.
 - [x] Media input consistency: admin trailer/audio validators reject whitespace-tainted HTTP(S) values, and trailer length matches the persisted movie column; frontend/backend URL guards use the same invariant.
+- [x] Admin movie input bounds: create/update requests validate persisted string lengths, positive duration, rating `0..10`, age-rating length and short-plot size before database writes; API shape unchanged, backend compile green.
 - [x] Read-only transaction boundaries: Profile and Review DTO-building reads explicitly use `@Transactional(readOnly = true)` so lazy relation access is scoped to the service operation rather than Open-Session-in-View behavior.
 - [x] Notification actor visibility: notification history and SSE keep events for deactivated actors but omit their public identity fields, matching the existing activity visibility rule.
 - [x] Activity list visibility: activity DTOs expose list metadata only for currently public lists with active owners, including activities created before a list was made private.
