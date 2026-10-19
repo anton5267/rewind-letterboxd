@@ -10,8 +10,10 @@ import com.rewind.rewind.user.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -47,7 +49,10 @@ class MessageIntegrationTests {
         assertEquals(1, messages.messages(secondEmail, conversation.id(), 0, 20).getTotalElements());
         assertEquals(1, messages.unreadCount(secondEmail));
         assertEquals(0, messages.unreadCount(firstEmail));
-        assertThrows(IllegalArgumentException.class, () -> messages.messages(outsiderEmail, conversation.id(), 0, 20));
+        ResponseStatusException notFound = assertThrows(ResponseStatusException.class,
+                () -> messages.messages(outsiderEmail, conversation.id(), 0, 20));
+        assertEquals(HttpStatus.NOT_FOUND, notFound.getStatusCode());
+        assertEquals("Conversation not found", notFound.getReason());
         messages.markRead(secondEmail, conversation.id());
         assertEquals(0, messages.unreadCount(secondEmail));
         assertNotNull(messages.messages(secondEmail, conversation.id(), 0, 20).getContent().get(0).readAt());
