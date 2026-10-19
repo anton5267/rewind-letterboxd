@@ -151,14 +151,7 @@ public class MovieListService {
     public PublicListDetailsResponse publicList(Long listId) {
         var list = visiblePublicList(listId);
         var movies = items.findAllByListId(listId).stream()
-                .sorted((left, right) -> {
-                    Integer a = left.getPosition();
-                    Integer b = right.getPosition();
-                    if (a == null && b == null) return 0;
-                    if (a == null) return 1;
-                    if (b == null) return -1;
-                    return a.compareTo(b);
-                })
+                .sorted(this::compareListItems)
                 .map(item -> new MovieCardResponse(item.getMovie().getId(), item.getMovie().getTitle(),
                         item.getMovie().getReleaseDate(), item.getMovie().getRating(), item.getMovie().getPhotoUrl()))
                 .toList();
@@ -228,14 +221,7 @@ public class MovieListService {
                 .orElseThrow(() -> new IllegalArgumentException("List not found"));
 
         return items.findAllByListId(list.getId()).stream()
-                .sorted((a, b) -> {
-                    Integer pa = a.getPosition();
-                    Integer pb = b.getPosition();
-                    if (pa == null && pb == null) return 0;
-                    if (pa == null) return 1;
-                    if (pb == null) return -1;
-                    return pa.compareTo(pb);
-                })
+                .sorted(this::compareListItems)
                 .map(li -> new ListItemResponse(
                         li.getId(),
                         li.getPosition(),
@@ -292,6 +278,18 @@ public class MovieListService {
 
     private List<String> tagNames(MovieList list) {
         return list.getTags().stream().map(tag -> tag.getName()).toList();
+    }
+
+    private int compareListItems(ListItem left, ListItem right) {
+        Integer leftPosition = left.getPosition();
+        Integer rightPosition = right.getPosition();
+        if (leftPosition == null && rightPosition != null) return 1;
+        if (leftPosition != null && rightPosition == null) return -1;
+        if (leftPosition != null) {
+            int byPosition = leftPosition.compareTo(rightPosition);
+            if (byPosition != 0) return byPosition;
+        }
+        return Long.compare(left.getId(), right.getId());
     }
 
     private Page<PublicListCardResponse> toPublicCards(Page<MovieList> source) {

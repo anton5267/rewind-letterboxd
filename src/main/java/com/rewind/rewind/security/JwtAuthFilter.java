@@ -60,9 +60,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             var user = userOpt.get();
 
-            // ✅ Якщо ти використовуєш isActive (деактивація)
-            // (Якщо поле називається інакше — скажу нижче що замінити)
-            if (user.getIsActive() != null && !user.getIsActive()) {
+            // Fail closed for a missing or disabled account flag.
+            if (!Boolean.TRUE.equals(user.getIsActive())) {
                 SecurityContextHolder.clearContext();
                 chain.doFilter(request, response);
                 return;

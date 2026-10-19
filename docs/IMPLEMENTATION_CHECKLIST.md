@@ -7,6 +7,7 @@
 Станом на **19.10.2026** для рішень про готовність використовуються цей блок, `PLAN.md`, верхній verified snapshot у `PROGRESS.md` та [`RELEASE_EVIDENCE.md`](RELEASE_EVIDENCE.md). Записи під заголовком historical log — це трасування роботи, а не список невиконаних поточних задач.
 
 - [x] Profile/media URL hardening: profile/admin avatar inputs and social-link schemes are server-validated; shared image rendering rejects non-HTTP(S) legacy values before creating `<img>` requests, and Journal cards use the same valid-audio guard as article detail. API shape unchanged; local follow-up не пушився.
+- [x] Social visibility and list-order hardening: JWT rejects missing/disabled account activity, profile/following activity queries filter deactivated authors before pagination, and list preview/detail/editor ordering is deterministic for null or equal positions via item ID. API/schema unchanged; Maven compile green; local follow-up не пушився.
 - [x] Read-only transaction boundaries: Profile and Review DTO-building reads explicitly use `@Transactional(readOnly = true)` so lazy relation access is scoped to the service operation rather than Open-Session-in-View behavior.
 - [x] Notification actor visibility: notification history and SSE keep events for deactivated actors but omit their public identity fields, matching the existing activity visibility rule.
 - [x] Activity list visibility: activity DTOs expose list metadata only for currently public lists with active owners, including activities created before a list was made private.

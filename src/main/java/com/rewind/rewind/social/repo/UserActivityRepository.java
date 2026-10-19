@@ -11,8 +11,15 @@ import org.springframework.data.repository.query.Param;
 import java.util.Collection;
 
 public interface UserActivityRepository extends JpaRepository<UserActivity, Long> {
-    Page<UserActivity> findAllByUserIdOrderByCreatedAtDescIdDesc(Long userId, Pageable pageable);
-    Page<UserActivity> findAllByUserIdInOrderByCreatedAtDescIdDesc(Collection<Long> userIds, Pageable pageable);
+    @Query("select a from UserActivity a where a.userId = :userId and exists "
+            + "(select u.id from User u where u.id = a.userId and u.isActive = true) "
+            + "order by a.createdAt desc, a.id desc")
+    Page<UserActivity> findAllByUserIdOrderByCreatedAtDescIdDesc(@Param("userId") Long userId, Pageable pageable);
+
+    @Query("select a from UserActivity a where a.userId in :userIds and exists "
+            + "(select u.id from User u where u.id = a.userId and u.isActive = true) "
+            + "order by a.createdAt desc, a.id desc")
+    Page<UserActivity> findAllByUserIdInOrderByCreatedAtDescIdDesc(@Param("userIds") Collection<Long> userIds, Pageable pageable);
     @Query("select a from UserActivity a where a.type = :type and exists "
             + "(select u.id from User u where u.id = a.userId and u.isActive = true) "
             + "order by a.createdAt desc, a.id desc")
