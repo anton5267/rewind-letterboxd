@@ -1,5 +1,7 @@
 package com.rewind.rewind.movie.dto.admin;
 
+import jakarta.validation.constraints.Pattern;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -14,6 +16,7 @@ public class UpdateMovieRequest {
     private String shortPlot;
     private String photoUrl;
     private String backdropUrl;
+    @Pattern(regexp = "https?://.+", message = "Trailer URL must use http or https")
     private String trailerUrl;
 
     public String getTitle() { return title; }

@@ -1,6 +1,7 @@
 package com.rewind.rewind.movie.dto.admin;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -20,6 +21,7 @@ public class CreateMovieRequest {
     private String shortPlot;
     private String photoUrl;
     private String backdropUrl;
+    @Pattern(regexp = "https?://.+", message = "Trailer URL must use http or https")
     private String trailerUrl;
 
     public String getTitle() { return title; }
