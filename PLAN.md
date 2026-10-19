@@ -29,6 +29,7 @@
 - **Async UI state safety:** User Lists remove/edit mutations use functional state updates, so late responses do not overwrite newer local state.
 - **Malformed request safety:** query/path type mismatches and missing required query parameters are normalized to structured HTTP 400 responses through the shared API exception handler.
 - **Editorial form contract:** Admin Articles normalizes blank optional excerpt/cover/audio fields to `null` and mirrors persisted length limits, so optional podcast media remains compatible with backend validation.
+- **Profile identity contract:** optional `displayName` may be cleared explicitly, while non-empty values remain 2–60 characters with a nonblank guard; the UI and backend now agree on that behavior.
 - Усі ці зміни зберігаються локально окремими commit-ами, API/schema не розширювалися, новий push не виконується без прямої команди користувача.
 - GitHub: за прямою командою користувача verified стан один раз запушено в `origin/master` — commit `6b5d14e` (`Make backend casing locale independent`); наступні push без окремої команди не виконувати.
 

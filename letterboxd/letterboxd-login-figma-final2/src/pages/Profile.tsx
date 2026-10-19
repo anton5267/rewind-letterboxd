@@ -191,7 +191,7 @@ export default function Profile() {
     setError("");
     try {
       if (avatarUrl && !/^https?:\/\//i.test(avatarUrl)) { setError(t("invalidAvatarUrl")); return; }
-      const { data } = await updateProfile({ displayName, avatarUrl });
+      const { data } = await updateProfile({ displayName: displayName.trim(), avatarUrl: avatarUrl.trim() });
       setProfile(data);
       setMessage(t("nameSaved"));
     } catch { setError(t("saveNameError")); }
@@ -312,7 +312,7 @@ export default function Profile() {
       <form className={styles.form} onSubmit={saveName} aria-busy={nameBusy}>
         <h2>{t("profileIdentity")}</h2>
         <label htmlFor="profile-display-name">{t("displayName")}</label>
-        <input id="profile-display-name" value={displayName} minLength={2} maxLength={60} onChange={e => setDisplayName(e.target.value)} />
+        <input id="profile-display-name" value={displayName} minLength={displayName.trim() ? 2 : undefined} maxLength={60} onChange={e => setDisplayName(e.target.value)} />
         <label htmlFor="profile-avatar-url">{t("avatarUrl")}</label>
         <input id="profile-avatar-url" type="url" value={avatarUrl} maxLength={255} placeholder="https://…" onChange={e => setAvatarUrl(e.target.value)} />
         <button className={styles.primaryButton} type="submit" disabled={nameBusy}>{nameBusy ? t("saving") : t("save")}</button>

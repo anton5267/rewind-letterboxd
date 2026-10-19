@@ -5,7 +5,8 @@ import jakarta.validation.constraints.Size;
 
 public class ProfileUpdateRequest {
 
-    @Size(min = 2, max = 60)
+    @Size(max = 60)
+    @Pattern(regexp = "^$|(?=.{2,60}$)(?=.*\\S).*$", message = "Display name must be empty or at least 2 non-blank characters")
     private String displayName;
 
     @Size(max = 255)
