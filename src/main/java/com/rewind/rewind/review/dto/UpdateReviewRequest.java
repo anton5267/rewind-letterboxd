@@ -2,11 +2,13 @@ package com.rewind.rewind.review.dto;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class UpdateReviewRequest {
 
     @Size(min = 1, max = 5000)
+    @Pattern(regexp = ".*\\S.*", message = "content must not be blank")
     private String content; // nullable
 
     @Min(1)

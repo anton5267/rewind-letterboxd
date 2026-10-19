@@ -12,6 +12,7 @@ import java.time.LocalDate;
 public class UpdateMovieRequest {
 
     @Size(max = 255)
+    @Pattern(regexp = ".*\\S.*", message = "title must not be blank")
     private String title;
     @Size(max = 20)
     private String imdbId;
