@@ -2,6 +2,7 @@
 
 Цей файл — короткий навігатор по великому плану. Детальні докази, дати, команди й відкриті ризики залишаються у [PROGRESS.md](PROGRESS.md). Позначка `[x]` ставиться тільки після коду, тесту й наскрізної перевірки; `[~]` означає частково виконаний етап.
 
+- [x] **19.10.2026, defensive external URL guard:** trailer/audio/social-link values are rendered only when they are valid HTTP(S) URLs; invalid legacy values use existing localized fallback/empty states. API unchanged, TypeScript green; local follow-up не пушився.
 - [x] **19.10.2026, admin trailer URL validation:** movie create/update requests reject non-HTTP(S) trailer URLs before persistence; poster/backdrop behavior is unchanged. Backend compile green; local follow-up не пушився.
 - [x] **19.10.2026, production SMTP guard:** production validator вимагає SMTP credentials при `MAIL_SMTP_AUTH=true`, example і runbook узгоджені; реальні secrets не додавалися. PowerShell parse і `git diff --check` green; local follow-up не пушився.
 - [x] **19.10.2026, localized Journal archive labels:** archive month navigation використовує locale-aware month/year labels для UK/EN замість raw `YYYY-MM`; invalid values мають safe fallback. API не змінювався, TypeScript green; local follow-up не пушився.

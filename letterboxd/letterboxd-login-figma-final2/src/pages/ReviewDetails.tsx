@@ -4,6 +4,7 @@ import { getReviewDetails, getReviewLikeStatus, likeReview, type ReviewDetails a
 import ResilientImage from "../components/ResilientImage";
 import { useAuth } from "../context/AuthContext";
 import { formatDateTime, useLocale } from "../i18n";
+import { safeHttpUrl } from "../utils/externalUrl";
 import styles from "./ReviewDetails.module.css";
 
 function Initial({ value }: { value: string }) {
@@ -99,6 +100,7 @@ export default function ReviewDetails() {
   const authorName = review.author.displayName || review.author.username;
   const year = review.movie.releaseDate?.slice(0, 4);
   const meta = [year, review.movie.durationMinutes ? `${review.movie.durationMinutes} ${t("minutes")}` : null, review.movie.ageRating].filter(Boolean).join(" · ");
+  const trailerUrl = safeHttpUrl(review.movie.trailerUrl);
 
   return <main className={styles.page} aria-busy={likeStatusLoading || likeBusy}>
     <section className={styles.hero}>
@@ -132,7 +134,7 @@ export default function ReviewDetails() {
           <time dateTime={review.createdAt}>{formatDateTime(review.createdAt, lang)}</time>
         </div>
         <p className={styles.reviewText}>{review.content}</p>
-        {review.movie.trailerUrl && <a className={styles.trailer} href={review.movie.trailerUrl} target="_blank" rel="noopener noreferrer"><span aria-hidden="true">▶</span>{t("watchTrailer")}</a>}
+        {trailerUrl && <a className={styles.trailer} href={trailerUrl} target="_blank" rel="noopener noreferrer"><span aria-hidden="true">▶</span>{t("watchTrailer")}</a>}
       </article>
 
       <aside className={styles.socialPanel}>

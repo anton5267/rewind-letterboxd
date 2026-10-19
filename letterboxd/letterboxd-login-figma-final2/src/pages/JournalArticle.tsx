@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getJournalArticle, type JournalArticle as Article } from "../api/journal.api";
 import { editorialText, formatDateTime, localizeJournalCategory, useLocale } from "../i18n";
+import { safeHttpUrl } from "../utils/externalUrl";
 import styles from "./JournalArticle.module.css";
 
 export default function JournalArticle() {
@@ -37,6 +38,8 @@ export default function JournalArticle() {
     return <main className={styles.page} aria-busy={true}><h1 className={styles.stateTitle}>{t("journal")}</h1><p className={styles.status} role="status">{t("loading")}</p></main>;
   }
 
+  const audioUrl = safeHttpUrl(article.audioUrl);
+
   return (
     <main className={styles.page}>
       <article className={styles.article}>
@@ -45,10 +48,10 @@ export default function JournalArticle() {
         <h1>{editorialText(article.title, t("untitledArticle"))}</h1>
         <div className={styles.meta}>
           {article.publishedAt && <time dateTime={article.publishedAt}>{formatDateTime(article.publishedAt, lang)}</time>}
-          {article.audioUrl && <span>{t("podcastAudio")}</span>}
+          {audioUrl && <span>{t("podcastAudio")}</span>}
         </div>
         {article.excerpt?.trim() && <p className={styles.excerpt}>{article.excerpt.trim()}</p>}
-        {article.audioUrl && <audio className={styles.audio} controls preload="metadata" src={article.audioUrl} aria-label={t("podcastAudio")}>{t("podcastAudioUnavailable")}</audio>}
+        {audioUrl && <audio className={styles.audio} controls preload="metadata" src={audioUrl} aria-label={t("podcastAudio")}>{t("podcastAudioUnavailable")}</audio>}
         <div className={styles.body}>{editorialText(article.content, t("noArticleContent"))}</div>
       </article>
     </main>

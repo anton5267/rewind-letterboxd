@@ -9,6 +9,7 @@ import { useAuth } from "../context/AuthContext";
 import { formatMovieCount, localizeActivityType, useLocale } from "../i18n";
 import ListPosterStack from "../components/ListPosterStack";
 import { toTagSlug } from "../utils/tagSlug";
+import { safeHttpUrl } from "../utils/externalUrl";
 import styles from "./PublicProfile.module.css";
 
 interface Profile {
@@ -238,6 +239,10 @@ export default function PublicProfile() {
 
   if (error) return <main className={styles.state}><div className={styles.shell}><p className={styles.alert} role="alert">{t("loadPublicProfileError")} <button type="button" onClick={() => setProfileAttempt(value => value + 1)}>{t("retry")}</button></p></div></main>;
   if (!profile) return <main className={styles.state}><div className={styles.shell}><p className={styles.loading} aria-live="polite">{t("loading")}</p></div></main>;
+  const socialLinks = profile.socialLinks.flatMap(link => {
+    const url = safeHttpUrl(link.url);
+    return url ? [{ platform: link.platform, url }] : [];
+  });
   return <main className={styles.page}>
     <div className={styles.shell}>
       <section className={styles.hero} aria-labelledby="public-profile-title">
@@ -274,7 +279,7 @@ export default function PublicProfile() {
       </ul>}
       </div>
     </section>
-    <section className={styles.section} aria-labelledby="public-profile-social-links"><h2 id="public-profile-social-links">{t("socialLinks")}</h2>{profile.socialLinks.length === 0 ? <p>{t("noSocialLinks")}</p> : <ul className={styles.socialList}>{profile.socialLinks.map(link => <li key={link.platform}><a href={link.url} target="_blank" rel="noreferrer">{link.platform}</a></li>)}</ul>}</section>
+    <section className={styles.section} aria-labelledby="public-profile-social-links"><h2 id="public-profile-social-links">{t("socialLinks")}</h2>{socialLinks.length === 0 ? <p>{t("noSocialLinks")}</p> : <ul className={styles.socialList}>{socialLinks.map(link => <li key={link.platform}><a href={link.url} target="_blank" rel="noreferrer">{link.platform}</a></li>)}</ul>}</section>
     <section className={styles.section} aria-labelledby="public-profile-collections" aria-busy={collectionLoading}>
       <h2 id="public-profile-collections">{t("profileCollections")}</h2>
       <div className={styles.tabs} role="tablist" aria-label={t("profileCollections")}>

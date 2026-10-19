@@ -1,5 +1,6 @@
 # Rewind — прогрес повного плану
 
+- [x] **19.10.2026, defensive external URL guard:** shared `safeHttpUrl` now filters legacy trailer, podcast audio and public social-link values to `http/https` before rendering; invalid legacy links fall back to the localized empty state. API contract unchanged; TypeScript green. This local follow-up remains unpushed.
 - [x] **19.10.2026, admin trailer URL validation:** movie create/update DTOs now reject non-HTTP(S) trailer URLs before persistence; poster/backdrop sources remain unchanged. Backend `mvnw.cmd -q -DskipTests compile` green. This local follow-up remains unpushed.
 - [x] **19.10.2026, production SMTP guard:** `verify-production-config.ps1` тепер вимагає реальні non-placeholder `MAIL_USERNAME` і `MAIL_PASSWORD`, коли `MAIL_SMTP_AUTH=true`; `.env.production.example` та deployment runbook узгоджені. Реальні production credentials не додавалися; PowerShell parse і `git diff --check` green. This local follow-up remains unpushed.
 - [x] **19.10.2026, localized Journal archive labels:** archive month buttons now use locale-aware `uk-UA`/`en-US` month-year formatting instead of raw `YYYY-MM`; invalid API month values retain a safe fallback. API contract and pagination are unchanged; TypeScript check green. This local follow-up remains unpushed.

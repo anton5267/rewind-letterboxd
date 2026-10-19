@@ -5,6 +5,7 @@ import ResilientImage from "../components/ResilientImage";
 import { addMovieToList, getUserLists } from "../api/lists.api";
 import { useAuth } from "../context/AuthContext";
 import { localizeGenreName, useLocale } from "../i18n";
+import { safeHttpUrl } from "../utils/externalUrl";
 import Comments from "./Comments";
 import styles from "./MovieDetails.module.css";
 
@@ -322,6 +323,7 @@ export default function MovieDetails() {
 
   const otherReviews = reviews.filter(item => item.id !== myReview?.id);
   const heroImage = movie?.backdropUrl || movie?.photoUrl;
+  const trailerUrl = safeHttpUrl(movie?.trailerUrl);
 
   if (!Number.isInteger(movieId) || movieId < 1) return <main className={styles.state}>{t("invalidMovieId")}</main>;
   return <main className={styles.page} aria-busy={loading || reviewsLoading || mutationBusy !== null}>
@@ -350,7 +352,7 @@ export default function MovieDetails() {
               <div className={styles.heroLinks}>
                 <div>
                   <h2>{t("trailer")}</h2>
-                  {movie.trailerUrl ? <a className={styles.textLink} href={movie.trailerUrl} target="_blank" rel="noopener noreferrer">{t("watchTrailer")}</a> : <p>{t("trailerUnavailable")}</p>}
+                  {trailerUrl ? <a className={styles.textLink} href={trailerUrl} target="_blank" rel="noopener noreferrer">{t("watchTrailer")}</a> : <p>{t("trailerUnavailable")}</p>}
                 </div>
                 {movie.externalRatings.length > 0 && <div className={styles.externalRatings} aria-label={t("ratings")}>
                   {movie.externalRatings.map(item => <span key={item.source}><strong>{item.source}</strong> {item.rating}</span>)}
