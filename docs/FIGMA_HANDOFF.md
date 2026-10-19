@@ -14,6 +14,8 @@
 
 Повторна спроба 19.10.2026 через `figma-design-to-code` для mobile public-list node `1480:9446` також повернула `don't have edit access` (`INVALID_ARGUMENT`, debug UUID `3e819a2d-8805-42bb-9de4-cbebcac15f5d`). Новий код не будується на неперевіреному MCP output; доступні frame references і project tokens залишаються джерелом visual alignment.
 
+Актуальне локальне evidence 19.10.2026: після завершення основної UI-роботи headed admin smoke пройшов **12/12 за 52.9s**, а backend Surefire з явними Compose credentials — **69 tests, 0 failures, 0 errors, 0 skipped** у 37 reports. Compose API/Web залишилися `running`, health/Web повернули `200`, у runtime logs за останні 20 хвилин немає `ERROR|Exception`. Це підтверджує функціональну й responsive перевірку реалізації, але не змінює статус exact Figma parity без Editor/node-level доступу.
+
 ## Безпечний локальний snapshot для Codex
 
 У репозиторії є [`scripts/sync-figma.ps1`](../scripts/sync-figma.ps1), який отримує повний Figma JSON, вибраний node та PNG через REST API. За замовчуванням він використовує основний Design-файл і node `202:729`:
@@ -30,7 +32,7 @@
 
 Скрипт запитує Personal Access Token через прихований prompt, тримає його лише в пам'яті поточного процесу й не записує в `.env`, JSON, логи або Git. Результат зберігається локально у `figma/design.json`, `figma/selected-node.json` і `figma/selected-node.png`; каталог `figma/` ігнорується Git. PAT користувач вводить локально, у чат його передавати не потрібно. Якщо Figma REST API або права токена не дозволяють читання файлу, snapshot не вважається отриманим і pixel-perfect parity не заявляється.
 
-Code/design update 19.10.2026: Home і Community розділені на незалежні API-backed surfaces — кожна секція має власні loading/error/empty/retry стани та `aria-busy`, тому visual alignment не маскує частково недоступні реальні дані. Це не змінює Figma matrix і не є заявою про pixel-perfect parity; browser/E2E verification для цього зрізу свідомо відкладено до завершення основної UI-роботи.
+Code/design update 19.10.2026: Home і Community розділені на незалежні API-backed surfaces — кожна секція має власні loading/error/empty/retry стани та `aria-busy`, тому visual alignment не маскує частково недоступні реальні дані. Це не змінює Figma matrix і не є заявою про pixel-perfect parity; після завершення основної UI-роботи browser/E2E evidence зафіксовано в актуальному verification entry вище.
 
 Того ж дня mobile Lists CSS cascade нормалізовано: `PublicLists` має один фінальний breakpoint для 320–380 px замість дубльованих правил після Figma mobile pass. Це підтримує visual alignment frame `1480:8280`, але не додає нових Figma tokens чи assets.
 
@@ -38,7 +40,7 @@ Code/design update 19.10.2026: Home і Community розділені на нез�
 
 `Community.module.css` також нормалізовано: старий light fallback block більше не перекриває Figma dark Community reference `1413:13364` / `1480:7698`; залишено один hero/card/directory cascade із доступними retry, focus і mobile rules.
 
-Після цього code/design pass production frontend build пройшов через Vite (**180 modules**, exit 0), а backend compile через `mvnw.cmd -DskipTests compile` завершився `BUILD SUCCESS`. Це підтверджує збірку, але не замінює відкладену browser/E2E visual verification.
+Після цього code/design pass production frontend build пройшов через Vite (**180 modules**, exit 0), а backend compile через `mvnw.cmd -DskipTests compile` завершився `BUILD SUCCESS`. Це був build-only checkpoint; актуальна browser/E2E та backend regression перевірка наведена вище.
 
 Фінальна повторна перевірка 18.10.2026 через `get_design_context` для `orb73jiLJnIsZNCRtJsWgS`, node `0:1`, дала той самий результат — `don't have edit access`, `INVALID_ARGUMENT`, debug UUID `db76f461-be64-4827-b9c3-0ab74cd0d7cd`. Точний design-to-code контекст і screenshot залишаються заблокованими правами Figma.
 
