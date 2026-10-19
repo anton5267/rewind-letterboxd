@@ -2,6 +2,20 @@
 
 Цей файл — короткий навігатор по великому плану. Детальні докази, дати, команди й відкриті ризики залишаються у [PROGRESS.md](PROGRESS.md). Позначка `[x]` ставиться тільки після коду, тесту й наскрізної перевірки; `[~]` означає частково виконаний етап.
 
+## Current release snapshot — authoritative
+
+Станом на **19.10.2026** для рішень про готовність використовуються цей блок, `PLAN.md`, верхній verified snapshot у `PROGRESS.md` та [`RELEASE_EVIDENCE.md`](RELEASE_EVIDENCE.md). Записи після historical log — це трасування роботи, а не список невиконаних поточних задач.
+
+- [x] Основні API-backed visual slices готові: Home, Search, Global Search, Lists, Public List, Profiles, Community, Journal, Review Details, Movie Details і mobile navigation; exact pixel parity не заявляється без Figma Editor/node export access.
+- [x] Responsive/accessibility baseline перевірено для 320/393/768/1440 px; loading/error/empty/retry, overflow, keyboard focus і bilingual UK/EN surfaces присутні в реалізованих маршрутах.
+- [x] Backend/API локально перевірені: schema V1–V31, compile, integration regression, security/contract/backup evidence і Compose runtime; production launch не заявляється.
+- [x] Поточний verified snapshot один раз запушено в `origin/master` як `75f9d26`; локальні hardening commits після цього (`e0e745b`…`76b0c74`) навмисно не пушилися.
+- [~] Exact Figma parity: потрібен Editor або frame-level export доступ.
+- [~] Production release: потрібні реальні TMDB/SMTP secrets, VPS, domain, HTTPS, monitoring і backup/restore drill на target infrastructure.
+- [ ] Editorial content gate: потрібні реальні UK/EN articles, covers, audio URLs і published dates.
+
+## Historical implementation log
+
 - [x] **19.10.2026, external URL guard build evidence:** після shared URL guard `npx tsc --noEmit` і Vite build green; latest build — **184 modules**, entry **310.05 kB**. Full E2E не запускався для цього hardening pass; local follow-up не пушився.
 - [x] **19.10.2026, defensive external URL guard:** trailer/audio/social-link values are rendered only when they are valid HTTP(S) URLs; invalid legacy values use existing localized fallback/empty states. API unchanged, TypeScript green; local follow-up не пушився.
 - [x] **19.10.2026, admin trailer URL validation:** movie create/update requests reject non-HTTP(S) trailer URLs before persistence; poster/backdrop behavior is unchanged. Backend compile green; local follow-up не пушився.
