@@ -1,0 +1,10 @@
+.page { composes: page from "./AuthShared.module.css"; }
+.card { composes: card from "./AuthShared.module.css"; }
+.eyebrow { composes: eyebrow from "./AuthShared.module.css"; }
+.title { composes: title from "./AuthShared.module.css"; }
+.form { composes: form from "./AuthShared.module.css"; }
+.input { composes: input from "./AuthShared.module.css"; }
+.passwordHint { composes: passwordHint from "./AuthShared.module.css"; }
+.button { composes: button from "./AuthShared.module.css"; }
+.error { composes: error from "./AuthShared.module.css"; }
+.footer { composes: footer from "./AuthShared.module.css"; }

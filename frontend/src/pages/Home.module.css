@@ -1,0 +1,739 @@
+.page {
+  --home-gutter: 5vw;
+  min-height: 70vh;
+  padding: 80px var(--home-gutter) 48px;
+  background: var(--rewind-surface);
+  color: #f5f5f5;
+  scrollbar-color: var(--rewind-muted) transparent;
+}
+
+.hero {
+  display: flex;
+  min-height: 430px;
+  margin: 0 calc(-1 * var(--home-gutter));
+  box-sizing: border-box;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  padding: 96px 8% 84px;
+  background:
+    linear-gradient(180deg, rgba(31, 31, 31, .24), var(--rewind-surface) 92%),
+    radial-gradient(circle at 50% 20%, rgba(91, 66, 116, .45), transparent 54%),
+    linear-gradient(135deg, #151515 0%, #29212f 52%, #171717 100%);
+  text-align: center;
+}
+
+.hero > * {
+  max-width: 760px;
+}
+
+.eyebrow {
+  color: #7bdff2;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.hero h1 {
+  max-width: 820px;
+  margin: 10px auto 18px;
+  font-size: clamp(38px, 7vw, 72px);
+  line-height: 1.04;
+}
+
+.hero > p:not(.eyebrow) {
+  max-width: 600px;
+  margin-inline: auto;
+  color: #d1d1d1;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.memberHero {
+  min-height: 360px;
+  padding-block: 80px;
+}
+
+.memberHero h1 {
+  max-width: 740px;
+  font-size: clamp(24px, 3.5vw, 44px);
+  line-height: 1.18;
+}
+
+.memberHero > p:not(.eyebrow) {
+  font-size: 16px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.actions a {
+  border-radius: 7px;
+  padding: 12px 18px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.primary {
+  background: #7bdff2;
+  color: #111;
+}
+
+.secondary {
+  border: 1px solid #777;
+  color: #fff;
+}
+
+.section,
+.grid,
+.status {
+  width: min(100%, 1220px);
+  margin-inline: auto;
+}
+
+.section {
+  margin-top: 56px;
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.sectionHeading h2 {
+  margin: 0;
+  font-size: clamp(21px, 2vw, 28px);
+  letter-spacing: -.02em;
+}
+
+.sectionHeading a,
+.review a {
+  color: #7bdff2;
+}
+
+.movieRow {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(140px, 1fr));
+  gap: 18px;
+  overflow-x: auto;
+  margin-inline: -5px;
+  padding: 5px;
+  scroll-padding-inline: 5px;
+  scrollbar-width: thin;
+}
+
+.movieCard {
+  position: relative;
+  min-width: 0;
+}
+
+.movieCard a {
+  display: block;
+  color: #fff;
+  text-decoration: none;
+}
+
+.movieCard img,
+.posterFallback {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border: 1px solid #3b3b3b;
+  border-radius: 2px;
+  background: #282828;
+  object-fit: cover;
+}
+
+.posterFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.posterFallback span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.movieCard h3 {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  margin: 10px 0 4px;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+}
+
+.movieCard p {
+  margin: 0;
+  color: #bdbdbd;
+  font-size: 13px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: start;
+  margin-top: 56px;
+}
+
+.panel {
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid #333;
+  border-radius: 2px;
+  background: var(--rewind-surface-raised);
+}
+
+.reviewsPanel,
+.listsPanel {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.listCards {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 100%;
+  gap: 20px;
+  margin-inline: -5px;
+  padding: 5px 5px 10px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 5px;
+  scrollbar-width: thin;
+}
+
+.listCard {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  scroll-snap-align: start;
+}
+
+.listPosterLink { display: block; border-radius: var(--rewind-radius-lg); }
+.listCard h3 { margin: 12px 0 6px; font-size: 16px; }
+.listCard h3 a { color: #f5f5f5; text-decoration: none; }
+.listCard p { margin: 0 0 8px; color: var(--rewind-muted); font-size: 13px; }
+.listAuthor { display: flex; align-items: center; gap: 5px; color: var(--rewind-muted); font-size: 12px; }
+.listAuthor > a { display: inline-flex; min-width: 0; align-items: center; gap: 5px; color: inherit; }
+
+.stack {
+  display: grid;
+  gap: 14px;
+}
+
+.journalCard {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  min-width: 0;
+  min-height: 180px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #282828;
+}
+
+.journalCoverLink {
+  position: relative;
+  display: block;
+  min-height: 180px;
+  background: #303030;
+}
+
+.journalCover,
+.journalCoverFallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.journalCoverFallback {
+  display: grid;
+  place-items: center;
+  color: #d4a85f;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.journalCopy {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 18px;
+  overflow-wrap: anywhere;
+}
+
+.journalCopy small {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--rewind-muted);
+  font-size: 11px;
+}
+
+.journalCopy h3 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.journalCopy h3 a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.journalCopy p {
+  margin: 8px 0 0;
+  color: #a0a0a0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.journalCopy a:hover {
+  text-decoration: underline;
+}
+
+.journalReadMore {
+  display: flex;
+  align-items: flex-end;
+  align-self: flex-start;
+  min-height: 44px;
+  margin-top: auto;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.12;
+  text-decoration: none;
+}
+
+.tagCloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tagCloud a {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.review,
+.list {
+  min-width: 0;
+  border-top: 1px solid #3d3d3d;
+  padding-top: 14px;
+  overflow-wrap: anywhere;
+}
+
+.review p,
+.list p {
+  margin: 0 0 8px;
+}
+
+.reviewCard {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  align-items: start;
+  gap: 14px;
+  min-width: 0;
+  border: 1px solid #3d3d3d;
+  border-radius: var(--rewind-radius-lg);
+  padding: 14px;
+  background: var(--rewind-surface-raised);
+  overflow-wrap: anywhere;
+}
+
+.reviewPoster {
+  display: grid;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--rewind-radius);
+  background: #282828;
+  color: #7bdff2;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.reviewPoster img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reviewBody {
+  min-width: 0;
+}
+
+.reviewHeading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.reviewHeading h3 {
+  min-width: 0;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+.reviewHeading h3 a {
+  color: #f5f5f5;
+  text-decoration: none;
+}
+
+.reviewRating {
+  flex: 0 0 auto;
+  color: var(--rewind-gold);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.reviewIdentity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin-block: 6px 8px;
+  font-size: 11px;
+}
+
+.reviewIdentity > a {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+}
+
+.reviewIdentity,
+.reviewIdentity a,
+.review small,
+.list small {
+  color: #a0a0a0;
+}
+
+.reviewAvatar,
+.reviewAvatarFallback {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.reviewAvatarFallback {
+  display: grid;
+  place-items: center;
+  background: #315966;
+  color: #f4d28c;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.reviewText {
+  margin: 0;
+  color: #dedede;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.reviewText a {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  color: inherit;
+  font-weight: inherit;
+  text-decoration: none;
+}
+
+.preview {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.reviewText a:hover {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.list h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.status {
+  margin-top: 36px;
+  margin-bottom: 36px;
+}
+
+.status button:not([class]),
+.sectionStatus button:not([class]) {
+  margin-left: 8px;
+  border: 1px solid #7bdff2;
+  border-radius: 6px;
+  padding: 6px 10px;
+  background: transparent;
+  color: #7bdff2;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.sectionStatus {
+  margin: 0;
+  color: #ffb8bd;
+}
+
+.status button:not([class]):focus-visible,
+.sectionStatus button:not([class]):focus-visible,
+.actions a:focus-visible,
+.sectionHeading a:focus-visible,
+.movieCard a:focus-visible,
+.journalCard a:focus-visible,
+.review a:focus-visible,
+.reviewCard a:focus-visible,
+.list a:focus-visible,
+.listCards:focus-visible,
+.listCard a:focus-visible,
+.tagCloud a:focus-visible {
+  outline: 2px solid #f4d28c;
+  outline-offset: 3px;
+}
+
+.journalCoverLink:focus-visible {
+  outline-offset: -3px;
+}
+
+@media (max-width: 900px) {
+  .movieRow {
+    grid-template-columns: repeat(6, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .page {
+    --home-gutter: 16px;
+    padding-top: 64px;
+    padding-bottom: 36px;
+  }
+}
+
+@media (max-width: 680px) {
+  .hero h1 {
+    font-size: 32px;
+  }
+
+  .hero {
+    min-height: 350px;
+    padding: 56px 20px 48px;
+  }
+
+  .memberHero {
+    position: relative;
+    isolation: isolate;
+    min-height: 256px;
+    justify-content: flex-start;
+    padding: 52px 20px 32px;
+    background: none;
+  }
+
+  .memberHero::before {
+    position: absolute;
+    z-index: -1;
+    inset: -64px 0 0;
+    pointer-events: none;
+    content: "";
+    background:
+      linear-gradient(180deg, rgba(78, 78, 78, 0) 34.0625%, rgba(45, 45, 45, .3) 54.35%, rgba(31, 31, 31, .8) 81.55%, var(--rewind-surface) 100%),
+      linear-gradient(rgba(0, 0, 0, .65), rgba(0, 0, 0, .65)),
+      url("/images/home-hero-revenant.jpg") center / cover no-repeat;
+  }
+
+  .memberHero h1 {
+    max-width: 308px;
+    margin: 0 0 12px;
+    font-size: 24px;
+    line-height: 1.12;
+  }
+
+  .memberHero > p:not(.eyebrow) {
+    max-width: 239px;
+    margin-block: 0;
+    color: #a0a0a0;
+    font-size: 12px;
+    line-height: 1.12;
+  }
+
+  .section {
+    margin-top: 30px;
+    border-top: 1px solid var(--rewind-line);
+    padding-top: 8px;
+  }
+
+  .leadingSection {
+    margin-top: 0;
+  }
+
+  .grid {
+    margin-top: 32px;
+  }
+
+  .reviewsPanel,
+  .listsPanel {
+    border-top: 1px solid var(--rewind-line);
+    padding-top: 8px;
+  }
+
+  .sectionHeading {
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .sectionHeading h2 {
+    font-size: 16px;
+    line-height: 1.12;
+  }
+
+  .sectionHeading > a {
+    flex-shrink: 0;
+    font-size: 12px;
+  }
+
+  .reviewCard {
+    grid-template-columns: 79px minmax(0, 1fr);
+    min-height: 168px;
+    align-items: center;
+    gap: 14px;
+    border: 0;
+    border-radius: 20px;
+    padding: 18px;
+    background: #282828;
+  }
+
+  .reviewPoster {
+    aspect-ratio: 79 / 116;
+    border-radius: 10px;
+  }
+
+  .reviewHeading h3 {
+    font-size: 13px;
+  }
+
+  .reviewIdentity {
+    margin-block: 6px 16px;
+    font-size: 10px;
+  }
+
+  .reviewText {
+    font-size: 12px;
+    line-height: 1.12;
+  }
+
+  .reviewText a {
+    -webkit-line-clamp: 5;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .movieRow {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 15px;
+  }
+
+  .movieCard {
+    flex: 0 0 79px;
+  }
+
+  .movieCard img,
+  .posterFallback {
+    aspect-ratio: 79 / 116;
+    border: 0;
+    border-radius: 10px;
+  }
+
+  .movieCard h3,
+  .movieCard p {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .journalCard {
+    grid-template-columns: 116px minmax(0, 1fr);
+    min-height: 149px;
+  }
+
+  .journalCoverLink {
+    min-height: 149px;
+  }
+
+  .journalCopy {
+    padding: 14px 17px;
+  }
+
+  .journalCopy small {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    margin: 0;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .journalCopy h3 {
+    font-size: 16px;
+    line-height: 1.12;
+  }
+
+  .journalCopy p {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.12;
+    -webkit-line-clamp: 3;
+  }
+
+  .section,
+  .grid,
+  .status {
+    width: 100%;
+  }
+}

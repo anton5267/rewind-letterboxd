@@ -1,0 +1,193 @@
+.page {
+  min-height: 100vh;
+  padding: 112px 5% 78px;
+  background:
+    radial-gradient(circle at 84% 0%, rgba(212, 168, 95, .16), transparent 34rem),
+    var(--rewind-surface);
+  color: #fff;
+}
+
+.article {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: clamp(22px, 5vw, 58px);
+  overflow-wrap: anywhere;
+  border: 1px solid var(--rewind-line);
+  border-radius: var(--rewind-radius-lg);
+  background: rgba(41, 41, 41, .92);
+  box-shadow: 0 22px 56px rgba(0, 0, 0, .24);
+}
+
+.articleHeader {
+  display: grid;
+  grid-template-columns: minmax(260px, .86fr) minmax(0, 1.14fr);
+  align-items: center;
+  gap: clamp(28px, 5vw, 72px);
+  padding-bottom: clamp(30px, 5vw, 58px);
+  border-bottom: 1px solid var(--rewind-line);
+}
+
+.coverHero,
+.coverImage,
+.coverFallback {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1.18 / 1;
+}
+
+.coverHero {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: var(--rewind-radius-lg);
+  background:
+    linear-gradient(145deg, rgba(32, 76, 82, .8), rgba(132, 96, 55, .62)),
+    #222;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, .2);
+}
+
+.coverImage { object-fit: cover; }
+
+.coverFallback {
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, .78);
+  font-size: clamp(20px, 4vw, 42px);
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+
+.articleLead { min-width: 0; }
+.mobileToolbar { display: none; }
+
+.back {
+  display: inline-flex;
+  margin-bottom: 34px;
+  color: var(--rewind-cyan);
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.back:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.eyebrow {
+  margin: 0 0 14px;
+  color: var(--rewind-gold);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.article h1 {
+  max-width: 760px;
+  margin: 0;
+  color: #fff;
+  font-size: clamp(36px, 5.5vw, 72px);
+  line-height: .98;
+  letter-spacing: -.05em;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin-top: 22px;
+  color: var(--rewind-muted);
+  font-size: 13px;
+}
+
+.meta span { color: var(--rewind-cyan); font-weight: 700; }
+
+.excerpt {
+  max-width: 720px;
+  margin: 26px 0 0;
+  color: #d0ceca;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.audioBlock {
+  width: min(100%, 780px);
+  margin: 34px auto 0;
+}
+
+.audio {
+  display: block;
+  width: 100%;
+  color-scheme: dark;
+}
+
+.audioBlock .audioFeedback { width: 100%; margin-top: 12px; }
+
+.body {
+  max-width: 780px;
+  margin: 40px auto 0;
+  color: #e1ded9;
+  font-size: 17px;
+  line-height: 1.85;
+  white-space: pre-wrap;
+}
+
+.stateTitle {
+  width: min(100%, 900px);
+  margin: 0 auto 24px;
+  color: #fff;
+  font-size: clamp(32px, 5vw, 48px);
+}
+
+.status,
+.error {
+  width: min(100%, 900px);
+  margin: 0 auto;
+  padding: 18px;
+  border: 1px solid var(--rewind-line);
+  border-radius: var(--rewind-radius);
+}
+
+.status { background: rgba(123, 223, 242, .08); color: var(--rewind-cyan); }
+.error { background: #4a1f24; color: #ffd2d2; }
+.error button:not([class]) {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  margin-left: 8px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: var(--rewind-radius);
+  background: rgba(255, 255, 255, .08);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+}
+
+.error button:not([class]):hover { background: rgba(255, 255, 255, .16); }
+.page a:focus-visible,
+.page button:not([data-retry-button]):focus-visible { outline: 2px solid var(--rewind-gold); outline-offset: 3px; }
+
+@media (max-width: 720px) {
+  .page { padding: 84px 14px calc(96px + env(safe-area-inset-bottom)); }
+  .article { padding: 14px 14px 34px; border-radius: var(--rewind-radius-lg); }
+  .mobileToolbar { display: grid; grid-template-columns: 36px minmax(0, 1fr) 36px; align-items: center; gap: 10px; margin-bottom: 22px; color: #fff; font-size: 12px; font-weight: 800; text-align: center; }
+  .mobileToolbar > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mobileBack,
+  .mobileMore { display: grid; width: 36px; height: 36px; place-items: center; border: 1px solid rgba(255, 255, 255, .35); border-radius: 50%; background: rgba(12, 12, 16, .3); color: #fff; text-decoration: none; }
+  .mobileBack { font-size: 22px; }
+  .mobileMore { font-size: 20px; line-height: 1; }
+  .articleHeader { grid-template-columns: 1fr; gap: 26px; padding-bottom: 32px; }
+  .coverHero { max-height: 300px; }
+  .back { display: none; }
+  .article h1 { font-size: clamp(34px, 10vw, 54px); }
+  .excerpt { font-size: 16px; }
+  .audioBlock { margin-top: 28px; }
+  .body { margin-top: 30px; font-size: 16px; line-height: 1.72; }
+  .error button[class] { margin: 12px 0 0; }
+}
+
+@media (max-width: 380px) {
+  .page { padding-inline: 10px; }
+  .article { padding-inline: 10px; }
+  .articleHeader { gap: 20px; }
+  .coverHero { max-height: 230px; }
+}

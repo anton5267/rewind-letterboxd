@@ -1,0 +1,187 @@
+import { useEffect, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { getGenres, searchMovies, type Genre, type MoviePage, type MovieSearchParams } from "../api/search.api";
+import Pagination from "../components/Pagination";
+import ResilientImage from "../components/ResilientImage";
+import RetryNotice from "../components/RetryNotice";
+import { editorialText, formatMovieYear, localizeGenreName, useLocale } from "../i18n";
+import { getLastPageIndex, isPageOutOfRange } from "../utils/pagination";
+import styles from "./Search.module.css";
+
+const PAGE_SIZE = 12;
+const MAX_PAGE = 2_147_483_647; // The API binds page to a Java int.
+
+export default function Search() {
+  const { lang, path, t } = useLocale();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchKey = searchParams.toString();
+  const [query, setQuery] = useState(searchParams.get("q") ?? "");
+  const [genreId, setGenreId] = useState(searchParams.get("genreId") ?? "");
+  const [year, setYear] = useState(searchParams.get("year") ?? "");
+  const [minRating, setMinRating] = useState(searchParams.get("minRating") ?? "");
+  const [sort, setSort] = useState(searchParams.get("sort") ?? "newest");
+  const [genres, setGenres] = useState<Genre[]>([]);
+  const [genresLoading, setGenresLoading] = useState(true);
+  const [genreError, setGenreError] = useState(false);
+  const [genreRetry, setGenreRetry] = useState(0);
+  const [results, setResults] = useState<MoviePage | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const filtersFormRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    setGenreError(false);
+    setGenresLoading(true);
+    let current = true;
+    getGenres().then(({ data }) => { if (current) setGenres(data); })
+      .catch(() => { if (current) { setGenres([]); setGenreError(true); } })
+      .finally(() => { if (current) setGenresLoading(false); });
+    return () => { current = false; };
+  }, [lang, genreRetry]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchKey);
+    setQuery(params.get("q") ?? "");
+    setGenreId(params.get("genreId") ?? "");
+    setYear(params.get("year") ?? "");
+    setMinRating(params.get("minRating") ?? "");
+    setSort(params.get("sort") ?? "newest");
+
+    const requestedPage = Number(params.get("page") ?? 0);
+    const validPage = Number.isSafeInteger(requestedPage) && requestedPage >= 0 && requestedPage <= MAX_PAGE;
+    if (params.has("page") && !validPage) {
+      params.set("page", "0");
+      setSearchParams(params, { replace: true });
+      return;
+    }
+
+    const request: MovieSearchParams = {
+      q: params.get("q") || undefined,
+      genreId: params.get("genreId") || undefined,
+      year: params.get("year") || undefined,
+      minRating: params.get("minRating") || undefined,
+      sort: params.get("sort") || "newest",
+      page: requestedPage,
+      size: PAGE_SIZE,
+    };
+    let current = true;
+    setLoading(true);
+    setError("");
+    searchMovies(request).then(({ data }) => {
+      if (!current) return;
+      if (isPageOutOfRange(request.page, data.totalPages)) {
+        const next = new URLSearchParams(params);
+        next.set("page", String(getLastPageIndex(data.totalPages)));
+        setSearchParams(next, { replace: true });
+        return;
+      }
+      setResults(data);
+    })
+      .catch(() => { if (current) { setResults(null); setError(t("loadFilmsError")); } })
+      .finally(() => { if (current) setLoading(false); });
+    return () => { current = false; };
+  }, [searchKey, lang, retry]);
+
+  const applyFilters = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const filtersForm = filtersFormRef.current;
+    if (filtersForm && event.currentTarget !== filtersForm && !filtersForm.reportValidity()) return;
+    const next = new URLSearchParams();
+    if (query.trim()) next.set("q", query.trim());
+    if (genreId) next.set("genreId", genreId);
+    if (year) next.set("year", year);
+    if (minRating) next.set("minRating", minRating);
+    if (sort !== "newest") next.set("sort", sort);
+    setSearchParams(next);
+  };
+
+  const turnPage = (page: number) => {
+    const next = new URLSearchParams(searchKey);
+    next.set("page", String(page));
+    setSearchParams(next);
+  };
+
+  return <main className={styles.page} aria-labelledby="films-page-title" aria-busy={loading || genresLoading}>
+    <div className={styles.shell}>
+      <section className={`${styles.hero} ${mobileFiltersOpen ? styles.heroFiltersOpen : ""}`}>
+        <div className={styles.heroBar}>
+          <Link className={styles.mobileBack} to={path("/home")} aria-label={t("home")}>←</Link>
+          <div className={styles.heroTitle}>
+            <p className={styles.eyebrow}>{t("searchEyebrow")}</p>
+            <h1 id="films-page-title">{t("films")}</h1>
+          </div>
+          <button
+            className={styles.filterToggle}
+            type="button"
+            aria-controls="film-filter-controls"
+            aria-expanded={mobileFiltersOpen}
+            aria-label={mobileFiltersOpen ? t("close") : t("filters")}
+            onClick={() => setMobileFiltersOpen(open => !open)}
+          >
+            <span aria-hidden="true">☷</span>
+          </button>
+        </div>
+        <p className={styles.heroIntro}>{t("searchIntro")}</p>
+        <form className={styles.searchForm} onSubmit={applyFilters} aria-busy={loading}>
+          <label className={styles.queryField} htmlFor="film-search-query">{t("searchFilms")}
+            <input id="film-search-query" aria-label={t("searchFilms")} value={query} onChange={event => setQuery(event.target.value)} />
+          </label>
+          <button className={styles.submit} type="submit" aria-busy={loading}>{t("search")}</button>
+        </form>
+      </section>
+
+      <form ref={filtersFormRef} id="film-filter-controls" className={`${styles.filters} ${mobileFiltersOpen ? styles.filtersOpen : ""}`} onSubmit={applyFilters} aria-label={t("sortBy")} aria-busy={genresLoading || loading}>
+        <label htmlFor="film-search-genre">{t("genre")}
+          <select id="film-search-genre" aria-busy={genresLoading} value={genreId} disabled={genresLoading || genreError} onChange={event => setGenreId(event.target.value)}>
+            <option value="">{t("allGenres")}</option>
+            {genres.map(genre => <option key={genre.id} value={genre.id}>{localizeGenreName(genre.name, lang)}</option>)}
+          </select>
+        </label>
+        <label htmlFor="film-search-year">{t("year")}
+          <input id="film-search-year" type="number" min="1888" max="2100" value={year} onChange={event => setYear(event.target.value)} />
+        </label>
+        <label htmlFor="film-search-rating">{t("minRating")}
+          <select id="film-search-rating" value={minRating} onChange={event => setMinRating(event.target.value)}>
+            <option value="">{t("anyRating")}</option>
+            {[1, 2, 3, 4, 5].map(value => <option key={value} value={value}>{value}+</option>)}
+          </select>
+        </label>
+        <label htmlFor="film-search-sort">{t("sortBy")}
+          <select id="film-search-sort" value={sort} onChange={event => setSort(event.target.value)}>
+            <option value="newest">{t("sortNewest")}</option>
+            <option value="oldest">{t("sortOldest")}</option>
+            <option value="rating_desc">{t("sortBestRated")}</option>
+            <option value="rating_asc">{t("sortLowestRated")}</option>
+            <option value="title_asc">{t("sortTitle")}</option>
+          </select>
+        </label>
+        <button className={styles.filterSubmit} type="submit">{t("applyFilters")}</button>
+      </form>
+
+      {genreError && <RetryNotice className={styles.alert} message={t("loadGenresError")} retryLabel={t("retry")} busy={genresLoading} onRetry={() => setGenreRetry(value => value + 1)} />}
+      {loading && <p className={styles.feedback} role="status">{t("loadingFilms")}</p>}
+      {error && <RetryNotice className={styles.alert} message={error} retryLabel={t("retry")} busy={loading} onRetry={() => setRetry(value => value + 1)} />}
+      {!loading && !error && results?.content.length === 0 && <p className={styles.empty}>{t("noFilms")}</p>}
+      {!loading && !error && results && <>
+        <section className={styles.results} aria-label={t("films")}>
+          <div className={styles.resultsBar}><p role="status">{t("resultsCount")}: {results.totalElements}</p>{results.totalPages > 0 && <span>{results.number + 1} / {results.totalPages}</span>}</div>
+          <div className={styles.grid}>
+          {results.content.map(movie => {
+            const movieTitle = editorialText(movie.title, t("untitledFilm"));
+            return <article className={styles.card} key={movie.id}>
+              <Link className={styles.posterLink} to={path(`/films/${movie.id}`)} aria-label={`${movieTitle} ${t("poster")}`}>
+                <ResilientImage className={styles.poster} src={movie.photoUrl} alt={movieTitle} fallback={<span className={styles.posterFallback}>{movieTitle}</span>} />
+              </Link>
+              <h2><Link to={path(`/films/${movie.id}`)}>{movieTitle}</Link></h2>
+              <p>{formatMovieYear(movie.releaseDate, t("unknownYear"))}{movie.rating != null ? ` · ★ ${movie.rating}` : ""}</p>
+            </article>;
+          })}
+          </div>
+          <Pagination className={styles.pagination} page={results.number} totalPages={results.totalPages} label={t("pagination")} busy={loading} onPageChange={turnPage} />
+        </section>
+      </>}
+    </div>
+  </main>;
+}

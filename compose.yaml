@@ -35,8 +35,7 @@ services:
 
   api:
     build:
-      context: .
-      dockerfile: Dockerfile.api
+      context: ./backend
     environment:
       SPRING_PROFILES_ACTIVE: dev
       DB_URL: jdbc:mysql://db:3306/rewind?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
@@ -65,7 +64,7 @@ services:
 
   web:
     build:
-      context: ./letterboxd/letterboxd-login-figma-final2
+      context: ./frontend
     depends_on:
       - api
     ports:

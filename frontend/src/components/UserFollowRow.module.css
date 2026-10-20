@@ -1,0 +1,104 @@
+.row {
+  display: flex;
+  min-height: 68px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid #3b3b3b;
+  line-height: 1.5;
+}
+
+.row:last-child { border-bottom: 0; }
+
+.userLink {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+  text-decoration: none;
+}
+
+.userLink:hover strong,
+.userLink:focus-visible strong { color: var(--rewind-gold); }
+
+.avatar,
+.avatarFallback {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatarFallback {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #315d68, #9f7543);
+  color: #fff;
+  font-weight: 700;
+}
+
+.userCopy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.userCopy strong,
+.userCopy span { overflow-wrap: anywhere; }
+.userCopy strong { color: #fff; font-size: 15px; line-height: 1.25; }
+.userCopy span { color: #c2bdb6; font-size: 12px; }
+
+.action {
+  display: inline-grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: #d7d2cb;
+  cursor: pointer;
+  text-decoration: none;
+  font: inherit;
+}
+
+.glyph {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid #646464;
+  border-radius: 50%;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.action:hover:not(:disabled) .glyph,
+.action[aria-pressed="true"] .glyph { border-color: var(--rewind-gold); color: var(--rewind-gold); }
+.action:disabled { cursor: default; opacity: .65; }
+.action:focus-visible,
+.userLink:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: 2px; border-radius: 4px; }
+
+.error,
+.feedback {
+  flex: 0 0 100%;
+  min-width: 0;
+  margin: 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.error { color: #ffb8bd; }
+.feedback { color: #c2bdb6; }
+
+@media (max-width: 400px) {
+  .row { gap: 8px; }
+  .userLink { gap: 10px; }
+  .userCopy strong { font-size: 14px; }
+  .glyph { width: 22px; height: 22px; }
+}

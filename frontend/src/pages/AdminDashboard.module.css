@@ -1,0 +1,149 @@
+.page {
+  min-height: 70vh;
+  box-sizing: border-box;
+  padding: 110px clamp(16px, 5vw, 80px) 40px;
+  background: var(--rewind-black);
+  color: #fff;
+}
+
+.page > section {
+  margin-top: 32px;
+}
+
+/* Admin sections share this shell, so keep their controls on one visual contract. */
+.page button:not([data-retry-button]) {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--rewind-line);
+  border-radius: var(--rewind-radius);
+  background: var(--rewind-surface-raised);
+  color: var(--rewind-paper);
+  cursor: pointer;
+}
+
+.page button:not([data-retry-button]):hover:not(:disabled) {
+  border-color: var(--rewind-gold);
+  color: #fff;
+}
+
+.page button:not([data-retry-button]):disabled {
+  cursor: not-allowed;
+  opacity: .56;
+}
+
+.page input:disabled,
+.page select:disabled,
+.page textarea:disabled {
+  cursor: not-allowed;
+  opacity: .58;
+}
+
+.title {
+  margin: 0;
+  color: var(--rewind-paper);
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.1;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.summaryCard {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--rewind-line);
+  border-radius: var(--rewind-radius-lg);
+  background: var(--rewind-surface);
+}
+
+.summaryValue {
+  margin-top: 6px;
+  color: var(--rewind-gold);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.feedback {
+  color: var(--rewind-muted);
+}
+
+.error {
+  color: #ff9a9a;
+}
+
+.settings {
+  padding: 20px;
+  border: 1px solid var(--rewind-line);
+  border-radius: var(--rewind-radius-lg);
+  background: var(--rewind-surface);
+}
+
+.settingsTitle {
+  margin: 0 0 16px;
+  color: var(--rewind-paper);
+}
+
+.settingsList {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.settingRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px;
+}
+
+.settingField {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 240px;
+  gap: 6px;
+  color: var(--rewind-muted);
+  overflow-wrap: anywhere;
+}
+
+.settingInput {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid var(--rewind-line);
+  border-radius: var(--rewind-radius);
+  background: var(--rewind-surface-raised);
+  color: #fff;
+}
+
+@media (max-width: 720px) {
+  .page {
+    padding: 90px 16px 32px;
+  }
+
+  .settings {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 520px) {
+  .settingRow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .settingRow button {
+    width: 100%;
+  }
+
+  .settingField {
+    flex-basis: auto;
+  }
+}

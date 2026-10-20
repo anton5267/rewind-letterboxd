@@ -1,0 +1,24 @@
+.page { composes: page from "./AuthShared.module.css"; }
+.card { composes: card from "./AuthShared.module.css"; }
+.eyebrow { composes: eyebrow from "./AuthShared.module.css"; }
+.title { composes: title from "./AuthShared.module.css"; }
+.form { composes: form from "./AuthShared.module.css"; }
+.input { composes: input from "./AuthShared.module.css"; }
+.button { composes: button from "./AuthShared.module.css"; }
+.error { composes: error from "./AuthShared.module.css"; }
+.success { composes: success from "./AuthShared.module.css"; }
+.footer { composes: footer from "./AuthShared.module.css"; }
+
+.row {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 2px;
+}
+
+.forgot {
+  color: var(--rewind-muted);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.forgot:hover { color: var(--rewind-cyan); }

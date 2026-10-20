@@ -1,0 +1,4 @@
+.focusTarget:focus-visible {
+  outline: var(--rewind-focus-width) solid var(--rewind-cyan);
+  outline-offset: 6px;
+}

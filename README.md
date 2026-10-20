@@ -1,165 +1,77 @@
 # Rewind
 
-Rewind is a bilingual movie discovery and social review platform inspired by Letterboxd. It combines a React/TypeScript web client with a Spring Boot API, MySQL persistence, optional Redis caching, and an administration dashboard.
+Двомовна платформа для пошуку фільмів, оцінок, оглядів, списків і спілкування. Frontend — React/TypeScript/Vite; backend — Java 17/Spring Boot; дані — MySQL 8.4 і Redis, локальна пошта — Mailpit.
 
-## Current scope
+## Запуск
 
-- Ukrainian and English routes under `/uk/...` and `/en/...`
-- Cookie-based access and refresh sessions with CSRF protection
-- Movie catalog, search, filters, pagination, people pages, ratings, reviews, comments, lists, profiles, follows, likes, activity, notifications, SSE, and private messages
-- Controlled admin-only TMDB synchronization for movie metadata, credits, trailer, external rating, and links to similar movies already in the local catalog
-- Journal articles with language fallback, category filtering, monthly archive navigation, and admin publishing
-- Newsletter opt-in/opt-out for users, an idempotent Flyway-backed delivery outbox with retry statuses, and audited admin queueing of published Newsletter/Бюлетень articles to active subscribers
-- Admin dashboard for users/HQ, movies, lists, reviews, comments, moderation queue, settings, communications, and audit logs
-- Flyway migrations and MySQL integration tests for the implemented API contracts
-
-## Stack
-
-- Backend: Java 17, Spring Boot, Spring Data JPA, Spring Security, Flyway
-- Database: MySQL 8.4
-- Optional runtime cache: Redis 7.4
-- Frontend: React 18, TypeScript, Vite
-- Local mail: Mailpit
-
-## Local development
-
-### Docker Compose
-
-1. Create local credentials:
-
-   ```powershell
-   .\scripts\init-dev-env.ps1
-   ```
-
-2. Build and start the complete stack:
-
-   ```powershell
-   docker compose up -d --build
-   ```
-
-3. Open the web app at `http://localhost:3000`. API health is available at `http://localhost:8081/actuator/health` and Mailpit at `http://localhost:8025`.
-
-TMDB synchronization is disabled by default. To enable it locally, set `TMDB_ENABLED=true` and `TMDB_API_KEY` in `.env`, restart the API, then an administrator can call:
-
-```http
-POST /api/admin/movies/{movieId}/tmdb-sync
-Content-Type: application/json
-
-{"tmdbId":550,"syncSimilar":true}
-```
-
-Для контрольного оновлення кількох уже створених локальних фільмів доступний admin-only batch endpoint. Він приймає максимум 20 пар за запит, ізолює помилку окремого фільму та повертає результат для кожного елемента:
-
-```http
-POST /api/admin/movies/tmdb-sync/batch
-Content-Type: application/json
-
-{"syncSimilar":true,"movies":[{"movieId":1,"tmdbId":550},{"movieId":2,"tmdbId":603}]}
-```
-
-The endpoint requires the normal admin cookie/CSRF contract. It never creates unverified similar movies; only already imported local movies with matching `tmdb_id` are linked.
-
-Для імпорту нових стрічок за TMDB ID використовуйте admin-only endpoint. Він створює відсутні локальні записи, повторно використовує вже імпортований фільм з таким самим `tmdb_id`, приймає максимум 20 ID і повертає окремий статус для кожного:
-
-```http
-POST /api/admin/movies/tmdb-import
-Content-Type: application/json
-
-{"tmdbIds":[550,603],"syncSimilar":true}
-```
-
-Якщо один ID не знайдено або TMDB тимчасово недоступний, інші елементи batch все одно обробляються. Зміни виконуються в окремих транзакціях, тому невдалий імпорт не залишає порожній локальний фільм.
-
-Для контрольованого імпорту з TMDB discovery використовуйте фільтри й сторінку результатів. Endpoint повертає загальну кількість сторінок/результатів і статус кожного імпорту; за один запит обробляється не більше 20 кандидатів:
-
-```http
-POST /api/admin/movies/tmdb-import/discover
-Content-Type: application/json
-
-{"page":1,"year":2024,"genreId":18,"minRating":7.0,"limit":20,"syncSimilar":true}
-```
-
-Це дозволяє адмінському імпорту рухатися сторінка за сторінкою та повторювати невдалі елементи без неконтрольованого масового заповнення каталогу.
-
-Для перевірки якості вже імпортованого каталогу використовуйте admin-only read endpoint:
-
-```http
-GET /api/admin/movies/tmdb-quality
-```
-
-Відповідь містить кількість фільмів у каталозі, TMDB-зв'язаних і повністю заповнених записів, відсутні постери/backdrop/описи/тривалості/трейлери/TMDB-рейтинги та відсотки покриття й повноти. Запит виконує один агрегований SQL без N+1 читань.
-
-The Compose file uses public ECR mirrors for container images. Maven uses the configured public mirror in `.mvn/settings.xml` so a local Docker build does not depend on a single registry endpoint.
-
-### Run services without Compose
-
-Start MySQL and set `DB_PASSWORD`, `JWT_SECRET`, and the other values described in [docs/RUN_LOCAL.md](docs/RUN_LOCAL.md), then run:
+Із кореня репозиторію, у PowerShell із запущеним Docker Desktop:
 
 ```powershell
-$env:DB_PASSWORD = "rewinddev"
-$env:JWT_SECRET = "a-local-secret-at-least-32-bytes-long"
-.\mvnw.cmd spring-boot:run
+.\scripts\init-dev-env.ps1
+docker compose up -d --build
 ```
 
-In another terminal:
+Сайт: `http://localhost:3000/uk/home`. Для роботи з актуальним frontend-кодом:
 
 ```powershell
-cd letterboxd/letterboxd-login-figma-final2
+cd frontend
 npm ci
-npm run dev
+npm run dev -- --host 127.0.0.1
 ```
 
-## Verification
+Dev frontend: `http://127.0.0.1:5173/uk/home`, API: `http://127.0.0.1:8081`, Mailpit: `http://localhost:8025`. Порт 3000 показує зібраний Docker image, 5173 — поточний source. Налаштування та усунення проблем — [RUN_LOCAL](docs/operations/RUN_LOCAL.md).
 
-Backend integration tests use MySQL and apply Flyway migrations automatically:
+## Структура
 
-```powershell
-$env:DB_PASSWORD = "rewinddev"
-$env:JWT_SECRET = "a-local-secret-at-least-32-bytes-long"
-.\mvnw.cmd test
+```text
+backend/   Java/Maven: src/, pom.xml, mvnw, .mvn/, Dockerfile
+frontend/  React/Vite: src/, public/, package.json, Dockerfile
+docs/      backend/, frontend/, operations/, project/, diploma/
+scripts/   перевірки, backup/restore, операції середовища й генератор демоданих
 ```
 
-Frontend checks:
+Compose, CI, Caddy й локальний `.env` розташовані в корені. Java редагується в `backend/src/`, React — у `frontend/src/`. `target/`, `dist/`, `node_modules/`, test-results та `artifacts/` містять generated/dependency/evidence файли; `.class` не є вихідним Java-кодом.
 
-```powershell
-cd letterboxd/letterboxd-login-figma-final2
-npx tsc --noEmit
-npm run build
+У `scripts/`: `init-dev-env.ps1` готує локальний `.env`; `backup-*` і `restore-*` працюють із копіями БД; `verify-*` перевіряють API, схему, безпеку й конфігурацію; `capture-diploma-*` створюють матеріали захисту; `tmdb_seed_50.py` генерує демо SQL. `sync-figma.ps1` потребує окремого зовнішнього exporter. Точні команди запуску й вплив перевірок на тестові дані описані в [RUN_LOCAL](docs/operations/RUN_LOCAL.md).
+
+## Архітектура
+
+```mermaid
+flowchart LR
+    Browser[React: Vite5173 або Nginx3000] -->|same-origin /api| API[Spring Boot: host8081]
+    API --> Security[Cookie JWT + CSRF]
+    Security --> Domain[Controller → Service → Repository]
+    Domain --> MySQL[(MySQL)]
+    API --> Redis[(Redis cache)]
+    Flyway[Flyway migrations] --> MySQL
 ```
 
-With the Compose stack running and Google Chrome installed, the main browser flow can be checked end to end:
+Routes мають `/uk` або `/en`. Авторизація використовує HttpOnly access/refresh cookies; mutations потребують CSRF cookie/header. Backend перевіряє role, ownership і block rules. API та UI зберігають реальні loading/error/empty/retry стани.
 
-```powershell
-$env:E2E_BASE_URL = 'http://127.0.0.1:3000'
-npm run test:e2e
-```
+## Де шукати функцію
 
-Для admin UI використовується окремий disposable fixture. Повний headed набір:
+UI-файли — від `frontend/src/`, Java packages — від `backend/src/main/java/com/rewind/rewind/`.
 
-```powershell
-.\scripts\verify-admin-browser.ps1 -Headed
-```
+| Функція | Frontend | Backend |
+| --- | --- | --- |
+| Каталог, пошук, фільми й персоналії | `Home`, `Search`, `GlobalSearch`, `MovieDetails`, `Person` | `movie`, `search`, `person`, `actor`, `director`, `producer`, `tmdb` |
+| Профіль і налаштування | `Profile`, `PublicProfile` | `profile`, `user`, `rating` |
+| Списки, теги, вподобання | `UserLists`, `PublicLists`, `PublicList` | `list`, `tag` |
+| Огляди й коментарі | `PopularReviews`, `ReviewDetails`, `Comments` | `review`, `comment`, `rating`, `social` |
+| Community, повідомлення, сповіщення | `Community`, `PopularReviewers`, `Messages`, `Notifications` | `social`, `message`, `notification` |
+| Journal і newsletter | `Journal`, `JournalArticle`, `AdminArticles` | `journal`, `newsletter` |
+| Авторизація та службові сторінки | `auth/`, `ServicePage`, `About` | `auth`, `security`, `user` |
+| Адміністрування | `AdminDashboard`, `components/Admin*` | `admin` і domain services |
 
-Після зміни конкретного admin flow можна звузити запуск, наприклад:
+## Документація
 
-```powershell
-.\scripts\verify-admin-browser.ps1 -Headed -Grep "admin notification table"
-```
+| Потрібно | Джерело |
+| --- | --- |
+| Наступні задачі / короткий стан | [PLAN](PLAN.md) / [PROGRESS](docs/project/PROGRESS.md) |
+| Вимоги та відповідність реалізації | [ТЗ](docs/project/PROJECT_REQUIREMENTS.md), [таблиця відповідності](docs/project/PROJECT_REQUIREMENTS.md#implementation-status) |
+| Java, модель даних і HTTP контракти | [Backend і ER-схема](docs/backend/README.md), [API](docs/backend/API.md) |
+| React routes, спільні компоненти, дизайн | [Frontend](docs/frontend/README.md), [Figma handoff](docs/frontend/FIGMA_HANDOFF.md) |
+| Запуск / production / перевірки | [RUN_LOCAL](docs/operations/RUN_LOCAL.md), [DEPLOYMENT](docs/operations/DEPLOYMENT.md), [RELEASE_EVIDENCE](docs/operations/RELEASE_EVIDENCE.md) |
+| Захист диплома | [Матеріали](docs/diploma/DIPLOMA_MATERIALS.md) |
 
-The current verified slice is tracked in [docs/PROGRESS.md](docs/PROGRESS.md), while the API and database map is in [docs/PROJECT_MAP.md](docs/PROJECT_MAP.md). The current migration-backed ER diagram is in [docs/ER_DIAGRAM.md](docs/ER_DIAGRAM.md); run `scripts/verify-er-schema.ps1` against Compose to check it.
-
-## Project references
-
-- Product plan: [PLAN.md](PLAN.md)
-- Requirements trace: [docs/REQUIREMENTS_TRACE.md](docs/REQUIREMENTS_TRACE.md)
-- Local setup: [docs/RUN_LOCAL.md](docs/RUN_LOCAL.md)
-- Database ER diagram: [docs/ER_DIAGRAM.md](docs/ER_DIAGRAM.md)
-- Production deployment: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
-- Diploma and demo materials: [docs/diploma/DIPLOMA_MATERIALS.md](docs/diploma/DIPLOMA_MATERIALS.md)
-- Figma design file: <https://www.figma.com/design/orb73jiLJnIsZNCRtJsWgS/>
-- Project FigJam: <https://www.figma.com/board/gPITmVEnT5L61gN7JiwIiX/>
-- Information architecture FigJam: <https://www.figma.com/board/qrrA6VTNZFiJstg1CsaOTo/>
-
-## Security notes
-
-Local secrets belong in `.env`, which is ignored by Git. Do not commit API keys, database passwords, refresh tokens, or production credentials. External ratings are displayed only when they are stored from an allowed source; the project does not scrape IMDb.
+Перевірка frontend: `npm run verify:build` із `frontend/`. Maven запускати з `backend/`; integration/browser suites працюють із виділеною тестовою БД, інструкції — в RUN_LOCAL. Secrets зберігаються локально поза Git; наявні Flyway migrations не переписуються.

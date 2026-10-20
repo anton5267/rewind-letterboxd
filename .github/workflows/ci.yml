@@ -36,15 +36,17 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
+          cache-dependency-path: backend/pom.xml
       - name: Backend tests with MySQL
-        run: ./mvnw -B test
+        working-directory: backend
+        run: sh ./mvnw -B test
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: letterboxd/letterboxd-login-figma-final2/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
       - name: Frontend build and type check
-        working-directory: letterboxd/letterboxd-login-figma-final2
+        working-directory: frontend
         run: |
           npm ci
           npx tsc --noEmit

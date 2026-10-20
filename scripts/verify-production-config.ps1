@@ -23,12 +23,27 @@ if ($values['DB_PASSWORD'].Length -lt 24) { throw 'DB_PASSWORD must be at least 
 if ($values['MYSQL_ROOT_PASSWORD'].Length -lt 24) { throw 'MYSQL_ROOT_PASSWORD must be at least 24 characters' }
 if ($values['JWT_SECRET'].Length -lt 48) { throw 'JWT_SECRET must be at least 48 characters' }
 if ($values['DB_PASSWORD'] -eq $values['MYSQL_ROOT_PASSWORD']) { throw 'DB_PASSWORD and MYSQL_ROOT_PASSWORD must differ' }
-if ($values['PUBLIC_BASE_URL'] -notmatch '^https://') { throw 'PUBLIC_BASE_URL must use HTTPS' }
+$publicBaseUri = $null
+if (-not [Uri]::TryCreate($values['PUBLIC_BASE_URL'], [UriKind]::Absolute, [ref]$publicBaseUri)) {
+    throw 'PUBLIC_BASE_URL must be an absolute HTTPS origin'
+}
+if ($publicBaseUri.Scheme -ne 'https' -or
+    [string]::IsNullOrWhiteSpace($publicBaseUri.Host) -or
+    $publicBaseUri.UserInfo -or $publicBaseUri.AbsolutePath -ne '/' -or
+    $publicBaseUri.Query -or $publicBaseUri.Fragment) {
+    throw 'PUBLIC_BASE_URL must be an HTTPS origin without credentials, path, query, or fragment'
+}
 if ($values.ContainsKey('APP_CORS_ALLOWED_ORIGINS') -and -not [string]::IsNullOrWhiteSpace($values['APP_CORS_ALLOWED_ORIGINS'])) {
     foreach ($origin in $values['APP_CORS_ALLOWED_ORIGINS'] -split ',') {
         $normalizedOrigin = $origin.Trim()
-        if ($normalizedOrigin -notmatch '^https://[^/]+$') {
-            throw 'APP_CORS_ALLOWED_ORIGINS must contain only comma-separated HTTPS origins without paths'
+        $originUri = $null
+        if (-not [Uri]::TryCreate($normalizedOrigin, [UriKind]::Absolute, [ref]$originUri) -or
+            $originUri.Scheme -ne 'https' -or
+            [string]::IsNullOrWhiteSpace($originUri.Host) -or
+            $originUri.UserInfo -or $originUri.AbsolutePath -ne '/' -or
+            $originUri.Query -or $originUri.Fragment -or
+            $normalizedOrigin -ne $originUri.GetLeftPart([UriPartial]::Authority)) {
+            throw 'APP_CORS_ALLOWED_ORIGINS must contain only comma-separated HTTPS origins without credentials, paths, queries, or fragments'
         }
     }
 }
@@ -38,7 +53,7 @@ if ($values.ContainsKey('MAIL_PORT') -and ($values['MAIL_PORT'] -notmatch '^\d+$
 foreach ($booleanKey in @('MAIL_SMTP_AUTH', 'MAIL_SMTP_STARTTLS', 'TMDB_ENABLED', 'TMDB_SCHEDULER_ENABLED')) {
     if ($values.ContainsKey($booleanKey) -and $values[$booleanKey] -notmatch '^(?i:true|false)$') { throw "$booleanKey must be true or false" }
 }
-$smtpAuthEnabled = $values.ContainsKey('MAIL_SMTP_AUTH') -and $values['MAIL_SMTP_AUTH'] -match '^(?i:true)$'
+$smtpAuthEnabled = -not $values.ContainsKey('MAIL_SMTP_AUTH') -or $values['MAIL_SMTP_AUTH'] -match '^(?i:true)$'
 if ($smtpAuthEnabled) {
     foreach ($key in @('MAIL_USERNAME', 'MAIL_PASSWORD')) {
         if (-not $values.ContainsKey($key) -or [string]::IsNullOrWhiteSpace($values[$key])) { throw "$key is required when MAIL_SMTP_AUTH=true" }

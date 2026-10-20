@@ -19,6 +19,10 @@ case "${CONFIRM_RESTORE:-}" in
   *) printf 'Set CONFIRM_RESTORE=YES to restore the production database.\n' >&2; exit 2 ;;
 esac
 
-gzip -dc "$backup" | docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T db sh -lc \
-  'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"'
+dump="$(mktemp "${TMPDIR:-/tmp}/rewind-restore.XXXXXX")"
+trap 'rm -f "$dump"' 0
+trap 'exit 1' HUP INT TERM
+gzip -dc "$backup" > "$dump"
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T db sh -lc \
+  'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < "$dump"
 printf 'Restored %s\n' "$backup"

@@ -33,8 +33,7 @@ services:
 
   api:
     build:
-      context: .
-      dockerfile: Dockerfile.api
+      context: ./backend
     restart: unless-stopped
     read_only: true
     tmpfs:
@@ -75,7 +74,7 @@ services:
 
   web:
     build:
-      context: ./letterboxd/letterboxd-login-figma-final2
+      context: ./frontend
     restart: unless-stopped
     read_only: true
     tmpfs:
@@ -84,7 +83,7 @@ services:
     depends_on:
       - api
     ports:
-      - "${HTTP_PORT:-80}:80"
+      - "${HTTP_PORT:-127.0.0.1:8088}:80"
 
 volumes:
   rewind-production-db:

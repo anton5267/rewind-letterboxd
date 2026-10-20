@@ -1,6 +1,6 @@
 HELP.md
 target/
-.mvn/wrapper/maven-wrapper.jar
+backend/.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
@@ -47,5 +47,6 @@ build/
 *.log
 *.err
 backups/
+/artifacts/
 # Local Figma REST snapshots may contain proprietary design data and must never be committed.
 figma/
