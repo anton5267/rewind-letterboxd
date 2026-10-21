@@ -1,6 +1,6 @@
 # Rewind — план завершення
 
-Оновлено 21.10.2026. Після Search/CI checkpoint розпочато повний node-by-node Figma audit: кожен наступний UI-блок реалізується тільки після перевірки конкретного frame context і screenshot, а не за припущеннями. Завершені блоки цього проходу: Popular Reviewers desktop/phone `1480:5486`/`1480:7698`, Community desktop/phone `605:1112`/`1517:4931`, Journal List 4 desktop `1494:5387` і Home desktop heroes: guest `1413:6471`, member `1413:6263`. Для Journal підтверджено editorial hero і three-column article rows; для Home — локальні original artworks, hero/CTA geometry та live API-backed poster rows. Наступний блок обирається лише після concrete-node review.
+Оновлено 21.10.2026. Після Search/CI checkpoint розпочато повний node-by-node Figma audit: кожен наступний UI-блок реалізується тільки після перевірки конкретного frame context і screenshot, а не за припущеннями. Завершені блоки цього проходу: Popular Reviewers desktop/phone `1480:5486`/`1480:7698`, Community desktop/phone `605:1112`/`1517:4931`, Journal List 4 desktop `1494:5387` і Home: desktop guest/member `1413:6471`/`1413:6263`, mobile guest `1411:3473`. Для Journal підтверджено editorial hero і three-column article rows; для Home — локальні original artworks, hero/CTA geometry та live API-backed poster rows. Наступний блок обирається лише після concrete-node review.
 
 ## Виконано
 

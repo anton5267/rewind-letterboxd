@@ -346,6 +346,17 @@
   .mobileSearch .mobileNav {
     pointer-events: auto;
   }
+
+  .header.mobileHome {
+    --header-background: transparent;
+    box-shadow: none;
+    pointer-events: none;
+  }
+
+  .mobileHome .logo,
+  .mobileHome .menuToggle { display: none; }
+
+  .mobileHome .mobileNav { pointer-events: auto; }
 }
 
 @media (max-width: 480px) {

@@ -104,12 +104,13 @@ export default function Header() {
   const mobileDetailHeader = /^\/(uk|en)\/(films|reviews)\/[^/]+\/?$/.test(location.pathname);
   const mobileListDetailHeader = /^\/(uk|en)\/lists\/public\/[^/]+\/?$/.test(location.pathname);
   const mobileSearchHeader = /^\/(uk|en)\/search\/?$/.test(location.pathname);
+  const mobileHomeHeader = /^\/(uk|en)\/home\/?$/.test(location.pathname);
   const listParams = new URLSearchParams(location.search);
   const listsLandingHeader = /^\/(uk|en)\/lists\/discover\/?$/.test(location.pathname)
     && !listParams.get("feed") && !toTagSlug(listParams.get("tag") ?? "");
 
   return (
-    <header className={`${styles.header} ${lightHeader ? styles.light : ""} ${mobileDetailHeader ? styles.mobileDetail : ""} ${mobileListDetailHeader ? styles.mobileListDetail : ""} ${mobileSearchHeader ? styles.mobileSearch : ""} ${listsLandingHeader ? styles.listsLanding : ""}`}>
+    <header className={`${styles.header} ${lightHeader ? styles.light : ""} ${mobileDetailHeader ? styles.mobileDetail : ""} ${mobileListDetailHeader ? styles.mobileListDetail : ""} ${mobileSearchHeader ? styles.mobileSearch : ""} ${mobileHomeHeader ? styles.mobileHome : ""} ${listsLandingHeader ? styles.listsLanding : ""}`}>
 
       {listsLandingHeader && <div className={styles.listLandingControls}>
         <Link to={path("/home")} aria-label={t("home")}><i className="fa-solid fa-chevron-left" aria-hidden="true" /></Link>

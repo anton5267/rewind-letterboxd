@@ -24,6 +24,13 @@ test("Home lists remain reachable by keyboard across the scrollable poster cards
   await expect(hero).toHaveCSS("min-height", "764px");
   expect(await hero.evaluate(element => getComputedStyle(element).backgroundImage)).toContain("home-hero-guest.jpg");
 
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto("/en/home");
+  await expect(hero).toHaveCSS("min-height", "142px");
+  await expect(page.getByRole("heading", { level: 1, name: "Track films you’ve watched. Save those you want to see. Tell your friends what’s good." })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Get Started", exact: true })).toHaveAttribute("href", "/en/register");
+  await expect(page.locator("main > section").nth(1).locator("article:visible")).toHaveCount(4);
+
   for (const width of [320, 393, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/en/home");

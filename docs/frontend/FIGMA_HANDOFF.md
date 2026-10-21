@@ -55,7 +55,7 @@ FigJam — джерело аналізу, архітектури, персон �
 | Frame / варіант | Node ID → розмір | Route / компонент | Статус і залишений gap |
 | --- | --- | --- | --- |
 | Home registered / guest desktop | `1413:6263` → 1440×5020; `1413:6471` → 1440×4934 | `/home` → Home | Screenshot/context: local original hero artworks; guest 764 px CTA hero and member 948 px hero, typography and six-poster rows verified. Remaining desktop feed sections require separate frame checks |
-| Home registered / guest mobile | `1327:3210` → 393×2463; `1411:3473` → 393×2265 | `/home` → Home | Auth hero з mapped original artwork, 79×116 poster rails, compact typography, Journal covers і review previews; native scroll/focus та реальний preview count збережені. Guest artwork і точні fonts/tokens ще відкриті |
+| Home registered / guest mobile | `1327:3210` → 393×2463; `1411:3473` → 393×2265 | `/home` → Home | Guest `1411:3473`: screenshot/context, 142 px hero, Figma CTA/copy, four 79×116 live posters, explainer and mobile order verified. Member mobile keeps its mapped artwork, 79×116 poster rails, compact typography, Journal covers and review previews; its remaining tokens need a separate check |
 | Popular Reviews mobile | `1480:9087` → 393×1265 | `/reviews` → PopularReviews; Home/GlobalSearch review cards | Реальні reviews/reviewers, sort/pagination/states; 393/320 px browser evidence |
 | All Films desktop / phone | `1413:12611` → 1440×2956; `1480:9187` → 393×1215 | `/films` → Search | Dark hero/filters/poster grid реалізовані |
 | Films phone | `1480:7843` → 393×1235 | `/films` → Search | Alignment; звірка варіантів |
