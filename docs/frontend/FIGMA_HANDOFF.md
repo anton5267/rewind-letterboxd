@@ -1,8 +1,10 @@
 # Rewind — Figma references
 
-Оновлено 20.10.2026. Тут зберігаються джерела дизайну й відповідність frames коду. Порядок роботи — лише у [PLAN.md](../../PLAN.md), результати перевірок — у [RELEASE_EVIDENCE.md](../operations/RELEASE_EVIDENCE.md).
+Оновлено 21.10.2026. Тут зберігаються джерела дизайну й відповідність frames коду. Порядок роботи — лише у [PLAN.md](../../PLAN.md), результати перевірок — у [RELEASE_EVIDENCE.md](../operations/RELEASE_EVIDENCE.md).
 
 ## Локально отримані джерела
+
+Основне live-джерело: Figma Design copy `BDO9GO1oscOeUTcu4VXVKA`, доступна через Figma plugin. 20.10.2026 підтверджено: повна metadata сторінки `0:1`, design context, screenshots, variables і тимчасові asset URLs для конкретних nodes. Контрольні nodes `560:1003` (Movie phone, 393×1908) і `825:1378` (Public Profile phone, 393×2355) повернули повний context та окремі screenshots. Node IDs збігаються з інвентарем нижче, тому це доступна копія того самого дипломного макета, а не нова несумісна дизайн-система.
 
 20.10.2026 через дозволене browser `File > Save local copy` отримано оригінальний `.fig`: workspace `.codex-backups/figma-local-copy-20261020/original.fig`. SHA256 `3C45A2CC190296FDB44B17A49353634CEABC634B2816BE3E0DD4E72470CA5576`; archive CRC перевірений для всіх файлів. `extracted/` містить `canvas.fig`, metadata та оригінальні images. `decoded/` містить локально декодовані Kiwi schema/nodeChanges; `focused/index.json` посилається на subtree Movie, Review, auth mobile Profile і Home з geometry, typography, paints та image mappings.
 
@@ -20,15 +22,25 @@ Lists phone `1480:8281` і desktop `1480:4984` посилаються відпо
 
 ## Доступ і межі точності
 
-Design/FigJam доступні у Chrome view-only. MCP context/screenshot повертає `don't have edit access`; desktop MCP не запущений. Canonical REST exporter `../figma-codex-complete-export/` і snapshot `../figma/` відсутні. Доступні оригінальна локальна `.fig` copy, focused raw/image mappings та вибрані frame exports, описані вище.
+Figma plugin має read-доступ до Design copy: metadata, concrete-node design context, screenshots, variable definitions і assets працюють. Page node `0:1` використовується для metadata inventory; для context/screenshot потрібен конкретний frame або layer ID. Edit-доступ цим проходом не перевірявся і для реалізації не потрібний. Canonical batch REST exporter `../figma-codex-complete-export/` і snapshot `../figma/` відсутні, але вони більше не блокують роботу з окремими nodes через plugin. Локальна `.fig`, focused raw/image mappings і browser exports залишаються резервним відтворюваним доказом поза Git.
 
 Auth mobile Home `1327:3210` додатково експортовано як PNG 393×2463 у workspace `.codex-backups/figma-browser-reference-2026-10-20-1327-3210/`, provenance перевірений SHA256. Це reference, а не UI asset.
 
-Результат — visual alignment. Повні fonts/variables/component overrides та pixel-perfect parity не підтверджені. Для неповних frames використовуються наявна дизайн-система й обґрунтовані рішення щодо читабельності, композиції та доступності. Дозволи, оплата й Figma source не змінювалися.
+Результат попередніх проходів — visual alignment. Plugin тепер дозволяє перевіряти точний frame context і screenshot перед наступними змінами, але один успішний node не доводить повний variables/component-overrides export або pixel-perfect parity всього файлу. Для кожної наступної поверхні запитувати конкретний node, його screenshot і assets, а потім перевіряти реалізацію окремо. Дозволи, оплата й Figma source не змінювалися.
+
+## Додатково перевірені frames 21.10.2026
+
+- Journal article `844:1547`: звірено desktop composition; mobile decorative `⋯` прибрано, бо дії та API для нього немає.
+- Auth: desktop Login `605:2175` і mobile Login `944:1582` перевірені окремими screenshots/context; спільний layout застосований також до Register/Forgot/Reset nodes `605:2173–2176`, `911:1596`, `915:1598`, `922:1788`, `944:1828`, `944:1887`. Artwork завантажено як `frontend/src/assets/figma/auth-desktop.png` і `auth-mobile.png`.
+- Service/About: Help `1062:1993` і About `1011:1915` використані для hero, navigation і structured content; ті самі правила застосовані до Contact, Rules, Privacy, Film Data та Account Deletion.
+- Admin dashboard `1178:2466`: hero/avatar/workspace/metrics перенесені поверх наявних API-backed admin sections. Поведінкові users/movies/reviews/comments/lists/moderation/activity/audit/settings сценарії пройшли в повному browser suite.
+- Public Profile phone `825:1378`: повторна перевірка на 320/393/768/1440 підтвердила 120 px avatar, перенос довгого імені, focus і відсутність horizontal overflow.
+
+Після цих змін production build пройшов повну регресію 125/125. Це підтверджує маршрути, стани, локалізацію й доступність; pixel-perfect твердження обмежене конкретними переліченими screenshots/context, а не всією сторінкою `0:1`.
 
 ## Джерела
 
-- [Figma Design — прототипи й дизайн сторінок](https://www.figma.com/design/orb73jiLJnIsZNCRtJsWgS/).
+- [Figma Design copy — основне live-джерело для plugin](https://www.figma.com/design/BDO9GO1oscOeUTcu4VXVKA/%D0%94%D0%B8%D0%BF%D0%BB%D0%BE%D0%BC_ItStep_2025--Copy-?node-id=0-1&p=f).
 - [FigJam — аналіз, архітектура, персони, кольори та продуктова структура](https://www.figma.com/board/gPITmVEnT5L61gN7JiwIiX/Untitled?node-id=0-1&t=J1ORYD0WSrKidGxO-1).
 - [Інформаційна архітектура, FigJam](https://www.figma.com/board/qrrA6VTNZFiJstg1CsaOTo/).
 
@@ -68,7 +80,7 @@ FigJam — джерело аналізу, архітектури, персон �
 | Movie Details phone / actions | `560:1003` → 393×1908; actions `736:1107` → 393×852 | `/films/:id` → MovieDetails / MovieActionSheet | Movie frame підтверджений raw hierarchy й browser export; `560:1097` — лише TEXT «Dune». Новий alignment починається з повного frame |
 | Movie Details desktop | Node не підтверджений | MovieDetails | Responsive alignment; exact reference/token audit відкритий |
 | Review page / rating state | `1480:9249` → 393×932; `1480:9407` → 393×852 | `/reviews/:id` → ReviewDetails / RatingSheet | Movie/author/likes/ratings; оцінка належить фільму, не огляду |
-| Public Profile overview desktop / phone | `238:596` → 1440×4459; `825:1378` → 393×2355 | `/users/:id` → PublicProfile | Bounded existing raw підтвердив visible frames; matching PNG/focused subtree відсутні. Focus/44px/preview containment виправлені; mobile avatar/name composition лишилася незастосованим наступним кроком |
+| Public Profile overview desktop / phone | `238:596` → 1440×4459; `825:1378` → 393×2355 | `/users/:id` → PublicProfile | Plugin повертає повний context і screenshot mobile frame. Focus/44px/preview containment виправлені; mobile avatar 120 px, name 26 px і прихований повторний eyebrow застосовані та перевірені окремим Chrome smoke. Наступний точний comparison тепер не заблокований відсутнім reference |
 | Власний Profile mobile overview | `896:1838` → 393×2319 | `/profile` → Profile | Raw subtree підтверджує Favorite Films, Recent Activity, Recent Reviews і Lists; пізніші коротші однойменні frames є іншими content states |
 | Crew lists / more tags phone | `1480:9718` → 393×1546; `1480:9814` → 393×1674 | `/users/:id` → PublicProfile | Real poster-stack lists/tags; 393 px browser evidence |
 | Community members desktop / phone | `605:1112` → 1440×4201; `1517:4931` → 393×1796 | `/community` → Community | Existing raw members frames; original gr1 image `6e83fad…` mapped nodes 605:1140/1517:5008 → community-hero.jpg, STRETCH. Compact mobile та desktop columns — visual judgment на реальному API, без invented favorite/follower data |
@@ -77,13 +89,19 @@ FigJam — джерело аналізу, архітектури, персон �
 | Journal List 4 / 5 / 6 | `1494:5387` → 1440×3561; `1494:5182` → 1440×3560; `1494:5287` → 1440×3565 | `/journal` → Journal | Alignment; exact variant parity відкрита |
 | Admin user profile | `1494:6089` → 1440×3059 | `/admin` → AdminUsers detail | API-backed identity/overview/history; сусідня movie database не є частиною цього frame |
 | Mobile navigation | Reference `1480:9249` | Header | Home/Search/Add/Journal/Profile, menu/focus/active route |
-| Journal article/archive, auth, service, messages, notifications, інші admin pages | Окремі nodes не підтверджені | Відповідні наявні routes | Спільна дизайн-система; не заявляти Figma parity |
+| Journal article | `844:1547` | `/journal/:slug` → JournalArticle | Desktop context/screenshot звірено; API content/audio/error/retry збережені, mobile decorative `⋯` прибрано |
+| Auth desktop/mobile | `605:2173–2176`, `911:1596`, `915:1598`, `922:1788`, `944:1582`, `944:1828`, `944:1887` | Login/Register/Forgot/Reset | Shared responsive composition, локальні artwork assets, UK/EN і password/focus contracts |
+| Service/About | `1011:1915`, `1062:1993–1176:2515` | About, Help, Contact, Rules, Privacy, Film Data, Account Deletion | About/Help concrete context перевірено; спільний responsive contract застосовано до всіх service routes |
+| Admin dashboard і sections | `1178:2466–1404:4076` | `/admin` → AdminDashboard + admin components | Dashboard context перевірено; усі API-backed admin flows пройшли browser regression |
+| Messages / Notifications та інші variants | Інвентаризовані в page metadata | Відповідні наявні routes | Поведінка/responsive/accessibility пройшли regression; окрему pixel parity для кожного top-level frame не заявлено |
 
 Спостережені references здебільшого мають dark canvas `#1f1f1f`, desktop 1440 px і mobile 393 px. Білий outer frame в inspector не означає білий app body. Повну палітру, typography, spacing і assets не виводити лише з цих спостережень.
 
 ## Локальний export workflow
 
-Очікуване розташування exporter — `../figma-codex-complete-export/` від кореня репозиторію. Ця зовнішня папка зараз відсутня, тому наведені команди потребують її відновлення користувачем; PAT сам по собі не усуває цю залежність.
+Для поточної node-based роботи основний шлях — Figma plugin: `get_design_context` для конкретного frame, окремий screenshot, variables та потрібні assets. Тимчасові plugin asset URLs не залишати у runtime-коді; потрібні статичні assets завантажувати в проєкт і посилатися локально.
+
+Зовнішній exporter лишається опційним лише для повного відтворюваного batch snapshot. Очікуване розташування — `../figma-codex-complete-export/` від кореня репозиторію. Ця папка зараз відсутня, тому наведені нижче legacy-команди потребують її відновлення; це не блокує роботу з конкретними nodes через plugin.
 
 Із `frontend/` (scripts очікують зовнішній exporter за `../../figma-codex-complete-export/`; він зараз відсутній):
 
