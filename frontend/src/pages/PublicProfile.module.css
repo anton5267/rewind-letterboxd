@@ -406,6 +406,23 @@
   .profileRailLink:hover { border-color: var(--rewind-cyan); color: #fff; }
 }
 
+/* Desktop Public Profile `238:596`: centered identity header and state rail.
+   The photographic layer is added only when its original Figma asset is available. */
+@media (min-width: 621px) {
+  .hero { width: 100vw; min-height: 458px; box-sizing: border-box; margin-left: calc(50% - 50vw); align-items: center; justify-content: center; flex-direction: column; padding: 112px 24px 76px; border-radius: 0; background: linear-gradient(180deg, rgba(0, 0, 0, .24), rgba(0, 0, 0, .88)), radial-gradient(ellipse at 18% 4%, #5b4331 0%, #211a18 36%, #101010 78%); text-align: center; }
+  .identity { flex-direction: column; gap: 12px; }
+  .avatar, .avatarFallback { width: 120px; height: 120px; flex-basis: 120px; }
+  .identityCopy { max-width: min(100%, 680px); }
+  .identity h1 { font-size: clamp(32px, 3vw, 44px); line-height: 1.04; }
+  .username { margin-top: 7px; font-size: 15px; }
+  .profileActions { justify-content: center; margin-top: 20px; }
+  .profileRail { display: flex; width: max-content; max-width: calc(100vw - 48px); margin: -20px auto 24px; padding: 5px; gap: 4px; overflow-x: auto; border: 1px solid rgba(255, 255, 255, .13); border-radius: 999px; background: #222; scrollbar-width: none; }
+  .profileRail::-webkit-scrollbar { display: none; }
+  .profileRailLink { display: inline-flex; min-height: 36px; align-items: center; justify-content: center; padding: 8px 19px; border-radius: 999px; color: #aaa; font-size: 13px; font-weight: 700; line-height: 1; text-decoration: none; white-space: nowrap; }
+  .profileRailLink:hover { color: #fff; }
+  .profileRailLinkActive { background: #fff; color: #171717; }
+}
+
 @media (max-width: 400px) {
   .hero { align-items: center; text-align: center; }
   .identity { align-items: center; flex-direction: column; width: 100%; }

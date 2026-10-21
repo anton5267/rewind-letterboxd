@@ -10,7 +10,7 @@
 
 ## Реалізація
 
-- Movie, Review, Home/Search, Lists, Profile/PublicProfile, Community, Messages і Notifications мають responsive стани, UK/EN, клавіатурну навігацію та реальні API. PublicProfile phone `825:1378` повторно звірений: 120 px avatar, 26 px name, 44 px controls і safe wrapping довгих імен підтверджені; desktop ще потребує окремого frame comparison.
+- Movie, Review, Home/Search, Lists, Profile/PublicProfile, Community, Messages і Notifications мають responsive стани, UK/EN, клавіатурну навігацію та реальні API. PublicProfile `238:596`/`825:1378` повторно звірений: desktop отримав центрований identity hero і state rail, phone має 120 px avatar, 26 px name, 44 px controls і safe wrapping довгих імен. Оригінальний desktop photographic asset ще очікує доступу Figma quota.
 - Старі profile reviews отримують nullable `moviePhotoUrl`; frontend сумісний і з попередньою відповіддю API.
 - Journal зберігає API-backed feed/archive/article/audio/newsletter. У mobile article прибрано декоративний control без дії. List 4 desktop `1494:5387` повторно звірено через Figma screenshot/context: compact hero та editorial 3-column rows застосовано до реальних статей без заміни їх Figma fixtures.
 - Login/Register/Forgot/Reset використовують спільну desktop/mobile Figma-композицію з локальними assets.
