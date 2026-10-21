@@ -1,6 +1,6 @@
 # Rewind — поточний стан
 
-Оновлено 21.10.2026. Код і локальна release-регресія завершені; доставка в GitHub ще виконується. Робочий порядок — [PLAN](../../PLAN.md), детальні результати — [RELEASE_EVIDENCE](../operations/RELEASE_EVIDENCE.md).
+Оновлено 21.10.2026. Код, локальна release-регресія та доставка в GitHub завершені. Робочий порядок — [PLAN](../../PLAN.md), детальні результати — [RELEASE_EVIDENCE](../operations/RELEASE_EVIDENCE.md).
 
 ## Структура та документація
 
@@ -30,6 +30,7 @@
 | Redis/concurrency/load/schema | PASS; 38 tables, 55 foreign keys |
 | Backup/restore | PASS в окремій тимчасовій schema, cleanup виконано |
 | Production template/Caddy/Compose | PASS |
+| GitHub CI | [PASS для `f48713a`](https://github.com/anton5267/rewind-letterboxd/actions/runs/39557098972), 1m53s |
 
 Перший full browser run виявив два дефекти Lists: втрачений локалізований hero text і приховану feed navigation. Після виправлення targeted run дав 7/7, повторний full run — 125/125.
 

@@ -35,9 +35,10 @@
 
 ## GitHub CI
 
-Поточний commit/push і `CI / verify (push)` ще не записані. Після зеленого run цей розділ буде оновлено посиланням і commit SHA.
-
-Історичний зелений checkpoint перед поточним UI-проходом: [GitHub CI для `f0df409`](https://github.com/anton5267/rewind-letterboxd/actions/runs/39485802412).
+- UI/assets/harness commit: `33f8082`.
+- Release documentation commit: `f48713a`.
+- [`CI / verify (push)` run 39557098972](https://github.com/anton5267/rewind-letterboxd/actions/runs/39557098972): PASS, 1m53s. Backend tests, frontend build/typecheck і Caddy validation зелені.
+- Історичний checkpoint перед поточним UI-проходом: [GitHub CI для `f0df409`](https://github.com/anton5267/rewind-letterboxd/actions/runs/39485802412).
 
 ## Збереження даних
 

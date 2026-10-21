@@ -1,6 +1,6 @@
 # Rewind — план завершення
 
-Оновлено 21.10.2026. Активна ціль: довести інтерфейс до перевіреної відповідності доступним Figma-макетам, зберегти API, UK/EN і доступність, пройти повну регресію, оновити локальний Docker та доставити зелений результат у GitHub.
+Оновлено 21.10.2026. Ціль виконано: інтерфейс доведено за доступними Figma references, API, UK/EN і доступність збережено, повну регресію пройдено, локальний Docker оновлено, commits відправлено в GitHub.
 
 ## Виконано
 
@@ -20,11 +20,12 @@
 
 Точні результати й межі доказу — у [RELEASE_EVIDENCE](docs/operations/RELEASE_EVIDENCE.md), Figma mappings — у [FIGMA_HANDOFF](docs/frontend/FIGMA_HANDOFF.md).
 
-## Залишилося в цій цілі
+## Доставка
 
-1. Перевірити intended Git diff і не включити локальні `AGENTS.md` та `artifacts/diploma-video/**`.
-2. Зробити логічні commits, push у GitHub і дочекатися зеленого `CI / verify (push)`.
-3. Записати URL фінального CI run у release evidence.
+- UI/assets/harness: commit `33f8082`.
+- Локальні release results: commit `f48713a`.
+- [GitHub CI / verify для `f48713a`](https://github.com/anton5267/rewind-letterboxd/actions/runs/39557098972): PASS, 1m53s.
+- Diploma artifacts і локальний `AGENTS.md` залишилися поза commits.
 
 ## Поза цією ціллю
 
