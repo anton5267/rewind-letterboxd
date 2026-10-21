@@ -72,3 +72,14 @@ test("Home list feed keeps retry and honest empty states", async ({ page }) => {
   await expect(panel.getByText("No public lists yet.", { exact: true })).toBeVisible();
   expect(attempts).toBe(2);
 });
+
+test("Member Home keeps the dedicated Figma desktop hero", async ({ page }) => {
+  await page.route("**/api/users/me", route => route.fulfill({ json: { id: 1, username: "member", role: "USER" } }));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/en/home");
+
+  const hero = page.locator("main > section").first();
+  await expect(hero).toHaveCSS("min-height", "948px");
+  expect(await hero.evaluate(element => getComputedStyle(element).backgroundImage)).toContain("home-hero-member.jpg");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveCSS("font-size", "58px");
+});

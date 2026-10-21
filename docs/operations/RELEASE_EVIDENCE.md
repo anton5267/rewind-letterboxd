@@ -31,6 +31,8 @@ Journal List 4 `1494:5387` was verified with Figma context and screenshot before
 
 Guest Home desktop `1413:6471` was checked with its Figma context and screenshot. The implementation uses the verified original artwork stored at `frontend/public/images/home-hero-guest.jpg`, a 764 px visual hero, and the target CTA geometry. `npm run verify:build` passed (216 modules); the Home keyboard/list-card suite and responsive matrix passed 3/3 against the rebuilt Docker web image. The authenticated Home variant and the remaining guest feed still need their own frame-by-frame review.
 
+Member Home desktop `1413:6263` was reviewed separately and uses `frontend/public/images/home-hero-member.jpg`, a 948 px header-underlaid hero, target 58 px title/24 px subtitle and six 174×260 px API-backed poster slots. `npm run verify:build` passed (216 modules); the rebuilt Docker web image passed the Home suite 3/3, including an authenticated mocked-session assertion. Other feed sections still require individual frame review.
+
 Поточний Search етап: targeted Global Search 4/4; нові UK/EN сценарії перевіряють shortcuts, URL, 361 px list cards, п’ять 79 px posters, багаторядкові tags і no-overflow. Повний набір зріс до 127. Admin wrapper спочатку зупинився до створення fixture через Docker template quoting у Windows PowerShell 5.1; після переходу на `docker inspect` JSON пройшов 12/12 і прибрав disposable fixture.
 
 Початкові backend спроби проти основної dev DB не зараховані: вони отримали access denied через host credentials. Фінальний результат отриманий на чистій ізольованій MySQL з CI credentials; основну БД не змінювали.

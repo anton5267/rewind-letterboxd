@@ -97,6 +97,50 @@
   font-size: 16px;
 }
 
+/* Figma member desktop 1413:6263. Its full-height artwork sits behind the fixed header. */
+@media (min-width: 681px) {
+  .page:has(.memberHero) {
+    padding-top: 0;
+  }
+
+  .memberHero {
+    min-height: 948px;
+    padding: 80px 24px 0;
+    background:
+      linear-gradient(0deg, var(--rewind-surface) 0%, rgba(31, 31, 31, .8) 28%, rgba(45, 45, 45, .3) 69%, rgba(78, 78, 78, 0) 100%),
+      linear-gradient(rgba(0, 0, 0, .77), rgba(0, 0, 0, .77)),
+      url("/images/home-hero-member.jpg") center / cover no-repeat;
+  }
+
+  .memberHero h1 {
+    max-width: 891px;
+    margin: 0;
+    font-size: 58px;
+    line-height: 1.12;
+  }
+
+  .memberHero > p:not(.eyebrow) {
+    max-width: 891px;
+    margin-top: 22px;
+    color: #7e7e7e;
+    font-size: 24px;
+    line-height: 1.12;
+  }
+
+  .page:has(.memberHero) .section,
+  .page:has(.memberHero) .grid,
+  .page:has(.memberHero) .status {
+    width: min(100%, 1199px);
+  }
+
+  .page:has(.memberHero) .leadingSection { margin-top: 96px; }
+  .page:has(.memberHero) .movieRow { grid-template-columns: repeat(6, 174px); gap: 31px; overflow: visible; }
+  .page:has(.memberHero) .movieCard img,
+  .page:has(.memberHero) .posterFallback { height: 260px; aspect-ratio: auto; border-radius: 20px; }
+  .page:has(.memberHero) .movieCard h3,
+  .page:has(.memberHero) .movieCard p { display: none; }
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
