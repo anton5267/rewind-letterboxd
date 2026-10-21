@@ -69,7 +69,7 @@ FigJam — джерело аналізу, архітектури, персон �
 | Global Search reviews desktop | `1480:7311` → 1440×2176 | `/search?tab=reviews` | Alignment |
 | Global Search films desktop | `1480:7256` → 1440×1062 | `/search?tab=films` | PNG/raw alignment: mapped background, search 400×44, 6 rounded posters близько 174×260; functional roving tabs з реальними counts збережені. Shared Header composition і точні fonts не заявлені як parity |
 | Journal search desktop / phone | `1480:7549` → 1440×1149; `1480:8889` → 393×1150 | `/search?tab=journal` | Alignment |
-| Tag search desktop / phone | `1480:6898` → 1440×2388; `1480:8527` → 393×1055 | `/lists/discover?tag=...`; GlobalSearch tags | Реальні tag/list transitions; exact parity відкрита |
+| Tag search desktop / phone | `1480:6898` → 1440×2388; `1480:8527` → 393×1055 | `/lists/discover?tag=...`; GlobalSearch tags | Desktop rows retain poster stack and metadata; mobile cards now place title/count above a 138 px poster rail with 16 px radius, hiding desktop-only description/meta. `list-discovery-controls.spec.ts` 3/3 passed; original Figma images remain unavailable while plugin quota is exhausted |
 | Додатковий mobile search reference | `1480:6217` → 393×581 | Search reference | Інвентаризовано; окрему parity не підтверджено |
 | Lists catalog desktop / mobile | `1480:4983` → 1440×3816; `1480:8280` → 393×1809 | `/lists/discover` → PublicLists | PNG/raw: compact hero, upright strips, Recently liked rows/cards; тільки фактичні previews, справжні empty feeds |
 | Featured desktop / mobile | `1480:5839` → 1440×3565; `1480:8012` → 393×2019 | `/lists/discover?feed=...` | Реальні feeds; частина feeds може бути порожньою |

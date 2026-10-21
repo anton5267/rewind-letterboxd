@@ -177,16 +177,17 @@
   .taggedGrid { gap: 12px; }
   .card,
   .featuredCard,
-  .taggedCard { display: block; }
+  /* Figma `1480:8527`: mobile tagged-list cards put the title/count above the poster rail. */
+  .taggedCard { display: flex; flex-direction: column; border-radius: 16px; }
   .posterLink,
   .featuredPosterLink { min-height: 124px; height: 124px; align-items: flex-start; overflow: hidden; padding: 9px 6px 0; }
   .featuredPosterLink { height: 132px; min-height: 132px; }
-  .taggedPosterLink { height: 156px; min-height: 156px; padding: 8px; }
-  .taggedCard .cardBody { padding: 10px 12px 14px; }
-  .taggedCard .cardBody h2 { margin-bottom: 6px; font-size: 15px; }
+  .taggedPosterLink { order: 2; height: 138px; min-height: 138px; padding: 8px 10px 10px; }
+  .taggedCard .cardBody { order: 1; padding: 12px 14px 0; }
+  .taggedCard .cardBody h2 { margin-bottom: 0; font-size: 13px; line-height: 16px; }
   .taggedCard .description { display: none; }
   .taggedCard .cardTags { display: none; }
-  .taggedCard .meta { margin-top: 6px; font-size: 11px; }
+  .taggedCard .meta { display: none; }
   .cardBody,
   .featuredCard .cardBody { display: block; padding: 10px 10px 12px; }
   .cardBody h2 { margin-bottom: 7px; font-size: 15px; line-height: 1.15; }

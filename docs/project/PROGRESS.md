@@ -18,6 +18,7 @@
 - Admin dashboard отримав Figma hero/workspace/metrics, зберіг усі users/movies/reviews/comments/lists/moderation/activity/audit/settings actions.
 - Lists landing повернув видиму feed navigation і точний UK/EN зміст після regression failure; links залишаються клавіатурно доступними.
 - Global Search отримав mobile shortcuts із шістьма реальними routes, а list/tag results — Figma-aligned poster stack і перенесення тегів без horizontal overflow.
+- Tag search mobile `1480:8527` повторно звірений у Figma: заголовок і кількість тепер стоять над poster rail, картка має 16 px radius і 138 px poster area; targeted list discovery tests 3/3 passed.
 - CI використовує `ubuntu-24.04`, `actions/checkout@v7`, `actions/setup-java@v6` і `actions/setup-node@v7`, прибираючи Node 20/deprecated action та runner migration warnings.
 - Admin browser wrapper більше не залежить від ламкого Docker Go-template quoting у Windows PowerShell 5.1.
 
