@@ -5,5 +5,8 @@ public record PopularReviewerResponse(
         String username,
         String displayName,
         String avatarUrl,
-        long likes
+        long likes,
+        long reviewCount,
+        long watchedCount,
+        long listCount
 ) {}

@@ -1,6 +1,6 @@
 # Rewind — поточний стан
 
-Оновлено 21.10.2026. Основний release checkpoint і наступний Search/CI maintenance етап доставлені в GitHub; основний CI run зелений. Робочий порядок — [PLAN](../../PLAN.md), детальні результати — [RELEASE_EVIDENCE](../operations/RELEASE_EVIDENCE.md).
+Оновлено 21.10.2026. Основний release checkpoint і Search/CI maintenance етап доставлені в GitHub; після них розпочато повний Figma audit по конкретних nodes. Перший завершений локальний блок — Popular Reviewers `1480:5486`/`1480:7698`: реальні reviewer metrics, desktop/mobile geometry, повні 127 browser-сценарії та 87 backend-тестів пройшли; API/web Docker images перебудовані. Робочий порядок — [PLAN](../../PLAN.md), детальні результати — [RELEASE_EVIDENCE](../operations/RELEASE_EVIDENCE.md).
 
 ## Структура та документація
 

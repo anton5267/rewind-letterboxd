@@ -18,6 +18,8 @@ public interface MovieListRepository extends JpaRepository<MovieList, Long> {
     @EntityGraph(attributePaths = "tags")
     List<MovieList> findAllByUser(User user);
     long countByUserIdAndListType(Long userId, ListType listType);
+    @Query("select l.user.id, count(l.id) from MovieList l where l.user.id in :userIds and l.listType = :listType group by l.user.id")
+    List<Object[]> countByUserIdsAndListType(@Param("userIds") Collection<Long> userIds, @Param("listType") ListType listType);
 
     Page<MovieList> findPageByUserOrderByUpdatedAtDescIdDesc(User user, Pageable pageable);
 

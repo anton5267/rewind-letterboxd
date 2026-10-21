@@ -73,6 +73,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @EntityGraph(attributePaths = {"user", "movie"})
     Page<Review> findAllByUserIdAndIsHidden(Long userId, Boolean hidden, Pageable pageable);
     long countByUserIdAndIsHiddenFalse(Long userId);
+    @Query("select r.user.id, count(r.id) from Review r where r.user.id in :userIds and r.isHidden = false group by r.user.id")
+    List<Object[]> countVisibleByUserIds(@Param("userIds") Collection<Long> userIds);
     long countByIsHiddenTrue();
     @EntityGraph(attributePaths = {"user", "movie"})
     Page<Review> findAllByMovieIdAndUserIdAndIsHidden(Long movieId, Long userId, Boolean hidden, Pageable pageable);

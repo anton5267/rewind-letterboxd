@@ -44,7 +44,7 @@ test("release routes keep landmarks and no horizontal overflow across the viewpo
       });
       await expect(page.getByRole("banner")).toHaveCount(1);
       await expect(page.getByRole("contentinfo")).toHaveCount(1);
-      if (route === "/uk/community/reviewers") {
+      if (route === "/uk/community/reviewers" && width <= 720) {
         const header = await page.getByRole("banner").boundingBox();
         const back = await page.locator("main a").first().boundingBox();
         expect(header).not.toBeNull();

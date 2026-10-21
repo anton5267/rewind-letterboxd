@@ -50,8 +50,13 @@ class ReviewLikeIntegrationTests {
                 .anyMatch(notification -> notification.type().name().equals("REVIEW_LIKED") && reviewId.equals(notification.reviewId())));
         assertEquals(1, likes.count(reviewId));
         assertTrue(likes.status(liker, reviewId).liked());
-        assertTrue(popularReviewers.popular(10).stream()
-                .anyMatch(reviewer -> reviewer.id().equals(authorId) && reviewer.likes() == 1));
+        var popularReviewer = popularReviewers.popular(10).stream()
+                .filter(reviewer -> reviewer.id().equals(authorId))
+                .findFirst().orElseThrow();
+        assertEquals(1, popularReviewer.likes());
+        assertEquals(1, popularReviewer.reviewCount());
+        assertEquals(0, popularReviewer.watchedCount());
+        assertEquals(0, popularReviewer.listCount());
         likes.unlike(liker, reviewId);
         assertEquals(0, likes.count(reviewId));
         assertFalse(likes.status(liker, reviewId).liked());

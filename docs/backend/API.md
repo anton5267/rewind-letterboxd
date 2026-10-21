@@ -71,7 +71,7 @@ Own `recentReviews` і paged `/api/profile/me/reviews` у поточному sou
 | U | `GET`, `POST /api/conversations`; `GET`, `POST /api/conversations/{id}/messages`; `POST /api/conversations/{id}/read` | Приватні діалоги й повідомлення; blocked pairs не можуть почати/читати/надсилати |
 | U | `GET /api/users/{id}/block-status`, `POST/DELETE /api/users/{id}/block` | Перевірка, встановлення й зняття блокування; блок також прибирає взаємні follow |
 | U | `GET`, `PUT /api/notifications/preferences` | Налаштування сповіщень |
-| P | `GET /api/users/hq`, `/api/users/directory`, `/api/users/popular-reviewers`; `GET /api/users/{id}/followers`, `/api/users/{id}/following`, `/api/users/{id}/activity`; `GET /api/activity/recent-watched` | Community, network, public activity і recent-watched feed |
+| P | `GET /api/users/hq`, `/api/users/directory`, `/api/users/popular-reviewers`; `GET /api/users/{id}/followers`, `/api/users/{id}/following`, `/api/users/{id}/activity`; `GET /api/activity/recent-watched` | Community, network, public activity і recent-watched feed. `popular-reviewers` також повертає additive `reviewCount`, `watchedCount`, `listCount`; старі клієнти лишаються сумісними. |
 | U | `GET /api/users/{id}/follow-status`; `POST`, `DELETE /api/users/{id}/follow`; `GET /api/activity/following` | Власні follow relations і activity feed |
 | U | `GET /api/notifications`, `/api/notifications/unread-count`, `/api/notifications/stream`; `POST /api/notifications/{id}/read`, `/api/notifications/read-all` | Сторінкові notifications, unread, SSE та read actions |
 | U | `GET /api/conversations/unread-count` | Кількість непрочитаних діалогів |

@@ -1,6 +1,6 @@
 # Rewind — план завершення
 
-Оновлено 21.10.2026. Наступний локальний етап виконано: мобільні Search shortcuts/lists/tags звірено з конкретними Figma frames, CI actions оновлено, Windows admin verifier виправлено, API, UK/EN і доступність збережено. Основний commit відправлено, GitHub CI зелений.
+Оновлено 21.10.2026. Після Search/CI checkpoint розпочато повний node-by-node Figma audit: кожен наступний UI-блок реалізується тільки після перевірки конкретного frame context і screenshot, а не за припущеннями. Перший блок цього проходу — Popular Reviewers desktop/phone `1480:5486`/`1480:7698`; локальна реалізація, повна регресія та Docker runtime пройшли. Наступний блок обирається лише після concrete-node review.
 
 ## Виконано
 

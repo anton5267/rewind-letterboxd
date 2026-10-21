@@ -32,6 +32,9 @@ export type ActivityPage = NumberedPage<Activity>;
 
 export interface PopularReviewer extends PublicNetworkUser {
   likes: number;
+  reviewCount?: number;
+  watchedCount?: number;
+  listCount?: number;
 }
 
 export interface CommunityUser {

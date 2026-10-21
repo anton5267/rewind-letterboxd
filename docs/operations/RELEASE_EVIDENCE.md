@@ -6,9 +6,9 @@
 
 | Gate | Результат | Доказ / межа |
 | --- | --- | --- |
-| Frontend build | PASS | `npm run verify:build`: TypeScript без помилок, Vite 213 modules |
-| Full browser suite | **127 passed** | 0 failed/skipped/flaky/retries; production Nginx image, Google Chrome. Standard run: 115 passed + 12 gated admin skips, 4.4 min; disposable admin run: 12/12, 42 s |
-| Backend suite | **87 tests** | failures/errors/skips 0, 1:52 min; окремий disposable MySQL 8.4 на `127.0.0.1:3308`, контейнер видалено |
+| Frontend build | PASS | `npm run verify:build`: TypeScript без помилок, Vite 216 modules |
+| Full browser suite | **127 passed** | 0 failed/flaky/retries; production Nginx image, Google Chrome. Standard run: 115 passed + 12 gated admin skips, 5.2 min; disposable admin run: 12/12, 43.6 s |
+| Backend suite | **87 tests** | failures/errors/skips 0, 2:24 min; окремий disposable MySQL 8.4 на `127.0.0.1:3308`, контейнер видалено |
 | API smoke | PASS | OpenAPI 159 operations; auth, profiles, films, lists, reviews, comments, social, messages, notifications, newsletter і cleanup |
 | Contract smoke | PASS | Public/protected routes, privacy fields, role guards, CRUD і nullable responses |
 | Security smoke | PASS | CSRF, guest/admin guards, hostile query payloads, metrics protection |
@@ -18,10 +18,12 @@
 | Backup/restore | PASS | Dump restored to a unique temporary schema; counts `203|438|31`; schema and temporary dump cleaned |
 | Production template | PASS | Synthetic temporary env: HTTPS origin, strong placeholders, private DB/Redis/API, read-only API/web, loopback web port |
 | Caddy / Compose | PASS | Caddy valid; development Compose config valid; clean API/web image builds |
-| Local Docker runtime | PASS | `/actuator/health` 200, `/uk/home` 200; API/web rebuilt, DB volume and `.env` preserved |
+| Local Docker runtime | PASS | `/actuator/health` 200, `/uk/community/reviewers` 200; API/web rebuilt, DB volume and `.env` preserved. Живий contract повернув `reviewCount`, `watchedCount`, `listCount` |
 | CI workflow maintenance | PASS | `ubuntu-24.04`, `checkout@v7`, `setup-java@v6`, `setup-node@v7`; action majors підтверджені GitHub run 39560672726 |
 
 Перший повний browser run завершився 123/125. Він виявив реальні regressions у Lists: hero втратив очікувані UK/EN «Колекції фільмів / Film collections», а landing CSS приховав feed navigation через `display:none`. Після виправлення targeted run дав 7/7, повторний full run — 125/125.
+
+Поточний Figma-audit блок Popular Reviewers: перший full run виявив, що release matrix неправильно очікував mobile Back-link на desktop, хоча у frame є desktop header. Перевірку обмежено шириною phone (`<=720 px`); цільова matrix пройшла, а повторний повний frontend run завершився 115 passed. Backend contract для трьох reviewer metrics перевірено окремо і в повному наборі; реалізація використовує групові запити, а не запит на кожного рецензента.
 
 Поточний Search етап: targeted Global Search 4/4; нові UK/EN сценарії перевіряють shortcuts, URL, 361 px list cards, п’ять 79 px posters, багаторядкові tags і no-overflow. Повний набір зріс до 127. Admin wrapper спочатку зупинився до створення fixture через Docker template quoting у Windows PowerShell 5.1; після переходу на `docker inspect` JSON пройшов 12/12 і прибрав disposable fixture.
 
@@ -30,7 +32,7 @@
 ## Figma та UI
 
 - Design copy: `BDO9GO1oscOeUTcu4VXVKA`.
-- У цьому проході concrete context/screenshots додатково використані для Search shortcuts `1480:8432`, lists `1480:8804` і tags `1480:8767`; попередній checkpoint охопив Journal article, Auth desktop/mobile, Help, About, Admin dashboard і Public Profile phone.
+- У цьому проході concrete context/screenshots додатково використані для Popular Reviewers desktop/phone `1480:5486`/`1480:7698`; попередній checkpoint охопив Search shortcuts, Lists, Journal article, Auth desktop/mobile, Help, About, Admin dashboard і Public Profile phone.
 - Auth raster assets збережені локально; runtime не містить тимчасових Figma asset URLs.
 - Повний browser suite перевірив UK/EN, 320/393/600/720/768/1440 responsive cases, keyboard/focus, loading/error/empty/retry, admin fixture і poster compatibility.
 

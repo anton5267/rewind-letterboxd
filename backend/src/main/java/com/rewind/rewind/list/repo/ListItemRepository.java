@@ -1,6 +1,7 @@
 package com.rewind.rewind.list.repo;
 
 import com.rewind.rewind.list.entity.ListItem;
+import com.rewind.rewind.list.entity.ListType;
 import com.rewind.rewind.list.entity.MovieList;
 import com.rewind.rewind.movie.entity.Movie;
 import org.springframework.data.domain.Page;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 
 public interface ListItemRepository extends JpaRepository<ListItem, Long> {
@@ -39,6 +41,9 @@ public interface ListItemRepository extends JpaRepository<ListItem, Long> {
 
     @Query("select li.list.id, count(li.id) from ListItem li where li.list.id in :listIds group by li.list.id")
     List<Object[]> countByListIds(@Param("listIds") List<Long> listIds);
+
+    @Query("select li.list.user.id, count(li.id) from ListItem li where li.list.user.id in :userIds and li.list.listType = :listType group by li.list.user.id")
+    List<Object[]> countByUserIdsAndListType(@Param("userIds") Collection<Long> userIds, @Param("listType") ListType listType);
 
     long countByListId(Long listId);
 }

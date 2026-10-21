@@ -96,9 +96,39 @@
 .error { color: #ffb8bd; }
 .feedback { color: #c2bdb6; }
 
+.metrics { display: flex; flex: 0 0 306px; align-items: center; justify-content: space-between; gap: 14px; color: #8f8f8f; }
+.metric { display: flex; min-width: 0; align-items: center; gap: 10px; }
+.metric img { width: 35px; height: 35px; flex: 0 0 35px; object-fit: contain; }
+.metricValue { color: #8f8f8f; font-size: 18px; line-height: 1.12; }
+.metricLabel { position: absolute; width: 1px; height: 1px; overflow: hidden; padding: 0; margin: -1px; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+@media (min-width: 721px) {
+  .reviewerRow { min-height: 112px; flex-wrap: nowrap; gap: 24px; padding: 16px 69px 16px 73px; }
+  .reviewerRow .userLink { flex: 1 1 auto; gap: 49px; }
+  .reviewerRow .avatar,
+  .reviewerRow .avatarFallback { width: 80px; height: 80px; flex-basis: 80px; }
+  .reviewerRow .userCopy { gap: 5px; }
+  .reviewerRow .userCopy strong { font-size: 24px; line-height: 1.12; }
+  .reviewerRow .userCopy span { font-size: 18px; line-height: 1.12; }
+  .reviewerRow .glyph { width: 34px; height: 34px; font-size: 22px; }
+}
+
+@media (max-width: 720px) {
+  .reviewerRow { position: relative; min-height: 65px; flex-wrap: nowrap; padding: 10px 0; border-bottom: 0; }
+  .reviewerRow .avatar,
+  .reviewerRow .avatarFallback { width: 40px; height: 40px; flex-basis: 40px; }
+  .reviewerRow .userCopy { gap: 1px; }
+  .reviewerRow .userCopy strong { font-size: 15px; line-height: 1.12; }
+  .reviewerRow .userCopy span { color: #8f8f8f; font-size: 12px; line-height: 1.12; }
+  .reviewerRow .metrics { display: none; }
+  .reviewerRow .feedback { position: absolute; width: 1px; height: 1px; overflow: hidden; padding: 0; margin: -1px; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+  .reviewerRow .glyph { width: 24px; height: 24px; border: 0; background: #929292; color: #252525; font-size: 18px; font-weight: 800; }
+  .reviewerRow .action[aria-pressed="true"] .glyph { background: #d4a85f; color: #1f1f1f; }
+}
+
 @media (max-width: 400px) {
   .row { gap: 8px; }
   .userLink { gap: 10px; }
-  .userCopy strong { font-size: 14px; }
-  .glyph { width: 22px; height: 22px; }
+  .row:not(.reviewerRow) .userCopy strong { font-size: 14px; }
+  .row:not(.reviewerRow) .glyph { width: 22px; height: 22px; }
 }

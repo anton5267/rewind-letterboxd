@@ -79,7 +79,7 @@ async function communityFixture(page: Page) {
       state.actor = state.nextActor;
       await respond({ status: 204 });
     } else if (path === "/api/users/popular-reviewers") {
-      await respond({ status: 200, json: state.reviewers.map(user => ({ ...user, likes: 3 })) });
+      await respond({ status: 200, json: state.reviewers.map((user, index) => ({ ...user, likes: 30 + index, reviewCount: 12 + index, watchedCount: 80 + index, listCount: 4 + index })) });
     } else if (path === "/api/users/hq") {
       await respond({ status: 200, json: pageOf(state.hq) });
     } else if (path === "/api/users/directory") {
@@ -310,6 +310,13 @@ for (const lang of ["uk", "en"] as const) {
       await expectControls(page, followName, 1);
       expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${lang} popular reviewers at ${width}px`).toBe(0);
     }
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await expect(page.getByText(lang === "uk" ? "Переглядайте профілі найпопулярніших і найшанованіших рецензентів." : "Explore the profiles of our most followed and respected reviewers.")).toBeVisible();
+    await expect(page.getByRole("group", { name: lang === "uk" ? "Статистика рецензента" : "Reviewer statistics" })).toHaveCount(3);
+    const reviewerTable = page.locator("#reviewer-list").locator("..");
+    const tableBox = await reviewerTable.boundingBox();
+    expect(tableBox?.width).toBeCloseTo(1200, 0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
     expect(state.mutations.map(call => [call.targetId, call.method])).toEqual([
       [ada.id, "POST"], [ada.id, "DELETE"], [ada.id, "POST"], [ada.id, "DELETE"],
     ]);
