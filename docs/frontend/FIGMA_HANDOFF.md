@@ -73,7 +73,7 @@ FigJam — джерело аналізу, архітектури, персон �
 | Додатковий mobile search reference | `1480:6217` → 393×581 | Search reference | Інвентаризовано; окрему parity не підтверджено |
 | Lists catalog desktop / mobile | `1480:4983` → 1440×3816; `1480:8280` → 393×1809 | `/lists/discover` → PublicLists | PNG/raw: compact hero, upright strips, Recently liked rows/cards; тільки фактичні previews, справжні empty feeds |
 | Featured desktop / mobile | `1480:5839` → 1440×3565; `1480:8012` → 393×2019 | `/lists/discover?feed=...` | Реальні feeds; частина feeds може бути порожньою |
-| Popular desktop / mobile | `1480:5390` → 1440×2821; `1480:7927` → 393×1301 | `/lists/discover?feed=popular` | Mobile `1480:7927` screenshot/context: 183 px hero, contextual controls, 361 px cards and pagination aligned with live data. Desktop still requires individual frame comparison |
+| Popular desktop / mobile | `1480:5390` → 1440×2821; `1480:7927` → 393×1301 | `/lists/discover?feed=popular` | Screenshot/context: desktop 628 px hero, 58 px heading and 1200×339 rows with 174×260 five-poster stacks; mobile 183 px hero, contextual controls, 361 px cards and pagination. Live data and routes retained |
 | Public / ranked list desktop | `1480:6071`, `1480:6134` → 1440×2033 | `/lists/public/:id` → PublicList | Dark hero, rank/posters/actions; без вигаданого ListType |
 | Public list information overlay mobile | `1480:9446` → 393×852 | PublicList → `⋯` | PNG/raw підтверджують information sheet: справжні owner/likes/tags, Done, focus trap/return; цей frame не доводить геометрію poster wall |
 | Create list empty / populated | `1480:5333` → 1440×2160; `1480:5182` → 1440×3856 | `/lists` → UserLists | Реальні create/edit/delete/reorder |

@@ -55,6 +55,26 @@
 .taggedPage .feedNav { display: none; }
 .feedPage .feedNav { display: none; }
 
+/* Figma Popular Lists desktop `1480:5390`: hero and full-width list rows. */
+@media (min-width: 721px) {
+  .feedPage { padding-top: 0; }
+  .feedPage .feedHero { min-height: 628px; box-sizing: border-box; margin-inline: -5vw; padding: 280px 24px 112px; justify-content: flex-start; gap: 0; background: linear-gradient(180deg, rgba(0, 0, 0, .05), rgba(0, 0, 0, .82) 78%, #1f1f1f), url("/images/search-hero-desktop.png") center 30% / cover no-repeat; }
+  .feedPage .feedToolbar { display: none; }
+  .feedPage .feedHeroCopy { width: min(100%, 547px); margin: 0 auto; }
+  .feedPage .feedHeroCopy .eyebrow { display: none; }
+  .feedPage .feedHeroCopy h1 { font-size: 58px; line-height: 1.12; letter-spacing: 0; }
+  .feedPage .feedHeroCopy p:last-child { max-width: 547px; margin-top: 8px; color: #7e7e7e; font-size: 24px; line-height: 1.2; }
+  .feedPage .shell > section > .sectionHeading { margin: 85px 0 58px; border-top: 1px solid #444; padding-top: 18px; }
+  .feedPage .shell > section > .sectionHeading h2 { font-size: 24px; line-height: 27px; }
+  .feedPage .featuredGrid { gap: 37px; }
+  .feedPage .featuredCard { min-height: 339px; box-sizing: border-box; grid-template-columns: minmax(0, 446px) minmax(0, 1fr); align-items: start; gap: 66px; padding: 44px 34px 35px; border: 0; border-radius: 20px; background: #282828; }
+  .feedPage .featuredPosterLink { --catalog-poster-height: 260px; min-height: 260px; height: 260px; justify-content: flex-start; padding: 0; background: none; }
+  .feedPage .featuredCard .cardBody { display: flex; min-width: 0; flex-direction: column; padding: 16px 0 0; }
+  .feedPage .featuredCard .cardBody h2 { margin: 0; font-size: 24px; font-weight: 700; line-height: 27px; }
+  .feedPage .featuredCard .meta { order: 1; min-height: 0; margin: 9px 0 0; padding: 0; color: #7e7e7e; font-size: 18px; line-height: 22px; }
+  .feedPage .featuredCard .description { display: -webkit-box; order: 2; margin-top: 18px; color: #7e7e7e; font-size: 20px; line-height: 24px; white-space: pre-line; -webkit-line-clamp: 6; }
+}
+
 .feedNav { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 0 22px; border-top: 1px solid var(--rewind-line); border-bottom: 1px solid var(--rewind-line); }
 .feedNav a,
 .tagRail a { color: #d4d0cc; text-decoration: none; }

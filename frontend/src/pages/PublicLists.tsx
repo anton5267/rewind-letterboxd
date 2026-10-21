@@ -218,7 +218,7 @@ export default function PublicLists() {
     const posterClass = tagged ? styles.taggedPosterLink : landing ? `${styles.posterLink} ${styles.railPosterLink}` : compact ? styles.featuredPosterLink : styles.posterLink;
     return <article className={cardClass} key={list.id}>
       <Link className={posterClass} to={path(`/lists/public/${list.id}`)} aria-label={listName}>
-        <ListPosterStack movies={list.previewMovies ?? []} label={listName} fallbackTitle={t("untitledFilm")} size={compact ? "featured" : "compact"} layout={landing ? "catalog" : "fan"} />
+        <ListPosterStack movies={list.previewMovies ?? []} label={listName} fallbackTitle={t("untitledFilm")} size={compact ? "featured" : "compact"} layout={landing || compact ? "catalog" : "fan"} />
       </Link>
       <div className={styles.cardBody}>
         <h2><Link to={path(`/lists/public/${list.id}`)}>{listName}</Link>{tagged && list.itemCount != null && <span className={styles.taggedCount}>{formatMovieCount(list.itemCount, lang)}</span>}{variant === "liked" && list.itemCount != null && <span className={styles.landingCount}>{formatMovieCount(list.itemCount, lang)}</span>}</h2>
