@@ -12,7 +12,7 @@ import styles from "./UserFollowRow.module.css";
 
 type ReviewerMetrics = { watched: number; lists: number; likes: number };
 
-export default function UserFollowRow({ user, href, meta, subtitle, label, reviewerMetrics }: { user: CommunityUser; href: string; meta?: string; subtitle?: string; label?: string; reviewerMetrics?: ReviewerMetrics }) {
+export default function UserFollowRow({ user, href, meta, subtitle, label, reviewerMetrics, presentation }: { user: CommunityUser; href: string; meta?: string; subtitle?: string; label?: string; reviewerMetrics?: ReviewerMetrics; presentation?: "communityShowcase" }) {
   const { t, path } = useLocale();
   const { actorId, authReady, state, retry, toggle } = useFollowAction(user.id);
   const feedbackId = useId();
@@ -22,7 +22,7 @@ export default function UserFollowRow({ user, href, meta, subtitle, label, revie
   const loading = !authReady || state.phase === "loading" || state.busy;
   const actionLabel = `${t(state.phase === "error" ? "retry" : loading ? "loading" : state.blocked ? "interactionBlocked" : state.following ? "unfollow" : "follow")}: ${identity}`;
 
-  return <li className={`${styles.row} ${reviewerMetrics ? styles.reviewerRow : ""}`}>
+  return <li className={`${styles.row} ${reviewerMetrics ? styles.reviewerRow : ""} ${presentation ? styles[presentation] : ""}`}>
     <Link className={styles.userLink} to={href} aria-label={label ?? `${identity} ${getUserHandle(user)}`}>
       <ResilientImage className={styles.avatar} src={user.avatarUrl} alt="" width={44} height={44}
         fallback={<span className={styles.avatarFallback} aria-hidden="true">{getUserInitial(user)}</span>} />

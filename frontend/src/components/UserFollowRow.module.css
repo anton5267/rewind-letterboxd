@@ -102,6 +102,16 @@
 .metricValue { color: #8f8f8f; font-size: 18px; line-height: 1.12; }
 .metricLabel { position: absolute; width: 1px; height: 1px; overflow: hidden; padding: 0; margin: -1px; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
+/* Community member rails mirror Figma 605:1112 / 1517:4931 while keeping API identities and follow controls. */
+.communityShowcase { position: relative; min-height: 0; display: grid; justify-items: start; align-content: start; gap: 8px; padding: 0; border-bottom: 0; }
+.communityShowcase .userLink { display: grid; flex: initial; gap: 8px; }
+.communityShowcase .avatar, .communityShowcase .avatarFallback { width: 96px; height: 96px; flex-basis: 96px; }
+.communityShowcase .userCopy { gap: 2px; }
+.communityShowcase .userCopy strong { font-size: 13px; line-height: 1.1; }
+.communityShowcase .userCopy span { font-size: 10px; line-height: 1.2; }
+.communityShowcase .action { position: absolute; top: 0; right: 0; width: 34px; height: 34px; opacity: 0; }
+.communityShowcase:focus-within .action, .communityShowcase:hover .action { opacity: 1; }
+
 @media (min-width: 721px) {
   .reviewerRow { min-height: 112px; flex-wrap: nowrap; gap: 24px; padding: 16px 69px 16px 73px; }
   .reviewerRow .userLink { flex: 1 1 auto; gap: 49px; }
@@ -124,6 +134,12 @@
   .reviewerRow .feedback { position: absolute; width: 1px; height: 1px; overflow: hidden; padding: 0; margin: -1px; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
   .reviewerRow .glyph { width: 24px; height: 24px; border: 0; background: #929292; color: #252525; font-size: 18px; font-weight: 800; }
   .reviewerRow .action[aria-pressed="true"] .glyph { background: #d4a85f; color: #1f1f1f; }
+  .communityShowcase { gap: 5px; }
+  .communityShowcase .userLink { gap: 5px; }
+  .communityShowcase .avatar, .communityShowcase .avatarFallback { width: 48px; height: 48px; flex-basis: 48px; }
+  .communityShowcase .userCopy strong { font-size: 9px; }
+  .communityShowcase .userCopy span { font-size: 7px; }
+  .communityShowcase .action { width: 44px; height: 44px; top: -8px; right: -10px; }
 }
 
 @media (max-width: 400px) {

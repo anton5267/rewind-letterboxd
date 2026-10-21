@@ -1,6 +1,6 @@
 # Rewind — поточний стан
 
-Оновлено 21.10.2026. Основний release checkpoint і Search/CI maintenance етап доставлені в GitHub; після них розпочато повний Figma audit по конкретних nodes. Перший завершений локальний блок — Popular Reviewers `1480:5486`/`1480:7698`: реальні reviewer metrics, desktop/mobile geometry, повні 127 browser-сценарії та 87 backend-тестів пройшли; API/web Docker images перебудовані. Робочий порядок — [PLAN](../../PLAN.md), детальні результати — [RELEASE_EVIDENCE](../operations/RELEASE_EVIDENCE.md).
+Оновлено 21.10.2026. Основний release checkpoint і Search/CI maintenance етап доставлені в GitHub; після них розпочато повний Figma audit по конкретних nodes. Завершений Popular Reviewers `1480:5486`/`1480:7698` має реальні reviewer metrics, desktop/mobile geometry, повні 127 browser-сценарії та 87 backend-тестів. Наступний Community блок `605:1112`/`1517:4931` переведений на Figma hero, featured/popular rails і member-list composition; справжні API profiles та follow interactions збережені. Робочий порядок — [PLAN](../../PLAN.md), детальні результати — [RELEASE_EVIDENCE](../operations/RELEASE_EVIDENCE.md).
 
 ## Структура та документація
 

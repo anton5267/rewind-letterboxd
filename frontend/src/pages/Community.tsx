@@ -84,19 +84,19 @@ export default function Community() {
   return <FollowActionsProvider><main className={styles.page} aria-labelledby="community-title" aria-busy={allSectionsLoading}>
     <div className={styles.shell}>
       <section className={styles.hero} aria-labelledby="community-title">
-        <h1 id="community-title">{t("community")}</h1>
+        <h1 id="community-title" className={styles.srOnly}>{t("community")}</h1>
         <p>{t("communitySubtitle")}</p>
       </section>
       {allSectionsLoading && <p className={styles.loading} role="status">{t("loading")}</p>}
       {Object.keys(sectionErrors).length > 0 && <p className={styles.alert} role="alert">{t("loadCommunityError")} <RetryButton label={t("retry")} onClick={() => setAttempt(value => value + 1)} /></p>}
       <div className={styles.grid}>
-        <section className={styles.card} aria-labelledby="community-reviewers" aria-busy={sectionLoading.reviewers}>
-          <div className={styles.cardHeading}><div className={styles.headingRow}><h2 id="community-reviewers">{t("popularReviewers")}</h2><Link to={path("/community/reviewers")}>{t("viewAll")}</Link></div></div>
-          {sectionLoading.reviewers ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.reviewers ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("reviewers")} /> : reviewers.length === 0 ? <p className={styles.empty}>{t("noPopularReviewers")}</p> : <ul className={styles.list}>{reviewers.map(reviewer => <UserFollowRow key={reviewer.id} user={reviewer} href={path(`/users/${reviewer.id}`)} meta={`${reviewer.likes} ${t("likes")}`} />)}</ul>}
-        </section>
         <section className={styles.card} aria-labelledby="community-hq" aria-busy={sectionLoading.hq}>
           <div className={styles.cardHeading}><h2 id="community-hq">{t("hqUsers")}</h2></div>
-          {sectionLoading.hq ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.hq ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("hq")} /> : !hqUsers || hqUsers.content.length === 0 ? <p className={styles.empty}>{t("noHqUsers")}</p> : <ul className={styles.list}>{hqUsers.content.map(member => <UserFollowRow key={member.id} user={member} href={path(`/users/${member.id}`)} meta={t("hq")} />)}</ul>}
+          {sectionLoading.hq ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.hq ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("hq")} /> : !hqUsers || hqUsers.content.length === 0 ? <p className={styles.empty}>{t("noHqUsers")}</p> : <ul className={`${styles.list} ${styles.showcaseList}`}>{hqUsers.content.slice(0, 5).map(member => <UserFollowRow key={member.id} presentation="communityShowcase" user={member} href={path(`/users/${member.id}`)} meta={t("hq")} />)}</ul>}
+        </section>
+        <section className={styles.card} aria-labelledby="community-reviewers" aria-busy={sectionLoading.reviewers}>
+          <div className={styles.cardHeading}><div className={styles.headingRow}><h2 id="community-reviewers">{t("popularThisWeek")}</h2><Link to={path("/community/reviewers")}>{t("viewAll")}</Link></div></div>
+          {sectionLoading.reviewers ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.reviewers ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("reviewers")} /> : reviewers.length === 0 ? <p className={styles.empty}>{t("noPopularReviewers")}</p> : <ul className={`${styles.list} ${styles.showcaseList}`}>{reviewers.slice(0, 5).map(reviewer => <UserFollowRow key={reviewer.id} presentation="communityShowcase" user={reviewer} href={path(`/users/${reviewer.id}`)} meta={`${reviewer.likes} ${t("likes")}`} />)}</ul>}
         </section>
         <section className={`${styles.card} ${styles.directoryCard}`} aria-labelledby="community-directory" aria-busy={sectionLoading.directory}>
           <div className={styles.cardHeading}><h2 id="community-directory">{t("allUsers")}</h2></div>
