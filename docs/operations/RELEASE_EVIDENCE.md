@@ -19,7 +19,7 @@
 | Production template | PASS | Synthetic temporary env: HTTPS origin, strong placeholders, private DB/Redis/API, read-only API/web, loopback web port |
 | Caddy / Compose | PASS | Caddy valid; development Compose config valid; clean API/web image builds |
 | Local Docker runtime | PASS | `/actuator/health` 200, `/uk/home` 200; API/web rebuilt, DB volume and `.env` preserved |
-| CI workflow maintenance | PASS locally | Official current major tags configured: `checkout@v7`, `setup-java@v6`, `setup-node@v7`; GitHub push validation pending |
+| CI workflow maintenance | PASS | `ubuntu-24.04`, `checkout@v7`, `setup-java@v6`, `setup-node@v7`; action majors підтверджені GitHub run 39560672726 |
 
 Перший повний browser run завершився 123/125. Він виявив реальні regressions у Lists: hero втратив очікувані UK/EN «Колекції фільмів / Film collections», а landing CSS приховав feed navigation через `display:none`. Після виправлення targeted run дав 7/7, повторний full run — 125/125.
 
@@ -41,6 +41,7 @@
 - UI/assets/harness commit: `33f8082`.
 - Release documentation commit: `f48713a`.
 - [`CI / verify (push)` run 39557098972](https://github.com/anton5267/rewind-letterboxd/actions/runs/39557098972): PASS, 1m53s. Backend tests, frontend build/typecheck і Caddy validation зелені.
+- Search/CI maintenance commit: `ea037f0`; [`CI / verify (push)` run 39560672726](https://github.com/anton5267/rewind-letterboxd/actions/runs/39560672726): PASS, 1m44s. Нові action majors виконані успішно; наступний малий commit фіксує `ubuntu-24.04` замість migration-prone alias.
 - Історичний checkpoint перед поточним UI-проходом: [GitHub CI для `f0df409`](https://github.com/anton5267/rewind-letterboxd/actions/runs/39485802412).
 
 ## Збереження даних

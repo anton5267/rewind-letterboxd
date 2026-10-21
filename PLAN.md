@@ -1,6 +1,6 @@
 # Rewind — план завершення
 
-Оновлено 21.10.2026. Наступний локальний етап виконано: мобільні Search shortcuts/lists/tags звірено з конкретними Figma frames, CI actions оновлено, Windows admin verifier виправлено, API, UK/EN і доступність збережено. Доставка цього етапу в GitHub триває.
+Оновлено 21.10.2026. Наступний локальний етап виконано: мобільні Search shortcuts/lists/tags звірено з конкретними Figma frames, CI actions оновлено, Windows admin verifier виправлено, API, UK/EN і доступність збережено. Основний commit відправлено, GitHub CI зелений.
 
 ## Виконано
 
@@ -10,7 +10,7 @@
 - Home/Search, Lists, Movie, Review, Profile, Community, Messages і Notifications зберігають реальні API, UK/EN, loading/error/empty/retry, клавіатуру й focus management.
 - Lists landing знову має доступну feed navigation і локалізований hero після повної регресії.
 - Global Search на телефонах має шість локалізованих швидких переходів із frame `1480:8432`; list cards і tag wrapping звірені з `1480:8804` та `1480:8767`.
-- GitHub Actions переведені на актуальні Node 24 based majors: `checkout@v7`, `setup-java@v6`, `setup-node@v7`.
+- GitHub Actions переведені на актуальні Node 24 based majors: `checkout@v7`, `setup-java@v6`, `setup-node@v7`; runner зафіксовано на `ubuntu-24.04`, щоб прибрати migration annotation для `ubuntu-latest`.
 - `verify-admin-browser.ps1` читає Compose project label із `docker inspect` JSON і працює у Windows PowerShell 5.1.
 - Локальні `api` і `web` images перебудовані; основний DB volume та `.env` збережені.
 
@@ -28,7 +28,7 @@
 - UI/assets/harness: commit `33f8082`.
 - Локальні release results: commit `f48713a`.
 - [GitHub CI / verify для `f48713a`](https://github.com/anton5267/rewind-letterboxd/actions/runs/39557098972): PASS, 1m53s.
-- Поточний Search/CI maintenance етап: локально зелений, commit/push і новий `CI / verify (push)` ще виконуються.
+- Search/CI maintenance: commit `ea037f0`; [GitHub CI / verify](https://github.com/anton5267/rewind-letterboxd/actions/runs/39560672726) PASS, 1m44s. Фінальний documentation/runner-pin commit перевіряється окремим run.
 - Diploma artifacts і локальний `AGENTS.md` залишилися поза commits.
 
 ## Поза цією ціллю

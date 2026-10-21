@@ -1,6 +1,6 @@
 # Rewind — поточний стан
 
-Оновлено 21.10.2026. Основний release checkpoint доставлений; наступний Search/CI maintenance етап завершений локально й готується до push. Робочий порядок — [PLAN](../../PLAN.md), детальні результати — [RELEASE_EVIDENCE](../operations/RELEASE_EVIDENCE.md).
+Оновлено 21.10.2026. Основний release checkpoint і наступний Search/CI maintenance етап доставлені в GitHub; основний CI run зелений. Робочий порядок — [PLAN](../../PLAN.md), детальні результати — [RELEASE_EVIDENCE](../operations/RELEASE_EVIDENCE.md).
 
 ## Структура та документація
 
@@ -18,7 +18,7 @@
 - Admin dashboard отримав Figma hero/workspace/metrics, зберіг усі users/movies/reviews/comments/lists/moderation/activity/audit/settings actions.
 - Lists landing повернув видиму feed navigation і точний UK/EN зміст після regression failure; links залишаються клавіатурно доступними.
 - Global Search отримав mobile shortcuts із шістьма реальними routes, а list/tag results — Figma-aligned poster stack і перенесення тегів без horizontal overflow.
-- CI використовує `actions/checkout@v7`, `actions/setup-java@v6` і `actions/setup-node@v7`, прибираючи Node 20/deprecated action warnings.
+- CI використовує `ubuntu-24.04`, `actions/checkout@v7`, `actions/setup-java@v6` і `actions/setup-node@v7`, прибираючи Node 20/deprecated action та runner migration warnings.
 - Admin browser wrapper більше не залежить від ламкого Docker Go-template quoting у Windows PowerShell 5.1.
 
 ## Перевірка 21.10.2026
@@ -34,6 +34,8 @@
 | Backup/restore | PASS в окремій тимчасовій schema, cleanup виконано |
 | Production template/Caddy/Compose | PASS |
 | GitHub CI | [PASS для `f48713a`](https://github.com/anton5267/rewind-letterboxd/actions/runs/39557098972), 1m53s |
+
+Search/CI maintenance commit `ea037f0`: [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39560672726), 1m44s. Він підтвердив 87 backend-тестів, frontend typecheck/build, Caddy і нові action majors.
 
 Перший full browser run виявив два дефекти Lists: втрачений локалізований hero text і приховану feed navigation. Після виправлення targeted run дав 7/7, повторний full run — 125/125.
 
