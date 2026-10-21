@@ -172,6 +172,14 @@ async function assertOrdinaryHeader(header: Locator, locale: "uk" | "en", width:
   else await expect(menu).toBeHidden();
 }
 
+async function assertListFeedHeader(header: Locator, locale: "uk" | "en") {
+  await expect(header.getByRole("link", { name: "REWIND", exact: true })).toBeHidden();
+  await expect(header.getByRole("button", { name: locale === "uk" ? "Меню" : "Menu", exact: true })).toBeHidden();
+  await expect(header.getByRole("link", { name: locale === "uk" ? "Добірки" : "Collections", exact: true })).toHaveAttribute("href", `/${locale}/lists/discover`);
+  await expect(header.getByRole("link", { name: locale === "uk" ? "Фільтри" : "Filters", exact: true })).toHaveAttribute("href", `/${locale}/lists/discover?feed=recent`);
+  await assertBottomLinks(header, locale);
+}
+
 for (const locale of ["uk", "en"] as const) for (const width of [320, 393, 600, 720, 768]) {
   test(`public list header preserves contextual navigation in ${locale} at ${width}px`, async ({ page }) => {
     const api = await listHeaderFixture(page);
@@ -216,7 +224,7 @@ for (const locale of ["uk", "en"] as const) for (const width of [320, 393, 600, 
       await filters.click({ position: { x: 5, y: 5 } });
       await expect(page).toHaveURL(new RegExp(`/${locale}/lists/discover\\?feed=recent$`));
       await expect(main).toHaveAttribute("aria-busy", "false");
-      await assertOrdinaryHeader(header, locale, width);
+      await assertListFeedHeader(header, locale);
       await page.goBack();
       await expect(page).toHaveURL(new RegExp(`/${locale}/lists/discover$`));
       await expect(logo).toBeHidden();
@@ -232,8 +240,14 @@ for (const locale of ["uk", "en"] as const) for (const width of [320, 393, 600, 
     }
     await expect(page).toHaveURL(new RegExp(`/${locale}/home$`));
     await expect(main).toHaveAttribute("aria-busy", "false");
-    await assertOrdinaryHeader(header, locale, width);
-    if (width <= 720) await assertBottomLinks(header, locale);
+    if (width <= 560) {
+      await expect(logo).toBeHidden();
+      await expect(menu).toBeHidden();
+      await assertBottomLinks(header, locale);
+    } else {
+      await assertOrdinaryHeader(header, locale, width);
+      if (width <= 720) await assertBottomLinks(header, locale);
+    }
     expect(api.mutations).toEqual([]);
     expect(api.unexpectedGets).toEqual([]);
     expect(pageErrors).toEqual([]);
