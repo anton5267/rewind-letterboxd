@@ -11,6 +11,15 @@ import styles from "./GlobalSearch.module.css";
 type SearchTab = "all" | "films" | "users" | "lists" | "tags" | "people" | "reviews" | "journal";
 const searchTabs = ["all", "films", "users", "lists", "tags", "people", "reviews", "journal"] as const satisfies readonly SearchTab[];
 
+const searchShortcuts = [
+  { href: "/films", label: "films" },
+  { href: "/lists/discover?feed=team", label: "featuredLists" },
+  { href: "/films?sort=rating_desc", label: "popularFilms" },
+  { href: "/lists/discover", label: "searchLists" },
+  { href: "/community", label: "searchMembers" },
+  { href: "/community/reviewers", label: "popularReviewers" },
+] as const;
+
 function Poster({ src, alt, fallback }: { src: string | null; alt: string; fallback: string }) {
   return <ResilientImage className={styles.poster} src={src} alt={alt} fallback={<span className={styles.posterFallback}>{fallback}</span>} />;
 }
@@ -137,7 +146,14 @@ export default function GlobalSearch() {
         >{tabLabel(item)}{item !== "all" && resultCounts && <span id={`global-search-count-${item}`} className={styles.tabCount}> ({resultCounts[item]})</span>}</button>)}
       </nav>}
 
-      {!query && <p className={styles.emptyIntro}>{t("globalSearchIntro")}</p>}
+      {!query && <>
+        <p className={styles.emptyIntro}>{t("globalSearchIntro")}</p>
+        <nav className={styles.shortcuts} aria-label={t("searchShortcuts")}>
+          {searchShortcuts.map(shortcut => <Link key={shortcut.href} to={path(shortcut.href)}>
+            <span>{t(shortcut.label)}</span><span aria-hidden="true">→</span>
+          </Link>)}
+        </nav>
+      </>}
       {query && <div id="global-search-results" className={styles.results} role="tabpanel" tabIndex={0} aria-busy={loading} aria-labelledby={`global-search-tab-${tab}`}>
       {loading && <p className={styles.feedback} role="status">{t("loadingSearch")}</p>}
       {error && <RetryNotice className={styles.alert} message={t("searchError")} retryLabel={t("retry")} busy={loading} onRetry={() => setRetry(value => value + 1)} />}

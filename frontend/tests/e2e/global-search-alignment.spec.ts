@@ -22,7 +22,7 @@ async function searchFixture(page: Page) {
         users: { content: [{ id: 982010, username: "reader", displayName: "Search Reader", avatarUrl: null }], totalElements: 1 },
         people: [{ id: 982011, name: "Film Director", type: "DIRECTOR", photoUrl: null }],
         reviews: { content: [{ id: 982012, movieId: movies[0].id, movieTitle: movies[0].title, userId: 982010, username: "reader", content: "The complete review remains available through its own link.", rating: 4, createdAt: "2026-10-20T12:00:00Z", moviePhotoUrl: movies[0].photoUrl, userAvatarUrl: null }], totalElements: 1 },
-        tags: [{ id: 982013, name: "Cinema", slug: "cinema" }],
+        tags: Array.from({ length: 9 }, (_, index) => ({ id: 982013 + index, name: `Cinema ${index + 1}`, slug: `cinema-${index + 1}` })),
         lists: { content: [{ id: 982014, name: "A complete collection title", ownerUsername: "reader", itemCount: 6, description: "A collection description", previewMovies: movies }], totalElements: 1 },
         journal: { content: [{ id: 982015, slug: "search-story", title: "A complete journal title", category: "News", excerpt: "A journal excerpt", coverUrl: null, publishedAt: "2026-10-20T12:00:00Z" }], totalElements: 1 },
       } });
@@ -30,6 +30,42 @@ async function searchFixture(page: Page) {
     return route.fulfill({ status: 404, json: {} });
   });
   return { searches, mutations };
+}
+
+for (const locale of ["uk", "en"] as const) {
+  test(`global search matches the phone shortcut, list and tag variants in ${locale}`, async ({ page }) => {
+    await searchFixture(page);
+    await page.setViewportSize({ width: 393, height: 852 });
+    await page.goto(`/${locale}/search`);
+
+    const main = page.getByRole("main");
+    const shortcuts = main.getByRole("navigation", { name: locale === "uk" ? "Швидкі переходи пошуку" : "Search shortcuts" });
+    const expected = locale === "uk"
+      ? ["Фільми", "Вибрані добірки", "Популярні фільми", "Списки", "Учасники", "Популярні рецензенти"]
+      : ["Films", "Featured lists", "Popular films", "Lists", "Members", "Popular reviewers"];
+    await expect(shortcuts.getByRole("link")).toHaveCount(6);
+    for (const label of expected) await expect(shortcuts.getByRole("link", { name: label, exact: true })).toBeVisible();
+    await expect(shortcuts.getByRole("link", { name: expected[1], exact: true })).toHaveAttribute("href", `/${locale}/lists/discover?feed=team`);
+    await expect(shortcuts.getByRole("link", { name: expected[2], exact: true })).toHaveAttribute("href", `/${locale}/films?sort=rating_desc`);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+
+    await page.goto(`/${locale}/search?q=${encodeURIComponent(query)}&tab=lists`);
+    const listCard = main.locator("#lists > div > a").first();
+    await expect(listCard).toBeVisible();
+    const listBox = await listCard.boundingBox();
+    expect(listBox?.width).toBeCloseTo(361, 0);
+    const posterBoxes = await listCard.locator("img").evaluateAll(images => images.map(image => image.getBoundingClientRect()).map(box => ({ left: box.left, right: box.right, width: box.width })));
+    expect(posterBoxes).toHaveLength(5);
+    expect(posterBoxes.every(box => box.width >= 78 && box.width <= 80)).toBe(true);
+    expect(posterBoxes.at(-1)!.right).toBeLessThanOrEqual(listBox!.x + listBox!.width - 17);
+
+    await page.getByRole("combobox", { name: locale === "uk" ? "Показати результати" : "Show results for" }).selectOption("tags");
+    const tags = main.locator("#tags a");
+    await expect(tags).toHaveCount(9);
+    const tagRows = await tags.evaluateAll(items => new Set(items.map(item => Math.round(item.getBoundingClientRect().top))).size);
+    expect(tagRows).toBeGreaterThan(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+  });
 }
 
 for (const locale of ["uk", "en"] as const) {

@@ -7,7 +7,7 @@
 | Gate | Результат | Доказ / межа |
 | --- | --- | --- |
 | Frontend build | PASS | `npm run verify:build`: TypeScript без помилок, Vite 213 modules |
-| Full browser suite | **125 passed** | 0 failed/skipped/flaky/retries, 4.9 min; production Nginx image, Google Chrome, disposable admin fixture |
+| Full browser suite | **127 passed** | 0 failed/skipped/flaky/retries; production Nginx image, Google Chrome. Standard run: 115 passed + 12 gated admin skips, 4.4 min; disposable admin run: 12/12, 42 s |
 | Backend suite | **87 tests** | failures/errors/skips 0, 1:52 min; окремий disposable MySQL 8.4 на `127.0.0.1:3308`, контейнер видалено |
 | API smoke | PASS | OpenAPI 159 operations; auth, profiles, films, lists, reviews, comments, social, messages, notifications, newsletter і cleanup |
 | Contract smoke | PASS | Public/protected routes, privacy fields, role guards, CRUD і nullable responses |
@@ -19,15 +19,18 @@
 | Production template | PASS | Synthetic temporary env: HTTPS origin, strong placeholders, private DB/Redis/API, read-only API/web, loopback web port |
 | Caddy / Compose | PASS | Caddy valid; development Compose config valid; clean API/web image builds |
 | Local Docker runtime | PASS | `/actuator/health` 200, `/uk/home` 200; API/web rebuilt, DB volume and `.env` preserved |
+| CI workflow maintenance | PASS locally | Official current major tags configured: `checkout@v7`, `setup-java@v6`, `setup-node@v7`; GitHub push validation pending |
 
 Перший повний browser run завершився 123/125. Він виявив реальні regressions у Lists: hero втратив очікувані UK/EN «Колекції фільмів / Film collections», а landing CSS приховав feed navigation через `display:none`. Після виправлення targeted run дав 7/7, повторний full run — 125/125.
+
+Поточний Search етап: targeted Global Search 4/4; нові UK/EN сценарії перевіряють shortcuts, URL, 361 px list cards, п’ять 79 px posters, багаторядкові tags і no-overflow. Повний набір зріс до 127. Admin wrapper спочатку зупинився до створення fixture через Docker template quoting у Windows PowerShell 5.1; після переходу на `docker inspect` JSON пройшов 12/12 і прибрав disposable fixture.
 
 Початкові backend спроби проти основної dev DB не зараховані: вони отримали access denied через host credentials. Фінальний результат отриманий на чистій ізольованій MySQL з CI credentials; основну БД не змінювали.
 
 ## Figma та UI
 
 - Design copy: `BDO9GO1oscOeUTcu4VXVKA`.
-- У цьому проході concrete context/screenshots використані для Journal article `844:1547`, Auth desktop/mobile, Help `1062:1993`, About `1011:1915`, Admin dashboard `1178:2466` і Public Profile phone `825:1378`.
+- У цьому проході concrete context/screenshots додатково використані для Search shortcuts `1480:8432`, lists `1480:8804` і tags `1480:8767`; попередній checkpoint охопив Journal article, Auth desktop/mobile, Help, About, Admin dashboard і Public Profile phone.
 - Auth raster assets збережені локально; runtime не містить тимчасових Figma asset URLs.
 - Повний browser suite перевірив UK/EN, 320/393/600/720/768/1440 responsive cases, keyboard/focus, loading/error/empty/retry, admin fixture і poster compatibility.
 

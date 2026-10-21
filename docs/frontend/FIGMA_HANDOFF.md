@@ -35,8 +35,9 @@ Auth mobile Home `1327:3210` додатково експортовано як PN
 - Service/About: Help `1062:1993` і About `1011:1915` використані для hero, navigation і structured content; ті самі правила застосовані до Contact, Rules, Privacy, Film Data та Account Deletion.
 - Admin dashboard `1178:2466`: hero/avatar/workspace/metrics перенесені поверх наявних API-backed admin sections. Поведінкові users/movies/reviews/comments/lists/moderation/activity/audit/settings сценарії пройшли в повному browser suite.
 - Public Profile phone `825:1378`: повторна перевірка на 320/393/768/1440 підтвердила 120 px avatar, перенос довгого імені, focus і відсутність horizontal overflow.
+- Global Search phone: `1480:8432`, `1480:8804` і `1480:8767` отримані через plugin із screenshots/context. Реалізація має шість справжніх shortcut routes, 361 px list cards із п’ятьма overlapping posters та багаторядкові tag pills; перевірено при 393 px у UK/EN без overflow.
 
-Після цих змін production build пройшов повну регресію 125/125. Це підтверджує маршрути, стани, локалізацію й доступність; pixel-perfect твердження обмежене конкретними переліченими screenshots/context, а не всією сторінкою `0:1`.
+Після цих змін production build пройшов повну регресію 127/127. Це підтверджує маршрути, стани, локалізацію й доступність; pixel-perfect твердження обмежене конкретними переліченими screenshots/context, а не всією сторінкою `0:1`.
 
 ## Джерела
 
@@ -58,10 +59,10 @@ FigJam — джерело аналізу, архітектури, персон �
 | Popular Reviews mobile | `1480:9087` → 393×1265 | `/reviews` → PopularReviews; Home/GlobalSearch review cards | Реальні reviews/reviewers, sort/pagination/states; 393/320 px browser evidence |
 | All Films desktop / phone | `1413:12611` → 1440×2956; `1480:9187` → 393×1215 | `/films` → Search | Dark hero/filters/poster grid реалізовані |
 | Films phone | `1480:7843` → 393×1235 | `/films` → Search | Alignment; звірка варіантів |
-| Search shortcuts phone | `1480:8432` → 393×852 | `/search` reference | Raw має shortcut sections; не frame каталогу Films. Matching PNG/parity ще не підтверджено |
+| Search shortcuts phone | `1480:8432` → 393×852 | `/search` → GlobalSearch | Screenshot/context: шість localized real-route rows у dark 52 px cards; 393 px UK/EN browser verification, keyboard focus і no-overflow підтверджені |
 | Filter / show-results fragments | `1480:7611` → 295×1416; `1480:7595` → 197×319 | Search controls | Reference fragments; не окремі routes |
 | Global Search all / no matches | `1480:8934` → 393×2801; `1480:8856` → 393×852 | `/search` → GlobalSearch | PNG/raw alignment: All poster rail і content order, compact Empty/white Home CTA. Query/category controls залишені доступними також у Empty; UK/EN copy та реальні counts збережено |
-| Global Search lists / tags / films phone | `1480:8804`, `1480:8767`, `1480:8594` → 393×852 | `/search?tab=...` | Films підтверджено PNG/raw: search 361×32, 4-column 79×116 grid при 393 px; native category select замінює desktop roving tabs. Lists/tags exact variants ще відкриті |
+| Global Search lists / tags / films phone | `1480:8804`, `1480:8767`, `1480:8594` → 393×852 | `/search?tab=...` | Plugin screenshots/context: Lists має 361 px cards і п’ять 79×116 overlapping posters; Tags переносить pills у кілька рядків; Films зберігає 4-column grid. Native category select замінює desktop roving tabs; geometry/no-overflow перевірені browser test |
 | Global Search lists desktop | `1480:7490` → 1440×1518 | `/search?tab=lists` | Alignment |
 | Global Search tags desktop | `1480:7445` → 1440×1024 | `/search?tab=tags` | Alignment |
 | Global Search cast / members desktop | `1480:7390` → 1440×1392 | `/search` → GlobalSearch | Alignment |

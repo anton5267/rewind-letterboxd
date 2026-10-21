@@ -1,6 +1,6 @@
 # Rewind — поточний стан
 
-Оновлено 21.10.2026. Код, локальна release-регресія та доставка в GitHub завершені. Робочий порядок — [PLAN](../../PLAN.md), детальні результати — [RELEASE_EVIDENCE](../operations/RELEASE_EVIDENCE.md).
+Оновлено 21.10.2026. Основний release checkpoint доставлений; наступний Search/CI maintenance етап завершений локально й готується до push. Робочий порядок — [PLAN](../../PLAN.md), детальні результати — [RELEASE_EVIDENCE](../operations/RELEASE_EVIDENCE.md).
 
 ## Структура та документація
 
@@ -17,13 +17,16 @@
 - Help, Contact, Rules, Privacy, Film Data, Account Deletion та About отримали структуровані responsive layouts.
 - Admin dashboard отримав Figma hero/workspace/metrics, зберіг усі users/movies/reviews/comments/lists/moderation/activity/audit/settings actions.
 - Lists landing повернув видиму feed navigation і точний UK/EN зміст після regression failure; links залишаються клавіатурно доступними.
+- Global Search отримав mobile shortcuts із шістьма реальними routes, а list/tag results — Figma-aligned poster stack і перенесення тегів без horizontal overflow.
+- CI використовує `actions/checkout@v7`, `actions/setup-java@v6` і `actions/setup-node@v7`, прибираючи Node 20/deprecated action warnings.
+- Admin browser wrapper більше не залежить від ламкого Docker Go-template quoting у Windows PowerShell 5.1.
 
 ## Перевірка 21.10.2026
 
 | Gate | Результат |
 | --- | --- |
 | Frontend typecheck/build | PASS; 213 modules |
-| Playwright | **125 passed**, 0 failed/skipped/flaky/retries |
+| Playwright | **127 passed**, 0 failed/skipped/flaky/retries; 115 standard + 12 disposable admin fixture |
 | Backend Maven | **87 tests**, 0 failures/errors/skips |
 | Local Docker | API health 200, web 200; images перебудовані зі збереженням DB/`.env` |
 | API/contracts/security/reset | PASS |
@@ -34,9 +37,11 @@
 
 Перший full browser run виявив два дефекти Lists: втрачений локалізований hero text і приховану feed navigation. Після виправлення targeted run дав 7/7, повторний full run — 125/125.
 
+Наступний Search run додав 2 двомовні сценарії. Targeted Global Search дав 4/4; повний standard run — 115 passed із 12 очікуваними admin skips, окремий wrapper — 12/12, разом усі 127 унікальних сценаріїв без skips. Перший запуск wrapper виявив quoting-дефект до створення fixture; після JSON fix сценарії пройшли, fixture видалено.
+
 ## Figma
 
-Plugin читає структуру, screenshots, assets, variables і context конкретних вузлів design copy `BDO9GO1oscOeUTcu4VXVKA`. У цьому проході використані Journal article `844:1547`, Auth `605:2173–2176`, mobile Auth `911:1596`, `915:1598`, `922:1788`, `944:1582`, `944:1828`, `944:1887`, Help `1062:1993`, About `1011:1915` і Admin dashboard `1178:2466`. Повний mapping і чесні межі точності — у [FIGMA_HANDOFF](../frontend/FIGMA_HANDOFF.md).
+Plugin читає структуру, screenshots, assets, variables і context конкретних вузлів design copy `BDO9GO1oscOeUTcu4VXVKA`. Додатково перевірені Search phone `1480:8432`, lists `1480:8804` і tags `1480:8767`; раніше використані Journal article `844:1547`, Auth, Help `1062:1993`, About `1011:1915` і Admin dashboard `1178:2466`. Повний mapping і чесні межі точності — у [FIGMA_HANDOFF](../frontend/FIGMA_HANDOFF.md).
 
 ## Зовнішні залежності
 

@@ -1,6 +1,6 @@
 # Rewind — план завершення
 
-Оновлено 21.10.2026. Ціль виконано: інтерфейс доведено за доступними Figma references, API, UK/EN і доступність збережено, повну регресію пройдено, локальний Docker оновлено, commits відправлено в GitHub.
+Оновлено 21.10.2026. Наступний локальний етап виконано: мобільні Search shortcuts/lists/tags звірено з конкретними Figma frames, CI actions оновлено, Windows admin verifier виправлено, API, UK/EN і доступність збережено. Доставка цього етапу в GitHub триває.
 
 ## Виконано
 
@@ -9,12 +9,15 @@
 - Auth artwork збережено локально в `frontend/src/assets/figma/`; тимчасових Figma URL у runtime-коді немає.
 - Home/Search, Lists, Movie, Review, Profile, Community, Messages і Notifications зберігають реальні API, UK/EN, loading/error/empty/retry, клавіатуру й focus management.
 - Lists landing знову має доступну feed navigation і локалізований hero після повної регресії.
+- Global Search на телефонах має шість локалізованих швидких переходів із frame `1480:8432`; list cards і tag wrapping звірені з `1480:8804` та `1480:8767`.
+- GitHub Actions переведені на актуальні Node 24 based majors: `checkout@v7`, `setup-java@v6`, `setup-node@v7`.
+- `verify-admin-browser.ps1` читає Compose project label із `docker inspect` JSON і працює у Windows PowerShell 5.1.
 - Локальні `api` і `web` images перебудовані; основний DB volume та `.env` збережені.
 
 ## Актуальні перевірки
 
 - `npm run verify:build`: PASS, TypeScript + Vite, 213 modules.
-- Playwright: **125/125 passed**, failures/skips/flaky/retries 0, production Nginx build і disposable admin fixture.
+- Playwright: **127/127 passed**, failures/skips/flaky/retries 0; 115 public/real API scenarios та 12 scenarios з disposable admin fixture.
 - Backend: **87/87 passed**, failures/errors/skips 0, ізольована MySQL 8.4.
 - PASS: API, contracts, security, password reset, Redis cache, HTTP concurrency, load, ER schema, backup/restore, production template config, Caddy та Compose config.
 
@@ -25,6 +28,7 @@
 - UI/assets/harness: commit `33f8082`.
 - Локальні release results: commit `f48713a`.
 - [GitHub CI / verify для `f48713a`](https://github.com/anton5267/rewind-letterboxd/actions/runs/39557098972): PASS, 1m53s.
+- Поточний Search/CI maintenance етап: локально зелений, commit/push і новий `CI / verify (push)` ще виконуються.
 - Diploma artifacts і локальний `AGENTS.md` залишилися поза commits.
 
 ## Поза цією ціллю

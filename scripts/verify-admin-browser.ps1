@@ -40,8 +40,11 @@ $selectedProject = $ProjectName
 foreach ($service in @('api', 'db', 'web')) {
     $containerIds = @(docker compose @composeArguments ps -q $service | Where-Object { $_.Trim() })
     if ($LASTEXITCODE -ne 0 -or $containerIds.Count -ne 1) { throw "Expected exactly one running $service container in the selected Compose project." }
-    $owner = docker inspect $containerIds[0] --format '{{index .Config.Labels "com.docker.compose.project"}}'
-    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($owner)) { throw "Could not verify the $service project identity." }
+    $inspectJson = docker inspect $containerIds[0]
+    if ($LASTEXITCODE -ne 0) { throw "Could not inspect the $service container." }
+    $inspect = @($inspectJson | ConvertFrom-Json)
+    $owner = $inspect[0].Config.Labels.'com.docker.compose.project'
+    if ([string]::IsNullOrWhiteSpace($owner)) { throw "Could not verify the $service project identity." }
     if (-not $selectedProject) { $selectedProject = $owner.Trim() }
     if ($owner.Trim() -ne $selectedProject) { throw "The $service container belongs to a different Compose project." }
 }
