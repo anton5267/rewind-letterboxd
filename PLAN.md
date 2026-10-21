@@ -28,7 +28,7 @@
 - UI/assets/harness: commit `33f8082`.
 - Локальні release results: commit `f48713a`.
 - [GitHub CI / verify для `f48713a`](https://github.com/anton5267/rewind-letterboxd/actions/runs/39557098972): PASS, 1m53s.
-- Search/CI maintenance: commit `ea037f0`; [GitHub CI / verify](https://github.com/anton5267/rewind-letterboxd/actions/runs/39560672726) PASS, 1m44s. Фінальний documentation/runner-pin commit перевіряється окремим run.
+- Search/CI maintenance: commit `ea037f0`, [CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39560672726), 1m44s; runner pin/docs commit `0b22904`, [CI PASS без annotations](https://github.com/anton5267/rewind-letterboxd/actions/runs/39560950893), 1m36s.
 - Diploma artifacts і локальний `AGENTS.md` залишилися поза commits.
 
 ## Поза цією ціллю

@@ -35,7 +35,7 @@
 | Production template/Caddy/Compose | PASS |
 | GitHub CI | [PASS для `f48713a`](https://github.com/anton5267/rewind-letterboxd/actions/runs/39557098972), 1m53s |
 
-Search/CI maintenance commit `ea037f0`: [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39560672726), 1m44s. Він підтвердив 87 backend-тестів, frontend typecheck/build, Caddy і нові action majors.
+Search/CI maintenance commit `ea037f0`: [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39560672726), 1m44s. Runner pin/docs commit `0b22904`: [GitHub CI PASS без annotations](https://github.com/anton5267/rewind-letterboxd/actions/runs/39560950893), 1m36s. Runs підтвердили 87 backend-тестів, frontend typecheck/build, Caddy, нові action majors і `ubuntu-24.04`.
 
 Перший full browser run виявив два дефекти Lists: втрачений локалізований hero text і приховану feed navigation. Після виправлення targeted run дав 7/7, повторний full run — 125/125.
 
