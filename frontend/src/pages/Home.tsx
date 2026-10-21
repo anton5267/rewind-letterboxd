@@ -106,7 +106,7 @@ export default function Home() {
     {Object.keys(sectionErrors).length > 0 && <p className={styles.status} role="alert">{t("loadHomeError")} <RetryButton label={t("retry")} onClick={() => setRetry(value => value + 1)} /></p>}
     <>
       <section className={`${styles.section} ${styles.leadingSection}`} aria-busy={sectionLoading.newest}>
-        <div className={styles.sectionHeading}><h2>{t(isAuth ? "newReleases" : "homeGuestReleases")}</h2><Link to={path("/films")}>{t("viewAll")}</Link></div>
+        <div className={styles.sectionHeading}><h2>{t(isAuth ? "homeNewOnRewind" : "homeGuestReleases")}</h2><Link to={path("/films")}>{t(isAuth ? "homeYourActivity" : "viewAll")}</Link></div>
         {sectionLoading.newest ? <p className={styles.sectionStatus} role="status">{t("loadingHome")}</p> : sectionErrors.newest ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} onRetry={() => setRetry(value => value + 1)} /> : newest.length === 0 ? <p>{t("noFilms")}</p> : <MovieRow movies={newest} />}
       </section>
       {!isAuth && <section className={styles.guestExplainer} aria-label={t("homeGuestExplainerTitle")}>

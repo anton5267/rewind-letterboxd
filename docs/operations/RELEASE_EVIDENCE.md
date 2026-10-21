@@ -35,6 +35,8 @@ Member Home desktop `1413:6263` was reviewed separately and uses `frontend/publi
 
 Guest Home mobile `1411:3473` was checked with its Figma screenshot/context. It now uses the Figma headline and registration CTA, 142 px artwork hero, four live 79×116 poster tiles, explainer and mobile content order. The production Docker web image passed `home-list-cards` plus the release viewport matrix 4/4; `npm run verify:build` passed (216 modules). The member mobile variant and remaining feed screens require separate frame review.
 
+Member Home mobile `1327:3210` was checked separately. Its 320 px artwork hero, centered 24 px heading/12 px copy, New on Rewind heading and four live 79×116 poster tiles follow the frame while preserving the API-backed news, review and list sections. `npm run verify:build` passed (216 modules); the rebuilt Docker web image passed `home-list-cards` 3/3 with an authenticated mocked session.
+
 Поточний Search етап: targeted Global Search 4/4; нові UK/EN сценарії перевіряють shortcuts, URL, 361 px list cards, п’ять 79 px posters, багаторядкові tags і no-overflow. Повний набір зріс до 127. Admin wrapper спочатку зупинився до створення fixture через Docker template quoting у Windows PowerShell 5.1; після переходу на `docker inspect` JSON пройшов 12/12 і прибрав disposable fixture.
 
 Початкові backend спроби проти основної dev DB не зараховані: вони отримали access denied через host credentials. Фінальний результат отриманий на чистій ізольованій MySQL з CI credentials; основну БД не змінювали.

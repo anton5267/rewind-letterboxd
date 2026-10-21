@@ -89,4 +89,10 @@ test("Member Home keeps the dedicated Figma desktop hero", async ({ page }) => {
   await expect(hero).toHaveCSS("min-height", "948px");
   expect(await hero.evaluate(element => getComputedStyle(element).backgroundImage)).toContain("home-hero-member.jpg");
   await expect(page.getByRole("heading", { level: 1 })).toHaveCSS("font-size", "58px");
+
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto("/en/home");
+  await expect(hero).toHaveCSS("min-height", "320px");
+  await expect(page.getByRole("heading", { level: 1, name: "Welcome back. Here’s what we’ve been watching…" })).toBeVisible();
+  await expect(page.locator("main > section").nth(1).locator("article:visible")).toHaveCount(4);
 });

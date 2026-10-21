@@ -682,9 +682,9 @@
   .memberHero {
     position: relative;
     isolation: isolate;
-    min-height: 256px;
+    min-height: 320px;
     justify-content: flex-start;
-    padding: 52px 20px 32px;
+    padding: 116px 20px 0;
     background: none;
   }
 
@@ -702,18 +702,28 @@
 
   .memberHero h1 {
     max-width: 308px;
-    margin: 0 0 12px;
+    margin: 0 auto 12px;
     font-size: 24px;
     line-height: 1.12;
+    text-align: center;
   }
 
   .memberHero > p:not(.eyebrow) {
     max-width: 239px;
-    margin-block: 0;
+    margin: 0 auto;
     color: #a0a0a0;
     font-size: 12px;
     line-height: 1.12;
+    text-align: center;
   }
+
+  .page:has(.memberHero) { padding-top: 0; }
+  .page:has(.memberHero) .leadingSection { margin-top: 0; }
+  .page:has(.memberHero) .leadingSection .sectionHeading { margin-bottom: 18px; }
+  .page:has(.memberHero) .leadingSection .sectionHeading h2 { font-size: 10px; }
+  .page:has(.memberHero) .leadingSection .sectionHeading a { font-size: 8px; }
+  .page:has(.memberHero) .leadingSection .movieRow { overflow: hidden; margin-inline: 0; padding: 0; }
+  .page:has(.memberHero) .leadingSection .movieCard:nth-child(n + 5) { display: none; }
 
   .section {
     margin-top: 30px;
