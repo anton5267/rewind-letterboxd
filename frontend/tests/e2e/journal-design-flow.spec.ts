@@ -41,4 +41,14 @@ test("journal renders the dark editorial feed with cover art", async ({ page }) 
   await expect(page.getByRole("link", { name: "Читати" })).toHaveAttribute("href", "/uk/journal/design-journal-fixture");
   await expect(page.locator('a[href="/uk/journal/design-journal-fixture"] img').first()).toHaveAttribute("src", "https://cdn.example.invalid/rewind-cover.jpg");
   await expect(page.locator("main")).toHaveCSS("background-color", "rgb(31, 31, 31)");
+
+  const feature = page.locator("article").first();
+  const cover = feature.locator('a[href="/uk/journal/design-journal-fixture"]').first();
+  await expect(cover).toHaveCSS("border-radius", "30px");
+  const desktopCover = await cover.boundingBox();
+  expect(desktopCover?.height).toBe(612);
+
+  await page.setViewportSize({ width: 393, height: 852 });
+  await expect(cover).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });

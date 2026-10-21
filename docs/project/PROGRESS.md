@@ -12,7 +12,7 @@
 
 - Movie, Review, Home/Search, Lists, Profile/PublicProfile, Community, Messages і Notifications мають responsive стани, UK/EN, клавіатурну навігацію та реальні API.
 - Старі profile reviews отримують nullable `moviePhotoUrl`; frontend сумісний і з попередньою відповіддю API.
-- Journal зберігає API-backed feed/archive/article/audio/newsletter. У mobile article прибрано декоративний control без дії.
+- Journal зберігає API-backed feed/archive/article/audio/newsletter. У mobile article прибрано декоративний control без дії. List 4 desktop `1494:5387` повторно звірено через Figma screenshot/context: compact hero та editorial 3-column rows застосовано до реальних статей без заміни їх Figma fixtures.
 - Login/Register/Forgot/Reset використовують спільну desktop/mobile Figma-композицію з локальними assets.
 - Help, Contact, Rules, Privacy, Film Data, Account Deletion та About отримали структуровані responsive layouts.
 - Admin dashboard отримав Figma hero/workspace/metrics, зберіг усі users/movies/reviews/comments/lists/moderation/activity/audit/settings actions.
