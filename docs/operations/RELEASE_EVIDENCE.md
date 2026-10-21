@@ -29,6 +29,8 @@ Community members frames `605:1112` (1440 px) and `1517:4931` (393 px) were re-r
 
 Journal List 4 `1494:5387` was verified with Figma context and screenshot before its CSS change. The API-backed feed now follows the compact Journal hero, a 612 px feature cover, and editorial three-column rows at desktop. Archive/category controls and pagination remain available with real data. `npm run verify:build` passed (216 modules); journal design flow and retry passed, including a 393 px no-horizontal-overflow assertion.
 
+Guest Home desktop `1413:6471` was checked with its Figma context and screenshot. The implementation uses the verified original artwork stored at `frontend/public/images/home-hero-guest.jpg`, a 764 px visual hero, and the target CTA geometry. `npm run verify:build` passed (216 modules); the Home keyboard/list-card suite and responsive matrix passed 3/3 against the rebuilt Docker web image. The authenticated Home variant and the remaining guest feed still need their own frame-by-frame review.
+
 Поточний Search етап: targeted Global Search 4/4; нові UK/EN сценарії перевіряють shortcuts, URL, 361 px list cards, п’ять 79 px posters, багаторядкові tags і no-overflow. Повний набір зріс до 127. Admin wrapper спочатку зупинився до створення fixture через Docker template quoting у Windows PowerShell 5.1; після переходу на `docker inspect` JSON пройшов 12/12 і прибрав disposable fixture.
 
 Початкові backend спроби проти основної dev DB не зараховані: вони отримали access denied через host credentials. Фінальний результат отриманий на чистій ізольованій MySQL з CI credentials; основну БД не змінювали.

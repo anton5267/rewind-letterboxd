@@ -18,6 +18,12 @@ test("Home lists remain reachable by keyboard across the scrollable poster cards
   await page.route("**/api/lists/public/popular?**", route => route.fulfill({ json: { content: lists, totalElements: 3, totalPages: 1, number: 0, size: 4 } }));
   await page.route(`**/api/lists/public/${lists[1].id}`, route => route.fulfill({ json: { ...lists[1], ownerAvatarUrl: null, movies: movies.slice(0, 1) } }));
 
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/en/home");
+  const hero = page.locator("main > section").first();
+  await expect(hero).toHaveCSS("min-height", "764px");
+  expect(await hero.evaluate(element => getComputedStyle(element).backgroundImage)).toContain("home-hero-guest.jpg");
+
   for (const width of [320, 393, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/en/home");
