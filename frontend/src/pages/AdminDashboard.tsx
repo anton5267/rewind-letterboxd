@@ -84,7 +84,12 @@ export default function AdminDashboard() {
     if (setting) void saveSetting(setting);
   };
   return <main className={styles.page} aria-labelledby="admin-dashboard-title" aria-busy={dashboardLoading || settingsLoading || saveBusyKey !== null}>
-    <h1 className={styles.title} id="admin-dashboard-title">{t("adminDashboard")}</h1>
+    <header className={styles.hero}>
+      <div className={styles.avatar} aria-hidden="true">{user.username.slice(0, 1).toUpperCase()}</div>
+      <h1 className={styles.title} id="admin-dashboard-title">{user.username}</h1>
+      <p>{t("adminDashboard")}</p>
+    </header>
+    <h2 className={styles.workspaceTitle}>{t("adminDashboard")}</h2>
     {dashboardLoading && <p className={styles.feedback} role="status" aria-busy={true}>{t("loading")}</p>}
     {dashboardError && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={dashboardLoading} busy={dashboardLoading} onRetry={() => setDashboardAttempt(value => value + 1)} />}
     {saveError && <p className={styles.error} role="alert">{t("adminSaveError")} {failedSettingKey && <RetryButton label={t("retry")} disabled={saveBusyKey !== null} busy={saveBusyKey !== null} onClick={retrySettingSave} />}</p>}

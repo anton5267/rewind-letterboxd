@@ -2,12 +2,19 @@ param(
     [string]$BaseUrl = 'http://127.0.0.1:8081',
     [switch]$Headed,
     [string]$Grep = '',
+    [string]$TestPath = 'tests/e2e/admin-flow.spec.ts',
     [string[]]$ComposeFile = @('compose.yaml'),
     [string]$ProjectName = ''
 )
 
 $ErrorActionPreference = 'Stop'
 $repositoryPath = Split-Path -Parent $PSScriptRoot
+$frontendPath = Join-Path $repositoryPath 'frontend'
+$resolvedTestPath = [IO.Path]::GetFullPath((Join-Path $frontendPath $TestPath))
+$allowedTestsPath = [IO.Path]::GetFullPath((Join-Path $frontendPath 'tests/e2e'))
+if (-not ($resolvedTestPath -eq $allowedTestsPath -or $resolvedTestPath.StartsWith($allowedTestsPath + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase))) {
+    throw 'TestPath must stay inside frontend/tests/e2e.'
+}
 $apiUri = $null
 if (-not [Uri]::TryCreate($BaseUrl, [UriKind]::Absolute, [ref]$apiUri) -or
     -not $apiUri.IsLoopback -or $apiUri.Scheme -notin @('http', 'https') -or
@@ -87,14 +94,13 @@ try {
     # itself has no public role-escalation route.
     Invoke-FixtureSql "UPDATE users SET role='ADMIN' WHERE id=$fixtureUserId AND email='$email';"
 
-    $frontend = Join-Path (Split-Path -Parent $PSScriptRoot) 'frontend'
-    Push-Location $frontend
+    Push-Location $frontendPath
     try {
         $env:E2E_ADMIN_EMAIL = $email
         $env:E2E_ADMIN_PASSWORD = $password
         $env:E2E_ADMIN_USERNAME = $username
         $env:E2E_BASE_URL = $webOrigin
-        $playwrightArgs = @('playwright', 'test', 'tests/e2e/admin-flow.spec.ts')
+        $playwrightArgs = @('playwright', 'test', $TestPath)
         if ($Headed) { $playwrightArgs += '--headed' }
         if ($Grep) { $playwrightArgs += @('-g', $Grep) }
         npx @playwrightArgs

@@ -1,28 +1,65 @@
 .page {
-  min-height: 70vh;
+  min-height: 100vh;
   box-sizing: border-box;
-  padding: 110px clamp(16px, 5vw, 80px) 60px;
-  background: var(--rewind-black);
+  padding: 106px 0 80px;
+  background: var(--rewind-surface);
   color: #fff;
 }
 
+.hero {
+  display: grid;
+  grid-template-columns: minmax(190px, 260px) minmax(0, 1fr);
+  gap: clamp(36px, 8vw, 120px);
+  min-height: 360px;
+  align-items: center;
+  padding: 56px clamp(20px, 8vw, 120px) 72px;
+  background:
+    linear-gradient(180deg, rgba(15, 18, 20, .08), #050607 96%),
+    radial-gradient(circle at 48% 0%, rgba(92, 174, 185, .72), transparent 38rem),
+    radial-gradient(circle at 96% 0%, rgba(202, 152, 72, .76), transparent 35rem),
+    #111417;
+}
+
+.serviceNav { display: grid; border-left: 1px solid rgba(255, 255, 255, .25); }
+.serviceNav a { min-height: 32px; padding: 7px 14px; color: #dedbd6; font-size: 13px; text-decoration: none; }
+.serviceNav a:hover, .serviceNav a[aria-current="page"] { color: #fff; background: rgba(255, 255, 255, .1); }
+
+.eyebrow { margin: 0 0 10px; color: var(--rewind-cyan); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+
 .content {
-  width: min(900px, 100%);
+  width: min(1200px, calc(100% - 40px));
   margin: 0 auto;
+  padding-top: 64px;
 }
 
 .title {
-  margin: 0 0 28px;
+  margin: 0 0 18px;
   color: var(--rewind-paper);
-  font-size: clamp(30px, 5vw, 48px);
+  font-size: clamp(38px, 6vw, 64px);
   line-height: 1.08;
   letter-spacing: -0.02em;
 }
 
-.body {
+.lead {
   max-width: 72ch;
   margin: 0;
-  color: var(--rewind-muted);
-  line-height: 1.75;
+  color: #d8d5d0;
+  font-size: 16px;
+  line-height: 1.65;
   white-space: pre-wrap;
+}
+
+.content h2 { margin: 0 0 28px; font-size: clamp(26px, 4vw, 38px); }
+.detailGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.detailCard { min-height: 210px; padding: 28px; border: 1px solid var(--rewind-line); border-radius: 20px; background: linear-gradient(145deg, #252525, #1a1a1a); }
+.detailCard span { color: var(--rewind-gold); font-size: 12px; font-weight: 800; letter-spacing: .15em; }
+.detailCard h3 { margin: 68px 0 0; font-size: 18px; line-height: 1.35; }
+
+@media (max-width: 720px) {
+  .page { padding-top: 64px; }
+  .hero { grid-template-columns: 1fr; gap: 34px; min-height: 440px; padding: 48px 20px 52px; }
+  .serviceNav { grid-template-columns: repeat(2, minmax(0, 1fr)); order: 2; }
+  .detailGrid { grid-template-columns: 1fr; }
+  .detailCard { min-height: 150px; }
+  .detailCard h3 { margin-top: 38px; }
 }

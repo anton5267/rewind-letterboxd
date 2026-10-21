@@ -5,12 +5,14 @@
   min-height: calc(100dvh - 80px);
   box-sizing: border-box;
   place-items: center;
-  padding: 116px 16px 84px;
+  padding: 316px 16px 160px;
   overflow: hidden;
   background:
-    radial-gradient(circle at 15% 8%, rgba(123, 223, 242, .16), transparent 30rem),
-    radial-gradient(circle at 88% 86%, rgba(212, 168, 95, .14), transparent 28rem),
-    linear-gradient(135deg, var(--rewind-black), var(--rewind-surface) 58%, #2a2722);
+    linear-gradient(180deg, transparent 0 260px, rgba(21, 21, 21, .72) 430px, var(--rewind-black) 720px),
+    radial-gradient(circle at 48% 0%, rgba(98, 182, 194, .55), transparent 31rem),
+    radial-gradient(circle at 88% 0%, rgba(212, 168, 95, .58), transparent 34rem),
+    url("../assets/figma/auth-desktop.png") top center / 100% 501px no-repeat,
+    #151515;
   color: #fff;
 }
 
@@ -24,18 +26,18 @@
 }
 
 .card {
-  width: min(560px, 100%);
+  width: min(1198px, 100%);
   box-sizing: border-box;
-  padding: clamp(28px, 5vw, 56px);
-  border: 1px solid var(--rewind-line);
-  border-radius: var(--rewind-radius-lg);
-  background: rgba(41, 41, 41, .94);
+  padding: 86px max(24px, calc((100% - 628px) / 2)) 82px;
+  border: 0;
+  border-radius: 50px;
+  background: rgba(40, 40, 40, .96);
   box-shadow: 0 24px 70px rgba(0, 0, 0, .34);
   color: #fff;
 }
 
 .eyebrow {
-  margin: 0 0 14px;
+  display: none;
   color: var(--rewind-cyan);
   font-size: 11px;
   font-weight: 800;
@@ -47,16 +49,17 @@
 .title {
   margin: 0;
   color: var(--rewind-paper);
-  font-size: clamp(30px, 5vw, 44px);
-  font-weight: 800;
-  letter-spacing: -.04em;
-  line-height: 1.04;
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  line-height: 1.1;
+  text-align: center;
 }
 
 .form {
   display: grid;
-  gap: 14px;
-  margin-top: 26px;
+  gap: 22px;
+  margin-top: 54px;
   text-align: left;
 }
 
@@ -77,13 +80,13 @@
 
 .input {
   width: 100%;
-  min-height: 54px;
+  min-height: 72px;
   box-sizing: border-box;
-  padding: 13px 16px;
-  border: 1px solid rgba(255, 255, 255, .16);
-  border-radius: var(--rewind-radius);
+  padding: 16px 28px;
+  border: 2px solid rgba(255, 255, 255, .24);
+  border-radius: 46px;
   outline: 0;
-  background: rgba(31, 31, 31, .9);
+  background: rgba(229, 229, 229, .2);
   color: #fff;
   color-scheme: dark;
   font-size: 16px;
@@ -104,14 +107,14 @@
 .button {
   display: inline-flex;
   width: 100%;
-  min-height: 54px;
+  min-height: 72px;
   box-sizing: border-box;
   align-items: center;
   justify-content: center;
-  border: 1px solid transparent;
-  border-radius: var(--rewind-radius);
-  background: linear-gradient(135deg, var(--rewind-cyan), var(--rewind-gold));
-  color: #151515;
+  border: 2px solid rgba(255, 255, 255, .3);
+  border-radius: 46px;
+  background: rgba(229, 229, 229, .2);
+  color: #fff;
   cursor: pointer;
   font-weight: 800;
   text-align: center;
@@ -167,7 +170,7 @@
 }
 
 .footer {
-  margin: 24px 0 0;
+  margin: 44px 0 0;
   color: var(--rewind-muted);
   font-size: 13px;
   line-height: 1.5;
@@ -189,11 +192,22 @@
 
 @media (max-width: 720px) {
   .page {
-    min-height: calc(100dvh - 64px);
-    padding: 88px 12px calc(96px + env(safe-area-inset-bottom));
+    min-height: 852px;
+    align-items: start;
+    padding: 174px 12px calc(96px + env(safe-area-inset-bottom));
+    background:
+      linear-gradient(180deg, transparent 0 300px, rgba(21, 21, 21, .78) 500px, var(--rewind-surface) 760px),
+      radial-gradient(circle at 48% 0%, rgba(98, 182, 194, .58), transparent 22rem),
+      radial-gradient(circle at 95% 0%, rgba(212, 168, 95, .64), transparent 23rem),
+      url("../assets/figma/auth-mobile.png") top center / 100% 378px no-repeat,
+      var(--rewind-surface);
   }
 
-  .card { padding: 28px 20px 30px; }
+  .card { width: min(393px, 100%); padding: 0 40px 34px; border-radius: 0; background: transparent; box-shadow: none; }
+  .title { font-size: 36px; }
+  .form { gap: 14px; margin-top: 156px; }
+  .input, .button { min-height: 46px; padding-block: 10px; border-width: 1px; }
+  .footer { margin-top: 80px; }
 }
 
 @media (max-width: 360px) {

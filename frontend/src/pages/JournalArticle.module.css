@@ -169,12 +169,11 @@
 @media (max-width: 720px) {
   .page { padding: 84px 14px calc(96px + env(safe-area-inset-bottom)); }
   .article { padding: 14px 14px 34px; border-radius: var(--rewind-radius-lg); }
-  .mobileToolbar { display: grid; grid-template-columns: 36px minmax(0, 1fr) 36px; align-items: center; gap: 10px; margin-bottom: 22px; color: #fff; font-size: 12px; font-weight: 800; text-align: center; }
+  .mobileToolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 10px; margin-bottom: 22px; color: #fff; font-size: 12px; font-weight: 800; text-align: center; }
+  .mobileToolbar::after { width: 44px; height: 44px; content: ""; }
   .mobileToolbar > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .mobileBack,
-  .mobileMore { display: grid; width: 36px; height: 36px; place-items: center; border: 1px solid rgba(255, 255, 255, .35); border-radius: 50%; background: rgba(12, 12, 16, .3); color: #fff; text-decoration: none; }
+  .mobileBack { display: grid; width: 44px; height: 44px; place-items: center; border: 1px solid rgba(255, 255, 255, .35); border-radius: 50%; background: rgba(12, 12, 16, .3); color: #fff; text-decoration: none; }
   .mobileBack { font-size: 22px; }
-  .mobileMore { font-size: 20px; line-height: 1; }
   .articleHeader { grid-template-columns: 1fr; gap: 26px; padding-bottom: 32px; }
   .coverHero { max-height: 300px; }
   .back { display: none; }

@@ -1,20 +1,12 @@
-.page {
-  min-height: 70vh;
-  box-sizing: border-box;
-  padding: 110px clamp(16px, 5vw, 80px) 40px;
-  background: var(--rewind-black);
-  color: #fff;
-}
+.page { min-height: 100vh; box-sizing: border-box; padding: 80px 0 60px; background: var(--rewind-surface); color: #fff; }
 
-.content {
-  width: min(960px, 100%);
-  margin: 0 auto;
-}
+.content { width: min(1200px, calc(100% - 40px)); margin: 0 auto; padding-top: 62px; }
+.hero { display: grid; min-height: 548px; place-content: center; padding: 70px 20px; background: linear-gradient(180deg, transparent 0 42%, #050505 96%), radial-gradient(circle at 48% 0%, rgba(95, 183, 194, .72), transparent 36rem), radial-gradient(circle at 96% 0%, rgba(210, 159, 74, .8), transparent 36rem), #111417; text-align: center; }
 
 .title {
-  margin: 0 0 22px;
+  margin: 0 0 18px;
   color: var(--rewind-paper);
-  font-size: clamp(30px, 5vw, 48px);
+  font-size: clamp(42px, 6vw, 64px);
   line-height: 1.08;
   letter-spacing: -0.02em;
 }
@@ -25,6 +17,12 @@
   color: var(--rewind-muted);
   line-height: 1.7;
 }
+
+.intro { margin-inline: auto; font-size: 18px; }
+.story { display: grid; }
+.story section { padding: 30px 0 34px; border-bottom: 1px solid var(--rewind-line); }
+.story h2 { margin: 0 0 16px; color: #fff; font-size: 22px; }
+.story p { max-width: 92ch; margin: 0; color: #e0ddd8; font-size: 17px; line-height: 1.65; }
 
 .credits {
   margin-top: 44px;
@@ -43,4 +41,12 @@
   width: 150px;
   max-width: 100%;
   height: auto;
+}
+
+@media (max-width: 720px) {
+  .page { padding-top: 64px; }
+  .hero { min-height: 430px; }
+  .content { width: min(100% - 32px, 1200px); padding-top: 36px; }
+  .story section { padding-block: 24px; }
+  .story p { font-size: 15px; }
 }

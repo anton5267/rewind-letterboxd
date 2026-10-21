@@ -61,7 +61,6 @@ export default function JournalArticle() {
         <div className={styles.mobileToolbar}>
           <Link className={styles.mobileBack} to={path("/journal")} aria-label={t("journal")}>←</Link>
           <span>{t("journal")}</span>
-          <span className={styles.mobileMore} aria-hidden="true">⋯</span>
         </div>
         <div className={styles.articleHeader}>
           <div className={styles.coverHero}>
