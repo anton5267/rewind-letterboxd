@@ -41,6 +41,9 @@ test("owner creates and deletes a custom list", async ({ page, baseURL }) => {
     await expect(page.getByText("Завантаження...", { exact: true })).toBeVisible();
     await expect(page.getByText("Тут поки немає фільмів. Додайте їх зі сторінки фільму.", { exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "Додати фільм", exact: true })).toHaveAttribute("href", "/uk/films");
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await expect(page.getByRole("link", { name: "Переглянути фільми", exact: true })).toHaveAttribute("href", "/uk/films");
+    await page.setViewportSize({ width: 320, height: 800 });
 
     const updatedListName = `${listName} updated`;
     await page.getByLabel("Назва списку").fill(updatedListName);

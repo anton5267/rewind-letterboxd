@@ -288,7 +288,7 @@ export default function UserLists() {
           <button type="button" className={styles.dangerButton} aria-busy={deleting} disabled={itemsBusy || deleting || saveBusy} onClick={() => void removeList()}>{deleting ? t("deletingList") : t("deleteList")}</button>
         </div>
       </form>}
-      <Link className={styles.browseFilms} to={path("/films")} aria-label={t("addFilm")} aria-disabled={listControlsBusy || undefined} onClick={event => { if (listControlsBusy) event.preventDefault(); }}>
+      <Link className={styles.browseFilms} to={path("/films")} aria-disabled={listControlsBusy || undefined} onClick={event => { if (listControlsBusy) event.preventDefault(); }}>
         <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
         <span className={styles.browseDesktop}>{t("browseFilms")}</span>
         <span className={styles.browseMobile}>{t("addFilm")}</span>
