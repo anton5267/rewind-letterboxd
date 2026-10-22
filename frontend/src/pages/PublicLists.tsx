@@ -276,14 +276,14 @@ export default function PublicLists() {
         </>}
       </section>
 
-      <nav className={styles.feedNav} aria-label={t("listFeeds")}>
+      {!isLanding && <nav className={styles.feedNav} aria-label={t("listFeeds")}>
         {feedLinks.map(item => <Link
           key={item.value}
-          className={!isLanding && feed === item.value ? styles.activeFeed : undefined}
-          aria-current={!isLanding && feed === item.value ? "page" : undefined}
+          className={feed === item.value ? styles.activeFeed : undefined}
+          aria-current={feed === item.value ? "page" : undefined}
           to={path(`/lists/discover?feed=${item.value}`)}
         >{item.label}</Link>)}
-      </nav>
+      </nav>}
 
       {!isLanding && !isTagged && !isFeedView && tagsSection}
 

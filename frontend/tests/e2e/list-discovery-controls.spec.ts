@@ -100,3 +100,23 @@ test("unfiltered public list feed selection keeps its real API endpoint", async 
     await expect(page.getByRole("alert")).toHaveCount(0);
   }
 });
+
+test("public lists landing follows the Figma section layout without a duplicate feed rail", async ({ page }) => {
+  for (const width of [393, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/en/lists/discover");
+    const main = page.getByRole("main");
+    await expect(main).toHaveAttribute("aria-busy", "false");
+    await expect(main.getByRole("navigation", { name: "List feeds", exact: true })).toHaveCount(0);
+    for (const [href, expectedCount] of [
+      ["/en/lists/discover?feed=team", 1],
+      ["/en/lists/discover?feed=popular", 1],
+      ["/en/lists/discover?feed=recently-liked", 1],
+      ["/en/lists/discover?feed=recent", 2],
+    ] as const) {
+      await expect(main.locator(`a[href="${href}"]`).filter({ hasText: "View all" })).toHaveCount(expectedCount);
+    }
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow, `Public lists landing must not overflow at ${width}px`).toBeLessThanOrEqual(1);
+  }
+});
