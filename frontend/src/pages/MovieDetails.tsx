@@ -424,9 +424,9 @@ export default function MovieDetails() {
   const heroImage = movie?.backdropUrl || movie?.photoUrl;
   const trailerUrl = safeHttpUrl(movie?.trailerUrl);
   const mobileCrew = movie ? [
-    ...movie.actors.slice(0, 4).map(item => ({ id: `actor-${item.id}`, personId: item.id, name: editorialText(item.name, t("unknownPerson")), type: "actor" as const, role: t("actors") })),
+    ...movie.actors.slice(0, 5).map(item => ({ id: `actor-${item.id}`, personId: item.id, name: editorialText(item.name, t("unknownPerson")), type: "actor" as const, role: t("actors") })),
     ...movie.directors.slice(0, 2).map(item => ({ id: `director-${item.id}`, personId: item.id, name: editorialText(item.name, t("unknownPerson")), type: "director" as const, role: t("directors") })),
-  ].slice(0, 6) : [];
+  ].slice(0, 7) : [];
   const movieTitle = movie ? editorialText(movie.title, t("untitledFilm")) : t("untitledFilm");
   const pageBusy = loading || reviewsLoading || listsLoading || ratingLoading || (isAuth && !myReviewReady) || mutationBusy !== null;
 

@@ -108,7 +108,13 @@ test("desktop movie retains its full hero plot and six-column recommendation lay
   await page.setViewportSize({ width: 1440, height: 900 });
   const state = await fixture(page);
   await ready(page, "en");
-  const preview = page.locator('section[aria-labelledby="movie-title"]').getByText(plot, { exact: true });
+  const hero = page.locator('section[aria-labelledby="movie-title"]');
+  await expect(hero).toHaveCSS("min-height", "1118px");
+  await expect(hero).toHaveCSS("border-radius", "0px");
+  const poster = await hero.locator('[class*="posterFrame"]').boundingBox();
+  expect(poster?.width).toBeCloseTo(275, 0);
+  await expect(page.locator("#mobile-rating-title")).toBeVisible();
+  const preview = hero.getByText(plot, { exact: true });
   expect(await preview.evaluate(element => element.scrollHeight - element.clientHeight)).toBeLessThanOrEqual(1);
   await expect(page.locator('section[aria-labelledby="storyline-title"]')).toBeHidden();
   const links = page.locator('section[aria-labelledby="similar-title"]').getByRole("link");
