@@ -33,4 +33,13 @@ test("mobile auth matches the standalone Figma composition", async ({ page }) =>
   await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Return" })).toBeVisible();
   await expect(page.getByText("Sign in with", { exact: true })).toBeVisible();
+
+  await page.goto("/en/forgot-password");
+  await expect(page.getByRole("heading", { name: "Forgot your password?" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "← Return" })).toBeVisible();
+
+  await page.goto("/en/reset-password?token=responsive-fixture-token");
+  await expect(page.getByRole("heading", { name: "Set a new password" })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "New password" })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Confirm password" })).toBeVisible();
 });
