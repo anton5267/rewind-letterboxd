@@ -92,7 +92,7 @@
 }
 
 .heroEdit {
-  right: 64px;
+  left: 16px;
   display: grid;
   width: 44px;
   height: 44px;
@@ -548,7 +548,7 @@
   }
 
   .heroActions { right: 12px; }
-  .heroEdit { right: 64px; }
+  .heroEdit { left: 12px; }
 
   .profileNav {
     margin-inline: -2px;
