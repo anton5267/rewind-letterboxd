@@ -59,7 +59,9 @@
 @media (min-width: 721px) {
   .feedPage { padding-top: 0; }
   .feedPage .feedHero { min-height: 628px; box-sizing: border-box; margin-inline: -5vw; padding: 280px 24px 112px; justify-content: flex-start; gap: 0; background: linear-gradient(180deg, rgba(0, 0, 0, .05), rgba(0, 0, 0, .82) 78%, #1f1f1f), url("/images/search-hero-desktop.png") center 30% / cover no-repeat; }
-  .feedPage .feedToolbar { display: none; }
+  /* Keep the desktop route-level back/filter controls available to keyboard
+     users and public-list flows; the mobile Figma frame hides this toolbar. */
+  .feedPage .feedToolbar { display: grid; }
   .feedPage .feedHeroCopy { width: min(100%, 547px); margin: 0 auto; }
   .feedPage .feedHeroCopy .eyebrow { display: none; }
   .feedPage .feedHeroCopy h1 { font-size: 58px; line-height: 1.12; letter-spacing: 0; }
@@ -183,6 +185,9 @@
   .featuredPosterLink { min-height: 124px; height: 124px; align-items: flex-start; overflow: hidden; padding: 9px 6px 0; }
   .featuredPosterLink { height: 132px; min-height: 132px; }
   .taggedPosterLink { order: 2; height: 138px; min-height: 138px; padding: 8px 10px 10px; }
+  /* Clip the compact poster stack to the Figma 138 px mobile rail so it
+     cannot cover the title link above it. */
+  .taggedPosterLink { overflow: hidden; }
   .taggedCard .cardBody { order: 1; padding: 12px 14px 0; }
   .taggedCard .cardBody h2 { margin-bottom: 0; font-size: 13px; line-height: 16px; }
   .taggedCard .description { display: none; }
