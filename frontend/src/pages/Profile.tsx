@@ -21,14 +21,13 @@ const collectionKinds = ["watched", "watchlist", "favorites"] as const;
 type SocialLinkPlatform = "website" | "instagram" | "tiktok" | "letterboxd";
 const socialLinkPlatforms = ["website", "instagram", "tiktok", "letterboxd"] as const satisfies readonly SocialLinkPlatform[];
 const profileNavigation = [
-  { id: "profile-overview", label: "profile" },
-  { id: "profile-collections", label: "watched" },
-  { id: "profile-ratings", label: "allRatings" },
-  { id: "profile-reviews", label: "allReviews" },
-  { id: "profile-lists", label: "lists" },
-  { id: "profile-following", label: "following" },
-] as const satisfies readonly { id: string; label: TranslationKey }[];
-const profileSectionIds = profileNavigation.map(({ id }) => id);
+  { id: "profile-overview", label: "profile", collectionKind: null },
+  { id: "profile-collections", label: "films", collectionKind: "watched" },
+  { id: "profile-collections", label: "watchlist", collectionKind: "watchlist" },
+  { id: "profile-collections", label: "likes", collectionKind: "favorites" },
+  { id: "profile-lists", label: "lists", collectionKind: null },
+] as const satisfies readonly { id: string; label: TranslationKey; collectionKind: ProfileCollection | null }[];
+const profileSectionIds = ["profile-overview", "profile-collections", "profile-ratings", "profile-reviews", "profile-lists", "profile-following"];
 
 export default function Profile() {
   const { isAuth, ready, logout, user } = useAuth();
@@ -315,6 +314,15 @@ export default function Profile() {
     setCollectionPage(0);
   };
 
+  const handleProfileNavigation = (id: string, collectionKind: ProfileCollection | null, event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (collectionKind) {
+      event.preventDefault();
+      chooseCollection(collectionKind);
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    setActiveProfileSection(id);
+  };
+
   const { setTabRef, handleKeyDown } = useRovingTabs(collectionKinds, chooseCollection);
 
   const focusIdentityForm = () => {
@@ -502,13 +510,16 @@ export default function Profile() {
         </div>
       </section>
       <nav className={styles.profileNav} aria-label={t("profile")}>
-        {profileNavigation.map(({ id, label }) => <a
-          className={activeProfileSection === id ? styles.activeProfileNav : undefined}
-          key={id}
-          href={`#${id}`}
-          aria-current={activeProfileSection === id ? "location" : undefined}
-          onClick={() => setActiveProfileSection(id)}
-        >{t(label)}</a>)}
+        {profileNavigation.map(({ id, label, collectionKind: itemKind }) => {
+          const active = activeProfileSection === id && (id !== "profile-collections" || itemKind === collectionKind);
+          return <a
+            className={active ? styles.activeProfileNav : undefined}
+            key={`${id}-${label}`}
+            href={`#${id}`}
+            aria-current={active ? "location" : undefined}
+            onClick={event => handleProfileNavigation(id, itemKind, event)}
+          >{t(label)}</a>;
+        })}
       </nav>
       <section className={styles.section} id="profile-favorite-preview" aria-labelledby="profile-favorite-preview-title" aria-busy={favoritePreviewLoading}>
         <h2 id="profile-favorite-preview-title">{t("favoriteFilms")}</h2>

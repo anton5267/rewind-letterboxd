@@ -3,7 +3,8 @@
 ## Останній Figma checkpoint — власний Profile mobile shell
 
 - Raw `896:1838` повторно підтверджено: mobile `/profile` має full-bleed identity hero без верхнього logo/menu header, 44×44 gear/more controls на y=48 і centered 120×120 avatar на y=190. Додано route-specific `mobileProfile` header state; bottom navigation, API data, localization, forms і focus behavior збережені.
-- `profile-alignment.spec.ts` розширено geometry assertions для 393 px; після `docker compose build web`/`up -d web` targeted suite пройшов **10/10**, `npm run verify:build` — PASS (218 modules).
+- Raw variants `122:176`, `175:619`, `363:289`, `363:411`, `153:180` і `175:177` додатково підтвердили five-tab rail `Profile / Films / Watchlist / Likes / Lists`; rail now switches the existing watched/watchlist/favorites API-backed collection states while Ratings/Reviews/Following sections remain available below.
+- `profile-alignment.spec.ts` розширено geometry і five-tab collection-switch assertions для 393 px; після `docker compose build web`/`up -d web` targeted suite пройшов **10/10**, `npm run verify:build` — PASS (218 modules).
 
 Наступний конкретний audit — окремі raw Profile variants Films/Lists/Reviews/Following/Watchlist/Likes і їхня відповідність доступним API-backed sections.
 

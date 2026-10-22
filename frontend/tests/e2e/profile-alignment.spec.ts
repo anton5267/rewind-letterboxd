@@ -123,6 +123,13 @@ for (const lang of ["uk", "en"] as const) {
     await expect(page.locator("#profile-lists a").last()).toHaveAttribute("href", `/${lang}/lists`);
     await expect(page.locator("#profile-activity").getByRole("link", { name: movies[0].title, exact: true })).toHaveAttribute("href", `/${lang}/films/${movies[0].id}`);
     expect(await page.locator("#profile-following").evaluate(element => Boolean(element.compareDocumentPosition(document.getElementById("profile-identity-form-title")!) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
+    const profileNav = page.locator('nav[class*="profileNav"]');
+    await expect(profileNav.getByRole("link")).toHaveCount(5);
+    const watchlistLabel = lang === "uk" ? "До перегляду" : "Watchlist";
+    await profileNav.getByRole("link", { name: watchlistLabel, exact: true }).click();
+    await expect(page.locator("#profile-collection-tab-watchlist")).toHaveAttribute("aria-selected", "true");
+    await profileNav.getByRole("link", { name: lang === "uk" ? "Фільми" : "Films", exact: true }).click();
+    await expect(page.locator("#profile-collection-tab-watched")).toHaveAttribute("aria-selected", "true");
     const hero = page.locator("section[aria-labelledby='profile-identity']");
     const editProfile = hero.getByRole("button", { name: lang === "uk" ? "Дані профілю" : "Profile details", exact: true });
     const moreProfileActions = hero.getByRole("button", { name: lang === "uk" ? "Дії профілю" : "Profile actions", exact: true });

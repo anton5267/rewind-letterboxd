@@ -3,7 +3,8 @@
 ### Поточний Figma checkpoint — власний Profile mobile shell
 
 - Raw frame `896:1838` підтверджує, що на телефоні власний профіль використовує contextual hero без верхнього logo/menu header: controls мають 44×44 px і починаються на y=48, а avatar — 120×120 px на y=190. `Header` тепер приховує лише desktop/mobile logo та menu для `/profile`, залишаючи bottom navigation доступною; `Profile.module.css` задає full-bleed identity stage, виміряні controls/avatar bounds і не змінює API-backed sections/forms.
-- `profile-alignment.spec.ts` тепер перевіряє ці bounds на 393 px разом із UK/EN, retry, legacy posters, focus і no-overflow: **10/10** після Docker web rebuild. `npm run verify:build` — PASS, 218 modules.
+- Profile variants `122:176`, `175:619`, `363:289`, `363:411`, `153:180` і `175:177` мають спільний five-tab rail `Profile / Films / Watchlist / Likes / Lists`. Runtime rail тепер використовує ці п’ять локалізованих destinations; Ratings, Reviews і Following залишаються нижче як API-backed sections, без вигаданих endpoints.
+- `profile-alignment.spec.ts` тепер перевіряє shell bounds і five-tab rail на 393 px разом із UK/EN, collection switching, retry, legacy posters, focus і no-overflow: **10/10** після Docker web rebuild. `npm run verify:build` — PASS, 218 modules.
 
 Наступний блок: перевірити окремі Films/Lists/Reviews/Following/Watchlist/Likes raw variants і звірити їх із наявними API-backed Profile/PublicProfile sections, не додаючи вигаданих endpoint’ів.
 

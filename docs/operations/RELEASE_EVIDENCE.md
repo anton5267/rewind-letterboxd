@@ -140,6 +140,8 @@ Raw own-profile frames `363:289`/`363:411` confirm a 1020 px identity stage, 265
 
 After the Docker web rebuild, `npm run verify:build` passed (218 modules) and `profile-alignment.spec.ts` passed **10/10** across UK/EN, retry/error, legacy poster, keyboard and no-overflow checks.
 
+The related Profile variants `122:176`, `175:619`, `363:289`, `363:411`, `153:180` and `175:177` share a five-tab `Profile / Films / Watchlist / Likes / Lists` rail. The runtime rail now switches the existing watched/watchlist/favorites API states and keeps Ratings, Reviews and Following as live sections below it; no new endpoint or fixture data was added. The same suite passed **10/10** after the Docker web rebuild, including UK/EN collection switching.
+
 ### Own Profile mobile shell follow-up — 22.10.2026
 
 Raw frame `896:1838` was re-read from the local archive. The phone route now uses a full-bleed identity stage without the global logo/menu header; its 44×44 gear/more controls start at y=48 and the 120×120 fallback avatar is centered at y=190. The bottom navigation, live profile sections, edit/logout menu, localization and focus behavior remain unchanged. After rebuilding Docker web, `profile-alignment.spec.ts` passed **10/10** and `npm run verify:build` passed (218 modules). Separate Films/Lists/Reviews/Following/Watchlist/Likes variants remain the next raw-node audit.
