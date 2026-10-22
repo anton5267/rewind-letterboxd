@@ -134,6 +134,12 @@ Raw frames `238:596`, `122:176` і `175:619` були повторно проч�
 
 Перевірки після `docker compose build web` та `docker compose up -d web`: `npm run verify:build` — PASS (218 modules), `public-profile-design-flow.spec.ts` + `public-profile-desktop-figma.spec.ts` — **2/2**, no horizontal overflow.
 
+### Own Profile desktop Figma follow-up — 22.10.2026
+
+Raw own-profile frames `363:289`/`363:411` confirm a 1020 px identity stage, 265 px avatar, 58 px name, 1200×79 profile rail and 174×260 collection poster slots. `Profile.module.css` applies those desktop measurements from 1024 px and reorders the rail before overview with CSS order; API-backed content, visible film titles/years, forms, focus behavior and mobile rules remain intact.
+
+After the Docker web rebuild, `npm run verify:build` passed (218 modules) and `profile-alignment.spec.ts` passed **10/10** across UK/EN, retry/error, legacy poster, keyboard and no-overflow checks.
+
 ## Збереження даних
 
 - Основні Docker volumes не видалялися; `down -v` не виконувався.

@@ -847,11 +847,6 @@
     border: 0;
   }
 
-  .collectionCard h3,
-  .collectionCard p {
-    display: none;
-  }
-
   .posterRail {
     grid-auto-columns: 265px;
     gap: 46px;

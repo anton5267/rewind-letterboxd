@@ -6,6 +6,8 @@
 
 Raw descendants frames `238:596` (Profile), `122:176` (Films) і `175:619` (Lists) зафіксували desktop geometry: full-bleed hero 1440×1020, avatar 265×265, identity title 58 px, navigation rail 1200×79, section headings 24 px і poster cards 174×260 у шість колонок із 31 px gap. Ці значення внесені до `PublicProfile.module.css` для `min-width: 1024px`. Figma photo fill не підмінений вигаданим asset; runtime продовжує використовувати API profile/avatar fallback. Перевірки: `npm run verify:build` PASS, `public-profile-design-flow.spec.ts` + `public-profile-desktop-figma.spec.ts` **2/2** після Docker web rebuild.
 
+Raw own-profile frames `363:289`/`363:411` повторно перевірені окремо від public route. Вони підтверджують 1020 px identity stage, 265 px avatar, 58 px name, 1200×79 rail і 174×260 poster slots. Ці правила додані до `Profile.module.css` лише для desktop; живі collection titles/years не приховуються, бо вони потрібні API-контенту та клавіатурному доступу. `profile-alignment.spec.ts` пройшов 10/10 після Docker web rebuild.
+
 ## Локально отримані джерела
 
 Основне live-джерело: Figma Design copy `BDO9GO1oscOeUTcu4VXVKA`, доступна через Figma plugin. 20.10.2026 підтверджено: повна metadata сторінки `0:1`, design context, screenshots, variables і тимчасові asset URLs для конкретних nodes. Контрольні nodes `560:1003` (Movie phone, 393×1908) і `825:1378` (Public Profile phone, 393×2355) повернули повний context та окремі screenshots. Node IDs збігаються з інвентарем нижче, тому це доступна копія того самого дипломного макета, а не нова несумісна дизайн-система.

@@ -140,6 +140,14 @@ for (const lang of ["uk", "en"] as const) {
       await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
       await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
       await expect(page.locator("#profile-page-title")).toBeVisible();
+      if (width === 1440) {
+        const heroBox = await hero.boundingBox();
+        expect(heroBox?.x).toBe(0);
+        expect(heroBox?.width).toBe(1440);
+        expect(heroBox?.height).toBe(1020);
+        await expect(hero.locator('[class*="avatarFallback"]')).toHaveCSS("width", "265px");
+        await expect(page.locator('nav[class*="profileNav"]')).toHaveCSS("height", "79px");
+      }
       const overflow = await page.evaluate(() => ({
         amount: document.documentElement.scrollWidth - document.documentElement.clientWidth,
         elements: [...document.querySelectorAll("body *")].filter(element => {
