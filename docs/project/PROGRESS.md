@@ -59,6 +59,8 @@ User Lists mobile add-film alignment commit `b2511f1`: [GitHub CI PASS](https://
 
 Public Lists catalog landing alignment commit `2d40abc`: [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39719191200). The duplicate landing feed rail was removed while section-level feed links, API content and localization remained intact; `list-discovery-controls.spec.ts` passed 4/4.
 
+Public Lists journey regression update commit `04723b8`: [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39720126166). The cross-locale tag → list → author → movie guard now follows section-level `View all`; list/public guard targeted coverage passed 10/10.
+
 Admin wrapper rerun: `scripts/verify-admin-browser.ps1` passed 12/12 and cleaned its disposable fixture; no database volume or `.env` changes were made.
 
 Admin gate evidence commit `00f9f43`: [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39707346272).
