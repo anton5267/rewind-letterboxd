@@ -171,3 +171,8 @@
 - Raw frame `1480:7490` confirms two 1200×339 editorial list cards at y=377 and y=754, with a 446×260 five-poster preview at x=154/y=421 and a 66 px body gap.
 - The desktop lists tab now uses measured 339 px cards, 38 px row rhythm, 20 px radius and the existing real list preview/description data; navigation, localization, keyboard tabs and mobile rules remain unchanged.
 - `global-search-desktop-figma.spec.ts` plus `global-search-alignment.spec.ts` passed **7/7**; `npm run verify:build` PASS (218 modules).
+
+### Global Search desktop reviews-tab follow-up — 22.10.2026
+
+- Raw frame `1480:7311` confirms four 1200×315 review cards beginning at y=377 with 38 px gaps; the existing desktop review contract now has a dedicated tab regression.
+- `global-search-desktop-figma.spec.ts` plus `global-search-alignment.spec.ts` passed **8/8**; live review links, nullable poster/avatar fallbacks, keyboard tabs and mobile behavior remain unchanged.

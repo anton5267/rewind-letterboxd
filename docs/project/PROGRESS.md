@@ -175,3 +175,7 @@ Raw frame `1480:5809` confirms a centered 540×166 no-match card at x=450/y=377 
 ### Global Search desktop lists-tab follow-up — 22.10.2026
 
 Raw frame `1480:7490` was checked: two 1200×339 list cards begin at y=377/y=754, with 446×260 five-poster previews at x=154/y=421. Desktop list search cards now follow this measured shell and retain live list preview, owner, count and description data. Keyboard tabs, localized links and mobile behavior remain unchanged. The combined desktop/alignment suite passed **7/7** and `npm run verify:build` passed (218 modules).
+
+### Global Search desktop reviews-tab follow-up — 22.10.2026
+
+Raw frame `1480:7311` confirms the Reviews tab uses a 1200 px rail with 1200×315 cards at y=377 and 38 px gaps. The existing desktop card styling is now covered by a direct tab regression; live review data, links, fallback images, keyboard tabs, localization and mobile behavior remain unchanged. Combined Global Search desktop/alignment coverage passed **8/8**.

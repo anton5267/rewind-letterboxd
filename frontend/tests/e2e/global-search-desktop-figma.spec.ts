@@ -107,3 +107,20 @@ test("global search lists variant keeps the measured editorial cards", async ({ 
   const second = await links.nth(1).boundingBox();
   expect(second?.y).toBeCloseTo(754, 0);
 });
+
+test("global search reviews tab keeps the raw review card rhythm", async ({ page }) => {
+  await mockSearch(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/en/search?q=dune&tab=reviews");
+  const main = page.getByRole("main");
+  await expect(main).toHaveAttribute("aria-busy", "false");
+  const cards = main.locator('#reviews [class*="reviewCard"]');
+  await expect(cards).toHaveCount(3);
+  const first = await cards.first().boundingBox();
+  const second = await cards.nth(1).boundingBox();
+  expect(first?.x).toBeCloseTo(120, 0);
+  expect(first?.y).toBeCloseTo(377, 0);
+  expect(first?.width).toBeCloseTo(1200, 0);
+  expect(first?.height).toBeCloseTo(315, 0);
+  expect(second?.y).toBeCloseTo(730, 0);
+});

@@ -230,3 +230,9 @@ Push `d703d63` passed GitHub `CI / verify (push)`. The local frontend suite comp
 - Implemented: 1200×339 list cards at y=377/y=754, 446×260 five-poster previews at x=154/y=421, 38 px card rhythm and 20 px card radius.
 - Verification: `npm run verify:build` PASS (218 modules); combined Global Search desktop/alignment tests PASS (**7/7**) after Docker web rebuild.
 - Contract: live list search data, owner/count/description content, keyboard category tabs, localization and mobile layout remain unchanged.
+
+### Global Search desktop reviews-tab Figma check — 22.10.2026
+
+- Raw source: local archive frame `1480:7311`.
+- Verification: `global-search-desktop-figma.spec.ts` plus `global-search-alignment.spec.ts` PASS (**8/8**) for all, no-match, lists and reviews variants after Docker web rebuild; `npm run verify:build` remained PASS (218 modules).
+- Contract: live review API data, links, nullable poster/avatar fallbacks, keyboard category tabs, localization and mobile behavior remain unchanged.
