@@ -216,3 +216,10 @@ Push `d703d63` passed GitHub `CI / verify (push)`. The local frontend suite comp
 - Implemented: 1200 px desktop rail, six 174×260 film posters at y=377, and 1200×315 review cards at y=692 with 175×262 poster slots; duplicate visual tab/section bands are removed while accessible controls remain.
 - Verification: `npm run verify:build` PASS (218 modules); `npx playwright test tests/e2e/global-search-desktop-figma.spec.ts tests/e2e/global-search-alignment.spec.ts` PASS (**5/5**); Docker web image rebuilt and restarted.
 - Contract: live search API, keyboard category navigation, localization, existing mobile variants, and no-overflow behavior remain unchanged.
+
+### Global Search desktop empty-state Figma check — 22.10.2026
+
+- Raw source: local archive frame `1480:5809`.
+- Implemented: centered 540×166 no-match shell at x=450/y=377 under the matches heading.
+- Verification: `npx playwright test tests/e2e/global-search-desktop-figma.spec.ts` PASS (**2/2**) after Docker web rebuild.
+- Contract: localized empty copy, Back to home link, keyboard semantics, API error/retry behavior, and mobile layout remain unchanged.

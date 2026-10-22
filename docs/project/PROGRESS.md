@@ -167,3 +167,7 @@ The raw `825:1378` phone frame was rechecked for the remaining long-name/avatar 
 ### Global Search desktop all-results follow-up — 22.10.2026
 
 Raw frame `1480:6991` was checked from the local archive: the desktop all-results variant uses a 1200 px rail, six 174×260 film posters from y=377, and 1200×315 review cards from y=692 with 175×262 poster slots. The desktop stylesheet preserves accessible category controls in the DOM while removing their duplicate visual band, places film metadata over the poster rail, and matches the measured review rhythm. Live search responses, keyboard navigation, localization, and mobile behavior remain unchanged. `global-search-desktop-figma.spec.ts` plus the existing alignment suite passed **5/5** after Docker web rebuild; `npm run verify:build` passed (218 modules).
+
+### Global Search desktop empty-state follow-up — 22.10.2026
+
+Raw frame `1480:5809` confirms a centered 540×166 no-match card at x=450/y=377 below the shared matches heading. The desktop empty state now uses that measured shell without changing localized copy, Back to home navigation, keyboard behavior, or mobile rules. The expanded `global-search-desktop-figma.spec.ts` passed **2/2** after Docker web rebuild.

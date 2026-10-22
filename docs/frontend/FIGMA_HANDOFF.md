@@ -173,3 +173,7 @@ Frame `825:1378` raw nodes place the fallback/avatar at 120×120 and x=136.5/y=1
 ### Global Search desktop all-results follow-up — 22.10.2026
 
 Raw frame `1480:6991` confirms a 1440 px desktop canvas with a 1200 px content rail, film posters at x=120/y=377 sized 174×260, and review cards at y=692 sized 1200×315 with 175×262 poster slots. `GlobalSearch.module.css` applies this desktop-only geometry while leaving result tabs keyboard-accessible in the DOM, preserving the live global-search API, UK/EN copy, and existing mobile variants. `global-search-desktop-figma.spec.ts` and `global-search-alignment.spec.ts` passed **5/5** after the Docker web rebuild.
+
+### Global Search desktop empty-state follow-up — 22.10.2026
+
+Raw frame `1480:5809` places the no-match frame at x=450/y=377 with 540×166 bounds. The desktop `noMatches` shell now follows that centered geometry; live localized empty copy, retry/error separation, Back to home navigation, and mobile behavior remain unchanged. The dedicated desktop suite covers both all-results and no-match variants.

@@ -19,6 +19,19 @@ async function mockSearch(page: Page) {
   });
 }
 
+async function mockEmptySearch(page: Page) {
+  await page.route(/^https?:\/\/[^/]+\/api\//, route => {
+    const url = new URL(route.request().url());
+    if (url.pathname === "/api/users/me") return route.fulfill({ status: 401, json: {} });
+    if (url.pathname === "/api/search/global") return route.fulfill({ json: {
+      films: { content: [], number: 0, size: 6, totalElements: 0, totalPages: 0 },
+      users: { content: [], totalElements: 0 }, lists: { content: [], totalElements: 0 }, tags: [], people: [],
+      reviews: { content: [], totalElements: 0 }, journal: { content: [], totalElements: 0 },
+    } });
+    return route.fulfill({ json: { count: 0 } });
+  });
+}
+
 test("global search all variant keeps the raw desktop rails", async ({ page }) => {
   await mockSearch(page);
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -41,4 +54,18 @@ test("global search all variant keeps the raw desktop rails", async ({ page }) =
   expect(review?.y).toBeCloseTo(692, 0);
   expect(review?.width).toBeCloseTo(1200, 0);
   expect(review?.height).toBeCloseTo(315, 0);
+});
+
+test("global search no-match variant keeps the centered raw empty state", async ({ page }) => {
+  await mockEmptySearch(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/en/search?q=missing");
+  const main = page.getByRole("main");
+  await expect(main).toHaveAttribute("aria-busy", "false");
+  const empty = main.locator('section[class*="noMatches"]');
+  const box = await empty.boundingBox();
+  expect(box?.x).toBeCloseTo(450, 0);
+  expect(box?.y).toBeCloseTo(377, 0);
+  expect(box?.width).toBeCloseTo(540, 0);
+  expect(box?.height).toBeCloseTo(166, 0);
 });

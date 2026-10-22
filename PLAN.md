@@ -159,3 +159,9 @@
 - Raw frame `1480:6991` confirms a 1440 px desktop canvas, 1200 px rail, film row x=120/y=377 with six 174×260 posters, and review cards x=120/y=692 sized 1200×315 with 175×262 poster slots.
 - Desktop `GlobalSearch` keeps category controls keyboard-accessible in the DOM while removing the duplicate visual tab/section bands, places film metadata over the poster rail, and matches the review card rhythm. Live search API, localization and mobile behavior remain unchanged.
 - `global-search-desktop-figma.spec.ts` plus `global-search-alignment.spec.ts` passed **5/5** after Docker web rebuild; `npm run verify:build` passed (218 modules).
+
+### Global Search desktop empty-state follow-up — 22.10.2026
+
+- Raw frame `1480:5809` confirms the no-match card at x=450/y=377 with 540×166 bounds beneath the shared matches heading.
+- Desktop empty state now uses that centered 540×166 shell; its localized copy and Back to home link remain live and keyboard-accessible, while phone empty-state rules stay unchanged.
+- `global-search-desktop-figma.spec.ts` now covers both all-results and no-match variants; the suite passed **2/2** after Docker web rebuild.

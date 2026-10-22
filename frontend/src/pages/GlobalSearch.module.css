@@ -128,6 +128,7 @@
   .reviewGrid { gap: 38px; }
   .reviewCard { height: 315px; min-height: 315px; box-sizing: border-box; overflow: hidden; grid-template-columns: 175px minmax(0, 1fr); gap: 40px; padding: 31px 26px 22px; }
   .reviewPoster { aspect-ratio: 175 / 262; }
+  .noMatches { width: 540px; min-height: 166px; height: 166px; box-sizing: border-box; margin: 0 auto; }
 }
 
 @media (max-width: 560px) {
