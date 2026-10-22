@@ -49,6 +49,10 @@ test("admin desktop hero follows the Figma dashboard frame", async ({ page }) =>
     id: 900022, reviewId: 900021, userId: 900011, username: "profile-fixture", content: "A Figma aligned comment fixture.",
     isHidden: false, moderatedReason: null, moderatedAt: null, createdAt: "2026-01-01T00:00:00Z",
   }], totalPages: 1, totalElements: 1 } }));
+  await page.route("**/api/admin/lists**", route => route.fulfill({ json: { content: [{
+    id: 900023, userId: 900011, username: "profile-fixture", name: "Lists fixture", description: null,
+    listType: "CUSTOM", isPublic: true, itemCount: 6, createdAt: "2026-01-01T00:00:00Z", updatedAt: "2026-01-01T00:00:00Z",
+  }], totalPages: 1, totalElements: 1 } }));
   await page.goto("/uk/admin");
   const hero = page.locator('main > [class*="hero"]');
   await expect(hero).toHaveCSS("min-height", "1020px");
@@ -109,4 +113,12 @@ test("admin desktop hero follows the Figma dashboard frame", async ({ page }) =>
   expect(commentBox?.x).toBeCloseTo(120, 0);
   expect(commentBox?.width).toBe(1200);
   expect(commentBox?.height).toBeGreaterThanOrEqual(249);
+  const lists = page.getByRole("region", { name: "Списки" });
+  await expect(lists).toBeVisible();
+  const listRow = lists.locator('ul[class*="list"] > li');
+  await expect(listRow).toHaveCount(1);
+  const listBox = await listRow.boundingBox();
+  expect(listBox?.x).toBeCloseTo(120, 0);
+  expect(listBox?.width).toBe(1200);
+  expect(listBox?.height).toBeGreaterThanOrEqual(393);
 });

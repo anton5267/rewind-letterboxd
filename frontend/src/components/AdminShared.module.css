@@ -52,6 +52,43 @@
     min-height: 41px;
     border-radius: 38px;
   }
+
+  /* Figma Lists frame `1344:5249` uses 1200 px translucent cards with a
+     38 px radius, 84 px rhythm and 393/364 px content states. */
+  .listsSection > .title {
+    margin-bottom: 38px;
+    text-align: center;
+  }
+
+  .listsSection > .list {
+    gap: 84px;
+  }
+
+  .listsSection > .list .row {
+    display: grid;
+    grid-template-columns: minmax(0, 417px) minmax(0, 1fr);
+    gap: 160px;
+    min-height: 364px;
+    box-sizing: border-box;
+    padding: 23px;
+    border: 0;
+    border-radius: 38px;
+    background: rgba(255, 255, 255, .05);
+    backdrop-filter: blur(4px);
+  }
+
+  .listsSection > .list .row:first-child {
+    min-height: 393px;
+  }
+
+  .listsSection > .list .rowActions {
+    margin-top: auto;
+  }
+
+  .listsSection > .list .rowActions button {
+    min-height: 41px;
+    border-radius: 38px;
+  }
 }
 
 .commentMain,
@@ -83,6 +120,42 @@
 }
 
 .commentSide {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.listMain,
+.listSide {
+  min-width: 0;
+}
+
+.listMain {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
+.listIdentity,
+.listMeta,
+.listStatus {
+  overflow-wrap: anywhere;
+}
+
+.listIdentity {
+  color: var(--rewind-paper);
+  font-size: 20px;
+}
+
+.listMeta,
+.listStatus {
+  margin: 0;
+  color: var(--rewind-muted);
+  line-height: 1.55;
+}
+
+.listSide {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
