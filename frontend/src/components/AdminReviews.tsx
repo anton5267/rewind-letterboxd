@@ -67,7 +67,7 @@ export default function AdminReviews() {
     }
   };
 
-  return <section className={styles.section} aria-label={t("adminReviews")} aria-busy={loading || busyId !== null}>
+  return <section className={`${styles.section} ${styles.reviewsSection}`} aria-label={t("adminReviews")} aria-busy={loading || busyId !== null}>
     <h2 className={styles.title}>{t("adminReviews")}</h2>
     {actionError && <p className={styles.error} role="alert">{actionError}</p>}
     <label className={styles.filter}>{t("adminVisibilityFilter")}{" "}
@@ -84,10 +84,23 @@ export default function AdminReviews() {
       <ul className={styles.list}>{data.content.map(review => {
         const movieTitle = editorialText(review.movieTitle, t("untitledFilm"));
         return <li className={styles.row} key={review.id}>
-        <div className={styles.rowContent}>{movieTitle} · {getUserName({ username: review.username }, t("someone"))}: {review.content} · {review.isHidden ? t("hiddenReview") : t("visibleReview")}</div>
-        <div className={styles.rowActions}>
-          <button type="button" aria-busy={busyId === review.id} disabled={busyId !== null} onClick={() => void toggleHidden(review)}>{busyId === review.id ? t("loading") : review.isHidden ? t("unhideReview") : t("hideReview")}</button>
-        </div>
+          <div className={styles.reviewMain}>
+            <div className={styles.reviewIdentity}>
+              <strong>{movieTitle}</strong>
+              <span>{getUserName({ username: review.username }, t("someone"))}</span>
+            </div>
+            <p className={styles.reviewText}>{review.content}</p>
+          </div>
+          <div className={styles.reviewSide}>
+            <div className={styles.reviewRating}>
+              <span>{t("rating")}</span>
+              <strong>{review.rating ?? "—"}</strong>
+            </div>
+            <p className={styles.reviewStatus}>{review.isHidden ? t("hiddenReview") : t("visibleReview")}</p>
+            <div className={styles.rowActions}>
+              <button type="button" aria-busy={busyId === review.id} disabled={busyId !== null} onClick={() => void toggleHidden(review)}>{busyId === review.id ? t("loading") : review.isHidden ? t("unhideReview") : t("hideReview")}</button>
+            </div>
+          </div>
       </li>;
       })}</ul>
       <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminReviewsPagination")} busy={loading} statusSuffix={data.totalElements} onPageChange={setPage} />

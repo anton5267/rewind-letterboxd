@@ -354,6 +354,10 @@
   .rowActions > * {
     width: 100%;
   }
+
+  .reviewSide {
+    gap: 12px;
+  }
 }
 
 .pagination {
@@ -370,6 +374,64 @@
 
 .error {
   color: #ff9a9a;
+}
+
+.reviewMain,
+.reviewSide {
+  min-width: 0;
+}
+
+.reviewIdentity {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.reviewIdentity strong,
+.reviewIdentity span,
+.reviewText {
+  overflow-wrap: anywhere;
+}
+
+.reviewIdentity strong {
+  color: var(--rewind-paper);
+  font-size: 20px;
+}
+
+.reviewIdentity span,
+.reviewStatus {
+  color: var(--rewind-muted);
+}
+
+.reviewText {
+  margin: 15px 0 0;
+  color: var(--rewind-paper);
+  line-height: 1.55;
+}
+
+.reviewSide {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.reviewRating {
+  display: grid;
+  gap: 8px;
+}
+
+.reviewRating span {
+  color: var(--rewind-muted);
+}
+
+.reviewRating strong {
+  color: var(--rewind-paper);
+  font-size: 26px;
+}
+
+.reviewStatus {
+  margin: 0;
 }
 
 /* Figma User List frames `1218:2982`/`1260:3404` use a centered title,
@@ -442,6 +504,50 @@
     min-height: 501px;
     box-sizing: border-box;
     padding: 36px;
+    border-radius: 38px;
+  }
+
+  /* Figma Reviews frame `1310:3108` uses translucent 1200 px cards with a
+     38 px radius, 84 px vertical rhythm and a two-column editorial layout. */
+  .reviewsSection > .title {
+    margin-bottom: 38px;
+    text-align: center;
+  }
+
+  .reviewsSection > .filter {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 42px;
+  }
+
+  .reviewsSection > .filter .control {
+    min-height: 41px;
+    border-radius: 38px;
+  }
+
+  .reviewsSection > .list {
+    gap: 84px;
+  }
+
+  .reviewsSection > .list .row {
+    display: grid;
+    grid-template-columns: minmax(0, 417px) minmax(0, 1fr);
+    gap: 160px;
+    min-height: 429px;
+    box-sizing: border-box;
+    padding: 23px;
+    border: 0;
+    border-radius: 38px;
+    background: rgba(255, 255, 255, .05);
+    backdrop-filter: blur(4px);
+  }
+
+  .reviewsSection > .list .rowActions {
+    margin-top: auto;
+  }
+
+  .reviewsSection > .list .rowActions button {
+    min-height: 41px;
     border-radius: 38px;
   }
 }

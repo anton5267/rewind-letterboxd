@@ -40,6 +40,11 @@ test("admin desktop hero follows the Figma dashboard frame", async ({ page }) =>
     { key: "maintenance_mode", value: "false", updatedBy: null, updatedAt: null },
     { key: "journal_enabled", value: "true", updatedBy: null, updatedAt: null },
   ] }));
+  await page.route("**/api/admin/reviews**", route => route.fulfill({ json: { content: [{
+    id: 900021, movieId: 77, movieTitle: "Review fixture", userId: 900011, username: "profile-fixture",
+    content: "A Figma aligned review fixture.", rating: 4, isHidden: false, moderatedReason: null,
+    moderatedAt: null, createdAt: "2026-01-01T00:00:00Z",
+  }], totalPages: 1, totalElements: 1 } }));
   await page.goto("/uk/admin");
   const hero = page.locator('main > [class*="hero"]');
   await expect(hero).toHaveCSS("min-height", "1020px");
@@ -84,4 +89,12 @@ test("admin desktop hero follows the Figma dashboard frame", async ({ page }) =>
   expect(settingsBox?.width).toBe(1200);
   expect(settingsBox?.height).toBeGreaterThanOrEqual(734);
   await expect(settings.locator('input')).toHaveCount(4);
+  const reviews = page.getByRole("region", { name: "Огляди" });
+  await expect(reviews).toBeVisible();
+  const reviewRow = reviews.locator('ul[class*="list"] > li');
+  await expect(reviewRow).toHaveCount(1);
+  const reviewBox = await reviewRow.boundingBox();
+  expect(reviewBox?.x).toBeCloseTo(120, 0);
+  expect(reviewBox?.width).toBe(1200);
+  expect(reviewBox?.height).toBeGreaterThanOrEqual(429);
 });
