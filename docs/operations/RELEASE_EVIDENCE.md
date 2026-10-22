@@ -156,6 +156,10 @@ The same Docker pass exposed a fixed-header interception in the admin user detai
 
 Raw Journal list frames confirmed the 1440×818 full-bleed stage, 513×612 feature cover at x=120/y=212, feature text rail at x=748, and the following 444×408 covers at the 576 px editorial rhythm. The desktop CSS now follows that geometry while retaining live API articles, archive/category controls, pagination, localization and the existing mobile composition. After rebuilding Docker web, `journal-design-flow.spec.ts` passed **2/2**, including the 393 px no-overflow check.
 
+### Full regression — 22.10.2026
+
+Push `d703d63` passed GitHub `CI / verify (push)`. The local frontend suite completed with **128 passed, 2 failed and 12 skipped out of 142**: both failures are the pre-existing Community retry scenarios covered by the user's uncommitted `FollowActionsContext.tsx`, and the skips require the unavailable admin fixture. The backend suite was rerun against the Compose MySQL service on port 3307 and completed **87/87 passed** with no failures, errors or skips; no `.env`, database or user-owned dirty files were changed.
+
 ## Збереження даних
 
 - Основні Docker volumes не видалялися; `down -v` не виконувався.
