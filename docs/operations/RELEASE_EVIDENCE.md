@@ -51,7 +51,7 @@ Public Profile desktop `238:596` was reviewed directly in the Figma canvas. Its 
 
 Backend host regression was rerun with the Compose MySQL credentials loaded only into the process environment. All 89 current tests passed with zero failures, errors, or skips; `.env`, schema and Docker volumes were not changed.
 
-Public Lists follow-up fixed two concrete responsive/accessibility regressions: mobile tagged cards now clip the compact poster stack to the 138 px Figma rail, and desktop feed pages keep their route-level back/filter toolbar available. After rebuilding the Docker web image, `list-discovery-controls.spec.ts` passed 3/3 and `public-guards.spec.ts` passed 6/6, including the cross-locale tag → list → author → movie journey.
+Public Lists follow-up fixed two concrete responsive/accessibility regressions: mobile tagged cards now clip the compact poster stack to the 138 px Figma rail, and desktop feed pages keep their route-level back/filter toolbar available. After rebuilding the Docker web image, `list-discovery-controls.spec.ts` passed 3/3, `public-guards.spec.ts` passed 6/6 (including the cross-locale tag → list → author → movie journey), the release viewport matrix passed 1/1, and the WCAG axe audit passed 1/1.
 
 Movie Details desktop `39:2`/`61:244` додатково перевірені через local Figma inventory і canvas. Реалізація тепер має full-bleed dark hero, 811 px backdrop, 275 px poster, desktop Rating/Cast rails і dark similar/review sections; `movie-mobile-alignment.spec.ts` та responsive suite пройшли 5/5.
 
