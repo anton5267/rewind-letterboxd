@@ -40,7 +40,7 @@ test("Home lists remain reachable by keyboard across the scrollable poster cards
   for (const width of [320, 393, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/en/home");
-    const panel = page.getByRole("region", { name: "Public lists", exact: true });
+    const panel = page.getByRole("region", { name: "Popular Lists", exact: true });
     await expect(panel).toHaveAttribute("aria-busy", "false");
     const cards = panel.locator("article");
     await expect(cards).toHaveCount(3);
@@ -76,7 +76,7 @@ test("Home list feed keeps retry and honest empty states", async ({ page }) => {
       : route.fulfill({ json: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 4 } });
   });
   await page.goto("/en/home");
-  const panel = page.getByRole("region", { name: "Public lists", exact: true });
+  const panel = page.getByRole("region", { name: "Popular Lists", exact: true });
   await expect(panel.getByRole("alert")).toBeVisible();
   await panel.getByRole("button", { name: "Retry", exact: true }).click();
   await expect(panel).toHaveAttribute("aria-busy", "false");

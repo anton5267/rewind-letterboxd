@@ -114,11 +114,11 @@ export default function Home() {
         <p>{t("homeGuestExplainerText")}</p>
       </section>}
       <section className={`${styles.section} ${styles.popularSection}`} aria-busy={sectionLoading.popular}>
-        <div className={styles.sectionHeading}><h2>{t("popularThisWeek")}</h2><Link to={path("/films?sort=rating_desc")}>{t("viewAll")}</Link></div>
+        <div className={styles.sectionHeading}><h2>{t(isAuth ? "homePopularOnRewind" : "popularThisWeek")}</h2><Link to={path("/films?sort=rating_desc")}>{t("viewAll")}</Link></div>
         {sectionLoading.popular ? <p className={styles.sectionStatus} role="status">{t("loadingHome")}</p> : sectionErrors.popular ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} onRetry={() => setRetry(value => value + 1)} /> : popular.length === 0 ? <p>{t("noFilms")}</p> : <MovieRow movies={popular} />}
       </section>
       <section className={`${styles.section} ${styles.journalSection}`} aria-busy={sectionLoading.journal}>
-        <div className={styles.sectionHeading}><h2>{t("latestJournal")}</h2><Link to={path("/journal")}>{t("viewAll")}</Link></div>
+        <div className={styles.sectionHeading}><h2>{t(isAuth ? "homeLatestNews" : "latestJournal")}</h2><Link to={path("/journal")}>{t("viewAll")}</Link></div>
         {sectionLoading.journal ? <p className={styles.sectionStatus} role="status">{t("loadingHome")}</p> : sectionErrors.journal ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} onRetry={() => setRetry(value => value + 1)} /> : journal.length === 0 ? <p>{t("noLatestJournal")}</p> : <div className={styles.stack}>{journal.map(article => {
           const title = editorialText(article.title, t("untitledArticle"));
           return <article className={styles.journalCard} key={article.id}>
@@ -136,7 +136,7 @@ export default function Home() {
       </section>
       <section className={styles.grid}>
         <div className={`${styles.panel} ${styles.reviewsPanel}`} aria-busy={sectionLoading.reviews}>
-          <div className={styles.sectionHeading}><h2>{t("homePopularReviews")}</h2><Link to={path("/reviews")}>{t("viewAll")}</Link></div>
+          <div className={styles.sectionHeading}><h2>{t("homePopularReviewsThisWeek")}</h2><Link to={path("/reviews")}>{t("viewAll")}</Link></div>
           {sectionLoading.reviews ? <p className={styles.sectionStatus} role="status">{t("loadingHome")}</p> : sectionErrors.reviews ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} onRetry={() => setRetry(value => value + 1)} /> : reviews.length === 0 ? <p>{t("noRecentReviews")}</p> : <div className={styles.stack}>{reviews.map(review => {
             const movieTitle = editorialText(review.movieTitle, t("untitledFilm"));
             return <article className={styles.reviewCard} key={review.id}>
@@ -161,7 +161,7 @@ export default function Home() {
           })}</div>}
         </div>
         <section className={`${styles.panel} ${styles.listsPanel}`} aria-labelledby="home-public-lists-heading" aria-busy={sectionLoading.lists}>
-          <div className={styles.sectionHeading}><h2 id="home-public-lists-heading">{t("popularLists")}</h2><Link to={path("/lists/discover?feed=popular")}>{t("viewAll")}</Link></div>
+          <div className={styles.sectionHeading}><h2 id="home-public-lists-heading">{t("homePopularLists")}</h2><Link to={path("/lists/discover?feed=popular")}>{t("viewAll")}</Link></div>
           {sectionLoading.lists ? <p className={styles.sectionStatus} role="status">{t("loadingHome")}</p> : sectionErrors.lists ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} onRetry={() => setRetry(value => value + 1)} /> : lists.length === 0 ? <p>{t("noPublicLists")}</p> : <div className={styles.listCards} role="group" aria-label={t("popularLists")} tabIndex={0}>{lists.map(list => {
             const listName = editorialText(list.name, t("lists"));
             return <article className={styles.listCard} key={list.id}>

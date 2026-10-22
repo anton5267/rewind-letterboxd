@@ -41,6 +41,8 @@ Guest Home mobile `1411:3473` was re-read from raw nodes: the artwork is 393×32
 
 Global navigation was then compared against the raw Figma header nodes: desktop Group 26 is 1440×106 and the mobile Navigation instance is 393×92. Runtime now uses a 106 px desktop header and 92 px boxed mobile bottom navigation while preserving contextual transparent headers and focus behavior. After the Docker web rebuild, `editorial-layout.spec.ts --grep "header stays readable"` passed 2/2.
 
+Home member section headings were aligned to the raw `1327:3210` text nodes (`Popular on Rewind`, `Latest news`, `Popular reviews this week`, `Popular Lists`) through dedicated UK/EN keys; API-backed content and state handling were untouched. `home-list-cards.spec.ts` passed 3/3 on the rebuilt Docker web image.
+
 Member Home mobile `1327:3210` was checked separately. Its 320 px artwork hero, centered 24 px heading/12 px copy, New on Rewind heading and four live 79×116 poster tiles follow the frame while preserving the API-backed news, review and list sections. `npm run verify:build` passed (216 modules); the rebuilt Docker web image passed `home-list-cards` 3/3 with an authenticated mocked session.
 
 Popular Lists desktop/mobile `1480:5390`/`1480:7927` were checked with their Figma screenshot/context. The feed now has the desktop 628 px image hero, 58 px heading and 1200×339 rows with 174×260 five-poster stacks, plus the 183 px mobile hero, contextual top controls, single 361 px card column and pagination. It retains API-backed lists and accessible targets. `npm run verify:build` passed (216 modules); `list-discovery-controls.spec.ts` passed 3/3 and `list-mobile-header.spec.ts` passed 12/12 at 320, 393, 600, 720 and 768 px in UK and EN.
