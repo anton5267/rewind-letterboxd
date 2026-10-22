@@ -52,6 +52,8 @@ Latest regression evidence commit `5e449af`: [GitHub CI PASS](https://github.com
 
 Admin wrapper rerun: `scripts/verify-admin-browser.ps1` passed 12/12 and cleaned its disposable fixture; no database volume or `.env` changes were made.
 
+Admin gate evidence commit `00f9f43`: [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39707346272).
+
 Перший full browser run виявив два дефекти Lists: втрачений локалізований hero text і приховану feed navigation. Після виправлення targeted run дав 7/7, повторний full run — 125/125.
 
 Наступний Search run додав 2 двомовні сценарії. Targeted Global Search дав 4/4; повний standard run — 115 passed із 12 очікуваними admin skips, окремий wrapper — 12/12, разом усі 127 унікальних сценаріїв без skips. Перший запуск wrapper виявив quoting-дефект до створення fixture; після JSON fix сценарії пройшли, fixture видалено.
