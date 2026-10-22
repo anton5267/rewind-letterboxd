@@ -99,6 +99,22 @@ for (const width of [393, 1440]) {
   });
 }
 
+test("mobile film filters return focus to the trigger after Escape", async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto("/uk/films");
+
+  const trigger = page.locator('button[aria-controls="film-filter-controls"]');
+  await expect(trigger).toHaveAccessibleName("Фільтри");
+  await expect(page.locator("#film-search-genre")).toBeEnabled();
+  await trigger.click();
+  await expect(trigger).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator("#film-search-genre")).toBeFocused();
+
+  await page.keyboard.press("Escape");
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  await expect(trigger).toBeFocused();
+});
+
 test("malformed film page URLs normalize before a real API request", async ({ page }) => {
   const requests: URL[] = [];
   page.on("request", request => {

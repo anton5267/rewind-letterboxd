@@ -30,6 +30,8 @@ export default function Search() {
   const [retry, setRetry] = useState(0);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const filtersFormRef = useRef<HTMLFormElement>(null);
+  const filterToggleRef = useRef<HTMLButtonElement>(null);
+  const filterWasOpen = useRef(false);
 
   useEffect(() => {
     setGenreError(false);
@@ -84,6 +86,29 @@ export default function Search() {
     return () => { current = false; };
   }, [searchKey, lang, retry]);
 
+  useEffect(() => {
+    if (mobileFiltersOpen && !filterWasOpen.current) {
+      window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+        const firstControl = filtersFormRef.current?.querySelector<HTMLElement>("select:not(:disabled), input:not(:disabled), button:not(:disabled)");
+        firstControl?.focus();
+      }));
+    } else if (!mobileFiltersOpen && filterWasOpen.current) {
+      window.requestAnimationFrame(() => filterToggleRef.current?.focus());
+    }
+    filterWasOpen.current = mobileFiltersOpen;
+  }, [mobileFiltersOpen]);
+
+  useEffect(() => {
+    if (!mobileFiltersOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setMobileFiltersOpen(false);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [mobileFiltersOpen]);
+
   const applyFilters = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const filtersForm = filtersFormRef.current;
@@ -113,6 +138,7 @@ export default function Search() {
             <h1 id="films-page-title">{t("films")}</h1>
           </div>
           <button
+            ref={filterToggleRef}
             className={styles.filterToggle}
             type="button"
             aria-controls="film-filter-controls"
