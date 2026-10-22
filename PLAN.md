@@ -8,6 +8,11 @@
 
 Наступний блок: перевірити окремі Films/Lists/Reviews/Following/Watchlist/Likes raw variants і звірити їх із наявними API-backed Profile/PublicProfile sections, не додаючи вигаданих endpoint’ів.
 
+### Контрактний gap — Admin reported/edit variants
+
+- Raw frames `1389:3464`, `1343:3799`, `1319:5033`, `1317:4617`, `1315:4313`, `1342:4028`, `1390:3326`, `1319:5889`, `1342:3273`, `1342:3470` і `1343:4118` описують reported lists/comments/reviews, edit forms, complaints, block/delete/resolved states та history of changes.
+- Поточні `admin.api.ts` і backend admin controllers мають moderation hide/unhide, list visibility/delete, movie/review/comment actions та audit logs, але не мають report/complaint entities, list/comment/review report endpoints, edit-history contracts чи block/resolution mutations. UI для цих frames не додається на підставі статичних Figma текстів; спочатку потрібен погоджений backend contract.
+
 ### Поточний Figma checkpoint — PublicProfile desktop
 
 - Raw frames `238:596`, `122:176` і `175:619` уточнили desktop geometry: full-bleed hero 1440×1020, avatar 265×265, identity title 58 px, section headings 24 px, profile rail 1200×79 і six-column poster cards 174×260 із 31 px gap. Runtime `PublicProfile.module.css` тепер використовує ці виміряні значення на ширинах від 1024 px; mobile rules і API states не змінювалися.

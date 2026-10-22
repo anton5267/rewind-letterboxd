@@ -8,6 +8,10 @@
 
 Наступний конкретний audit — окремі raw Profile variants Films/Lists/Reviews/Following/Watchlist/Likes і їхня відповідність доступним API-backed sections.
 
+### Виявлений контрактний gap — Admin reported/edit variants
+
+Raw frames `1389:3464`, `1343:3799`, `1319:5033`, `1317:4617`, `1315:4313`, `1342:4028`, `1390:3326`, `1319:5889`, `1342:3273`, `1342:3470` і `1343:4118` потребують report/complaint records, edit history, block/delete/resolved mutations. У `admin.api.ts` та backend немає відповідних endpoints/entities; наявні moderation hide/unhide і audit APIs не є сумісним контрактом. Цей UI gap залишено явно зафіксованим, без вигаданих кнопок, даних чи API.
+
 ## Останній Figma checkpoint — PublicProfile desktop
 
 - Raw frames `238:596`, `122:176` і `175:619` перевірені по descendants: desktop hero має 1440×1020, avatar 265×265, identity title 58 px, section headings 24 px, profile rail 1200×79, а poster grid — шість колонок 174×260 із 31 px gap. `PublicProfile.module.css` тепер має ці desktop rules від 1024 px; mobile Figma geometry, API-backed content, localization і focus behavior збережені.
