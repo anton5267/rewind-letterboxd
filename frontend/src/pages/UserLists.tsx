@@ -288,7 +288,11 @@ export default function UserLists() {
           <button type="button" className={styles.dangerButton} aria-busy={deleting} disabled={itemsBusy || deleting || saveBusy} onClick={() => void removeList()}>{deleting ? t("deletingList") : t("deleteList")}</button>
         </div>
       </form>}
-      <Link className={styles.browseFilms} to={path("/films")} aria-disabled={listControlsBusy || undefined} onClick={event => { if (listControlsBusy) event.preventDefault(); }}>{t("browseFilms")}</Link>
+      <Link className={styles.browseFilms} to={path("/films")} aria-label={t("addFilm")} aria-disabled={listControlsBusy || undefined} onClick={event => { if (listControlsBusy) event.preventDefault(); }}>
+        <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
+        <span className={styles.browseDesktop}>{t("browseFilms")}</span>
+        <span className={styles.browseMobile}>{t("addFilm")}</span>
+      </Link>
       {itemsLoading && <div className={styles.stateCard} role="status"><span className={styles.stateMark} aria-hidden="true">…</span><strong>{t("loading")}</strong></div>}
       {itemsLoadError && <div className={`${styles.stateCard} ${styles.stateError}`} role="alert"><strong>{t("loadItemsError")}</strong><RetryButton label={t("retry")} onClick={() => setItemsReload(value => value + 1)} /></div>}
       {!itemsLoading && !itemsLoadError && items.length === 0 && <div className={`${styles.emptyPreview} ${styles.selectedEmpty}`}><p className={styles.eyebrow}>{t("emptyListLabel")}</p><strong>{editorialText(selectedList.name, t("lists"))}</strong><p>{t("emptyList")}</p></div>}

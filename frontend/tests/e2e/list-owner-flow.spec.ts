@@ -40,6 +40,7 @@ test("owner creates and deletes a custom list", async ({ page, baseURL }) => {
     await listButton.click();
     await expect(page.getByText("Завантаження...", { exact: true })).toBeVisible();
     await expect(page.getByText("Тут поки немає фільмів. Додайте їх зі сторінки фільму.", { exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Додати фільм", exact: true })).toHaveAttribute("href", "/uk/films");
 
     const updatedListName = `${listName} updated`;
     await page.getByLabel("Назва списку").fill(updatedListName);
