@@ -704,6 +704,7 @@
   }
 
   .usersSection .detailHeader {
+    position: relative;
     justify-content: center;
     text-align: center;
   }

@@ -150,6 +150,8 @@ After the Docker web rebuild, `npm run verify:build` passed (218 modules) and `a
 
 Raw service frames confirmed the shared 1440×818 hero, 58 px title, 24 px lead, 1200 px content rail and 22/20 px editorial typography. `ServicePage` now uses route-specific localized sections for Help, Contact, Rules, Privacy, Film Data and Account Deletion, with no API or asset contract changes. After rebuilding Docker web, `service-pages-responsive.spec.ts` passed **3/3**, covering hero/nav, desktop section counts and rails, and UK/EN 393 px no-overflow.
 
+The same Docker pass exposed a fixed-header interception in the admin user detail Close action. Scoping the Figma-aligned absolute control to its detail header restored the keyboard focus-return contract; `editorial-accessibility.spec.ts --grep "admin user detail"` passed **1/1**.
+
 ## Збереження даних
 
 - Основні Docker volumes не видалялися; `down -v` не виконувався.
