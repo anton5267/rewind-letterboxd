@@ -24,7 +24,7 @@
 ## Актуальні перевірки
 
 - `npm run verify:build`: PASS, TypeScript + Vite, 218 modules.
-- Playwright: latest full local run **118 passed, 2 failures, 12 skips** across 132 scenarios. The two failures are isolated to the user's uncommitted `FollowActionsContext.tsx` change; `list-mobile-header.spec.ts` passed 12/12 and the transient EN-only case passed 6/6 on repeat. The remaining 12 skips are disposable admin fixture scenarios.
+- Playwright: latest full local run **118 passed, 2 failures, 12 skips** across 132 scenarios; `scripts/verify-admin-browser.ps1` then passed **12/12** with cleanup. The two standard-run failures are isolated to the user's uncommitted `FollowActionsContext.tsx` change; `list-mobile-header.spec.ts` passed 12/12 and the transient EN-only case passed 6/6 on repeat.
 - Backend: **87/87 passed**, failures/errors/skips 0, ізольована MySQL 8.4.
 - PASS: API, contracts, security, password reset, Redis cache, HTTP concurrency, load, ER schema, backup/restore, production template config, Caddy та Compose config.
 
@@ -38,6 +38,7 @@
 - Search/CI maintenance: commit `ea037f0`, [CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39560672726), 1m44s; runner pin/docs commit `0b22904`, [CI PASS без annotations](https://github.com/anton5267/rewind-letterboxd/actions/runs/39560950893), 1m36s.
 - Auth mobile cleanup: commit `42b8e3b`, [CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39700140275), 1m52s; backend, frontend build/typecheck і Caddy validation зелені.
 - Latest regression evidence: commit `5e449af`, [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39706799280); only release documentation changed, and unrelated local files remained unstaged.
+- Admin browser wrapper: `scripts/verify-admin-browser.ps1` passed 12/12 with a disposable fixture and cleanup.
 - Diploma artifacts і локальний `AGENTS.md` залишилися поза commits.
 
 ## Поза цією ціллю

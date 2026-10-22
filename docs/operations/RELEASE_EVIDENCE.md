@@ -7,7 +7,7 @@
 | Gate | Результат | Доказ / межа |
 | --- | --- | --- |
 | Frontend build | PASS | `npm run verify:build`: TypeScript без помилок, Vite 218 modules |
-| Full browser suite | **118 passed; 2 failures; 12 skips** | Latest 22.10.2026 run: 132 scenarios, 4.7 min. The two remaining failures are the Community retry cases caused by the user's uncommitted `FollowActionsContext` change, which converts failed relationship reads into `false` instead of exposing the tested Retry controls. No API timeout or list-header failure reproduced in this run. The 12 skips are the disposable admin fixture scenarios. |
+| Full browser suite | **118 passed; 2 failures; 12 skips** | Latest 22.10.2026 run: 132 scenarios, 4.7 min. The two remaining failures are the Community retry cases caused by the user's uncommitted `FollowActionsContext` change, which converts failed relationship reads into `false` instead of exposing the tested Retry controls. No API timeout or list-header failure reproduced in this run. The 12 skips are covered separately by the disposable admin wrapper below. |
 | Backend suite | **89 passed** | Latest 22.10.2026 host run used the running Docker MySQL on `127.0.0.1:3307`; failures/errors/skips 0. The earlier disposable release checkpoint remains 87/87. |
 | API smoke | PASS | OpenAPI 159 operations; auth, profiles, films, lists, reviews, comments, social, messages, notifications, newsletter і cleanup |
 | Contract smoke | PASS | Public/protected routes, privacy fields, role guards, CRUD і nullable responses |
@@ -19,7 +19,7 @@
 | Production template | PASS | Synthetic temporary env: HTTPS origin, strong placeholders, private DB/Redis/API, read-only API/web, loopback web port |
 | Caddy / Compose | PASS | Caddy valid; development Compose config valid; clean API/web image builds |
 | Local Docker runtime | PASS | `/actuator/health` 200, `/uk/community/reviewers` 200; API/web rebuilt, DB volume and `.env` preserved. Живий contract повернув `reviewCount`, `watchedCount`, `listCount` |
-| CI workflow maintenance | PASS | `ubuntu-24.04`, `checkout@v7`, `setup-java@v6`, `setup-node@v7`; latest documentation checkpoint `5e449af` passed GitHub CI run [39706799280](https://github.com/anton5267/rewind-letterboxd/actions/runs/39706799280) |
+| CI workflow maintenance | PASS | `ubuntu-24.04`, `checkout@v7`, `setup-java@v6`, `setup-node@v7`; latest documentation checkpoint `bf312e0` passed GitHub CI run [39707011594](https://github.com/anton5267/rewind-letterboxd/actions/runs/39707011594) |
 
 Перший повний browser run завершився 123/125. Він виявив реальні regressions у Lists: hero втратив очікувані UK/EN «Колекції фільмів / Film collections», а landing CSS приховав feed navigation через `display:none`. Після виправлення targeted run дав 7/7, повторний full run — 125/125.
 
@@ -50,6 +50,8 @@ Public Profile desktop `238:596` was reviewed directly in the Figma canvas. Its 
 Останній повний browser run після Public Lists follow-up завершився **118 passed, 2 failures і 12 skips**. Обидва failures — Community retry scenarios, які залежать від незакоміченої локальної зміни `frontend/src/context/FollowActionsContext.tsx`; у committed baseline ці стани мають показувати Retry. EN public-list information scenario, що одноразово впав у попередньому довгому запуску, повторно пройшов окремо 6/6 (включно з `--repeat-each=5`) і весь `list-mobile-header.spec.ts` пройшов 12/12.
 
 Backend host regression was rerun with the Compose MySQL credentials loaded only into the process environment. All 89 current tests passed with zero failures, errors, or skips; `.env`, schema and Docker volumes were not changed.
+
+The disposable admin browser wrapper was rerun after the latest frontend changes: `scripts/verify-admin-browser.ps1` completed **12/12 passed in 42.8s**, then removed its temporary ADMIN fixture. Combined with the standard run, 130 browser scenarios are green across the two isolated runs; the two remaining standard-run failures are the user's uncommitted Community context change described above.
 
 Public Lists follow-up fixed two concrete responsive/accessibility regressions: mobile tagged cards now clip the compact poster stack to the 138 px Figma rail, and desktop feed pages keep their route-level back/filter toolbar available. After rebuilding the Docker web image, `list-discovery-controls.spec.ts` passed 3/3, `public-guards.spec.ts` passed 6/6 (including the cross-locale tag → list → author → movie journey), the release viewport matrix passed 1/1, and the WCAG axe audit passed 1/1.
 
