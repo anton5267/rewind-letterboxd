@@ -47,6 +47,7 @@
 - Global Search Figma alignment: commit `cda3126`, [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39708297409); mobile slider trigger now focuses the native category select, targeted alignment 4/4.
 - Profile mobile hero/activity: commit `115bd45` adds Figma-aligned gear/more controls and the existing `/users/:id/activity` feed to own Profile; targeted `profile-alignment.spec.ts` 10/10 and `npm run verify:build` PASS. GitHub CI run `39710281853` is green.
 - User Lists mobile add-film alignment: commit `b2511f1` adds the localized search-style mobile control for frames `1480:9542`/`1480:9606`; build and `list-owner-flow.spec.ts` 2/2 PASS. [GitHub CI / verify](https://github.com/anton5267/rewind-letterboxd/actions/runs/39711299541) is green.
+- Public Lists catalog landing alignment: commit `2d40abc` removes the duplicate landing feed rail while preserving section-level feed links; `list-discovery-controls.spec.ts` 4/4 and `npm run verify:build` PASS. [GitHub CI / verify](https://github.com/anton5267/rewind-letterboxd/actions/runs/39719191200) is green.
 - Diploma artifacts і локальний `AGENTS.md` залишилися поза commits.
 
 ## Поза цією ціллю

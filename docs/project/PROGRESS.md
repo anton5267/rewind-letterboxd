@@ -57,6 +57,8 @@ Latest regression evidence commit `5e449af`: [GitHub CI PASS](https://github.com
 
 User Lists mobile add-film alignment commit `b2511f1`: [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39711299541). The change preserves the existing `/films` route and list API.
 
+Public Lists catalog landing alignment commit `2d40abc`: [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39719191200). The duplicate landing feed rail was removed while section-level feed links, API content and localization remained intact; `list-discovery-controls.spec.ts` passed 4/4.
+
 Admin wrapper rerun: `scripts/verify-admin-browser.ps1` passed 12/12 and cleaned its disposable fixture; no database volume or `.env` changes were made.
 
 Admin gate evidence commit `00f9f43`: [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39707346272).
