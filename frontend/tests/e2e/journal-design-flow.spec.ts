@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("journal renders the dark editorial feed with cover art", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.route("https://cdn.example.invalid/rewind-cover.jpg", async route => {
     await route.fulfill({
       status: 200,
@@ -45,7 +46,14 @@ test("journal renders the dark editorial feed with cover art", async ({ page }) 
   const feature = page.locator("article").first();
   const cover = feature.locator('a[href="/uk/journal/design-journal-fixture"]').first();
   await expect(cover).toHaveCSS("border-radius", "30px");
+  const intro = await page.locator('[class*="intro"]').boundingBox();
+  expect(intro?.x).toBe(0);
+  expect(intro?.width).toBe(1440);
+  expect(intro?.height).toBe(818);
   const desktopCover = await cover.boundingBox();
+  expect(desktopCover?.x).toBeCloseTo(120, 0);
+  expect(desktopCover?.y).toBeCloseTo(212, 0);
+  expect(desktopCover?.width).toBe(513);
   expect(desktopCover?.height).toBe(612);
 
   await page.setViewportSize({ width: 393, height: 852 });

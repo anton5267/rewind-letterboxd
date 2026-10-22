@@ -152,6 +152,10 @@ Raw service frames confirmed the shared 1440×818 hero, 58 px title, 24 px lead,
 
 The same Docker pass exposed a fixed-header interception in the admin user detail Close action. Scoping the Figma-aligned absolute control to its detail header restored the keyboard focus-return contract; `editorial-accessibility.spec.ts --grep "admin user detail"` passed **1/1**.
 
+### Journal feed desktop — 22.10.2026
+
+Raw Journal list frames confirmed the 1440×818 full-bleed stage and 513×612 feature cover at x=120/y=212. The desktop CSS now follows that geometry while retaining live API articles, archive/category controls, pagination, localization and the existing mobile composition. After rebuilding Docker web, `journal-design-flow.spec.ts` passed **2/2**, including the 393 px no-overflow check.
+
 ## Збереження даних
 
 - Основні Docker volumes не видалялися; `down -v` не виконувався.
