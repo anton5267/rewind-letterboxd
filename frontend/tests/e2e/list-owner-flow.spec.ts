@@ -49,6 +49,13 @@ test("owner creates and deletes a custom list", async ({ page, baseURL }) => {
     await page.getByLabel("Назва списку").fill(updatedListName);
     await page.getByRole("button", { name: "Зберегти", exact: true }).click();
     await expect(page.getByRole("button", { name: updatedListName, exact: true })).toBeVisible();
+    const addFilmLink = page.getByRole("link", { name: "Додати фільм", exact: true });
+    await expect(addFilmLink).toBeVisible();
+    await expect.poll(() => addFilmLink.evaluate(element => {
+      const description = document.getElementById("edit-list-description")?.closest("label");
+      const tags = document.getElementById("edit-list-tags")?.closest("label");
+      return Boolean(description && tags && (description.compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING) && (element.compareDocumentPosition(tags) & Node.DOCUMENT_POSITION_FOLLOWING));
+    })).toBe(true);
 
     page.once("dialog", dialog => dialog.accept());
     await page.getByRole("button", { name: "Видалити список" }).click();
