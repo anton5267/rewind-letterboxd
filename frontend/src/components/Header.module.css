@@ -321,6 +321,17 @@
   .mobilePublicProfile .menuToggle { display: none; }
 
   .mobilePublicProfile .mobileNav { pointer-events: auto; }
+
+  .header.mobileProfile {
+    --header-background: transparent;
+    box-shadow: none;
+    pointer-events: none;
+  }
+
+  .mobileProfile .logo,
+  .mobileProfile .menuToggle { display: none; }
+
+  .mobileProfile .mobileNav { pointer-events: auto; }
 }
 
 @media (max-width: 560px) {

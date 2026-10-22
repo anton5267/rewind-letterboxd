@@ -1327,3 +1327,74 @@
     background: #282828;
   }
 }
+
+/* Figma own profile phone `896:1838`: the identity artwork owns the top
+   canvas, while the shared mobile navigation remains fixed at the bottom. */
+@media (max-width: 720px) {
+  .page {
+    padding: 0 16px 32px;
+    background: #1f1f1f;
+  }
+
+  .pageTitle {
+    position: absolute;
+    z-index: 0;
+    top: 1px;
+    left: 16px;
+    margin: 0;
+    opacity: .01;
+    pointer-events: none;
+  }
+
+  .hero {
+    width: 100vw;
+    min-height: 438px;
+    box-sizing: border-box;
+    margin: 0 0 0 -16px;
+    padding: 190px 16px 38px;
+    border: 0;
+    border-radius: 0;
+    background:
+      linear-gradient(180deg, rgba(0, 0, 0, .12), rgba(0, 0, 0, .92)),
+      radial-gradient(ellipse at 50% 18%, #5b4331 0%, #211a18 44%, #101010 86%);
+    box-shadow: none;
+  }
+
+  .heroActions,
+  .heroEdit {
+    top: 48px;
+  }
+
+  .heroActions { right: 16px; }
+  .heroEdit { left: 16px; }
+
+  .heroCopy {
+    gap: 4px;
+    padding: 0;
+  }
+
+  .hero .eyebrow { display: none; }
+
+  .hero h2 {
+    max-width: 100%;
+    font-size: 26px;
+    line-height: 1.12;
+  }
+
+  .username { font-size: 11px; }
+  .email { font-size: 11px; }
+
+  .overviewSection {
+    position: relative;
+    z-index: 1;
+    margin-top: -38px !important;
+    padding-top: 0 !important;
+    background: transparent !important;
+  }
+
+  .profileNav {
+    position: relative;
+    z-index: 1;
+    margin-top: 20px;
+  }
+}

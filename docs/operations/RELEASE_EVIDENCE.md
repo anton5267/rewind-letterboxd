@@ -140,6 +140,10 @@ Raw own-profile frames `363:289`/`363:411` confirm a 1020 px identity stage, 265
 
 After the Docker web rebuild, `npm run verify:build` passed (218 modules) and `profile-alignment.spec.ts` passed **10/10** across UK/EN, retry/error, legacy poster, keyboard and no-overflow checks.
 
+### Own Profile mobile shell follow-up — 22.10.2026
+
+Raw frame `896:1838` was re-read from the local archive. The phone route now uses a full-bleed identity stage without the global logo/menu header; its 44×44 gear/more controls start at y=48 and the 120×120 fallback avatar is centered at y=190. The bottom navigation, live profile sections, edit/logout menu, localization and focus behavior remain unchanged. After rebuilding Docker web, `profile-alignment.spec.ts` passed **10/10** and `npm run verify:build` passed (218 modules). Separate Films/Lists/Reviews/Following/Watchlist/Likes variants remain the next raw-node audit.
+
 ### About desktop Figma follow-up — 22.10.2026
 
 Raw frame `1011:1915` confirms the About composition: 1440×818 full-bleed hero, 58 px title, 24 px intro, a 1200 px editorial rail and the first heading at y=713. `About.module.css` now uses that measured desktop overlap shell from 721 px; localized copy, TMDB attribution and mobile overflow behavior remain intact. The original photo fill is not fabricated without a local asset.

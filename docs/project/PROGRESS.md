@@ -1,5 +1,12 @@
 # Rewind — поточний стан
 
+## Останній Figma checkpoint — власний Profile mobile shell
+
+- Raw `896:1838` повторно підтверджено: mobile `/profile` має full-bleed identity hero без верхнього logo/menu header, 44×44 gear/more controls на y=48 і centered 120×120 avatar на y=190. Додано route-specific `mobileProfile` header state; bottom navigation, API data, localization, forms і focus behavior збережені.
+- `profile-alignment.spec.ts` розширено geometry assertions для 393 px; після `docker compose build web`/`up -d web` targeted suite пройшов **10/10**, `npm run verify:build` — PASS (218 modules).
+
+Наступний конкретний audit — окремі raw Profile variants Films/Lists/Reviews/Following/Watchlist/Likes і їхня відповідність доступним API-backed sections.
+
 ## Останній Figma checkpoint — PublicProfile desktop
 
 - Raw frames `238:596`, `122:176` і `175:619` перевірені по descendants: desktop hero має 1440×1020, avatar 265×265, identity title 58 px, section headings 24 px, profile rail 1200×79, а poster grid — шість колонок 174×260 із 31 px gap. `PublicProfile.module.css` тепер має ці desktop rules від 1024 px; mobile Figma geometry, API-backed content, localization і focus behavior збережені.

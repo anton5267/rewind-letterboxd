@@ -148,6 +148,15 @@ for (const lang of ["uk", "en"] as const) {
         await expect(hero.locator('[class*="avatarFallback"]')).toHaveCSS("width", "265px");
         await expect(page.locator('nav[class*="profileNav"]')).toHaveCSS("height", "79px");
       }
+      if (width === 393) {
+        const avatarBox = await hero.locator('[class*="avatarFallback"]').boundingBox();
+        const editBox = await hero.getByRole("button", { name: lang === "uk" ? "Дані профілю" : "Profile details", exact: true }).boundingBox();
+        const actionsBox = await hero.getByRole("button", { name: lang === "uk" ? "Дії профілю" : "Profile actions", exact: true }).boundingBox();
+        expect(avatarBox?.x).toBeCloseTo(136.5, 0);
+        expect(avatarBox).toMatchObject({ y: 190, width: 120, height: 120 });
+        expect(editBox).toMatchObject({ x: 16, y: 48, width: 44, height: 44 });
+        expect(actionsBox).toMatchObject({ x: 333, y: 48, width: 44, height: 44 });
+      }
       const overflow = await page.evaluate(() => ({
         amount: document.documentElement.scrollWidth - document.documentElement.clientWidth,
         elements: [...document.querySelectorAll("body *")].filter(element => {

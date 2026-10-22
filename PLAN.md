@@ -1,5 +1,12 @@
 # Rewind — план завершення
 
+### Поточний Figma checkpoint — власний Profile mobile shell
+
+- Raw frame `896:1838` підтверджує, що на телефоні власний профіль використовує contextual hero без верхнього logo/menu header: controls мають 44×44 px і починаються на y=48, а avatar — 120×120 px на y=190. `Header` тепер приховує лише desktop/mobile logo та menu для `/profile`, залишаючи bottom navigation доступною; `Profile.module.css` задає full-bleed identity stage, виміряні controls/avatar bounds і не змінює API-backed sections/forms.
+- `profile-alignment.spec.ts` тепер перевіряє ці bounds на 393 px разом із UK/EN, retry, legacy posters, focus і no-overflow: **10/10** після Docker web rebuild. `npm run verify:build` — PASS, 218 modules.
+
+Наступний блок: перевірити окремі Films/Lists/Reviews/Following/Watchlist/Likes raw variants і звірити їх із наявними API-backed Profile/PublicProfile sections, не додаючи вигаданих endpoint’ів.
+
 ### Поточний Figma checkpoint — PublicProfile desktop
 
 - Raw frames `238:596`, `122:176` і `175:619` уточнили desktop geometry: full-bleed hero 1440×1020, avatar 265×265, identity title 58 px, section headings 24 px, profile rail 1200×79 і six-column poster cards 174×260 із 31 px gap. Runtime `PublicProfile.module.css` тепер використовує ці виміряні значення на ширинах від 1024 px; mobile rules і API states не змінювалися.
