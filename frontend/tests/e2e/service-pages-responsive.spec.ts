@@ -57,6 +57,10 @@ test("admin desktop hero follows the Figma dashboard frame", async ({ page }) =>
     type: "REVIEW", id: 900021, parentId: null, movieId: 77, subject: "Review fixture", userId: 900011,
     username: "profile-fixture", content: "Moderation fixture.", createdAt: "2026-01-01T00:00:00Z",
   }], totalPages: 1, totalElements: 1 } }));
+  await page.route("**/api/admin/audit-logs**", route => route.fulfill({ json: { content: [{
+    id: 900024, adminId: 900010, action: "SITE_SETTING_UPDATED", targetType: "SITE_SETTING", targetId: null,
+    metadata: null, createdAt: "2026-01-01T00:00:00Z",
+  }], totalPages: 1, totalElements: 1 } }));
   await page.goto("/uk/admin");
   const hero = page.locator('main > [class*="hero"]');
   await expect(hero).toHaveCSS("min-height", "1020px");
@@ -131,4 +135,12 @@ test("admin desktop hero follows the Figma dashboard frame", async ({ page }) =>
   expect(moderationBox?.x).toBeCloseTo(120, 0);
   expect(moderationBox?.width).toBe(1200);
   expect(moderationBox?.height).toBeGreaterThanOrEqual(673);
+  const audit = page.getByRole("region", { name: "Журнал дій" });
+  await expect(audit).toBeVisible();
+  const auditRow = audit.locator('ul[class*="list"] > li');
+  await expect(auditRow).toHaveCount(1);
+  const auditBox = await auditRow.boundingBox();
+  expect(auditBox?.x).toBeCloseTo(120, 0);
+  expect(auditBox?.width).toBe(1200);
+  expect(auditBox?.height).toBeGreaterThanOrEqual(348);
 });

@@ -34,7 +34,7 @@ export default function AdminAuditLogs() {
     return () => { current = false; };
   }, [page, revision]);
 
-  return <section className={styles.section} aria-label={t("auditLogs")} aria-busy={loading}>
+  return <section className={`${styles.section} ${styles.auditSection}`} aria-label={t("auditLogs")} aria-busy={loading}>
     <h2 className={styles.title}>{t("auditLogs")}</h2>
     {loading && <p className={styles.feedback} role="status">{t("loading")}</p>}
     {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => setRevision(value => value + 1)} />}

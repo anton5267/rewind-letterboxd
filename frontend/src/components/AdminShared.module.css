@@ -137,6 +137,33 @@
   gap: 18px;
 }
 
+@media (min-width: 721px) {
+  /* Figma Moderator Logs frame `1404:3804` uses 1200 px translucent audit
+     cards with a 38 px radius, 348 px lead state and 293 px follow-up rows. */
+  .auditSection > .title {
+    margin-bottom: 38px;
+    text-align: center;
+  }
+
+  .auditSection > .list {
+    gap: 84px;
+  }
+
+  .auditSection > .list .row {
+    min-height: 293px;
+    box-sizing: border-box;
+    padding: 36px 23px;
+    border: 0;
+    border-radius: 38px;
+    background: rgba(255, 255, 255, .05);
+    backdrop-filter: blur(4px);
+  }
+
+  .auditSection > .list .row:first-child {
+    min-height: 348px;
+  }
+}
+
 .listIdentity,
 .listMeta,
 .listStatus {
