@@ -283,6 +283,17 @@
   .mobileListDetail .menuToggle { display: none; }
 
   .mobileListDetail .mobileNav { pointer-events: auto; }
+
+  .header.mobilePerson {
+    --header-background: transparent;
+    box-shadow: none;
+    pointer-events: none;
+  }
+
+  .mobilePerson .logo,
+  .mobilePerson .menuToggle { display: none; }
+
+  .mobilePerson .mobileNav { pointer-events: auto; }
 }
 
 @media (max-width: 560px) {

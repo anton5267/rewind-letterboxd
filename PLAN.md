@@ -12,6 +12,7 @@
 - Global Search на телефонах має шість локалізованих швидких переходів із frame `1480:8432`; list cards і tag wrapping звірені з `1480:8804` та `1480:8767`. Tag search `1480:6898`/`1480:8527` додатково звірений: mobile title/count order and poster rail now match the frame; desktop asset parity remains open until Figma quota returns.
 - Movie Details desktop frames `39:2`/`61:244` тепер підтверджені inventory та canvas; застосовано full-bleed dark hero, poster/content geometry, Rating/Cast sections і dark similar/review rails. Mobile contract лишився окремо перевіреним.
 - Person/Actor desktop `545:676`/`551:705` підтверджений inventory та canvas; застосовано centered identity hero, 265 px avatar і 1200 px six-column filmography rail. Separate produced feed потребує API, тому не вигаданий.
+- Person/Actor phone `721:1085` підтверджений inventory та browser preview; застосовано 120 px avatar, компактний back/filter toolbar, 465 px hero і чотириколонкову poster grid. Sort/genre filters лишилися доступними через mobile control; `producer-flow.spec.ts` 2/2.
 - GitHub Actions переведені на актуальні Node 24 based majors: `checkout@v7`, `setup-java@v6`, `setup-node@v7`; runner зафіксовано на `ubuntu-24.04`, щоб прибрати migration annotation для `ubuntu-latest`.
 - `verify-admin-browser.ps1` читає Compose project label із `docker inspect` JSON і працює у Windows PowerShell 5.1.
 - Локальні `api` і `web` images перебудовані; основний DB volume та `.env` збережені.

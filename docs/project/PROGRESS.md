@@ -21,6 +21,7 @@
 - Tag search mobile `1480:8527` повторно звірений у Figma: заголовок і кількість тепер стоять над poster rail, картка має 16 px radius і 138 px poster area; targeted list discovery tests 3/3 passed.
 - Movie Details desktop `39:2`/`61:244` знайдені в локальному Figma inventory й повторно відкриті в canvas: застосовано dark full-bleed hero, 811 px backdrop, 275 px poster, desktop Rating/Cast rails і dark six-column content rail; targeted Movie Details tests 5/5 passed.
 - Person desktop `545:676` перевірений у canvas та inventory: hero став full-bleed із 265 px centered avatar, а filmography отримала 1200 px six-column rail; API-backed single feed збережено без вигаданого Films Produced.
+- Person phone `721:1085` звірений із локальним inventory та browser preview: додано 120 px centered avatar, compact back/filter toolbar, 465 px identity hero і four-column poster grid; sort/genre controls відкриваються через mobile Filters. `producer-flow.spec.ts` пройшов 2/2.
 - CI використовує `ubuntu-24.04`, `actions/checkout@v7`, `actions/setup-java@v6` і `actions/setup-node@v7`, прибираючи Node 20/deprecated action та runner migration warnings.
 - Admin browser wrapper більше не залежить від ламкого Docker Go-template quoting у Windows PowerShell 5.1.
 

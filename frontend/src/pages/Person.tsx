@@ -24,6 +24,7 @@ export default function Person() {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   useEffect(() => {
     let current = true;
     if (!validPersonType || !validPersonId) {
@@ -69,7 +70,7 @@ export default function Person() {
       <div className={styles.mobileToolbar}>
         <Link className={styles.mobileBack} to={path("/search")} aria-label={t("search")}>←</Link>
         <span>{t("filmography")}</span>
-        <Link className={styles.mobileSearch} to={path("/search")} aria-label={t("search")}>⌕</Link>
+        <button className={styles.mobileSearch} type="button" aria-label={t("filters")} aria-expanded={filtersOpen} onClick={() => setFiltersOpen(value => !value)}><i className="fa-solid fa-sliders" aria-hidden="true" /></button>
       </div>
       <div className={styles.heroIdentity}>
         <ResilientImage className={styles.avatar} src={person.photoUrl} alt={personName} fallback={<div className={styles.avatarFallback} aria-hidden="true">{personName.slice(0, 1).toUpperCase()}</div>} />
@@ -85,7 +86,7 @@ export default function Person() {
       {loading && <p className={styles.status} role="status">{t("loading")}</p>}
       {error && <RetryNotice className={styles.error} message={t("loadPersonError")} retryLabel={t("retry")} onRetry={() => setAttempt(value => value + 1)} />}
       {genreError && <RetryNotice className={styles.error} message={t("loadGenresError")} retryLabel={t("retry")} onRetry={() => setGenreRetry(value => value + 1)} />}
-      <div className={styles.controls}>
+      <div className={`${styles.controls} ${filtersOpen ? styles.controlsOpen : ""}`}>
         <label className={styles.field}>{t("sortBy")} <select value={sort} onChange={event => setSort(event.target.value)}><option value="newest">{t("sortNewest")}</option><option value="oldest">{t("sortOldest")}</option><option value="rating">{t("sortBestRated")}</option><option value="title">{t("sortTitle")}</option></select></label>
         <label className={styles.field}>{t("genre")} <select value={genreId} disabled={genresLoading || genreError} onChange={event => setGenreId(event.target.value)}><option value="">{t("allGenres")}</option>{genres.map(genre => <option key={genre.id} value={genre.id}>{localizeGenreName(genre.name, lang)}</option>)}</select></label>
       </div>
