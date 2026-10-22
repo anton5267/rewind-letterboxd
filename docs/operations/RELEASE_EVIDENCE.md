@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | Frontend build | PASS | `npm run verify:build`: TypeScript без помилок, Vite 218 modules |
 | Full browser suite | **115 passed; 5 failures; 12 skips** | Latest 22.10.2026 run: 132 scenarios, 6.2 min. The five failures are tracked below: two community retry cases use the user's uncommitted `FollowActionsContext` change, two API-backed flows timed out against the long-running local stack, and the Movie Details contrast defect is fixed and its targeted axe run is now 1/1. The earlier 127-scenario checkpoint remains historical; disposable admin run was 12/12. |
-| Backend suite | **87 tests** | failures/errors/skips 0, 2:24 min; окремий disposable MySQL 8.4 на `127.0.0.1:3308`, контейнер видалено |
+| Backend suite | **89 passed** | Latest 22.10.2026 host run used the running Docker MySQL on `127.0.0.1:3307`; failures/errors/skips 0. The earlier disposable release checkpoint remains 87/87. |
 | API smoke | PASS | OpenAPI 159 operations; auth, profiles, films, lists, reviews, comments, social, messages, notifications, newsletter і cleanup |
 | Contract smoke | PASS | Public/protected routes, privacy fields, role guards, CRUD і nullable responses |
 | Security smoke | PASS | CSRF, guest/admin guards, hostile query payloads, metrics protection |
@@ -49,6 +49,8 @@ Public Profile desktop `238:596` was reviewed directly in the Figma canvas. Its 
 
 Останній повний browser run після Search checkpoint зафіксував 115 passed, 5 failures і 12 skips. Контраст Movie Details виправлено в `MovieDetails.module.css`; окремий WCAG axe сценарій після rebuild Docker пройшов 1/1. Повторний full run залишився потрібним після ізоляції локальної незакоміченої зміни `FollowActionsContext.tsx` і стабілізації API flows.
 
+Backend host regression was rerun with the Compose MySQL credentials loaded only into the process environment. All 89 current tests passed with zero failures, errors, or skips; `.env`, schema and Docker volumes were not changed.
+
 Movie Details desktop `39:2`/`61:244` додатково перевірені через local Figma inventory і canvas. Реалізація тепер має full-bleed dark hero, 811 px backdrop, 275 px poster, desktop Rating/Cast rails і dark similar/review sections; `movie-mobile-alignment.spec.ts` та responsive suite пройшли 5/5.
 
 Person/Actor desktop `545:676` і phone `721:1085` перевірені через local inventory та browser preview. Реалізація має full-bleed identity hero, 265 px desktop avatar, 120 px mobile avatar, compact mobile back/filter toolbar і 1200 px desktop або чотириколонкову mobile filmography grid; producer-flow suite пройшов 2/2 разом із API-backed navigation та mobile filter toggle.
@@ -80,6 +82,7 @@ Figma 404 frame `361:778` реалізовано як локалізований
 - Release documentation commit: `f48713a`.
 - [`CI / verify (push)` run 39557098972](https://github.com/anton5267/rewind-letterboxd/actions/runs/39557098972): PASS, 1m53s. Backend tests, frontend build/typecheck і Caddy validation зелені.
 - Search/CI maintenance commit: `ea037f0`; [`CI / verify (push)` run 39560672726](https://github.com/anton5267/rewind-letterboxd/actions/runs/39560672726): PASS, 1m44s. Runner pin/docs commit `0b22904`; [run 39560950893](https://github.com/anton5267/rewind-letterboxd/actions/runs/39560950893): PASS, 1m36s, без annotations. Нові action majors та `ubuntu-24.04` виконані успішно.
+- Latest PublicProfile overflow fix commit `4e3eada`: [CI / verify (push) run 39703800234](https://github.com/anton5267/rewind-letterboxd/actions/runs/39703800234) PASS.
 - Історичний checkpoint перед поточним UI-проходом: [GitHub CI для `f0df409`](https://github.com/anton5267/rewind-letterboxd/actions/runs/39485802412).
 
 ## Збереження даних
