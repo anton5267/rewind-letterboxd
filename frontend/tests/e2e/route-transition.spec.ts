@@ -24,6 +24,8 @@ async function fixture(page: Page, gate?: ReturnType<typeof deferred>, movieErro
     if (request.method() !== "GET") { unexpectedWrites.push(`${request.method()} ${pathname}`); return route.abort(); }
     if (pathname === "/api/users/me") return route.fulfill({ status: 401, json: {} });
     if (pathname === "/api/genres") return route.fulfill({ json: [{ id: 1, name: "Drama" }] });
+    if (pathname === "/api/journal/articles/archive") return route.fulfill({ json: [] });
+    if (pathname === "/api/journal/articles") return route.fulfill({ json: { content: [], totalPages: 0, totalElements: 0 } });
     if (pathname === "/api/movies/search") return route.fulfill({ json: { content: movies, number: Number(url.searchParams.get("page") ?? 0), size: 12, totalElements: 36, totalPages: 3 } });
     const details = pathname.match(/^\/api\/movies\/(\d+)\/details$/);
     if (details) {
@@ -175,8 +177,8 @@ for (const delayed of [false, true]) {
 test("mobile menu Escape restores its trigger while screen navigation settles on the new heading", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 700 });
   const writes = await fixture(page);
-  await page.goto("/en/films");
-  await ready(page, "#films-page-title");
+  await page.goto("/en/journal");
+  await ready(page, "#journal-page-title");
   const menu = page.getByRole("banner").getByRole("button", { name: "Menu", exact: true });
   await menu.click();
   await page.keyboard.press("Escape");
