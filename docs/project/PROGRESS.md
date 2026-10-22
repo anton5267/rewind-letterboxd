@@ -48,6 +48,8 @@ Search/CI maintenance commit `ea037f0`: [GitHub CI PASS](https://github.com/anto
 
 Auth mobile footer cleanup commit `42b8e3b`: [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39700140275), 1m52s. Backend tests, frontend build/typecheck і Caddy validation зелені.
 
+Latest regression evidence commit `5e449af`: [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39706799280). The push contains documentation only; no unrelated local files were staged.
+
 Перший full browser run виявив два дефекти Lists: втрачений локалізований hero text і приховану feed navigation. Після виправлення targeted run дав 7/7, повторний full run — 125/125.
 
 Наступний Search run додав 2 двомовні сценарії. Targeted Global Search дав 4/4; повний standard run — 115 passed із 12 очікуваними admin skips, окремий wrapper — 12/12, разом усі 127 унікальних сценаріїв без skips. Перший запуск wrapper виявив quoting-дефект до створення fixture; після JSON fix сценарії пройшли, fixture видалено.

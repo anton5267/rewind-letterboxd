@@ -37,6 +37,7 @@
 - [GitHub CI / verify для `f48713a`](https://github.com/anton5267/rewind-letterboxd/actions/runs/39557098972): PASS, 1m53s.
 - Search/CI maintenance: commit `ea037f0`, [CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39560672726), 1m44s; runner pin/docs commit `0b22904`, [CI PASS без annotations](https://github.com/anton5267/rewind-letterboxd/actions/runs/39560950893), 1m36s.
 - Auth mobile cleanup: commit `42b8e3b`, [CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39700140275), 1m52s; backend, frontend build/typecheck і Caddy validation зелені.
+- Latest regression evidence: commit `5e449af`, [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39706799280); only release documentation changed, and unrelated local files remained unstaged.
 - Diploma artifacts і локальний `AGENTS.md` залишилися поза commits.
 
 ## Поза цією ціллю
