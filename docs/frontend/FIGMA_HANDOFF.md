@@ -177,3 +177,7 @@ Raw frame `1480:6991` confirms a 1440 px desktop canvas with a 1200 px content r
 ### Global Search desktop empty-state follow-up — 22.10.2026
 
 Raw frame `1480:5809` places the no-match frame at x=450/y=377 with 540×166 bounds. The desktop `noMatches` shell now follows that centered geometry; live localized empty copy, retry/error separation, Back to home navigation, and mobile behavior remain unchanged. The dedicated desktop suite covers both all-results and no-match variants.
+
+### Global Search desktop lists-tab follow-up — 22.10.2026
+
+Raw frame `1480:7490` defines the lists result variant: a 1200 px rail, 339 px cards at y=377/y=754, 446×260 poster preview at x=154/y=421, and 66 px preview-to-copy gap. `GlobalSearch.module.css` applies this desktop geometry to live list results; no API, keyboard, localization or mobile contract changed. Targeted coverage is in `global-search-desktop-figma.spec.ts`.

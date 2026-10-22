@@ -223,3 +223,10 @@ Push `d703d63` passed GitHub `CI / verify (push)`. The local frontend suite comp
 - Implemented: centered 540×166 no-match shell at x=450/y=377 under the matches heading.
 - Verification: `npx playwright test tests/e2e/global-search-desktop-figma.spec.ts` PASS (**2/2**) after Docker web rebuild.
 - Contract: localized empty copy, Back to home link, keyboard semantics, API error/retry behavior, and mobile layout remain unchanged.
+
+### Global Search desktop lists-tab Figma check — 22.10.2026
+
+- Raw source: local archive frame `1480:7490`.
+- Implemented: 1200×339 list cards at y=377/y=754, 446×260 five-poster previews at x=154/y=421, 38 px card rhythm and 20 px card radius.
+- Verification: `npm run verify:build` PASS (218 modules); combined Global Search desktop/alignment tests PASS (**7/7**) after Docker web rebuild.
+- Contract: live list search data, owner/count/description content, keyboard category tabs, localization and mobile layout remain unchanged.

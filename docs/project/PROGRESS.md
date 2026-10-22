@@ -171,3 +171,7 @@ Raw frame `1480:6991` was checked from the local archive: the desktop all-result
 ### Global Search desktop empty-state follow-up — 22.10.2026
 
 Raw frame `1480:5809` confirms a centered 540×166 no-match card at x=450/y=377 below the shared matches heading. The desktop empty state now uses that measured shell without changing localized copy, Back to home navigation, keyboard behavior, or mobile rules. The expanded `global-search-desktop-figma.spec.ts` passed **2/2** after Docker web rebuild.
+
+### Global Search desktop lists-tab follow-up — 22.10.2026
+
+Raw frame `1480:7490` was checked: two 1200×339 list cards begin at y=377/y=754, with 446×260 five-poster previews at x=154/y=421. Desktop list search cards now follow this measured shell and retain live list preview, owner, count and description data. Keyboard tabs, localized links and mobile behavior remain unchanged. The combined desktop/alignment suite passed **7/7** and `npm run verify:build` passed (218 modules).

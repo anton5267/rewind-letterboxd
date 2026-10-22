@@ -129,6 +129,11 @@
   .reviewCard { height: 315px; min-height: 315px; box-sizing: border-box; overflow: hidden; grid-template-columns: 175px minmax(0, 1fr); gap: 40px; padding: 31px 26px 22px; }
   .reviewPoster { aspect-ratio: 175 / 262; }
   .noMatches { width: 540px; min-height: 166px; height: 166px; box-sizing: border-box; margin: 0 auto; }
+  .listGrid { gap: 38px; }
+  .listCard { height: 339px; box-sizing: border-box; grid-template-columns: 446px minmax(0, 1fr); gap: 66px; padding: 44px 34px 35px; border: 0; border-radius: 20px; background: #282828; }
+  .listPreview { width: 446px; min-height: 260px; height: 260px; aspect-ratio: auto; }
+  .listSummary { padding-top: 12px; }
+  .listCard small { -webkit-line-clamp: 6; line-height: 24px; }
 }
 
 @media (max-width: 560px) {
