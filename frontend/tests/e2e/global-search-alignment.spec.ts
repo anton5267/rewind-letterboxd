@@ -65,6 +65,15 @@ for (const locale of ["uk", "en"] as const) {
     const tagRows = await tags.evaluateAll(items => new Set(items.map(item => Math.round(item.getBoundingClientRect().top))).size);
     expect(tagRows).toBeGreaterThan(1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+
+    await page.getByRole("combobox", { name: locale === "uk" ? "Показати результати" : "Show results for" }).selectOption("journal");
+    const article = main.locator("#journal a").first();
+    await expect(article).toBeVisible();
+    const articleCover = article.locator("img, [class*='articleCoverFallback']").first();
+    const articleCoverBox = await articleCover.boundingBox();
+    expect(articleCoverBox?.width).toBeCloseTo(361, 0);
+    expect(articleCoverBox?.height).toBeCloseTo(149, 0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
   });
 }
 

@@ -61,7 +61,7 @@
 .userCard strong, .userCard small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .userCard small { margin-top: 3px; color: var(--rewind-muted); }
 .listGrid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-.articleGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.articleGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
 .listCard, .articleCard { display: grid; grid-template-columns: minmax(220px, .34fr) minmax(0, 1fr); gap: 24px; min-width: 0; border: 1px solid var(--rewind-line); padding: 18px; background: #292929; color: #fff; text-decoration: none; }
 .listCard > div:last-child, .articleCard > div:last-child { min-width: 0; }
 .listSummary { grid-column: 2; grid-row: 1; min-width: 0; }
