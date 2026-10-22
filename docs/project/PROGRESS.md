@@ -15,6 +15,7 @@
 - Journal зберігає API-backed feed/archive/article/audio/newsletter. У mobile article прибрано декоративний control без дії. List 4 desktop `1494:5387` повторно звірено через Figma screenshot/context: compact hero та editorial 3-column rows застосовано до реальних статей без заміни їх Figma fixtures.
 - Login/Register/Forgot/Reset використовують спільну desktop/mobile Figma-композицію з локальними assets.
 - Help, Contact, Rules, Privacy, Film Data, Account Deletion та About отримали структуровані responsive layouts.
+- Service desktop `1062:1993` повторно звірений через Figma screenshot/raw geometry: hero збільшено до 818 px, title/lead центровано, detail cards переведено у широкі alternating editorial rows; `service-pages-responsive.spec.ts` пройшов 1/1 для всіх шести service routes.
 - Admin dashboard отримав Figma hero/workspace/metrics, зберіг усі users/movies/reviews/comments/lists/moderation/activity/audit/settings actions.
 - Lists landing повернув видиму feed navigation і точний UK/EN зміст після regression failure; links залишаються клавіатурно доступними.
 - Global Search отримав mobile shortcuts із шістьма реальними routes, а list/tag results — Figma-aligned poster stack і перенесення тегів без horizontal overflow.

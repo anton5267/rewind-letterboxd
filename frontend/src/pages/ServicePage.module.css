@@ -63,3 +63,71 @@
   .detailCard { min-height: 150px; }
   .detailCard h3 { margin-top: 38px; }
 }
+
+/* Figma service frames (`1062:1993`, `1122:2497`, `1164:2679`) use a
+   full-bleed editorial hero followed by wide alternating information rows. */
+@media (min-width: 721px) {
+  .page {
+    padding: 0 0 80px;
+    background: #1f1f1f;
+  }
+
+  .hero {
+    position: relative;
+    display: block;
+    min-height: 818px;
+    box-sizing: border-box;
+    padding: 80px 24px 96px;
+    background:
+      linear-gradient(180deg, rgba(17, 17, 17, .12), #1f1f1f 92%),
+      radial-gradient(circle at 30% 8%, rgba(39, 96, 107, .68), transparent 45%),
+      radial-gradient(circle at 70% 12%, rgba(171, 143, 78, .48), transparent 42%),
+      #111;
+  }
+
+  .serviceNav {
+    position: absolute;
+    top: 280px;
+    left: max(24px, calc((100% - 1200px) / 2));
+    width: 160px;
+  }
+
+  .hero > div:last-child {
+    max-width: 650px;
+    margin: 168px auto 0;
+    text-align: center;
+  }
+
+  .eyebrow { color: #d5c27e; }
+  .title { font-size: 64px; }
+  .lead { max-width: 547px; margin-inline: auto; color: #d8d5d0; }
+
+  .content {
+    width: min(1200px, calc(100% - 48px));
+    padding-top: 64px;
+  }
+
+  .content h2 { margin-bottom: 28px; }
+
+  .detailGrid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .detailCard {
+    display: grid;
+    min-height: 220px;
+    grid-template-columns: minmax(220px, .42fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 64px;
+    padding: 42px 0;
+    border-width: 1px 0 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .detailCard:nth-child(even) { grid-template-columns: minmax(0, 1fr) minmax(220px, .42fr); }
+  .detailCard:nth-child(even) h3 { grid-column: 1; grid-row: 1; }
+  .detailCard:nth-child(even) span { grid-column: 2; grid-row: 1; }
+  .detailCard h3 { margin: 0; font-size: 28px; line-height: 1.25; }
+}

@@ -6,6 +6,7 @@
 
 - Figma Design copy `BDO9GO1oscOeUTcu4VXVKA` доступна через plugin; для реалізації використані metadata, context, screenshots і assets конкретних nodes.
 - Доведені Journal article, desktop/mobile Auth, Service/About, Admin dashboard і desktop/mobile PublicProfile structure. Декоративний `⋯` у JournalArticle прибрано.
+- Service desktop `1062:1993` повторно звірений: full-bleed 818 px hero, centered title/lead і alternating information rows застосовані спільно до Help, Contact, Rules, Privacy, Film Data та Account Deletion; responsive route suite 1/1.
 - Auth artwork збережено локально в `frontend/src/assets/figma/`; тимчасових Figma URL у runtime-коді немає.
 - Home/Search, Lists, Movie, Review, Profile, Community, Messages і Notifications зберігають реальні API, UK/EN, loading/error/empty/retry, клавіатуру й focus management.
 - Lists landing знову має доступну feed navigation і локалізований hero після повної регресії.

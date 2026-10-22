@@ -93,7 +93,7 @@ FigJam — джерело аналізу, архітектури, персон �
 | Mobile navigation | Reference `1480:9249` | Header | Home/Search/Add/Journal/Profile, menu/focus/active route |
 | Journal article | `844:1547` | `/journal/:slug` → JournalArticle | Desktop context/screenshot звірено; API content/audio/error/retry збережені, mobile decorative `⋯` прибрано |
 | Auth desktop/mobile | `605:2173–2176`, `911:1596`, `915:1598`, `922:1788`, `944:1582`, `944:1828`, `944:1887` | Login/Register/Forgot/Reset | Shared responsive composition, локальні artwork assets, UK/EN і password/focus contracts |
-| Service/About | `1011:1915`, `1062:1993–1176:2515` | About, Help, Contact, Rules, Privacy, Film Data, Account Deletion | About/Help concrete context перевірено; спільний responsive contract застосовано до всіх service routes |
+| Service/About | `1011:1915`, `1062:1993–1176:2515` | About, Help, Contact, Rules, Privacy, Film Data, Account Deletion | Help `1062:1993` screenshot/raw geometry тепер відображена як 818 px full-bleed hero з centered title/lead і wide alternating information rows; той самий responsive contract застосовано до всіх service routes |
 | Admin dashboard і sections | `1178:2466–1404:4076` | `/admin` → AdminDashboard + admin components | Dashboard context перевірено; усі API-backed admin flows пройшли browser regression |
 | Messages / Notifications та інші variants | Інвентаризовані в page metadata | Відповідні наявні routes | Поведінка/responsive/accessibility пройшли regression; окрему pixel parity для кожного top-level frame не заявлено |
 
