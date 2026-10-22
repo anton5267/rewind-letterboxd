@@ -58,6 +58,7 @@ Person/Actor desktop `545:676` і phone `721:1085` перевірені чере
 - Design copy: `BDO9GO1oscOeUTcu4VXVKA`.
 - У цьому проході concrete context/screenshots додатково використані для Popular Reviewers desktop/phone `1480:5486`/`1480:7698`; попередній checkpoint охопив Search shortcuts, Lists, Journal article, Auth desktop/mobile, Help, About, Admin dashboard і Public Profile phone.
 - Service desktop `1062:1993` повторно перевірений у Figma canvas: Help-style full-bleed 818 px hero, centered title/lead і alternating detail rows тепер спільні для шести service routes. `service-pages-responsive.spec.ts` пройшов 1/1.
+- Admin desktop `1178:2466`/`1404:4076` повторно перевірений через local raw inventory: hero/workspace geometry має 1020 px і 272 px avatar, а admin API tables/settings залишилися без контрактних змін. Geometry check пройшов 1/1.
 - Auth raster assets збережені локально; runtime не містить тимчасових Figma asset URLs.
 - Повний browser suite перевірив UK/EN, 320/393/600/720/768/1440 responsive cases, keyboard/focus, loading/error/empty/retry, admin fixture і poster compatibility.
 

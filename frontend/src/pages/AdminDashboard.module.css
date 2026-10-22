@@ -170,3 +170,16 @@
     flex-basis: auto;
   }
 }
+
+/* Figma dashboard frames `1178:2466` and `1404:4076` use a 1020 px
+   identity/workspace hero before the admin tables and settings begin. */
+@media (min-width: 721px) {
+  .hero {
+    min-height: 1020px;
+  }
+
+  .avatar {
+    width: 272px;
+    height: 272px;
+  }
+}

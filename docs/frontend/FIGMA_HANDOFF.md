@@ -33,7 +33,7 @@ Auth mobile Home `1327:3210` додатково експортовано як PN
 - Journal article `844:1547`: звірено desktop composition; mobile decorative `⋯` прибрано, бо дії та API для нього немає.
 - Auth: desktop Login `605:2175` і mobile Login `944:1582` перевірені окремими screenshots/context; спільний layout застосований також до Register/Forgot/Reset nodes `605:2173–2176`, `911:1596`, `915:1598`, `922:1788`, `944:1828`, `944:1887`. Artwork завантажено як `frontend/src/assets/figma/auth-desktop.png` і `auth-mobile.png`.
 - Service/About: Help `1062:1993` і About `1011:1915` використані для hero, navigation і structured content; ті самі правила застосовані до Contact, Rules, Privacy, Film Data та Account Deletion.
-- Admin dashboard `1178:2466`: hero/avatar/workspace/metrics перенесені поверх наявних API-backed admin sections. Поведінкові users/movies/reviews/comments/lists/moderation/activity/audit/settings сценарії пройшли в повному browser suite.
+- Admin dashboard `1178:2466`: desktop identity/workspace hero now follows the 1020 px Figma frame with 272 px avatar, layered over the existing API-backed admin sections. Поведінкові users/movies/reviews/comments/lists/moderation/activity/audit/settings сценарії залишилися без контрактних змін.
 - Public Profile phone `825:1378`: повторна перевірка на 320/393/768/1440 підтвердила 120 px avatar, перенос довгого імені, focus і відсутність horizontal overflow.
 - Global Search phone: `1480:8432`, `1480:8804` і `1480:8767` отримані через plugin із screenshots/context. Реалізація має шість справжніх shortcut routes, 361 px list cards із п’ятьма overlapping posters та багаторядкові tag pills; перевірено при 393 px у UK/EN без overflow.
 
@@ -94,7 +94,7 @@ FigJam — джерело аналізу, архітектури, персон �
 | Journal article | `844:1547` | `/journal/:slug` → JournalArticle | Desktop context/screenshot звірено; API content/audio/error/retry збережені, mobile decorative `⋯` прибрано |
 | Auth desktop/mobile | `605:2173–2176`, `911:1596`, `915:1598`, `922:1788`, `944:1582`, `944:1828`, `944:1887` | Login/Register/Forgot/Reset | Shared responsive composition, локальні artwork assets, UK/EN і password/focus contracts |
 | Service/About | `1011:1915`, `1062:1993–1176:2515` | About, Help, Contact, Rules, Privacy, Film Data, Account Deletion | Help `1062:1993` screenshot/raw geometry тепер відображена як 818 px full-bleed hero з centered title/lead і wide alternating information rows; той самий responsive contract застосовано до всіх service routes |
-| Admin dashboard і sections | `1178:2466–1404:4076` | `/admin` → AdminDashboard + admin components | Dashboard context перевірено; усі API-backed admin flows пройшли browser regression |
+| Admin dashboard і sections | `1178:2466–1404:4076` | `/admin` → AdminDashboard + admin components | Desktop hero/workspace має 1020 px Figma geometry і 272 px avatar; усі API-backed admin flows збережені |
 | Messages / Notifications та інші variants | Інвентаризовані в page metadata | Відповідні наявні routes | Поведінка/responsive/accessibility пройшли regression; окрему pixel parity для кожного top-level frame не заявлено |
 
 Спостережені references здебільшого мають dark canvas `#1f1f1f`, desktop 1440 px і mobile 393 px. Білий outer frame в inspector не означає білий app body. Повну палітру, typography, spacing і assets не виводити лише з цих спостережень.
