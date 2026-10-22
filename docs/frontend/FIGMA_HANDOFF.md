@@ -2,7 +2,11 @@
 
 Оновлено 22.10.2026. Тут зберігаються джерела дизайну й відповідність frames коду. Порядок роботи — лише у [PLAN.md](../../PLAN.md), результати перевірок — у [RELEASE_EVIDENCE.md](../operations/RELEASE_EVIDENCE.md).
 
-## Остання звірка — PublicProfile desktop
+## Поточний доступ до джерела — 22.10.2026
+
+Live Figma copy відкрита й прочитана у Chrome: Journal Search `1480:7549` (1440×1149) та Create List `1480:5333` (1440×2160). Браузер показує canvas і properties вибраних frames. Повторні `get_design_context` та `get_screenshot` через plugin повернули `Unknown tool`; це збій доступу до інструментів, а не підтвердження quota limit. Для точних вимірів використовується наявний read-only raw archive поза Git. Browser canvas не є доказом повного variables/asset export або pixel parity.
+
+## Перевірені Profile / Service / Journal shells
 
 Raw descendants frames `238:596` (Profile), `122:176` (Films) і `175:619` (Lists) зафіксували desktop geometry: full-bleed hero 1440×1020, avatar 265×265, identity title 58 px, navigation rail 1200×79, section headings 24 px і poster cards 174×260 у шість колонок із 31 px gap. Ці значення внесені до `PublicProfile.module.css` для `min-width: 1024px`. Figma photo fill не підмінений вигаданим asset; runtime продовжує використовувати API profile/avatar fallback. Перевірки: `npm run verify:build` PASS, `public-profile-design-flow.spec.ts` + `public-profile-desktop-figma.spec.ts` **2/2** після Docker web rebuild.
 
@@ -84,12 +88,12 @@ FigJam — джерело аналізу, архітектури, персон �
 | Filter / show-results fragments | `1480:7611` → 295×1416; `1480:7595` → 197×319 | Search controls | Reference fragments; не окремі routes |
 | Global Search all / no matches | `1480:8934` → 393×2801; `1480:8856` → 393×852 | `/search` → GlobalSearch | PNG/raw alignment: All poster rail і content order, compact Empty/white Home CTA. Query/category controls залишені доступними також у Empty; UK/EN copy та реальні counts збережено |
 | Global Search lists / tags / films phone | `1480:8804`, `1480:8767`, `1480:8594` → 393×852 | `/search?tab=...` | Plugin screenshots/context: Lists має 361 px cards і п’ять 79×116 overlapping posters; Tags переносить pills у кілька рядків; Films зберігає 4-column grid. Mobile hero має Figma slider trigger, який фокусує native category select; geometry/no-overflow перевірені browser test |
-| Global Search lists desktop | `1480:7490` → 1440×1518 | `/search?tab=lists` | Alignment |
+| Global Search lists desktop | `1480:7490` → 1440×1518 | `/search?tab=lists` | 1200 px rail, 339 px minimum rows, 38 px gaps, proportional preview up to 446×260. Cards grow for long API titles; native category control and keyboard tabs remain visible on focus |
 | Global Search tags desktop | `1480:7445` → 1440×1024 | `/search?tab=tags` | Alignment |
 | Global Search cast / members desktop | `1480:7390` → 1440×1392 | `/search` → GlobalSearch | Alignment |
-| Global Search reviews desktop | `1480:7311` → 1440×2176 | `/search?tab=reviews` | Alignment |
+| Global Search reviews desktop | `1480:7311` → 1440×2176 | `/search?tab=reviews` | 1200 px rail, 315 px minimum cards from y=377, 38 px gaps, 175×262 poster slot. Natural card height preserves translated content and focus outlines |
 | Global Search films desktop | `1480:7256` → 1440×1062 | `/search?tab=films` | PNG/raw alignment: mapped background, search 400×44, 6 rounded posters близько 174×260; functional roving tabs з реальними counts збережені. Shared Header composition і точні fonts не заявлені як parity |
-| Journal search desktop / phone | `1480:7549` → 1440×1149; `1480:8889` → 393×1150 | `/search?tab=journal` | Desktop three-column article cards now use the frame's ~20 px column gap; phone keeps the 361×149 cover rail, 20 px card radius, live API titles/excerpts and native category selection. `global-search-alignment.spec.ts` passed 4/4 in UK/EN. |
+| Journal search desktop / phone | `1480:7549` → 1440×1149; `1480:8889` → 393×1150 | `/search?tab=journal` | Live canvas/raw: desktop three-column cards, 20 px gaps/radius, 219 px covers, 347 px minimum cards and 22/20 px title/excerpt. Grid fits the 1200 px runtime rail and cards grow with live content; phone keeps 361×149 covers. API images/titles, native category URL/keyboard and fallback states remain real |
 | Tag search desktop / phone | `1480:6898` → 1440×2388; `1480:8527` → 393×1055 | `/lists/discover?tag=...`; GlobalSearch tags | Desktop rows retain poster stack and metadata; mobile cards place title/count above a 138 px poster rail with 16 px radius, and the poster anchor clips its compact stack so it cannot cover the title link. Desktop feed keeps the route-level back/filter toolbar. `list-discovery-controls.spec.ts` 3/3 and `public-guards.spec.ts` 6/6 passed; original Figma images remain unavailable while plugin quota is exhausted |
 | Додатковий mobile search reference | `1480:6217` → 393×581 | Search reference | Raw hierarchy підтверджує 160 px show-results trigger/menu geometry; mobile native select вирівняний до 160 px із збереженням accessible keyboard/URL behavior. Open dropdown лишається behavior-equivalent, бо custom Figma overlay не має окремого API |
 | Lists catalog desktop / mobile | `1480:4983` → 1440×3816; `1480:8280` → 393×1809 | `/lists/discover` → PublicLists | PNG/raw: compact hero, upright strips, Recently liked rows/cards; landing не показує дубльований feed rail під hero; усі feed-и доступні через section-level `View all`; тільки фактичні previews, справжні empty feeds |
@@ -170,18 +174,10 @@ Raw frame `1480:4880` confirms a 1440×486 editorial hero under the shared 1440�
 
 Frame `825:1378` raw nodes place the fallback/avatar at 120×120 and x=136.5/y=190, with the identity title inside the phone content rail x=16..377. The mobile CSS now gives `.identityCopy` a 361 px maximum and allows safe wrapping for long display names. The existing contextual back/search controls, bottom navigation, profile API and no-overflow behavior remain unchanged. `public-profile-design-flow.spec.ts` and `public-profile-desktop-figma.spec.ts` passed **2/2** after the Docker web rebuild.
 
-### Global Search desktop all-results follow-up — 22.10.2026
+### Global Search desktop variants and responsive corrections — 22.10.2026
 
-Raw frame `1480:6991` confirms a 1440 px desktop canvas with a 1200 px content rail, film posters at x=120/y=377 sized 174×260, and review cards at y=692 sized 1200×315 with 175×262 poster slots. `GlobalSearch.module.css` applies this desktop-only geometry while leaving result tabs keyboard-accessible in the DOM, preserving the live global-search API, UK/EN copy, and existing mobile variants. `global-search-desktop-figma.spec.ts` and `global-search-alignment.spec.ts` passed **5/5** after the Docker web rebuild.
+All-results `1480:6991` defines six 174×260 posters from x=120/y=377 and review cards from y=692; Reviews `1480:7311` shares the 315 px card/38 px gap contract, Lists `1480:7490` uses 339 px cards and 446×260 previews, and Journal `1480:7549` uses 219 px covers and 347 px cards. The runtime uses these as minimum heights on a responsive 1200 px rail, preserving live API data and long localized titles.
 
-### Global Search desktop empty-state follow-up — 22.10.2026
+The Empty frame `1480:5809` has a 540×166 text group and a separate Home action below it. The earlier fixed 166 px runtime section incorrectly tried to contain both. Its height is now natural so the message and action remain inside the section. Exact empty-copy typography and shared header/footer parity remain separate review items.
 
-Raw frame `1480:5809` places the no-match frame at x=450/y=377 with 540×166 bounds. The desktop `noMatches` shell now follows that centered geometry; live localized empty copy, retry/error separation, Back to home navigation, and mobile behavior remain unchanged. The dedicated desktop suite covers both all-results and no-match variants.
-
-### Global Search desktop lists-tab follow-up — 22.10.2026
-
-Raw frame `1480:7490` defines the lists result variant: a 1200 px rail, 339 px cards at y=377/y=754, 446×260 poster preview at x=154/y=421, and 66 px preview-to-copy gap. `GlobalSearch.module.css` applies this desktop geometry to live list results; no API, keyboard, localization or mobile contract changed. Targeted coverage is in `global-search-desktop-figma.spec.ts`.
-
-### Global Search desktop reviews-tab follow-up — 22.10.2026
-
-Raw frame `1480:7311` defines the Reviews result variant as four 1200×315 cards from y=377 with 38 px gaps. The desktop review shell already matches this contract and is now asserted directly for `tab=reviews`; no API or mobile changes were required.
+Desktop category selection is visible through the native select. Roving tabs reveal their focused control; poster metadata stays anchored to the poster bottom. Preview aspect ratios no longer enlarge cards at intermediate widths. `global-search-responsive.spec.ts` checks UK/EN, 320/393/600/720/768/1024/1100/1101/1440 px, long content, card bounds and real keyboard/pointer targets. Geometry checks cover all/empty/lists/reviews/journal; current results are in RELEASE_EVIDENCE.

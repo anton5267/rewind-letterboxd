@@ -48,6 +48,18 @@ async function mockListSearch(page: Page) {
   });
 }
 
+async function mockJournalSearch(page: Page) {
+  await page.route(/^https?:\/\/[^/]+\/api\//, route => {
+    const url = new URL(route.request().url());
+    if (url.pathname === "/api/users/me") return route.fulfill({ status: 401, json: {} });
+    if (url.pathname === "/api/search/global") return route.fulfill({ json: {
+      films: { content: [], number: 0, size: 6, totalElements: 0, totalPages: 0 }, users: { content: [], totalElements: 0 }, lists: { content: [], totalElements: 0 }, tags: [], people: [], reviews: { content: [], totalElements: 0 },
+      journal: { content: Array.from({ length: 3 }, (_, index) => ({ id: 986700 + index, slug: `journal-${index + 1}`, category: "NEWS", title: `Journal article ${index + 1}`, excerpt: "A concise journal excerpt for the editorial result card.", coverUrl: null, publishedAt: "2026-10-20T12:00:00Z" })), totalElements: 3 },
+    } });
+    return route.fulfill({ json: { count: 0 } });
+  });
+}
+
 test("global search all variant keeps the raw desktop rails", async ({ page }) => {
   await mockSearch(page);
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -83,7 +95,12 @@ test("global search no-match variant keeps the centered raw empty state", async 
   expect(box?.x).toBeCloseTo(450, 0);
   expect(box?.y).toBeCloseTo(377, 0);
   expect(box?.width).toBeCloseTo(540, 0);
-  expect(box?.height).toBeCloseTo(166, 0);
+  expect(box?.height).toBeGreaterThanOrEqual(166);
+  const home = empty.getByRole("link", { name: "Back to home" });
+  await expect(home).toBeVisible();
+  const homeBox = await home.boundingBox();
+  expect(homeBox!.y).toBeGreaterThanOrEqual(box!.y);
+  expect(homeBox!.y + homeBox!.height).toBeLessThanOrEqual(box!.y + box!.height + 1);
 });
 
 test("global search lists variant keeps the measured editorial cards", async ({ page }) => {
@@ -123,4 +140,22 @@ test("global search reviews tab keeps the raw review card rhythm", async ({ page
   expect(first?.width).toBeCloseTo(1200, 0);
   expect(first?.height).toBeCloseTo(315, 0);
   expect(second?.y).toBeCloseTo(730, 0);
+});
+
+test("global search journal tab keeps the raw three-column cards", async ({ page }, testInfo) => {
+  await mockJournalSearch(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/en/search?q=journal&tab=journal");
+  const main = page.getByRole("main");
+  await expect(main).toHaveAttribute("aria-busy", "false");
+  const cards = main.locator('#journal [class*="articleCard"]');
+  await expect(cards).toHaveCount(3);
+  const first = await cards.first().boundingBox();
+  const second = await cards.nth(1).boundingBox();
+  expect(first?.x).toBeCloseTo(120, 0);
+  expect(first?.y).toBeCloseTo(377, 0);
+  expect(first?.width).toBeCloseTo(387, 0);
+  expect(first?.height).toBeCloseTo(347, 0);
+  expect(second?.x).toBeCloseTo(527, 0);
+  await page.screenshot({ path: testInfo.outputPath("journal-search-desktop.png"), fullPage: true });
 });

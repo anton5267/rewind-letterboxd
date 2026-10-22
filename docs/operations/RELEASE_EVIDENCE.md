@@ -1,8 +1,8 @@
 # Rewind — докази перевірок
 
-Оновлено 22.10.2026, Europe/Berlin. Нижче наведено актуальний локальний release checkpoint. Production VPS не розгорнуто.
+Оновлено 22.10.2026, Europe/Berlin. Документ містить історичні release checkpoints і наступні targeted перевірки; повний фінальний regression нового UI ще потрібний. Production VPS не розгорнуто.
 
-## Фінальна локальна регресія
+## Раніше записаний локальний checkpoint
 
 | Gate | Результат | Доказ / межа |
 | --- | --- | --- |
@@ -10,7 +10,7 @@
 | Full browser suite | **123 passed; 2 failures; 12 skips** | Latest 22.10.2026 run: 137 scenarios, 5.2 min. The two remaining failures are the Community retry cases caused by the user's uncommitted `FollowActionsContext` change, which converts failed relationship reads into `false` instead of exposing the tested Retry controls. Films, Journal Search, detail header, route-transition and Public Lists guard checks are green. The 12 skips are covered separately by the disposable admin wrapper below. |
 | Films geometry/filter/header targeted suites | **9 + 3 + 2 passed; 0 failures** | After Docker web rebuild, `search-controls.spec.ts` covers the `1413:12611`/`1480:9187` poster geometry and `1480:7611` filter behavior: desktop 174×260/20 px, phone 79×116/10 px, 15 px gaps, 215 px filter summary, focus restore and no overflow. `detail-header.spec.ts` confirms contextual back and bottom navigation at 320/393 px while the Figma Films header logo/Menu stay hidden (3/3); editorial header check passed 2/2. |
 | Journal search alignment suite | **4 passed; 0 failures** | After Docker web rebuild, `global-search-alignment.spec.ts` verifies `1480:7549`/`1480:8889` in UK/EN, including the 361×149 phone article cover, 20 px card radius, API-backed title/excerpt and native category URL/keyboard behavior. |
-| Backend suite | **89 passed** | Latest 22.10.2026 host run used the running Docker MySQL on `127.0.0.1:3307`; failures/errors/skips 0. The earlier disposable release checkpoint remains 87/87. |
+| Backend suite | **87 passed** | Latest host reports: 40 current XML files dated 22.10.2026 08:33–08:34 Berlin, failures/errors/skips 0, Compose MySQL on `127.0.0.1:3307`. The earlier count of 89 included a stale suffixed two-test poster report from 20.10, duplicating current cases. Reports do not record the checked Git revision. |
 | API smoke | PASS | OpenAPI 159 operations; auth, profiles, films, lists, reviews, comments, social, messages, notifications, newsletter і cleanup |
 | Contract smoke | PASS | Public/protected routes, privacy fields, role guards, CRUD і nullable responses |
 | Security smoke | PASS | CSRF, guest/admin guards, hostile query payloads, metrics protection |
@@ -59,7 +59,7 @@ Public Profile phone `825:1378` was re-read from raw nodes: the contextual toolb
 
 Останній повний browser run після Public Lists landing update завершився **123 passed, 2 failures і 12 skips** у 137 сценаріях. Обидва failures — Community retry scenarios, які залежать від незакоміченої локальної зміни `frontend/src/context/FollowActionsContext.tsx`; у committed baseline ці стани мають показувати Retry. Films geometry/filter, Journal Search alignment, detail header, route-transition і Public Lists guard targeted suites пройшли без failures; весь `list-mobile-header.spec.ts` пройшов 12/12.
 
-Backend host regression was rerun with the Compose MySQL credentials loaded only into the process environment. All 89 current tests passed with zero failures, errors, or skips; `.env`, schema and Docker volumes were not changed.
+Backend host regression was rerun with the Compose MySQL credentials loaded only into the process environment. All 87 current tests passed with zero failures, errors, or skips; `.env`, schema and Docker volumes were not changed. The originally recorded 89 was corrected after excluding a stale duplicate poster report.
 
 The disposable admin browser wrapper was rerun after the latest frontend changes: `scripts/verify-admin-browser.ps1` completed **12/12 passed in 42.8s**, then removed its temporary ADMIN fixture. Combined with the standard run, 130 browser scenarios are green across the two isolated runs; the two remaining standard-run failures are the user's uncommitted Community context change described above.
 
@@ -236,3 +236,11 @@ Push `d703d63` passed GitHub `CI / verify (push)`. The local frontend suite comp
 - Raw source: local archive frame `1480:7311`.
 - Verification: `global-search-desktop-figma.spec.ts` plus `global-search-alignment.spec.ts` PASS (**8/8**) for all, no-match, lists and reviews variants after Docker web rebuild; `npm run verify:build` remained PASS (218 modules).
 - Contract: live review API data, links, nullable poster/avatar fallbacks, keyboard category tabs, localization and mobile behavior remain unchanged.
+
+### Global Search responsive and live Figma follow-up — 22.10.2026
+
+- Sources: live Chrome Figma canvas `1480:7549` (Journal Search,1440×1149), plus local raw all/empty/lists/reviews frames. Live `get_design_context` and `get_screenshot` MCP calls returned `Unknown tool`; browser canvas access works. Full variables/assets export and exact shared header/footer parity are not claimed.
+- Corrected: visible native desktop category selection; keyboard tabs reveal on focus; metadata anchored to posters; proportional previews; natural card/empty heights for long localized content; responsive Journal cards with219px covers,347px minimum,20px radius and22/20px title/excerpt.
+- Current verification: **23/23 passed**, no skips, after Docker web rebuild: `global-search-desktop-figma.spec.ts`, `global-search-alignment.spec.ts`, `global-search-responsive.spec.ts`, `search-controls.spec.ts`, `journal-design-flow.spec.ts`. The responsive fixture checks UK/EN at320/393/600/720/768/1024/1100/1101/1440px, long titles/copy, document/card bounds and actual keyboard/pointer targets. TypeScript/Vite passed (218modules); Docker web image rebuilt and restarted with existing volumes preserved.
+- The earlier geometry-only empty-state check counted a166px outer box while content escaped it. That result does not prove content fit; the new suite checks message/action containment and allows natural height.
+- PLAN and PROGRESS are consolidated to current status and one work order; detailed historical evidence remains here. Backend report totals corrected to87 after excluding a stale duplicate two-test report; this audit did not rerun backend tests.
