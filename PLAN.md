@@ -24,7 +24,7 @@
 ## Актуальні перевірки
 
 - `npm run verify:build`: PASS, TypeScript + Vite, 218 modules.
-- Playwright: **127/127 passed**, failures/skips/flaky/retries 0; 115 public/real API scenarios та 12 scenarios з disposable admin fixture.
+- Playwright: latest full local run **118 passed, 2 failures, 12 skips** across 132 scenarios. The two failures are isolated to the user's uncommitted `FollowActionsContext.tsx` change; `list-mobile-header.spec.ts` passed 12/12 and the transient EN-only case passed 6/6 on repeat. The remaining 12 skips are disposable admin fixture scenarios.
 - Backend: **87/87 passed**, failures/errors/skips 0, ізольована MySQL 8.4.
 - PASS: API, contracts, security, password reset, Redis cache, HTTP concurrency, load, ER schema, backup/restore, production template config, Caddy та Compose config.
 

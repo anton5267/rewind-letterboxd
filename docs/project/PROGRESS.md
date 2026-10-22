@@ -35,7 +35,7 @@
 | Gate | Результат |
 | --- | --- |
 | Frontend typecheck/build | PASS; 218 modules |
-| Playwright | Historical checkpoint **127 passed**; latest local run 115 passed, 5 failures, 12 skips. Movie Details WCAG axe rerun 1/1 after contrast fix; remaining failures are tracked in RELEASE_EVIDENCE. |
+| Playwright | Latest local full run **118 passed, 2 failures, 12 skips** across 132 scenarios. Both failures are caused by the user's uncommitted `FollowActionsContext.tsx` change; the list-header suite passed 12/12 and the earlier EN-only failure passed 6/6 on repeat. Movie Details WCAG axe rerun 1/1 after contrast fix. |
 | Backend Maven | Historical release checkpoint **87 tests**; latest 22.10.2026 local Compose-MySQL run **89 passed**, 0 failures/errors/skips |
 | Local Docker | API health 200, web 200; images перебудовані зі збереженням DB/`.env` |
 | API/contracts/security/reset | PASS |

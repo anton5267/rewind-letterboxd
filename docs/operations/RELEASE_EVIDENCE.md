@@ -7,7 +7,7 @@
 | Gate | Результат | Доказ / межа |
 | --- | --- | --- |
 | Frontend build | PASS | `npm run verify:build`: TypeScript без помилок, Vite 218 modules |
-| Full browser suite | **115 passed; 5 failures; 12 skips** | Latest 22.10.2026 run: 132 scenarios, 6.2 min. The five failures are tracked below: two community retry cases use the user's uncommitted `FollowActionsContext` change, two API-backed flows timed out against the long-running local stack, and the Movie Details contrast defect is fixed and its targeted axe run is now 1/1. The earlier 127-scenario checkpoint remains historical; disposable admin run was 12/12. |
+| Full browser suite | **118 passed; 2 failures; 12 skips** | Latest 22.10.2026 run: 132 scenarios, 4.7 min. The two remaining failures are the Community retry cases caused by the user's uncommitted `FollowActionsContext` change, which converts failed relationship reads into `false` instead of exposing the tested Retry controls. No API timeout or list-header failure reproduced in this run. The 12 skips are the disposable admin fixture scenarios. |
 | Backend suite | **89 passed** | Latest 22.10.2026 host run used the running Docker MySQL on `127.0.0.1:3307`; failures/errors/skips 0. The earlier disposable release checkpoint remains 87/87. |
 | API smoke | PASS | OpenAPI 159 operations; auth, profiles, films, lists, reviews, comments, social, messages, notifications, newsletter і cleanup |
 | Contract smoke | PASS | Public/protected routes, privacy fields, role guards, CRUD і nullable responses |
@@ -47,7 +47,7 @@ Public Profile desktop `238:596` was reviewed directly in the Figma canvas. Its 
 
 Після повторної перевірки Figma `1480:8527` mobile tag search cards now render the title/count before the poster rail, with 16 px radius and a 138 px poster area. `list-discovery-controls.spec.ts` пройшов 3/3; desktop original imagery remains pending Figma Starter quota.
 
-Останній повний browser run після Search checkpoint зафіксував 115 passed, 5 failures і 12 skips. Контраст Movie Details виправлено в `MovieDetails.module.css`; окремий WCAG axe сценарій після rebuild Docker пройшов 1/1. Повторний full run залишився потрібним після ізоляції локальної незакоміченої зміни `FollowActionsContext.tsx` і стабілізації API flows.
+Останній повний browser run після Public Lists follow-up завершився **118 passed, 2 failures і 12 skips**. Обидва failures — Community retry scenarios, які залежать від незакоміченої локальної зміни `frontend/src/context/FollowActionsContext.tsx`; у committed baseline ці стани мають показувати Retry. EN public-list information scenario, що одноразово впав у попередньому довгому запуску, повторно пройшов окремо 6/6 (включно з `--repeat-each=5`) і весь `list-mobile-header.spec.ts` пройшов 12/12.
 
 Backend host regression was rerun with the Compose MySQL credentials loaded only into the process environment. All 89 current tests passed with zero failures, errors, or skips; `.env`, schema and Docker volumes were not changed.
 
