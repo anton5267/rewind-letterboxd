@@ -177,3 +177,9 @@ Push `d703d63` passed GitHub `CI / verify (push)`. The local frontend suite comp
 ## Межа релізу
 
 Локальні перевірки не підтверджують production infrastructure. VPS, domain/TLS, real SMTP/TMDB credentials, monitoring і restore drill на цільовому сервері виконуються окремо за [DEPLOYMENT](DEPLOYMENT.md). Відсутність погодженого Journal content не блокує код: Journal залишається API-backed.
+### Popular Reviews desktop Figma check — 22.10.2026
+
+- Raw source: local archive frame `1480:4880`.
+- Implemented: 1440×486 hero, 1200 px rail at x=120, 1200×180 reviewer group, 80×80 reviewer avatars, 1200×315 review cards, and 175×262 poster slots.
+- Verification: `npm run verify:build` PASS (218 modules); `npx playwright test tests/e2e/popular-reviews-figma.spec.ts` PASS (**2/2**); Docker web image rebuilt and restarted.
+- Contract: live review/reviewer APIs, localization, focusable links and mobile overflow behavior remain unchanged.

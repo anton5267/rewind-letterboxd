@@ -123,3 +123,9 @@
 ## Межі безпеки роботи
 
 Не змінювати diploma video artifacts, локальний `AGENTS.md`, бази, backups, `.env`, Figma raw references і кеші. Backend змінювати лише за підтвердженим функціональним дефектом; migrations не переписувати. Public routes й API залишаються сумісними; `ProfileReview.moviePhotoUrl` nullable.
+### Наступний raw-блок — Popular Reviews `1480:4880` (22.10.2026)
+
+- Перечитано локальний raw subtree: desktop hero 1440×486, content rail 1200 px від x=120, reviewer group 1200×180, avatars 80×80, review cards 1200×315 з poster slot 175×262 і 38 px card rhythm.
+- `PopularReviews.module.css` тепер має окремий desktop contract для цих bounds; mobile правила, API, UK/EN, loading/error/empty/retry і keyboard links збережено.
+- Додано контрольний `popular-reviews-figma.spec.ts`: desktop bounds і phone no-overflow, **2/2 passed** після Docker web rebuild.
+- Наступний raw audit: вибрати наступний видимий frame з конкретним route/API контрактом; reported/edit admin variants залишаються documented contract gap.

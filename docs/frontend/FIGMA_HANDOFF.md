@@ -151,3 +151,6 @@ PAT вводиться локально в прихований prompt; його
 Verifier розрізняє COMPLETE/PARTIAL/FAILED і фіксує недоступні ресурси. Не створювати порожні папки як доказ успішного export.
 
 Private bounded Profile/Community raw provenance: workspace `.codex-backups/profile-community-reference-review-20261020/reference-summary.json`. Нового decoder/export або Figma edits у цьому проході не було.
+### Popular Reviews desktop follow-up — 22.10.2026
+
+Raw frame `1480:4880` confirms a 1440×486 editorial hero under the shared 1440×106 header, a 1200 px content rail at x=120, a 1200×180 Popular reviewers group with 80×80 avatar instances, and a 1200×1473 review group containing four 1200×315 cards. Each card reserves a 175×262 poster slot and a 40 px content gap. `PopularReviews.module.css` now applies those desktop measurements while the route continues using live popular-reviewer and popular-review API responses, localized links, accessible headings and mobile rules. `popular-reviews-figma.spec.ts` checks the measured 1440 px geometry and 393 px no-overflow state; both tests passed after the Docker web rebuild.

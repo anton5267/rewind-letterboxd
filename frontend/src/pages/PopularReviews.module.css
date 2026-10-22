@@ -174,3 +174,118 @@
   .reviewHeader { display: block; }
   .reviewHeader strong { display: block; margin-top: 5px; }
 }
+
+/* Figma frame `1480:4880` (desktop): the global header overlays a 486 px
+   editorial hero. The two API-backed content groups sit on a 1200 px rail
+   at x=120; review cards are 1200x315 with 175x262 poster slots. */
+@media (min-width: 721px) {
+  .page {
+    min-height: 100vh;
+    padding: 0 0 72px;
+    background: #171719;
+  }
+
+  .hero {
+    min-height: 486px;
+    box-sizing: border-box;
+    padding: 0;
+    background:
+      linear-gradient(180deg, rgba(0, 0, 0, .04), rgba(0, 0, 0, .82) 78%, #171719 100%),
+      url("/images/search-hero-desktop.png") center / cover no-repeat;
+  }
+
+  .toolbar {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .shell {
+    position: relative;
+    z-index: 1;
+    width: min(1200px, calc(100% - 48px));
+    margin: -206px auto 0;
+  }
+
+  .reviewerSection,
+  .reviewsSection {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .reviewerSection {
+    height: 180px;
+    box-sizing: border-box;
+    padding: 18px 0 0;
+  }
+
+  .reviewerSection .sectionHeading {
+    margin-bottom: 55px;
+  }
+
+  .reviewerSection .sectionHeading h2,
+  .reviewsSection .sectionHeading h2 {
+    font-size: 24px;
+    line-height: 27px;
+  }
+
+  .reviewerRail {
+    gap: 6px;
+    padding: 0;
+  }
+
+  .reviewerAvatar {
+    width: 80px;
+    height: 80px;
+    flex-basis: 80px;
+    border-width: 2px;
+  }
+
+  .reviewsSection {
+    margin-top: 174px;
+    padding: 0;
+  }
+
+  .reviewsSection .sectionHeading {
+    margin-bottom: 55px;
+  }
+
+  .reviewList {
+    gap: 38px;
+  }
+
+  .reviewCard {
+    height: 315px;
+    box-sizing: border-box;
+    grid-template-columns: 175px minmax(0, 1fr);
+    gap: 40px;
+    padding: 31px 26px 22px;
+    border: 0;
+    border-radius: 0;
+    background: #282828;
+  }
+
+  .poster {
+    width: 175px;
+    height: 262px;
+    aspect-ratio: auto;
+  }
+
+  .reviewCopy {
+    padding-top: 23px;
+  }
+
+  .reviewHeader h3 {
+    font-size: 20px;
+  }
+
+  .reviewText {
+    margin-top: 38px;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+}
