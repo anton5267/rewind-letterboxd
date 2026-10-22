@@ -14,6 +14,7 @@
 - Lists landing знову має доступну feed navigation і локалізований hero після повної регресії.
 - Global Search на телефонах має шість локалізованих швидких переходів із frame `1480:8432`; list cards і tag wrapping звірені з `1480:8804` та `1480:8767`. Tag search `1480:6898`/`1480:8527` додатково звірений: mobile title/count order and poster rail now match the frame; desktop asset parity remains open until Figma quota returns. Додатковий reference `1480:6217` підтвердив 160 px ширину mobile show-results control; native select збережено для keyboard/URL semantics і вирівняно до цієї геометрії.
 - Global Search phone frame `1480:8594` додатково звірений: mobile hero slider trigger тепер фокусує той самий native category select; targeted alignment suite пройшов 4/4 після Docker web rebuild.
+- Власний Profile mobile frame `896:1838` повторно звірений по raw subtree: hero отримав 44 px gear/more controls, які ведуть до наявної форми `Profile details` або безпечного виходу; меню має Escape/outside close і повернення фокуса. `profile-alignment.spec.ts` пройшов 8/8 після Docker web rebuild.
 - Public Lists follow-up: mobile tagged poster rail тепер clip-иться в 138 px container, щоб не перекривати title link; desktop feed toolbar залишено доступним для back/filter flow. `list-discovery-controls` 3/3 і `public-guards` 6/6 пройшли після Docker web rebuild.
 - Movie Details desktop frames `39:2`/`61:244` тепер підтверджені inventory та canvas; застосовано full-bleed dark hero, poster/content geometry, Rating/Cast sections і dark similar/review rails. Mobile contract лишився окремо перевіреним.
 - Person/Actor desktop `545:676`/`551:705` підтверджений inventory та canvas; застосовано centered identity hero, 265 px avatar і 1200 px six-column filmography rail. Separate produced feed потребує API, тому не вигаданий.
@@ -41,6 +42,7 @@
 - Latest regression evidence: commit `00f9f43`, [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39707346272); only release documentation changed, and unrelated local files remained unstaged.
 - Admin browser wrapper: `scripts/verify-admin-browser.ps1` passed 12/12 with a disposable fixture and cleanup.
 - Global Search Figma alignment: commit `cda3126`, [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39708297409); mobile slider trigger now focuses the native category select, targeted alignment 4/4.
+- Profile mobile hero actions: current local change adds Figma-aligned gear/more controls backed by existing profile form/logout actions; targeted `profile-alignment.spec.ts` 8/8 and `npm run verify:build` PASS. Commit/push pending after this checkpoint.
 - Diploma artifacts і локальний `AGENTS.md` залишилися поза commits.
 
 ## Поза цією ціллю

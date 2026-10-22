@@ -88,7 +88,12 @@ export default function Profile() {
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [accountDeleted, setAccountDeleted] = useState(false);
   const [passwordChanged, setPasswordChanged] = useState(false);
+  const [profileActionsOpen, setProfileActionsOpen] = useState(false);
   const activeUserId = useRef<number | null>(null);
+  const profileActionsButtonRef = useRef<HTMLButtonElement>(null);
+  const profileActionsMenuRef = useRef<HTMLDivElement>(null);
+  const identityFormRef = useRef<HTMLFormElement>(null);
+  const displayNameInputRef = useRef<HTMLInputElement>(null);
   const identityMutation = useRef(0);
   const newsletterMutation = useRef(0);
   const socialLinksMutation = useRef(0);
@@ -110,6 +115,28 @@ export default function Profile() {
     setPasswordBusy(false);
     setDeleteBusy(false);
   }, [isAuth, user?.id]);
+
+  useEffect(() => {
+    if (!profileActionsOpen) return;
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (!profileActionsMenuRef.current?.contains(target) && !profileActionsButtonRef.current?.contains(target)) setProfileActionsOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setProfileActionsOpen(false);
+      window.requestAnimationFrame(() => profileActionsButtonRef.current?.focus());
+    };
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    window.requestAnimationFrame(() => profileActionsMenuRef.current?.querySelector<HTMLElement>("button")?.focus());
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [profileActionsOpen]);
 
   const applySocialLinks = (data: SocialLink[]) => {
     setSocialLinkValues({
@@ -265,6 +292,23 @@ export default function Profile() {
 
   const { setTabRef, handleKeyDown } = useRovingTabs(collectionKinds, chooseCollection);
 
+  const focusIdentityForm = () => {
+    setProfileActionsOpen(false);
+    identityFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.requestAnimationFrame(() => displayNameInputRef.current?.focus({ preventScroll: true }));
+  };
+
+  const handleProfileLogout = async () => {
+    setProfileActionsOpen(false);
+    setError("");
+    try {
+      await logout();
+      navigate(path("/login"));
+    } catch {
+      setError(t("logoutError"));
+    }
+  };
+
   if (!ready) return <main className={styles.page} aria-labelledby="profile-page-title" aria-busy={true}><div className={styles.content}><h1 className={styles.pageTitle} id="profile-page-title">{t("myProfile")}</h1><p className={styles.feedback} role="status">{t("loading")}</p></div></main>;
   if (!isAuth && !accountDeleted && !passwordChanged) return <Navigate to={path("/login")} replace />;
 
@@ -401,6 +445,18 @@ export default function Profile() {
     {profileLoadError && <RetryNotice className={styles.feedback} message={t("loadProfileError")} retryLabel={t("retry")} onRetry={() => setProfileAttempt(value => value + 1)} />}
     {profile && <>
       <section className={styles.hero} aria-labelledby="profile-identity">
+        <div className={styles.heroActions}>
+          <button ref={profileActionsButtonRef} className={styles.heroAction} type="button" aria-label={t("profileActions")} aria-expanded={profileActionsOpen} aria-controls={profileActionsOpen ? "profile-actions-menu" : undefined} onClick={() => setProfileActionsOpen(open => !open)}>
+            <i className="fa-solid fa-ellipsis" aria-hidden="true" />
+          </button>
+          {profileActionsOpen && <div ref={profileActionsMenuRef} className={styles.heroActionsMenu} id="profile-actions-menu" role="menu" aria-label={t("profileActions")}>
+            <button type="button" role="menuitem" onClick={focusIdentityForm}>{t("profileIdentity")}</button>
+            <button type="button" role="menuitem" onClick={() => { void handleProfileLogout(); }}>{t("logout")}</button>
+          </div>}
+        </div>
+        <button className={styles.heroEdit} type="button" aria-label={t("profileIdentity")} onClick={focusIdentityForm}>
+          <i className="fa-solid fa-gear" aria-hidden="true" />
+        </button>
         <ResilientImage className={styles.avatar} src={profile.avatarUrl} alt="" width={120} height={120}
           fallback={<span className={styles.avatarFallback} aria-hidden="true">{getUserInitial(profile)}</span>} />
         <div className={styles.heroCopy}>
@@ -554,10 +610,10 @@ export default function Profile() {
           <button className={styles.primaryButton} type="submit" disabled={socialLinksBusy}>{socialLinksBusy ? t("saving") : t("save")}</button>
         </form>}
       </section>
-      <form className={styles.form} aria-labelledby="profile-identity-form-title" onSubmit={saveName} aria-busy={nameBusy}>
+      <form ref={identityFormRef} className={styles.form} aria-labelledby="profile-identity-form-title" onSubmit={saveName} aria-busy={nameBusy}>
         <h2 id="profile-identity-form-title">{t("profileIdentity")}</h2>
         <label htmlFor="profile-display-name">{t("displayName")}</label>
-        <input id="profile-display-name" value={displayName} disabled={nameBusy} minLength={displayName.trim() ? 2 : undefined} maxLength={60} onChange={e => setDisplayName(e.target.value)} />
+        <input ref={displayNameInputRef} id="profile-display-name" value={displayName} disabled={nameBusy} minLength={displayName.trim() ? 2 : undefined} maxLength={60} onChange={e => setDisplayName(e.target.value)} />
         <label htmlFor="profile-avatar-url">{t("avatarUrl")}</label>
         <input id="profile-avatar-url" type="url" disabled={nameBusy} value={avatarUrl} maxLength={255} placeholder="https://…" onChange={e => setAvatarUrl(e.target.value)} />
         <button className={styles.primaryButton} type="submit" disabled={nameBusy}>{nameBusy ? t("saving") : t("save")}</button>

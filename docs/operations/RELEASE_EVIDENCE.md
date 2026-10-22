@@ -57,6 +57,8 @@ Public Lists follow-up fixed two concrete responsive/accessibility regressions: 
 
 Global Search phone frame `1480:8594` exposed a missing slider control in the mobile hero. The new localized button focuses the existing native `Show results for` select, preserving keyboard and URL behavior; after rebuilding the Docker web image, `global-search-alignment.spec.ts` passed 4/4 and the combined Search targeted run passed 11/11. Commit `cda3126` passed GitHub CI run [39708297409](https://github.com/anton5267/rewind-letterboxd/actions/runs/39708297409).
 
+Profile mobile frame `896:1838` exposed missing hero actions. The new 44 px gear button focuses the existing Profile details form, while the more menu exposes that same form and the existing logout action; no new API or unsupported setting was introduced. Escape and outside click close the menu and restore focus to its trigger. After rebuilding the Docker web image, `profile-alignment.spec.ts` passed 8/8 and `npm run verify:build` passed; commit/push is the next delivery checkpoint.
+
 Movie Details desktop `39:2`/`61:244` додатково перевірені через local Figma inventory і canvas. Реалізація тепер має full-bleed dark hero, 811 px backdrop, 275 px poster, desktop Rating/Cast rails і dark similar/review sections; `movie-mobile-alignment.spec.ts` та responsive suite пройшли 5/5.
 
 Person/Actor desktop `545:676` і phone `721:1085` перевірені через local inventory та browser preview. Реалізація має full-bleed identity hero, 265 px desktop avatar, 120 px mobile avatar, compact mobile back/filter toolbar і 1200 px desktop або чотириколонкову mobile filmography grid; producer-flow suite пройшов 2/2 разом із API-backed navigation та mobile filter toggle.

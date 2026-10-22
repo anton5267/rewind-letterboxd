@@ -116,6 +116,16 @@ for (const lang of ["uk", "en"] as const) {
     await expect(page.locator("#profile-lists a").first()).toHaveAttribute("href", `/${lang}/lists/public/981201`);
     await expect(page.locator("#profile-lists a").last()).toHaveAttribute("href", `/${lang}/lists`);
     expect(await page.locator("#profile-following").evaluate(element => Boolean(element.compareDocumentPosition(document.getElementById("profile-identity-form-title")!) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
+    const hero = page.locator("section[aria-labelledby='profile-identity']");
+    const editProfile = hero.getByRole("button", { name: lang === "uk" ? "Дані профілю" : "Profile details", exact: true });
+    const moreProfileActions = hero.getByRole("button", { name: lang === "uk" ? "Дії профілю" : "Profile actions", exact: true });
+    await expect(editProfile).toBeVisible();
+    await editProfile.click();
+    await expect(page.locator("#profile-display-name")).toBeFocused();
+    await moreProfileActions.click();
+    await expect(hero.getByRole("menu")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(moreProfileActions).toBeFocused();
 
     for (const width of [320, 393, 768, 1440]) {
       await page.setViewportSize({ width, height: 900 });
