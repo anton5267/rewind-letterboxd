@@ -107,6 +107,7 @@ Figma 404 frame `361:778` реалізовано як локалізований
 - Latest PublicProfile overflow fix commit `4e3eada`: [CI / verify (push) run 39703800234](https://github.com/anton5267/rewind-letterboxd/actions/runs/39703800234) PASS.
 - Public Lists catalog landing alignment commit `2d40abc`: [CI / verify (push) run 39719191200](https://github.com/anton5267/rewind-letterboxd/actions/runs/39719191200) PASS; `list-discovery-controls.spec.ts` 4/4 and frontend build/typecheck passed.
 - Public Lists journey regression update commit `04723b8`: [CI / verify (push) run 39720126166](https://github.com/anton5267/rewind-letterboxd/actions/runs/39720126166) PASS; the cross-locale tag → list → author → movie guard follows section-level `View all`, and list/public guard targeted coverage passed 10/10.
+- Journal Article geometry commit `d68eeec`: [CI / verify (push) run 39725805058](https://github.com/anton5267/rewind-letterboxd/actions/runs/39725805058) PASS. Public Profile phone geometry commit `8ce4419`: [CI / verify (push) run 39726412078](https://github.com/anton5267/rewind-letterboxd/actions/runs/39726412078) PASS.
 - Історичний checkpoint перед поточним UI-проходом: [GitHub CI для `f0df409`](https://github.com/anton5267/rewind-letterboxd/actions/runs/39485802412).
 
 ## Збереження даних

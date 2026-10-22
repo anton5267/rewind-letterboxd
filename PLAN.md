@@ -46,6 +46,7 @@
 - Guest Home raw geometry correction: commit `22d4b78`; [GitHub CI / verify](https://github.com/anton5267/rewind-letterboxd/actions/runs/39723605654) PASS.
 - Shared navigation geometry: commit `84e4167`; [GitHub CI / verify](https://github.com/anton5267/rewind-letterboxd/actions/runs/39724012017) PASS.
 - Home feed label alignment: commit `c56242a`; [GitHub CI / verify](https://github.com/anton5267/rewind-letterboxd/actions/runs/39724308023) PASS. Full local frontend regression after these changes: 123 passed, 2 known Community retry failures from the user's uncommitted `FollowActionsContext.tsx`, 12 admin skips covered by the browser wrapper.
+- Journal Article Figma geometry: commit `d68eeec`; [GitHub CI / verify](https://github.com/anton5267/rewind-letterboxd/actions/runs/39725805058) PASS. Public Profile phone geometry: commit `8ce4419`; [GitHub CI / verify](https://github.com/anton5267/rewind-letterboxd/actions/runs/39726412078) PASS.
 - UI/assets/harness: commit `33f8082`.
 - Локальні release results: commit `f48713a`.
 - [GitHub CI / verify для `f48713a`](https://github.com/anton5267/rewind-letterboxd/actions/runs/39557098972): PASS, 1m53s.
