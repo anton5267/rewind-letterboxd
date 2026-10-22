@@ -29,13 +29,19 @@ for (const authenticated of [false, true]) {
         const header = page.getByRole("banner");
         const nav = header.getByRole("navigation", { name: "Головна навігація" });
         const mobile = width <= 720;
+        const filmsMobileCanvas = mobile && route === "/uk/films" && width <= 560;
         if (mobile) {
           for (const label of ["Головна", "Пошук", "Додати", "Журнал", authenticated ? "Профіль" : "Увійти"]) {
             await expect(nav.getByRole("link", { name: label, exact: true })).toBeVisible();
           }
-          await header.getByRole("button", { name: "Меню", exact: true }).click();
-          await expect(header.getByRole("navigation", { name: "Додаткова навігація" }).locator(`a[href="/uk/${authenticated ? "admin" : "login"}"]`)).toBeAttached();
-          await page.keyboard.press("Escape");
+          if (!filmsMobileCanvas) {
+            await header.getByRole("button", { name: "Меню", exact: true }).click();
+            await expect(header.getByRole("navigation", { name: "Додаткова навігація" }).locator(`a[href="/uk/${authenticated ? "admin" : "login"}"]`)).toBeAttached();
+            await page.keyboard.press("Escape");
+          } else {
+            await expect(header.getByRole("link", { name: "REWIND", exact: true })).toHaveCount(0);
+            await expect(header.getByRole("button", { name: "Меню", exact: true })).toHaveCount(0);
+          }
         } else {
           await expect(nav.locator(`a[href="/uk/${authenticated ? "admin" : "login"}"]`)).toBeAttached();
         }
@@ -46,12 +52,15 @@ for (const authenticated of [false, true]) {
             return { x, y, right: x + width, bottom: y + height };
           };
           const visibleNav = [...element.querySelectorAll("nav")].find(target => getComputedStyle(target).display !== "none")!;
-          const topAction = isMobile ? element.querySelector("button[aria-expanded]")! : element.querySelector("a[aria-label]")!;
-          return { header: box(element), logo: box(element.querySelector("a")!), nav: box(visibleNav), search: box(topAction), heading: box(document.querySelector("h1")!) };
+          const topAction = isMobile ? element.querySelector("button[aria-expanded]") : element.querySelector("a[aria-label]");
+          const logo = element.querySelector("a");
+          return { header: box(element), logo: logo ? box(logo) : null, nav: box(visibleNav), search: topAction ? box(topAction) : null, heading: box(document.querySelector("h1")!) };
         }, mobile);
         const disjoint = (a: typeof bounds.logo, b: typeof bounds.logo) => a.right <= b.x || b.right <= a.x || a.bottom <= b.y || b.bottom <= a.y;
-        expect(disjoint(bounds.logo, bounds.nav), `${route} logo/nav overlap at ${width}px`).toBe(true);
-        expect(disjoint(bounds.search, bounds.nav), `${route} search/nav overlap at ${width}px`).toBe(true);
+        if (bounds.logo && bounds.search) {
+          expect(disjoint(bounds.logo, bounds.nav), `${route} logo/nav overlap at ${width}px`).toBe(true);
+          expect(disjoint(bounds.search, bounds.nav), `${route} search/nav overlap at ${width}px`).toBe(true);
+        }
         expect(bounds.heading.y, `${route} header covers its title`).toBeGreaterThanOrEqual(bounds.header.bottom);
         expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
 
@@ -61,6 +70,7 @@ for (const authenticated of [false, true]) {
           await page.screenshot({ path: testInfo.outputPath(route.endsWith("journal") ? "light-mobile.png" : "dark-mobile.png") });
         }
 
+        if (filmsMobileCanvas) continue;
         await header.getByRole("link", { name: "REWIND", exact: true }).focus();
         if (mobile) {
           await page.keyboard.press("Tab");

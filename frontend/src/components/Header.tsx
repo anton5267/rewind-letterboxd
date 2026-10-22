@@ -104,6 +104,7 @@ export default function Header() {
   // only Journal keeps its light editorial header treatment.
   const lightHeader = /^\/(uk|en)\/journal\//.test(location.pathname);
   const mobileDetailHeader = /^\/(uk|en)\/(films|reviews)\/[^/]+\/?$/.test(location.pathname);
+  const mobileFilmsHeader = /^\/(uk|en)\/films\/?$/.test(location.pathname);
   const mobileListDetailHeader = /^\/(uk|en)\/lists\/public\/[^/]+\/?$/.test(location.pathname);
   const mobileSearchHeader = /^\/(uk|en)\/search\/?$/.test(location.pathname);
   const mobileHomeHeader = /^\/(uk|en)\/home\/?$/.test(location.pathname);
@@ -115,7 +116,7 @@ export default function Header() {
   const listsFeedHeader = listsLandingHeader && Boolean(listParams.get("feed"));
 
   return (
-    <header className={`${styles.header} ${lightHeader ? styles.light : ""} ${mobileDetailHeader ? styles.mobileDetail : ""} ${mobileListDetailHeader ? styles.mobileListDetail : ""} ${mobileSearchHeader ? styles.mobileSearch : ""} ${mobileHomeHeader ? styles.mobileHome : ""} ${mobilePersonHeader ? styles.mobilePerson : ""} ${mobileAuthHeader ? styles.mobileAuth : ""} ${listsLandingHeader ? styles.listsLanding : ""}`}>
+    <header className={`${styles.header} ${lightHeader ? styles.light : ""} ${mobileDetailHeader ? styles.mobileDetail : ""} ${mobileFilmsHeader ? styles.mobileFilms : ""} ${mobileListDetailHeader ? styles.mobileListDetail : ""} ${mobileSearchHeader ? styles.mobileSearch : ""} ${mobileHomeHeader ? styles.mobileHome : ""} ${mobilePersonHeader ? styles.mobilePerson : ""} ${mobileAuthHeader ? styles.mobileAuth : ""} ${listsLandingHeader ? styles.listsLanding : ""}`}>
 
       {listsLandingHeader && <div className={styles.listLandingControls}>
         <Link to={path(listsFeedHeader ? "/lists/discover" : "/home")} aria-label={listsFeedHeader ? t("discoverLists") : t("home")}><i className="fa-solid fa-chevron-left" aria-hidden="true" /></Link>

@@ -146,7 +146,12 @@ export default function Search() {
             aria-label={mobileFiltersOpen ? t("close") : t("filters")}
             onClick={() => setMobileFiltersOpen(open => !open)}
           >
-            <span aria-hidden="true">☷</span>
+            <span className={styles.filterSummary} aria-hidden="true">
+              <span>{t("year")}</span><span className={styles.filterSummaryArrow}>›</span>
+              <span>{t("rating")}</span><span className={styles.filterSummaryArrow}>›</span>
+              <span>{t("genre")}</span>
+            </span>
+            <span className={styles.filterIcon} aria-hidden="true">☷</span>
           </button>
         </div>
         <p className={styles.heroIntro}>{t("searchIntro")}</p>

@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | Frontend build | PASS | `npm run verify:build`: TypeScript без помилок, Vite 218 modules |
 | Full browser suite | **120 passed; 2 failures; 12 skips** | Latest 22.10.2026 run: 134 scenarios, 4.9 min. The two remaining failures are the Community retry cases caused by the user's uncommitted `FollowActionsContext` change, which converts failed relationship reads into `false` instead of exposing the tested Retry controls. No API timeout or list-header failure reproduced in this run. The 12 skips are covered separately by the disposable admin wrapper below. |
-| Films mobile filter targeted suite | **8 passed; 0 failures** | After Docker web rebuild, `search-controls.spec.ts` covers the `1480:7611` phone filter behavior plus existing empty/error/query/pagination states. Opening focuses the first enabled control; Escape restores the trigger. |
+| Films geometry/filter targeted suites | **9 + 2 passed; 0 failures** | After Docker web rebuild, `search-controls.spec.ts` covers the `1413:12611`/`1480:9187` poster geometry and `1480:7611` filter behavior: desktop 174×260/20 px, phone 79×116/10 px, 15 px gaps, 215 px filter summary, focus restore and no overflow. The editorial header check for the transparent mobile Films canvas passed 2/2. |
 | Backend suite | **89 passed** | Latest 22.10.2026 host run used the running Docker MySQL on `127.0.0.1:3307`; failures/errors/skips 0. The earlier disposable release checkpoint remains 87/87. |
 | API smoke | PASS | OpenAPI 159 operations; auth, profiles, films, lists, reviews, comments, social, messages, notifications, newsletter і cleanup |
 | Contract smoke | PASS | Public/protected routes, privacy fields, role guards, CRUD і nullable responses |

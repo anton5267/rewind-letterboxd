@@ -312,6 +312,17 @@
 }
 
 @media (max-width: 560px) {
+  .header.mobileFilms {
+    --header-background: transparent;
+    box-shadow: none;
+    pointer-events: none;
+  }
+
+  .mobileFilms .logo,
+  .mobileFilms .menuToggle { display: none; }
+
+  .mobileFilms .mobileNav { pointer-events: auto; }
+
   .header.listsLanding {
     --header-background: transparent;
     display: block;

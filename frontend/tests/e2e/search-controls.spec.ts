@@ -115,6 +115,23 @@ test("mobile film filters return focus to the trigger after Escape", async ({ pa
   await expect(trigger).toBeFocused();
 });
 
+test("mobile films canvas keeps the Figma poster rail geometry", async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto("/uk/films");
+
+  await expect(page.getByRole("banner").getByRole("link", { name: "REWIND", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("banner").getByRole("button", { name: "Меню", exact: true })).toHaveCount(0);
+  const posterLink = page.getByRole("region", { name: "Фільми" }).locator("article").first().getByRole("link").first();
+  await expect(posterLink).toBeVisible();
+
+  const poster = await posterLink.boundingBox();
+  expect(Math.round(poster?.width ?? 0)).toBe(79);
+  expect(Math.round(poster?.height ?? 0)).toBe(116);
+  await expect(posterLink).toHaveCSS("border-radius", "10px");
+  await expect(page.locator('button[aria-controls="film-filter-controls"]')).toHaveCSS("width", "215px");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+});
+
 test("malformed film page URLs normalize before a real API request", async ({ page }) => {
   const requests: URL[] = [];
   page.on("request", request => {
