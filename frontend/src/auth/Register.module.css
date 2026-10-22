@@ -8,3 +8,6 @@
 .button { composes: button from "./AuthShared.module.css"; }
 .error { composes: error from "./AuthShared.module.css"; }
 .footer { composes: footer from "./AuthShared.module.css"; }
+.mobileBack { composes: mobileBack from "./AuthShared.module.css"; }
+.social { composes: social from "./AuthShared.module.css"; }
+.socialMark { composes: socialMark from "./AuthShared.module.css"; }

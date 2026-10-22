@@ -1,11 +1,13 @@
 import styles from "./Footer.module.css";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useLocale } from "../i18n";
 
 export default function Footer() {
   const { path, t } = useLocale();
+  const location = useLocation();
+  const mobileAuthFooter = /^\/(uk|en)\/(login|register|forgot-password|reset-password)\/?$/.test(location.pathname);
   return (
-    <footer className={styles.footer}>
+    <footer className={`${styles.footer} ${mobileAuthFooter ? styles.mobileAuthFooter : ""}`}>
 
       {/* TOP LINE */}
       <div className={styles.top}>

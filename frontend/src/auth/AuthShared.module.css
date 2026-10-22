@@ -56,6 +56,14 @@
   text-align: center;
 }
 
+.mobileBack {
+  display: none;
+}
+
+.social {
+  display: none;
+}
+
 .form {
   display: grid;
   gap: 22px;
@@ -194,13 +202,59 @@
   .page {
     min-height: 852px;
     align-items: start;
-    padding: 174px 12px calc(96px + env(safe-area-inset-bottom));
+    padding: 198px 12px calc(96px + env(safe-area-inset-bottom));
     background:
       linear-gradient(180deg, transparent 0 300px, rgba(21, 21, 21, .78) 500px, var(--rewind-surface) 760px),
       radial-gradient(circle at 48% 0%, rgba(98, 182, 194, .58), transparent 22rem),
       radial-gradient(circle at 95% 0%, rgba(212, 168, 95, .64), transparent 23rem),
       url("../assets/figma/auth-mobile.png") top center / 100% 378px no-repeat,
       var(--rewind-surface);
+  }
+
+  .mobileBack {
+    position: absolute;
+    top: 48px;
+    left: 50px;
+    z-index: 1;
+    display: grid;
+    width: 24px;
+    height: 24px;
+    place-items: center;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, .44);
+    border-radius: 50%;
+    background: rgba(25, 25, 25, .35);
+    color: #fff;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+  }
+
+  .social {
+    display: grid;
+    gap: 12px;
+    margin-top: 72px;
+    color: rgba(255, 255, 255, .52);
+    font-size: 11px;
+    text-align: center;
+  }
+
+  .social::before {
+    display: block;
+    width: 100%;
+    border-top: 1px solid rgba(255, 255, 255, .18);
+    content: "";
+  }
+
+  .socialMark {
+    display: grid;
+    width: 24px;
+    height: 24px;
+    margin: 0 auto;
+    place-items: center;
+    color: rgba(255, 255, 255, .62);
+    font-size: 21px;
+    font-weight: 800;
   }
 
   .card { width: min(393px, 100%); padding: 0 40px 34px; border-radius: 0; background: transparent; box-shadow: none; }

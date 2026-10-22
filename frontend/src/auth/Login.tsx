@@ -32,6 +32,7 @@ export default function Login() {
   return (
     <main className={styles.page} aria-labelledby="login-page-title" aria-busy={loading}>
       <div className={styles.card}>
+        <button type="button" className={styles.mobileBack} aria-label={t("return")} onClick={() => navigate(path("/home"))}>←</button>
         <p className={styles.eyebrow}>{t("accountEyebrow")}</p>
         <h1 className={styles.title} id="login-page-title">{t("welcome")}</h1>
         {searchParams.get("passwordChanged") === "1" && <p className={styles.success} role="status">{t("passwordChangedSignIn")}</p>}
@@ -79,6 +80,10 @@ export default function Login() {
             {loading ? t("loggingIn") : t("login")}
           </button>
         </form>
+        <div className={styles.social} aria-hidden="true">
+          <span>{t("signInWith")}</span>
+          <span className={styles.socialMark}>G</span>
+        </div>
         <p className={styles.footer}>
           {t("noAccount")} <Link to={path("/register")}>{t("createOne")}</Link>
         </p>

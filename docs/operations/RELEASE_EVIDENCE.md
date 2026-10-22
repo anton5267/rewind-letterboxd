@@ -51,6 +51,8 @@ Movie Details desktop `39:2`/`61:244` додатково перевірені ч
 
 Person/Actor desktop `545:676` і phone `721:1085` перевірені через local inventory та browser preview. Реалізація має full-bleed identity hero, 265 px desktop avatar, 120 px mobile avatar, compact mobile back/filter toolbar і 1200 px desktop або чотириколонкову mobile filmography grid; producer-flow suite пройшов 2/2 разом із API-backed navigation та mobile filter toggle.
 
+Auth mobile `944:1582`/`944:1828` перевірений у Chrome на 393×852. Login/Register family тепер має standalone dark canvas із back control, без глобальної mobile navigation, збереженим API/auth flow та Figma sign-in footer. `auth-responsive.spec.ts` пройшов 1/1; `npm run verify:build` пройшов (216 modules).
+
 Початкові backend спроби проти основної dev DB не зараховані: вони отримали access denied через host credentials. Фінальний результат отриманий на чистій ізольованій MySQL з CI credentials; основну БД не змінювали.
 
 ## Figma та UI

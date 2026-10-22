@@ -167,6 +167,21 @@
     gap: 14px;
   }
 
+  .mobileAuth {
+    height: 1px;
+    min-height: 1px;
+    padding: 0;
+    overflow: visible;
+    background: transparent;
+    pointer-events: none;
+  }
+
+  .mobileAuth > *,
+  .mobileAuth .menuToggle,
+  .mobileAuth .mobileNav,
+  .mobileAuth .mobileMenu,
+  .mobileAuth .menuBackdrop { display: none !important; }
+
   .logoImage { width: 126px; height: 26px; }
   .nav,
   .search { display: none; }

@@ -60,6 +60,7 @@ export default function Register() {
   return (
     <main className={styles.page} aria-labelledby="register-page-title" aria-busy={loading}>
       <div className={styles.card}>
+        <button type="button" className={styles.mobileBack} aria-label={t("return")} onClick={() => navigate(path("/home"))}>←</button>
         <p className={styles.eyebrow}>{t("accountEyebrow")}</p>
         <h1 className={styles.title} id="register-page-title">{t("createAccount")}</h1>
 
@@ -123,6 +124,11 @@ export default function Register() {
             {loading ? t("loading") : t("createAccount")}
           </button>
         </form>
+
+        <div className={styles.social} aria-hidden="true">
+          <span>{t("signInWith")}</span>
+          <span className={styles.socialMark}>G</span>
+        </div>
 
         <p className={styles.footer}>
           {t("alreadyAccount")} <Link to={path("/login")}>{t("login")}</Link>
