@@ -75,6 +75,8 @@ Global Search Figma alignment commit `cda3126`: [GitHub CI PASS](https://github.
 
 Наступний Search run додав 2 двомовні сценарії. Targeted Global Search дав 4/4; повний standard run — 115 passed із 12 очікуваними admin skips, окремий wrapper — 12/12, разом усі 127 унікальних сценаріїв без skips. Перший запуск wrapper виявив quoting-дефект до створення fixture; після JSON fix сценарії пройшли, fixture видалено.
 
+Current Figma audit commits are pushed in order: `22d4b78` (guest Home raw hero, CI run [39723605654](https://github.com/anton5267/rewind-letterboxd/actions/runs/39723605654)), `84e4167` (shared navigation, CI run [39724012017](https://github.com/anton5267/rewind-letterboxd/actions/runs/39724012017)) and `c56242a` (Home feed labels, CI run [39724308023](https://github.com/anton5267/rewind-letterboxd/actions/runs/39724308023)); all are green. The latest local full frontend run is 123 passed, 2 known Community retry failures from the user's uncommitted `FollowActionsContext.tsx`, and 12 admin skips covered by the browser wrapper.
+
 ## Figma
 
 Plugin читає структуру, screenshots, assets, variables і context конкретних вузлів design copy `BDO9GO1oscOeUTcu4VXVKA`. Додатково перевірені Search phone `1480:8432`, lists `1480:8804` і tags `1480:8767`; раніше використані Journal article `844:1547`, Auth, Help `1062:1993`, About `1011:1915` і Admin dashboard `1178:2466`. Повний mapping і чесні межі точності — у [FIGMA_HANDOFF](../frontend/FIGMA_HANDOFF.md).
