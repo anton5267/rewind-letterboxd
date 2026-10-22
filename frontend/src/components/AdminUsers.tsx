@@ -201,7 +201,7 @@ export default function AdminUsers({ onHqCountChange }: Props) {
     setDetailOverview(null);
   };
 
-  return <section className={styles.section} aria-label={t("adminUsers")} aria-busy={loading || busyId !== null}>
+  return <section className={`${styles.section} ${styles.usersSection}`} aria-label={t("adminUsers")} aria-busy={loading || busyId !== null}>
     <h2 ref={usersHeading} className={styles.title} tabIndex={-1}>{t("adminUsers")}</h2>
     {actionError && <p className={styles.error} role="alert">{actionError}</p>}
     <form className={styles.toolbar} onSubmit={search} aria-busy={loading}>

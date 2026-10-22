@@ -22,6 +22,7 @@ test("admin desktop hero follows the Figma dashboard frame", async ({ page }) =>
   } }));
   await page.route("**/api/auth/refresh", route => route.fulfill({ status: 401, json: {} }));
   await page.route("**/api/admin/dashboard", route => route.fulfill({ json: { users: 12, activeUsers: 9, hqUsers: 2, movies: 40, reviews: 18, hiddenReviews: 1 } }));
+  await page.route("**/api/admin/users**", route => route.fulfill({ json: { content: [], totalPages: 0, totalElements: 0 } }));
   await page.route("**/api/admin/settings", route => route.fulfill({ json: [
     { key: "site_name", value: "Rewind", updatedBy: null, updatedAt: null },
     { key: "default_locale", value: "uk", updatedBy: null, updatedAt: null },
@@ -46,6 +47,14 @@ test("admin desktop hero follows the Figma dashboard frame", async ({ page }) =>
   expect(cards.every(card => Math.abs(card.width - 368) < 1)).toBe(true);
   expect(cards.every(card => card.height >= 233)).toBe(true);
   expect(new Set(cards.map(card => card.top)).size).toBe(2);
+  const users = page.getByRole("region", { name: "Користувачі" });
+  await expect(users).toBeVisible();
+  const usersBox = await users.boundingBox();
+  expect(usersBox?.x).toBeCloseTo(120, 0);
+  expect(usersBox?.width).toBe(1200);
+  const userToolbar = users.locator('form').first();
+  const userToolbarBox = await userToolbar.boundingBox();
+  expect(userToolbarBox?.width).toBeCloseTo(402, 0);
   const settings = page.locator('section[aria-labelledby="admin-settings-title"]');
   await expect(settings).toBeVisible();
   const settingsBox = await settings.boundingBox();

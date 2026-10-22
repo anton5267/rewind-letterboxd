@@ -371,3 +371,41 @@
 .error {
   color: #ff9a9a;
 }
+
+/* Figma User List frames `1218:2982`/`1260:3404` use a centered title,
+   402 px search control and a single 1200 px table rail. The runtime keeps
+   its live row actions and pagination inside that shell. */
+@media (min-width: 721px) {
+  .usersSection > .title {
+    margin-bottom: 38px;
+    text-align: center;
+  }
+
+  .usersSection > .toolbar {
+    width: min(402px, 100%);
+    margin: 0 auto 36px;
+  }
+
+  .usersSection > .toolbar .control,
+  .usersSection > .toolbar button {
+    min-height: 41px;
+    border-radius: 38px;
+  }
+
+  .usersSection > .list {
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid var(--rewind-line);
+    border-radius: 20px;
+  }
+
+  .usersSection > .list .row {
+    border-width: 0 0 1px;
+    border-radius: 0;
+    padding: 18px 24px;
+  }
+
+  .usersSection > .list .row:last-child {
+    border-bottom: 0;
+  }
+}
