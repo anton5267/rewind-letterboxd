@@ -2,6 +2,93 @@
   margin-top: 32px;
 }
 
+@media (max-width: 520px) {
+  .commentSide {
+    gap: 12px;
+  }
+}
+
+@media (min-width: 721px) {
+  /* Figma Comments frame `1342:3589` uses the same rail and translucency,
+     with shorter 249 px comment cards and the same editorial columns. */
+  .commentsSection > .title {
+    margin-bottom: 38px;
+    text-align: center;
+  }
+
+  .commentsSection > .filter {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 42px;
+  }
+
+  .commentsSection > .filter .control {
+    min-height: 41px;
+    border-radius: 38px;
+  }
+
+  .commentsSection > .list {
+    gap: 84px;
+  }
+
+  .commentsSection > .list .row {
+    display: grid;
+    grid-template-columns: minmax(0, 417px) minmax(0, 1fr);
+    gap: 160px;
+    min-height: 249px;
+    box-sizing: border-box;
+    padding: 23px;
+    border: 0;
+    border-radius: 38px;
+    background: rgba(255, 255, 255, .05);
+    backdrop-filter: blur(4px);
+  }
+
+  .commentsSection > .list .rowActions {
+    margin-top: auto;
+  }
+
+  .commentsSection > .list .rowActions button {
+    min-height: 41px;
+    border-radius: 38px;
+  }
+}
+
+.commentMain,
+.commentSide {
+  min-width: 0;
+}
+
+.commentMain {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
+.commentIdentity,
+.commentText {
+  overflow-wrap: anywhere;
+}
+
+.commentIdentity {
+  color: var(--rewind-paper);
+  font-size: 20px;
+}
+
+.commentText,
+.commentStatus {
+  margin: 0;
+  color: var(--rewind-muted);
+  line-height: 1.55;
+}
+
+.commentSide {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+}
+
 .title {
   margin: 0 0 18px;
   color: var(--rewind-paper);

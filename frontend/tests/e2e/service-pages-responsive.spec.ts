@@ -45,6 +45,10 @@ test("admin desktop hero follows the Figma dashboard frame", async ({ page }) =>
     content: "A Figma aligned review fixture.", rating: 4, isHidden: false, moderatedReason: null,
     moderatedAt: null, createdAt: "2026-01-01T00:00:00Z",
   }], totalPages: 1, totalElements: 1 } }));
+  await page.route("**/api/admin/comments**", route => route.fulfill({ json: { content: [{
+    id: 900022, reviewId: 900021, userId: 900011, username: "profile-fixture", content: "A Figma aligned comment fixture.",
+    isHidden: false, moderatedReason: null, moderatedAt: null, createdAt: "2026-01-01T00:00:00Z",
+  }], totalPages: 1, totalElements: 1 } }));
   await page.goto("/uk/admin");
   const hero = page.locator('main > [class*="hero"]');
   await expect(hero).toHaveCSS("min-height", "1020px");
@@ -97,4 +101,12 @@ test("admin desktop hero follows the Figma dashboard frame", async ({ page }) =>
   expect(reviewBox?.x).toBeCloseTo(120, 0);
   expect(reviewBox?.width).toBe(1200);
   expect(reviewBox?.height).toBeGreaterThanOrEqual(429);
+  const comments = page.getByRole("region", { name: "Коментарі" });
+  await expect(comments).toBeVisible();
+  const commentRow = comments.locator('ul[class*="list"] > li');
+  await expect(commentRow).toHaveCount(1);
+  const commentBox = await commentRow.boundingBox();
+  expect(commentBox?.x).toBeCloseTo(120, 0);
+  expect(commentBox?.width).toBe(1200);
+  expect(commentBox?.height).toBeGreaterThanOrEqual(249);
 });

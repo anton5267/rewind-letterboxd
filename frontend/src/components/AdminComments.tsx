@@ -67,7 +67,7 @@ export default function AdminComments() {
     }
   };
 
-  return <section className={styles.section} aria-label={t("adminComments")} aria-busy={loading || busyId !== null}>
+  return <section className={`${styles.section} ${styles.commentsSection}`} aria-label={t("adminComments")} aria-busy={loading || busyId !== null}>
     <h2 className={styles.title}>{t("adminComments")}</h2>
     {actionError && <p className={styles.error} role="alert">{actionError}</p>}
     <label className={styles.filter}>{t("adminVisibilityFilter")}{" "}
@@ -82,9 +82,15 @@ export default function AdminComments() {
     {data && data.content.length === 0 && <p>{t("noAdminComments")}</p>}
     {data && <>
       <ul className={styles.list}>{data.content.map(comment => <li className={styles.row} key={comment.id}>
-        <div className={styles.rowContent}>{getUserName({ username: comment.username }, t("someone"))}: {comment.content} · {comment.isHidden ? t("hiddenComment") : t("visibleComment")}</div>
-        <div className={styles.rowActions}>
-          <button type="button" aria-busy={busyId === comment.id} disabled={busyId !== null} onClick={() => void toggleHidden(comment)}>{busyId === comment.id ? t("loading") : comment.isHidden ? t("unhideComment") : t("hideComment")}</button>
+        <div className={styles.commentMain}>
+          <strong className={styles.commentIdentity}>{getUserName({ username: comment.username }, t("someone"))}</strong>
+          <p className={styles.commentText}>{comment.content}</p>
+        </div>
+        <div className={styles.commentSide}>
+          <p className={styles.commentStatus}>{comment.isHidden ? t("hiddenComment") : t("visibleComment")}</p>
+          <div className={styles.rowActions}>
+            <button type="button" aria-busy={busyId === comment.id} disabled={busyId !== null} onClick={() => void toggleHidden(comment)}>{busyId === comment.id ? t("loading") : comment.isHidden ? t("unhideComment") : t("hideComment")}</button>
+          </div>
         </div>
       </li>)}</ul>
       <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminCommentsPagination")} busy={loading} statusSuffix={data.totalElements} onPageChange={setPage} />
