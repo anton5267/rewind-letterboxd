@@ -68,6 +68,12 @@ Raw frames `1389:3464`, `1343:3799`, `1319:5033`, `1317:4617`, `1315:4313`, `134
 - Admin Lists `1344:5249` перевірено по raw geometry: translucent cards 1200 px wide, radius 38 px, 417 px text column, 84 px rhythm і 393/364 px content states. Live list cards тепер мають окремі owner/items та visibility/actions колонки; API, confirmation, UK/EN і keyboard actions збережені. `service-pages-responsive.spec.ts` пройшов 2/2 після Docker rebuild.
 - Admin Moderation `1399:3300` перевірено по raw geometry: єдиний translucent workspace 1200×673 з radius 38 px. Queue тепер має цей desktop shell для live filters, selection, bulk hide та retry/loading states; API й accessibility збережені. `service-pages-responsive.spec.ts` пройшов 2/2 після Docker rebuild.
 - Admin Moderator Logs `1404:3804` перевірено по raw geometry: translucent audit cards 1200 px wide, radius 38 px, lead height 348 px, follow-up rows 293 px і 84 px rhythm. Audit actions, локалізація та pagination збережені; `service-pages-responsive.spec.ts` пройшов 2/2 після Docker rebuild.
+
+### Featured Lists `1480:5839` — 22.10.2026
+
+- Raw subtree підтвердив content start y=572, 1200 px desktop rail і три cards 326×249 з 112 px spacing; `PublicLists` тепер застосовує ці bounds лише до `feed=team`.
+- Poster-led card shell, compact title treatment і full-bleed mobile hero вирівняні без зміни `/api/lists/public/team`, localization, focus або retry states.
+- `public-lists-featured-figma.spec.ts`: **2/2 passed**; `npm run verify:build`: PASS, 218 modules.
 - Старі profile reviews отримують nullable `moviePhotoUrl`; frontend сумісний і з попередньою відповіддю API.
 - Journal зберігає API-backed feed/archive/article/audio/newsletter. У mobile article прибрано декоративний control без дії. List 4 desktop `1494:5387` повторно звірено через Figma screenshot/context: compact hero та editorial 3-column rows застосовано до реальних статей без заміни їх Figma fixtures.
 - Journal Article `844:1547` додатково перевірено по raw node geometry: hero frame має 909 px, title target — 58 px, cover rail — 1126×642, а content block починається на 909 px із 251 px editorial inset. Runtime залишається API-backed: одна `coverUrl` використовується як реальне зображення, Figma static collage/author text не підміняють production data. `journal-design-flow.spec.ts` і `editorial-accessibility.spec.ts` разом пройшли 5/5 після Docker web rebuild.

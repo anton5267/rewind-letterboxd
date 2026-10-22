@@ -244,7 +244,7 @@ export default function PublicLists() {
 
   const anyLandingLoading = Object.values(landingLoading).some(Boolean);
 
-  return <main className={`${styles.page} ${isLanding ? styles.landingPage : ""} ${isTagged ? styles.taggedPage : ""} ${isFeedView ? styles.feedPage : ""}`} aria-labelledby={isTagged ? "lists-grid-heading" : "public-lists-title"} aria-busy={loading || tagsLoading || anyLandingLoading}>
+  return <main className={`${styles.page} ${isLanding ? styles.landingPage : ""} ${isTagged ? styles.taggedPage : ""} ${isFeedView ? styles.feedPage : ""} ${feed === "team" ? styles.teamFeed : ""}`} aria-labelledby={isTagged ? "lists-grid-heading" : "public-lists-title"} aria-busy={loading || tagsLoading || anyLandingLoading}>
     <div className={styles.shell}>
       <section className={`${styles.hero} ${isLanding ? styles.landingHero : ""} ${isTagged ? styles.taggedHero : ""} ${isFeedView ? styles.feedHero : ""}`}>
         {isTagged ? <>

@@ -151,6 +151,10 @@ PAT вводиться локально в прихований prompt; його
 Verifier розрізняє COMPLETE/PARTIAL/FAILED і фіксує недоступні ресурси. Не створювати порожні папки як доказ успішного export.
 
 Private bounded Profile/Community raw provenance: workspace `.codex-backups/profile-community-reference-review-20261020/reference-summary.json`. Нового decoder/export або Figma edits у цьому проході не було.
+
+### Featured Lists desktop/mobile follow-up — 22.10.2026
+
+Raw frame `1480:5839` is a 1440×3565 Featured Lists page. Its main content starts at y=572 on a 1200 px rail; the first group contains three 326×249 poster-led cards with 112 px gaps. `PublicLists.tsx` marks only the `team` feed with `teamFeed`, and `PublicLists.module.css` applies the desktop rhythm while retaining the existing compact/recent feed variants. On phones the feed remains one column and the hero is full-bleed within the viewport. The route still reads live `/api/lists/public/team` data and preserves UK/EN, loading/error/empty/retry and keyboard behavior. `public-lists-featured-figma.spec.ts` passed **2/2** after rebuilding the Docker web image. This is a verified frame-specific alignment, not a claim for every Lists variant.
 ### Popular Reviews desktop follow-up — 22.10.2026
 
 Raw frame `1480:4880` confirms a 1440×486 editorial hero under the shared 1440×106 header, a 1200 px content rail at x=120, a 1200×180 Popular reviewers group with 80×80 avatar instances, and a 1200×1473 review group containing four 1200×315 cards. Each card reserves a 175×262 poster slot and a 40 px content gap. `PopularReviews.module.css` now applies those desktop measurements while the route continues using live popular-reviewer and popular-review API responses, localized links, accessible headings and mobile rules. `popular-reviews-figma.spec.ts` checks the measured 1440 px geometry and 393 px no-overflow state; both tests passed after the Docker web rebuild.

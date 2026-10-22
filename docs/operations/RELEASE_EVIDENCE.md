@@ -188,3 +188,10 @@ Push `d703d63` passed GitHub `CI / verify (push)`. The local frontend suite comp
 - Raw source: local frame `825:1378`.
 - Implemented: 361 px mobile identity rail (x=16..377), safe long-name wrapping, and preserved 120×120 avatar at x=136.5/y=190.
 - Verification: `npm run verify:build` PASS (218 modules); `public-profile-design-flow.spec.ts` + `public-profile-desktop-figma.spec.ts` PASS (**2/2**); Docker web image rebuilt and restarted.
+
+### Featured Lists Figma check — 22.10.2026
+
+- Raw source: local archive frame `1480:5839`.
+- Implemented: 1200 px desktop content rail, y=572 content start, three 326×249 cards with 112 px gaps, and a phone-safe full-bleed hero under the `team` feed variant.
+- Verification: `npm run verify:build` PASS (218 modules); `npx playwright test tests/e2e/public-lists-featured-figma.spec.ts` PASS (**2/2**); Docker web image rebuilt and restarted.
+- Contract: live `/api/lists/public/team`, localization, focusable links and loading/error/empty/retry states remain unchanged.

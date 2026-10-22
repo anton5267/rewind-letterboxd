@@ -123,6 +123,13 @@
 ## Межі безпеки роботи
 
 Не змінювати diploma video artifacts, локальний `AGENTS.md`, бази, backups, `.env`, Figma raw references і кеші. Backend змінювати лише за підтвердженим функціональним дефектом; migrations не переписувати. Public routes й API залишаються сумісними; `ProfileReview.moviePhotoUrl` nullable.
+
+### Featured Lists desktop/mobile follow-up — 22.10.2026
+
+- Raw frame `1480:5839` підтверджує 1440×3565 canvas, content start y=572, 1200 px rail та три poster-led cards 326×249 із 112 px gaps.
+- `PublicLists` має окремий `teamFeed` contract для Featured Lists: desktop hero/card rhythm відповідає raw bounds, а mobile зберігає один стовпець і full-bleed hero без горизонтального overflow.
+- Live `/api/lists/public/team`, UK/EN, loading/error/empty/retry, links і keyboard semantics не змінені.
+- `public-lists-featured-figma.spec.ts` пройшов **2/2**; `npm run verify:build` PASS (218 modules) після Docker web rebuild.
 ### Наступний raw-блок — Popular Reviews `1480:4880` (22.10.2026)
 
 - Перечитано локальний raw subtree: desktop hero 1440×486, content rail 1200 px від x=120, reviewer group 1200×180, avatars 80×80, review cards 1200×315 з poster slot 175×262 і 38 px card rhythm.
