@@ -53,6 +53,8 @@ Person/Actor desktop `545:676` і phone `721:1085` перевірені чере
 
 Auth mobile `944:1582`/`944:1828` перевірений у Chrome на 393×852. Login/Register family тепер має standalone dark canvas із back control, без глобальної mobile navigation, збереженим API/auth flow та Figma sign-in footer. `auth-responsive.spec.ts` пройшов 1/1; `npm run verify:build` пройшов (216 modules).
 
+Mobile Auth footer тепер рендерить лише порожній `contentinfo` landmark, щоб приховані desktop-посилання не потрапляли в keyboard tab order. Release responsive matrix повторно пройшла 1/1 на 320/393/768/1440 px.
+
 Початкові backend спроби проти основної dev DB не зараховані: вони отримали access denied через host credentials. Фінальний результат отриманий на чистій ізольованій MySQL з CI credentials; основну БД не змінювали.
 
 ## Figma та UI

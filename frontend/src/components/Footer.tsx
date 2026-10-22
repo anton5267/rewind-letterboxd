@@ -6,8 +6,11 @@ export default function Footer() {
   const { path, t } = useLocale();
   const location = useLocation();
   const mobileAuthFooter = /^\/(uk|en)\/(login|register|forgot-password|reset-password)\/?$/.test(location.pathname);
+  if (mobileAuthFooter) {
+    return <footer className={`${styles.footer} ${styles.mobileAuthFooter}`} aria-label={t("moreNavigation")} />;
+  }
   return (
-    <footer className={`${styles.footer} ${mobileAuthFooter ? styles.mobileAuthFooter : ""}`}>
+    <footer className={styles.footer}>
 
       {/* TOP LINE */}
       <div className={styles.top}>

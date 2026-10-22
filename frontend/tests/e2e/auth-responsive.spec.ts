@@ -11,6 +11,7 @@ test("mobile auth matches the standalone Figma composition", async ({ page }) =>
   await expect(page.getByText("Sign in with", { exact: true })).toBeVisible();
   await expect(page.getByRole("banner")).toHaveCount(1);
   await expect(page.getByRole("contentinfo")).toHaveCount(1);
+  await expect(page.locator("footer a, footer button")).toHaveCount(0);
 
   const geometry = await page.evaluate(() => {
     const main = document.querySelector("main")?.getBoundingClientRect();
