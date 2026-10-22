@@ -153,3 +153,9 @@
 - Raw frame `825:1378` підтверджує identity rail x=16..377 (361 px), avatar 120×120 на x=136.5/y=190 і title anchor y=317.
 - `PublicProfile.module.css` обмежує mobile identity copy 361 px і зберігає anywhere wrapping для довгих display names; API, actions, localization і contextual header не змінені.
 - `public-profile-design-flow.spec.ts` тепер перевіряє bounds довгого title та avatar після повторного route load; разом із desktop suite пройшло **2/2**.
+
+### Global Search desktop all-results follow-up — 22.10.2026
+
+- Raw frame `1480:6991` confirms a 1440 px desktop canvas, 1200 px rail, film row x=120/y=377 with six 174×260 posters, and review cards x=120/y=692 sized 1200×315 with 175×262 poster slots.
+- Desktop `GlobalSearch` keeps category controls keyboard-accessible in the DOM while removing the duplicate visual tab/section bands, places film metadata over the poster rail, and matches the review card rhythm. Live search API, localization and mobile behavior remain unchanged.
+- `global-search-desktop-figma.spec.ts` plus `global-search-alignment.spec.ts` passed **5/5** after Docker web rebuild; `npm run verify:build` passed (218 modules).

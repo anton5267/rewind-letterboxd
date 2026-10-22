@@ -169,3 +169,7 @@ Raw frame `1480:4880` confirms a 1440×486 editorial hero under the shared 1440�
 ### PublicProfile mobile identity follow-up — 22.10.2026
 
 Frame `825:1378` raw nodes place the fallback/avatar at 120×120 and x=136.5/y=190, with the identity title inside the phone content rail x=16..377. The mobile CSS now gives `.identityCopy` a 361 px maximum and allows safe wrapping for long display names. The existing contextual back/search controls, bottom navigation, profile API and no-overflow behavior remain unchanged. `public-profile-design-flow.spec.ts` and `public-profile-desktop-figma.spec.ts` passed **2/2** after the Docker web rebuild.
+
+### Global Search desktop all-results follow-up — 22.10.2026
+
+Raw frame `1480:6991` confirms a 1440 px desktop canvas with a 1200 px content rail, film posters at x=120/y=377 sized 174×260, and review cards at y=692 sized 1200×315 with 175×262 poster slots. `GlobalSearch.module.css` applies this desktop-only geometry while leaving result tabs keyboard-accessible in the DOM, preserving the live global-search API, UK/EN copy, and existing mobile variants. `global-search-desktop-figma.spec.ts` and `global-search-alignment.spec.ts` passed **5/5** after the Docker web rebuild.

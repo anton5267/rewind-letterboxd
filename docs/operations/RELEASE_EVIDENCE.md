@@ -209,3 +209,10 @@ Push `d703d63` passed GitHub `CI / verify (push)`. The local frontend suite comp
 - Implemented: 818 px desktop hero, 1200 px detail rail, six 174×260 desktop posters, and 79×116 four-poster phone rows.
 - Verification: `npm run verify:build` PASS (218 modules); `npx playwright test tests/e2e/public-list-detail-figma.spec.ts tests/e2e/list-mobile-header.spec.ts` PASS (**14/14**); Docker web image rebuilt and restarted.
 - Contract: live detail/like/tag APIs, information dialog focus return, contextual navigation and UK/EN behavior remain unchanged.
+
+### Global Search desktop all-results Figma check — 22.10.2026
+
+- Raw source: local archive frame `1480:6991`.
+- Implemented: 1200 px desktop rail, six 174×260 film posters at y=377, and 1200×315 review cards at y=692 with 175×262 poster slots; duplicate visual tab/section bands are removed while accessible controls remain.
+- Verification: `npm run verify:build` PASS (218 modules); `npx playwright test tests/e2e/global-search-desktop-figma.spec.ts tests/e2e/global-search-alignment.spec.ts` PASS (**5/5**); Docker web image rebuilt and restarted.
+- Contract: live search API, keyboard category navigation, localization, existing mobile variants, and no-overflow behavior remain unchanged.

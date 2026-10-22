@@ -163,3 +163,7 @@ Raw frame `1480:4880` was re-read from the local Figma archive. The desktop rout
 ### PublicProfile mobile identity follow-up — 22.10.2026
 
 The raw `825:1378` phone frame was rechecked for the remaining long-name/avatar cosmetic case. Mobile identity copy is now constrained to the measured 361 px x=16..377 rail, while the 120 px avatar remains centered at x=136.5/y=190. `public-profile-design-flow.spec.ts` asserts the long display name stays inside that rail and retains the avatar bounds; the mobile and desktop PublicProfile Figma suites passed **2/2** after rebuilding web. No API, asset or localization contract changed.
+
+### Global Search desktop all-results follow-up — 22.10.2026
+
+Raw frame `1480:6991` was checked from the local archive: the desktop all-results variant uses a 1200 px rail, six 174×260 film posters from y=377, and 1200×315 review cards from y=692 with 175×262 poster slots. The desktop stylesheet preserves accessible category controls in the DOM while removing their duplicate visual band, places film metadata over the poster rail, and matches the measured review rhythm. Live search responses, keyboard navigation, localization, and mobile behavior remain unchanged. `global-search-desktop-figma.spec.ts` plus the existing alignment suite passed **5/5** after Docker web rebuild; `npm run verify:build` passed (218 modules).
