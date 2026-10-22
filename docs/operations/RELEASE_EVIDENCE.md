@@ -1,6 +1,6 @@
 # Rewind — докази перевірок
 
-Оновлено 21.10.2026, Europe/Berlin. Нижче наведено актуальний локальний release checkpoint. Production VPS не розгорнуто.
+Оновлено 22.10.2026, Europe/Berlin. Нижче наведено актуальний локальний release checkpoint. Production VPS не розгорнуто.
 
 ## Фінальна локальна регресія
 
@@ -54,6 +54,8 @@ Person/Actor desktop `545:676` і phone `721:1085` перевірені чере
 Auth mobile `944:1582`/`944:1828` перевірений у Chrome на 393×852. Login/Register family тепер має standalone dark canvas із back control, без глобальної mobile navigation, збереженим API/auth flow та Figma sign-in footer. `auth-responsive.spec.ts` пройшов 1/1; `npm run verify:build` пройшов (216 modules).
 
 Mobile Auth footer тепер рендерить лише порожній `contentinfo` landmark, щоб приховані desktop-посилання не потрапляли в keyboard tab order. Release responsive matrix повторно пройшла 1/1 на 320/393/768/1440 px.
+
+Останній Auth cleanup commit `42b8e3b` пройшов [GitHub CI run 39700140275](https://github.com/anton5267/rewind-letterboxd/actions/runs/39700140275) за 1m52s: backend tests, frontend build/typecheck і Caddy validation завершилися успішно.
 
 Початкові backend спроби проти основної dev DB не зараховані: вони отримали access denied через host credentials. Фінальний результат отриманий на чистій ізольованій MySQL з CI credentials; основну БД не змінювали.
 
