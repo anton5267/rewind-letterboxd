@@ -47,5 +47,10 @@ test("public profile mobile follows the Figma identity geometry and contains lon
   displayName = "A public profile name that is deliberately very long ".repeat(4);
   await page.goto("/en/users/981234");
   await expect(page.getByRole("heading", { name: displayName, level: 1 })).toBeVisible();
+  const longTitle = await page.getByRole("heading", { name: displayName, level: 1 }).boundingBox();
+  expect(longTitle?.x).toBeGreaterThanOrEqual(16);
+  expect((longTitle?.x ?? 0) + (longTitle?.width ?? 0)).toBeLessThanOrEqual(377);
+  const longAvatar = await page.locator('[class*="avatarFallback"]').first().boundingBox();
+  expect(longAvatar).toMatchObject({ x: 136.5, y: 190, width: 120, height: 120 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });

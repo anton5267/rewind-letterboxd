@@ -429,10 +429,12 @@
 @media (max-width: 400px) {
   .hero { align-items: center; text-align: center; }
   .identity { align-items: center; flex-direction: column; width: 100%; gap: 7px; }
-  .identityCopy { width: 100%; }
+  /* Figma phone frame `825:1378` keeps identity copy inside the 361 px
+     x=16..377 rail so long display names wrap without moving the avatar. */
+  .identityCopy { width: min(100%, 361px); }
   .avatar,
   .avatarFallback { width: 120px; height: 120px; flex-basis: 120px; }
-  .identity h1 { font-size: 26px; line-height: 1.08; text-wrap: balance; }
+  .identity h1 { max-width: 361px; font-size: 26px; line-height: 1.08; overflow-wrap: anywhere; text-wrap: balance; }
   .profileActions { align-items: stretch; justify-content: center; flex-direction: column; width: 100%; }
   .primaryButton,
   .secondaryButton,

@@ -129,3 +129,8 @@
 - `PopularReviews.module.css` тепер має окремий desktop contract для цих bounds; mobile правила, API, UK/EN, loading/error/empty/retry і keyboard links збережено.
 - Додано контрольний `popular-reviews-figma.spec.ts`: desktop bounds і phone no-overflow, **2/2 passed** після Docker web rebuild.
 - Наступний raw audit: вибрати наступний видимий frame з конкретним route/API контрактом; reported/edit admin variants залишаються documented contract gap.
+### PublicProfile mobile long-name follow-up — 22.10.2026
+
+- Raw frame `825:1378` підтверджує identity rail x=16..377 (361 px), avatar 120×120 на x=136.5/y=190 і title anchor y=317.
+- `PublicProfile.module.css` обмежує mobile identity copy 361 px і зберігає anywhere wrapping для довгих display names; API, actions, localization і contextual header не змінені.
+- `public-profile-design-flow.spec.ts` тепер перевіряє bounds довгого title та avatar після повторного route load; разом із desktop suite пройшло **2/2**.

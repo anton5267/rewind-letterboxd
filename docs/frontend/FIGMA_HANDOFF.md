@@ -154,3 +154,6 @@ Private bounded Profile/Community raw provenance: workspace `.codex-backups/prof
 ### Popular Reviews desktop follow-up — 22.10.2026
 
 Raw frame `1480:4880` confirms a 1440×486 editorial hero under the shared 1440×106 header, a 1200 px content rail at x=120, a 1200×180 Popular reviewers group with 80×80 avatar instances, and a 1200×1473 review group containing four 1200×315 cards. Each card reserves a 175×262 poster slot and a 40 px content gap. `PopularReviews.module.css` now applies those desktop measurements while the route continues using live popular-reviewer and popular-review API responses, localized links, accessible headings and mobile rules. `popular-reviews-figma.spec.ts` checks the measured 1440 px geometry and 393 px no-overflow state; both tests passed after the Docker web rebuild.
+### PublicProfile mobile identity follow-up — 22.10.2026
+
+Frame `825:1378` raw nodes place the fallback/avatar at 120×120 and x=136.5/y=190, with the identity title inside the phone content rail x=16..377. The mobile CSS now gives `.identityCopy` a 361 px maximum and allows safe wrapping for long display names. The existing contextual back/search controls, bottom navigation, profile API and no-overflow behavior remain unchanged. `public-profile-design-flow.spec.ts` and `public-profile-desktop-figma.spec.ts` passed **2/2** after the Docker web rebuild.

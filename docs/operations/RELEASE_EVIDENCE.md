@@ -183,3 +183,8 @@ Push `d703d63` passed GitHub `CI / verify (push)`. The local frontend suite comp
 - Implemented: 1440×486 hero, 1200 px rail at x=120, 1200×180 reviewer group, 80×80 reviewer avatars, 1200×315 review cards, and 175×262 poster slots.
 - Verification: `npm run verify:build` PASS (218 modules); `npx playwright test tests/e2e/popular-reviews-figma.spec.ts` PASS (**2/2**); Docker web image rebuilt and restarted.
 - Contract: live review/reviewer APIs, localization, focusable links and mobile overflow behavior remain unchanged.
+### PublicProfile mobile identity check — 22.10.2026
+
+- Raw source: local frame `825:1378`.
+- Implemented: 361 px mobile identity rail (x=16..377), safe long-name wrapping, and preserved 120×120 avatar at x=136.5/y=190.
+- Verification: `npm run verify:build` PASS (218 modules); `public-profile-design-flow.spec.ts` + `public-profile-desktop-figma.spec.ts` PASS (**2/2**); Docker web image rebuilt and restarted.

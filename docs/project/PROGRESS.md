@@ -142,3 +142,6 @@ Production VPS/domain/TLS, SMTP/TMDB credentials, monitoring, server restore dri
 ### Popular Reviews raw alignment — 22.10.2026
 
 Raw frame `1480:4880` was re-read from the local Figma archive. The desktop route now uses the measured 486 px hero, 1200 px content rail at x=120, 1200×180 popular-reviewer group with 80 px avatars, and 1200×315 review cards with 175×262 poster slots. The runtime still renders live `/users/popular-reviewers` and `/reviews/popular` data, localized links and all loading/error/empty/retry states; no Figma fixture text or new endpoint was added. `popular-reviews-figma.spec.ts` passed **2/2** at 1440 and 393 px after rebuilding the web container; `npm run verify:build` passed with 218 modules.
+### PublicProfile mobile identity follow-up — 22.10.2026
+
+The raw `825:1378` phone frame was rechecked for the remaining long-name/avatar cosmetic case. Mobile identity copy is now constrained to the measured 361 px x=16..377 rail, while the 120 px avatar remains centered at x=136.5/y=190. `public-profile-design-flow.spec.ts` asserts the long display name stays inside that rail and retains the avatar bounds; the mobile and desktop PublicProfile Figma suites passed **2/2** after rebuilding web. No API, asset or localization contract changed.
