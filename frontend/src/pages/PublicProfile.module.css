@@ -121,6 +121,7 @@
 }
 
 .identity h1 {
+  display: inline-block;
   max-width: 100%;
   margin: 0;
   overflow-wrap: anywhere;
@@ -386,11 +387,11 @@
 }
 
 @media (max-width: 620px) {
-  .page { padding: 84px 0 92px; }
+  .page { padding: 0 0 92px; }
   .shell { padding: 0 14px; }
-  .hero { align-items: flex-start; flex-direction: column; padding: 14px 20px 24px; }
+  .hero { align-items: flex-start; flex-direction: column; gap: 0; padding: 50px 0 24px; }
   .hero .eyebrow { display: none; }
-  .mobileToolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 10px; width: 100%; margin-bottom: 24px; color: #fff; font-size: 13px; font-weight: 800; text-align: center; }
+  .mobileToolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 10px; width: 100%; margin-bottom: 96px; color: #fff; font-size: 13px; font-weight: 800; text-align: center; }
   .mobileToolbar > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .mobileBack,
   .mobileSearch { position: relative; isolation: isolate; display: grid; width: 44px; height: 44px; place-items: center; color: #fff; text-decoration: none; }
@@ -427,7 +428,7 @@
 
 @media (max-width: 400px) {
   .hero { align-items: center; text-align: center; }
-  .identity { align-items: center; flex-direction: column; width: 100%; }
+  .identity { align-items: center; flex-direction: column; width: 100%; gap: 7px; }
   .identityCopy { width: 100%; }
   .avatar,
   .avatarFallback { width: 120px; height: 120px; flex-basis: 120px; }
@@ -689,8 +690,8 @@
 }
 
 @media (max-width: 400px) {
-  .hero { padding-inline: 14px; }
-  .mobileToolbar { margin-bottom: 20px; }
+  .hero { padding-inline: 0; }
+  .mobileToolbar { margin-bottom: 96px; }
   .profileRailLink { padding-inline: 12px; }
   .stat { min-height: 70px; padding-inline: 6px; }
   .stat strong { font-size: 21px; }

@@ -310,6 +310,17 @@
   .mobilePerson .menuToggle { display: none; }
 
   .mobilePerson .mobileNav { pointer-events: auto; }
+
+  .header.mobilePublicProfile {
+    --header-background: transparent;
+    box-shadow: none;
+    pointer-events: none;
+  }
+
+  .mobilePublicProfile .logo,
+  .mobilePublicProfile .menuToggle { display: none; }
+
+  .mobilePublicProfile .mobileNav { pointer-events: auto; }
 }
 
 @media (max-width: 560px) {

@@ -109,6 +109,7 @@ export default function Header() {
   const mobileSearchHeader = /^\/(uk|en)\/search\/?$/.test(location.pathname);
   const mobileHomeHeader = /^\/(uk|en)\/home\/?$/.test(location.pathname);
   const mobilePersonHeader = /^\/(uk|en)\/people\/(actor|director|producer)\/[^/]+\/?$/.test(location.pathname);
+  const mobilePublicProfileHeader = /^\/(uk|en)\/users\/\d+\/?$/.test(location.pathname);
   const mobileAuthHeader = /^\/(uk|en)\/(login|register|forgot-password|reset-password)\/?$/.test(location.pathname);
   const listParams = new URLSearchParams(location.search);
   const listsLandingHeader = /^\/(uk|en)\/lists\/discover\/?$/.test(location.pathname)
@@ -116,7 +117,7 @@ export default function Header() {
   const listsFeedHeader = listsLandingHeader && Boolean(listParams.get("feed"));
 
   return (
-    <header className={`${styles.header} ${lightHeader ? styles.light : ""} ${mobileDetailHeader ? styles.mobileDetail : ""} ${mobileFilmsHeader ? styles.mobileFilms : ""} ${mobileListDetailHeader ? styles.mobileListDetail : ""} ${mobileSearchHeader ? styles.mobileSearch : ""} ${mobileHomeHeader ? styles.mobileHome : ""} ${mobilePersonHeader ? styles.mobilePerson : ""} ${mobileAuthHeader ? styles.mobileAuth : ""} ${listsLandingHeader ? styles.listsLanding : ""}`}>
+    <header className={`${styles.header} ${lightHeader ? styles.light : ""} ${mobileDetailHeader ? styles.mobileDetail : ""} ${mobileFilmsHeader ? styles.mobileFilms : ""} ${mobileListDetailHeader ? styles.mobileListDetail : ""} ${mobileSearchHeader ? styles.mobileSearch : ""} ${mobileHomeHeader ? styles.mobileHome : ""} ${mobilePersonHeader ? styles.mobilePerson : ""} ${mobilePublicProfileHeader ? styles.mobilePublicProfile : ""} ${mobileAuthHeader ? styles.mobileAuth : ""} ${listsLandingHeader ? styles.listsLanding : ""}`}>
 
       {listsLandingHeader && <div className={styles.listLandingControls}>
         <Link to={path(listsFeedHeader ? "/lists/discover" : "/home")} aria-label={listsFeedHeader ? t("discoverLists") : t("home")}><i className="fa-solid fa-chevron-left" aria-hidden="true" /></Link>
