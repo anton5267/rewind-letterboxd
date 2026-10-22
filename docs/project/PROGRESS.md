@@ -14,6 +14,7 @@
 - Старі profile reviews отримують nullable `moviePhotoUrl`; frontend сумісний і з попередньою відповіддю API.
 - Journal зберігає API-backed feed/archive/article/audio/newsletter. У mobile article прибрано декоративний control без дії. List 4 desktop `1494:5387` повторно звірено через Figma screenshot/context: compact hero та editorial 3-column rows застосовано до реальних статей без заміни їх Figma fixtures.
 - Login/Register/Forgot/Reset використовують спільну desktop/mobile Figma-композицію з локальними assets.
+- Auth frames `605:2173–2176`, `944:1582`, `944:1828` і `944:1887` повторно звірені по raw geometry: desktop 627 px form width, 94 px fields, 89 px actions і route-specific card heights; phone 393×852 має back x32/y52, 290 px controls та окремі Login/Register/Forgot anchors. Forgot отримав Figma `Or` divider, а API, password validation і keyboard flow не змінені. `auth-responsive.spec.ts` + password-validation + completion-focus пройшли 12/12.
 - Help, Contact, Rules, Privacy, Film Data, Account Deletion та About отримали структуровані responsive layouts.
 - Service desktop `1062:1993` повторно звірений через Figma screenshot/raw geometry: hero збільшено до 818 px, title/lead центровано, detail cards переведено у широкі alternating editorial rows; `service-pages-responsive.spec.ts` пройшов 1/1 для всіх шести service routes.
 - Admin dashboard отримав Figma hero/workspace/metrics, зберіг усі users/movies/reviews/comments/lists/moderation/activity/audit/settings actions.

@@ -26,9 +26,11 @@
 }
 
 .card {
+  position: relative;
   width: min(1198px, 100%);
   box-sizing: border-box;
-  padding: 86px max(24px, calc((100% - 628px) / 2)) 82px;
+  min-height: 873px;
+  padding: 94px 24px 82px;
   border: 0;
   border-radius: 50px;
   background: rgba(40, 40, 40, .96);
@@ -47,6 +49,8 @@
 }
 
 .title {
+  max-width: 627px;
+  margin-inline: auto;
   margin: 0;
   color: var(--rewind-paper);
   font-size: 36px;
@@ -65,9 +69,11 @@
 }
 
 .form {
+  width: min(627px, 100%);
+  margin-inline: auto;
   display: grid;
-  gap: 22px;
-  margin-top: 54px;
+  gap: 14px;
+  margin-top: 55px;
   text-align: left;
 }
 
@@ -88,7 +94,7 @@
 
 .input {
   width: 100%;
-  min-height: 72px;
+  min-height: 94px;
   box-sizing: border-box;
   padding: 16px 28px;
   border: 2px solid rgba(255, 255, 255, .24);
@@ -115,7 +121,7 @@
 .button {
   display: inline-flex;
   width: 100%;
-  min-height: 72px;
+  min-height: 89px;
   box-sizing: border-box;
   align-items: center;
   justify-content: center;
@@ -178,6 +184,8 @@
 }
 
 .footer {
+  max-width: 627px;
+  margin-inline: auto;
   margin: 44px 0 0;
   color: var(--rewind-muted);
   font-size: 13px;
@@ -201,8 +209,8 @@
 @media (max-width: 720px) {
   .page {
     min-height: 852px;
-    align-items: start;
-    padding: 198px 12px calc(96px + env(safe-area-inset-bottom));
+    display: block;
+    padding: 0 0 calc(96px + env(safe-area-inset-bottom));
     background:
       linear-gradient(180deg, transparent 0 300px, rgba(21, 21, 21, .78) 500px, var(--rewind-surface) 760px),
       radial-gradient(circle at 48% 0%, rgba(98, 182, 194, .58), transparent 22rem),
@@ -213,12 +221,12 @@
 
   .mobileBack {
     position: absolute;
-    top: 48px;
-    left: 50px;
+    top: 52px;
+    left: 32px;
     z-index: 1;
     display: grid;
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: 30px;
     place-items: center;
     padding: 0;
     border: 1px solid rgba(255, 255, 255, .44);
@@ -257,11 +265,21 @@
     font-weight: 800;
   }
 
-  .card { width: min(393px, 100%); padding: 0 40px 34px; border-radius: 0; background: transparent; box-shadow: none; }
-  .title { font-size: 36px; }
-  .form { gap: 14px; margin-top: 156px; }
-  .input, .button { min-height: 46px; padding-block: 10px; border-width: 1px; }
-  .footer { margin-top: 80px; }
+  .card {
+    width: min(393px, 100%);
+    min-height: 852px;
+    margin-inline: auto;
+    padding-inline: max(16px, calc((100% - 290px) / 2));
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .title { font-size: 36px; line-height: 1.2; }
+  .form { width: 100%; gap: 28px; margin-top: 103px; }
+  .input, .button { min-height: 45px; padding-block: 10px; border-width: 1px; }
+  .button { min-height: 56px; }
+  .social { width: 100%; margin-top: 76px; }
+  .footer { width: 100%; margin-top: 9px; }
 }
 
 @media (max-width: 360px) {

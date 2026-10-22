@@ -31,7 +31,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <main className={styles.page} aria-labelledby="forgot-password-title" aria-busy={loading}>
+    <main className={`${styles.page} ${styles.forgotPage}`} aria-labelledby="forgot-password-title" aria-busy={loading}>
       <div className={styles.card}>
 
         <button
@@ -75,7 +75,7 @@ export default function ForgotPassword() {
           </button>
         </form>
 
-        <div className={styles.divider} aria-hidden="true" />
+        <div className={styles.divider} aria-hidden="true"><span>Or</span></div>
 
         {/* → REGISTER */}
         <Link className={styles.create} to={path("/register")}>{t("createAccount")}</Link>

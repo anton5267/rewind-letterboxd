@@ -11,3 +11,30 @@
 .mobileBack { composes: mobileBack from "./AuthShared.module.css"; }
 .social { composes: social from "./AuthShared.module.css"; }
 .socialMark { composes: socialMark from "./AuthShared.module.css"; }
+.registerPage { composes: page from "./AuthShared.module.css"; }
+
+.registerPage .card { min-height: 1011px; }
+.registerPage .form { margin-top: 58.4px; }
+.registerPage .button { margin-top: 32px; }
+
+@media (min-width: 721px) {
+  .registerPage .footer { margin-top: 191px; }
+}
+
+@media (max-width: 720px) {
+  .registerPage .card { padding-top: 101px; }
+  .registerPage .form { margin-top: 103px; }
+  .registerPage .passwordHint {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .registerPage .button { margin-top: 28px; }
+  .registerPage .footer { margin-top: 3px; }
+}

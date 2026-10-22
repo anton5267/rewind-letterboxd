@@ -30,7 +30,7 @@ export default function Login() {
   };
 
   return (
-    <main className={styles.page} aria-labelledby="login-page-title" aria-busy={loading}>
+    <main className={`${styles.page} ${styles.loginPage}`} aria-labelledby="login-page-title" aria-busy={loading}>
       <div className={styles.card}>
         <button type="button" className={styles.mobileBack} aria-label={t("return")} onClick={() => navigate(path("/home"))}>←</button>
         <p className={styles.eyebrow}>{t("accountEyebrow")}</p>

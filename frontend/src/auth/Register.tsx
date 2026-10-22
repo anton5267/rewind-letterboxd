@@ -40,7 +40,7 @@ export default function Register() {
 
   if (success) {
     return (
-      <main className={styles.page} aria-labelledby="register-success-title" aria-busy={false}>
+      <main className={`${styles.page} ${styles.registerPage}`} aria-labelledby="register-success-title" aria-busy={false}>
         <div className={styles.card}>
           <p className={styles.eyebrow}>{t("accountEyebrow")}</p>
           <h1 ref={successHeading} tabIndex={-1} className={styles.title} id="register-success-title" aria-live="polite">{t("accountCreated")}</h1>
@@ -58,7 +58,7 @@ export default function Register() {
   }
 
   return (
-    <main className={styles.page} aria-labelledby="register-page-title" aria-busy={loading}>
+    <main className={`${styles.page} ${styles.registerPage}`} aria-labelledby="register-page-title" aria-busy={loading}>
       <div className={styles.card}>
         <button type="button" className={styles.mobileBack} aria-label={t("return")} onClick={() => navigate(path("/home"))}>←</button>
         <p className={styles.eyebrow}>{t("accountEyebrow")}</p>

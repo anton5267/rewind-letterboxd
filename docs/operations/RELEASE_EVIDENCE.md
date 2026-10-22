@@ -69,7 +69,7 @@ Movie Details desktop `39:2`/`61:244` додатково перевірені ч
 
 Person/Actor desktop `545:676` і phone `721:1085` перевірені через local inventory та browser preview. Реалізація має full-bleed identity hero, 265 px desktop avatar, 120 px mobile avatar, compact mobile back/filter toolbar і 1200 px desktop або чотириколонкову mobile filmography grid; producer-flow suite пройшов 2/2 разом із API-backed navigation та mobile filter toggle.
 
-Auth mobile `944:1582`/`944:1828` перевірений у Chrome на 393×852. Login/Register family тепер має standalone dark canvas із back control, без глобальної mobile navigation, збереженим API/auth flow та Figma sign-in footer. `auth-responsive.spec.ts` пройшов 1/1; `npm run verify:build` пройшов (216 modules).
+Auth `605:2173–2176` і mobile `944:1582`/`944:1828`/`944:1887` перевірені через raw geometry та Chrome: desktop 627 px form width, 94 px inputs, 89 px actions і route-specific cards; phone 393×852 має back x32/y52, 290 px controls і Login/Register/Forgot anchors. Додано `Or` divider у Forgot без API зміни. `auth-responsive.spec.ts`, password-validation і completion-focus пройшли 12/12; `npm run verify:build` PASS (218 modules).
 
 Mobile Auth footer тепер рендерить лише порожній `contentinfo` landmark, щоб приховані desktop-посилання не потрапляли в keyboard tab order. Release responsive matrix повторно пройшла 1/1 на 320/393/768/1440 px; до неї додано unknown-route 404 state.
 
