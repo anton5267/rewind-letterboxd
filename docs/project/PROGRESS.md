@@ -145,6 +145,12 @@ Plugin читає структуру, screenshots, assets, variables і context 
 ## Зовнішні залежності
 
 Production VPS/domain/TLS, SMTP/TMDB credentials, monitoring, server restore drill і погоджений Journal content залишаються окремою інфраструктурною фазою. Вони не блокують завершення коду та локальної регресії.
+
+### Popular Lists `1480:5390` / `1480:7927` — 22.10.2026
+
+- Desktop raw geometry підтвердила 1200 px rail, 1200×339 list rows, hero content start 628 px і first row y=813; phone variant підтвердила x=16..377, 361 px cards та 323×116 five-poster strips.
+- Feed shell, heading rhythm і compact mobile poster width тепер відповідають цим bounds без зміни `/api/lists/public/popular`, sorting/filter navigation або localization.
+- `public-lists-popular-figma.spec.ts` пройшов 2/2; у спільному проході Popular + Featured Lists — **4/4**. Build — PASS, 218 modules.
 ### Popular Reviews raw alignment — 22.10.2026
 
 Raw frame `1480:4880` was re-read from the local Figma archive. The desktop route now uses the measured 486 px hero, 1200 px content rail at x=120, 1200×180 popular-reviewer group with 80 px avatars, and 1200×315 review cards with 175×262 poster slots. The runtime still renders live `/users/popular-reviewers` and `/reviews/popular` data, localized links and all loading/error/empty/retry states; no Figma fixture text or new endpoint was added. `popular-reviews-figma.spec.ts` passed **2/2** at 1440 and 393 px after rebuilding the web container; `npm run verify:build` passed with 218 modules.

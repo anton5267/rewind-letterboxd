@@ -130,6 +130,12 @@
 - `PublicLists` має окремий `teamFeed` contract для Featured Lists: desktop hero/card rhythm відповідає raw bounds, а mobile зберігає один стовпець і full-bleed hero без горизонтального overflow.
 - Live `/api/lists/public/team`, UK/EN, loading/error/empty/retry, links і keyboard semantics не змінені.
 - `public-lists-featured-figma.spec.ts` пройшов **2/2**; `npm run verify:build` PASS (218 modules) після Docker web rebuild.
+
+### Popular Lists desktop/mobile follow-up — 22.10.2026
+
+- Raw frames `1480:5390` and `1480:7927` підтверджують 1200 px desktop rail, 1200×339 editorial rows від y=813 та phone rail x=16..377 із 361 px cards, 323×116 poster strips і 12 px row rhythm.
+- `PublicLists.module.css` тепер вирівнює feed shell, heading/card y-rhythm і compact poster rail для `feed=popular`; API, sort/filter links, UK/EN і keyboard semantics збережено.
+- `public-lists-popular-figma.spec.ts` разом із Featured Lists suite пройшов **4/4** після Docker web rebuild; `npm run verify:build` PASS.
 ### Наступний raw-блок — Popular Reviews `1480:4880` (22.10.2026)
 
 - Перечитано локальний raw subtree: desktop hero 1440×486, content rail 1200 px від x=120, reviewer group 1200×180, avatars 80×80, review cards 1200×315 з poster slot 175×262 і 38 px card rhythm.
