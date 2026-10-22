@@ -2,6 +2,10 @@
 
 Оновлено 22.10.2026. Тут зберігаються джерела дизайну й відповідність frames коду. Порядок роботи — лише у [PLAN.md](../../PLAN.md), результати перевірок — у [RELEASE_EVIDENCE.md](../operations/RELEASE_EVIDENCE.md).
 
+## Остання звірка — PublicProfile desktop
+
+Raw descendants frames `238:596` (Profile), `122:176` (Films) і `175:619` (Lists) зафіксували desktop geometry: full-bleed hero 1440×1020, avatar 265×265, identity title 58 px, navigation rail 1200×79, section headings 24 px і poster cards 174×260 у шість колонок із 31 px gap. Ці значення внесені до `PublicProfile.module.css` для `min-width: 1024px`. Figma photo fill не підмінений вигаданим asset; runtime продовжує використовувати API profile/avatar fallback. Перевірки: `npm run verify:build` PASS, `public-profile-design-flow.spec.ts` + `public-profile-desktop-figma.spec.ts` **2/2** після Docker web rebuild.
+
 ## Локально отримані джерела
 
 Основне live-джерело: Figma Design copy `BDO9GO1oscOeUTcu4VXVKA`, доступна через Figma plugin. 20.10.2026 підтверджено: повна metadata сторінки `0:1`, design context, screenshots, variables і тимчасові asset URLs для конкретних nodes. Контрольні nodes `560:1003` (Movie phone, 393×1908) і `825:1378` (Public Profile phone, 393×2355) повернули повний context та окремі screenshots. Node IDs збігаються з інвентарем нижче, тому це доступна копія того самого дипломного макета, а не нова несумісна дизайн-система.

@@ -128,6 +128,12 @@ Figma 404 frame `361:778` реалізовано як локалізований
 - Journal Article geometry commit `d68eeec`: [CI / verify (push) run 39725805058](https://github.com/anton5267/rewind-letterboxd/actions/runs/39725805058) PASS. Public Profile phone geometry commit `8ce4419`: [CI / verify (push) run 39726412078](https://github.com/anton5267/rewind-letterboxd/actions/runs/39726412078) PASS.
 - Історичний checkpoint перед поточним UI-проходом: [GitHub CI для `f0df409`](https://github.com/anton5267/rewind-letterboxd/actions/runs/39485802412).
 
+### PublicProfile desktop Figma follow-up — 22.10.2026
+
+Raw frames `238:596`, `122:176` і `175:619` були повторно прочитані з локального Figma archive. Desktop route тепер має виміряні 1440×1020 full-bleed hero, 265×265 avatar, 58 px identity title, 1200×79 profile rail, 24 px section headings і 174×260 poster cards у шість колонок із 31 px gap. API-backed profile data, avatar fallback, mobile geometry, localization і accessibility не змінювалися; оригінальний Figma photo fill не вигадувався без локального asset.
+
+Перевірки після `docker compose build web` та `docker compose up -d web`: `npm run verify:build` — PASS (218 modules), `public-profile-design-flow.spec.ts` + `public-profile-desktop-figma.spec.ts` — **2/2**, no horizontal overflow.
+
 ## Збереження даних
 
 - Основні Docker volumes не видалялися; `down -v` не виконувався.
