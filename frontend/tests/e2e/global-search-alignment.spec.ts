@@ -130,8 +130,11 @@ for (const locale of ["uk", "en"] as const) {
     // This corner lies under the fixed header; it must reach the local back link.
     await back.click({ position: { x: 5, y: 5 } });
     await expect(page).toHaveURL(new RegExp(`/${locale}/home$`));
-    await expect(header.getByRole("link", { name: "REWIND", exact: true })).toBeVisible();
-    await expect(header.getByRole("button", { name: locale === "uk" ? "Меню" : "Menu", exact: true })).toBeVisible();
+    // The Figma Home phone frame uses the contextual bottom navigation only;
+    // the upper logo/menu remain hidden on Home just like on Search.
+    await expect(header.getByRole("link", { name: "REWIND", exact: true })).toBeHidden();
+    await expect(header.getByRole("button", { name: locale === "uk" ? "Меню" : "Menu", exact: true })).toBeHidden();
+    await expect(header.locator("nav:visible a")).toHaveCount(5);
     await page.goBack();
     await expect(input).toHaveValue(query);
     await expect(selector).toHaveValue("all");
