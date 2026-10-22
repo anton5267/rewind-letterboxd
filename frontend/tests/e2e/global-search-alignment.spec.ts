@@ -77,9 +77,13 @@ for (const locale of ["uk", "en"] as const) {
     await page.goto(`/${locale}/search?q=${encodeURIComponent(query)}`);
     const main = page.getByRole("main");
     const selector = main.getByRole("combobox", { name: locale === "uk" ? "Показати результати" : "Show results for", exact: true });
+    const mobileFilter = main.getByRole("button", { name: locale === "uk" ? "Показати результати" : "Show results for", exact: true });
     const input = page.locator("#global-search-query");
     await expect(main).toHaveAttribute("aria-busy", "false");
     await expect(selector).toBeVisible();
+    await expect(mobileFilter).toBeVisible();
+    await mobileFilter.click();
+    await expect(selector).toBeFocused();
     await expect(selector.locator('option[value="films"]')).toHaveText(`${locale === "uk" ? "Фільми" : "Films"} (21)`);
     await expect(selector.locator("option")).toHaveCount(8);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { searchGlobal, type GlobalSearchResponse } from "../api/search.api";
 import ResilientImage from "../components/ResilientImage";
@@ -36,6 +36,7 @@ export default function GlobalSearch() {
   const [loading, setLoading] = useState(Boolean(query));
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
+  const categorySelectRef = useRef<HTMLSelectElement>(null);
 
   useEffect(() => {
     setInput(query);
@@ -89,6 +90,13 @@ export default function GlobalSearch() {
     setSearchParams(next);
   };
 
+  const focusCategorySelect = () => {
+    const select = categorySelectRef.current;
+    if (!select) return;
+    select.focus({ preventScroll: true });
+    select.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  };
+
   const { setTabRef, handleKeyDown } = useRovingTabs(searchTabs, selectTab);
 
   const tabLabel = (item: SearchTab) => item === "all" ? t("allSearchResults") : item === "films" ? t("films") : item === "users" ? t("users") : item === "lists" ? t("searchLists") : item === "tags" ? t("searchTags") : item === "people" ? t("searchPeople") : item === "reviews" ? t("searchReviews") : t("journal");
@@ -111,6 +119,9 @@ export default function GlobalSearch() {
             <p className={styles.eyebrow}>{t("discoverEyebrow")}</p>
             <h1 id="global-search-title">{t("globalSearch")}</h1>
           </div>
+          {query && <button className={styles.mobileFilter} type="button" aria-label={t("showSearchResultsFor")} onClick={focusCategorySelect}>
+            <i className="fa-solid fa-sliders" aria-hidden="true" />
+          </button>}
         </div>
         <p className={styles.heroIntro}>{t("globalSearchIntro")}</p>
         <form className={styles.searchForm} onSubmit={submit} aria-busy={loading}>
@@ -123,7 +134,7 @@ export default function GlobalSearch() {
 
       {query && <div className={styles.matchesHeading}>
         <h2>{t("showingSearchMatches")} “{query}”</h2>
-        <select className={styles.categorySelect} aria-label={t("showSearchResultsFor")} aria-controls="global-search-results" value={tab} onChange={event => selectTab(event.target.value as SearchTab)}>
+        <select ref={categorySelectRef} className={styles.categorySelect} aria-label={t("showSearchResultsFor")} aria-controls="global-search-results" value={tab} onChange={event => selectTab(event.target.value as SearchTab)}>
           {searchTabs.map(item => <option value={item} key={item}>{tabLabel(item)}{item !== "all" && resultCounts ? ` (${resultCounts[item]})` : ""}</option>)}
         </select>
       </div>}

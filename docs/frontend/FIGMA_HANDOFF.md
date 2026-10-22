@@ -38,7 +38,7 @@ Auth mobile Home `1327:3210` додатково експортовано як PN
 - Service/About: Help `1062:1993` і About `1011:1915` використані для hero, navigation і structured content; ті самі правила застосовані до Contact, Rules, Privacy, Film Data та Account Deletion.
 - Admin dashboard `1178:2466`: desktop identity/workspace hero now follows the 1020 px Figma frame with 272 px avatar, layered over the existing API-backed admin sections. Поведінкові users/movies/reviews/comments/lists/moderation/activity/audit/settings сценарії залишилися без контрактних змін.
 - Public Profile phone `825:1378`: повторна перевірка на 320/393/768/1440 підтвердила 120 px avatar, перенос довгого імені, focus і відсутність horizontal overflow.
-- Global Search phone: `1480:8432`, `1480:8804` і `1480:8767` отримані через plugin із screenshots/context. Реалізація має шість справжніх shortcut routes, 361 px list cards із п’ятьма overlapping posters та багаторядкові tag pills; перевірено при 393 px у UK/EN без overflow.
+- Global Search phone: `1480:8432`, `1480:8804`, `1480:8767` і `1480:8594` отримані через plugin із screenshots/context. Реалізація має шість справжніх shortcut routes, 361 px list cards із п’ятьма overlapping posters, багаторядкові tag pills і mobile slider trigger, який відкриває вже наявний native category select; перевірено при 393 px у UK/EN без overflow.
 
 Після цих змін production build пройшов повну регресію 127/127. Це підтверджує маршрути, стани, локалізацію й доступність; pixel-perfect твердження обмежене конкретними переліченими screenshots/context, а не всією сторінкою `0:1`.
 
@@ -65,7 +65,7 @@ FigJam — джерело аналізу, архітектури, персон �
 | Search shortcuts phone | `1480:8432` → 393×852 | `/search` → GlobalSearch | Screenshot/context: шість localized real-route rows у dark 52 px cards; 393 px UK/EN browser verification, keyboard focus і no-overflow підтверджені |
 | Filter / show-results fragments | `1480:7611` → 295×1416; `1480:7595` → 197×319 | Search controls | Reference fragments; не окремі routes |
 | Global Search all / no matches | `1480:8934` → 393×2801; `1480:8856` → 393×852 | `/search` → GlobalSearch | PNG/raw alignment: All poster rail і content order, compact Empty/white Home CTA. Query/category controls залишені доступними також у Empty; UK/EN copy та реальні counts збережено |
-| Global Search lists / tags / films phone | `1480:8804`, `1480:8767`, `1480:8594` → 393×852 | `/search?tab=...` | Plugin screenshots/context: Lists має 361 px cards і п’ять 79×116 overlapping posters; Tags переносить pills у кілька рядків; Films зберігає 4-column grid. Native category select замінює desktop roving tabs; geometry/no-overflow перевірені browser test |
+| Global Search lists / tags / films phone | `1480:8804`, `1480:8767`, `1480:8594` → 393×852 | `/search?tab=...` | Plugin screenshots/context: Lists має 361 px cards і п’ять 79×116 overlapping posters; Tags переносить pills у кілька рядків; Films зберігає 4-column grid. Mobile hero має Figma slider trigger, який фокусує native category select; geometry/no-overflow перевірені browser test |
 | Global Search lists desktop | `1480:7490` → 1440×1518 | `/search?tab=lists` | Alignment |
 | Global Search tags desktop | `1480:7445` → 1440×1024 | `/search?tab=tags` | Alignment |
 | Global Search cast / members desktop | `1480:7390` → 1440×1392 | `/search` → GlobalSearch | Alignment |
