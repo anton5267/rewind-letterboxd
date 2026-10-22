@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("guest opens a producer filmography from movie details", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.route("**/api/users/me", route => route.fulfill({ status: 401, json: {} }));
   await page.route("**/api/auth/refresh", route => route.fulfill({ status: 401, json: {} }));
   await page.route("**/api/movies/900001/details", route => route.fulfill({ json: {
@@ -46,6 +47,12 @@ test("guest opens a producer filmography from movie details", async ({ page }) =
 
   await expect(page).toHaveURL(/\/uk\/people\/producer\/900002$/);
   await expect(page.getByRole("heading", { level: 1, name: "Producer Fixture" })).toBeVisible();
+  const hero = page.locator("main > section").first();
+  await expect(hero).toHaveCSS("min-height", "827px");
+  const avatar = await hero.locator('[class*="avatar"]').boundingBox();
+  expect(avatar?.width).toBeCloseTo(265, 0);
+  const filmography = await page.locator('section[aria-labelledby="filmography-title"]').boundingBox();
+  expect(filmography?.width).toBeCloseTo(1200, 0);
   await expect(page.getByText("Продюсери", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { level: 3, name: "Producer flow film" })).toBeVisible();
 });

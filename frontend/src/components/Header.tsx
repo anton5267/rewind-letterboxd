@@ -100,7 +100,9 @@ export default function Header() {
     }
   };
 
-  const lightHeader = /^\/(uk|en)\/(journal\/|people\/)/.test(location.pathname);
+  // Person/filmography pages use the same dark canvas as the Figma Actor frames;
+  // only Journal keeps its light editorial header treatment.
+  const lightHeader = /^\/(uk|en)\/journal\//.test(location.pathname);
   const mobileDetailHeader = /^\/(uk|en)\/(films|reviews)\/[^/]+\/?$/.test(location.pathname);
   const mobileListDetailHeader = /^\/(uk|en)\/lists\/public\/[^/]+\/?$/.test(location.pathname);
   const mobileSearchHeader = /^\/(uk|en)\/search\/?$/.test(location.pathname);
