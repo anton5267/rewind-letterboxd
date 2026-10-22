@@ -18,7 +18,7 @@
 - Service desktop `1062:1993` повторно звірений через Figma screenshot/raw geometry: hero збільшено до 818 px, title/lead центровано, detail cards переведено у широкі alternating editorial rows; `service-pages-responsive.spec.ts` пройшов 1/1 для всіх шести service routes.
 - Admin dashboard отримав Figma hero/workspace/metrics, зберіг усі users/movies/reviews/comments/lists/moderation/activity/audit/settings actions.
 - Lists landing повернув видиму feed navigation і точний UK/EN зміст після regression failure; links залишаються клавіатурно доступними.
-- Global Search отримав mobile shortcuts із шістьма реальними routes, а list/tag results — Figma-aligned poster stack і перенесення тегів без horizontal overflow.
+- Global Search отримав mobile shortcuts із шістьма реальними routes, а list/tag results — Figma-aligned poster stack і перенесення тегів без horizontal overflow. Додатковий mobile reference `1480:6217` звірений по raw hierarchy: show-results native select має 160 px trigger geometry без втрати keyboard/URL semantics.
 - Tag search mobile `1480:8527` повторно звірений у Figma: заголовок і кількість тепер стоять над poster rail, картка має 16 px radius і 138 px poster area; targeted list discovery tests 3/3 passed.
 - Movie Details desktop `39:2`/`61:244` знайдені в локальному Figma inventory й повторно відкриті в canvas: застосовано dark full-bleed hero, 811 px backdrop, 275 px poster, desktop Rating/Cast rails і dark six-column content rail; targeted Movie Details tests 5/5 passed.
 - Person desktop `545:676` перевірений у canvas та inventory: hero став full-bleed із 265 px centered avatar, а filmography отримала 1200 px six-column rail; API-backed single feed збережено без вигаданого Films Produced.
