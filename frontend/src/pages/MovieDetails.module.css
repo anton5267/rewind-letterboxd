@@ -493,7 +493,7 @@
 
 .empty {
   margin: 0;
-  color: #6d6862;
+  color: #bdb7b0;
 }
 
 .similarGrid {
@@ -650,7 +650,7 @@
 }
 
 .signIn a {
-  color: var(--rewind-purple);
+  color: #d0a8ff;
   font-weight: 700;
 }
 

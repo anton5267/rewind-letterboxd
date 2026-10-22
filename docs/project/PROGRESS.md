@@ -34,7 +34,7 @@
 | Gate | Результат |
 | --- | --- |
 | Frontend typecheck/build | PASS; 218 modules |
-| Playwright | **127 passed**, 0 failed/skipped/flaky/retries; 115 standard + 12 disposable admin fixture |
+| Playwright | Historical checkpoint **127 passed**; latest local run 115 passed, 5 failures, 12 skips. Movie Details WCAG axe rerun 1/1 after contrast fix; remaining failures are tracked in RELEASE_EVIDENCE. |
 | Backend Maven | **87 tests**, 0 failures/errors/skips |
 | Local Docker | API health 200, web 200; images перебудовані зі збереженням DB/`.env` |
 | API/contracts/security/reset | PASS |
