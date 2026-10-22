@@ -921,8 +921,9 @@
     line-height: 1.2;
   }
 
-  /* Cast is represented by the dedicated Cast & Crew rail in the Figma frame. */
-  .heroCopy .credits { display: none; }
+  /* Keep the API-backed director/producer/actor links available on desktop;
+     the dedicated Cast & Crew rail below supplies the compact visual summary. */
+  .heroCopy .credits { display: grid; margin-top: 28px; }
 
   .heroLinks {
     max-width: 760px;
