@@ -14,6 +14,33 @@ test("service pages use the Figma editorial hero and retain route navigation", a
   }
 });
 
+test("service page sections preserve the Figma editorial rhythm across breakpoints", async ({ page }) => {
+  const expectedSections = { help: 6, contact: 3, rules: 9, privacy: 5, "film-data": 2, "delete-account": 4 };
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  for (const [route, count] of Object.entries(expectedSections)) {
+    await page.goto(`/en/${route}`);
+    const article = page.locator("main > article");
+    await expect(article.locator("section")).toHaveCount(count);
+    const firstRow = article.locator("section").first();
+    const firstHeading = firstRow.getByRole("heading", { level: 3 });
+    await expect(firstHeading).toBeVisible();
+    const rowBox = await firstRow.boundingBox();
+    expect(rowBox?.x).toBeCloseTo(120, 0);
+    expect(rowBox?.width).toBe(1200);
+  }
+
+  await page.setViewportSize({ width: 393, height: 844 });
+  for (const [route, count] of Object.entries(expectedSections)) {
+    await page.goto(`/uk/${route}`);
+    const article = page.locator("main > article");
+    await expect(article.locator("section")).toHaveCount(count);
+    await expect(article.locator("section").first().getByRole("heading", { level: 3 })).toBeVisible();
+    await expect(article.locator("section").first().locator("p")).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(393);
+  }
+});
+
 test("admin desktop hero follows the Figma dashboard frame", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.route("**/api/users/me", route => route.fulfill({ json: {

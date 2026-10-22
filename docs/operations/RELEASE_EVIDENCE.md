@@ -146,6 +146,10 @@ Raw frame `1011:1915` confirms the About composition: 1440×818 full-bleed hero,
 
 After the Docker web rebuild, `npm run verify:build` passed (218 modules) and `about-figma.spec.ts` passed **1/1** at 1440 and 393 px.
 
+### Service editorial variants — 22.10.2026
+
+Raw service frames confirmed the shared 1440×818 hero, 58 px title, 24 px lead, 1200 px content rail and 22/20 px editorial typography. `ServicePage` now uses route-specific localized sections for Help, Contact, Rules, Privacy, Film Data and Account Deletion, with no API or asset contract changes. After rebuilding Docker web, `service-pages-responsive.spec.ts` passed **3/3**, covering hero/nav, desktop section counts and rails, and UK/EN 393 px no-overflow.
+
 ## Збереження даних
 
 - Основні Docker volumes не видалялися; `down -v` не виконувався.

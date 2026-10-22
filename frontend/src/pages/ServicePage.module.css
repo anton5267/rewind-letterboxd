@@ -104,10 +104,11 @@
 
   .content {
     width: min(1200px, calc(100% - 48px));
+    margin-top: -190px;
     padding-top: 64px;
   }
 
-  .content h2 { margin-bottom: 28px; }
+  .content h2 { display: none; }
 
   .detailGrid {
     grid-template-columns: 1fr;
@@ -127,7 +128,12 @@
   }
 
   .detailCard:nth-child(even) { grid-template-columns: minmax(0, 1fr) minmax(220px, .42fr); }
-  .detailCard:nth-child(even) h3 { grid-column: 1; grid-row: 1; }
-  .detailCard:nth-child(even) span { grid-column: 2; grid-row: 1; }
-  .detailCard h3 { margin: 0; font-size: 28px; line-height: 1.25; }
+  .detailCard:nth-child(even) > div { grid-column: 1; grid-row: 1; }
+  .detailCard:nth-child(even) > span { grid-column: 2; grid-row: 1; }
+  .detailCard h3 { margin: 0 0 20px; font-size: 28px; line-height: 1.25; }
+  .detailCard p { max-width: 66ch; margin: 0; color: #d8d5d0; font-size: 20px; line-height: 1.45; }
+
+  .content-contact { margin-top: -56px; }
+  .content-privacy { margin-top: -116px; }
+  .content-film-data { margin-top: -98px; }
 }

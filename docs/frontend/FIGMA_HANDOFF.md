@@ -10,6 +10,8 @@ Raw own-profile frames `363:289`/`363:411` повторно перевірені
 
 About frame `1011:1915` окремо звірений по raw geometry: hero 1440×818, title 58 px, intro 24 px, content rail 1200 px і перший heading на y=713. `About.module.css` використовує цей desktop overlap shell від 721 px, а mobile layout, локалізація й TMDB attribution залишилися. `about-figma.spec.ts` пройшов 1/1 на 1440/393 px; відсутній локальний photo fill не замінюється вигаданим asset.
 
+Service variants `1062:1993` (Help), `1122:2497` (Contact), `1162:2193` (Frequent Questions), `1162:2305` (Film Data), `1164:2398` (Important Data), `1164:2679` (Privacy), `1164:2790` (Rules), `1176:2515` (Account Deletion) були прочитані з локального raw archive. Їхній спільний shell має 1440×818 hero, 58 px title, 24 px lead, 1200 px content rail і 22/20 px heading/body typography; row counts і editorial offsets залежать від route. `ServicePage.tsx` тепер зберігає живі service routes та локалізований текст у цій структурі, без вигаданих API або assets. `service-pages-responsive.spec.ts` пройшов 3/3 на desktop і 393 px UK/EN.
+
 ## Локально отримані джерела
 
 Основне live-джерело: Figma Design copy `BDO9GO1oscOeUTcu4VXVKA`, доступна через Figma plugin. 20.10.2026 підтверджено: повна metadata сторінки `0:1`, design context, screenshots, variables і тимчасові asset URLs для конкретних nodes. Контрольні nodes `560:1003` (Movie phone, 393×1908) і `825:1378` (Public Profile phone, 393×2355) повернули повний context та окремі screenshots. Node IDs збігаються з інвентарем нижче, тому це доступна копія того самого дипломного макета, а не нова несумісна дизайн-система.
