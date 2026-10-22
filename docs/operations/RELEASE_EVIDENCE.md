@@ -140,6 +140,12 @@ Raw own-profile frames `363:289`/`363:411` confirm a 1020 px identity stage, 265
 
 After the Docker web rebuild, `npm run verify:build` passed (218 modules) and `profile-alignment.spec.ts` passed **10/10** across UK/EN, retry/error, legacy poster, keyboard and no-overflow checks.
 
+### About desktop Figma follow-up — 22.10.2026
+
+Raw frame `1011:1915` confirms the About composition: 1440×818 full-bleed hero, 58 px title, 24 px intro, a 1200 px editorial rail and the first heading at y=713. `About.module.css` now uses that measured desktop overlap shell from 721 px; localized copy, TMDB attribution and mobile overflow behavior remain intact. The original photo fill is not fabricated without a local asset.
+
+After the Docker web rebuild, `npm run verify:build` passed (218 modules) and `about-figma.spec.ts` passed **1/1** at 1440 and 393 px.
+
 ## Збереження даних
 
 - Основні Docker volumes не видалялися; `down -v` не виконувався.

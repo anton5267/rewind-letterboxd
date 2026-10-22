@@ -50,3 +50,72 @@
   .story section { padding-block: 24px; }
   .story p { font-size: 15px; }
 }
+
+/* Figma About frame `1011:1915`: 818px hero, 1200px editorial rail,
+   58px title and 24px lead. The original photo fill is unavailable locally,
+   so the existing gradient remains the honest fallback. */
+@media (min-width: 721px) {
+  .page {
+    padding: 0 0 60px;
+    background: #1f1f1f;
+  }
+
+  .hero {
+    width: 100vw;
+    min-height: 818px;
+    box-sizing: border-box;
+    margin-left: calc(50% - 50vw);
+    place-content: start center;
+    padding: 280px 24px 120px;
+    background:
+      linear-gradient(180deg, rgba(0, 0, 0, .08), rgba(0, 0, 0, .88)),
+      radial-gradient(circle at 48% 0%, rgba(95, 183, 194, .72), transparent 36rem),
+      radial-gradient(circle at 96% 0%, rgba(210, 159, 74, .8), transparent 36rem),
+      #111417;
+  }
+
+  .title {
+    max-width: 534px;
+    margin: 0 auto 8px;
+    font-size: 58px;
+    line-height: 1.19;
+    letter-spacing: 0;
+  }
+
+  .intro {
+    max-width: 547px;
+    margin: 0 auto;
+    font-size: 24px;
+    line-height: 1.2;
+  }
+
+  .content {
+    position: relative;
+    z-index: 1;
+    width: 1200px;
+    max-width: calc(100% - 48px);
+    box-sizing: border-box;
+    margin: -190px auto 0;
+    padding-top: 55px;
+  }
+
+  .story section {
+    padding: 30px 0 34px;
+  }
+
+  .story h2 {
+    margin: 0 0 24px;
+    font-size: 22px;
+    line-height: 1.18;
+  }
+
+  .story p {
+    max-width: 1126px;
+    font-size: 20px;
+    line-height: 1.45;
+  }
+
+  .credits {
+    margin-top: 44px;
+  }
+}
