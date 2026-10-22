@@ -171,7 +171,7 @@ export default function ServicePage({ kind }: ServicePageProps) {
         </div>
       </div>
       <article className={`${styles.content} ${styles[`content-${kind}`]}`} aria-labelledby="service-details-title">
-        <h2 id="service-details-title">{t(copy.title)}</h2>
+        <h2 id="service-details-title" className="srOnly">{t(copy.title)}</h2>
         <div className={styles.detailGrid}>{sections.map((section, index) => <section key={section.heading} className={styles.detailCard}><span aria-hidden="true">{String(index + 1).padStart(2, "0")}</span><div><h3>{section.heading}</h3><p>{section.body}</p></div></section>)}</div>
       </article>
     </main>
