@@ -42,8 +42,8 @@ for (const sample of [
     await bottom.locator(`a[href="/${sample.lang}/films"]`).click();
     await expect(page).toHaveURL(new RegExp(`/${sample.lang}/films$`));
     await expect(page.locator("#films-page-title")).toBeVisible();
-    await expect(page.locator('header img[alt="REWIND"]')).toBeVisible();
-    await expect(page.getByRole("banner").getByRole("button", { name: sample.lang === "en" ? "Menu" : "Меню", exact: true })).toBeVisible();
+    await expect(page.locator('header img[alt="REWIND"]')).toBeHidden();
+    await expect(page.getByRole("banner").getByRole("button", { name: sample.lang === "en" ? "Menu" : "Меню", exact: true })).toBeHidden();
     expect(writes).toEqual([]);
   });
 }
