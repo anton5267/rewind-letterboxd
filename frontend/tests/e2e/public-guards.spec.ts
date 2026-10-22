@@ -143,9 +143,9 @@ test("public list discovery reaches tag, detail, author and movie in both locale
     await expect(page.getByRole("heading", { name: listName })).toBeVisible();
     await page.getByRole("main").getByRole("link", { name: "Добірки", exact: true }).click();
     await expect(page).toHaveURL(/\/uk\/lists\/discover$/);
-    const feeds = page.getByRole("navigation", { name: "Добірки списків", exact: true });
-    await expect(feeds.getByRole("link", { name: "Популярні", exact: true })).not.toHaveAttribute("aria-current", "page");
-    await feeds.getByRole("link", { name: "Популярні", exact: true }).click();
+    const landing = page.getByRole("main");
+    await expect(landing.getByRole("navigation", { name: "Добірки списків", exact: true })).toHaveCount(0);
+    await landing.locator('a[href="/uk/lists/discover?feed=popular"]').filter({ hasText: "Переглянути всі" }).first().click();
     await expect(page).toHaveURL(/\/uk\/lists\/discover\?feed=popular$/);
     await expect(page.getByRole("heading", { name: "Популярні добірки", level: 1, exact: true })).toBeVisible();
 
