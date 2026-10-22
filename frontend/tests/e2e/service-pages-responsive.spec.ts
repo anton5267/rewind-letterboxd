@@ -22,7 +22,12 @@ test("admin desktop hero follows the Figma dashboard frame", async ({ page }) =>
   } }));
   await page.route("**/api/auth/refresh", route => route.fulfill({ status: 401, json: {} }));
   await page.route("**/api/admin/dashboard", route => route.fulfill({ json: { users: 12, activeUsers: 9, hqUsers: 2, movies: 40, reviews: 18, hiddenReviews: 1 } }));
-  await page.route("**/api/admin/settings", route => route.fulfill({ json: [] }));
+  await page.route("**/api/admin/settings", route => route.fulfill({ json: [
+    { key: "site_name", value: "Rewind", updatedBy: null, updatedAt: null },
+    { key: "default_locale", value: "uk", updatedBy: null, updatedAt: null },
+    { key: "maintenance_mode", value: "false", updatedBy: null, updatedAt: null },
+    { key: "journal_enabled", value: "true", updatedBy: null, updatedAt: null },
+  ] }));
   await page.goto("/uk/admin");
   const hero = page.locator('main > [class*="hero"]');
   await expect(hero).toHaveCSS("min-height", "1020px");
@@ -41,4 +46,11 @@ test("admin desktop hero follows the Figma dashboard frame", async ({ page }) =>
   expect(cards.every(card => Math.abs(card.width - 368) < 1)).toBe(true);
   expect(cards.every(card => card.height >= 233)).toBe(true);
   expect(new Set(cards.map(card => card.top)).size).toBe(2);
+  const settings = page.locator('section[aria-labelledby="admin-settings-title"]');
+  await expect(settings).toBeVisible();
+  const settingsBox = await settings.boundingBox();
+  expect(settingsBox?.x).toBeCloseTo(120, 0);
+  expect(settingsBox?.width).toBe(1200);
+  expect(settingsBox?.height).toBeGreaterThanOrEqual(734);
+  await expect(settings.locator('input')).toHaveCount(4);
 });

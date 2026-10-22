@@ -190,6 +190,35 @@
     min-height: 233px;
   }
 
+  /* Figma Settings frame `1404:4076` uses a 1200×734 translucent workspace
+     at x=120 with a 38 px radius. Keep the API-backed rows flexible inside it. */
+  .settings {
+    min-height: 734px;
+    box-sizing: border-box;
+    padding: 30px 36px 36px;
+    border-radius: 38px;
+    background: rgba(255, 255, 255, .05);
+    backdrop-filter: blur(4px);
+  }
+
+  .settingsList {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 24px;
+    row-gap: 28px;
+  }
+
+  .settingRow {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+
+  .settingInput {
+    min-height: 41px;
+    border-radius: 38px;
+  }
+
   .hero {
     min-height: 1020px;
   }
