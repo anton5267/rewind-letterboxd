@@ -1,6 +1,6 @@
 # Rewind — поточний стан
 
-Оновлено 22.10.2026. Основний release checkpoint і Search/CI maintenance етап доставлені в GitHub; після них розпочато повний Figma audit по конкретних nodes. Завершений Popular Reviewers `1480:5486`/`1480:7698` має реальні reviewer metrics, desktop/mobile geometry, повні 127 browser-сценарії та 87 backend-тестів. Community `605:1112`/`1517:4931` переведений на Figma hero, featured/popular rails і member-list composition; справжні API profiles та follow interactions збережені. Home desktops `1413:6471` (guest) і `1413:6263` (member) отримали перевірені local original artworks, hero geometry, typography й member poster rows. Mobile guest `1411:3473` та member `1327:3210` мають власні Figma heroes, чотири справжні poster previews і порядок API-backed секцій. Popular Lists `1480:5390`/`1480:7927` тепер має окремі desktop/mobile hero, контекстні controls, Figma-sized poster cards і pagination з реальними API lists. Auth mobile family `944:1582`/`944:1828`/`944:1887` перевірена на 393×852, включно з Back, standalone canvas, sign-in footer і tab-order. Робочий порядок — [PLAN](../../PLAN.md), детальні результати — [RELEASE_EVIDENCE](../operations/RELEASE_EVIDENCE.md).
+Оновлено 22.10.2026. Основний release checkpoint і Search/CI maintenance етап доставлені в GitHub; після них розпочато повний Figma audit по конкретних nodes. Завершений Popular Reviewers `1480:5486`/`1480:7698` має реальні reviewer metrics, desktop/mobile geometry, повні 127 browser-сценарії та 87 backend-тестів. Community `605:1112`/`1517:4931` переведений на Figma hero, featured/popular rails і member-list composition; справжні API profiles та follow interactions збережені. Home desktops `1413:6471` (guest) і `1413:6263` (member) отримали перевірені local original artworks, hero geometry, typography й member poster rows. Mobile guest `1411:3473` та member `1327:3210` мають власні Figma heroes, чотири справжні poster previews і порядок API-backed секцій. Popular Lists `1480:5390`/`1480:7927` тепер має окремі desktop/mobile hero, контекстні controls, Figma-sized poster cards і pagination з реальними API lists. Auth mobile family `944:1582`/`944:1828`/`944:1887` перевірена на 393×852, включно з Back, standalone canvas, sign-in footer і tab-order. 404 frame `361:778` тепер доступний як локалізований route state з no-overflow перевіркою на 320/393/768/1440 px. Робочий порядок — [PLAN](../../PLAN.md), детальні результати — [RELEASE_EVIDENCE](../operations/RELEASE_EVIDENCE.md).
 
 ## Структура та документація
 
@@ -33,7 +33,7 @@
 
 | Gate | Результат |
 | --- | --- |
-| Frontend typecheck/build | PASS; 216 modules |
+| Frontend typecheck/build | PASS; 218 modules |
 | Playwright | **127 passed**, 0 failed/skipped/flaky/retries; 115 standard + 12 disposable admin fixture |
 | Backend Maven | **87 tests**, 0 failures/errors/skips |
 | Local Docker | API health 200, web 200; images перебудовані зі збереженням DB/`.env` |

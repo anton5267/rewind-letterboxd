@@ -1,6 +1,6 @@
 # Rewind — план завершення
 
-Оновлено 22.10.2026. Після Search/CI checkpoint розпочато повний node-by-node Figma audit: кожен наступний UI-блок реалізується тільки після перевірки конкретного frame context і screenshot, а не за припущеннями. Завершені блоки цього проходу: Popular Reviewers desktop/phone `1480:5486`/`1480:7698`, Community desktop/phone `605:1112`/`1517:4931`, Journal Lists 4/5/6 desktop `1494:5387`/`1494:5182`/`1494:5287`, Home desktop guest/member `1413:6471`/`1413:6263`, mobile guest/member `1411:3473`/`1327:3210`, Popular Lists desktop/mobile `1480:5390`/`1480:7927` і Public Profile desktop/phone `238:596`/`825:1378`. Для Journal підтверджено editorial hero і three-column article rows; Lists 5/6 є alternate static-content variants і не замінюють API. Для Home — локальні original artworks, hero/CTA geometry та live API-backed poster rows; для Popular Lists — frame-specific heroes, cards, controls і pagination; для Public Profile — центрований desktop identity hero, state rail, mobile avatar/name geometry та live anchors. Auth mobile family `944:1582`/`944:1828`/`944:1887` тепер має окремий 393 px canvas, back control, безпечний tab order і локалізований sign-in footer. Наступний блок обирається лише після concrete-node review.
+Оновлено 22.10.2026. Після Search/CI checkpoint розпочато повний node-by-node Figma audit: кожен наступний UI-блок реалізується тільки після перевірки конкретного frame context і screenshot, а не за припущеннями. Завершені блоки цього проходу: Popular Reviewers desktop/phone `1480:5486`/`1480:7698`, Community desktop/phone `605:1112`/`1517:4931`, Journal Lists 4/5/6 desktop `1494:5387`/`1494:5182`/`1494:5287`, Home desktop guest/member `1413:6471`/`1413:6263`, mobile guest/member `1411:3473`/`1327:3210`, Popular Lists desktop/mobile `1480:5390`/`1480:7927` і Public Profile desktop/phone `238:596`/`825:1378`. Для Journal підтверджено editorial hero і three-column article rows; Lists 5/6 є alternate static-content variants і не замінюють API. Для Home — локальні original artworks, hero/CTA geometry та live API-backed poster rows; для Popular Lists — frame-specific heroes, cards, controls і pagination; для Public Profile — центрований desktop identity hero, state rail, mobile avatar/name geometry та live anchors. Auth mobile family `944:1582`/`944:1828`/`944:1887` тепер має окремий 393 px canvas, back control, безпечний tab order і локалізований sign-in footer. Figma frame `361:778` для 404 доданий як локалізований routed state з error-композицією, кнопкою повернення та no-overflow перевіркою. Наступний блок обирається лише після concrete-node review.
 
 ## Виконано
 
@@ -22,7 +22,7 @@
 
 ## Актуальні перевірки
 
-- `npm run verify:build`: PASS, TypeScript + Vite, 216 modules.
+- `npm run verify:build`: PASS, TypeScript + Vite, 218 modules.
 - Playwright: **127/127 passed**, failures/skips/flaky/retries 0; 115 public/real API scenarios та 12 scenarios з disposable admin fixture.
 - Backend: **87/87 passed**, failures/errors/skips 0, ізольована MySQL 8.4.
 - PASS: API, contracts, security, password reset, Redis cache, HTTP concurrency, load, ER schema, backup/restore, production template config, Caddy та Compose config.

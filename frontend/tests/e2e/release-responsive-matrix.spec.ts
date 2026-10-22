@@ -15,6 +15,7 @@ const routes = [
   "/en/login",
   "/en/register",
   "/en/forgot-password",
+  "/uk/route-that-does-not-exist",
 ];
 
 test("release routes keep landmarks and no horizontal overflow across the viewport matrix", async ({ page }) => {
@@ -44,6 +45,10 @@ test("release routes keep landmarks and no horizontal overflow across the viewpo
       });
       await expect(page.getByRole("banner")).toHaveCount(1);
       await expect(page.getByRole("contentinfo")).toHaveCount(1);
+      if (route === "/uk/route-that-does-not-exist") {
+        await expect(page.getByRole("heading", { name: "Ой! Сторінку не знайдено" })).toBeVisible();
+        await expect(page.getByRole("link", { name: "На головну" })).toHaveAttribute("href", "/uk/home");
+      }
       if (route === "/uk/community/reviewers" && width <= 720) {
         const header = await page.getByRole("banner").boundingBox();
         const back = await page.locator("main a").first().boundingBox();

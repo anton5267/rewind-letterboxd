@@ -29,6 +29,7 @@ const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const Journal = lazy(() => import("./pages/Journal"));
 const JournalArticle = lazy(() => import("./pages/JournalArticle"));
 const ServicePage = lazy(() => import("./pages/ServicePage"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 function LegacyRedirect() {
   const location = useLocation();
@@ -81,9 +82,9 @@ function LocalizedApp() {
     <Route path="register" element={<Layout><Register /></Layout>} />
     <Route path="forgot-password" element={<Layout><ForgotPassword /></Layout>} />
     <Route path="reset-password" element={<Layout><ResetPassword /></Layout>} />
-    {/* Keep the fallback absolute inside the language namespace. A relative
-        target here would append /films repeatedly for an unknown deep link. */}
-    <Route path="*" element={<Navigate to={`/${lang}/films`} replace />} />
+    {/* Keep unknown localized paths inside the language namespace so the
+        Figma-inspired error state can offer the correct localized home link. */}
+    <Route path="*" element={<Layout><NotFound /></Layout>} />
   </Routes></Suspense>;
 }
 

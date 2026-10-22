@@ -6,7 +6,7 @@
 
 | Gate | Результат | Доказ / межа |
 | --- | --- | --- |
-| Frontend build | PASS | `npm run verify:build`: TypeScript без помилок, Vite 216 modules |
+| Frontend build | PASS | `npm run verify:build`: TypeScript без помилок, Vite 218 modules |
 | Full browser suite | **127 passed** | 0 failed/flaky/retries; production Nginx image, Google Chrome. Standard run: 115 passed + 12 gated admin skips, 5.2 min; disposable admin run: 12/12, 43.6 s |
 | Backend suite | **87 tests** | failures/errors/skips 0, 2:24 min; окремий disposable MySQL 8.4 на `127.0.0.1:3308`, контейнер видалено |
 | API smoke | PASS | OpenAPI 159 operations; auth, profiles, films, lists, reviews, comments, social, messages, notifications, newsletter і cleanup |
@@ -53,7 +53,9 @@ Person/Actor desktop `545:676` і phone `721:1085` перевірені чере
 
 Auth mobile `944:1582`/`944:1828` перевірений у Chrome на 393×852. Login/Register family тепер має standalone dark canvas із back control, без глобальної mobile navigation, збереженим API/auth flow та Figma sign-in footer. `auth-responsive.spec.ts` пройшов 1/1; `npm run verify:build` пройшов (216 modules).
 
-Mobile Auth footer тепер рендерить лише порожній `contentinfo` landmark, щоб приховані desktop-посилання не потрапляли в keyboard tab order. Release responsive matrix повторно пройшла 1/1 на 320/393/768/1440 px.
+Mobile Auth footer тепер рендерить лише порожній `contentinfo` landmark, щоб приховані desktop-посилання не потрапляли в keyboard tab order. Release responsive matrix повторно пройшла 1/1 на 320/393/768/1440 px; до неї додано unknown-route 404 state.
+
+Figma 404 frame `361:778` реалізовано як локалізований fallback route: великий 404 hero, error copy, Back to home CTA і responsive no-overflow. Matrix перевіряє UK copy та `/uk/home` link на 320/393/768/1440 px; оригінальний Figma image fill не використовувався, бо asset не доступний у локальній копії.
 
 Останній Auth cleanup commit `42b8e3b` пройшов [GitHub CI run 39700140275](https://github.com/anton5267/rewind-letterboxd/actions/runs/39700140275) за 1m52s: backend tests, frontend build/typecheck і Caddy validation завершилися успішно.
 
