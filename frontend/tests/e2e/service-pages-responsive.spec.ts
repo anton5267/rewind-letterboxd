@@ -22,7 +22,18 @@ test("admin desktop hero follows the Figma dashboard frame", async ({ page }) =>
   } }));
   await page.route("**/api/auth/refresh", route => route.fulfill({ status: 401, json: {} }));
   await page.route("**/api/admin/dashboard", route => route.fulfill({ json: { users: 12, activeUsers: 9, hqUsers: 2, movies: 40, reviews: 18, hiddenReviews: 1 } }));
-  await page.route("**/api/admin/users**", route => route.fulfill({ json: { content: [], totalPages: 0, totalElements: 0 } }));
+  await page.route("**/api/admin/users**", route => route.fulfill({ json: { content: [{
+    id: 900011, username: "profile-fixture", displayName: "Profile Fixture", email: "profile@example.invalid",
+    role: "USER", avatarUrl: null, isActive: true, isHq: false,
+  }], totalPages: 1, totalElements: 1 } }));
+  await page.route("**/api/admin/users/900011", route => route.fulfill({ json: {
+    id: 900011, username: "profile-fixture", displayName: "Profile Fixture", email: "profile@example.invalid",
+    role: "USER", avatarUrl: null, isActive: true, isHq: false, createdAt: "2026-01-01T00:00:00Z",
+  } }));
+  await page.route("**/api/admin/users/900011/overview", route => route.fulfill({ json: {
+    adminHistory: [{ id: 1, action: "SITE_SETTING_UPDATED", targetType: "SITE_SETTING", targetId: null, createdAt: "2026-01-01T00:00:00Z" }],
+    stats: { watched: 74, reviews: 37, likesReceived: 145, comments: 64, customLists: 15 },
+  } }));
   await page.route("**/api/admin/settings", route => route.fulfill({ json: [
     { key: "site_name", value: "Rewind", updatedBy: null, updatedAt: null },
     { key: "default_locale", value: "uk", updatedBy: null, updatedAt: null },
@@ -55,6 +66,17 @@ test("admin desktop hero follows the Figma dashboard frame", async ({ page }) =>
   const userToolbar = users.locator('form').first();
   const userToolbarBox = await userToolbar.boundingBox();
   expect(userToolbarBox?.width).toBeCloseTo(402, 0);
+  await expect(users.getByRole("listitem")).toHaveCount(1);
+  await users.getByRole("button", { name: /профіл/i }).click();
+  const detail = users.locator("#admin-user-profile");
+  await expect(detail).toBeVisible();
+  const detailBox = await detail.boundingBox();
+  expect(detailBox?.x).toBeCloseTo(120, 0);
+  expect(detailBox?.width).toBe(1200);
+  expect(detailBox?.height).toBeGreaterThanOrEqual(829);
+  await expect(detail.locator('[class*="detailSubsection"]')).toHaveCount(2);
+  const detailCards = await detail.locator('[class*="detailSubsection"]').evaluateAll(elements => elements.map(element => element.getBoundingClientRect().height));
+  expect(detailCards.every(height => height >= 501)).toBe(true);
   const settings = page.locator('section[aria-labelledby="admin-settings-title"]');
   await expect(settings).toBeVisible();
   const settingsBox = await settings.boundingBox();

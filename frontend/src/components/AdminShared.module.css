@@ -408,4 +408,40 @@
   .usersSection > .list .row:last-child {
     border-bottom: 0;
   }
+
+  /* Figma User Profile `1237:4369` uses a 1200×829 detail card followed by
+     two 516×501 history/activity cards. Keep the existing live controls and
+     overview data inside those rails. */
+  .usersSection .detailPanel {
+    min-height: 829px;
+    box-sizing: border-box;
+    padding: 36px 84px;
+    border-radius: 38px;
+  }
+
+  .usersSection .detailHeader {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .usersSection .detailHeader > button {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+
+  .usersSection .detailHeader > div {
+    min-width: 0;
+  }
+
+  .usersSection .detailOverviewGrid {
+    gap: 68px;
+  }
+
+  .usersSection .detailSubsection {
+    min-height: 501px;
+    box-sizing: border-box;
+    padding: 36px;
+    border-radius: 38px;
+  }
 }
