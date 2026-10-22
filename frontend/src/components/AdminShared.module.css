@@ -162,6 +162,41 @@
   gap: 18px;
 }
 
+@media (min-width: 721px) {
+  /* Figma moderation frame `1399:3300` places the queue controls and live
+     items inside a single 1200×673 translucent workspace. */
+  .moderationSection {
+    min-height: 673px;
+    box-sizing: border-box;
+    padding: 36px 24px;
+    border: 0;
+    border-radius: 38px;
+    background: rgba(255, 255, 255, .05);
+    backdrop-filter: blur(4px);
+  }
+
+  .moderationSection > .title {
+    margin-bottom: 38px;
+    text-align: center;
+  }
+
+  .moderationSection > form {
+    width: min(834px, 100%);
+    margin: 0 auto 36px;
+  }
+
+  .moderationSection .filterset {
+    justify-content: center;
+    margin-bottom: 0;
+  }
+
+  .moderationSection .filterset .control,
+  .moderationSection .filterset button {
+    min-height: 41px;
+    border-radius: 38px;
+  }
+}
+
 .title {
   margin: 0 0 18px;
   color: var(--rewind-paper);

@@ -53,6 +53,10 @@ test("admin desktop hero follows the Figma dashboard frame", async ({ page }) =>
     id: 900023, userId: 900011, username: "profile-fixture", name: "Lists fixture", description: null,
     listType: "CUSTOM", isPublic: true, itemCount: 6, createdAt: "2026-01-01T00:00:00Z", updatedAt: "2026-01-01T00:00:00Z",
   }], totalPages: 1, totalElements: 1 } }));
+  await page.route("**/api/admin/moderation/queue**", route => route.fulfill({ json: { content: [{
+    type: "REVIEW", id: 900021, parentId: null, movieId: 77, subject: "Review fixture", userId: 900011,
+    username: "profile-fixture", content: "Moderation fixture.", createdAt: "2026-01-01T00:00:00Z",
+  }], totalPages: 1, totalElements: 1 } }));
   await page.goto("/uk/admin");
   const hero = page.locator('main > [class*="hero"]');
   await expect(hero).toHaveCSS("min-height", "1020px");
@@ -121,4 +125,10 @@ test("admin desktop hero follows the Figma dashboard frame", async ({ page }) =>
   expect(listBox?.x).toBeCloseTo(120, 0);
   expect(listBox?.width).toBe(1200);
   expect(listBox?.height).toBeGreaterThanOrEqual(393);
+  const moderation = page.getByRole("region", { name: "Черга модерації" });
+  await expect(moderation).toBeVisible();
+  const moderationBox = await moderation.boundingBox();
+  expect(moderationBox?.x).toBeCloseTo(120, 0);
+  expect(moderationBox?.width).toBe(1200);
+  expect(moderationBox?.height).toBeGreaterThanOrEqual(673);
 });

@@ -80,7 +80,7 @@ export default function AdminModerationQueue() {
     setSelected(values => values.includes(key) ? values.filter(value => value !== key) : [...values, key]);
   };
 
-  return <section className={styles.section} aria-labelledby="moderation-heading" aria-busy={busy}>
+  return <section className={`${styles.section} ${styles.moderationSection}`} aria-labelledby="moderation-heading" aria-busy={busy}>
     <h2 className={styles.title} id="moderation-heading">{t("moderationQueue")}</h2>
     {mutationError && <p className={styles.error} role="alert">{mutationError}</p>}
     {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={busy} busy={busy} onRetry={refresh} />}
