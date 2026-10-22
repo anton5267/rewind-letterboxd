@@ -154,7 +154,7 @@ The same Docker pass exposed a fixed-header interception in the admin user detai
 
 ### Journal feed desktop — 22.10.2026
 
-Raw Journal list frames confirmed the 1440×818 full-bleed stage and 513×612 feature cover at x=120/y=212. The desktop CSS now follows that geometry while retaining live API articles, archive/category controls, pagination, localization and the existing mobile composition. After rebuilding Docker web, `journal-design-flow.spec.ts` passed **2/2**, including the 393 px no-overflow check.
+Raw Journal list frames confirmed the 1440×818 full-bleed stage, 513×612 feature cover at x=120/y=212, feature text rail at x=748, and the following 444×408 covers at the 576 px editorial rhythm. The desktop CSS now follows that geometry while retaining live API articles, archive/category controls, pagination, localization and the existing mobile composition. After rebuilding Docker web, `journal-design-flow.spec.ts` passed **2/2**, including the 393 px no-overflow check.
 
 ## Збереження даних
 

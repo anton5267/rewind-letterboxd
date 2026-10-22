@@ -14,20 +14,20 @@ test("journal renders the dark editorial feed with cover art", async ({ page }) 
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
-        content: [{
-          id: 910001,
-          slug: "design-journal-fixture",
+        content: Array.from({ length: 5 }, (_, index) => ({
+          id: 910001 + index,
+          slug: index === 0 ? "design-journal-fixture" : `design-journal-fixture-${index}`,
           language: "uk",
           category: "Community",
-          title: "Тестова історія Rewind",
+          title: index === 0 ? "Тестова історія Rewind" : `Тестова історія ${index}`,
           excerpt: "Короткий опис редакційної статті для visual flow.",
           content: "Повний текст",
           coverUrl: "https://cdn.example.invalid/rewind-cover.jpg",
           audioUrl: null,
           publishedAt: "2025-12-25T12:00:00Z",
-        }],
+        })),
         totalPages: 1,
-        totalElements: 1,
+        totalElements: 5,
       }),
     });
   });
@@ -39,7 +39,7 @@ test("journal renders the dark editorial feed with cover art", async ({ page }) 
 
   await expect(page.getByRole("heading", { name: "Журнал", level: 1 })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Тестова історія Rewind", level: 3 })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Читати" })).toHaveAttribute("href", "/uk/journal/design-journal-fixture");
+  await expect(page.getByRole("link", { name: "Читати" }).first()).toHaveAttribute("href", "/uk/journal/design-journal-fixture");
   await expect(page.locator('a[href="/uk/journal/design-journal-fixture"] img').first()).toHaveAttribute("src", "https://cdn.example.invalid/rewind-cover.jpg");
   await expect(page.locator("main")).toHaveCSS("background-color", "rgb(31, 31, 31)");
 
@@ -55,6 +55,17 @@ test("journal renders the dark editorial feed with cover art", async ({ page }) 
   expect(desktopCover?.y).toBeCloseTo(212, 0);
   expect(desktopCover?.width).toBe(513);
   expect(desktopCover?.height).toBe(612);
+  const featureBody = await feature.locator('[class*="cardBody"]').boundingBox();
+  expect(featureBody?.x).toBeCloseTo(748, 0);
+  expect(featureBody?.width).toBeCloseTo(572, 0);
+  const secondCover = await page.locator("article").nth(1).locator('[class*="cover"]').boundingBox();
+  expect(secondCover?.x).toBeCloseTo(120, 0);
+  expect(secondCover?.y).toBeCloseTo(995, 0);
+  expect(secondCover?.width).toBe(444);
+  expect(secondCover?.height).toBe(408);
+  const thirdCover = await page.locator("article").nth(2).locator('[class*="cover"]').boundingBox();
+  expect(thirdCover?.y).toBeGreaterThanOrEqual(1570);
+  expect(thirdCover?.y).toBeLessThanOrEqual(1573);
 
   await page.setViewportSize({ width: 393, height: 852 });
   await expect(cover).toBeVisible();

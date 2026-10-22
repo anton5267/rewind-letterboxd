@@ -455,6 +455,21 @@
   }
 
   .feature {
-    padding-top: 0;
+    position: relative;
+    grid-template-columns: 513px minmax(0, 1fr);
+    gap: 115px;
+    padding: 0 0 87px;
+  }
+
+  .feature .thumb {
+    position: absolute;
+    top: 352px;
+    right: 21px;
+  }
+
+  .card:not(.feature) {
+    grid-template-columns: 444px 314px 174px;
+    gap: 61px;
+    padding: 84px 0;
   }
 }
