@@ -42,7 +42,7 @@
 - Latest regression evidence: commit `00f9f43`, [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39707346272); only release documentation changed, and unrelated local files remained unstaged.
 - Admin browser wrapper: `scripts/verify-admin-browser.ps1` passed 12/12 with a disposable fixture and cleanup.
 - Global Search Figma alignment: commit `cda3126`, [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39708297409); mobile slider trigger now focuses the native category select, targeted alignment 4/4.
-- Profile mobile hero/activity: local changes add Figma-aligned gear/more controls and the existing `/users/:id/activity` feed to own Profile; targeted `profile-alignment.spec.ts` 10/10 and `npm run verify:build` PASS. Commit/push pending after this checkpoint.
+- Profile mobile hero/activity: commit `115bd45` adds Figma-aligned gear/more controls and the existing `/users/:id/activity` feed to own Profile; targeted `profile-alignment.spec.ts` 10/10 and `npm run verify:build` PASS. GitHub CI run `39710281853` is green.
 - Diploma artifacts і локальний `AGENTS.md` залишилися поза commits.
 
 ## Поза цією ціллю
