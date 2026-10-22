@@ -8,6 +8,7 @@
 }
 
 .hero {
+  position: relative;
   display: flex;
   min-height: 430px;
   margin: 0 calc(-1 * var(--home-gutter));
@@ -25,35 +26,31 @@
 
 /* Figma guest desktop 1413:6471: the member variant has a separate frame and keeps its API-backed composition. */
 .hero:not(.memberHero) {
-  min-height: 764px;
-  justify-content: flex-end;
-  padding: 0 24px 178px;
+  height: 844px;
+  min-height: 844px;
+  justify-content: flex-start;
+  padding: 706px 24px 0;
+  align-items: center;
   background:
     linear-gradient(180deg, rgba(31, 31, 31, 0) 0%, rgba(31, 31, 31, .25) 42%, var(--rewind-surface) 100%),
     url("/images/home-hero-guest.jpg") center top / cover no-repeat;
 }
 
 .hero:not(.memberHero) .eyebrow,
-.hero:not(.memberHero) > p:not(.eyebrow) { display: none; }
+.hero:not(.memberHero) > p:not(.eyebrow),
+.hero:not(.memberHero) .actions { display: none; }
 
 .hero:not(.memberHero) h1 {
-  max-width: 700px;
+  max-width: 765px;
   margin: 0;
-  font-size: clamp(40px, 4vw, 58px);
+  font-size: 58px;
   line-height: 1.12;
-  text-align: left;
+  text-align: center;
 }
 
-.hero:not(.memberHero) .actions {
-  width: 700px;
-  max-width: 100%;
-  justify-content: flex-start;
-  margin-top: 24px;
-}
-
-.hero:not(.memberHero) .actions a { border-radius: 24px; }
-.hero:not(.memberHero) .actions .primary { background: rgba(255, 255, 255, .14); color: #fff; }
-.hero:not(.memberHero) .actions .secondary { display: none; }
+/* The guest Figma frame has an artwork-only release row below the hero. */
+.page:has(.hero:not(.memberHero)) .leadingSection { margin-top: 85px; }
+.page:has(.hero:not(.memberHero)) .leadingSection .sectionHeading { display: none; }
 
 .hero > * {
   max-width: 760px;
@@ -101,6 +98,10 @@
 
 /* Figma member desktop 1413:6263. Its full-height artwork sits behind the fixed header. */
 @media (min-width: 681px) {
+  .page:has(.hero:not(.memberHero)) {
+    padding-top: 0;
+  }
+
   .page:has(.memberHero) {
     padding-top: 0;
   }
@@ -635,27 +636,51 @@
   }
 
   .hero:not(.memberHero) {
-    min-height: 142px;
-    justify-content: flex-end;
-    padding: 30px 20px 20px;
+    height: 320px;
+    min-height: 320px;
+    justify-content: flex-start;
+    padding: 106px 42px 0;
     background:
       linear-gradient(180deg, rgba(12, 12, 12, .16), rgba(31, 31, 31, .95)),
-      url("/images/home-hero-guest.jpg") center 37% / cover no-repeat;
+      url("/images/home-hero-guest.jpg") center top / cover no-repeat;
   }
 
   .hero:not(.memberHero) .eyebrow,
   .hero:not(.memberHero) > p:not(.eyebrow) { display: block; }
 
   .hero:not(.memberHero) .eyebrow,
-  .hero:not(.memberHero) > p:not(.eyebrow) { display: none; }
+  .hero:not(.memberHero) > p:not(.eyebrow),
+  .hero:not(.memberHero) .actions { display: none; }
 
-  .hero:not(.memberHero) h1 { max-width: 270px; margin: 0 auto 12px; font-size: 14px; line-height: 1.12; text-align: center; }
-  .hero:not(.memberHero) .actions { width: auto; margin-top: 0; justify-content: center; }
-  .hero:not(.memberHero) .actions a { min-height: 24px; padding: 6px 11px; border-radius: 13px; font-size: 7px; }
+  .hero:not(.memberHero) h1 { max-width: 308px; margin: 0 auto; font-size: 24px; line-height: 1.12; text-align: center; }
+
+  .hero:not(.memberHero) .actions {
+    position: absolute;
+    top: 239px;
+    left: 50%;
+    display: flex;
+    width: auto;
+    margin: 0;
+    transform: translateX(-50%);
+  }
+
+  .hero:not(.memberHero) .actions a {
+    width: 85px;
+    min-width: 85px;
+    min-height: 32px;
+    box-sizing: border-box;
+    padding: 10px 5px;
+    border-radius: 37px;
+    font-size: 11px;
+    line-height: 12px;
+    text-align: center;
+  }
+
   .hero:not(.memberHero) .actions .secondary { display: none; }
 
   .page:has(.hero:not(.memberHero)) { padding-top: 0; }
-  .page:has(.hero:not(.memberHero)) .leadingSection { margin-top: 26px; border-top: 0; padding-top: 0; }
+  .page:has(.hero:not(.memberHero)) .leadingSection { margin-top: 48px; border-top: 0; padding-top: 0; }
+  .page:has(.hero:not(.memberHero)) .leadingSection .sectionHeading { display: none; }
   .page:has(.hero:not(.memberHero)) .leadingSection .sectionHeading { margin-bottom: 12px; }
   .page:has(.hero:not(.memberHero)) .leadingSection .sectionHeading h2 { font-size: 10px; }
   .page:has(.hero:not(.memberHero)) .leadingSection .sectionHeading a { display: none; }
