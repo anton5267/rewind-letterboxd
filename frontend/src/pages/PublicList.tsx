@@ -144,8 +144,8 @@ export default function PublicList() {
       </div>
       <div className={styles.heroInner}>
         <p className={styles.eyebrow}>{t("listEyebrow")}</p>
-        <p className={styles.ownerLine}>{t("listBy")} <Link to={path(`/users/${list.ownerId}`)}>{ownerName}</Link></p>
         <h1 ref={headingRef} tabIndex={-1} id="public-list-heading">{listName}</h1>
+        <p className={styles.ownerLine}>{t("listBy")} <Link to={path(`/users/${list.ownerId}`)}>{ownerName}</Link></p>
         {list.description && <p className={styles.description}>{list.description}</p>}
         {list.tags.length > 0 && <div className={styles.tags} role="group" aria-label={t("tags")}>
           {list.tags.map(tag => <Link key={tag} to={path(`/lists/discover?feed=recent&tag=${encodeURIComponent(toTagSlug(tag))}`)}>#{tag}</Link>)}

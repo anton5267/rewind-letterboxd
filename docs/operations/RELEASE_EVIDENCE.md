@@ -202,3 +202,10 @@ Push `d703d63` passed GitHub `CI / verify (push)`. The local frontend suite comp
 - Implemented: 1200 px desktop rail, 1200×339 rows at the measured y-rhythm, 361 px phone cards, and 323×116 compact poster strips.
 - Verification: `npm run verify:build` PASS (218 modules); `npx playwright test tests/e2e/public-lists-popular-figma.spec.ts tests/e2e/public-lists-featured-figma.spec.ts` PASS (**4/4**); Docker web image rebuilt and restarted.
 - Contract: live `/api/lists/public/popular`, sorting/filter links, localization, focus and retry states remain unchanged.
+
+### Public List detail Figma check — 22.10.2026
+
+- Raw sources: local archive frames `1480:6071`, `1480:6134`, `1480:9302` and `1480:9353`.
+- Implemented: 818 px desktop hero, 1200 px detail rail, six 174×260 desktop posters, and 79×116 four-poster phone rows.
+- Verification: `npm run verify:build` PASS (218 modules); `npx playwright test tests/e2e/public-list-detail-figma.spec.ts tests/e2e/list-mobile-header.spec.ts` PASS (**14/14**); Docker web image rebuilt and restarted.
+- Contract: live detail/like/tag APIs, information dialog focus return, contextual navigation and UK/EN behavior remain unchanged.

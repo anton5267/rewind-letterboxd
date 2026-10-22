@@ -136,6 +136,12 @@
 - Raw frames `1480:5390` and `1480:7927` підтверджують 1200 px desktop rail, 1200×339 editorial rows від y=813 та phone rail x=16..377 із 361 px cards, 323×116 poster strips і 12 px row rhythm.
 - `PublicLists.module.css` тепер вирівнює feed shell, heading/card y-rhythm і compact poster rail для `feed=popular`; API, sort/filter links, UK/EN і keyboard semantics збережено.
 - `public-lists-popular-figma.spec.ts` разом із Featured Lists suite пройшов **4/4** після Docker web rebuild; `npm run verify:build` PASS.
+
+### Public List detail desktop/mobile follow-up — 22.10.2026
+
+- Raw frames `1480:6071` / `1480:6134` and phone `1480:9302` / `1480:9353` підтверджують 818 px detail hero, 1200 px desktop rail, 174×260 six-column posters та 361 px phone rail із 79×116 four-poster rows.
+- `PublicList` тепер відповідає цим bounds, зберігаючи live detail/like/tag API, information dialog, focus return, contextual navigation та locale behavior.
+- `public-list-detail-figma.spec.ts` і `list-mobile-header.spec.ts` пройшли **14/14**; `npm run verify:build` PASS (218 modules).
 ### Наступний raw-блок — Popular Reviews `1480:4880` (22.10.2026)
 
 - Перечитано локальний raw subtree: desktop hero 1440×486, content rail 1200 px від x=120, reviewer group 1200×180, avatars 80×80, review cards 1200×315 з poster slot 175×262 і 38 px card rhythm.
