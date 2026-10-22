@@ -517,6 +517,43 @@
   color: var(--rewind-cyan);
 }
 
+.activityList {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activityList li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid #3a3a3a;
+  color: #d4d4d4;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.activityList li:last-child { border-bottom: 0; }
+
+.activityList a {
+  color: var(--rewind-cyan);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.activityList a:hover,
+.activityList a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+
+.activityList time {
+  flex: 1 0 100%;
+  color: var(--rewind-muted);
+  font-size: 12px;
+}
+
 @media (max-width: 768px) {
   .page {
     padding: 88px 16px 32px;

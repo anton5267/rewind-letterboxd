@@ -3,12 +3,12 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { changePassword, deleteAccount, getProfile, getProfileCollection, getProfileRatings, getProfileReviews, getSocialLinks, updateSocialLinks, type ProfileCollection, type ProfilePage, type ProfileRating, type ProfileResponse, type ProfileReview, type SocialLink, updateProfile } from "../api/profile.api";
 import { getNewsletterSubscription, updateNewsletterSubscription } from "../api/newsletter.api";
 import type { MoviePage } from "../api/search.api";
-import { getFollowing, type NetworkPage } from "../api/social.api";
+import { getFollowing, getUserActivity, type ActivityPage, type NetworkPage } from "../api/social.api";
 import ResilientImage from "../components/ResilientImage";
 import Pagination from "../components/Pagination";
 import RetryNotice from "../components/RetryNotice";
 import { useAuth } from "../context/AuthContext";
-import { editorialText, formatDateTime, formatMovieYear, useLocale, type TranslationKey } from "../i18n";
+import { editorialText, formatDateTime, formatMovieYear, localizeActivityType, useLocale, type TranslationKey } from "../i18n";
 import { useRovingTabs } from "../hooks/useRovingTabs";
 import { useActiveSection } from "../hooks/useActiveSection";
 import { safeHttpUrl } from "../utils/externalUrl";
@@ -71,6 +71,11 @@ export default function Profile() {
   const [followingLoading, setFollowingLoading] = useState(false);
   const [followingError, setFollowingError] = useState(false);
   const [followingAttempt, setFollowingAttempt] = useState(0);
+  const [activity, setActivity] = useState<ActivityPage | null>(null);
+  const [activityPage, setActivityPage] = useState(0);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityError, setActivityError] = useState(false);
+  const [activityAttempt, setActivityAttempt] = useState(0);
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
   const [newsletterLoading, setNewsletterLoading] = useState(false);
   const [newsletterLoadError, setNewsletterLoadError] = useState(false);
@@ -285,6 +290,26 @@ export default function Profile() {
     return () => { current = false; };
   }, [isAuth, user?.id, followingPage, followingAttempt]);
 
+  useEffect(() => {
+    if (!isAuth || !user?.id) return;
+    let current = true;
+    setActivityLoading(true);
+    setActivityError(false);
+    setActivity(null);
+    getUserActivity(user.id, activityPage)
+      .then(({ data }) => {
+        if (!current) return;
+        if (isPageOutOfRange(activityPage, data.totalPages)) {
+          setActivityPage(getLastPageIndex(data.totalPages));
+          return;
+        }
+        setActivity(data);
+      })
+      .catch(() => { if (current) setActivityError(true); })
+      .finally(() => { if (current) setActivityLoading(false); });
+    return () => { current = false; };
+  }, [isAuth, user?.id, activityPage, activityAttempt]);
+
   const chooseCollection = (kind: ProfileCollection) => {
     setCollectionKind(kind);
     setCollectionPage(0);
@@ -434,7 +459,7 @@ export default function Profile() {
     finally { if (isCurrentRequest()) setSocialLinksBusy(false); }
   };
 
-  const pageBusy = profileLoading || followingLoading || newsletterLoading || socialLinksLoading || collectionLoading || favoritePreviewLoading || ratingsLoading || reviewsLoading || nameBusy || passwordBusy || deleteBusy || newsletterBusy || socialLinksBusy;
+  const pageBusy = profileLoading || followingLoading || activityLoading || newsletterLoading || socialLinksLoading || collectionLoading || favoritePreviewLoading || ratingsLoading || reviewsLoading || nameBusy || passwordBusy || deleteBusy || newsletterBusy || socialLinksBusy;
 
   return <main className={styles.page} aria-labelledby="profile-page-title" aria-busy={pageBusy}>
     <div className={styles.content}>
@@ -497,6 +522,22 @@ export default function Profile() {
             </Link></li>;
           })}
         </ul>)}
+      </section>
+      <section className={styles.section} id="profile-activity" aria-labelledby="profile-activity-title" aria-busy={activityLoading}>
+        <h2 id="profile-activity-title">{t("recentActivity")}</h2>
+        {activityLoading && <p className={styles.feedback} role="status">{t("loading")}</p>}
+        {activityError && <RetryNotice className={styles.feedback} message={t("loadActivityError")} retryLabel={t("retry")} onRetry={() => setActivityAttempt(value => value + 1)} />}
+        {!activityLoading && !activityError && activity && (activity.content.length === 0 ? <p className={styles.empty}>{t("noActivity")}</p> : <>
+          <ul className={styles.activityList}>{activity.content.map(item => <li key={item.id}>
+            {item.type === "FOLLOW" && <>{localizeActivityType(item.type, t)} {item.relatedUser && <Link to={path(`/users/${item.relatedUser.id}`)}>{getUserName(item.relatedUser, t("someone"))}</Link>}</>}
+            {item.type === "RATING" && <>{localizeActivityType(item.type, t)} {item.movie && <Link to={path(`/films/${item.movie.id}`)}>{editorialText(item.movie.title, t("untitledFilm"))}</Link>}</>}
+            {item.type === "REVIEW" && <>{localizeActivityType(item.type, t)} {item.movie && <Link to={path(`/films/${item.movie.id}`)}>{editorialText(item.movie.title, t("untitledFilm"))}</Link>}</>}
+            {item.type === "LIST" && <>{localizeActivityType(item.type, t)} {item.list && editorialText(item.list.name, t("lists"))}</>}
+            {!(["FOLLOW", "RATING", "REVIEW", "LIST"] as string[]).includes(item.type) && localizeActivityType(item.type, t)}
+            <time dateTime={item.createdAt}>{formatDateTime(item.createdAt, lang)}</time>
+          </li>)}</ul>
+          <Pagination className={styles.pagination} page={activityPage} totalPages={activity.totalPages} label={t("activityPagination")} busy={activityLoading} onPageChange={setActivityPage} />
+        </>)}
       </section>
       <section className={styles.section} id="profile-ratings" aria-labelledby="profile-ratings-title" aria-busy={ratingsLoading}>
         <h2 id="profile-ratings-title">{t("allRatings")}</h2>

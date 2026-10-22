@@ -19,9 +19,10 @@ function deferred() {
 }
 
 /** Synthetic HTTP responses are confined to this browser context; every API write is blocked. */
-async function fixture(page: Page, options?: { gate?: ReturnType<typeof deferred>; failFirst?: boolean; empty?: boolean; olderReviews?: boolean; legacyReview?: boolean }) {
+async function fixture(page: Page, options?: { gate?: ReturnType<typeof deferred>; failFirst?: boolean; activityFailFirst?: boolean; empty?: boolean; olderReviews?: boolean; legacyReview?: boolean }) {
   const mutations: string[] = [];
   let favoriteRequests = 0;
+  let activityRequests = 0;
   const reviewData = options?.olderReviews ? olderReviews : [{ ...review, moviePhotoUrl: options?.legacyReview ? undefined : review.moviePhotoUrl }];
   await page.route("https://profile-fixture.invalid/**", route => route.fulfill({ contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="79" height="116"><rect width="79" height="116" fill="#4a3a61"/><circle cx="39" cy="45" r="22" fill="#c9a56b"/></svg>' }));
   await page.route(url => url.pathname.startsWith("/api/"), async route => {
@@ -42,6 +43,11 @@ async function fixture(page: Page, options?: { gate?: ReturnType<typeof deferred
     if (pathname === "/api/profile/me/watched") return route.fulfill({ json: pageOf([movies[0]]) });
     if (pathname === "/api/profile/me/ratings") return route.fulfill({ json: pageOf(ratings) });
     if (pathname === "/api/profile/me/reviews") return route.fulfill({ json: pageOf(reviewData) });
+    if (pathname === "/api/users/981000/activity") {
+      const attempt = ++activityRequests;
+      if (options?.activityFailFirst && attempt === 1) return route.fulfill({ status: 503, json: {} });
+      return route.fulfill({ json: pageOf([{ id: 981400, type: "RATING", createdAt: "2026-10-20T12:00:00Z", actor: null, movie: { id: movies[0].id, title: movies[0].title }, relatedUser: null, list: null }]) });
+    }
     if (pathname === "/api/users/981000/following") return route.fulfill({ json: pageOf(Array.from({ length: 8 }, (_, index) => ({ id: 981300 + index, username: `following-${index}`, displayName: `Following reader ${index}`, avatarUrl: null }))) });
     if (pathname.endsWith("/social-links")) return route.fulfill({ json: [] });
     if (pathname === "/api/newsletter/subscription") return route.fulfill({ json: { subscribed: false } });
@@ -115,6 +121,7 @@ for (const lang of ["uk", "en"] as const) {
     await expect(page.locator("#profile-overview article").first()).toHaveText(lang === "uk" ? "17Переглянуто" : "17Watched");
     await expect(page.locator("#profile-lists a").first()).toHaveAttribute("href", `/${lang}/lists/public/981201`);
     await expect(page.locator("#profile-lists a").last()).toHaveAttribute("href", `/${lang}/lists`);
+    await expect(page.locator("#profile-activity").getByRole("link", { name: movies[0].title, exact: true })).toHaveAttribute("href", `/${lang}/films/${movies[0].id}`);
     expect(await page.locator("#profile-following").evaluate(element => Boolean(element.compareDocumentPosition(document.getElementById("profile-identity-form-title")!) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
     const hero = page.locator("section[aria-labelledby='profile-identity']");
     const editProfile = hero.getByRole("button", { name: lang === "uk" ? "Дані профілю" : "Profile details", exact: true });
@@ -186,6 +193,18 @@ for (const lang of ["uk", "en"] as const) {
     await expect(preview.getByRole("link")).toHaveCount(6);
     await expect(page.locator("#profile-collection-tab-watched")).toHaveAttribute("aria-selected", "true");
     expect(api.favoriteRequests()).toBeGreaterThanOrEqual(2);
+    expect(api.mutations).toEqual([]);
+  });
+}
+
+for (const lang of ["uk", "en"] as const) {
+  test(`profile activity exposes retry in ${lang}`, async ({ page }) => {
+    const api = await fixture(page, { activityFailFirst: true });
+    await page.goto(`/${lang}/profile`);
+    const activity = page.locator("#profile-activity");
+    await expect(activity.getByRole("alert")).toContainText(lang === "uk" ? "Не вдалося завантажити активність." : "Could not load activity.");
+    await activity.getByRole("button", { name: lang === "uk" ? "Спробувати ще" : "Retry" }).click();
+    await expect(activity.getByRole("link", { name: movies[0].title, exact: true })).toBeVisible();
     expect(api.mutations).toEqual([]);
   });
 }
