@@ -40,7 +40,7 @@ Auth mobile Home `1327:3210` додатково експортовано як PN
 - Public Profile phone `825:1378`: повторна перевірка на 320/393/768/1440 підтвердила 120 px avatar, перенос довгого імені, focus і відсутність horizontal overflow.
 - Global Search phone: `1480:8432`, `1480:8804`, `1480:8767` і `1480:8594` отримані через plugin із screenshots/context. Реалізація має шість справжніх shortcut routes, 361 px list cards із п’ятьма overlapping posters, багаторядкові tag pills і mobile slider trigger, який відкриває вже наявний native category select; перевірено при 393 px у UK/EN без overflow.
 
-Після цих змін production build пройшов повну регресію 127/127. Це підтверджує маршрути, стани, локалізацію й доступність; pixel-perfect твердження обмежене конкретними переліченими screenshots/context, а не всією сторінкою `0:1`.
+Попередній committed regression checkpoint проходив 127 унікальних сценаріїв без skips; найновіший локальний запуск після User Lists додав сценарії й завершився 120 passed, 2 відомими failures та 12 admin skips, які окремо покриває disposable admin wrapper. Це підтверджує маршрути, стани, локалізацію й доступність у межах наведених доказів; pixel-perfect твердження обмежене конкретними переліченими screenshots/context, а не всією сторінкою `0:1`.
 
 ## Джерела
 
