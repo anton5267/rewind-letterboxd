@@ -38,7 +38,7 @@
 | Gate | Результат |
 | --- | --- |
 | Frontend typecheck/build | PASS; 218 modules |
-| Playwright | Latest local full run **118 passed, 2 failures, 12 skips** across 132 scenarios; disposable admin wrapper then passed **12/12** (42.8s). Both standard-run failures are caused by the user's uncommitted `FollowActionsContext.tsx` change. The list-header suite passed 12/12 and the earlier EN-only failure passed 6/6 on repeat. Movie Details WCAG axe rerun 1/1 after contrast fix. |
+| Playwright | Latest local full run **120 passed, 2 failures, 12 skips** across 134 scenarios; disposable admin wrapper then passed **12/12**. Both standard-run failures are caused by the user's uncommitted `FollowActionsContext.tsx` change. User Lists targeted flow passed 2/2, list-header suite passed 12/12 and the earlier EN-only failure passed 6/6 on repeat. Movie Details WCAG axe rerun 1/1 after contrast fix. |
 | Backend Maven | Historical release checkpoint **87 tests**; latest 22.10.2026 local Compose-MySQL run **89 passed**, 0 failures/errors/skips |
 | Local Docker | API health 200, web 200; images перебудовані зі збереженням DB/`.env` |
 | API/contracts/security/reset | PASS |
@@ -52,6 +52,8 @@ Search/CI maintenance commit `ea037f0`: [GitHub CI PASS](https://github.com/anto
 Auth mobile footer cleanup commit `42b8e3b`: [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39700140275), 1m52s. Backend tests, frontend build/typecheck і Caddy validation зелені.
 
 Latest regression evidence commit `5e449af`: [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39706799280). The push contains documentation only; no unrelated local files were staged.
+
+User Lists mobile add-film alignment commit `b2511f1`: [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39711299541). The change preserves the existing `/films` route and list API.
 
 Admin wrapper rerun: `scripts/verify-admin-browser.ps1` passed 12/12 and cleaned its disposable fixture; no database volume or `.env` changes were made.
 

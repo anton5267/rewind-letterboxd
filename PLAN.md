@@ -27,7 +27,7 @@
 ## Актуальні перевірки
 
 - `npm run verify:build`: PASS, TypeScript + Vite, 218 modules.
-- Playwright: latest full local run **118 passed, 2 failures, 12 skips** across 132 scenarios; `scripts/verify-admin-browser.ps1` then passed **12/12** with cleanup. The two standard-run failures are isolated to the user's uncommitted `FollowActionsContext.tsx` change; `list-mobile-header.spec.ts` passed 12/12 and the transient EN-only case passed 6/6 on repeat.
+- Playwright: latest full local run **120 passed, 2 failures, 12 skips** across 134 scenarios; `scripts/verify-admin-browser.ps1` then passed **12/12** with cleanup. The two standard-run failures are isolated to the user's uncommitted `FollowActionsContext.tsx` change; the new User Lists targeted suite passed 2/2, `list-mobile-header.spec.ts` passed 12/12 and the transient EN-only case passed 6/6 on repeat.
 - Backend: **87/87 passed**, failures/errors/skips 0, ізольована MySQL 8.4.
 - PASS: API, contracts, security, password reset, Redis cache, HTTP concurrency, load, ER schema, backup/restore, production template config, Caddy та Compose config.
 
@@ -44,6 +44,7 @@
 - Admin browser wrapper: `scripts/verify-admin-browser.ps1` passed 12/12 with a disposable fixture and cleanup.
 - Global Search Figma alignment: commit `cda3126`, [GitHub CI PASS](https://github.com/anton5267/rewind-letterboxd/actions/runs/39708297409); mobile slider trigger now focuses the native category select, targeted alignment 4/4.
 - Profile mobile hero/activity: commit `115bd45` adds Figma-aligned gear/more controls and the existing `/users/:id/activity` feed to own Profile; targeted `profile-alignment.spec.ts` 10/10 and `npm run verify:build` PASS. GitHub CI run `39710281853` is green.
+- User Lists mobile add-film alignment: commit `b2511f1` adds the localized search-style mobile control for frames `1480:9542`/`1480:9606`; build and `list-owner-flow.spec.ts` 2/2 PASS. [GitHub CI / verify](https://github.com/anton5267/rewind-letterboxd/actions/runs/39711299541) is green.
 - Diploma artifacts і локальний `AGENTS.md` залишилися поза commits.
 
 ## Поза цією ціллю
