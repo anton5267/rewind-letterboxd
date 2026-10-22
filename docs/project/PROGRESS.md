@@ -16,6 +16,7 @@
 - Home member section labels now match `1327:3210`: `Popular on Rewind`, `Latest news`, `Popular reviews this week` and `Popular Lists` have dedicated UK/EN keys; existing API loading, error, empty and retry states are unchanged. `home-list-cards.spec.ts` пройшов 3/3.
 - Старі profile reviews отримують nullable `moviePhotoUrl`; frontend сумісний і з попередньою відповіддю API.
 - Journal зберігає API-backed feed/archive/article/audio/newsletter. У mobile article прибрано декоративний control без дії. List 4 desktop `1494:5387` повторно звірено через Figma screenshot/context: compact hero та editorial 3-column rows застосовано до реальних статей без заміни їх Figma fixtures.
+- Journal Article `844:1547` додатково перевірено по raw node geometry: hero frame має 909 px, title target — 58 px, cover rail — 1126×642, а content block починається на 909 px із 251 px editorial inset. Runtime залишається API-backed: одна `coverUrl` використовується як реальне зображення, Figma static collage/author text не підміняють production data. `journal-design-flow.spec.ts` і `editorial-accessibility.spec.ts` разом пройшли 5/5 після Docker web rebuild.
 - Login/Register/Forgot/Reset використовують спільну desktop/mobile Figma-композицію з локальними assets.
 - Auth frames `605:2173–2176`, `944:1582`, `944:1828` і `944:1887` повторно звірені по raw geometry: desktop 627 px form width, 94 px fields, 89 px actions і route-specific card heights; phone 393×852 має back x32/y52, 290 px controls та окремі Login/Register/Forgot anchors. Forgot отримав Figma `Or` divider, а API, password validation і keyboard flow не змінені. `auth-responsive.spec.ts` + password-validation + completion-focus пройшли 12/12.
 - Help, Contact, Rules, Privacy, Film Data, Account Deletion та About отримали структуровані responsive layouts.
@@ -44,7 +45,7 @@
 | Gate | Результат |
 | --- | --- |
 | Frontend typecheck/build | PASS; 218 modules |
-| Playwright | Latest local full run **123 passed, 2 failures, 12 skips** across 137 scenarios; disposable admin wrapper then passed **12/12**. Both remaining standard-run failures are caused by the user's uncommitted `FollowActionsContext.tsx` change. Films, Journal Search, detail header, route-transition and Public Lists guard targeted checks are green. Movie Details WCAG axe rerun 1/1 after contrast fix. |
+| Playwright | Latest local full run **123 passed, 2 failures, 12 skips** across 137 scenarios; disposable admin wrapper then passed **12/12**. Both remaining standard-run failures are caused by the user's uncommitted `FollowActionsContext.tsx` change. Journal Article targeted suite passed **5/5** after the latest Docker rebuild; Films, Journal Search, detail header, route-transition and Public Lists guard targeted checks are green. Movie Details WCAG axe rerun 1/1 after contrast fix. |
 | Backend Maven | Historical release checkpoint **87 tests**; latest 22.10.2026 local Compose-MySQL run **89 passed**, 0 failures/errors/skips |
 | Local Docker | API health 200, web 200; images перебудовані зі збереженням DB/`.env` |
 | API/contracts/security/reset | PASS |

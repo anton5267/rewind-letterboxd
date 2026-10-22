@@ -63,9 +63,6 @@ export default function JournalArticle() {
           <span>{t("journal")}</span>
         </div>
         <div className={styles.articleHeader}>
-          <div className={styles.coverHero}>
-            <ResilientImage className={styles.coverImage} src={article.coverUrl} alt="" loading="eager" fallback={<span className={styles.coverFallback} aria-hidden="true">REWIND</span>} />
-          </div>
           <div className={styles.articleLead}>
             <Link className={styles.back} to={path("/journal")}>← {t("journal")}</Link>
             <p className={styles.eyebrow}>{localizeJournalCategory(article.category, t)}</p>
@@ -74,19 +71,24 @@ export default function JournalArticle() {
               {article.publishedAt && <time dateTime={article.publishedAt}>{formatDateTime(article.publishedAt, lang)}</time>}
               {audioUrl && <span>{t("podcastAudio")}</span>}
             </div>
-            {article.excerpt?.trim() && <p className={styles.excerpt} lang={articleLang}>{article.excerpt.trim()}</p>}
+          </div>
+          <div className={styles.coverHero}>
+            <ResilientImage className={styles.coverImage} src={article.coverUrl} alt="" loading="eager" fallback={<span className={styles.coverFallback} aria-hidden="true">REWIND</span>} />
           </div>
         </div>
-        {audioUrl && <div className={styles.audioBlock} role="group" aria-label={t("podcastAudio")} aria-busy={audioLoading}>
-          <audio ref={audioRef} className={styles.audio} controls preload="metadata" src={audioUrl} aria-label={t("podcastAudio")}
-            onLoadStart={() => setAudioLoading(true)}
-            onLoadedMetadata={() => { setAudioLoading(false); setAudioError(false); }}
-            onError={() => { setAudioLoading(false); setAudioError(true); }}
-          >{t("podcastAudioUnavailable")}</audio>
-          {audioLoading && <p className={`${styles.status} ${styles.audioFeedback}`} role="status">{t("loading")}</p>}
-          {audioError && <RetryNotice className={`${styles.error} ${styles.audioFeedback}`} message={t("podcastAudioLoadError")} retryLabel={t("retry")} onRetry={retryAudio} />}
-        </div>}
-        <div className={styles.body} lang={article.content?.trim() ? articleLang : lang}>{editorialText(article.content, t("noArticleContent"))}</div>
+        <div className={styles.articleContent}>
+          {article.excerpt?.trim() && <p className={styles.excerpt} lang={articleLang}>{article.excerpt.trim()}</p>}
+          {audioUrl && <div className={styles.audioBlock} role="group" aria-label={t("podcastAudio")} aria-busy={audioLoading}>
+            <audio ref={audioRef} className={styles.audio} controls preload="metadata" src={audioUrl} aria-label={t("podcastAudio")}
+              onLoadStart={() => setAudioLoading(true)}
+              onLoadedMetadata={() => { setAudioLoading(false); setAudioError(false); }}
+              onError={() => { setAudioLoading(false); setAudioError(true); }}
+            >{t("podcastAudioUnavailable")}</audio>
+            {audioLoading && <p className={`${styles.status} ${styles.audioFeedback}`} role="status">{t("loading")}</p>}
+            {audioError && <RetryNotice className={`${styles.error} ${styles.audioFeedback}`} message={t("podcastAudioLoadError")} retryLabel={t("retry")} onRetry={retryAudio} />}
+          </div>}
+          <div className={styles.body} lang={article.content?.trim() ? articleLang : lang}>{editorialText(article.content, t("noArticleContent"))}</div>
+        </div>
       </article>
     </main>
   );
