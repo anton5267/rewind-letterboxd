@@ -49,18 +49,27 @@ for (const authenticated of [false, true]) {
         const bounds = await header.evaluate((element, isMobile) => {
           const box = (target: Element) => {
             const { x, y, width, height } = target.getBoundingClientRect();
-            return { x, y, right: x + width, bottom: y + height };
+            return { x, y, width, height, right: x + width, bottom: y + height };
           };
           const visibleNav = [...element.querySelectorAll("nav")].find(target => getComputedStyle(target).display !== "none")!;
           const topAction = isMobile ? element.querySelector("button[aria-expanded]") : element.querySelector("a[aria-label]");
           const logo = element.querySelector("a");
-          return { header: box(element), logo: logo ? box(logo) : null, nav: box(visibleNav), search: topAction ? box(topAction) : null, heading: box(document.querySelector("h1")!) };
+          return {
+            header: box(element),
+            logo: logo ? box(logo) : null,
+            nav: box(visibleNav),
+            search: topAction ? box(topAction) : null,
+            heading: box(document.querySelector("h1")!),
+            mobileNav: isMobile ? box(visibleNav) : null,
+          };
         }, mobile);
         const disjoint = (a: typeof bounds.logo, b: typeof bounds.logo) => a.right <= b.x || b.right <= a.x || a.bottom <= b.y || b.bottom <= a.y;
         if (bounds.logo && bounds.search) {
           expect(disjoint(bounds.logo, bounds.nav), `${route} logo/nav overlap at ${width}px`).toBe(true);
           expect(disjoint(bounds.search, bounds.nav), `${route} search/nav overlap at ${width}px`).toBe(true);
         }
+        expect(bounds.header.height, `${route} Figma header height at ${width}px`).toBe(mobile ? 64 : 106);
+        if (mobile) expect(bounds.mobileNav?.height, `${route} Figma bottom navigation height at ${width}px`).toBe(92);
         expect(bounds.heading.y, `${route} header covers its title`).toBeGreaterThanOrEqual(bounds.header.bottom);
         expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
 
