@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useParams } from "react-router-dom";
 import { getReviewDetails, getReviewLikeStatus, likeReview, type ReviewDetails as ReviewDetailsModel, unlikeReview } from "../api/reviews.api";
 import RatingSheet from "../components/RatingSheet";
@@ -135,6 +136,7 @@ export default function ReviewDetails() {
       <div className={styles.heroShade} aria-hidden="true" />
       <div className={styles.heroInner}>
         <Link className={styles.back} to={path(`/films/${review.movie.id}`)} aria-label={t("backToMovie")}>←</Link>
+        {isAuth && <button className={styles.more} type="button" aria-haspopup="dialog" aria-controls={ratingSheetOpen ? "rating-sheet-dialog" : undefined} aria-expanded={ratingSheetOpen} aria-label={t("moreOptions")} onClick={() => setRatingSheetOpen(true)}>⋯</button>}
         <div className={styles.filmBlock}>
           <div className={styles.posterColumn}>
             <Link className={styles.poster} to={path(`/films/${review.movie.id}`)} aria-label={`${t("poster")} ${movieTitle}`}>
@@ -150,30 +152,39 @@ export default function ReviewDetails() {
               <ResilientImage src={review.author.avatarUrl} alt="" fallback={<Initial value={authorName} />} />
               <span><small>{t("reviewBy")}</small>{" "}<strong>{authorName}</strong></span>
             </Link>
+            <article className={styles.reviewBody}>
+              <p className={styles.reviewText}>{review.content}</p>
+            </article>
           </div>
+          <aside className={styles.socialPanel}>
+            <div className={styles.reviewMeta}>
+              <div className={styles.reviewMetaPrimary}>
+                <div className={styles.stars} role="img" aria-label={`${t("rating")}: ${review.rating ?? 0}/5`}>
+                  {[1, 2, 3, 4, 5].map(star => <span aria-hidden="true" className={review.rating != null && star <= review.rating ? styles.starActive : ""} key={star}>★</span>)}
+                </div>
+                {isAuth && <button className={styles.rateTrigger} type="button" aria-haspopup="dialog" aria-controls={ratingSheetOpen ? "rating-sheet-dialog" : undefined} aria-expanded={ratingSheetOpen} onClick={() => setRatingSheetOpen(true)}>
+                  <span aria-hidden="true">★</span>{t("rateFilm")}
+                </button>}
+              </div>
+              <time dateTime={review.createdAt}>{formatDateTime(review.createdAt, lang)}</time>
+            </div>
+            <div className={styles.likeActions}>
+              {isAuth && likeStatusLoading && <p className={styles.likeStatus} role="status">{t("loading")}</p>}
+              {isAuth && likeStatusError && <p className={styles.likeError} role="alert">{t("likeReviewError")} <RetryButton label={t("retry")} onClick={() => setLikeStatusAttempt(value => value + 1)} /></p>}
+              {isAuth && !likeStatusLoading && !likeStatusError && <button className={`${styles.likeButton} ${liked ? styles.likeButtonActive : ""}`} type="button" aria-busy={likeBusy} aria-pressed={liked} disabled={likeBusy} onClick={() => void toggleLike()}>
+                <span aria-hidden="true">{liked ? "♥" : "♡"}</span>{likeBusy ? t("loading") : liked ? t("unlike") : t("like")}
+              </button>}
+              {!isAuth && <Link className={styles.likeButton} to={path("/login")}>♡ {t("loginToLikeReview")}</Link>}
+              {likeError && <p className={styles.likeError} role="alert">{t("likeReviewError")} <RetryButton label={t("retry")} disabled={likeBusy} busy={likeBusy} onClick={() => void toggleLike()} /></p>}
+            </div>
+          </aside>
         </div>
       </div>
     </section>
 
-    <div className={styles.content}>
-      <article className={styles.reviewBody}>
-        <p className={styles.reviewText}>{review.content}</p>
-        <div className={styles.reviewMeta}>
-          <div className={styles.reviewMetaPrimary}>
-            <div className={styles.stars} role="img" aria-label={`${t("rating")}: ${review.rating ?? 0}/5`}>
-              {[1, 2, 3, 4, 5].map(star => <span aria-hidden="true" className={review.rating != null && star <= review.rating ? styles.starActive : ""} key={star}>★</span>)}
-            </div>
-            {isAuth && <button className={styles.rateTrigger} type="button" aria-haspopup="dialog" aria-controls={ratingSheetOpen ? "rating-sheet-dialog" : undefined} aria-expanded={ratingSheetOpen} onClick={() => setRatingSheetOpen(true)}>
-              <span aria-hidden="true">★</span>{t("rateFilm")}
-            </button>}
-          </div>
-          <time dateTime={review.createdAt}>{formatDateTime(review.createdAt, lang)}</time>
-        </div>
-      </article>
-
-      <aside className={styles.socialPanel}>
+    <section className={styles.likersSection} aria-labelledby="review-likers-title">
         <div className={styles.likeRow}>
-          <div><p className={styles.eyebrow}>{t("community")}</p><h2>{t("membersWhoLikedReview")}</h2></div>
+          <div><p className={styles.eyebrow}>{t("community")}</p><h2 id="review-likers-title">{t("membersWhoLikedReview")}</h2></div>
           <strong>{review.likes}</strong>
         </div>
         {review.likedBy.length > 0 ? <div className={styles.likers} onFocusCapture={event => {
@@ -183,18 +194,12 @@ export default function ReviewDetails() {
             <ResilientImage src={user.avatarUrl} alt={getUserName(user, t("someone"))} fallback={<Initial value={getUserName(user, t("someone"))} />} />
           </Link>)}
         </div> : <p className={styles.noLikes}>{t("noReviewLikes")}</p>}
-        {isAuth && likeStatusLoading && <p className={styles.likeStatus} role="status">{t("loading")}</p>}
-        {isAuth && likeStatusError && <p className={styles.likeError} role="alert">{t("likeReviewError")} <RetryButton label={t("retry")} onClick={() => setLikeStatusAttempt(value => value + 1)} /></p>}
-        {isAuth && !likeStatusLoading && !likeStatusError && <button className={`${styles.likeButton} ${liked ? styles.likeButtonActive : ""}`} type="button" aria-busy={likeBusy} aria-pressed={liked} disabled={likeBusy} onClick={() => void toggleLike()}>
-          <span aria-hidden="true">{liked ? "♥" : "♡"}</span>{likeBusy ? t("loading") : liked ? t("unlike") : t("like")}
-        </button>}
-        {!isAuth && <Link className={styles.likeButton} to={path("/login")}>♡ {t("loginToLikeReview")}</Link>}
-        {likeError && <p className={styles.likeError} role="alert">{t("likeReviewError")} <RetryButton label={t("retry")} disabled={likeBusy} busy={likeBusy} onClick={() => void toggleLike()} /></p>}
-      </aside>
-    </div>
-    {ratingSheetOpen && isAuth && <RatingSheet
+    </section>
+        {ratingSheetOpen && isAuth && createPortal(<RatingSheet
       movieId={review.movie.id}
       movieTitle={movieTitle}
+      subtitle={`${t("reviewBy")} ${authorName}`}
+          movieBackdropUrl={review.movie.backdropUrl}
       likes={review.likes}
       liked={liked}
       likeBusy={likeBusy}
@@ -203,6 +208,6 @@ export default function ReviewDetails() {
       onRetryLikeStatus={() => setLikeStatusAttempt(value => value + 1)}
       onToggleLike={() => void toggleLike()}
       onClose={closeRatingSheet}
-    />}
+        />, document.body)}
   </main>;
 }

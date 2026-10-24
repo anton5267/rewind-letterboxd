@@ -118,6 +118,43 @@
 
 .input::placeholder { color: rgba(255, 255, 255, .48); }
 
+.passwordField {
+  position: relative;
+  min-width: 0;
+}
+
+.passwordField .input { padding-right: 72px; }
+
+.passwordVisibility {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  transform: translateY(-50%);
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(255, 255, 255, .68);
+  cursor: pointer;
+}
+
+.passwordVisibility:hover:not(:disabled) { color: #fff; }
+.passwordVisibility:disabled { cursor: wait; opacity: .58; }
+
+.passwordVisibility svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
 .button {
   display: inline-flex;
   width: 100%;
@@ -269,7 +306,7 @@
     width: min(393px, 100%);
     min-height: 852px;
     margin-inline: auto;
-    padding-inline: max(16px, calc((100% - 290px) / 2));
+    padding-inline: max(16px, calc((min(100vw, 393px) - 290px) / 2));
     border-radius: 0;
     background: transparent;
     box-shadow: none;

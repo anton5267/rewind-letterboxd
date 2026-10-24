@@ -1,12 +1,14 @@
 .page {
   min-height: 100vh;
   padding: 112px 0 72px;
+  overflow-x: clip;
   background: var(--rewind-surface);
   color: #f5f5f5;
 }
 
 .shell {
   width: min(1220px, 100%);
+  box-sizing: border-box;
   margin: 0 auto;
   padding: 0 24px;
 }
@@ -51,6 +53,8 @@
   outline-offset: 3px;
 }
 
+.page .profileRailLink:focus-visible { outline-offset: -3px; }
+
 .actionStatus {
   margin: 16px 0 0;
   padding: 12px 14px;
@@ -92,13 +96,13 @@
   flex: 0 0 112px;
   border-radius: 50%;
   object-fit: cover;
-  background: #392752;
+  background: #282828;
 }
 
 .avatarFallback {
   display: grid;
   place-items: center;
-  color: #e6c8ff;
+  color: #fff;
   font-size: 48px;
   font-weight: 700;
 }
@@ -387,10 +391,17 @@
 }
 
 @media (max-width: 620px) {
-  .page { padding: 0 0 92px; }
-  .shell { padding: 0 14px; }
-  .hero { align-items: flex-start; flex-direction: column; gap: 0; padding: 50px 0 24px; }
+  .page { padding: 0 0 92px; background: #1f1f1f; }
+  .shell { box-sizing: border-box; padding: 0 16px; }
+  /* Figma 825:1393: original Whiplash layer in a 430x295 slot at x=-19.
+     The gradient approximates the black blur; the flat surface starts at547. */
+  .hero { width: 100vw; min-height: 547px; box-sizing: border-box; margin-left: calc(50% - 50vw); align-items: center; justify-content: flex-start; flex-direction: column; gap: 0; border-radius: 0; padding: 50px 16px 35px; background: linear-gradient(180deg, rgba(0, 0, 0, .12), #000 295px, #000 547px, #1f1f1f 547px), #000 url("/images/public-profile-hero-phone.png") center -1px / max(100%, 430px) 304px no-repeat; box-shadow: none; text-align: center; }
   .hero .eyebrow { display: none; }
+  .identity { width: 100%; align-items: center; flex-direction: column; gap: 7px; }
+  .identityCopy { width: min(100%, 361px); }
+  .avatar, .avatarFallback { width: 120px; height: 120px; flex-basis: 120px; }
+  .identity h1 { max-width: 100%; font-size: 26px; line-height: 1.08; letter-spacing: 0; text-wrap: balance; }
+  .username { margin-top: 7px; color: #aaa; font-size: 14px; line-height: 1.4; }
   .mobileToolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 10px; width: 100%; margin-bottom: 96px; color: #fff; font-size: 13px; font-weight: 800; text-align: center; }
   .mobileToolbar > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .mobileBack,
@@ -401,9 +412,13 @@
   .mobileSearch { font-size: 22px; }
   .mobileBack:focus-visible,
   .mobileSearch:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 2px; }
-  .profileActions { justify-content: flex-start; }
-  .profileRail { display: flex; gap: 8px; margin: 10px -14px -6px; padding: 6px 14px 8px; overflow-x: auto; scroll-padding-inline: 14px; scrollbar-width: none; }
-  .profileRail::-webkit-scrollbar { display: none; }
+  .profileActions { display: grid; width: min(100%, 361px); grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 20px; }
+  .profileActions :is(button, a) { min-width: 0; min-height: 44px; box-sizing: border-box; border-radius: 24px; padding: 10px 14px; color: #fff; font-size: 14px; line-height: 1.25; overflow-wrap: anywhere; text-align: center; }
+  .profileActions .primaryButton { grid-column: 1 / -1; justify-self: center; width: max-content; max-width: 100%; min-width: 124px; border-color: #fff; background: #fff; color: #191919; }
+  .profileActions > :only-child { grid-column: 1 / -1; justify-self: center; }
+  /* Phone overview `825:1378` goes from the 547px identity hero to
+     Favorites at y=590; its six section links are the lower navigation. */
+  .profileRail { display: none; }
   .profileRailLink { display: inline-flex; flex: 0 0 auto; min-height: 40px; box-sizing: border-box; align-items: center; padding: 9px 14px; border: 1px solid #464646; border-radius: 999px; background: #242424; color: #f1f1f1; font-size: 12px; font-weight: 800; line-height: 1; text-decoration: none; }
   .profileRailLinkActive { border-color: var(--rewind-gold); background: var(--rewind-gold); color: #17120d; }
   .profileRailLink:hover { border-color: var(--rewind-cyan); color: #fff; }
@@ -412,7 +427,7 @@
 /* Desktop Public Profile `238:596`: centered identity header and state rail.
    The photographic layer is added only when its original Figma asset is available. */
 @media (min-width: 621px) {
-  .hero { width: 100vw; min-height: 458px; box-sizing: border-box; margin-left: calc(50% - 50vw); align-items: center; justify-content: center; flex-direction: column; padding: 112px 24px 76px; border-radius: 0; background: linear-gradient(180deg, rgba(0, 0, 0, .24), rgba(0, 0, 0, .88)), radial-gradient(ellipse at 18% 4%, #5b4331 0%, #211a18 36%, #101010 78%); text-align: center; }
+  .hero { width: 100vw; min-height: 458px; box-sizing: border-box; margin-left: calc(50% - 50vw); align-items: center; justify-content: flex-start; flex-direction: column; gap: 0; padding: 112px 24px 76px; border-radius: 0; background: linear-gradient(180deg, rgba(0, 0, 0, .24), rgba(0, 0, 0, .88)), #111 url("/images/public-profile-hero.jpg") center / cover no-repeat; text-align: center; }
   .identity { flex-direction: column; gap: 12px; }
   .avatar, .avatarFallback { width: 120px; height: 120px; flex-basis: 120px; }
   .identityCopy { max-width: min(100%, 680px); }
@@ -435,10 +450,6 @@
   .avatar,
   .avatarFallback { width: 120px; height: 120px; flex-basis: 120px; }
   .identity h1 { max-width: 361px; font-size: 26px; line-height: 1.08; overflow-wrap: anywhere; text-wrap: balance; }
-  .profileActions { align-items: stretch; justify-content: center; flex-direction: column; width: 100%; }
-  .primaryButton,
-  .secondaryButton,
-  .messageLink { width: 100%; text-align: center; }
 }
 
 /* Profile design slice: the Figma profile frames use one dark editorial surface
@@ -713,10 +724,11 @@
     box-sizing: border-box;
     margin-left: calc(50% - 50vw);
     padding: 274px 24px 120px;
+    justify-content: flex-start;
     border-radius: 0;
     background:
       linear-gradient(180deg, rgba(0, 0, 0, .16), rgba(0, 0, 0, .82)),
-      radial-gradient(ellipse at 50% 25%, #674d39 0%, #2c211d 42%, #111 82%);
+      #111 url("/images/public-profile-hero.jpg") center / cover no-repeat;
     text-align: center;
   }
 
@@ -811,6 +823,8 @@
     box-shadow: none;
   }
 
+  .section, .section > h2 { scroll-margin-top: 122px; }
+
   .shell > section.section > h2 {
     margin: 0 0 48px;
     color: #fff;
@@ -832,16 +846,16 @@
   }
 
   .collectionGrid {
-    grid-template-columns: repeat(6, 174px);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 31px;
   }
 
   .collectionPosterLink,
   .collectionPoster,
   .collectionPosterFallback {
-    width: 174px;
-    height: 260px;
-    aspect-ratio: auto;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 174 / 260;
     border-radius: 20px;
   }
 
@@ -883,7 +897,6 @@
 }
 
 @media (max-width: 400px) {
-  .hero { padding-inline: 0; }
   .mobileToolbar { margin-bottom: 96px; }
   .profileRailLink { padding-inline: 12px; }
   .stat { min-height: 70px; padding-inline: 6px; }
@@ -924,4 +937,208 @@
     gap: 5px;
     margin-top: 9px;
   }
+}
+
+/* Public overview: Figma 238:642 / 825:1428 uses four genuine favorites,
+   followed by activity, reviews, following and public lists. Extra account
+   statistics and the complete collections remain available after this rail. */
+.mobileCollectionNavigation, .collectionToolbar { display: none; }
+
+/* Explicit collection/list views retain legacy anchor-only URLs as overview. */
+.page[data-profile-view] .shell > section.section { display: none; }
+.page[data-profile-view="collection"] .shell > section.section[id="public-profile-collections"],
+.page[data-profile-view="lists"] .shell > section.section[id="public-profile-lists"],
+.page[data-profile-view="following"] .shell > section.section[id="public-profile-following"],
+.page[data-profile-view="followers"] .shell > section.section[id="public-profile-followers"] { display: block; }
+.page[data-profile-view] .mobileCollectionNavigation { display: none; }
+
+.heroMetrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(100%, 650px);
+  gap: 24px;
+  margin: 28px 0 0;
+}
+
+.heroMetrics > div { display: flex; min-width: 0; flex-direction: column-reverse; gap: 10px; }
+.heroMetrics dt { color: #bcbcbc; font-size: 18px; line-height: 1.3; overflow-wrap: anywhere; }
+.heroMetrics dd { margin: 0; color: #fff; font-size: 32px; font-weight: 600; line-height: 1.15; overflow-wrap: anywhere; }
+.heroMetrics dd a { display: inline-flex; min-height: 44px; align-items: center; color: inherit; text-decoration: none; }
+
+.shell > section.section.overviewSection {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  margin: 60px auto 0;
+  padding: 18px 0 0;
+  border: 0;
+  border-top: 1px solid #4d4d4d;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.shell > section.section.overviewSection > h2 {
+  margin: 0 0 40px;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 27px;
+  text-align: left;
+}
+
+.previewGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 32px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.previewGrid > li { min-width: 0; }
+.previewPosterLink, .previewPoster, .previewPosterFallback, .activityPlaceholder {
+  display: block;
+  width: 100%;
+  aspect-ratio: 265 / 395;
+  border-radius: 20px;
+}
+.previewPosterLink { overflow: hidden; background: #303030; text-decoration: none; }
+.previewPoster { object-fit: cover; }
+.previewPosterFallback, .activityPlaceholder { display: grid; place-items: center; box-sizing: border-box; background: linear-gradient(145deg, #35234a, #242424); color: #d8a5ff; font-size: clamp(24px, 4vw, 52px); font-weight: 800; }
+.shell > section.overviewSection .activityCaption { display: flex; flex-direction: column; gap: 7px; margin: 16px 0 0; color: #aaa; font-size: 14px; line-height: 1.4; }
+.activityCaption strong { color: #fff; font-size: 16px; font-weight: 500; }
+.activityCaption time { font-size: 12px; }
+
+.reviewCards { display: grid; gap: 36px; margin: 0; padding: 0; list-style: none; }
+
+.followingRail { display: flex; gap: 6px; margin: -6px; padding: 6px; overflow-x: auto; scroll-padding: 6px; list-style: none; }
+.followingRail > li { flex: 0 0 auto; }
+.followingRail a { display: grid; width: 80px; min-height: 80px; place-items: center; border-radius: 50%; text-decoration: none; }
+.followingRail img, .followingAvatarFallback { display: block; width: 80px; height: 80px; border-radius: 50%; object-fit: cover; }
+.followingAvatarFallback { display: grid; place-items: center; background: #343434; color: #fff; font-size: 26px; }
+
+.shell > section.overviewSection .overviewAction {
+  display: table;
+  max-width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  margin: 20px auto 0;
+  padding: 11px 18px;
+  border: 1px solid #5a5a5a;
+  border-radius: 999px;
+  background: transparent;
+  color: #ddd;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  text-align: center;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.shell > section.overviewSection .overviewAction:hover { border-color: var(--rewind-cyan); color: #fff; }
+.shell > section.overviewSection > h2 a { color: inherit; font: inherit; text-decoration: none; }
+.shell > section.overviewSection > h2 a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.shell > section.activityOverview .overviewAction { margin: 12px 0 0 auto; }
+
+.networkBack { display: none; }
+.networkList { margin: 0; padding: 0; list-style: none; }
+.shell > section.networkSection .networkList a { color: inherit; font-weight: inherit; }
+@media (min-width: 721px) {
+  .networkBack { display: inline-flex; width: 44px; min-height: 44px; align-items: center; justify-content: center; margin-top: 73px; color: #b9b9b9; font-size: 30px; text-decoration: none; }
+  .page[data-network-view="true"] .shell > section.networkSection { margin-top: 16px; border: 0; border-top: 1px solid #4d4d4d; border-radius: 0; padding: 17px 0 0; background: transparent; box-shadow: none; }
+  .shell > section.networkSection > h2 { margin-bottom: 59px; font-size: 24px; line-height: 27px; }
+}
+@media (max-width: 720px) {
+  .page[data-network-view="true"] { padding-top: 0; }
+  .page[data-network-view="true"] .hero, .page[data-network-view="true"] .profileRail, .page[data-network-view="true"] .shell > p { display: none; }
+  .page[data-network-view="true"] .collectionToolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 10px; padding-top: 50px; margin-bottom: 29px; }
+  .page[data-network-view="true"] .collectionToolbar h1 { margin: 0; color: #fff; font-size: 15px; font-weight: 500; line-height: 1.3; text-align: center; overflow-wrap: anywhere; }
+  .page[data-network-view="true"] .collectionToolbar > a { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 50%; background: #282828; color: #fff; font-size: 20px; text-decoration: none; }
+  .page[data-network-view="true"] .shell > section.networkSection { width: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+  .page[data-network-view="true"] .shell > section.networkSection > h2 { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+
+.listsOverview .publicListGrid { gap: 35px; }
+.listsOverview .publicListCard { grid-template-columns: minmax(0, 40%) minmax(0, 1fr); grid-template-rows: max-content 1fr; min-height: 339px; border: 0; border-radius: 20px; background: #282828; }
+.listsOverview .publicListPoster { grid-column: 1; grid-row: 1 / 3; min-width: 0; min-height: 0; box-sizing: border-box; padding: 38px 16px 39px 28px; background: transparent; --catalog-poster-height: 262px; }
+.listsOverview .publicListBody { grid-column: 2; grid-row: 2; justify-content: flex-start; padding: 16px 50px 35px 28px; }
+.listsOverview .publicListHeading { grid-column: 2; grid-row: 1; align-items: flex-start; flex-direction: column; gap: 13px; padding: 59px 50px 0 28px; }
+.listsOverview .publicListTitle { font-size: 24px; font-weight: 600; line-height: 1.2; }
+.listsOverview .publicListCount { font-size: 16px; white-space: normal; }
+.listsOverview .publicListDescription { display: block; margin: 0; overflow: visible; font-size: 18px; line-height: 1.5; -webkit-line-clamp: unset; }
+.listsOverview .publicListTags a { font-size: 14px; }
+
+@media (min-width: 1024px) {
+  .hero { gap: 0; }
+  .heroMetrics { margin-top: 64px; }
+  .heroMetrics dd { font-size: 36px; }
+  .heroMetrics dt { font-size: 24px; }
+  .shell > section.section.overviewSection { margin-top: 85px; }
+  .shell > section.section.overviewSection > h2 { margin-bottom: 59px; font-size: 24px; }
+  .previewGrid { gap: 46px; }
+}
+
+@media (min-width: 621px) and (max-width: 1023px) {
+  .listsOverview .publicListCard { min-height: 260px; }
+  .listsOverview .publicListPoster { padding: 24px 12px 24px 20px; --catalog-poster-height: 212px; }
+  .listsOverview .publicListHeading { padding: 30px 24px 0 12px; }
+  .listsOverview .publicListBody { padding: 16px 24px 30px 12px; }
+  .listsOverview .publicListTitle { font-size: 20px; }
+  .listsOverview .publicListDescription { font-size: 15px; }
+}
+
+@media (max-width: 620px) {
+  /* 845:1679 / 861:1474 / 863:2474 / 863:2717: toolbar50, content123. */
+  .page[data-profile-view] .hero,
+  .page[data-profile-view] .profileRail,
+  .page[data-profile-view] .shell > p { display: none; }
+  .page[data-profile-view] .collectionToolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 10px; align-items: center; padding-top: 50px; margin-bottom: 29px; }
+  .collectionToolbar h1 { margin: 0; overflow-wrap: anywhere; color: #fff; font-size: 14px; font-weight: 500; line-height: 1.3; text-align: center; }
+  .collectionToolbar > a, .collectionToolbar > button { display: grid; width: 44px; height: 44px; box-sizing: border-box; place-items: center; border: 0; border-radius: 50%; background: #282828; color: #fff; font-size: 20px; text-decoration: none; cursor: pointer; }
+  .collectionToolbar > button { font-size: 16px; }
+  .page[data-profile-view] .shell > section.section[id] { position: relative; width: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+  .page[data-profile-view] .shell > section.section > h2 { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .page[data-profile-view="collection"] .tabs[data-filters-open="false"] { display: none; }
+  .page[data-profile-view="collection"] .tabs[data-filters-open="true"] { margin: 0 0 20px; }
+  .page[data-profile-view="collection"] .collectionGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 19px 15px; }
+  .page[data-profile-view="collection"] .collectionPosterLink,
+  .page[data-profile-view="collection"] .collectionPoster,
+  .page[data-profile-view="collection"] .collectionPosterFallback { aspect-ratio: 79 / 116; border-radius: 10px; }
+  .page[data-profile-view="collection"] .collectionCard > h3,
+  .page[data-profile-view="collection"] .collectionCard > p { display: none; }
+  /* 831:1568 has six361px links. Keep44px targets instead of its32px. */
+  .mobileCollectionNavigation { display: grid; gap: 5px; margin-top: 35px; }
+  .mobileCollectionNavigation a { display: flex; min-width: 0; min-height: 44px; box-sizing: border-box; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 15px; border-radius: 37px; background: #282828; color: #fff; font-size: 11px; font-weight: 500; line-height: 1.4; text-decoration: none; overflow-wrap: anywhere; }
+  .mobileCollectionNavigation a:hover { background: #343434; }
+  .mobileCollectionNavigation a:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: 2px; }
+  .mobileCollectionNavigation a > span { font-size: 20px; line-height: 1; }
+  .heroMetrics { width: min(100%, 300px); gap: 12px; margin-top: 20px; }
+  .heroMetrics > div { gap: 5px; }
+  .heroMetrics dt { font-size: 12px; line-height: 1.4; }
+  .heroMetrics dd { font-size: 22px; }
+  .shell > section.section.overviewSection { margin-top: 35px; padding-top: 8px; }
+  .shell > section.section.overviewSection > h2 { margin-bottom: 24px; font-size: 14px; line-height: 16px; }
+  .previewGrid { gap: 15px; }
+  .previewPosterLink, .previewPoster, .previewPosterFallback, .activityPlaceholder { aspect-ratio: 79 / 116; border-radius: 10px; }
+  .shell > section.overviewSection .activityCaption { gap: 4px; margin-top: 9px; font-size: 10px; line-height: 1.4; }
+  .activityCaption strong { font-size: 11px; }
+  .activityCaption time { font-size: 9px; }
+  .reviewCards { gap: 12px; }
+  .followingRail a { width: 44px; min-height: 44px; }
+  .followingRail img, .followingAvatarFallback { width: 40px; height: 40px; }
+  .followingAvatarFallback { font-size: 18px; }
+  .listsOverview .publicListGrid { gap: 35px; }
+  .listsOverview .publicListCard { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto; min-height: 189px; border-radius: 10px; }
+  .listsOverview .publicListPoster { grid-column: 1; grid-row: 2; align-items: flex-start; justify-content: flex-start; padding: 0 18px 24px; --catalog-poster-height: 116px; }
+  .listsOverview .publicListBody { grid-column: 1; grid-row: 3; padding: 0 18px 24px; }
+  .listsOverview .publicListBody:empty { display: none; }
+  .listsOverview .publicListHeading { grid-column: 1; grid-row: 1; align-items: baseline; flex-direction: row; gap: 12px; padding: 24px 18px 9px; }
+  .listsOverview .publicListTitle { font-size: 13px; line-height: 1.3; }
+  .listsOverview .publicListCount { font-size: 10px; }
+  .listsOverview .publicListDescription { margin: 0; font-size: 12px; line-height: 1.45; }
+  .listsOverview .publicListTags { gap: 5px; margin-top: 10px; }
+  .listsOverview .publicListTags a { font-size: 10px; }
 }

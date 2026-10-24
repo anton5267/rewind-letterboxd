@@ -1,0 +1,11 @@
+.wrap { min-width: 0; }
+.link, .image, .fallback { display: block; width: 100%; aspect-ratio: 265 / 395; border-radius: 20px; }
+.link { overflow: hidden; background: #303030; text-decoration: none; }
+.image { object-fit: cover; }
+.fallback { display: grid; box-sizing: border-box; place-items: center; background: linear-gradient(145deg, #35234a, #242424); color: #d8a5ff; font-size: clamp(22px, 4vw, 52px); font-weight: 800; }
+.retry { display: flex; justify-content: center; margin-top: 8px; }
+.retry button { max-width: 100%; overflow-wrap: anywhere; }
+@media (max-width: 620px) {
+  .link, .image, .fallback { aspect-ratio: 79 / 116; border-radius: 10px; }
+  .retry { margin-top: 4px; }
+}

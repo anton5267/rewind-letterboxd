@@ -1,16 +1,30 @@
 import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import styles from "./Login.module.css";
 import { useLocale } from "../i18n";
 
+function getProfileReturnLocation(state: unknown, profilePath: string): string | null {
+  if (typeof state !== "object" || state === null || !("returnTo" in state)) return null;
+  const { returnTo } = state;
+  if (typeof returnTo !== "string" || /[\u0000-\u001f\u007f\\]/.test(returnTo)) return null;
+
+  // Only Profile supplies this state. Accept its exact localized pathname,
+  // preserving settings queries and form anchors without accepting external URLs.
+  const pathname = returnTo.split(/[?#]/, 1)[0];
+  return pathname === profilePath || pathname === `${profilePath}/` ? returnTo : null;
+}
+
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { login } = useAuth();
   const { path, t } = useLocale();
+  const returnLocation = getProfileReturnLocation(location.state, path("/profile"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -21,7 +35,8 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email.trim(), password);
-      navigate(path("/films"));
+      if (returnLocation) navigate(returnLocation, { replace: true });
+      else navigate(path("/films"));
     } catch {
       setError(t("loginError"));
     } finally {
@@ -54,22 +69,38 @@ export default function Login() {
             required
           />
           <label className="srOnly" htmlFor="login-password">{t("password")}</label>
-          <input
-            id="login-password"
-            name="password"
-            type="password"
-            placeholder={t("password")}
-            className={styles.input}
-            value={password}
-            disabled={loading}
-            onChange={(event) => setPassword(event.target.value)}
-            autoComplete="current-password"
-            minLength={6}
-            maxLength={100}
-            aria-invalid={Boolean(error)}
-            aria-describedby={error ? "login-error" : undefined}
-            required
-          />
+          <div className={styles.passwordField}>
+            <input
+              id="login-password"
+              name="password"
+              type={passwordVisible ? "text" : "password"}
+              placeholder={t("password")}
+              className={styles.input}
+              value={password}
+              disabled={loading}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="current-password"
+              minLength={6}
+              maxLength={100}
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? "login-error" : undefined}
+              required
+            />
+            <button
+              type="button"
+              className={styles.passwordVisibility}
+              aria-label={passwordVisible ? t("hidePassword") : t("showPassword")}
+              aria-pressed={passwordVisible}
+              onClick={() => setPasswordVisible((visible) => !visible)}
+              disabled={loading}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+                <circle cx="12" cy="12" r="3" />
+                {passwordVisible && <path d="m4 4 16 16" />}
+              </svg>
+            </button>
+          </div>
           <div className={styles.row}>
             <Link className={styles.forgot} to={path("/forgot-password")}>
               {t("forgotPassword")}

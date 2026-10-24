@@ -90,6 +90,7 @@ export default function MovieDetails() {
   const [reviews, setReviews] = useState<MovieReview[]>([]);
   const [reviewsPage, setReviewsPage] = useState(0);
   const [reviewsTotalPages, setReviewsTotalPages] = useState(0);
+  const [showAllReviews, setShowAllReviews] = useState(false);
   const [myReview, setMyReview] = useState<MovieReview | null>(null);
   const [myReviewReady, setMyReviewReady] = useState(false);
   const [myReviewError, setMyReviewError] = useState(false);
@@ -268,6 +269,11 @@ export default function MovieDetails() {
   }, [isAuth, loadMovie, loadMyReview, movieId, myReviewAttempt, validMovieId]);
 
   useEffect(() => {
+    setShowAllReviews(false);
+    setReviewsPage(0);
+  }, [movieId]);
+
+  useEffect(() => {
     if (validMovieId) void loadReviews();
   }, [loadReviews, validMovieId]);
 
@@ -421,6 +427,22 @@ export default function MovieDetails() {
   }, [movie, t]);
 
   const otherReviews = reviews.filter(item => item.id !== myReview?.id);
+  const renderReviewCard = (item: MovieReview) => {
+    const reviewerName = getUserName({ username: item.username }, t("someone"));
+    const createdDate = new Date(item.createdAt);
+    const reviewDate = Number.isNaN(createdDate.getTime())
+      ? item.createdAt
+      : new Intl.DateTimeFormat(lang === "uk" ? "uk-UA" : "en-US", { dateStyle: "medium" }).format(createdDate);
+    return <article className={styles.review} key={item.id}>
+      <h3 className={styles.desktopReviewTitle}><Link to={path(`/reviews/${item.id}`)}>{reviewerName} · {item.rating ?? "—"}/5</Link></h3>
+      <div className={styles.mobileReviewHeading}>
+        <span className={styles.mobileReviewAvatar} aria-hidden="true">{reviewerName.slice(0, 1).toLocaleUpperCase(lang === "uk" ? "uk-UA" : "en-US")}</span>
+        <span className={styles.mobileReviewByline}><Link to={path(`/reviews/${item.id}`)}>{reviewerName}</Link><time dateTime={item.createdAt}>{reviewDate}</time></span>
+        <strong className={styles.mobileReviewRating}>{item.rating == null ? "—" : `★ ${item.rating}`}</strong>
+      </div>
+      <p>{item.content}</p><ReviewLikeButton reviewId={item.id} /><Comments reviewId={item.id} />
+    </article>;
+  };
   const heroImage = movie?.backdropUrl || movie?.photoUrl;
   const trailerUrl = safeHttpUrl(movie?.trailerUrl);
   const mobileCrew = movie ? [
@@ -543,8 +565,8 @@ export default function MovieDetails() {
             </>}
           </div>
         </section>}
-        <section className={`${styles.section} ${styles.reviewsSection}`} aria-labelledby="reviews-title" aria-busy={reviewsLoading || (isAuth && !myReviewReady)}>
-          <div className={styles.sectionHeading}><p className={styles.eyebrow}>{t("reviews")}</p><h2 id="reviews-title">{t("reviews")}</h2></div>
+        <section className={`${styles.section} ${styles.reviewsSection}`} data-reviews-expanded={showAllReviews} aria-labelledby="reviews-title" aria-busy={reviewsLoading || (isAuth && !myReviewReady)}>
+          <div className={styles.sectionHeading}><p className={styles.eyebrow}>{t("reviews")}</p><h2 id="reviews-title"><span className={styles.desktopReviewTitle}>{t("reviews")}</span><span className={styles.mobileReviewTitle}>{t("recentReviews")}</span></h2></div>
           {reviewsLoading && <p className={styles.loading} role="status">{t("loading")}</p>}
           {reviewsLoadError && <RetryNotice className={styles.alert} message={t("loadReviewsError")} retryLabel={t("retry")} onRetry={() => setReviewsAttempt(value => value + 1)} />}
           {isAuth && myReview && <article className={`${styles.review} ${styles.myReview}`}>
@@ -557,8 +579,12 @@ export default function MovieDetails() {
             </>}
           </article>}
           {!reviewsLoading && !reviewsLoadError && otherReviews.length === 0 && !myReview && <p className={styles.empty}>{t("noReviews")}</p>}
-          {!reviewsLoading && !reviewsLoadError && otherReviews.map(item => <article className={styles.review} key={item.id}><h3><Link to={path(`/reviews/${item.id}`)}>{getUserName({ username: item.username }, t("someone"))} · {item.rating ?? "—"}/5</Link></h3><p>{item.content}</p><ReviewLikeButton reviewId={item.id} /><Comments reviewId={item.id} /></article>)}
-          {!reviewsLoadError && <Pagination className={styles.pagination} page={reviewsPage} totalPages={reviewsTotalPages} label={t("reviewsPagination")} busy={reviewsLoading} onPageChange={setReviewsPage} />}
+          {!reviewsLoading && !reviewsLoadError && otherReviews.slice(0, 2).map(renderReviewCard)}
+          {!reviewsLoading && !reviewsLoadError && (otherReviews.length > 2 || reviewsTotalPages > 1) && <>
+            <button className={styles.allReviewsButton} type="button" aria-expanded={showAllReviews} aria-controls="additional-movie-reviews" onClick={() => setShowAllReviews(value => !value)}>{t(showAllReviews ? "showFewerReviews" : "allReviews")}<span aria-hidden="true">{showAllReviews ? "‹" : "›"}</span></button>
+            <div id="additional-movie-reviews" className={styles.additionalReviews}>{otherReviews.slice(2).map(renderReviewCard)}</div>
+          </>}
+          {!reviewsLoadError && <Pagination className={styles.pagination} page={reviewsPage} totalPages={reviewsTotalPages} label={t("reviewsPagination")} busy={reviewsLoading} onPageChange={page => { setShowAllReviews(false); setReviewsPage(page); }} />}
           {isAuth && !myReviewReady && <p className={styles.loading} role="status">{t("loading")}</p>}
           {isAuth && myReviewError && <RetryNotice className={styles.alert} message={t("loadMyReviewError")} retryLabel={t("retry")} onRetry={() => setMyReviewAttempt(value => value + 1)} />}
           {isAuth && myReviewReady && !myReviewError && (!myReview || editingReview) && <form className={styles.reviewForm} onSubmit={createReview}>

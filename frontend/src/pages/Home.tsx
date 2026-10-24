@@ -80,7 +80,7 @@ export default function Home() {
 
     runSection("popular", searchMovies({ sort: "rating_desc", page: 0, size: 6 }), data => setPopular(data.content));
     runSection("newest", searchMovies({ sort: "newest", page: 0, size: 6 }), data => setNewest(data.content));
-    runSection("reviews", getPopularReviews(), data => setReviews(data.content));
+    runSection("reviews", getPopularReviews(0, 4), data => setReviews(data.content));
     runSection("lists", getPublicListFeed("popular", 0, undefined, 4), data => setLists(data.content));
     runSection("reviewers", getPopularReviewers(), data => setReviewers(data));
     runSection("tags", getPopularTags(12), data => setTags(data));
@@ -110,15 +110,28 @@ export default function Home() {
         {sectionLoading.newest ? <p className={styles.sectionStatus} role="status">{t("loadingHome")}</p> : sectionErrors.newest ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} onRetry={() => setRetry(value => value + 1)} /> : newest.length === 0 ? <p>{t("noFilms")}</p> : <MovieRow movies={newest} />}
       </section>
       {!isAuth && <section className={styles.guestExplainer} aria-label={t("homeGuestExplainerTitle")}>
-        <h2>{t("homeGuestExplainerTitle")}</h2>
+        <h2>{t("homeGuestExplainerHeading")}</h2>
+        <div className={styles.guestExplainerCard}>
+          <svg aria-hidden="true" viewBox="0 0 32 24" focusable="false"><path d="M2 12s5-9 14-9 14 9 14 9-5 9-14 9S2 12 2 12Z"/><circle cx="16" cy="12" r="4"/></svg>
         <p>{t("homeGuestExplainerText")}</p>
+        </div>
       </section>}
+      {!isAuth && <section className={styles.guestRecentReviews} aria-busy={sectionLoading.reviews}>
+        <div className={styles.sectionHeading}><h2>{t("homeJustReviewed")}</h2><Link to={path("/reviews")}>{t("homeMore")}</Link></div>
+        {sectionLoading.reviews ? <p className={styles.sectionStatus} role="status">{t("loadingHome")}</p> : sectionErrors.reviews ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} onRetry={() => setRetry(value => value + 1)} /> : reviews.length === 0 ? <p>{t("noRecentReviews")}</p> : <div className={styles.guestReviewPosters} role="group" aria-label={t("homeJustReviewed")}>{reviews.slice(0, 4).map(review => {
+          const movieTitle = editorialText(review.movieTitle, t("untitledFilm"));
+          return <Link key={review.id} to={path(`/reviews/${review.id}`)} aria-label={`${movieTitle} — ${t("homeJustReviewed")}`}>
+            <ResilientImage src={review.moviePhotoUrl} alt="" loading="lazy" fallback={<span aria-hidden="true">{movieTitle.slice(0, 1)}</span>} />
+          </Link>;
+        })}</div>}
+      </section>}
+      {!isAuth && <p className={styles.guestPitch}>{t("homeGuestPitchLead")} {t("homeGuestPitchPrompt")} <Link to={path("/register")}>{t("getStarted")}</Link></p>}
       <section className={`${styles.section} ${styles.popularSection}`} aria-busy={sectionLoading.popular}>
         <div className={styles.sectionHeading}><h2>{t(isAuth ? "homePopularOnRewind" : "popularThisWeek")}</h2><Link to={path("/films?sort=rating_desc")}>{t("viewAll")}</Link></div>
         {sectionLoading.popular ? <p className={styles.sectionStatus} role="status">{t("loadingHome")}</p> : sectionErrors.popular ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} onRetry={() => setRetry(value => value + 1)} /> : popular.length === 0 ? <p>{t("noFilms")}</p> : <MovieRow movies={popular} />}
       </section>
       <section className={`${styles.section} ${styles.journalSection}`} aria-busy={sectionLoading.journal}>
-        <div className={styles.sectionHeading}><h2>{t(isAuth ? "homeLatestNews" : "latestJournal")}</h2><Link to={path("/journal")}>{t("viewAll")}</Link></div>
+        <div className={styles.sectionHeading}><h2>{t(isAuth ? "homeLatestNews" : "homeRecentNews")}</h2><Link to={path("/journal")}>{t(isAuth ? "viewAll" : "homeMore")}</Link></div>
         {sectionLoading.journal ? <p className={styles.sectionStatus} role="status">{t("loadingHome")}</p> : sectionErrors.journal ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} onRetry={() => setRetry(value => value + 1)} /> : journal.length === 0 ? <p>{t("noLatestJournal")}</p> : <div className={styles.stack}>{journal.map(article => {
           const title = editorialText(article.title, t("untitledArticle"));
           return <article className={styles.journalCard} key={article.id}>
@@ -136,7 +149,7 @@ export default function Home() {
       </section>
       <section className={styles.grid}>
         <div className={`${styles.panel} ${styles.reviewsPanel}`} aria-busy={sectionLoading.reviews}>
-          <div className={styles.sectionHeading}><h2>{t("homePopularReviewsThisWeek")}</h2><Link to={path("/reviews")}>{t("viewAll")}</Link></div>
+          <div className={styles.sectionHeading}><h2>{t("homePopularReviewsThisWeek")}</h2><Link to={path("/reviews")}>{t(isAuth ? "viewAll" : "homeMore")}</Link></div>
           {sectionLoading.reviews ? <p className={styles.sectionStatus} role="status">{t("loadingHome")}</p> : sectionErrors.reviews ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} onRetry={() => setRetry(value => value + 1)} /> : reviews.length === 0 ? <p>{t("noRecentReviews")}</p> : <div className={styles.stack}>{reviews.map(review => {
             const movieTitle = editorialText(review.movieTitle, t("untitledFilm"));
             return <article className={styles.reviewCard} key={review.id}>
@@ -161,7 +174,7 @@ export default function Home() {
           })}</div>}
         </div>
         <section className={`${styles.panel} ${styles.listsPanel}`} aria-labelledby="home-public-lists-heading" aria-busy={sectionLoading.lists}>
-          <div className={styles.sectionHeading}><h2 id="home-public-lists-heading">{t("homePopularLists")}</h2><Link to={path("/lists/discover?feed=popular")}>{t("viewAll")}</Link></div>
+          <div className={styles.sectionHeading}><h2 id="home-public-lists-heading">{t("homePopularLists")}</h2><Link to={path("/lists/discover?feed=popular")}>{t(isAuth ? "viewAll" : "homeMore")}</Link></div>
           {sectionLoading.lists ? <p className={styles.sectionStatus} role="status">{t("loadingHome")}</p> : sectionErrors.lists ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} onRetry={() => setRetry(value => value + 1)} /> : lists.length === 0 ? <p>{t("noPublicLists")}</p> : <div className={styles.listCards} role="group" aria-label={t("popularLists")} tabIndex={0}>{lists.map(list => {
             const listName = editorialText(list.name, t("lists"));
             return <article className={styles.listCard} key={list.id}>
@@ -178,10 +191,13 @@ export default function Home() {
           })}</div>}
         </section>
         <div className={styles.panel} aria-busy={sectionLoading.reviewers}>
-          <div className={styles.sectionHeading}><h2>{t("popularReviewers")}</h2></div>
-          {sectionLoading.reviewers ? <p className={styles.sectionStatus} role="status">{t("loadingHome")}</p> : sectionErrors.reviewers ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} onRetry={() => setRetry(value => value + 1)} /> : reviewers.length === 0 ? <p>{t("noPopularReviewers")}</p> : <div className={styles.stack}>{reviewers.map(reviewer => <article className={styles.list} key={reviewer.id}>
-            <h3><Link to={path(`/users/${reviewer.id}`)}>{getUserName(reviewer, t("someone"))}</Link></h3>
-            <small>{t("likes")}: {reviewer.likes}</small>
+          <div className={styles.sectionHeading}><h2>{t("popularReviewers")}</h2>{!isAuth && <Link to={path("/community/reviewers")}>{t("homeMore")}</Link>}</div>
+          {sectionLoading.reviewers ? <p className={styles.sectionStatus} role="status">{t("loadingHome")}</p> : sectionErrors.reviewers ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} onRetry={() => setRetry(value => value + 1)} /> : reviewers.length === 0 ? <p>{t("noPopularReviewers")}</p> : <div className={styles.stack}>{reviewers.slice(0, isAuth ? reviewers.length : 3).map(reviewer => <article className={styles.list} key={reviewer.id}>
+            <Link className={styles.homeReviewer} to={path(`/users/${reviewer.id}`)}>
+              <ResilientImage className={styles.homeReviewerAvatar} src={reviewer.avatarUrl} alt="" fallback={<span className={styles.homeReviewerFallback} aria-hidden="true">{getUserInitial(reviewer)}</span>} />
+              <span className={styles.homeReviewerCopy}><strong>{getUserName(reviewer, t("someone"))}</strong><small>{reviewer.watchedCount !== undefined && `${reviewer.watchedCount.toLocaleString()} ${t("films")}`}{reviewer.reviewCount !== undefined && `, ${reviewer.reviewCount.toLocaleString()} ${t("reviewCountUnit")}`}</small></span>
+            </Link>
+            <small className={styles.homeReviewerLikes}>{t("likes")}: {reviewer.likes}</small>
           </article>)}</div>}
         </div>
         <div className={styles.panel} aria-busy={sectionLoading.tags}>
@@ -189,7 +205,7 @@ export default function Home() {
           {sectionLoading.tags ? <p className={styles.sectionStatus} role="status">{t("loadingHome")}</p> : sectionErrors.tags ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} onRetry={() => setRetry(value => value + 1)} /> : tags.length === 0 ? <p>{t("noTags")}</p> : <p className={styles.tagCloud}>{tags.map(tag => <Link key={tag.id} to={path(`/lists/discover?tag=${encodeURIComponent(tag.slug)}`)}>#{tag.name}</Link>)}</p>}
         </div>
       </section>
-      <section className={styles.section} aria-busy={sectionLoading.recentWatched}>
+      <section className={`${styles.section} ${styles.recentWatchedSection}`} aria-busy={sectionLoading.recentWatched}>
         <div className={styles.sectionHeading}><h2>{t("recentWatched")}</h2></div>
         {sectionLoading.recentWatched ? <p className={styles.sectionStatus} role="status">{t("loadingHome")}</p> : sectionErrors.recentWatched ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} onRetry={() => setRetry(value => value + 1)} /> : recentWatched.length === 0 ? <p>{t("noRecentWatched")}</p> : <div className={styles.stack}>{recentWatched.map(item => {
           if (!item.movie) return null;

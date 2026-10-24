@@ -103,6 +103,7 @@
 .itemActions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
 .itemActions button { min-width: 38px; padding: 8px 10px; border-color: rgba(255, 255, 255, .18); background: transparent; color: #fff; }
 .itemActions button:hover { border-color: #d4a85f; color: #d4a85f; }
+.mobileMoveHandle { display: none; }
 .itemRemoveButton span[aria-hidden="true"] { display: block; font-size: 21px; line-height: 1; }
 .browseFilms { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; margin-top: 22px; border: 1px solid var(--rewind-line); border-radius: 999px; padding: 9px 16px; background: #1f1f1f; color: #fff; font-size: 14px; text-decoration: none; }
 .browseFilms i { display: none; }
@@ -113,6 +114,73 @@
 .status { padding: 10px 12px; border-radius: 3px; }
 .alert { color: #ffd2d2; background: #4a1f24; }
 .status { color: #d8ffd8; background: #1d4728; }
+
+/* Raw desktop create/edit frames 1480:5333 / 1480:5182 share a
+   1200 px editor rail. Minimum sizes let live text and controls grow. */
+@media (min-width: 1024px) {
+  .page { padding: 0 0 160px; }
+  .hero {
+    min-height: 818px;
+    box-sizing: border-box;
+    align-content: start;
+    gap: 8px;
+    margin: 0;
+    border: 0;
+    padding: 280px 24px 220px;
+    overflow: visible;
+    background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .82) 74%, #1f1f1f), url("/images/search-hero-desktop.png") center top / cover no-repeat;
+  }
+  .hero::after, .hero > .eyebrow { display: none; }
+  .hero h1 { max-width: 900px; font-size: 58px; line-height: 1.12; letter-spacing: 0; }
+  .heroCopy { max-width: 445px; margin: 0; color: #aaa6a1; font-size: 24px; line-height: 1.2; }
+  .content { position: relative; width: min(1200px, calc(100% - 48px)); margin: -105px auto 0; }
+  .content > .alert, .content > .status { margin: 0 0 24px; }
+
+  .form, .selectedSection { min-width: 0; margin-top: 0; border: 0; padding: 0; border-radius: 0; background: transparent; box-shadow: none; }
+  .createForm, .editForm { gap: 54px 24px; }
+  .form label { min-width: 0; align-content: start; gap: 17px; color: #b9b9b9; font-size: 22px; font-weight: 400; line-height: 25px; letter-spacing: 0; }
+  .form label.nameField { grid-column: 1; grid-row: 1; }
+  .form label.descriptionField { grid-column: 2; grid-row: 1 / span 3; }
+  .form label.tagsField { grid-column: 1; grid-row: 2; }
+  .form label.checkboxLabel { grid-column: 1; grid-row: 3; min-height: 121px; border: 0; border-radius: 37px; padding: 24px 30px; background: #282828; align-items: center; }
+  .checkboxLabel input { width: 24px; height: 24px; }
+  .form input:not([type="checkbox"]), .form textarea { min-width: 0; border: 0; border-radius: 37px; padding: 24px 30px; background: #282828; font-size: 22px; line-height: 1.4; }
+  .form input:not([type="checkbox"]) { min-height: 79px; }
+  .form textarea { min-height: 515px; }
+  .form .createActions, .form .editActions { align-items: center; gap: 16px; padding-top: 40px; border-top: 1px solid #7e7e7e; }
+  .createActions { grid-row: 4; }
+  .editActions { grid-row: 5; }
+  .createActions span { font-size: 18px; }
+  .form button:not([data-retry-button]) { min-height: 79px; border: 1px solid transparent; border-radius: 37px; padding: 20px 30px; background: #fff; color: #191919; font-size: 22px; font-weight: 400; }
+  .createActions > button { min-width: 220px; }
+  .editActions > button { min-width: 0; }
+  .customEditor .sectionHeader { margin: 0; }
+  .customEditor .sectionHeader > div { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+  .customEditor .sectionHeader > button { display: none; }
+  .editForm label.descriptionField { grid-row: 1 / span 4; }
+  .editForm label.tagsField { grid-row: 3; }
+  .editForm label.checkboxLabel { grid-row: 4; }
+  .form .browseFilms { grid-column: 1; grid-row: 2; min-height: 79px; box-sizing: border-box; margin: 0; border: 0; border-radius: 37px; padding: 24px 30px; background: #282828; justify-content: flex-start; font-size: 22px; }
+  .browseFilms i { display: block; margin-right: 16px; }
+
+  .emptyPreview { min-width: 0; margin-top: 60px; border: 0; border-top: 1px solid #555; border-radius: 0; padding: 40px 30px; background: transparent; }
+  .emptyPreview strong { font-size: 32px; letter-spacing: 0; }
+  .emptyPreview > p:not(.eyebrow) { max-width: 100%; }
+  .listPicker { margin-top: 72px; border: 0; border-top: 1px solid #555; border-radius: 0; padding: 32px 0 0; background: transparent; box-shadow: none; }
+  .listPicker h2 { margin-bottom: 24px; font-size: 24px; line-height: 1.2; letter-spacing: 0; }
+  .listPicker button:not([data-retry-button]) { max-width: 100%; min-height: 48px; border-color: #666; border-radius: 24px; background: #282828; color: #fff; overflow-wrap: anywhere; }
+  .listPicker button[aria-pressed="true"] { border-color: #fff; background: #fff; color: #191919; }
+  .items { gap: 35px; margin-top: 56px; }
+  .itemRow { min-width: 0; min-height: 195px; box-sizing: border-box; grid-template-columns: 91px minmax(0, 1fr) auto; gap: 21px; border: 0; border-radius: 37px; padding: 31px 48px 30px; background: #282828; }
+  .itemPosterLink { width: 91px; }
+  .itemPoster, .itemPosterFallback { width: 91px; height: 134px; aspect-ratio: 91 / 134; border-radius: 20px; }
+  .itemPosterFallback { overflow: hidden; }
+  .itemTitle { overflow: visible; font-size: 32px; line-height: 1.15; white-space: normal; overflow-wrap: anywhere; }
+  .itemMeta { font-size: 18px; line-height: 1.4; }
+  .itemActions { max-width: 160px; }
+  .section .itemActions button { width: 44px; min-width: 44px; min-height: 44px; border: 1px solid #666; border-radius: 50%; padding: 0; background: #191919; color: #fff; }
+  .page :is(input, textarea, button, a):focus-visible { outline: 2px solid #d4a85f; outline-offset: 4px; scroll-margin-block: 120px; }
+}
 
 @media (max-width: 768px) {
   .page { padding: 104px 16px 44px; }
@@ -180,22 +248,26 @@
   .browseDesktop { display: none; }
   .browseMobile { display: inline; }
   .browseFilms::before { position: absolute; z-index: -1; inset: 4px 0; border-radius: 999px; background: #191919; content: ""; pointer-events: none; }
-  .items { gap: 45px; margin-top: 29px; }
-  .itemRow { min-width: 0; min-height: 116px; grid-template-columns: 79px minmax(0, 1fr); gap: 8px 16px; padding: 0; border: 0; background: transparent; }
-  .itemPosterLink { width: 79px; grid-column: 1; grid-row: 1 / span 2; align-self: start; border-radius: 10px; }
+  .items { gap: 45px; margin: 29px -18px 0 0; }
+  .itemRow { min-width: 0; min-height: 116px; grid-template-columns: 79px minmax(0, 1fr) 78px; align-items: center; gap: 0 16px; padding: 0; border: 0; background: transparent; }
+  .itemPosterLink { width: 79px; grid-column: 1; grid-row: 1; align-self: center; border-radius: 10px; }
   .itemPoster, .itemPosterFallback { width: 79px; height: 116px; aspect-ratio: 79 / 116; overflow: hidden; border-radius: 10px; }
   .itemPoster { display: block; }
-  .itemInfo { display: flex; grid-column: 2; grid-row: 1; align-self: end; align-items: baseline; flex-wrap: wrap; gap: 5px 6px; }
+  .itemInfo { display: flex; grid-column: 2; grid-row: 1; align-self: center; align-items: baseline; flex-wrap: wrap; gap: 5px 6px; }
   .itemTitle { max-width: 100%; overflow-wrap: anywhere; font-size: 18px; line-height: 1.12; white-space: normal; }
   .itemMeta { display: contents; }
   .itemYear, .itemRating { color: var(--rewind-muted); font-size: 12px; line-height: 1.2; }
   .itemRating { flex-basis: 100%; }
-  .itemActions { min-width: 0; grid-column: 2; grid-row: 2; align-self: start; flex-wrap: wrap; justify-content: flex-start; gap: 6px; }
-  .section .itemActions button { flex: 0 0 42px; width: 42px; min-width: 42px; height: 42px; min-height: 42px; border-color: transparent; padding: 0; background: #191919; color: #fff; }
+  .itemActions { width: 78px; min-width: 0; grid-column: 3; grid-row: 1; align-self: center; flex-wrap: nowrap; justify-content: flex-end; gap: 6px; }
+  .section .itemActions button { flex: 0 0 36px; width: 36px; min-width: 36px; height: 36px; min-height: 36px; border-color: transparent; padding: 0; background: #191919; color: #fff; }
   .section .itemActions button:hover:not(:disabled) { border-color: var(--rewind-line); background: #353535; }
-  .itemRemoveButton { display: grid; place-items: center; width: 42px; border-color: #d55a63 !important; border-radius: 50% !important; background: #c43f4a !important; color: #fff !important; font-size: 0; }
+  .itemRemoveButton { display: grid; place-items: center; width: 36px; border-color: #d55a63 !important; border-radius: 50% !important; background: #c43f4a !important; color: #fff !important; font-size: 0; }
   .itemRemoveButton span[aria-hidden="true"] { display: block; font-size: 21px; font-weight: 400; line-height: 1; }
-  .itemMoveButton { border-radius: 50% !important; }
+  .itemMoveButton { display: none !important; }
+  .mobileMoveHandle { display: grid !important; place-items: center; border-radius: 50% !important; cursor: grab; touch-action: none; }
+  .mobileMoveHandle:active { cursor: grabbing; }
+  .mobileMoveHandle:focus-visible { outline: 3px solid #64dbe2; outline-offset: 3px; }
+  .mobileMoveHandle span { font-size: 21px; line-height: 1; }
 }
 
 @media (max-width: 380px) {

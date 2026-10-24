@@ -20,7 +20,7 @@ export interface BlockStatus { blocked: boolean }
 
 export interface Activity {
   id: number;
-  type: "FOLLOW" | "RATING" | "REVIEW" | "LIST";
+  type: "FOLLOW" | "RATING" | "REVIEW" | "LIST" | "WATCHED";
   createdAt: string;
   actor: PublicNetworkUser | null;
   movie: { id: number; title: string } | null;

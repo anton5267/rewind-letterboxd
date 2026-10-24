@@ -12,6 +12,7 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -100,22 +101,38 @@ export default function Register() {
           />
 
           <label className="srOnly" htmlFor="register-password">{t("password")}</label>
-          <input
-            id="register-password"
-            name="password"
-            className={styles.input}
-            type="password"
-            placeholder={t("password")}
-            value={password}
-            disabled={loading}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="new-password"
-            minLength={6}
-            maxLength={MAX_PASSWORD_BYTES}
-            aria-invalid={Boolean(error)}
-            aria-describedby={`register-password-hint${error ? " register-error" : ""}`}
-            required
-          />
+          <div className={styles.passwordField}>
+            <input
+              id="register-password"
+              name="password"
+              className={styles.input}
+              type={passwordVisible ? "text" : "password"}
+              placeholder={t("password")}
+              value={password}
+              disabled={loading}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              minLength={6}
+              maxLength={MAX_PASSWORD_BYTES}
+              aria-invalid={Boolean(error)}
+              aria-describedby={`register-password-hint${error ? " register-error" : ""}`}
+              required
+            />
+            <button
+              type="button"
+              className={styles.passwordVisibility}
+              aria-label={passwordVisible ? t("hidePassword") : t("showPassword")}
+              aria-pressed={passwordVisible}
+              onClick={() => setPasswordVisible((visible) => !visible)}
+              disabled={loading}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+                <circle cx="12" cy="12" r="3" />
+                {passwordVisible && <path d="m4 4 16 16" />}
+              </svg>
+            </button>
+          </div>
           <p className={styles.passwordHint} id="register-password-hint">{t("passwordByteLimitHint")}</p>
 
           {error && <p className={styles.error} id="register-error" role="alert">{error}</p>}

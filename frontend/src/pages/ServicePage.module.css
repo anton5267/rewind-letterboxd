@@ -7,26 +7,24 @@
 }
 
 .hero {
+  position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-columns: minmax(190px, 260px) minmax(0, 1fr);
   gap: clamp(36px, 8vw, 120px);
   min-height: 360px;
   align-items: center;
   padding: 56px clamp(20px, 8vw, 120px) 72px;
-  background:
-    linear-gradient(180deg, rgba(15, 18, 20, .08), #050607 96%),
-    radial-gradient(circle at 48% 0%, rgba(92, 174, 185, .72), transparent 38rem),
-    radial-gradient(circle at 96% 0%, rgba(202, 152, 72, .76), transparent 35rem),
-    #111417;
+  background: linear-gradient(180deg, rgba(0, 0, 0, .12), #1f1f1f), url("/images/search-hero-desktop.png") center / cover no-repeat;
 }
 
-.serviceNav { display: grid; border-left: 1px solid rgba(255, 255, 255, .25); }
-.serviceNav a { min-height: 32px; padding: 7px 14px; color: #dedbd6; font-size: 13px; text-decoration: none; }
-.serviceNav a:hover, .serviceNav a[aria-current="page"] { color: #fff; background: rgba(255, 255, 255, .1); }
+.serviceNav, .heroCopy { position: relative; z-index: 1; min-width: 0; }
 
 .eyebrow { margin: 0 0 10px; color: var(--rewind-cyan); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
 
 .content {
+  position: relative;
+  z-index: 1;
   width: min(1200px, calc(100% - 40px));
   margin: 0 auto;
   padding-top: 64px;
@@ -38,6 +36,7 @@
   font-size: clamp(38px, 6vw, 64px);
   line-height: 1.08;
   letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
 }
 
 .lead {
@@ -47,25 +46,18 @@
   font-size: 16px;
   line-height: 1.65;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .content h2 { margin: 0 0 28px; font-size: clamp(26px, 4vw, 38px); }
-.detailGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
-.detailCard { min-height: 210px; padding: 28px; border: 1px solid var(--rewind-line); border-radius: 20px; background: linear-gradient(145deg, #252525, #1a1a1a); }
-.detailCard span { color: var(--rewind-gold); font-size: 12px; font-weight: 800; letter-spacing: .15em; }
-.detailCard h3 { margin: 68px 0 0; font-size: 18px; line-height: 1.35; }
 
 @media (max-width: 720px) {
   .page { padding-top: 64px; }
   .hero { grid-template-columns: 1fr; gap: 34px; min-height: 440px; padding: 48px 20px 52px; }
-  .serviceNav { grid-template-columns: repeat(2, minmax(0, 1fr)); order: 2; }
-  .detailGrid { grid-template-columns: 1fr; }
-  .detailCard { min-height: 150px; }
-  .detailCard h3 { margin-top: 38px; }
+  .serviceNav { order: 2; }
 }
 
-/* Figma service frames (`1062:1993`, `1122:2497`, `1164:2679`) use a
-   full-bleed editorial hero followed by wide alternating information rows. */
+/* Shared service hero. Each page's body follows its own Figma composition. */
 @media (min-width: 721px) {
   .page {
     padding: 0 0 80px;
@@ -77,30 +69,35 @@
     display: block;
     min-height: 818px;
     box-sizing: border-box;
-    padding: 80px 24px 96px;
-    background:
-      linear-gradient(180deg, rgba(17, 17, 17, .12), #1f1f1f 92%),
-      radial-gradient(circle at 30% 8%, rgba(39, 96, 107, .68), transparent 45%),
-      radial-gradient(circle at 70% 12%, rgba(171, 143, 78, .48), transparent 42%),
-      #111;
+    padding: 280px 24px 120px;
+    background: #1f1f1f url("/images/search-hero-desktop.png") center 43.3755% / 100% 140.138% no-repeat;
   }
+
+  .hero.helpHero { background-position: center 80.85%; }
+
+  /* 1062:2006 is a blurred black rectangle; the gradient approximates
+     that layer, while 1062:2007 supplies the exact flat surface at y628. */
+  .hero::before, .hero::after { position: absolute; z-index: 0; right: 0; left: 0; pointer-events: none; content: ""; }
+  .hero::before { inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, .06), rgba(0, 0, 0, .5) 41%, #000 77%); }
+  .hero::after { top: 628px; bottom: 0; background: #1f1f1f; }
 
   .serviceNav {
     position: absolute;
-    top: 280px;
+    top: 176px;
     left: max(24px, calc((100% - 1200px) / 2));
-    width: 160px;
+    width: 278px;
   }
 
-  .hero > div:last-child {
-    max-width: 650px;
-    margin: 168px auto 0;
+  .heroCopy {
+    width: min(547px, 100%);
+    margin: 0 auto;
+    transform: translateX(36.5px);
     text-align: center;
   }
 
-  .eyebrow { color: #d5c27e; }
-  .title { font-size: 64px; }
-  .lead { max-width: 547px; margin-inline: auto; color: #d8d5d0; }
+  .heroCopy .eyebrow { display: none; }
+  .title { margin: 0 auto 8px; color: #fff; font-size: 58px; line-height: 1.19; letter-spacing: 0; }
+  .lead { max-width: 547px; margin-inline: auto; color: #aaa; font-size: 24px; line-height: 1.2; }
 
   .content {
     width: min(1200px, calc(100% - 48px));
@@ -108,30 +105,116 @@
     padding-top: 64px;
   }
 
-  .detailGrid {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
+}
 
-  .detailCard {
-    display: grid;
-    min-height: 220px;
-    grid-template-columns: minmax(220px, .42fr) minmax(0, 1fr);
-    align-items: start;
-    gap: 64px;
-    padding: 42px 0;
-    border-width: 1px 0 0;
-    border-radius: 0;
-    background: transparent;
-  }
+/* Help 1062:1993: alternating guide rows and three final illustrated cards. */
+.helpSteps { display: grid; }
+.helpStep { display: grid; min-width: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: clamp(36px, 8.47vw, 122px); border-bottom: 1px solid #4d4d4d; padding: 30px 0; }
+.helpStep:first-child { padding-top: 0; }
+.helpStep:nth-child(even) .helpCopy { grid-column: 2; grid-row: 1; }
+.helpStep:nth-child(even) .helpIllustration { grid-column: 1; grid-row: 1; justify-self: start; }
+.helpCopy { min-width: 0; }
+.helpCopy h3, .helpGuide h3 { margin: 0 0 24px; color: #fff; font-size: 22px; line-height: 1.18; overflow-wrap: anywhere; }
+.helpCopy p, .helpGuide p { margin: 0; color: #fff; font-size: 20px; line-height: 1.12; overflow-wrap: anywhere; }
+.guideLink { display: inline-flex; min-height: 44px; align-items: center; gap: 10px; margin-top: 12px; color: #b9b9b9; font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; text-underline-offset: 4px; }
+.guideLink:hover { color: #fff; }
+.guideLink:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: 3px; }
+.helpIllustration { min-width: 0; width: 100%; max-width: 399px; justify-self: end; overflow: hidden; border-radius: 20px; }
+.helpIllustration > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.watchedIllustration { max-width: 393px; aspect-ratio: 393 / 202; }
+.browseIllustration { max-width: 394px; aspect-ratio: 394 / 401; }
+.watchlistIllustration { max-width: 398px; aspect-ratio: 398 / 399; }
+.settingsIllustration { aspect-ratio: 399 / 336; }
+.settingsIllustration > img { object-position: center bottom; }
+.activityIllustration { max-width: 430px; aspect-ratio: 430 / 345; }
+.listsIllustration { aspect-ratio: 399 / 348; }
+.listsIllustration > img { object-position: center 60.5%; }
+.helpGuides { display: grid; grid-template-columns: minmax(0, 278fr) minmax(0, 214fr) minmax(0, 278fr) minmax(0, 152fr) minmax(0, 278fr); margin-top: 30px; }
+.helpGuide { min-width: 0; }
+.filmActionsGuide { grid-column: 1; }
+.tagsGuide { grid-column: 3; }
+.listsGuide { grid-column: 5; }
+.guideImage { width: 100%; height: 198px; margin-bottom: 30px; overflow: hidden; border-radius: 20px; }
+.guideImage img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.tagsGuide .guideImage img { object-position: 13% top; }
+.helpGuide h3 { margin-bottom: 28px; }
+.helpGuide p { font-size: 20px; line-height: 1.12; }
 
-  .detailCard:nth-child(even) { grid-template-columns: minmax(0, 1fr) minmax(220px, .42fr); }
-  .detailCard:nth-child(even) > div { grid-column: 1; grid-row: 1; }
-  .detailCard:nth-child(even) > span { grid-column: 2; grid-row: 1; }
-  .detailCard h3 { margin: 0 0 20px; font-size: 28px; line-height: 1.25; }
-  .detailCard p { max-width: 66ch; margin: 0; color: #d8d5d0; font-size: 20px; line-height: 1.45; }
+/* Service documents use one editorial column and original 1200 px dividers. */
+.editorialBody { color: #fff; font-size: 20px; line-height: 1.12; overflow-wrap: anywhere; }
+.editorialBody p { margin: 0; }
+.editorialBody a { color: inherit; text-underline-offset: 3px; }
+.editorialBody a:hover { color: var(--rewind-cyan); }
+.editorialBody a:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; }
+.editorialIntro { padding-bottom: 30px; }
+.editorialIntro > p:first-child { max-width: 1126px; }
+.editorialIntro .contactAvailability { margin-top: 15px; color: #b9b9b9; }
+.editorialSection { padding: 30px 0; background: url("/images/service-divider.svg") left top / 100% 1px no-repeat; }
+.editorialSection h3 { margin: 0 0 24px; font-size: 22px; line-height: 1.18; }
+.editorialSection ul { margin: 0; padding: 0; list-style: none; }
+.editorialSection li { display: flex; align-items: baseline; gap: 6px; }
+.editorialSection li > span { flex: 0 0 auto; }
+.editorialSection > p { max-width: 1126px; }
+.editorialBody .contactClosing { padding-top: 30px; background: url("/images/service-divider.svg") left top / 100% 1px no-repeat; }
+.documentContent .editorialIntro { padding-bottom: 38px; }
+.documentContent .editorialSection { padding-bottom: 38px; }
+.documentContent .editorialSection > :is(p, ol) { max-width: 1126px; }
+.editorialBody > .editorialSection:first-child { padding-top: 0; background: none; }
+.editorialSection ol { margin: 0; padding-inline-start: 1.4em; }
+.editorialSection ol li { display: list-item; }
+.privacyLinks { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 12px; }
+.privacyLinks a { display: inline-flex; min-height: 44px; align-items: center; }
+@media (min-width: 721px) {
+  .content.editorialContent { margin-top: -105px; padding-top: 0; padding-bottom: 80px; }
+}
+@media (max-width: 720px) {
+  .editorialBody { font-size: 16px; line-height: 1.45; }
+  .editorialSection h3 { margin-bottom: 18px; font-size: 20px; }
+  .editorialSection { padding-block: 26px; }
+  .editorialSection li + li { margin-top: 6px; }
+}
 
-  .content-contact { margin-top: -56px; }
-  .content-privacy { margin-top: -116px; }
-  .content-film-data { margin-top: -98px; }
+/* The visible 393×202 part of 1064:2191 uses original raster icons and
+   backdrop. These are decorative instructions, never interactive controls. */
+.watchedPreview { position: relative; isolation: isolate; container-type: inline-size; width: 100%; height: 100%; overflow: hidden; background: #1f1f1f; color: #fff; }
+.watchedPreview::after { position: absolute; z-index: 0; inset: 0; background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .8)); content: ""; }
+.watchedBackdrop { position: absolute; left: -19.847%; top: 0; width: 139.949%; max-width: none; height: 152.97%; object-fit: cover; }
+.watchedBack, .watchedMore { position: absolute; z-index: 1; top: 24.752%; display: grid; width: 8.906%; aspect-ratio: 1; place-items: center; border-radius: 50%; background: #1f1f1f; }
+.watchedBack { left: 4.071%; }
+.watchedMore { left: 87.023%; }
+.watchedBack img, .watchedMore img { width: 71.429%; height: 71.429%; }
+.watchedFilmTitle { position: absolute; z-index: 1; top: 10.396%; left: 45.547%; font-size: 4.58cqw; line-height: 1.1; }
+.watchedYear { position: absolute; z-index: 1; top: 20.792%; left: 47.074%; color: #7e7e7e; font-size: 3.562cqw; line-height: 1.1; }
+.watchedActionSurface { position: absolute; z-index: 1; left: 5.344%; top: 33.663%; width: 91.858%; height: 56.436%; border-radius: 5.089cqw; background: #282828; }
+.watchedActions { position: absolute; z-index: 2; top: 41.584%; left: 14.249%; display: flex; width: 74.046%; justify-content: space-between; }
+.watchedActions > span { display: grid; width: 20.962%; justify-items: center; color: #7e7e7e; font-size: 3.562cqw; line-height: 1.2; }
+.watchedActions img { display: block; width: 83.607%; aspect-ratio: 1; }
+.watchedHighlight { position: absolute; z-index: 3; left: 10.941%; top: 40.594%; width: 21.883%; aspect-ratio: 1; border: 1px solid #fff; border-radius: 50%; }
+
+@media (min-width: 721px) {
+  .content.helpContent { margin-top: -190px; padding-top: 85px; }
+}
+
+@media (min-width: 721px) and (max-width: 1100px) {
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 48px; padding: 160px 24px 260px; }
+  .serviceNav { position: relative; top: auto; left: auto; width: 100%; }
+  .heroCopy { transform: none; }
+}
+
+@media (max-width: 1100px) {
+  .helpSteps { gap: 0; }
+  .helpStep { gap: 48px; }
+  .helpGuides { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
+  .helpGuide:nth-child(n) { grid-column: auto; }
+  .guideImage { height: auto; aspect-ratio: 278 / 198; }
+}
+
+@media (max-width: 900px) {
+  .helpStep { grid-template-columns: minmax(0, 1fr); gap: 24px; padding-block: 32px; }
+  .helpStep:nth-child(even) .helpCopy, .helpStep:nth-child(even) .helpIllustration { grid-column: 1; grid-row: auto; }
+  .helpIllustration, .helpStep:nth-child(even) .helpIllustration { justify-self: center; }
+  .helpGuides { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  .helpGuide { width: min(100%, 430px); justify-self: center; }
+  .helpCopy h3, .helpGuide h3 { margin-bottom: 16px; font-size: 20px; }
+  .helpCopy p, .helpGuide p { font-size: 16px; line-height: 1.55; }
 }

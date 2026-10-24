@@ -75,19 +75,26 @@
    poster grid. Keep the live list API and action controls unchanged. */
 @media (min-width: 721px) {
   .hero { min-height: 818px; background: linear-gradient(180deg, rgba(0, 0, 0, .08), rgba(0, 0, 0, .84) 82%, #1f1f1f), url("/images/search-hero-desktop.png") center top / cover no-repeat; }
-  .heroInner { width: min(100%, 1200px); min-height: 818px; box-sizing: border-box; padding: 583px 0 0; }
+  .heroInner { width: min(1200px, calc(100% - 48px)); min-height: 818px; box-sizing: border-box; padding: 583px 0 0; }
   .heroInner .eyebrow { display: none; }
-  .hero h1 { max-width: 812px; font-size: 58px; line-height: 1.19; letter-spacing: 0; }
-  .ownerLine { margin: 12px 0 0; font-size: 16px; line-height: 24px; }
-  .description { max-width: 581px; margin-top: 20px; font-size: 20px; line-height: 1.2; }
+  .hero h1 { max-width: min(812px, calc(100% - 240px)); font-size: 58px; line-height: 1.19; letter-spacing: 0; }
+  .ownerLine { max-width: calc(100% - 240px); margin: 12px 0 0; font-size: 16px; line-height: 24px; }
+  .description { max-width: min(581px, calc(100% - 240px)); margin-top: 20px; font-size: 20px; line-height: 1.2; }
   .heroInner .tags { position: absolute; top: 705px; right: 0; width: 200px; margin-top: 0; }
   .heroInner .heroActions { position: absolute; top: 588px; right: 0; width: 200px; margin-top: 0; flex-direction: column; align-items: flex-start; }
-  .content { width: min(100%, 1200px); box-sizing: border-box; margin-top: 139px; padding: 81px 0 160px; }
+  .content { width: min(1200px, calc(100% - 48px)); box-sizing: border-box; margin-top: 139px; padding: 81px 0 160px; }
   .sectionHeading { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
-  .movieGrid { grid-template-columns: repeat(6, 174px); gap: 50px 31px; }
+  .movieGrid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 50px 31px; }
   .moviePoster,
-  .moviePosterFallback { width: 174px; height: 260px; aspect-ratio: auto; border-radius: 20px; }
+  .moviePosterFallback { width: 100%; height: auto; aspect-ratio: 174 / 260; overflow: hidden; border-radius: 20px; }
   .movieRank, .movieCard h3, .movieCard p { display: none; }
+}
+
+@media (min-width: 721px) and (max-width: 1023px) {
+  .heroInner { padding-bottom: 48px; }
+  .hero h1, .ownerLine, .description { max-width: 100%; }
+  .heroInner .tags, .heroInner .heroActions { position: static; width: auto; margin-top: 24px; }
+  .heroInner .heroActions { flex-direction: row; }
 }
 
 @media (max-width: 900px) { .movieGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }

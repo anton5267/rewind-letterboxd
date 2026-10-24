@@ -1,0 +1,26 @@
+.card { display: grid; grid-template-columns: 175px minmax(0, 1fr); gap: 40px; min-width: 0; min-height: 315px; box-sizing: border-box; padding: 31px 26px 22px; border-radius: 20px; background: #282828; }
+.posterWrap, .copy { min-width: 0; }
+.posterLink, .poster, .fallback { display: block; width: 100%; aspect-ratio: 175 / 262; border-radius: 20px; }
+.posterLink { overflow: hidden; text-decoration: none; background: #303030; }
+.poster { object-fit: cover; }
+.fallback { display: grid; place-items: center; box-sizing: border-box; background: linear-gradient(145deg, #35234a, #242424); color: #d8a5ff; font-size: 32px; font-weight: 800; }
+.copy { padding-top: 20px; }
+.copy h3 { margin: 0; overflow-wrap: anywhere; font-size: 24px; font-weight: 600; line-height: 1.2; }
+.card .copy .titleLink { color: #fff; font-weight: 600; text-decoration: none; }
+.meta { display: flex; flex-wrap: wrap; gap: 7px 16px; margin-top: 10px; color: #aaa; font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; }
+.rating { color: var(--rewind-cyan); }
+.card .copy .content { display: block; min-height: 44px; margin-top: 24px; color: #d5d5d5; font-size: 18px; font-weight: 400; line-height: 1.5; text-decoration: none; overflow-wrap: anywhere; white-space: pre-line; }
+.card .copy .content:hover { text-decoration: underline; text-underline-offset: 3px; }
+.unavailable { margin: 24px 0 0; }
+.retry { display: flex; justify-content: center; margin-top: 8px; }
+@media (max-width: 1023px) { .card { gap: 24px; } .card .copy .content { font-size: 16px; } }
+@media (max-width: 620px) {
+  .card { grid-template-columns: 79px minmax(0, 1fr); gap: 14px; min-height: 221px; padding: 26px 18px; border-radius: 10px; }
+  .posterLink, .poster, .fallback { aspect-ratio: 79 / 116; border-radius: 10px; }
+  .copy { padding-top: 0; }
+  .copy h3 { font-size: 13px; line-height: 1.3; }
+  .meta { gap: 4px 8px; margin-top: 5px; font-size: 10px; line-height: 1.35; }
+  .card .copy .content { margin-top: 12px; font-size: 12px; line-height: 1.5; }
+  .fallback { font-size: 24px; }
+}
+@media (max-width: 350px) { .card { grid-template-columns: 64px minmax(0, 1fr); gap: 10px; padding: 20px 12px; } }

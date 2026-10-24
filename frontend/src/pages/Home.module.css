@@ -95,6 +95,32 @@
 }
 
 .guestExplainer { display: none; }
+.guestRecentReviews,
+.guestPitch { display: none; }
+
+.homeReviewer {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.homeReviewerAvatar,
+.homeReviewerFallback {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.homeReviewerFallback { display: grid; place-items: center; background: #315966; color: #f4d28c; font-weight: 800; }
+.homeReviewerCopy { display: grid; min-width: 0; gap: 3px; }
+.homeReviewerCopy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.homeReviewerCopy small { color: var(--rewind-muted); }
+.homeReviewerLikes { margin-left: auto; }
 
 /* Figma member desktop 1413:6263. Its full-height artwork sits behind the fixed header. */
 @media (min-width: 681px) {
@@ -137,7 +163,7 @@
   }
 
   .page:has(.memberHero) .leadingSection { margin-top: 96px; }
-  .page:has(.memberHero) .movieRow { grid-template-columns: repeat(6, 174px); gap: 31px; overflow: visible; }
+  .page:has(.memberHero) .movieRow { grid-template-columns: repeat(6, 174px); gap: 31px; overflow-x: auto; overflow-y: hidden; }
   .page:has(.memberHero) .movieCard img,
   .page:has(.memberHero) .posterFallback { height: 260px; aspect-ratio: auto; border-radius: 20px; }
   .page:has(.memberHero) .movieCard h3,
@@ -626,6 +652,19 @@
 }
 
 @media (max-width: 680px) {
+  .page:has(.hero:not(.memberHero)) {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .page:has(.hero:not(.memberHero)) > .hero { order: 0; }
+  .page:has(.hero:not(.memberHero)) > .leadingSection { order: 1; }
+  .page:has(.hero:not(.memberHero)) > .guestExplainer { order: 2; }
+  .page:has(.hero:not(.memberHero)) > .guestRecentReviews { order: 3; }
+  .page:has(.hero:not(.memberHero)) > .guestPitch { order: 4; }
+  .page:has(.hero:not(.memberHero)) > .grid { order: 5; }
+  .page:has(.hero:not(.memberHero)) > .journalSection { order: 6; }
+
   .hero h1 {
     font-size: 32px;
   }
@@ -689,20 +728,61 @@
 
   .guestExplainer {
     display: grid;
-    min-height: 84px;
-    align-content: center;
-    gap: 6px;
-    margin-top: 18px;
-    padding: 12px 52px;
-    border-radius: 10px;
-    background: linear-gradient(120deg, #252525, #202020);
-    text-align: center;
+    gap: 16px;
+    margin-top: 38px;
+    padding: 0;
+    background: transparent;
   }
 
-  .guestExplainer h2 { margin: 0; color: #fff; font-size: 11px; line-height: 1.12; }
-  .guestExplainer p { margin: 0; color: #7e7e7e; font-size: 9px; line-height: 1.2; }
+  .guestExplainer h2 { margin: 0; color: #f5f5f5; font-size: 14px; line-height: 1.12; }
+  .guestExplainerCard {
+    display: flex;
+    min-height: 102px;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 26px;
+    border-radius: 18px;
+    background: #282828;
+    color: #8d8d8d;
+  }
+  .guestExplainerCard svg { flex: 0 0 38px; width: 38px; fill: none; stroke: #888; stroke-width: 2.2; }
+  .guestExplainerCard p { margin: 0; font-size: 14px; line-height: 1.22; }
+
+  .guestRecentReviews { display: block; margin-top: 20px; border-top: 1px solid var(--rewind-line); padding-top: 8px; }
+  .guestRecentReviews .sectionHeading { margin-bottom: 14px; }
+  .guestRecentReviews .sectionHeading h2 { font-size: 14px; }
+  .guestRecentReviews .sectionHeading a { font-size: 11px; }
+  .guestReviewPosters { display: flex; gap: 15px; overflow-x: auto; padding: 0 0 3px; scrollbar-width: thin; }
+  .guestReviewPosters a { flex: 0 0 79px; width: 79px; height: 116px; overflow: hidden; border-radius: 10px; background: #282828; color: #fff; text-decoration: none; }
+  .guestReviewPosters img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .guestReviewPosters a > span { display: grid; height: 100%; place-items: center; font-size: 24px; }
+  .guestPitch { display: block; margin: 22px 0 87px; color: #f5f5f5; font-size: 10px; line-height: 1.35; }
+  .guestPitch a { color: #f5f5f5; text-decoration: underline; text-underline-offset: 2px; }
+
   .page:has(.hero:not(.memberHero)) .popularSection,
-  .page:has(.hero:not(.memberHero)) .journalSection { display: none; }
+  .page:has(.hero:not(.memberHero)) .recentWatchedSection { display: none; }
+  .page:has(.hero:not(.memberHero)) .journalSection { display: block; }
+  .page:has(.hero:not(.memberHero)) .grid { display: grid; gap: 34px; margin-top: 0; }
+  .page:has(.hero:not(.memberHero)) .grid > :first-child .sectionHeading { margin-bottom: 21px; }
+  .page:has(.hero:not(.memberHero)) .grid > :first-child .reviewCard:nth-child(n + 2) { display: none; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(4) { display: none; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(1),
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2),
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) { border-top: 1px solid var(--rewind-line); padding-top: 8px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .sectionHeading,
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) .sectionHeading { margin-bottom: 14px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) .list { display: flex; min-height: 64px; align-items: center; gap: 8px; margin: 0; border: 0; border-radius: 14px; padding: 10px 14px; background: #282828; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) .homeReviewerAvatar,
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) .homeReviewerFallback { flex-basis: 40px; width: 40px; height: 40px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) .homeReviewerLikes { display: none; }
+  .page:has(.hero:not(.memberHero)) .journalSection { margin-top: 0; }
+  .page:has(.hero:not(.memberHero)) .journalSection .sectionHeading h2 { font-size: 14px; }
+  .page:has(.hero:not(.memberHero)) .journalSection .sectionHeading a { font-size: 11px; }
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCard { grid-template-columns: 1fr; border-radius: 18px; }
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCoverLink { min-height: 164px; }
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCopy { padding: 14px; }
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCopy h3 { font-size: 14px; }
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCopy p { font-size: 11px; }
 
   .memberHero {
     position: relative;
@@ -858,6 +938,8 @@
     grid-template-columns: 116px minmax(0, 1fr);
     min-height: 149px;
   }
+
+  .journalCard:nth-child(n + 2) { display: none; }
 
   .journalCoverLink {
     min-height: 149px;

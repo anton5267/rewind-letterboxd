@@ -21,6 +21,9 @@ export default function UserLists() {
   const [listsReload, setListsReload] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const selectedRef = useRef<number | null>(null);
+  const editorNameRef = useRef<HTMLInputElement>(null);
+  const selectedHeadingRef = useRef<HTMLHeadingElement>(null);
+  const focusEditor = useRef(false);
   const [items, setItems] = useState<UserListItem[]>([]);
   const [itemsLoading, setItemsLoading] = useState(false);
   const [itemsLoadError, setItemsLoadError] = useState(false);
@@ -107,6 +110,16 @@ export default function UserLists() {
     selectedRef.current = selected;
   }, [selected]);
 
+  useEffect(() => {
+    if (!focusEditor.current) return;
+    const target = editorNameRef.current ?? selectedHeadingRef.current;
+    if (target) {
+      focusEditor.current = false;
+      target.focus();
+      target.scrollIntoView({ block: "center" });
+    }
+  }, [selected]);
+
   if (!ready) return <main className={styles.page} aria-labelledby="user-lists-loading-title" aria-busy={true}><h1 id="user-lists-loading-title" className="srOnly">{t("lists")}</h1><div className={styles.stateCard} role="status"><span className={styles.stateMark} aria-hidden="true">…</span><strong>{t("loading")}</strong></div></main>;
   if (!isAuth) return <Navigate to={path("/login")} replace />;
 
@@ -150,11 +163,22 @@ export default function UserLists() {
   const selectedList = lists.find(list => list.id === selected) ?? null;
   const listControlsBusy = listsLoading || itemsBusy || createBusy || saveBusy || deleting;
   const clearSelection = () => {
+    focusEditor.current = selectedRef.current !== null;
+    if (!focusEditor.current) {
+      editorNameRef.current?.focus();
+      editorNameRef.current?.scrollIntoView({ block: "center" });
+    }
     selectedRef.current = null;
     setSelected(null);
   };
   const select = (list: UserList) => {
     if (listControlsBusy) return;
+    focusEditor.current = selectedRef.current !== list.id;
+    if (!focusEditor.current) {
+      const target = editorNameRef.current ?? selectedHeadingRef.current;
+      target?.focus();
+      target?.scrollIntoView({ block: "center" });
+    }
     selectedRef.current = list.id;
     setSelected(list.id);
     setEditName(list.name);
@@ -213,18 +237,18 @@ export default function UserLists() {
     }
   };
 
-  const move = async (itemId: number, direction: -1 | 1) => {
+  const moveToIndex = async (itemId: number, target: number) => {
     if (selected == null || itemsBusy || saveBusy || deleting) return;
     const listId = selected;
     const index = items.findIndex(item => item.id === itemId);
-    const target = index + direction;
-    if (index < 0 || target < 0 || target >= items.length) return;
+    if (index < 0 || target < 0 || target >= items.length || target === index) return;
     const requestId = ++itemMutation.current;
     const requestUserId = activeUserId.current;
     const isCurrentRequest = () => requestUserId !== null && activeUserId.current === requestUserId && selectedRef.current === listId && itemMutation.current === requestId;
     setItemsBusy(true);
     const reordered = [...items];
-    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+    const [moving] = reordered.splice(index, 1);
+    reordered.splice(target, 0, moving);
     try {
       await reorderListItems(listId, reordered.map(item => item.id));
       if (!isCurrentRequest()) return;
@@ -234,19 +258,32 @@ export default function UserLists() {
     finally { if (isCurrentRequest()) setItemsBusy(false); }
   };
 
+  const move = (itemId: number, direction: -1 | 1) => {
+    const index = items.findIndex(item => item.id === itemId);
+    if (index >= 0) void moveToIndex(itemId, index + direction);
+  };
+
+  const handleItemDrop = (event: React.DragEvent<HTMLLIElement>, targetItemId: number) => {
+    event.preventDefault();
+    if (selectedList?.listType !== "CUSTOM") return;
+    const sourceItemId = Number(event.dataTransfer.getData("text/plain"));
+    const targetIndex = items.findIndex(item => item.id === targetItemId);
+    if (Number.isSafeInteger(sourceItemId) && targetIndex >= 0) void moveToIndex(sourceItemId, targetIndex);
+  };
+
   return <main className={styles.page} aria-labelledby="user-lists-title" aria-busy={listsLoading || itemsLoading || itemsBusy || createBusy || saveBusy || deleting}>
-    <div className={styles.content}>
     <header className={styles.hero}>
       <p className={styles.eyebrow}>{t("listsEyebrow")}</p>
       <h1 id="user-lists-title">{editorialText(selectedList?.name, t("newList"))}</h1>
-      <p className={styles.heroCopy}>{selectedList?.description?.trim() || t("createListIntro")}</p>
+      <p className={styles.heroCopy}>{t("createListIntro")}</p>
     </header>
+    <div className={styles.content}>
     {error && <p className={styles.alert} role="alert">{error}</p>}
     {status && <p className={styles.status} role="status">{status}</p>}
     {!selectedList && <form className={`${styles.form} ${styles.createForm}`} aria-labelledby="user-lists-title" aria-busy={createBusy} onSubmit={create}>
-      <label htmlFor="new-list-name">{t("newList")} <input id="new-list-name" required disabled={createBusy} value={name} maxLength={120} onChange={e => setName(e.target.value)} /></label>
-      <label htmlFor="new-list-description">{t("description")} <textarea id="new-list-description" rows={5} disabled={createBusy} value={description} maxLength={5000} onChange={e => setDescription(e.target.value)} /></label>
-      <label htmlFor="new-list-tags">{t("tags")} <input id="new-list-tags" value={tags} maxLength={509} disabled={createBusy} placeholder={t("tagsHint")} onChange={e => setTags(e.target.value)} /></label>
+      <label className={styles.nameField} htmlFor="new-list-name">{t("newList")} <input ref={editorNameRef} id="new-list-name" required disabled={createBusy} value={name} maxLength={120} onChange={e => setName(e.target.value)} /></label>
+      <label className={styles.descriptionField} htmlFor="new-list-description">{t("description")} <textarea id="new-list-description" rows={5} disabled={createBusy} value={description} maxLength={5000} onChange={e => setDescription(e.target.value)} /></label>
+      <label className={styles.tagsField} htmlFor="new-list-tags">{t("tags")} <input id="new-list-tags" value={tags} maxLength={509} disabled={createBusy} placeholder={t("tagsHint")} onChange={e => setTags(e.target.value)} /></label>
       <label className={styles.checkboxLabel}><input type="checkbox" checked={isPublic} disabled={createBusy} onChange={e => setIsPublic(e.target.checked)} /> <span>{t("publicList")}</span></label>
       <div className={styles.createActions}>
         <button type="submit" aria-busy={createBusy} disabled={createBusy}>{createBusy ? t("saving") : t("create")}</button>
@@ -259,33 +296,23 @@ export default function UserLists() {
       <p>{description.trim() || t("emptyList")}</p>
       {tags.trim() && <div className={styles.previewTags}>{tags.split(",").map(tag => tag.trim()).filter(Boolean).map(tag => <span key={tag}>#{tag}</span>)}</div>}
     </aside>}
-    <section className={styles.section} aria-labelledby="my-lists-heading" aria-busy={listsLoading}>
-      <h2 id="my-lists-heading">{t("lists")}</h2>
-      {listsLoading && <div className={styles.stateCard} role="status"><span className={styles.stateMark} aria-hidden="true">…</span><strong>{t("loading")}</strong></div>}
-      {listsLoadError && <p className={styles.alert} role="alert">{t("loadListsError")} <RetryButton label={t("retry")} onClick={() => setListsReload(value => value + 1)} /></p>}
-      {!listsLoading && !listsLoadError && lists.length === 0 && <p>{t("noLists")}</p>}
-      {!listsLoading && !listsLoadError && <div className={styles.listButtons}>
-        {lists.map(list => <button key={list.id} type="button" disabled={listControlsBusy} onClick={() => select(list)} aria-pressed={selected === list.id}>{editorialText(list.name, t("lists"))}</button>)}
-      </div>}
-      {!listsLoading && !listsLoadError && <Pagination className={styles.pagination} page={listPage} totalPages={listTotalPages} label={t("listsPagination")} busy={listControlsBusy} statusSuffix={listTotalElements} onPageChange={page => { clearSelection(); setListPage(page); }} />}
-    </section>
-    {selectedList && <section className={`${styles.section} ${styles.selectedSection}`} aria-labelledby="selected-list-heading" aria-busy={itemsLoading || itemsBusy || saveBusy || deleting}>
+    {selectedList && <section className={`${styles.section} ${styles.selectedSection} ${selectedList.listType === "CUSTOM" ? styles.customEditor : ""}`} aria-labelledby="selected-list-heading" aria-busy={itemsLoading || itemsBusy || saveBusy || deleting}>
       <div className={styles.sectionHeader}>
         <div>
           <p className={styles.eyebrow}>{selectedList.isPublic ? t("publicList") : t("privateList")}</p>
-          <h2 id="selected-list-heading">{editorialText(selectedList.name, t("lists"))}</h2>
+          <h2 ref={selectedHeadingRef} id="selected-list-heading" tabIndex={-1}>{editorialText(selectedList.name, t("lists"))}</h2>
         </div>
         <button type="button" className={styles.secondaryButton} disabled={listControlsBusy} onClick={clearSelection}>{t("newList")}</button>
       </div>
       {selectedList.listType === "CUSTOM" && <form className={`${styles.form} ${styles.editForm}`} aria-labelledby="selected-list-heading" aria-busy={itemsBusy || saveBusy || deleting} onSubmit={saveList}>
-        <label htmlFor="edit-list-name">{t("listName")} <input id="edit-list-name" required maxLength={120} disabled={itemsBusy || saveBusy || deleting} value={editName} onChange={event => setEditName(event.target.value)} /></label>
-        <label htmlFor="edit-list-description">{t("description")} <textarea id="edit-list-description" rows={5} maxLength={5000} disabled={itemsBusy || saveBusy || deleting} value={editDescription} onChange={event => setEditDescription(event.target.value)} /></label>
+        <label className={styles.nameField} htmlFor="edit-list-name">{t("listName")} <input ref={editorNameRef} id="edit-list-name" required maxLength={120} disabled={itemsBusy || saveBusy || deleting} value={editName} onChange={event => setEditName(event.target.value)} /></label>
+        <label className={styles.descriptionField} htmlFor="edit-list-description">{t("description")} <textarea id="edit-list-description" rows={5} maxLength={5000} disabled={itemsBusy || saveBusy || deleting} value={editDescription} onChange={event => setEditDescription(event.target.value)} /></label>
         <Link className={styles.browseFilms} to={path("/films")} aria-disabled={listControlsBusy || undefined} onClick={event => { if (listControlsBusy) event.preventDefault(); }}>
           <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
           <span className={styles.browseDesktop}>{t("browseFilms")}</span>
           <span className={styles.browseMobile}>{t("addFilm")}</span>
         </Link>
-        <label htmlFor="edit-list-tags">{t("tags")} <input id="edit-list-tags" value={editTags} maxLength={509} disabled={itemsBusy || saveBusy || deleting} placeholder={t("tagsHint")} onChange={event => setEditTags(event.target.value)} /></label>
+        <label className={styles.tagsField} htmlFor="edit-list-tags">{t("tags")} <input id="edit-list-tags" value={editTags} maxLength={509} disabled={itemsBusy || saveBusy || deleting} placeholder={t("tagsHint")} onChange={event => setEditTags(event.target.value)} /></label>
         <label className={styles.checkboxLabel}><input type="checkbox" checked={editPublic} disabled={itemsBusy || saveBusy || deleting} onChange={event => setEditPublic(event.target.checked)} /> <span>{t("publicList")}</span></label>
         <div className={styles.editActions}>
           <button type="button" className={styles.secondaryButton} disabled={itemsBusy || saveBusy || deleting} onClick={() => { clearSelection(); setError(""); }}>{t("cancel")}</button>
@@ -296,9 +323,11 @@ export default function UserLists() {
       {itemsLoading && <div className={styles.stateCard} role="status"><span className={styles.stateMark} aria-hidden="true">…</span><strong>{t("loading")}</strong></div>}
       {itemsLoadError && <div className={`${styles.stateCard} ${styles.stateError}`} role="alert"><strong>{t("loadItemsError")}</strong><RetryButton label={t("retry")} onClick={() => setItemsReload(value => value + 1)} /></div>}
       {!itemsLoading && !itemsLoadError && items.length === 0 && <div className={`${styles.emptyPreview} ${styles.selectedEmpty}`}><p className={styles.eyebrow}>{t("emptyListLabel")}</p><strong>{editorialText(selectedList.name, t("lists"))}</strong><p>{t("emptyList")}</p></div>}
-      {!itemsLoading && !itemsLoadError && items.length > 0 && <ul className={styles.items}>{items.map((item, index) => {
+      {!itemsLoading && !itemsLoadError && items.length > 0 && <>
+        {selectedList.listType === "CUSTOM" && <p id="list-reorder-instructions" className="srOnly">{t("listReorderHelp")}</p>}
+        <ul className={styles.items}>{items.map((item, index) => {
         const movieTitle = editorialText(item.movie.title, t("untitledFilm"));
-        return <li className={styles.itemRow} key={item.id}>
+        return <li className={styles.itemRow} key={item.id} onDragOver={event => { if (selectedList.listType === "CUSTOM") event.preventDefault(); }} onDrop={event => handleItemDrop(event, item.id)}>
           <Link className={styles.itemPosterLink} to={path(`/films/${item.movie.id}`)} aria-label={`${movieTitle} ${t("poster")}`}>
             <ResilientImage className={styles.itemPoster} src={item.movie.photoUrl} alt="" fallback={<span className={styles.itemPosterFallback}>{movieTitle}</span>} />
           </Link>
@@ -311,13 +340,34 @@ export default function UserLists() {
               <span aria-hidden="true">−</span><span className="srOnly">{t("remove")}</span>
             </button>
             {selectedList.listType === "CUSTOM" && <>
+              <button className={styles.mobileMoveHandle} type="button" draggable={!itemsBusy && !saveBusy && !deleting} disabled={itemsBusy || saveBusy || deleting} aria-label={`${t("reorderItem")} ${movieTitle}`} aria-describedby="list-reorder-instructions" aria-keyshortcuts="ArrowUp ArrowDown" onKeyDown={event => {
+                if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+                event.preventDefault();
+                void moveToIndex(item.id, index + (event.key === "ArrowUp" ? -1 : 1));
+              }} onDragStart={event => {
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", String(item.id));
+              }}>
+                <span aria-hidden="true">✥</span>
+              </button>
               <button className={styles.itemMoveButton} type="button" aria-busy={itemsBusy} disabled={itemsBusy || saveBusy || deleting || index === 0} onClick={() => void move(item.id, -1)} aria-label={t("moveUp")}>↑</button>
               <button className={styles.itemMoveButton} type="button" aria-busy={itemsBusy} disabled={itemsBusy || saveBusy || deleting || index === items.length - 1} onClick={() => void move(item.id, 1)} aria-label={t("moveDown")}>↓</button>
             </>}
           </div>
         </li>;
-      })}</ul>}
+        })}</ul>
+      </>}
     </section>}
+    <section className={`${styles.section} ${styles.listPicker}`} aria-labelledby="my-lists-heading" aria-busy={listsLoading}>
+      <h2 id="my-lists-heading">{t("lists")}</h2>
+      {listsLoading && <div className={styles.stateCard} role="status"><span className={styles.stateMark} aria-hidden="true">…</span><strong>{t("loading")}</strong></div>}
+      {listsLoadError && <p className={styles.alert} role="alert">{t("loadListsError")} <RetryButton label={t("retry")} onClick={() => setListsReload(value => value + 1)} /></p>}
+      {!listsLoading && !listsLoadError && lists.length === 0 && <p>{t("noLists")}</p>}
+      {!listsLoading && !listsLoadError && <div className={styles.listButtons}>
+        {lists.map(list => <button key={list.id} type="button" disabled={listControlsBusy} onClick={() => select(list)} aria-pressed={selected === list.id}>{editorialText(list.name, t("lists"))}</button>)}
+      </div>}
+      {!listsLoading && !listsLoadError && <Pagination className={styles.pagination} page={listPage} totalPages={listTotalPages} label={t("listsPagination")} busy={listControlsBusy} statusSuffix={listTotalElements} onPageChange={page => { clearSelection(); setListPage(page); }} />}
+    </section>
     </div>
   </main>;
 }

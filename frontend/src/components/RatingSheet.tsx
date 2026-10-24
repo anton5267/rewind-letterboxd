@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { getUserRating, setRating as setMovieRating } from "../api/ratings.api";
+import ResilientImage from "./ResilientImage";
 import RetryButton from "./RetryButton";
 import { useLocale } from "../i18n";
 import { useDialogFocusTrap } from "../hooks/useDialogFocusTrap";
@@ -8,6 +9,8 @@ import styles from "./RatingSheet.module.css";
 interface RatingSheetProps {
   movieId: number;
   movieTitle: string;
+  subtitle?: string;
+  movieBackdropUrl?: string | null;
   likes: number;
   liked: boolean;
   likeBusy: boolean;
@@ -21,6 +24,8 @@ interface RatingSheetProps {
 export default function RatingSheet({
   movieId,
   movieTitle,
+  subtitle,
+  movieBackdropUrl,
   likes,
   liked,
   likeBusy,
@@ -89,11 +94,12 @@ export default function RatingSheet({
       if (event.target === event.currentTarget) onClose();
     }}
   >
-    <section id="rating-sheet-dialog" ref={sheetRef} className={styles.sheet} role="dialog" aria-modal="true" aria-labelledby="rating-sheet-title" aria-busy={ratingLoading || ratingBusy}>
+    <section id="rating-sheet-dialog" ref={sheetRef} className={`${styles.sheet} ${subtitle ? styles.reviewSheet : ""}`} role="dialog" aria-modal="true" aria-labelledby="rating-sheet-title" aria-busy={ratingLoading || ratingBusy}>
       <div className={styles.header}>
-        <p className={styles.eyebrow}>{t("rateFilm")}</p>
+        {!subtitle && <p className={styles.eyebrow}>{t("rateFilm")}</p>}
         <h2 id="rating-sheet-title">{movieTitle}</h2>
-        <button
+        {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
+        {!subtitle && <button
           className={styles.likeButton}
           type="button"
           disabled={likeBusy || likeStatusLoading || likeStatusError}
@@ -104,12 +110,49 @@ export default function RatingSheet({
         >
           <span aria-hidden="true">{liked ? "♥" : "♡"}</span>
           <span>{likeStatusLoading ? t("loading") : likes}</span>
-        </button>
+        </button>}
       </div>
 
-      {likeStatusError && <p className={styles.error} role="alert">{t("likeReviewError")} <RetryButton label={t("retry")} size="large" onClick={onRetryLikeStatus} /></p>}
+      {subtitle && <div className={styles.reviewCard}>
+        {movieBackdropUrl && <ResilientImage className={styles.reviewBackdrop} src={movieBackdropUrl} alt="" aria-hidden="true" fallback={null} />}
+        <div className={styles.reviewShade} aria-hidden="true" />
+        <button
+          className={`${styles.likeButton} ${styles.reviewLikeButton}`}
+          type="button"
+          disabled={likeBusy || likeStatusLoading || likeStatusError}
+          aria-busy={likeBusy || likeStatusLoading}
+          aria-pressed={liked}
+          aria-label={`${liked ? t("unlike") : t("like")} ${movieTitle}`}
+          onClick={onToggleLike}
+        >
+          <span aria-hidden="true">{liked ? "♥" : "♡"}</span>
+          <span>{likeStatusLoading ? t("loading") : likes}</span>
+        </button>
+        {likeStatusError && <p className={styles.error} role="alert">{t("likeReviewError")} <RetryButton label={t("retry")} size="large" onClick={onRetryLikeStatus} /></p>}
+        <div className={styles.reviewRatingArea}>
+          <p className={styles.ratingLabel}>{t("rate")}</p>
+          <div className={styles.stars} role="group" aria-label={t("myRating")}>
+            {[1, 2, 3, 4, 5].map(value => <button
+              className={`${styles.star} ${rating === value ? styles.starActive : ""}`}
+              key={value}
+              type="button"
+              disabled={ratingLoading || ratingBusy}
+              aria-pressed={rating === value}
+              aria-label={`${t("rateAs")} ${value}`}
+              onClick={() => void saveRating(value)}
+            >
+              <span aria-hidden="true">★</span>
+            </button>)}
+          </div>
+          {ratingLoading && <p className={styles.status} role="status">{t("loading")}</p>}
+          {ratingLoadError && <p className={styles.error} role="alert">{t("loadRatingsError")} <RetryButton label={t("retry")} size="large" onClick={() => setRatingAttempt(value => value + 1)} /></p>}
+          {ratingSaveError && <p className={styles.error} role="alert">{t("saveRatingError")} <button type="button" onClick={() => setRatingSaveError(false)}>{t("close")}</button></p>}
+        </div>
+      </div>}
 
-      <div className={styles.ratingBlock}>
+      {likeStatusError && !subtitle && <p className={styles.error} role="alert">{t("likeReviewError")} <RetryButton label={t("retry")} size="large" onClick={onRetryLikeStatus} /></p>}
+
+      {!subtitle && <div className={styles.ratingBlock}>
         <p className={styles.ratingLabel}>{t("myRating")}</p>
         <div className={styles.stars} role="group" aria-label={t("myRating")}>
           {[1, 2, 3, 4, 5].map(value => <button
@@ -127,7 +170,7 @@ export default function RatingSheet({
         {ratingLoading && <p className={styles.status} role="status">{t("loading")}</p>}
         {ratingLoadError && <p className={styles.error} role="alert">{t("loadRatingsError")} <RetryButton label={t("retry")} size="large" onClick={() => setRatingAttempt(value => value + 1)} /></p>}
         {ratingSaveError && <p className={styles.error} role="alert">{t("saveRatingError")} <button type="button" onClick={() => setRatingSaveError(false)}>{t("close")}</button></p>}
-      </div>
+      </div>}
 
       <button className={styles.doneButton} ref={doneButtonRef} type="button" onClick={onClose}>{t("done")}</button>
     </section>

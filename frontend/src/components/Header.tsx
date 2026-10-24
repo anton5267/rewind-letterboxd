@@ -17,10 +17,19 @@ export default function Header() {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const menuToggleRef = useRef<HTMLButtonElement>(null);
   const mobileMenuRef = useRef<HTMLElement>(null);
+  const accountToggleRef = useRef<HTMLButtonElement>(null);
+  const accountAreaRef = useRef<HTMLDivElement>(null);
+  const mobileNavRef = useRef<HTMLElement>(null);
   const locationKey = `${location.pathname}${location.search}`;
   const lastLocationKeyRef = useRef(locationKey);
+
+  const focusVisibleNavigation = () => {
+    const targets = [accountToggleRef.current, menuToggleRef.current, mobileNavRef.current?.querySelector<HTMLAnchorElement>("a")];
+    targets.find(target => target && target.getClientRects().length > 0)?.focus();
+  };
 
   useEffect(() => {
     if (!isAuth) {
@@ -54,10 +63,32 @@ export default function Header() {
   useEffect(() => {
     const locationChanged = lastLocationKeyRef.current !== locationKey;
     lastLocationKeyRef.current = locationKey;
-    if (!locationChanged || !mobileMenuOpen) return;
-    setMobileMenuOpen(false);
-    window.requestAnimationFrame(() => menuToggleRef.current?.focus());
+    if (!locationChanged) return;
+    setAccountOpen(false);
+    if (mobileMenuOpen) {
+      setMobileMenuOpen(false);
+      window.requestAnimationFrame(() => menuToggleRef.current?.focus());
+    }
   }, [locationKey, mobileMenuOpen]);
+
+  useEffect(() => {
+    if (!accountOpen) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !accountAreaRef.current?.contains(event.target)) setAccountOpen(false);
+    };
+    const desktop = window.matchMedia("(min-width: 721px)");
+    const closeAtBreakpoint = () => {
+      if (desktop.matches) return;
+      setAccountOpen(false);
+      window.requestAnimationFrame(focusVisibleNavigation);
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    desktop.addEventListener("change", closeAtBreakpoint);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      desktop.removeEventListener("change", closeAtBreakpoint);
+    };
+  }, [accountOpen]);
 
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
@@ -68,6 +99,14 @@ export default function Header() {
     if (!mobileMenuOpen) return;
     const firstFocusable = mobileMenuRef.current?.querySelector<HTMLElement>("a, button");
     firstFocusable?.focus();
+    const mobile = window.matchMedia("(max-width: 720px)");
+    const closeAtBreakpoint = () => {
+      if (mobile.matches) return;
+      setMobileMenuOpen(false);
+      window.requestAnimationFrame(focusVisibleNavigation);
+    };
+    mobile.addEventListener("change", closeAtBreakpoint);
+    return () => mobile.removeEventListener("change", closeAtBreakpoint);
   }, [mobileMenuOpen]);
 
   const handleMobileMenuKeyDown = (event: KeyboardEvent<HTMLElement>) => {
@@ -134,36 +173,41 @@ export default function Header() {
         />
       </Link>
 
-      {/* NAV */}
-      <nav
-        className={styles.nav}
-        aria-label={t("mainNavigation")}
-        onFocusCapture={event => {
-          if (event.target instanceof HTMLElement) {
-            event.target.scrollIntoView({ block: "nearest", inline: "nearest" });
-          }
-        }}
-      >
-        <Link to={path("/home")}>{t("home")}</Link>
+      <nav className={styles.desktopNav} aria-label={t("mainNavigation")}>
         <Link to={path("/films")}>{t("films")}</Link>
-        <Link to={path("/community")}>{t("community")}</Link>
+        <Link to={path("/lists/discover")}>{t("searchLists")}</Link>
+        <Link to={path("/community")}>{t("searchMembers")}</Link>
         <Link to={path("/journal")}>{t("journal")}</Link>
-        {isAuth ? (
-          <>
-            <Link to={path("/lists")}>{t("lists")}</Link>
-            <Link to={path("/profile")}>{t("profile")}</Link>
-            <Link to={path("/notifications")}><span>{t("notifications")}</span>{unreadNotifications > 0 && <span className={styles.badge} aria-label={`${t("unread")}: ${unreadNotifications}`}>{unreadNotifications > 99 ? "99+" : unreadNotifications}</span>}</Link>
-            <Link to={path("/messages")}><span>{t("messages")}</span>{unreadMessages > 0 && <span className={styles.badge} aria-label={`${t("unread")}: ${unreadMessages}`}>{unreadMessages > 99 ? "99+" : unreadMessages}</span>}</Link>
-            {user?.role === "ADMIN" && <Link to={path("/admin")}>{t("adminDashboard")}</Link>}
-            <button type="button" onClick={() => { void handleLogout(); }}>{t("logout")}</button>
-          </>
-        ) : (
-          <>
-            <Link to={path("/login")}>{t("login")}</Link>
-            <Link to={path("/register")}>{t("register")}</Link>
-          </>
-        )}
-        <Link to={otherLanguagePath} lang={lang === "uk" ? "en" : "uk"}>{lang === "uk" ? "EN" : "УКР"}</Link>
+        <div ref={accountAreaRef} className={styles.accountArea}
+          onBlurCapture={event => {
+            if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) setAccountOpen(false);
+          }}
+          onKeyDown={event => {
+            if (event.key !== "Escape" || !accountOpen) return;
+            event.preventDefault();
+            setAccountOpen(false);
+            accountToggleRef.current?.focus();
+          }}>
+          <button ref={accountToggleRef} className={styles.accountToggle} type="button" aria-expanded={accountOpen} aria-controls={accountOpen ? "desktop-account-links" : undefined} onClick={() => setAccountOpen(open => !open)}>
+            <span>{t("account")}</span>
+            {isAuth && unreadMessages + unreadNotifications > 0 && <span className={styles.badge} aria-label={`${t("unread")}: ${unreadMessages + unreadNotifications}`}>{unreadMessages + unreadNotifications > 99 ? "99+" : unreadMessages + unreadNotifications}</span>}
+          </button>
+          {accountOpen && <div className={styles.accountPopover} id="desktop-account-links">
+            {isAuth ? <>
+              <Link to={path("/profile")}>{t("profile")}</Link>
+              <Link to={path("/lists")}>{t("lists")}</Link>
+              <Link to={`${path("/profile")}?settings=profile`}>{t("accountSettings")}</Link>
+              <Link to={path("/notifications")}><span>{t("notifications")}</span>{unreadNotifications > 0 && <span className={styles.badge} aria-label={`${t("unread")}: ${unreadNotifications}`}>{unreadNotifications > 99 ? "99+" : unreadNotifications}</span>}</Link>
+              <Link to={path("/messages")}><span>{t("messages")}</span>{unreadMessages > 0 && <span className={styles.badge} aria-label={`${t("unread")}: ${unreadMessages}`}>{unreadMessages > 99 ? "99+" : unreadMessages}</span>}</Link>
+              {user?.role === "ADMIN" && <Link to={path("/admin")}>{t("adminDashboard")}</Link>}
+              <button type="button" onClick={() => { void handleLogout(); }}>{t("logout")}</button>
+            </> : <>
+              <Link to={path("/login")}>{t("login")}</Link>
+              <Link to={path("/register")}>{t("register")}</Link>
+            </>}
+            <Link to={otherLanguagePath} lang={lang === "uk" ? "en" : "uk"}>{lang === "uk" ? "EN" : "УКР"}</Link>
+          </div>}
+        </div>
       </nav>
       {logoutError && <p className={styles.logoutError} role="alert">{t("logoutError")}</p>}
 
@@ -195,7 +239,7 @@ export default function Header() {
         </nav>
       </>}
 
-      <nav className={styles.mobileNav} aria-label={t("mainNavigation")}>
+      <nav ref={mobileNavRef} className={styles.mobileNav} aria-label={t("mainNavigation")}>
         <NavLink end to={path("/home")}><i className="fa-solid fa-house" aria-hidden="true"></i><span>{t("home")}</span></NavLink>
         <NavLink to={path("/search")}><i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span>{t("search")}</span></NavLink>
         <NavLink to={path("/films")}><i className="fa-solid fa-circle-plus" aria-hidden="true"></i><span>{t("add")}</span></NavLink>

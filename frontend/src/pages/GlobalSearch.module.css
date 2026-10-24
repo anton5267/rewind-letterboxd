@@ -184,7 +184,7 @@
   .results { gap: 24px; }
   .noMatches { min-height: max(280px, calc(100svh - 534px)); margin: 0 0 40px; padding: 0; border: 0; background: transparent; }
   .noMatches .sectionKicker { display: none; }
-  .noMatches h2 { max-width: 340px; font-size: 24px; line-height: 1.12; letter-spacing: 0; }
+  .noMatches h2 { max-width: 270px; font-size: 24px; line-height: 1.12; letter-spacing: 0; }
   .noMatches > p:not(.sectionKicker) { max-width: 359px; margin: 16px 0 35px; font-size: 12px; line-height: 1.2; }
   .noMatchesAction { display: inline-flex; min-width: 95px; min-height: 32px; align-items: center; justify-content: center; border: 0; padding: 8px 15px; background: #fff; color: #000; font-size: 11px; font-weight: 500; line-height: 16px; }
   .filmGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 19px 15px; }
@@ -192,9 +192,11 @@
   .filmCard .posterLink { width: 100%; aspect-ratio: 79 / 116; border: 0; border-radius: 10px; scroll-margin-block: 100px; }
   .filmCard h3 { display: none; }
   .posterFallback { padding: 6px; overflow-wrap: anywhere; font-size: 11px; }
-  .filmRail { display: flex; gap: 8px; overflow-x: auto; margin: -6px -16px -10px; padding: 6px 16px 10px; scroll-padding-inline: 16px; scrollbar-width: thin; scrollbar-color: var(--rewind-muted) transparent; }
-  .filmRail .filmCard { flex: 0 0 100px; }
-  .filmRail .posterLink { aspect-ratio: 100 / 149; }
+  /* Figma phone All results uses the same four-column poster grid as the
+     Films variant (79×116 slots on a 361 px rail), not a larger carousel. */
+  .filmRail { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 19px 15px; margin: -7px 0 0; padding: 0; overflow: visible; }
+  .filmRail .filmCard { min-width: 0; flex: initial; }
+  .filmRail .posterLink { aspect-ratio: 79 / 116; }
   .userGrid, .peopleGrid, .listGrid, .articleGrid, .reviewGrid { grid-template-columns: 1fr; }
   .userGrid { gap: 24px; }
   .userCard { min-height: 52px; gap: 12px; border: 0; border-radius: 20px; padding: 10px 16px 10px 8px; background: #282828; }

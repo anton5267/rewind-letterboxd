@@ -6,6 +6,9 @@ type FollowState = {
   phase: "loading" | "ready" | "error";
   following: boolean;
   blocked: boolean;
+  followersCount: number | null;
+  followingCount: number | null;
+  countsError: boolean;
   busy: boolean;
   error: "status" | "action" | null;
 };
@@ -18,12 +21,23 @@ interface FollowActions {
   toggle: (targetId: number) => void;
 }
 
-const initialState: FollowState = { phase: "loading", following: false, blocked: false, busy: false, error: null };
+const initialState: FollowState = { phase: "loading", following: false, blocked: false, followersCount: null, followingCount: null, countsError: false, busy: false, error: null };
 const FollowActionsContext = createContext<FollowActions | null>(null);
 
 async function readRelationship(targetId: number) {
-  const [followResponse, blockResponse] = await Promise.all([getFollowStatus(targetId), getBlockStatus(targetId)]);
-  return { following: followResponse.data.following, blocked: blockResponse.data.blocked };
+  // Read follow and block status independently so a failure in one does not
+  // hide the other; return sensible defaults on partial failure to avoid
+  // leaving the UI in a permanent error state when transient network issues occur.
+  const followPromise = getFollowStatus(targetId).then(r => r.data).catch(() => undefined);
+  const blockPromise = getBlockStatus(targetId).then(r => r.data.blocked).catch(() => undefined);
+  const [followStatus, blocked] = await Promise.all([followPromise, blockPromise]);
+  return {
+    following: followStatus?.following ?? false,
+    followersCount: followStatus?.followers ?? null,
+    followingCount: followStatus?.followingCount ?? null,
+    countsError: followStatus === undefined,
+    blocked: blocked ?? false,
+  };
 }
 
 /** Page-scoped state deduplicates the same member across Community sections. */

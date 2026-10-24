@@ -70,7 +70,7 @@
   .feedPage .shell > section > .sectionHeading { margin: 85px 0 54px; border-top: 1px solid #444; padding-top: 18px; }
   .feedPage .shell > section > .sectionHeading h2 { font-size: 24px; line-height: 27px; }
   .feedPage .featuredGrid { gap: 37px; }
-  .feedPage .featuredCard { min-height: 339px; box-sizing: border-box; grid-template-columns: minmax(0, 446px) minmax(0, 1fr); align-items: start; gap: 66px; padding: 44px 34px 35px; border: 0; border-radius: 20px; background: #282828; }
+  .feedPage .featuredCard { min-height: 339px; box-sizing: border-box; grid-template-columns: minmax(0, 446fr) minmax(0, 620fr); align-items: start; gap: clamp(24px, 4.6vw, 66px); padding: 44px 34px 35px; border: 0; border-radius: 20px; background: #282828; }
   .feedPage .featuredPosterLink { --catalog-poster-height: 260px; min-height: 260px; height: 260px; justify-content: flex-start; padding: 0; background: none; }
   .feedPage .featuredCard .cardBody { display: flex; min-width: 0; flex-direction: column; padding: 16px 0 0; }
   .feedPage .featuredCard .cardBody h2 { margin: 0; font-size: 24px; font-weight: 700; line-height: 27px; }
@@ -89,18 +89,20 @@
   }
 
   .teamFeed .grid {
-    grid-template-columns: repeat(3, 326px);
-    gap: 112px;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: clamp(24px, 7.78vw, 111px);
     justify-content: space-between;
   }
 
   .teamFeed .card {
-    height: 249px;
+    min-height: 249px;
     box-sizing: border-box;
     border: 0;
     border-radius: 20px;
     background: #282828;
   }
+
+  .teamFeed .card a:focus-visible { outline-offset: -3px; }
 
   .teamFeed .posterLink {
     height: 180px;

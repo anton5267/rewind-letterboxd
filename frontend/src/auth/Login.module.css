@@ -4,6 +4,8 @@
 .title { composes: title from "./AuthShared.module.css"; }
 .form { composes: form from "./AuthShared.module.css"; }
 .input { composes: input from "./AuthShared.module.css"; }
+.passwordField { composes: passwordField from "./AuthShared.module.css"; }
+.passwordVisibility { composes: passwordVisibility from "./AuthShared.module.css"; }
 .button { composes: button from "./AuthShared.module.css"; }
 .error { composes: error from "./AuthShared.module.css"; }
 .success { composes: success from "./AuthShared.module.css"; }

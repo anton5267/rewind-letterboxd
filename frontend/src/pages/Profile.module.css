@@ -1,9 +1,46 @@
+.collectionToolbar, .heroCreate { display: none; }
+
 .page {
   min-height: 70vh;
   padding: 110px 5% 40px;
   background: var(--rewind-surface);
   color: #fff;
   scrollbar-color: var(--rewind-muted) transparent;
+}
+
+/* Explicit own views keep legacy anchor-only sections and all settings URLs. */
+.page[data-profile-view] { min-height: 100vh; box-sizing: border-box; }
+.page[data-profile-view] .content > :is(.section, .form) { display: none; }
+.page[data-profile-view="collection"] .content > .section[id="profile-collections"],
+.page[data-profile-view="reviews"] .content > .section[id="profile-reviews"],
+.page[data-profile-view="ratings"] .content > .section[id="profile-ratings"],
+.page[data-profile-view="lists"] .content > .section[id="profile-lists"],
+.page[data-profile-view="following"] .content > .section[id="profile-following"],
+.page[data-profile-view="followers"] .content > .section[id="profile-followers"] { display: block; }
+.heroMetrics { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: min(100%, 650px); gap: 24px; margin: 32px 0 0; }
+.heroMetrics > div { display: flex; min-width: 0; flex-direction: column-reverse; gap: 8px; }
+.heroMetrics dt { display: flex; min-height: 44px; align-items: center; justify-content: center; color: #aaa; font-size: 18px; line-height: 1.3; overflow-wrap: anywhere; }
+.heroMetrics dd { margin: 0; color: #fff; font-size: 32px; font-weight: 600; line-height: 1.1; }
+.heroMetrics a { display: inline-flex; min-height: 44px; align-items: center; color: inherit; text-decoration: none; }
+.heroMetrics a:hover { color: #fff; }
+.metricRetry { position: relative; z-index: 1; }
+.networkList, .listCards { margin: 0; padding: 0; list-style: none; }
+.networkBack { display: none; }
+@media (min-width: 1024px) {
+  .networkBack { display: inline-flex; order: 3; width: 44px; min-height: 44px; align-items: center; justify-content: center; margin-top: 73px; color: #b9b9b9; font-size: 30px; text-decoration: none; }
+  .page[data-network-view="true"] .content > .section { margin-top: 16px; border-top: 1px solid #4d4d4d; padding-top: 17px; }
+  .page[data-network-view="true"] .content > .section > h2 { margin-bottom: 59px; line-height: 27px; text-align: left; }
+}
+.listCards { display: grid; gap: 24px; }
+@media (min-width: 721px) and (max-width: 1023px) {
+  .hero { flex-wrap: wrap; }
+  .heroMetrics { flex-basis: 100%; }
+}
+@media (min-width: 1024px) {
+  .heroMetrics { margin-top: 48px; }
+  .heroMetrics dt { font-size: 24px; }
+  .heroMetrics dd { font-size: 36px; }
+  .page .section, .page .section > h2 { scroll-margin-top: 122px; }
 }
 
 .content {
@@ -50,7 +87,9 @@
   position: relative;
   overflow: hidden;
   display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
   gap: 16px;
   min-height: 238px;
   margin-top: 16px;
@@ -307,6 +346,8 @@
   font-size: 12px;
   line-height: 1.45;
 }
+
+.passwordField { display: grid; min-width: 0; gap: 6px; }
 
 .form label {
   display: grid;
@@ -1024,6 +1065,8 @@
     font-size: 11px;
   }
 
+  .profileNav a:focus-visible { outline-offset: -3px; }
+
   .profileNav a:hover,
   .profileNav a:focus-visible,
   .profileNav .activeProfileNav {
@@ -1134,6 +1177,8 @@
 @media (min-width: 1024px) {
   .page {
     position: relative;
+    /* Keep the full-bleed canvas inside the layout viewport when classic scrollbars are present. */
+    overflow-x: clip;
     padding: 0 0 72px;
     background: #1f1f1f;
   }
@@ -1150,7 +1195,7 @@
     position: absolute;
     z-index: 2;
     top: 130px;
-    left: max(24px, calc((100vw - 1200px) / 2));
+    left: max(24px, calc((100% - 1200px) / 2));
     margin: 0;
     color: rgba(255, 255, 255, .86);
     font-size: 24px;
@@ -1166,12 +1211,24 @@
     padding: 274px 24px 120px;
     border: 0;
     border-radius: 0;
-    background:
-      linear-gradient(180deg, rgba(0, 0, 0, .12), rgba(0, 0, 0, .84)),
-      radial-gradient(ellipse at 50% 18%, #5b4331 0%, #211a18 42%, #101010 84%);
+    background: #1f1f1f;
     box-shadow: none;
     text-align: center;
   }
+
+  /* Raw own-profile layers 238:1060 / 363:304 use the same Babylon
+     original as Authentication; its image slot is 817 px high. */
+  .hero::before {
+    position: absolute;
+    z-index: 0;
+    inset: 0 0 auto;
+    height: 817px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, .12), rgba(0, 0, 0, .84) 76%, #1f1f1f), url("/images/profile-settings-hero.jpg") center top / cover no-repeat;
+    content: "";
+    pointer-events: none;
+  }
+
+  .hero::after { display: none; }
 
   .heroActions,
   .heroEdit {
@@ -1246,6 +1303,8 @@
     color: #161616;
   }
 
+  .profileNav a:focus-visible { outline-offset: -3px; }
+
   .content > .section,
   .content > .form {
     order: 4;
@@ -1286,16 +1345,16 @@
   }
 
   .collectionGrid {
-    grid-template-columns: repeat(6, 174px);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 31px;
   }
 
   .collectionPosterLink,
   .collectionPoster,
   .collectionPosterFallback {
-    width: 174px;
-    height: 260px;
-    aspect-ratio: auto;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 174 / 260;
     border-radius: 20px;
   }
 
@@ -1328,6 +1387,28 @@
   }
 }
 
+/* No tablet frame is available. Keep the existing responsive layout,
+   interpolate the verified original artwork, and retain visible focus. */
+@media (min-width: 721px) and (max-width: 1023px) {
+  .hero {
+    overflow: visible;
+    isolation: isolate;
+    background: #1f1f1f;
+  }
+
+  .hero::before {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(180deg, rgba(0, 0, 0, .2), rgba(0, 0, 0, .84) 76%, #1f1f1f), url("/images/profile-settings-hero.jpg") center top / cover no-repeat;
+    content: "";
+    pointer-events: none;
+  }
+
+  .hero::after { display: none; }
+}
+
 /* Figma own profile phone `896:1838`: the identity artwork owns the top
    canvas, while the shared mobile navigation remains fixed at the bottom. */
 @media (max-width: 720px) {
@@ -1347,18 +1428,37 @@
   }
 
   .hero {
-    width: 100vw;
-    min-height: 438px;
+    /* Expand past the page's 16px inline padding without 100vw scrollbar overflow. */
+    width: calc(100% + 32px);
+    min-height: 496px;
     box-sizing: border-box;
+    overflow: visible;
+    isolation: isolate;
     margin: 0 0 0 -16px;
-    padding: 190px 16px 38px;
+    padding: 190px 16px 4px;
     border: 0;
     border-radius: 0;
-    background:
-      linear-gradient(180deg, rgba(0, 0, 0, .12), rgba(0, 0, 0, .92)),
-      radial-gradient(ellipse at 50% 18%, #5b4331 0%, #211a18 44%, #101010 86%);
+    background: #000;
     box-shadow: none;
   }
+
+  /* Raw 896:2058 covers a 430x295 slot at x=-19. Its FILL crop
+     scales the 3840x2160 original to 524.444x295 before viewport clipping.
+     The Figma content surface starts at y=496 beneath the identity stage. */
+  .hero::before {
+    position: absolute;
+    z-index: 0;
+    inset: 0 0 auto;
+    height: max(496px, 100%);
+    background:
+      linear-gradient(180deg, rgba(0, 0, 0, .12), rgba(0, 0, 0, .4) 114px, rgba(0, 0, 0, .92) 245px, #000 295px),
+      url("/images/profile-settings-hero.jpg") center top / max(100%, 524.444px) auto no-repeat,
+      #000;
+    content: "";
+    pointer-events: none;
+  }
+
+  .hero::after { display: none; }
 
   .heroActions,
   .heroEdit {
@@ -1397,4 +1497,99 @@
     z-index: 1;
     margin-top: 20px;
   }
+}
+
+/* Own phone variants:1015:2131 is standalone Films;1015:3356/4508 and
+   1023:1867 keep identity/nav before the collection or review rail. */
+@media (max-width: 720px) {
+  .hero { min-height: 496px; gap: 7px; padding-bottom: 4px; }
+  .heroCreate { position: absolute; z-index: 3; top: 48px; right: 64px; display: grid; width: 44px; height: 44px; box-sizing: border-box; place-items: center; border: 1px solid #444; border-radius: 50%; background: #282828; color: #fff; font-size: 24px; text-decoration: none; }
+  .profileNav { scrollbar-width: none; }
+  .profileNav::-webkit-scrollbar { display: none; }
+  .profileNav a:focus-visible { outline-offset: -3px; }
+  .heroMetrics { width: min(100%, 300px); gap: 12px; margin: 34px 0 0; }
+  .heroMetrics > div { gap: 3px; }
+  .heroMetrics dt { font-size: 11px; }
+  .heroMetrics dd { font-size: 16px; }
+  .listCards { gap: 12px; }
+  .page[data-profile-view] .hero { min-height: 496px; }
+  .page[data-profile-view] .profileNav { margin: 35px 0 0; padding: 0; border: 0; border-radius: 0; background: transparent; scrollbar-width: none; }
+  .page[data-profile-view] .profileNav::-webkit-scrollbar { display: none; }
+  .page[data-profile-view] .profileNav a { min-height: 44px; }
+  .page[data-profile-view] .profileNav a:focus-visible { outline-offset: -3px; }
+  .page[data-profile-view] a.heroEdit { text-decoration: none; font-size: 22px; }
+  .page[data-profile-view] .content > .section[id] { margin: 23px 0 0; padding: 8px 0 0; border: 0; border-top: 1px solid #4d4d4d; border-radius: 0; background: transparent; box-shadow: none; }
+  .page[data-profile-view] .content > .section > h2 { margin: 0 0 24px; color: #fff; font-size: 14px; font-weight: 500; line-height: 16px; text-align: left; }
+  .page[data-profile-view="collection"] .collectionGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 19px 15px; }
+  .page[data-profile-view="collection"] .collectionPosterLink,
+  .page[data-profile-view="collection"] .collectionPoster,
+  .page[data-profile-view="collection"] .collectionPosterFallback { aspect-ratio: 79 / 116; border-radius: 10px; }
+  .page[data-profile-view="collection"] .collectionCard > h3,
+  .page[data-profile-view="collection"] .collectionCard > p,
+  .page[data-profile-view="collection"] .tabs { display: none; }
+  .page[data-profile-view="reviews"] .reviewCards { margin-top: 0; }
+  .page[data-profile-view="reviews"] .reviewCard { min-height: 208px; box-sizing: border-box; padding: 26px 18px; }
+  .page[data-films-view="true"] .hero,
+  .page[data-films-view="true"] .profileNav { display: none; }
+  .page[data-films-view="true"] .collectionToolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 10px; align-items: center; padding-top: 50px; margin-bottom: 29px; }
+  .collectionToolbar h2 { margin: 0; color: #fff; font-size: 14px; font-weight: 500; line-height: 1.3; text-align: center; overflow-wrap: anywhere; }
+  .collectionToolbar > a, .collectionToolbar > button { display: grid; width: 44px; height: 44px; place-items: center; box-sizing: border-box; padding: 0; border: 0; border-radius: 50%; background: #282828; color: #fff; font-size: 20px; text-decoration: none; cursor: pointer; }
+  .collectionToolbar > button { font-size: 16px; }
+  .page[data-films-view="true"] .content > .section[id] { position: relative; margin: 0; padding: 0; border: 0; }
+  .page[data-films-view="true"] .content > .section > h2 { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .page[data-films-view="true"] .tabs[data-filters-open="true"] { display: flex; margin: 0 0 20px; }
+}
+
+/* Own overview238:865 /896:1838: four favorites, poster activity, two
+   review previews, following avatars, one list and six phone links. */
+.content > section.section.previewSection { width: 100%; max-width: 100%; box-sizing: border-box; margin: 60px 0 0; padding: 18px 0 0; border: 0; border-top: 1px solid #4d4d4d; border-radius: 0; background: transparent; box-shadow: none; }
+.content > section.previewSection > h2 { margin: 0 0 40px; color: #fff; font-size: 22px; font-weight: 500; line-height: 27px; text-align: left; }
+.content > section.previewSection > h2 a { color: inherit; font: inherit; text-decoration: none; }
+.content > section.previewSection > h2 a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.overviewPosterGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; margin: 0; padding: 0; list-style: none; }
+.overviewPosterGrid > li { min-width: 0; }
+.overviewPosterGrid :is(.railPosterLink, .railPoster, .railPosterFallback) { aspect-ratio: 265 / 395; border-radius: 20px; }
+.previewSection .activityCaption { display: flex; flex-direction: column; gap: 4px; margin: 12px 0 0; color: #aaa; font-size: 14px; line-height: 1.4; }
+.activityCaption time { font-size: 12px; }
+.previewAction { display: table; min-height: 44px; max-width: 100%; box-sizing: border-box; margin: 12px 0 0 auto; padding: 11px 18px; border: 1px solid #5a5a5a; border-radius: 999px; background: transparent; color: #ddd; font: inherit; font-size: 12px; line-height: 20px; text-align: center; overflow-wrap: anywhere; cursor: pointer; }
+.previewAction:hover { border-color: var(--rewind-cyan); color: #fff; }
+.previewSection .reviewCards { margin-top: 0; }
+.reviewHeading { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+.reviewHeading h3 { flex: 1; min-width: 0; }
+.reviewHeading > span { flex: 0 0 auto; color: #ddd; font-size: 12px; line-height: 1.4; white-space: nowrap; }
+.followingPreview { display: flex; gap: 4px; margin: -6px; padding: 6px; overflow-x: auto; scroll-padding: 6px; list-style: none; }
+.followingPreview > li { flex: 0 0 auto; }
+.followingPreview a { display: grid; width: 80px; min-height: 80px; place-items: center; border-radius: 50%; text-decoration: none; }
+.followingPreview img, .followingInitial { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; }
+.followingInitial { display: grid; place-items: center; background: #343434; color: #fff; font-size: 26px; }
+.overviewLinks { display: none; }
+@media (min-width: 1024px) {
+  .content > section.section.previewSection { margin-top: 85px; }
+  .content > section.previewSection > h2 { margin-bottom: 59px; font-size: 24px; }
+  .overviewPosterGrid { gap: 46px; }
+  .reviewCard { grid-template-columns: 175px minmax(0, 1fr); gap: 40px; }
+  .reviewCopy h3 { font-size: 24px; }
+  .reviewCopy time { font-size: 14px; }
+  .reviewCopy .reviewContent { font-size: 18px; }
+  .previewSection .reviewCards { gap: 36px; }
+}
+@media (max-width: 720px) {
+  .profileNav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin: 35px 0 0; padding: 0; overflow: visible; border: 0; border-radius: 0; background: transparent; }
+  .profileNav a { min-width: 0; min-height: 44px; justify-content: center; padding: 8px 4px; font-size: 11px; line-height: 1.3; text-align: center; white-space: normal; overflow-wrap: anywhere; }
+  .profileNav a[data-collection-kind="watched"] { display: none; }
+  .content > section.section.previewSection { margin-top: 35px; padding-top: 8px; }
+  .content > section.section.previewSection[id="profile-overview"] { margin-top: 23px; }
+  .content > section.previewSection > h2 { margin-bottom: 24px; font-size: 14px; line-height: 16px; }
+  .overviewPosterGrid { gap: 15px; }
+  .overviewPosterGrid :is(.railPosterLink, .railPoster, .railPosterFallback) { aspect-ratio: 79 / 116; border-radius: 10px; }
+  .previewSection .activityCaption { margin-top: 9px; font-size: 10px; line-height: 1.4; }
+  .activityCaption time { font-size: 10px; }
+  .previewSection .reviewCard { min-height: 208px; box-sizing: border-box; padding: 26px 18px; }
+  .followingPreview a { width: 44px; min-height: 44px; }
+  .followingPreview img, .followingInitial { width: 40px; height: 40px; }
+  .followingInitial { font-size: 18px; }
+  .overviewLinks { display: grid; gap: 5px; margin-top: 35px; }
+  .overviewLinks a { display: flex; min-width: 0; min-height: 44px; align-items: center; justify-content: space-between; gap: 16px; box-sizing: border-box; padding: 10px 15px; border-radius: 37px; background: #282828; color: #fff; font-size: 11px; line-height: 1.4; text-decoration: none; overflow-wrap: anywhere; }
+  .overviewLinks a > span { font-size: 20px; line-height: 1; }
+  .overviewLinks a:focus-visible { outline-offset: -3px; }
 }

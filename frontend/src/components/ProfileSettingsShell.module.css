@@ -1,0 +1,135 @@
+.page { position: relative; min-height: 100vh; padding: 0 0 160px; background: #1f1f1f; color: #fff; }
+.mobileSettingLink { display: none !important; }
+.hero {
+  display: grid;
+  min-height: 818px;
+  box-sizing: border-box;
+  align-content: start;
+  justify-items: center;
+  gap: 8px;
+  padding: 280px 24px 220px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, .1), rgba(0, 0, 0, .85) 76%, #1f1f1f), url("/images/profile-settings-hero.jpg") center top / cover no-repeat;
+  text-align: center;
+}
+.hero h1 { max-width: 100%; margin: 0; font-size: 58px; font-weight: 700; line-height: 1.19; letter-spacing: 0; overflow-wrap: anywhere; }
+.hero p { max-width: 418px; margin: 0; color: #a8a8a8; font-size: 24px; line-height: 1.2; }
+.mobileToolbar { display: none; }
+.content { position: relative; width: min(1200px, calc(100% - 48px)); margin: -105px auto 0; }
+.navigation { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+.navigation a { display: flex; min-width: 0; min-height: 79px; box-sizing: border-box; align-items: center; justify-content: center; border-radius: 37px; padding: 16px; background: #282828; color: #fff; font-size: 24px; line-height: 1.15; overflow-wrap: anywhere; text-align: center; text-decoration: none; }
+.navigation a[aria-current="page"], .navigation a:hover { background: #fff; color: #191919; }
+.back { display: flex; width: fit-content; max-width: 100%; min-height: 44px; box-sizing: border-box; align-items: center; gap: 12px; margin-top: 73px; padding: 8px 0; color: #b9b9b9; font-size: 16px; line-height: 1.25; text-decoration: none; }
+.back i { font-size: 24px; }
+.back:hover, .accountLinks a:hover { color: #fff; }
+.settingsSection { margin-top: 16px; border-top: 1px solid #4d4d4d; padding-top: 17px; }
+.settingsSection > .mobileOnly { display: none; }
+.settingsSection > form { display: grid; width: min(588px, 100%); box-sizing: border-box; gap: 0; margin: 0; border: 0; border-radius: 0; padding: 0; background: transparent; box-shadow: none; }
+.settingsSection > form > h2 { margin: 0 0 59px; font-size: 24px; font-weight: 500; line-height: 27px; text-align: left; }
+.settingsSection > form > div { display: grid; min-width: 0; gap: 17px; margin-bottom: 55px; }
+.settingsSection label { color: #fff; font-size: 22px; line-height: 25px; }
+.settingsSection > form :is(input:not([type="checkbox"]), output) { width: 100%; min-width: 0; min-height: 79px; box-sizing: border-box; border: 1px solid transparent; border-radius: 37px; padding: 24px 30px; background: #282828; color: #fff; font-size: 22px; line-height: 1.25; }
+.settingsSection > form input[aria-invalid="true"] { border-color: #e89b9b; }
+.settingsSection > form > p { margin: 16px 0 0; color: #aaa; font-size: 13px; line-height: 1.45; }
+.settingsSection > form > button { width: 100%; min-height: 79px; box-sizing: border-box; border: 1px solid transparent; border-radius: 37px; padding: 20px 30px; background: #fff; color: #191919; font-size: 24px; font-weight: 500; line-height: 1.2; }
+.settingsSection > form > button:hover { background: #ddd; color: #191919; }
+.settingsSection > form > button:disabled { cursor: not-allowed; opacity: .55; }
+.accountLinks { display: flex; flex-wrap: wrap; gap: 16px 32px; margin-top: 56px; }
+.accountLinks a { display: inline-flex; min-height: 44px; align-items: center; color: #b9b9b9; line-height: 1.4; }
+.error, .message, .feedback { margin: 0 0 24px; padding: 16px; line-height: 1.5; overflow-wrap: anywhere; }
+.error { background: #4a1f24; color: #ffd2d2; }
+.message { background: #1d4728; color: #d8ffd8; }
+.page :is(a, button, input):focus-visible { outline: 2px solid #d4a85f; outline-offset: 4px; scroll-margin-block: 120px; }
+.hero h1:focus { outline: none; }
+.settingsSection output { display: block; overflow-wrap: anywhere; }
+.settingsSection > form[data-settings-form="avatar"] { width: 100%; }
+.settingsSection > form[data-settings-form="avatar"] > button, .settingsSection .avatarField { width: min(588px, 100%); }
+.settingsSection .avatarPreview { display: grid; min-height: 543px; place-items: center; border-radius: 20px; background: #282828; }
+.avatarPreview > img, .avatarInitial { width: 265px; height: 265px; border-radius: 50%; object-fit: cover; }
+.avatarInitial { display: grid; place-items: center; background: #343434; color: #d4a85f; font-size: 72px; }
+.favorites { margin-top: 85px; border-top: 1px solid #4d4d4d; padding-top: 18px; }
+.favorites h2 { margin: 0 0 59px; font-size: 24px; font-weight: 500; line-height: 27px; }
+.favorites ul { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 46px; margin: 0; padding: 0; list-style: none; }
+.favorites li { min-width: 0; }
+.favorites li a, .favorites li img, .favorites li span { display: grid; width: 100%; aspect-ratio: 265 / 395; box-sizing: border-box; place-items: center; border-radius: 20px; background: #282828; color: #fff; object-fit: cover; text-decoration: none; }
+.manageLink { display: inline-flex; min-height: 44px; align-items: center; gap: 12px; margin-top: 12px; color: #b9b9b9; }
+
+@media (min-width: 1024px) {
+  /* The image slot extends to 817 px, while Figma 251:566 covers it
+     with the page color from y=628. Keep the navigation on that flat layer. */
+  .hero { background-image: linear-gradient(180deg, rgba(0, 0, 0, .1), #000 628px, #1f1f1f 628px), url("/images/profile-settings-hero.jpg"); }
+}
+
+@media (max-width: 1023px) {
+  .hero { min-height: 580px; padding-top: 180px; padding-bottom: 160px; }
+  .hero h1 { font-size: clamp(36px, 6vw, 58px); }
+  .hero p { font-size: 20px; }
+  .content { margin-top: -79px; }
+  .navigation { gap: 12px; }
+  .navigation a { min-height: 64px; border-radius: 32px; padding: 12px; font-size: 18px; }
+  .back { margin-top: 32px; }
+}
+
+@media (max-width: 600px) {
+  .page { padding-bottom: calc(124px + env(safe-area-inset-bottom)); }
+  .hero { min-height: 400px; padding: 116px 16px 120px; }
+  .hero h1 { font-size: 32px; }
+  .hero p { max-width: 330px; font-size: 16px; }
+  .content { width: calc(100% - 32px); margin-top: -64px; }
+  .navigation { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .navigation a { min-height: 52px; padding: 12px; font-size: 14px; }
+  .back { margin-top: 24px; }
+  .settingsSection { margin-top: 16px; padding-top: 24px; }
+  .settingsSection > form > h2 { margin-bottom: 32px; font-size: 22px; }
+  .settingsSection > form > div { gap: 12px; margin-bottom: 32px; }
+  .settingsSection label { font-size: 16px; line-height: 1.3; }
+  .settingsSection > form :is(input:not([type="checkbox"]), output) { min-height: 56px; padding: 16px 20px; font-size: 18px; }
+  .settingsSection > form > button { min-height: 56px; padding: 16px 20px; font-size: 18px; }
+  .accountLinks { margin-top: 32px; }
+}
+
+/* Phone settings1043:2125 uses a flat page, toolbar near y106 and compact
+   profile rows. Unsupported bio/pronoun/upload/OAuth controls stay absent. */
+@media (max-width: 720px) {
+  .page { padding-bottom: calc(124px + env(safe-area-inset-bottom)); }
+  .hero { min-height: 0; padding: 85px 64px 0; background: none; }
+  .hero h1 { display: flex; min-height: 44px; align-items: center; justify-content: center; font-size: 16px; font-weight: 500; line-height: 1.3; }
+  .hero > h1, .hero > p { display: none; }
+  .mobileToolbar { position: fixed; z-index: 20; top: calc(85px + env(safe-area-inset-top)); right: 0; left: 0; display: grid; height: 44px; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 16px; border-bottom: 1px solid #333; background: #1f1f1f; }
+  .mobileToolbar a, .mobileToolbar button { display: inline-flex; min-width: 44px; min-height: 44px; align-items: center; justify-content: flex-start; border: 0; padding: 0; background: none; color: #fff; font: inherit; text-decoration: none; }
+  .mobileToolbar h2 { margin: 0; font-size: 16px; font-weight: 500; }
+  .mobileToolbar button { justify-content: flex-end; color: #d4a85f; }
+  .mobileToolbar button:disabled { opacity: .5; }
+  .hero { padding-top: calc(129px + env(safe-area-inset-top)); }
+  .hero p, .navigation { display: none; }
+  .content { width: calc(100% - 32px); margin-top: 0; }
+  .back { position: absolute; top: -44px; left: 0; width: 44px; height: 44px; justify-content: center; margin: 0; padding: 0; }
+  .back { display: none; }
+  .back span { display: none; }
+  .settingsSection { margin-top: 18px; padding: 0 18px; border: 0; }
+  .settingsSection > .mobileOnly { display: block; margin-top: 35px; border-top: 1px solid #4d4d4d; padding-top: 18px; }
+  .settingsSection > form.mobileOnly { display: grid; }
+  .settingsSection > form > h2 { margin-bottom: 24px; font-size: 14px; line-height: 16px; text-transform: uppercase; }
+  .settingsSection > form > div { gap: 12px; margin-bottom: 24px; }
+  .settingsSection label { font-size: 16px; line-height: 1.3; }
+  .settingsSection > form :is(input:not([type="checkbox"]), output) { min-height: 44px; padding: 12px 16px; font-size: 16px; }
+  .settingsSection > form > button { min-height: 44px; padding: 12px 16px; font-size: 16px; }
+  .settingsSection > form[data-settings-form="profile"] > div { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; gap: 12px; margin-bottom: 0; }
+  .settingsSection > form[data-settings-form="profile"] :is(input, output) { min-width: 0; min-height: 45px; border-radius: 4px; padding: 8px 0; background: transparent; text-align: right; }
+  .settingsSection > form[data-settings-form="profile"] > button { margin-top: 16px; }
+  .settingsSection > form[id^="settings-form-"] > button { display: none; }
+  .settingsSection .avatarPreview { min-height: 158px; border-radius: 10px; }
+  .avatarPreview > img, .avatarInitial { width: 90px; height: 90px; }
+  .avatarInitial { font-size: 32px; }
+  .favorites { margin-top: 35px; padding-top: 18px; }
+  .favorites h2 { margin-bottom: 24px; font-size: 14px; line-height: 16px; text-transform: uppercase; }
+  .favorites ul { gap: 3px; }
+  .favorites li a, .favorites li img, .favorites li span { aspect-ratio: 79 / 116; border-radius: 10px; }
+  .accountLinks { display: grid; gap: 0; margin-top: 35px; padding: 0 18px; border-top: 1px solid #4d4d4d; }
+  .accountLinks a { min-height: 44px; justify-content: space-between; gap: 16px; border-bottom: 1px solid #4d4d4d; text-decoration: none; }
+  .accountLinks .mobileSettingLink { display: flex !important; }
+}
+
+@media (max-width: 360px) {
+  .mobileToolbar { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); column-gap: 8px; }
+  .mobileToolbar a, .mobileToolbar button, .mobileToolbar h2 { font-size: 14px; }
+}
