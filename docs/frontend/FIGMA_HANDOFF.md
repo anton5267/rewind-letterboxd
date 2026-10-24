@@ -2,6 +2,14 @@
 
 Оновлено 24.10.2026. Поточні runtime-to-frame результати нижче доповнюють початкові source mappings; вони не є pixel-diff доказом.
 
+### Public Lists desktop rail offset — 24.10.2026
+
+For frame `1480:4983` (1440×3816), the local screenshot and focused raw subtree place the 1200px shell at x=120 and the first section divider at y=531.5. In the current Docker preview at a1440px browser viewport, the classic scrollbar leaves a1425px document client width; the 1200px shell renders at x=112.5, a7.5px left offset, while the first section begins at y=531. This is a confirmed horizontal geometry mismatch. The local desktop screenshot/raw source are available, but the Figma connector now returns `UNAUTHORIZED`; code changes await restored design-context access. The `/team` feed is empty locally, so populated Featured card appearance remains unverified and the existing feed/API gap remains documented below.
+
+### Public Lists phone vertical anchors — 24.10.2026
+
+The raw phone frame `1480:8280` (393×1809) puts the hero background end at y=249.1, Featured divider/title group at y=284.1, Featured poster slots at x=15.5 and209/y=335.1 (150×87), Popular divider/title at y=499.3, its poster slots at x=15 and226.5/y=550.3 (150×87), and Recently liked at y=714.3. Docker preview at393×852 has a270px hero and the Featured heading at y=304, about20px below the raw anchor; Popular begins at y=429 because the local `/team` feed is empty. Popular card x positions (16 and227) and150px card widths match the phone frame. The page stays within393px document width. Runtime empty/populated feed geometry is not interchangeable; populated Featured remains unverified. Figma MCP access needs reauthentication before implementation changes.
+
 ### Home guest desktop title — 24.10.2026
 
 Guest desktop frame `1413:6471` has title node `1413:6487` with three sentence lines. CSS keeps each localized sentence on its own line from681px. EN uses53.8px/65px desktop text; UK uses39.8px/65px so the longer translation stays inside the same rail. From681–999px, fluid font sizes follow each title's measured text width. At1920, EN lines measure712/718/756px within a756px rail and UK lines645/733/643px within a733px rail; full document width remains below the viewport. TypeScript/Vite build passed. A physical681–999px viewport pass and full desktop frame comparison are still open.
