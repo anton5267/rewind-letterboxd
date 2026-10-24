@@ -150,3 +150,7 @@ Read-only звірка PNG/raw 1480:4983 підтвердила порядок F
 ### ReviewDetails desktop composition — 24.10.2026
 
 For Figma frame `1480:6826`, poster, title, author/copy and rating/like card use the desktop hero rail. Corrected the lower desktop strip against raw landmarks: section y1215, divider y1300, heading y1318, 80px avatars y1400 at86px pitch, and footer y1640. At1440 source preview these measurements now match; the hero poster x120/y538/275×411, title x450/y601/58px and action card x1069/y653/251×170 remain aligned. Poster/action radii and trailer sizing also follow the frame. Tablet/phone CSS remains outside the changed breakpoint. Manual runtime geometry review completed at1440, plus responsive overflow review at320/393/600/720/768/1024; `npm run verify:build` PASS (TypeScript + Vite,229 modules). Local API rows are test-like and images are absent, so content/imagery parity is not claimed. Empty-liked state and production data remain open; tests, API, data and Docker were not changed.
+
+### Home guest 681–720px overlap — 24.10.2026
+
+Responsive review found the guest Home title could be covered by the fixed mobile navigation at intermediate widths. Adjusted the guest hero top padding only from681px through720px. Manual Chromium review at681×900 and720×852 shows the whole three-line title above the navigation;721×852 switches to desktop navigation. `npm run verify:build` passed; no tests run.

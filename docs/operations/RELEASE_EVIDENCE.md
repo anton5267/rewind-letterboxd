@@ -624,3 +624,7 @@ The authenticated mobile `More` control on `/uk/reviews/1` now has a44×44px hit
 ### Home member retry announcement — 24.10.2026
 
 Manual read-only Chromium review of `/uk/home` at393×852 showed a duplicate assertive alert when the newest-films request failed: one page-level alert and one section-level alert. Section `RetryNotice` now allows its live role to be omitted; Home keeps the global alert while its local error message and Retry button remain in the reading order. Recheck with an intercepted one-time503 showed exactly one `role="alert"`, both retry buttons, 3px focus outline, Enter recovery to zero alerts and `<main aria-busy="false">`, with no horizontal overflow. Loading snapshots also confirmed guest EN320/UK393 and member UK393 localized status while the main region was busy. No app data changed, no test suite ran. `npm run verify:build` passed after the component change.
+
+### Home guest intermediate-width responsive correction — 24.10.2026
+
+Manual Chromium review found the guest Home title could overlap the fixed mobile navigation at681–720px. Added a height-aware hero top-padding rule for this interval. At681×900 and720×852 the full title ends above the bottom bar; at721×852 the desktop navigation is active and the prior desktop hero behavior remains. TypeScript and Vite production build passed (`npm run verify:build`). No tests or Docker update were run; final regression is still pending.

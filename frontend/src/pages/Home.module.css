@@ -84,6 +84,10 @@
   .guestHeroUk:not(.memberHero) h1 { font-size: clamp(34px, calc(5.35vw - 2.8px), 39.8px); }
 }
 
+@media (min-width: 681px) and (max-width: 720px) {
+  .hero:not(.memberHero) { padding-top: max(0px, min(706px, calc(100vh - 303px))); }
+}
+
 .hero > p:not(.eyebrow) {
   max-width: 600px;
   margin-inline: auto;

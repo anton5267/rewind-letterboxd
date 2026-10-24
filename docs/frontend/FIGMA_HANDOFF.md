@@ -325,3 +325,7 @@ For `1494:5387` (1440×3561), the live Figma canvas and current-source preview w
 ### Own Profile network mobile — 24.10.2026
 
 Live canvas `1023:3020` (393×852) shows populated Following: rows start y123, Back/filter controls render35px circles, and bottom navigation starts y760/h92. Source preview of authenticated own Followers at320/393 instead shows the real empty state because the local account has0 followers: copy x16/y123, Back hit target44×44, bottom navigation x0/y760/393×92, no horizontal overflow. English320 and Ukrainian393 labels were checked; keyboard Back focus outline is visible. Mobile own Films/network toolbar now draws35px circles inside44px hit targets without shrinking interactions. Populated own follower rows/pagination remain unverified until real API data is available.
+
+### Home guest intermediate-width overlap — 24.10.2026
+
+The guest hero had a 681–720px range where the desktop title spacing was active alongside the fixed mobile navigation. A height-aware top-padding rule now keeps the complete title visible above the bar on shorter viewports while preserving the 721px desktop navigation transition. Manual Chromium screenshots at681×900,720×852 and721×852 confirm the behavior. This checks overlap only; no additional Figma parity claim is made. `npm run verify:build` passed. Tests remain deferred.
