@@ -31,13 +31,16 @@
 
 .mobileBack,
 .mobileSearch {
+  position: relative;
+  isolation: isolate;
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, .35);
-  border-radius: 50%;
-  background: rgba(12, 12, 16, .28);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: #fff;
   text-decoration: none;
 }
@@ -47,8 +50,9 @@
   font: inherit;
 }
 
-.mobileBack { font-size: 22px; }
-.mobileSearch { font-size: 22px; }
+.mobileBack { padding: 0 9px 9px 0; font-size: 22px; }
+.mobileBack::before { position: absolute; z-index: -1; top: 0; left: 0; width: 35px; height: 35px; border-radius: 50%; background: rgba(12, 12, 16, .28); content: ""; pointer-events: none; }
+.mobileSearch { padding-left: 9px; font-size: 22px; background: radial-gradient(circle 17.5px at calc(100% - 17.5px) 50%, rgba(12, 12, 16, .28) 99%, transparent 100%); }
 
 .mobileBack:focus-visible,
 .mobileSearch:focus-visible {
@@ -227,7 +231,7 @@
 @media (max-width: 620px) {
   .page { padding: 0 0 calc(96px + env(safe-area-inset-bottom)); background: #1f1f1f; }
   .hero { min-height: 534px; box-sizing: border-box; margin: 0; padding: 14px 16px 0; border: 0; border-radius: 0; background: linear-gradient(180deg, #1f5c69 0%, #24353b 50%, #1f1f1f 100%); box-shadow: none; }
-  .mobileToolbar { display: grid; grid-template-columns: 36px minmax(0, 1fr) 36px; align-items: center; gap: 10px; margin-bottom: 140px; color: #fff; font-size: 13px; font-weight: 800; text-align: center; }
+  .mobileToolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 10px; margin-bottom: 132px; color: #fff; font-size: 13px; font-weight: 800; text-align: center; }
   .mobileToolbar > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .heroIdentity { align-items: center; flex-direction: column; gap: 7px; text-align: center; }
   .avatar, .avatarFallback { width: 120px; height: 120px; }
@@ -255,7 +259,8 @@
 @media (max-width: 360px) {
   .page { padding-inline: 10px; }
   .hero { margin-inline: -10px; padding-inline: 10px; }
-  .content { padding-inline: 12px; }
+  .mobileToolbar { margin-inline: 6px; }
+  .content { padding-inline: 6px; }
   .grid { gap: 8px; }
   .filmInfo { padding: 8px; }
   .filmTitle { font-size: 12px; }
