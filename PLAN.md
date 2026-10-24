@@ -90,3 +90,7 @@ Frame 1480:4983 orders Featured lists, Popular this week, Recently liked, Crew l
 
 Profile Settings toolbar manually reviewed at320/393 px against y≈107 reference; no horizontal overflow. Continue remaining own Profile/PublicProfile desktop/mobile variants: long names/avatar, populated Followers and pagination, empty/error/retry/focus, plus documented API gaps.
 PublicProfile update 24.10.2026: Follow-up fixed desktop/tablet `100vw` horizontal overflow while retaining the full-bleed hero. Populated Following row geometry manually matched at393; overview/Following no-overflow pass at320/393/600/720/768/1024/1440. Continue populated Followers/pagination, error/retry/focus, long-name/avatar and desktop state coverage.
+
+### Own Profile network mobile — 24.10.2026
+
+Live Figma `1023:3020` is the populated Following reference: rows start y123, Back/filter controls have35px visible circles, and bottom navigation begins y760/h92 at393×852. The authenticated local account has0 Followers; source preview therefore verifies only the empty Followers state at320 EN and393 UK. Empty copy starts x16/y123, Back target is44×44, fixed navigation is x0/y760/393×92, keyboard focus is visible and both widths have no horizontal overflow. Updated mobile own collection/network toolbar circles to35px while preserving44px hit targets. `npm run verify:build` PASS; tests remain deferred. Populated own follower rows/pagination still require real API data.

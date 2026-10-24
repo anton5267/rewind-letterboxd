@@ -288,3 +288,7 @@ PublicProfile desktop overflow follow-up, 24.10.2026: Manual Vite/Chromium found
 ### Journal desktop hero correction — 24.10.2026
 
 For `1494:5387` (1440×3561), the live Figma canvas and current-source preview were reviewed at1440px. UK pill measures x120/y132/147×42; the 1200px content rail begins at x120/y212. The local API returns no articles or archive entries, so only the desktop shell/empty-state interaction and top-of-rail anchor are evidenced; populated cards remain open. Existing 1920px source geometry is x360/y132/139×42. No source/API/data changes or tests in this review.
+
+### Own Profile network mobile — 24.10.2026
+
+Live canvas `1023:3020` (393×852) shows populated Following: rows start y123, Back/filter controls render35px circles, and bottom navigation starts y760/h92. Source preview of authenticated own Followers at320/393 instead shows the real empty state because the local account has0 followers: copy x16/y123, Back hit target44×44, bottom navigation x0/y760/393×92, no horizontal overflow. English320 and Ukrainian393 labels were checked; keyboard Back focus outline is visible. Mobile own Films/network toolbar now draws35px circles inside44px hit targets without shrinking interactions. Populated own follower rows/pagination remain unverified until real API data is available.

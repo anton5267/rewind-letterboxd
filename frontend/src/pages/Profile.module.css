@@ -1533,7 +1533,7 @@
   .page[data-films-view="true"] .profileNav { display: none; }
   .page[data-films-view="true"] .collectionToolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 10px; align-items: center; padding-top: 50px; margin-bottom: 29px; }
   .collectionToolbar h2 { margin: 0; color: #fff; font-size: 14px; font-weight: 500; line-height: 1.3; text-align: center; overflow-wrap: anywhere; }
-  .collectionToolbar > a, .collectionToolbar > button { display: grid; width: 44px; height: 44px; place-items: center; box-sizing: border-box; padding: 0; border: 0; border-radius: 50%; background: #282828; color: #fff; font-size: 20px; text-decoration: none; cursor: pointer; }
+  .collectionToolbar > a, .collectionToolbar > button { display: grid; width: 44px; height: 44px; place-items: center; box-sizing: border-box; padding: 0; border: 0; border-radius: 50%; background: radial-gradient(circle 17.5px, #282828 99%, transparent 100%); color: #fff; font-size: 20px; text-decoration: none; cursor: pointer; }
   .collectionToolbar > button { font-size: 16px; }
   .page[data-films-view="true"] .content > .section[id] { position: relative; margin: 0; padding: 0; border: 0; }
   .page[data-films-view="true"] .content > .section > h2 { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
