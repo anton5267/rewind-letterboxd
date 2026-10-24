@@ -5,6 +5,7 @@ interface RetryNoticeProps {
   message: string;
   retryLabel: string;
   onRetry: () => void;
+  role?: "alert" | "status" | null;
   disabled?: boolean;
   busy?: boolean;
 }
@@ -18,11 +19,12 @@ export default function RetryNotice({
   message,
   retryLabel,
   onRetry,
+  role = "alert",
   disabled = false,
   busy = false,
 }: RetryNoticeProps) {
   return (
-    <p className={className} role="alert">
+    <p className={className} role={role ?? undefined}>
       {message}{" "}
       <RetryButton
         label={retryLabel}

@@ -594,3 +594,15 @@ Intercepted only the first GET `/api/users/7748/following` as503, then allowed r
 Intercepted only the first GET `/api/search/global` as503 at EN320 and UK393, then let Retry reach the local API. The localized alert contained a44px Retry button and the page had no horizontal overflow. Keyboard traversal reached Retry after12 Tabs; focus outline was3px. Enter repeated the GET; the alert cleared, and the successful empty result state hid the query form and restored the localized category prompt. No app data changed; this was a manual browser review, not a test run.
 
 A delayed read-only `/api/search/global` response was also reviewed at EN320/UK393. While pending, localized search status was visible, both `<main>` and results panel had `aria-busy=true`, and document width matched viewport; after the live response completed, the page reached the empty state without an alert. No API records were changed.
+
+### Global Search category keyboard navigation — 24.10.2026
+
+With a read-only API fixture containing one film, desktop1440 showed the roving tablist on focus with a3px outline. ArrowRight moved focus and `aria-selected` from All to Films and changed the URL to `?q=film&tab=films`; Tab moved into the associated `tabpanel`. At320/393px, the desktop tablist is replaced by the native 160×32 category selector; selecting Films preserves the query and updates the same tab parameter. Checked 320/393/600/720/768/1024/1440 viewports kept `scrollWidth === innerWidth`. The fixture was intercepted in Chromium; no data mutation or test suite.
+
+### Review Details More hit target — 24.10.2026
+
+The authenticated mobile `More` control on `/uk/reviews/1` now has a44×44px hit target with the original35×35px painted circle centered at the same Figma coordinates: x342/y50 at393px and x269/y50 at320px. Chromium source preview measured a3px visible keyboard outline. Opening the existing RatingSheet retained the raw-frame geometry at393×852 (sheet x16/y489/361×328, Done x16/y761/361×56) and320×852 (sheet x16/y489/288×328, Done x16/y761/288×56); document width matched the viewport. Review/auth/rating data were intercepted in-browser; no application data changed. `npm run verify:build` passed (TypeScript and Vite,229 modules). Manual review only; test suites remain deferred.
+
+### Home member retry announcement — 24.10.2026
+
+Manual read-only Chromium review of `/uk/home` at393×852 showed a duplicate assertive alert when the newest-films request failed: one page-level alert and one section-level alert. Section `RetryNotice` now allows its live role to be omitted; Home keeps the global alert while its local error message and Retry button remain in the reading order. Recheck with an intercepted one-time503 showed exactly one `role="alert"`, both retry buttons, 3px focus outline, Enter recovery to zero alerts and `<main aria-busy="false">`, with no horizontal overflow. Loading snapshots also confirmed guest EN320/UK393 and member UK393 localized status while the main region was busy. No app data changed, no test suite ran. `npm run verify:build` passed after the component change.

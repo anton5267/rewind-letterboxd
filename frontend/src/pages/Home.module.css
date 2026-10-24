@@ -71,6 +71,12 @@
   line-height: 1.04;
 }
 
+.heroTitleSentence { display: inline; margin-inline-end: .25em; }
+
+@media (min-width: 1100px) {
+  .heroTitleSentence { display: block; margin: 0; white-space: nowrap; }
+}
+
 .hero > p:not(.eyebrow) {
   max-width: 600px;
   margin-inline: auto;
@@ -703,6 +709,7 @@
   .hero:not(.memberHero) .actions { display: none; }
 
   .hero:not(.memberHero) h1 { max-width: 308px; margin: 0 auto; font-size: 24px; line-height: 1.12; text-align: center; }
+  .heroTitleSentence { display: inline; margin-inline-end: .25em; white-space: normal; }
 
   .hero:not(.memberHero) .actions {
     position: absolute;

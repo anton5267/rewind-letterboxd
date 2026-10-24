@@ -276,7 +276,7 @@
   .heroBackdrop { z-index: -2; top: 0; height: 309px; }
   .heroShade { z-index: -1; top: 0; height: 310px; background: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, .62) 44%, rgba(0, 0, 0, .2) 100%); }
   .back { grid-column: 1 / -1; width: 35px; height: 35px; margin-bottom: 152px; border: 0; background: #1f1f1f; }
-  .more { position: absolute; top: 50px; right: 16px; display: grid; width: 35px; height: 35px; place-items: center; border: 0; border-radius: 50%; background: #1f1f1f; color: #fff; cursor: pointer; font: inherit; font-size: 22px; line-height: 1; }
+  .more { position: absolute; top: 45.5px; right: 11.5px; display: grid; width: 44px; height: 44px; place-items: center; border: 0; border-radius: 50%; background: radial-gradient(circle 17.5px, #1f1f1f 99%, transparent 100%); color: #fff; cursor: pointer; font: inherit; font-size: 22px; line-height: 1; }
   .more:focus-visible { outline: 3px solid #64dbe2; outline-offset: 3px; }
   .posterColumn { grid-column: 1; grid-row: 2 / 4; align-self: start; }
   .poster { border-radius: 8px; box-shadow: none; }
