@@ -74,7 +74,7 @@ Decoded raw nodes `545:707` (desktop) і `725:1097` (phone) підтвердил
 
 ### Journal desktop hero — 24.10.2026
 
-Для frame `1494:5387` desktop intro повернено до компактного pill heading; marketing summary лишається screen-reader доступним, але не накладається на feature card/empty state. Ручний source preview при1920px показав pill x360/y132/139×42, порожній стан без перекриття та `scrollWidth === viewport`. Позиція feature rail і mobile styles не змінювалися. `npm run verify:build` пройшов; окремий 1440px frame review ще потрібен.
+Для frame `1494:5387` desktop intro повернено до компактного pill heading; marketing summary лишається screen-reader доступним, але не накладається на feature card/empty state. Live Figma canvas підтвердив desktop frame1440×3561 та композицію з API-backed статтями. На поточному UK source preview при1440px pill має x120/y132/147×42, content rail починається x120/y212 і має ширину1200px; порожній стан не перекриває toolbar/archive. Раніше при1920px pill був x360/y132/139×42. Ручний responsive pass 320/393/600/720/768/1024/1440 не показав горизонтального overflow. Локальний Journal API повертає нуль статей і нуль архівних періодів, тому перший populated feature card, реальні обкладинки й подальший ритм рядків залишаються відкритими. Код/API/data не змінювалися; тести не запускалися.
 
 ### ReviewDetails desktop — 24.10.2026
 
