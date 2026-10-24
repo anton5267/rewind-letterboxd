@@ -4,7 +4,7 @@
 
 ## Зараз у роботі
 
-**Global Search mobile controls:** звірив frame `1480:8934`: Back і Filter мають35×35px візуальні круги при44×44px інтерактивних ділянках. Filter раніше малював коло на всі44px; CSS тепер обмежує фон до35px, залишаючи target area і focus outline. `npm run verify:build` PASS (TypeScript, Vite, 229 modules); локальний raw frame/screenshot підтверджує геометрію. Повнорозмірний Chrome mobile comparison і Figma MCP доступ ще потрібні для наступного visual pass; тести не запускалися.
+**Global Search mobile controls:** raw frames `1480:8934` та `1480:8856` показують Back/Filter circles35×35px при44×44px controls; Filter видимий x342/y50. CSS зберігає target і focus outline, малює круг на trailing edge й зміщує icon усередині hit area до Figma координат. `npm run verify:build` PASS після фінального CSS (TypeScript, Vite, 229 modules). Повнорозмірний Chrome mobile screenshot і Figma MCP access ще потрібні; тести не запускалися.
 
 **Own Profile network mobile:** authenticated Followers empty state перевірено в UK393/EN320; copy x16/y123, Back target44×44, navigation y760/h92 at393, клавіатурний focus видимий, overflow немає. Поточний акаунт має0 Followers, тому populated own rows/pagination ще не перевірені. Own Films/network toolbar circles зменшено до35px без зменшення44px hit targets; `npm run verify:build` PASS.
 
