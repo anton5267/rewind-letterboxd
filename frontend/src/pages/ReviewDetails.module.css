@@ -283,7 +283,7 @@
   .filmCopy { grid-column: 2; min-width: 0; padding: 25px 0 0; }
   .filmCopy > .eyebrow { display: none; }
   .filmCopy h1 { font-size: 26px; line-height: 1.12; letter-spacing: 0; }
-  .meta { margin: 3px 0 8px; color: #7e7e7e; font-size: 12px; font-weight: 500; line-height: 1.12; }
+  .meta { margin: 3px 0 3px; color: #7e7e7e; font-size: 12px; font-weight: 500; line-height: 1.12; }
   .meta li { min-width: 0; overflow-wrap: anywhere; }
   .meta li + li::before { margin-inline: 4px; color: inherit; content: "|"; }
   .meta .ageRating { margin-left: 8px; padding: 1px 5px; border: 1px solid currentColor; border-radius: 6px; font-size: 10px; }
@@ -306,13 +306,13 @@
   .likeActions { display: none; }
   .likeActions > .likeButton { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; white-space: normal; }
   .likeActions > p { margin: 0; }
-  .likersSection { grid-column: 1 / -1; grid-row: 6; min-width: 0; margin: 20px -16px 0; padding: 34px 16px 28px; border: 0; border-radius: 0; background: var(--rewind-surface); }
+  .likersSection { grid-column: 1 / -1; min-width: 0; margin: 9px -16px 0; padding: 34px 16px 28px; border: 0; border-radius: 0; background: var(--rewind-surface); }
   .likeRow { min-width: 0; gap: 12px; padding-top: 8px; border-top: 1px solid #4d4d4d; }
   .likeRow .eyebrow { display: none; }
   .likeRow > div { min-width: 0; overflow-wrap: anywhere; }
   .likeRow h2 { font-size: 14px; line-height: 1.12; }
   .likeRow > strong { color: #aaa; font-size: 14px; line-height: 1.12; }
-  .likers { flex-wrap: nowrap; gap: 6px; overflow-x: auto; margin: 24px 0; padding: 3px; scroll-padding-inline: 3px; scrollbar-width: thin; }
+  .likers { flex-wrap: nowrap; gap: 6px; overflow-x: auto; margin: 22px 0; padding: 3px 0; scroll-padding-inline: 3px; scrollbar-width: thin; }
   .liker { width: 40px; height: 40px; flex: 0 0 40px; margin: 0; border: 0; scroll-margin-block: 100px; }
   .liker:focus-visible { outline-offset: 0; }
 }
