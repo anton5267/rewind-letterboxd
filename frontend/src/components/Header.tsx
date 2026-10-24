@@ -244,7 +244,7 @@ export default function Header() {
         <NavLink to={path("/search")}><i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span>{t("search")}</span></NavLink>
         <NavLink to={path("/films")}><i className="fa-solid fa-circle-plus" aria-hidden="true"></i><span>{t("add")}</span></NavLink>
         <NavLink to={path("/journal")}><i className="fa-solid fa-book-open" aria-hidden="true"></i><span>{t("journal")}</span></NavLink>
-        <NavLink to={path(isAuth ? "/profile" : "/login")}><i className="fa-solid fa-user" aria-hidden="true"></i><span>{isAuth ? t("profile") : t("login")}</span></NavLink>
+        <NavLink to={path(isAuth ? "/profile" : "/login")}><i className="fa-solid fa-user" aria-hidden="true"></i><span>{t("profile")}</span></NavLink>
       </nav>
 
     </header>

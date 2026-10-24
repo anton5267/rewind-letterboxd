@@ -4,6 +4,10 @@
 
 ## Раніше записаний локальний checkpoint
 
+### Shared mobile navigation — 24.10.2026
+
+Live Figma frame `1411:3473` Navigation instance is393×92 and shows Home/Search/Add/Journal/Profile for a guest. Raw child nodes specify 12 px labels and30×30 icon slots. `Header` now keeps the localized Profile label while routing unauthenticated clicks to the existing Login path; mobile labels/icon slots were resized, with the existing 92 px bar and 44 px+ interaction targets retained. `npm run verify:build` passed (TypeScript + Vite,229 modules). Local Vite `/uk/home` loaded in Chrome at desktop size; a matching 393 px runtime capture and exact icon-vector comparison remain open. No tests or Docker changes; no API or database mutations.
+
 ### Review Details phone More — 24.10.2026
 
 Phone `1480:9249` now exposes an authenticated-only `More` button at the Figma control position and opens the existing movie `RatingSheet`, with localized review author subtitle. Existing movie-rating and review-like API calls remain in use. Phone inline rating/date and like action are hidden; desktop controls remain. `npm run verify:build` passed (TypeScript + Vite, 229 modules). Manual guest preview at393×932 measured back x16/y50/35×35, `document.body.scrollWidth === 393`, and verified phone rating/like controls are hidden. The authenticated dialog behavior was verified in the subsequent browser pass below; phone `More` activation and sheet geometry remain open for final responsive review. No tests were run, and no backend, database or Docker state changed.
