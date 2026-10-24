@@ -568,3 +568,8 @@ Live canvas frame `1023:3020` is the populated own Following variant at393×852:
 
 **User Lists phone populated rail — 24.10.2026.** Frame `1480:9606` підтверджує 79×116 posters, 161px row pitch та 36px remove/reorder actions; на393px runtime bounds: rail x34, row343×116, poster79×116, action group78px. На320px row лишається у viewport без horizontal overflow. Mobile reorder handle підтримує ArrowUp/ArrowDown і викликає чинний reorder endpoint; ручний огляд на ephemeral API fixture не змінював БД. Live Figma Prototype inspector для frame не містить заданих interactions, тож metadata sheet trigger не встановлений.
 pm run verify:build PASS; жодні тести не запускалися.
+### Global Search filter target — 24.10.2026
+
+- Source: local read-only Figma raw frame `1480:8934` and its 393×2801 PNG. Back and Filter background layers measure35×35px at y50; UI controls retain44×44px target areas.
+- Change: mobile Filter background now paints a35px circle inside its existing44px button. Keyboard focus outline and native category-select focus behavior remain in the same control.
+- Verification: `npm run verify:build` PASS (TypeScript and Vite; 229 modules). CSS preserves the44×44px control and focus outline while its centered radial background matches the raw35×35px Figma layer. The available browser was at desktop width, where the mobile control is hidden, so a Chrome mobile screenshot remains pending. Figma MCP connection currently requires reauthentication. No tests run.

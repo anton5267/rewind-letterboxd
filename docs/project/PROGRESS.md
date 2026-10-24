@@ -4,6 +4,8 @@
 
 ## Зараз у роботі
 
+**Global Search mobile controls:** звірив frame `1480:8934`: Back і Filter мають35×35px візуальні круги при44×44px інтерактивних ділянках. Filter раніше малював коло на всі44px; CSS тепер обмежує фон до35px, залишаючи target area і focus outline. `npm run verify:build` PASS (TypeScript, Vite, 229 modules); локальний raw frame/screenshot підтверджує геометрію. Повнорозмірний Chrome mobile comparison і Figma MCP доступ ще потрібні для наступного visual pass; тести не запускалися.
+
 **Own Profile network mobile:** authenticated Followers empty state перевірено в UK393/EN320; copy x16/y123, Back target44×44, navigation y760/h92 at393, клавіатурний focus видимий, overflow немає. Поточний акаунт має0 Followers, тому populated own rows/pagination ще не перевірені. Own Films/network toolbar circles зменшено до35px без зменшення44px hit targets; `npm run verify:build` PASS.
 
 **Review Details phone `1480:9249` / More `1480:9407` звірено на phone viewports.** `More` доступна лише авторизованим і відкриває RatingSheet через чинні movie-rating/review-like API. На393×852 runtime: More x342/y50/35×35; modal x16/y489/361×328; card x16/y536/361×206; Done x16/y761/361×56. Raw sheet group x16/y488.6/361×328.4, тож округлення runtime складає менше1px. На320×852 modal 288×328, Done лишається видимою, body width320. Dialog перенесено у portal, тому він затемнює і перекриває fixed bottom navigation. Keyboard огляд: Done initial focus, Tab/Shift+Tab traversal, Escape закриває та повертає фокус. У preview використано local review row і ephemeral auth/rating state; API/database mutations не виконувались. `npm run verify:build` PASS, тестів не запускали. Повна page/footer/content parity і production imagery залишаються відкритими.
