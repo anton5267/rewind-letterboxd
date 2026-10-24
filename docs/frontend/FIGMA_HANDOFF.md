@@ -2,6 +2,10 @@
 
 Оновлено 24.10.2026. Поточні runtime-to-frame результати нижче доповнюють початкові source mappings; вони не є pixel-diff доказом.
 
+### Shared mobile navigation — 24.10.2026
+
+Live Figma guest Home `1411:3473` shows the selected Navigation component at393×92, with Home/Search/Add/Journal/Profile, white 12px labels,30×30 icon slots and a flat `#191919` background. A Vite/Chromium preview of `/uk/home` at393×852 measured the runtime bar at x0/y760/393×92; the five item order and icon-slot widths matched. Removed the purple active tile and muted inactive labels from `Header.module.css`. The screenshot comparison shows Figma's outlined Home, Journal and Profile glyphs differ from the current solid Font Awesome icons; exact vector assets are still needed. TypeScript/Vite build passed after the CSS change; no tests or Docker updates.
+
 ### Global Search Films phone — 24.10.2026
 
 Frame `1480:8594` (393×852) звірено з local `.fig` PNG/raw та Vite source preview на реальному локальному API-відгуку із шістьма фільмами. Poster slots збігаються: чотири колонки x16/110/204/298, y267, 79×116; наступний рядок починається y402. Runtime Select розташований x217/y222/160×32, як у frame. EN/UK category labels працюють. Keyboard ArrowDown на сфокусованому Select змінив `films` на `users` та URL query, не втрачаючи фокус. Ширини320/393/600/720/768/1024/1440 не мають horizontal overflow; 320px posters адаптивно 60.8×89.2, desktop 1440px cards 174.2×260.2 у шість колонок. Контент відрізняється від статичного Dune frame через чинні API дані; перевірено композицію й поведінку, не контентну parity. Код не змінювався.

@@ -6,7 +6,9 @@
 
 ### Shared mobile navigation — 24.10.2026
 
-Live Figma frame `1411:3473` Navigation instance is393×92 and shows Home/Search/Add/Journal/Profile for a guest. Raw child nodes specify 12 px labels and30×30 icon slots. `Header` now keeps the localized Profile label while routing unauthenticated clicks to the existing Login path; mobile labels/icon slots were resized, with the existing 92 px bar and 44 px+ interaction targets retained. `npm run verify:build` passed (TypeScript + Vite,229 modules). Local Vite `/uk/home` loaded in Chrome at desktop size; a matching 393 px runtime capture and exact icon-vector comparison remain open. No tests or Docker changes; no API or database mutations.
+Live Figma frame `1411:3473` Navigation instance is393×92 and shows Home/Search/Add/Journal/Profile for a guest. Raw child nodes specify 12px labels and30×30 icon slots. `Header` keeps the localized Profile label while routing unauthenticated clicks to the existing Login path; link targets remain at least44px. A Vite/Chromium capture of `/uk/home` at393×852 measured the runtime bar at x0/y760/393×92 with five 30px icon slots. Compared with the selected Figma component, the runtime had an extra purple active tile, muted labels and a darker surface; CSS now uses a flat `#191919` bar and white labels/icons. `npm run verify:build` passed (TypeScript + Vite,229 modules). The screenshot still shows Figma's outlined Home/Journal/Profile glyphs differ from the current solid Font Awesome icons; exact vector parity remains open. No tests or Docker changes; no API or database mutations.
+
+Commit `1159dac` was pushed to `master`; its `CI / verify (push)` run [40107220610](https://github.com/anton5267/rewind-letterboxd/actions/runs/40107220610) completed successfully, including backend tests, frontend build/typecheck and proxy validation. It predates the local CSS surface/color follow-up above and does not verify those unpushed edits.
 
 ### Review Details phone More — 24.10.2026
 

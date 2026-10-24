@@ -247,10 +247,7 @@
     min-height: 92px;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     padding: 7px 8px calc(7px + env(safe-area-inset-bottom));
-    border-top: 1px solid rgba(255, 255, 255, .12);
-    background: rgba(20, 20, 21, .98);
-    box-shadow: 0 -12px 35px rgba(0, 0, 0, .25);
-    backdrop-filter: blur(18px);
+    background: #191919;
   }
 
   .mobileNav a {
@@ -263,7 +260,7 @@
     gap: 1px;
     padding-inline: 2px;
     border-radius: 9px;
-    color: #bdb8c0;
+    color: #fff;
     font-size: 12px;
     line-height: 14px;
     text-decoration: none;
@@ -277,9 +274,6 @@
     color: #fff;
     font-size: 22px;
   }
-  .mobileNav a[aria-current="page"] { background: rgba(138, 56, 245, .16); color: #d9bfff; }
-  .mobileNav a[aria-current="page"] i { color: #b978ff; }
-
   .logoutError {
     top: 64px;
     right: 12px;
