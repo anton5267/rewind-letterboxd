@@ -588,3 +588,9 @@ Using a read-only fixture based on local `/api/users/7748/profile`, set display 
 ### Public Following retry state — 24.10.2026
 
 Intercepted only the first GET `/api/users/7748/following` as503, then allowed retry to reach the local API. At EN320 the visible alert/retry rendered without overflow and the button measured44px high; at UK393 it also measured44px. On EN393 keyboard traversal reached Retry after7 Tabs, displayed a3px cyan outline, and Enter repeated the request; the alert cleared and the single real API network row rendered. No API mutation occurred. This is a manual interaction review, not a test run; `npm run verify:build` also passed after the shared `RetryButton.module.css` min-height change.
+
+### Global Search error/retry state — 24.10.2026
+
+Intercepted only the first GET `/api/search/global` as503 at EN320 and UK393, then let Retry reach the local API. The localized alert contained a44px Retry button and the page had no horizontal overflow. Keyboard traversal reached Retry after12 Tabs; focus outline was3px. Enter repeated the GET; the alert cleared, and the successful empty result state hid the query form and restored the localized category prompt. No app data changed; this was a manual browser review, not a test run.
+
+A delayed read-only `/api/search/global` response was also reviewed at EN320/UK393. While pending, localized search status was visible, both `<main>` and results panel had `aria-busy=true`, and document width matched viewport; after the live response completed, the page reached the empty state without an alert. No API records were changed.
