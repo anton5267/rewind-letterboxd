@@ -2,6 +2,10 @@
 
 Оновлено 24.10.2026, Europe/Berlin. Документ містить історичні release checkpoints і наступні targeted перевірки; повний фінальний regression нового UI ще потрібний. Production VPS не розгорнуто.
 
+### Push checkpoint — 24.10.2026
+
+Commit `2b531b3060864eb1a56b22686bc0a5ff2b412748` (`Align Home desktop layouts with Figma`) was pushed to `master`. `frontend/npm run verify:build` passed before the push, and GitHub Actions `CI / verify` run [40114726723](https://github.com/anton5267/rewind-letterboxd/actions/runs/40114726723) completed successfully. This confirms the push gate only; it does not replace the deferred full frontend/backend regression or the pending visual review of Home desktop/member variants.
+
 ### Home guest desktop title follow-up — 24.10.2026
 
 The guest Home source preview exposed extra title wrapping and text extending past the rail. CSS now uses three explicit sentence lines from681px, EN 53.8px/65px and UK 39.8px/65px on desktop, with locale-specific fluid sizes at681–999px. At1920, `/en/home` sentence text widths are712/718/756px inside756px and `/uk/home` widths645/733/643px inside733px; document width is1905px against a1920px viewport. `npm run verify:build` passed (TypeScript and Vite,229 modules); no tests ran. The681–999px physical viewport pass and full Home desktop/member frame comparison remain open.
