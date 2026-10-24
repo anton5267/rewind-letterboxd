@@ -94,7 +94,7 @@ export default function Home() {
   const allSectionsLoading = Object.values(sectionLoading).some(Boolean);
 
   return <main className={styles.page} aria-labelledby="home-title" aria-busy={allSectionsLoading}>
-    <section className={`${styles.hero} ${isAuth ? styles.memberHero : ""}`}>
+    <section className={`${styles.hero} ${isAuth ? styles.memberHero : ""} ${!isAuth && lang === "uk" ? styles.guestHeroUk : ""}`}>
       {!isAuth && <p className={styles.eyebrow}>{t("homeEyebrow")}</p>}
       <h1 id="home-title" aria-label={isAuth ? t("homeWelcomeTitle") : guestTitle}>{isAuth ? t("homeWelcomeTitle") : guestTitleSentences.map(sentence => <span className={styles.heroTitleSentence} key={sentence}>{sentence}</span>)}</h1>
       <p>{t(isAuth ? "homeWelcomeSubtitle" : "homeSubtitle")}</p>
@@ -207,17 +207,22 @@ export default function Home() {
           {sectionLoading.tags ? <p className={styles.sectionStatus} role="status">{t("loadingHome")}</p> : sectionErrors.tags ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} role={null} onRetry={() => setRetry(value => value + 1)} /> : tags.length === 0 ? <p>{t("noTags")}</p> : <p className={styles.tagCloud}>{tags.map(tag => <Link key={tag.id} to={path(`/lists/discover?tag=${encodeURIComponent(tag.slug)}`)}>#{tag.name}</Link>)}</p>}
         </div>
       </section>
-      {isAuth && journal[0] && <section className={`${styles.section} ${styles.memberRecentNewsSection}`}>
+      {isAuth && journal.length > 0 && <section className={`${styles.section} ${styles.memberRecentNewsSection}`}>
         <div className={styles.sectionHeading}><h2>{t("homeRecentNews")}</h2><Link to={path("/journal")}>{t("homeMore")}</Link></div>
-        <article className={styles.memberRecentNewsCard}>
-          <Link className={styles.memberRecentNewsCover} to={path(`/journal/${journal[0].slug}`)} aria-label={editorialText(journal[0].title, t("untitledArticle"))}>
-            <ResilientImage src={journal[0].coverUrl} alt="" loading="lazy" fallback={<span aria-hidden="true">{editorialText(journal[0].title, t("untitledArticle")).slice(0, 1).toUpperCase()}</span>} />
-          </Link>
-          <div className={styles.memberRecentNewsCopy}>
-            <h3><Link to={path(`/journal/${journal[0].slug}`)}>{editorialText(journal[0].title, t("untitledArticle"))}</Link></h3>
-            {journal[0].excerpt && <p>{journal[0].excerpt}</p>}
-          </div>
-        </article>
+        <div className={styles.memberRecentNewsGrid}>
+          {journal.slice(0, 3).map(article => {
+            const title = editorialText(article.title, t("untitledArticle"));
+            return <article className={styles.memberRecentNewsCard} key={article.id}>
+              <Link className={styles.memberRecentNewsCover} to={path(`/journal/${article.slug}`)} aria-label={title}>
+                <ResilientImage src={article.coverUrl} alt="" loading="lazy" fallback={<span aria-hidden="true">{title.slice(0, 1).toUpperCase()}</span>} />
+              </Link>
+              <div className={styles.memberRecentNewsCopy}>
+                <h3><Link to={path(`/journal/${article.slug}`)}>{title}</Link></h3>
+                {article.excerpt && <p>{article.excerpt}</p>}
+              </div>
+            </article>;
+          })}
+        </div>
       </section>}
       <section className={`${styles.section} ${styles.recentWatchedSection}`} aria-busy={sectionLoading.recentWatched}>
         <div className={styles.sectionHeading}><h2>{t("recentWatched")}</h2></div>

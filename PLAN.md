@@ -4,6 +4,10 @@
 
 ## Мета та правила реалізації
 
+**Home guest desktop follow-up — 24.10.2026:** raw frame `1413:6471` title `1413:6487` uses three sentence lines. The former preview showed extra wrapping and text overflow. The guest title now keeps each sentence on its own line from681px; English uses53.8px/65px lines on desktop, Ukrainian39.8px/65px, and each has a width-responsive size from681–999px. At1920, EN sentence widths are712/718/756 in a756px rail; UK widths are645/733/643 in a733px rail. Re-measuring at681–999px and member desktop geometry remains open.
+
+**Home member desktop structural follow-up — 24.10.2026:** raw `1413:6263` orders Latest News, four full-width 1199×273 Review cards, three 325.5×257 Popular Lists cards, and Recent News. The desktop runtime previously placed Reviews and Lists beside one another and included reviewer/tag/watched panels absent from this frame. Desktop member CSS now stacks the Reviews and Lists panels, uses three list columns, omits those extra panels for this variant, and aligns the hero/news sections to raw anchors. The Latest News desktop card targets1199×193 with a300px cover column; Recent News renders up to three API articles in a three-column group, while the phone still shows one. Build passed, but this change has not yet had an authenticated Chrome visual review; frame parity is not claimed.
+
 Повністю передивитися Figma й переробити всі реалізовані сторінки та доступні variants: компонування, кнопки, зображення та інші деталі. Зберегти робочі API, доступність і UK/EN. За уточненням користувача 22.10.2026 написання та запуск тестів відкладаються до завершення всього редизайну. Загальна ціль ще не завершена.
 
 - Перед змінами читати конкретний frame/raw subtree, screenshot і mappings; використовувати наявні компоненти, реальні дані та локальні assets. Палітру, шрифти, відступи, радіуси й responsive поведінку звіряти з джерелом; для відсутніх ліцензованих шрифтів використовувати найближчий доступний fallback.

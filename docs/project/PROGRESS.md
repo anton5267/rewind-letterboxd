@@ -6,6 +6,10 @@ Person phone controls: Back і Filter мають44×44px hit targets із35px pa
 
 Review Details mobile More тепер має44×44px target зі збереженим35px колом; на320/393 підтверджено focus outline та відповідність RatingSheet geometry. Global Search keyboard tabs перевірені на1440, phone native category selector — на320/393. Guest Home loading/error/retry перевірено на EN320/UK393, retry відновлює успішний state без overflow. `npm run verify:build` пройшов; перевірка лише браузерна, test suites відкладені.
 
+Guest Home title desktop follow-up: попередній preview показав надлишкове перенесення й текст за межами rail. Від681px речення мають окремі рядки; EN desktop 53.8px, UK 39.8px, line-height65px; на681–999px обидві локалі плавно адаптують шрифт до доступної ширини. Runtime на1920 виміряв EN рядки712/718/756px у rail756px та UK645/733/643px у rail733px; document width1905 ≤ viewport1920. `npm run verify:build` PASS. Фізичну responsive matrix681–999 ще треба зняти; member desktop залишається відкритим.
+
+Member Home desktop `1413:6263` отримав структурну правку за raw anchors: full-width Reviews stack із чотирма273px cards, окремий трьохколонковий Popular Lists блок, Latest News banner із300px cover і нижня Recent News grid до трьох API статей. Reviewer/tag/recent-watched секції приховано лише в desktop member variant; mobile поведінка збережена. Hero title/subtitle зміщені до raw x/y anchors. TypeScript/Vite build пройшов; потрібен authenticated Chrome preview, щоб перевірити координати, картки й footer перед заявою про відповідність.
+
 Member Home loading/error/retry додано до ручного огляду: `role="alert"` дублювався між глобальним повідомленням і секцією. `RetryNotice` тепер може прибрати live role для локальної копії; global alert залишається єдиним assertive announcement, section текст і Retry збережені. UK393 Chromium preview підтвердив один alert, видимий focus, Enter recovery та no overflow. Desktop/member frame parity ще відкрита.
 
 ## Зараз у роботі

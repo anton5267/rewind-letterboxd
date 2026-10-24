@@ -2,6 +2,14 @@
 
 Оновлено 24.10.2026, Europe/Berlin. Документ містить історичні release checkpoints і наступні targeted перевірки; повний фінальний regression нового UI ще потрібний. Production VPS не розгорнуто.
 
+### Home guest desktop title follow-up — 24.10.2026
+
+The guest Home source preview exposed extra title wrapping and text extending past the rail. CSS now uses three explicit sentence lines from681px, EN 53.8px/65px and UK 39.8px/65px on desktop, with locale-specific fluid sizes at681–999px. At1920, `/en/home` sentence text widths are712/718/756px inside756px and `/uk/home` widths645/733/643px inside733px; document width is1905px against a1920px viewport. `npm run verify:build` passed (TypeScript and Vite,229 modules); no tests ran. The681–999px physical viewport pass and full Home desktop/member frame comparison remain open.
+
+### Home member desktop structural update — 24.10.2026
+
+Member Home desktop CSS now follows the raw vertical order and card geometry in `1413:6263`: Latest News banner; four full-width Reviews cards; three-column Popular Lists; and three API-backed Recent News cards. The previous two-column Reviews/Lists pairing and extra reviewer/tag/watched panels are removed from this desktop member variant. Hero x/y offsets and section spacing are mapped from raw anchors and the prior 1440 fixture measurements. `npm run verify:build` passed (TypeScript and Vite,229 modules). No authenticated screenshot or browser geometry review has been captured after the change, so this remains an implementation pass rather than verified frame parity; full regression remains deferred.
+
 ## Раніше записаний локальний checkpoint
 
 ### Shared mobile navigation — 24.10.2026

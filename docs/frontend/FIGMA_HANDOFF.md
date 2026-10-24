@@ -2,6 +2,14 @@
 
 Оновлено 24.10.2026. Поточні runtime-to-frame результати нижче доповнюють початкові source mappings; вони не є pixel-diff доказом.
 
+### Home guest desktop title — 24.10.2026
+
+Guest desktop frame `1413:6471` has title node `1413:6487` with three sentence lines. CSS keeps each localized sentence on its own line from681px. EN uses53.8px/65px desktop text; UK uses39.8px/65px so the longer translation stays inside the same rail. From681–999px, fluid font sizes follow each title's measured text width. At1920, EN lines measure712/718/756px within a756px rail and UK lines645/733/643px within a733px rail; full document width remains below the viewport. TypeScript/Vite build passed. A physical681–999px viewport pass and full desktop frame comparison are still open.
+
+### Home member desktop structure — 24.10.2026
+
+Raw frame `1413:6263` places Latest News at y1909/193px; Popular Reviews at y2300 with four1199×273 cards from y2376 through3360; Popular Lists at y3736 with three325.5×257 cards from y3811.5; Recent News begins y4153 with a1199×347 group. Member desktop CSS now uses that vertical ordering, hides reviewer/tag/recent-watched panels for this variant, uses one API article in the Latest News banner and up to three API articles in Recent News. The frame’s text child in Latest News begins318px into the card, so the runtime cover column is300px plus18px copy padding. Build passes; authenticated visual measurements have not yet been run after these changes.
+
 ### Shared mobile navigation — 24.10.2026
 
 Live Figma guest Home `1411:3473` shows the selected Navigation component at393×92, with Home/Search/Add/Journal/Profile, white 12px labels,30×30 icon slots and a flat `#191919` background. A Vite/Chromium preview of `/uk/home` at393×852 measured the runtime bar at x0/y760/393×92; the five item order and icon-slot widths matched. Removed the purple active tile and muted inactive labels from `Header.module.css`. The screenshot comparison shows Figma's outlined Home, Journal and Profile glyphs differ from the current solid Font Awesome icons; exact vector assets are still needed. TypeScript/Vite build passed after the CSS change; no tests or Docker updates.

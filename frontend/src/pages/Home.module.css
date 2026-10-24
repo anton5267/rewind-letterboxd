@@ -43,10 +43,12 @@
 .hero:not(.memberHero) h1 {
   max-width: 765px;
   margin: 0;
-  font-size: 58px;
-  line-height: 1.12;
+  font-size: 53.8px;
+  line-height: 65px;
   text-align: center;
 }
+
+.guestHeroUk:not(.memberHero) h1 { font-size: 39.8px; }
 
 /* The guest Figma frame has an artwork-only release row below the hero. */
 .page:has(.hero:not(.memberHero)) .leadingSection { margin-top: 85px; }
@@ -73,8 +75,13 @@
 
 .heroTitleSentence { display: inline; margin-inline-end: .25em; }
 
-@media (min-width: 1100px) {
+@media (min-width: 681px) {
   .heroTitleSentence { display: block; margin: 0; white-space: nowrap; }
+}
+
+@media (min-width: 681px) and (max-width: 999px) {
+  .hero:not(.memberHero) h1 { font-size: clamp(44px, calc(7.4vw - 6.5px), 53.8px); }
+  .guestHeroUk:not(.memberHero) h1 { font-size: clamp(34px, calc(5.35vw - 2.8px), 39.8px); }
 }
 
 .hero > p:not(.eyebrow) {
@@ -361,6 +368,7 @@
 }
 
 .memberRecentNewsSection { display: none; }
+.memberRecentNewsGrid { display: grid; grid-template-columns: 1fr; gap: 16px; }
 .memberRecentNewsCard { overflow: hidden; border-radius: 20px; background: #282828; }
 .memberRecentNewsCover { position: relative; display: block; height: 145px; overflow: hidden; background: #303030; }
 .memberRecentNewsCover img,
@@ -854,6 +862,8 @@
   .page:has(.memberHero) .recentWatchedSection { display: none; }
   .page:has(.memberHero) .memberRecentNewsSection { display: block; margin-top: 16px; }
   .page:has(.memberHero) .memberRecentNewsSection .sectionHeading { margin-bottom: 22px; }
+  .page:has(.memberHero) .memberRecentNewsGrid { grid-template-columns: 1fr; }
+  .page:has(.memberHero) .memberRecentNewsCard:nth-child(n + 2) { display: none; }
 
   .section {
     margin-top: 30px;
@@ -1001,4 +1011,86 @@
   .status {
     width: 100%;
   }
+}
+
+/* Figma member desktop 1413:6263: long-form editorial sections run vertically. */
+@media (min-width: 1100px) {
+  .page:has(.memberHero) .memberHero h1,
+  .page:has(.memberHero) .memberHero > p:not(.eyebrow) {
+    position: relative;
+    left: 36.5px;
+  }
+
+  .page:has(.memberHero) .memberHero h1 { top: -3.6px; }
+  .page:has(.memberHero) .memberHero > p:not(.eyebrow) { top: -7.5px; width: min(891px, 100%); }
+
+  .page:has(.memberHero) .leadingSection {
+    margin-top: 85px;
+    border-top: 1px solid #3d3d3d;
+  }
+
+  .page:has(.memberHero) .section:not(.leadingSection) { margin-top: 80px; }
+  .page:has(.memberHero) .sectionHeading {
+    box-sizing: border-box;
+    height: 40px;
+    align-items: flex-start;
+    margin-bottom: 47px;
+    padding-top: 15px;
+  }
+
+  .page:has(.memberHero) .sectionHeading h2 { font-size: 24px; line-height: 22px; }
+  .page:has(.memberHero) .leadingSection .movieRow,
+  .page:has(.memberHero) .popularSection .movieRow { grid-template-columns: repeat(6, 174px); gap: 31px; }
+  .page:has(.memberHero) .popularSection { border-top: 1px solid #3d3d3d; }
+  .page:has(.memberHero) .journalSection { margin-top: 80px; border-top: 1px solid #3d3d3d; }
+  .page:has(.memberHero) .journalSection .sectionHeading { margin-bottom: 54px; padding-top: 17px; }
+  .page:has(.memberHero) .journalSection .sectionHeading h2 { font-size: 24px; line-height: 22px; }
+  .page:has(.memberHero) .journalSection .journalCard { grid-template-columns: 300px minmax(0, 1fr); min-height: 193px; }
+  .page:has(.memberHero) .journalSection .journalCard:nth-child(n + 2) { display: none; }
+  .page:has(.memberHero) .journalSection .journalCoverLink { min-height: 193px; }
+
+  .page:has(.memberHero) .grid {
+    grid-template-columns: 1fr;
+    row-gap: 85px;
+    margin-top: 85px;
+  }
+
+  .page:has(.memberHero) .grid > :nth-child(n + 3),
+  .page:has(.memberHero) .recentWatchedSection { display: none; }
+  .page:has(.memberHero) .reviewsPanel,
+  .page:has(.memberHero) .listsPanel { border-top: 1px solid #3d3d3d; padding-top: 16px; }
+  .page:has(.memberHero) .grid .sectionHeading {
+    height: 22px;
+    align-items: flex-start;
+    margin-bottom: 55px;
+    padding-top: 0;
+  }
+  .page:has(.memberHero) .grid .sectionHeading h2 { font-size: 22px; line-height: 22px; }
+  .page:has(.memberHero) .reviewsPanel .stack { gap: 55px; }
+  .page:has(.memberHero) .reviewsPanel .reviewCard { min-height: 273px; }
+  .page:has(.memberHero) .listsPanel .sectionHeading { margin-bottom: 54.5px; }
+  .page:has(.memberHero) .listCards {
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    grid-template-columns: repeat(3, minmax(0, 325.5px));
+    justify-content: space-between;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+  }
+  .page:has(.memberHero) .listCard { min-height: 257px; }
+  .page:has(.memberHero) .memberRecentNewsSection {
+    display: block;
+    margin-top: 84.5px;
+    margin-bottom: 112px;
+  }
+  .page:has(.memberHero) .memberRecentNewsSection .sectionHeading {
+    margin-bottom: 55px;
+    padding-top: 17px;
+  }
+  .page:has(.memberHero) .memberRecentNewsGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+  .page:has(.memberHero) .memberRecentNewsCard { min-height: 347px; }
+  .page:has(.memberHero) .memberRecentNewsCover { height: 219px; }
+  .page:has(.memberHero) .memberRecentNewsCopy { min-height: 128px; padding: 16px; }
 }
