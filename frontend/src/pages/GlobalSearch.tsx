@@ -109,6 +109,10 @@ export default function GlobalSearch() {
     reviews: results.reviews.totalElements,
     journal: results.journal.totalElements,
   } : null;
+  const isEmptyState = !loading && !error && Boolean(query) && !hasVisibleResults;
+  const categorySelect = <select ref={categorySelectRef} className={styles.categorySelect} aria-label={t("showSearchResultsFor")} aria-controls="global-search-results" value={tab} onChange={event => selectTab(event.target.value as SearchTab)}>
+    {searchTabs.map(item => <option value={item} key={item}>{tabLabel(item)}{item !== "all" && resultCounts ? ` (${resultCounts[item]})` : ""}</option>)}
+  </select>;
 
   return <main className={`${styles.page} ${tab === "films" ? styles.filmsOnly : ""}`} aria-labelledby="global-search-title" aria-busy={loading}>
     <div className={styles.shell}>
@@ -134,9 +138,10 @@ export default function GlobalSearch() {
 
       {query && <div className={styles.matchesHeading}>
         <h2>{t("showingSearchMatches")} “{query}”</h2>
-        <select ref={categorySelectRef} className={styles.categorySelect} aria-label={t("showSearchResultsFor")} aria-controls="global-search-results" value={tab} onChange={event => selectTab(event.target.value as SearchTab)}>
-          {searchTabs.map(item => <option value={item} key={item}>{tabLabel(item)}{item !== "all" && resultCounts ? ` (${resultCounts[item]})` : ""}</option>)}
-        </select>
+        {isEmptyState ? <div className={styles.categoryPicker}>
+          <span className={styles.categoryPrompt} aria-hidden="true">{t("showSearchResultsFor")} <span>⌄</span></span>
+          {categorySelect}
+        </div> : categorySelect}
       </div>}
 
       {query && <nav className={styles.resultNav} role="tablist" aria-orientation="horizontal" aria-label={t("globalSearchResults")}>

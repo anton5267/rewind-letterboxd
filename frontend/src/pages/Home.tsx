@@ -205,6 +205,18 @@ export default function Home() {
           {sectionLoading.tags ? <p className={styles.sectionStatus} role="status">{t("loadingHome")}</p> : sectionErrors.tags ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} onRetry={() => setRetry(value => value + 1)} /> : tags.length === 0 ? <p>{t("noTags")}</p> : <p className={styles.tagCloud}>{tags.map(tag => <Link key={tag.id} to={path(`/lists/discover?tag=${encodeURIComponent(tag.slug)}`)}>#{tag.name}</Link>)}</p>}
         </div>
       </section>
+      {isAuth && journal[0] && <section className={`${styles.section} ${styles.memberRecentNewsSection}`}>
+        <div className={styles.sectionHeading}><h2>{t("homeRecentNews")}</h2><Link to={path("/journal")}>{t("homeMore")}</Link></div>
+        <article className={styles.memberRecentNewsCard}>
+          <Link className={styles.memberRecentNewsCover} to={path(`/journal/${journal[0].slug}`)} aria-label={editorialText(journal[0].title, t("untitledArticle"))}>
+            <ResilientImage src={journal[0].coverUrl} alt="" loading="lazy" fallback={<span aria-hidden="true">{editorialText(journal[0].title, t("untitledArticle")).slice(0, 1).toUpperCase()}</span>} />
+          </Link>
+          <div className={styles.memberRecentNewsCopy}>
+            <h3><Link to={path(`/journal/${journal[0].slug}`)}>{editorialText(journal[0].title, t("untitledArticle"))}</Link></h3>
+            {journal[0].excerpt && <p>{journal[0].excerpt}</p>}
+          </div>
+        </article>
+      </section>}
       <section className={`${styles.section} ${styles.recentWatchedSection}`} aria-busy={sectionLoading.recentWatched}>
         <div className={styles.sectionHeading}><h2>{t("recentWatched")}</h2></div>
         {sectionLoading.recentWatched ? <p className={styles.sectionStatus} role="status">{t("loadingHome")}</p> : sectionErrors.recentWatched ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} onRetry={() => setRetry(value => value + 1)} /> : recentWatched.length === 0 ? <p>{t("noRecentWatched")}</p> : <div className={styles.stack}>{recentWatched.map(item => {

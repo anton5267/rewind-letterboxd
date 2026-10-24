@@ -374,10 +374,8 @@ Push `d703d63` passed GitHub `CI / verify (push)`. The local frontend suite comp
 
 ### Global Search phone Empty copy and geometry — 24.10.2026
 
-- Compared local Figma phone frame `1480:8856` (393×852) with `/en/search?q=zzznomatchesrewind`. Updated UK/EN empty heading/helper copy to the mapped design and constrained the phone heading rail to 270 px so English breaks as “There were no matches” / “for your search term.” White Back to home CTA remains visible. Search input and category selector remain available for keyboard and pointer users; Figma's frame does not show the input, so this is retained as an explicit accessibility/design difference pending a better mapped interaction.
-- Chromium manual viewport captures/read-only geometry at EN/UK393, EN320 and EN1440 showed no horizontal overflow. At EN393, heading measured x61.5/y357.8/w270/h53.75 and CTA y476.9/h32, close to the raw reference's two-line copy and CTA placement. No Playwright test runner or mutations were used.
-- `npm run build` PASS (Vite229 modules); Docker web rebuilt and recreated with `--no-deps`, image digest `sha256:009f169af5818b8703532cf4a8655074c3023aae64e0908a3de79c89602f5b03`. API/DB/Redis/Mailpit stayed running. No DB volume, `.env`, account data, test files, commit or push changed.
-
+- Compared archived Figma frame `1480:8856` (393×852 PNG and raw subtree) with authenticated-state-free Vite preview using read-only API fixtures. Only successful Empty state hides the query input. Summary row x16/y120/361×24; prompt begins x279; no-match heading x61.5/y342.5/270×53.8; helper y413.3; Home CTA x149/y477.6/95×32. All state keeps its input and the four 79×116 poster slots at x16/110/204/298, y267. Native category select still receives focus from the Filter button and its focus outline is visible.
+- EN393 and UK320 preview document widths equal their viewports. The PNG and raw source are local browser-save exports; no Figma assets were added. API/DB/Compose were not changed, no tests were run, and `npm run verify:build` passes TypeScript/Vite after these edits.
 ### Global Search All phone / Films desktop frame review — 24.10.2026
 
 - Compared raw `1480:8934` All phone top against the 393 px Docker route: hero end y187, input y120, match divider y220, first poster y267. Runtime layout matches; poster slots are 79×116. The mobile slider trigger focused the native category select. Query `film` returned 152 film/101 review rows from the local test-like database, so content parity is not claimed.
@@ -427,9 +425,8 @@ Push `d703d63` passed GitHub `CI / verify (push)`. The local frontend suite comp
 
 ### Member Home phone frame follow-up — 24.10.2026
 
-- Raw frame `1327:3210` is393×2463; hero320px, New posters y368, Popular posters y567, Latest News y726/y775 card, four review cards from y1009, Popular Lists y1760/y1800 and Recent News heading y2074. Live Figma Chrome selected the corresponding phone frame. Local member runtime at393 aligns first headings/posters within8–11px; mobile API Journal is currently empty, so the lower populated-feed geometry is not verified. Local mobile Journal cards are limited to the first result and Home requests four popular reviews as shown in the phone frame.
-- Chrome responsive measurement (after the internal poster-rail overflow fix): document scroll width matched client width at320/393/600/720/768/1024/1440. `npm run verify:build` passed TypeScript/Vite (229 modules). Full Figma frame export did not complete; no tests or backend/API/DB/Docker changes.
-
+- Raw `1327:3210` anchors: Latest News title y726/card y775, Popular Reviews title y969, Popular Lists title y1760/card y1800, Recent News title y2074/card y2114×361×222. Authenticated Vite/Chromium preview at393 with ephemeral read-only API fixtures measured title/card positions y726/y775.4, y969.4, y1759.8/y1800.2 and y2074.2/y2115.6 with card361×222. No horizontal overflow at320 and393 px.
+- Added the frame Recent News preview using the existing Journal API article and More link; member phone hides the reviewer/tag/watched panels absent from this frame. Both preview positions use API-backed article content. Local Journal database is empty, so production copy and poster imagery were not verified. `npm run verify:build` passes TypeScript/Vite. No tests, DB mutations, Docker changes, or backend/API contract changes.
 ### Authenticated Public Following More sheet — 24.10.2026
 
 - Read-only Chrome view `/en/users/7748?view=following` at393×852. Opened the populated row’s More sheet; visible actions are Follow, Block, Go to member and Done. Done receives initial focus; Tab wraps to Follow and Shift+Tab wraps to Done; Escape closes and returns focus to the More trigger. No follow/block action was selected. Content is test-like local data; evidence covers sheet layout and keyboard focus only.

@@ -6,6 +6,8 @@
 .mobileBack,
 .mobileFilter,
 .categorySelect { display: none; }
+.categoryPicker { display: contents; }
+.categoryPrompt { display: none; }
 .heroHeading > div,
 .searchLabel,
 .submitLabel,
@@ -170,7 +172,7 @@
   .searchForm input { display: block; width: 100%; min-height: 32px; height: 32px; padding: 5px 44px 5px 16px; border: 0; border-radius: 999px; background: rgba(255, 255, 255, .14); font-size: 14px; font-weight: 400; }
   .searchForm button { position: absolute; inset: 0 0 auto auto; width: 44px; min-height: 32px; height: 32px; padding: 0; border: 0; border-radius: 999px; background: transparent; color: #d8d5d0; }
   .submitIcon { display: inline; font-size: 18px; }
-  .matchesHeading { align-items: flex-start; gap: 8px; min-height: 33px; margin: 34px 0 13px; padding-top: 8px; border-top: 1px solid #4d4d4d; }
+  .matchesHeading { align-items: flex-start; gap: 8px; min-height: 40px; margin: 34px 0 13px; padding-top: 8px; border-top: 1px solid #4d4d4d; }
   .matchesHeading h2 { flex: 1 1 auto; min-width: 0; padding-top: 0; font-size: 14px; line-height: 1.12; }
   .categorySelect { display: block; width: 160px; min-width: 0; height: 32px; flex: 0 0 160px; margin-top: -8px; border: 0; border-radius: 4px; padding: 0 4px; background: transparent; color: #aaa; font: inherit; font-size: 12px; cursor: pointer; color-scheme: dark; }
   .resultNav { display: none; }
@@ -237,5 +239,19 @@
   .articleCard small { margin-top: 6px; font-size: 11px; line-height: 1.12; }
   .tagGrid { gap: 7px; flex-wrap: wrap; margin: -6px 0 -10px; padding: 6px 0 10px; }
   .tag { flex: 0 0 auto; min-height: 31px; padding: 7px 20px; font-size: 12px; line-height: 1.2; scroll-margin-block: 100px; }
+
+  .page:has(.noMatches) .hero { min-height: 120px; padding-bottom: 26px; }
+  .page:has(.noMatches) .searchForm { display: none; }
+  .page:has(.noMatches) .matchesHeading { min-height: 24px; margin: 0 0 13px; padding-top: 7px; }
+  .page:has(.noMatches) .matchesHeading h2 { overflow: hidden; font-size: 14px; line-height: 16px; text-overflow: ellipsis; white-space: nowrap; }
+  .page:has(.noMatches) .categoryPicker { position: relative; display: flex; width: auto; max-width: 45%; height: 16px; flex: 0 0 auto; align-items: center; justify-content: flex-start; overflow: hidden; padding-right: 10px; color: #aaa; font-size: 11px; line-height: 16px; white-space: nowrap; }
+  .page:has(.noMatches) .categoryPrompt { display: inline-flex; align-items: center; gap: 3px; }
+  .page:has(.noMatches) .categorySelect { position: absolute; inset: 0; display: block; width: 100%; min-width: 100%; height: 100%; flex: none; margin: 0; padding: 0; opacity: 0; cursor: pointer; }
+  .page:has(.noMatches) .categoryPicker:focus-within { outline: 2px solid var(--rewind-cyan); outline-offset: 2px; }
+  .page:has(.noMatches) .results { padding-top: 185.5px; }
+  .page:has(.noMatches) .noMatches { display: block; width: min(359px, 100%); min-height: 0; margin: 0 auto 40px; text-align: center; }
+  .page:has(.noMatches) .noMatches h2 { max-width: 270px; margin: 0 auto; }
+  .page:has(.noMatches) .noMatches > p:not(.sectionKicker) { max-width: 359px; margin: 17px auto 0; }
+  .page:has(.noMatches) .noMatchesAction { display: flex; width: 95px; min-width: 95px; margin: 50px auto 0; padding: 0; white-space: nowrap; }
 }
 @media (max-width: 340px) { .reviewCard { grid-template-columns: 66px minmax(0, 1fr); gap: 12px; padding-inline: 12px; } .listCard { padding-inline: 12px; } }
