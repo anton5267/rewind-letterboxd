@@ -168,8 +168,8 @@
 .likeError button:not([class]) { border: 0; padding: 0; background: transparent; color: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 
 @media (min-width: 1263px) {
-  .page { padding: 0 0 80px; }
-  .hero { min-height: 1200px; }
+  .page { padding: 0; }
+  .hero { min-height: 1215px; }
   .heroInner { width: min(1200px, calc(100% - 48px)); padding: 106px 0 0; }
   .filmBlock {
     grid-template-columns: 275px 55px 581px 38px 251px;
@@ -178,7 +178,7 @@
     margin-top: 388px;
   }
   .posterColumn { grid-column: 1; }
-  .poster { aspect-ratio: 275 / 411; }
+  .poster { aspect-ratio: 275 / 411; border-radius: 20px; }
   .filmCopy { grid-column: 3; padding: 63px 0 0; }
   .filmCopy > .eyebrow { display: none; }
   .filmCopy h1 { font-size: 58px; line-height: 1; letter-spacing: -.02em; }
@@ -191,7 +191,7 @@
     margin-top: 115px;
     padding: 16px;
     border: 0;
-    border-radius: 16px;
+    border-radius: 38px;
     background: rgba(38, 38, 38, .92);
     box-shadow: none;
   }
@@ -204,18 +204,23 @@
   .likeButton { min-height: 42px; }
   .reviewBody { padding: 0; margin-top: 32px; }
   .reviewText { margin: 0; font-size: 20px; line-height: 1.2; }
+  .trailer { min-height: 59px; margin-top: 25px; font-size: 20px; }
   .likersSection {
     width: 100%;
     box-sizing: border-box;
     margin: 0;
-    padding: 24px max(24px, calc((100% - 1200px) / 2)) 32px;
-    background: #252525;
+    min-height: 425px;
+    padding: 85px max(24px, calc((100% - 1200px) / 2)) 160px;
+    background: #1f1f1f;
   }
   .likersSection > .likeRow,
   .likersSection > .likers,
   .likersSection > .noLikes { max-width: 1200px; margin-left: auto; margin-right: auto; }
-  .likersSection > .likeRow { padding-top: 0; border-top: 0; }
-  .likersSection .likers { gap: 12px; margin-top: 20px; padding: 0; }
+  .likersSection > .likeRow { padding-top: 17px; border-top: 1px solid #4d4d4d; }
+  .likersSection .likeRow .eyebrow { display: none; }
+  .likersSection .likeRow h2,
+  .likersSection .likeRow > strong { font-size: 24px; line-height: 27px; }
+  .likersSection .likers { gap: 6px; margin: 55px 0 0; padding: 0; }
   .likersSection .liker { width: 80px; height: 80px; flex-basis: 80px; margin: 0; border: 0; }
 }
 
