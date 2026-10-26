@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   createAdminMovie,
   deleteAdminMovie,
@@ -14,8 +14,11 @@ import {
   type TmdbQualityReport,
 } from "../api/admin.api";
 import type { Page } from "../api/types";
+import { getMovieDetails } from "../api/movies.api";
+import { useAuth } from "../context/AuthContext";
 import Pagination from "./Pagination";
 import RetryNotice from "./RetryNotice";
+import ResilientImage from "./ResilientImage";
 import { editorialText, useLocale } from "../i18n";
 import styles from "./AdminMovies.module.css";
 
@@ -23,7 +26,8 @@ interface Props {
   onTotalChange: (total: number) => void;
 }
 
-const emptyMovie: AdminMovieWrite = { title: "", releaseDate: "", rating: null, photoUrl: "" };
+const emptyMovie: AdminMovieWrite = { title: "", imdbId: "", releaseDate: "", ageRating: "", rating: null, photoUrl: "", backdropUrl: "", trailerUrl: "", durationMinutes: null, shortPlot: "" };
+const emptyMovieCredits = { genres: [] as string[], directors: [] as string[], actors: [] as string[] };
 
 const parseTmdbId = (value: string): number | null => {
   const normalized = value.trim();
@@ -39,7 +43,8 @@ const parseTmdbIds = (value: string): number[] | null => {
 };
 
 export default function AdminMovies({ onTotalChange }: Props) {
-  const { t } = useLocale();
+  const { lang, t } = useLocale();
+  const { user } = useAuth();
   const [data, setData] = useState<Page<AdminMovie> | null>(null);
   const [page, setPage] = useState(0);
   const [revision, setRevision] = useState(0);
@@ -49,7 +54,10 @@ export default function AdminMovies({ onTotalChange }: Props) {
   const [actionError, setActionError] = useState("");
   const [mutationBusy, setMutationBusy] = useState(false);
   const [movieDraft, setMovieDraft] = useState<AdminMovieWrite>(emptyMovie);
+  const [movieCredits, setMovieCredits] = useState(emptyMovieCredits);
   const [editingMovieId, setEditingMovieId] = useState<number | null>(null);
+  const [editorLoading, setEditorLoading] = useState(false);
+  const [editorDetailsFailed, setEditorDetailsFailed] = useState(false);
   const [tmdbIds, setTmdbIds] = useState<Record<number, string>>({});
   const [syncingMovieId, setSyncingMovieId] = useState<number | null>(null);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
@@ -63,14 +71,97 @@ export default function AdminMovies({ onTotalChange }: Props) {
   const [qualityLoading, setQualityLoading] = useState(true);
   const [qualityError, setQualityError] = useState(false);
   const movieTitleInput = useRef<HTMLInputElement>(null);
+  const catalogTitle = useRef<HTMLHeadingElement>(null);
+  const catalogFocus = useRef<{ page: number; origin: HTMLElement | null } | null>(null);
   const editingTrigger = useRef<HTMLButtonElement | null>(null);
+  const editorRequestId = useRef(0);
+  const movieEditor = useRef<HTMLDetailsElement>(null);
+  const movieEditorSummary = useRef<HTMLElement | null>(null);
+  const movieActionAlert = useRef<HTMLParagraphElement>(null);
+  const movieDetailsError = useRef<HTMLDivElement>(null);
+  const mounted = useRef(false);
+  const scopeGeneration = useRef(0);
+  const actionScopeGeneration = useRef(0);
+  const saveToken = useRef<object | null>(null);
+  const pendingFocus = useRef<{ scope: number; request: number; origin: HTMLElement | null; target: "title" | "return" | "error" | "details-error"; trigger: HTMLButtonElement | null } | null>(null);
+
+  useLayoutEffect(() => {
+    catalogFocus.current = null;
+  }, [lang, user?.id, user?.role]);
+
+  useLayoutEffect(() => {
+    actionScopeGeneration.current += 1;
+    setSyncingMovieId(null);
+    setTmdbImportBusy(false);
+    setSyncMessage(null);
+    setSyncError(false);
+    setTmdbImportMessage(null);
+    setTmdbImportError(false);
+  }, [lang, user?.id, user?.role]);
+
+  useEffect(() => {
+    const pending = catalogFocus.current;
+    if (!pending || pending.page !== page || loading) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (!mounted.current || catalogFocus.current !== pending) return;
+      catalogFocus.current = null;
+      if (document.activeElement === document.body || document.activeElement === pending.origin) catalogTitle.current?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [page, loading, data, error]);
+
+  useLayoutEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      scopeGeneration.current += 1;
+      editorRequestId.current += 1;
+      pendingFocus.current = null;
+      saveToken.current = null;
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    scopeGeneration.current += 1;
+    editorRequestId.current += 1;
+    pendingFocus.current = null;
+    saveToken.current = null;
+    editingTrigger.current = null;
+    setMutationBusy(false);
+    setEditorLoading(false);
+    setEditorDetailsFailed(false);
+    setEditingMovieId(null);
+    setMovieDraft(emptyMovie);
+    setMovieCredits(emptyMovieCredits);
+    setActionError("");
+    if (movieEditor.current) movieEditor.current.open = false;
+  }, [lang, user?.id, user?.role, page]);
+
+  useEffect(() => {
+    const pending = pendingFocus.current;
+    if (!pending || editorLoading || mutationBusy || (pending.target === "return" && loading)) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (pendingFocus.current !== pending) return;
+      pendingFocus.current = null;
+      if (!mounted.current || scopeGeneration.current !== pending.scope || editorRequestId.current !== pending.request) return;
+      if (document.activeElement !== document.body && document.activeElement !== pending.origin) return;
+      if (pending.target === "title") {
+        if (movieEditor.current?.open) movieTitleInput.current?.focus();
+      } else if (pending.target === "details-error") {
+        if (movieEditor.current?.open) movieDetailsError.current?.focus();
+      } else if (pending.target === "error") movieActionAlert.current?.focus();
+      else if (pending.trigger?.isConnected && !pending.trigger.disabled) pending.trigger.focus();
+      else movieEditorSummary.current?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [lang, page, editingMovieId, editorLoading, editorDetailsFailed, mutationBusy, loading, data, actionError]);
 
   useEffect(() => {
     let current = true;
     setLoading(true);
     setError(false);
     setData(null);
-    getAdminMovies(page)
+    getAdminMovies(page, 6)
       .then(({ data: response }) => {
         if (!current) return;
         setTmdbIds(Object.fromEntries(response.content.filter(movie => movie.tmdbId !== null).map(movie => [movie.id, String(movie.tmdbId)])));
@@ -85,7 +176,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
       .catch(() => { if (current) setError(true); })
       .finally(() => { if (current) setLoading(false); });
     return () => { current = false; };
-  }, [onTotalChange, page, revision]);
+  }, [onTotalChange, page, revision, lang, user?.id, user?.role]);
 
   useEffect(() => {
     let current = true;
@@ -96,7 +187,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
       .catch(() => { if (current) setQualityError(true); })
       .finally(() => { if (current) setQualityLoading(false); });
     return () => { current = false; };
-  }, [qualityRevision]);
+  }, [qualityRevision, user?.id, user?.role]);
 
   const reloadFirstPage = () => {
     if (page === 0) setRevision(value => value + 1);
@@ -104,93 +195,171 @@ export default function AdminMovies({ onTotalChange }: Props) {
   };
 
   const resetMovieDraft = () => {
+    pendingFocus.current = null;
+    editorRequestId.current += 1;
     setEditingMovieId(null);
+    setEditorLoading(false);
+    setEditorDetailsFailed(false);
     setMovieDraft(emptyMovie);
+    setMovieCredits(emptyMovieCredits);
   };
 
-  const editMovie = (movie: AdminMovie, trigger: HTMLButtonElement) => {
+  const editMovie = async (movie: AdminMovie, trigger: HTMLButtonElement, origin: HTMLElement | null = trigger) => {
+    const requestId = ++editorRequestId.current;
+    const scope = scopeGeneration.current;
+    const isCurrent = () => mounted.current && scopeGeneration.current === scope && editorRequestId.current === requestId && editingTrigger.current === trigger && movieEditor.current?.open;
+    pendingFocus.current = null;
     editingTrigger.current = trigger;
+    if (movieEditor.current) movieEditor.current.open = true;
     setEditingMovieId(movie.id);
-    setMovieDraft({ title: movie.title, releaseDate: movie.releaseDate ?? "", rating: movie.rating, photoUrl: movie.photoUrl ?? "" });
-    movieTitleInput.current?.focus();
+    setActionError("");
+    setEditorLoading(true);
+    setEditorDetailsFailed(false);
+    setMovieCredits(emptyMovieCredits);
+    setMovieDraft({ ...emptyMovie, title: movie.title, releaseDate: movie.releaseDate ?? "", rating: movie.rating, photoUrl: movie.photoUrl ?? "" });
+    try {
+      const { data: details } = await getMovieDetails(movie.id);
+      if (isCurrent()) {
+        setMovieCredits({
+          genres: (details.genres ?? []).map(genre => genre.name),
+          directors: (details.directors ?? []).map(director => director.name),
+          actors: (details.actors ?? []).map(actor => actor.characterName ? `${actor.name} (${actor.characterName})` : actor.name),
+        });
+        setMovieDraft({
+          title: details.title,
+          imdbId: details.imdbId ?? "",
+          releaseDate: details.releaseDate ?? "",
+          ageRating: details.ageRating ?? "",
+          rating: movie.rating,
+          photoUrl: details.photoUrl ?? "",
+          backdropUrl: details.backdropUrl ?? "",
+          trailerUrl: details.trailerUrl ?? "",
+          durationMinutes: details.durationMinutes,
+          shortPlot: details.shortPlot ?? "",
+        });
+        pendingFocus.current = { scope, request: requestId, origin, target: "title", trigger };
+      }
+    } catch {
+      if (isCurrent()) {
+        setEditorDetailsFailed(true);
+        pendingFocus.current = { scope, request: requestId, origin, target: "details-error", trigger };
+      }
+    } finally {
+      if (isCurrent()) setEditorLoading(false);
+    }
   };
 
   const cancelEdit = () => {
     resetMovieDraft();
+    if (movieEditor.current) movieEditor.current.open = false;
     if (editingTrigger.current?.isConnected) editingTrigger.current.focus();
-    else movieTitleInput.current?.focus();
+    else movieEditorSummary.current?.focus();
     editingTrigger.current = null;
   };
 
   const saveMovie = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (mutationBusy) return;
+    if (mutationBusy || saveToken.current !== null) return;
+    const token = {};
+    saveToken.current = token;
+    const scope = scopeGeneration.current;
+    const request = editorRequestId.current;
+    const trigger = editingTrigger.current;
+    const origin = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const currentScope = () => mounted.current && scopeGeneration.current === scope && saveToken.current === token;
+    const currentEditor = () => currentScope() && editorRequestId.current === request && movieEditor.current?.open;
+    pendingFocus.current = null;
     setMutationBusy(true);
     setActionError("");
+    const wasEditing = editingMovieId !== null;
     try {
-      const payload = { ...movieDraft, title: movieDraft.title.trim(), releaseDate: movieDraft.releaseDate || null, photoUrl: movieDraft.photoUrl || null };
+      const payload = { ...movieDraft, title: movieDraft.title.trim(), imdbId: movieDraft.imdbId || null, releaseDate: movieDraft.releaseDate || null, ageRating: movieDraft.ageRating || null, photoUrl: movieDraft.photoUrl || null, backdropUrl: movieDraft.backdropUrl || null, trailerUrl: movieDraft.trailerUrl || null };
       if (editingMovieId === null) {
         await createAdminMovie(payload);
+        if (!currentScope()) return;
         reloadFirstPage();
       } else {
         const { data: updated } = await updateAdminMovie(editingMovieId, payload);
+        if (!currentScope()) return;
         setData(current => current ? { ...current, content: current.content.map(item => item.id === updated.id ? updated : item) } : current);
       }
+      if (!currentEditor()) return;
       resetMovieDraft();
+      if (movieEditor.current) movieEditor.current.open = false;
+      pendingFocus.current = { scope, request: editorRequestId.current, origin, target: "return", trigger: wasEditing ? trigger : null };
+      editingTrigger.current = null;
       setError(false);
     } catch {
-      setActionError(editingMovieId === null ? t("adminMovieCreateError") : t("adminMovieSaveError"));
+      if (currentEditor()) {
+        setActionError(wasEditing ? t("adminMovieSaveError") : t("adminMovieCreateError"));
+        pendingFocus.current = { scope, request, origin, target: "error", trigger };
+      }
     } finally {
-      setMutationBusy(false);
+      if (currentScope()) {
+        saveToken.current = null;
+        setMutationBusy(false);
+      }
     }
   };
 
   const removeMovie = async (movie: AdminMovie) => {
+    const actionScope = actionScopeGeneration.current;
+    const isCurrent = () => mounted.current && actionScopeGeneration.current === actionScope;
     const movieTitle = editorialText(movie.title, t("untitledFilm"));
-    if (mutationBusy || !window.confirm(`${t("deleteMovieConfirm")} ${movieTitle}?`)) return;
+    if (mutationBusy || !window.confirm(`${t("deleteMovieConfirm")} ${movieTitle}?`) || !isCurrent()) return;
     setMutationBusy(true);
     setActionError("");
     try {
       await deleteAdminMovie(movie.id);
+      if (!isCurrent()) return;
       if (data?.content.length === 1 && page > 0) setPage(value => value - 1);
       else setRevision(value => value + 1);
       if (editingMovieId === movie.id) resetMovieDraft();
       setError(false);
     } catch {
-      setActionError(t("adminMovieDeleteError"));
+      if (isCurrent()) setActionError(t("adminMovieDeleteError"));
     } finally {
-      setMutationBusy(false);
+      if (isCurrent()) setMutationBusy(false);
     }
   };
 
   const syncMovie = async (movie: AdminMovie) => {
+    const actionScope = actionScopeGeneration.current;
+    const isCurrent = () => mounted.current && actionScopeGeneration.current === actionScope;
     const tmdbId = parseTmdbId(tmdbIds[movie.id] ?? "");
     if (tmdbId === null) {
-      setSyncError(true);
-      setSyncMessage(t("tmdbIdRequired"));
+      if (isCurrent()) {
+        setSyncError(true);
+        setSyncMessage(t("tmdbIdRequired"));
+      }
       return;
     }
-    if (syncingMovieId !== null) return;
+    if (syncingMovieId !== null || !isCurrent()) return;
     setSyncingMovieId(movie.id);
     setSyncMessage(null);
     setSyncError(false);
     setActionError("");
     try {
       const { data: response } = await syncAdminMovieTmdb(movie.id, tmdbId);
+      if (!isCurrent()) return;
       setSyncMessage(`${t("tmdbSyncDone")}: ${editorialText(response.title, t("untitledFilm"))} · ${response.genresUpdated} ${t("genres")} · ${response.actorsUpdated} ${t("actors")} · ${response.directorsUpdated} ${t("directors")} · ${response.producersUpdated} ${t("producers")}`);
       setRevision(value => value + 1);
       setQualityRevision(value => value + 1);
       setError(false);
     } catch {
-      setSyncError(true);
-      setSyncMessage(t("tmdbSyncError"));
+      if (isCurrent()) {
+        setSyncError(true);
+        setSyncMessage(t("tmdbSyncError"));
+      }
     } finally {
-      setSyncingMovieId(null);
+      if (isCurrent()) setSyncingMovieId(null);
     }
   };
 
   const importTmdbIds = async (event: React.FormEvent) => {
     event.preventDefault();
+    const actionScope = actionScopeGeneration.current;
+    const isCurrent = () => mounted.current && actionScopeGeneration.current === actionScope;
     setTmdbImportError(false);
     const ids = parseTmdbIds(tmdbImportIds);
     if (ids === null || ids.length === 0 || ids.length > 20) {
@@ -204,20 +373,25 @@ export default function AdminMovies({ onTotalChange }: Props) {
     setActionError("");
     try {
       const { data: response } = await importAdminTmdb(ids);
+      if (!isCurrent()) return;
       setTmdbImportMessage(`${t("tmdbImportDone")}: ${response.succeeded}/${response.requested}`);
       reloadFirstPage();
       setQualityRevision(value => value + 1);
       setError(false);
     } catch {
-      setTmdbImportError(true);
-      setTmdbImportMessage(t("tmdbImportError"));
+      if (isCurrent()) {
+        setTmdbImportError(true);
+        setTmdbImportMessage(t("tmdbImportError"));
+      }
     } finally {
-      setTmdbImportBusy(false);
+      if (isCurrent()) setTmdbImportBusy(false);
     }
   };
 
   const discoverAndImportTmdb = async (event: React.FormEvent) => {
     event.preventDefault();
+    const actionScope = actionScopeGeneration.current;
+    const isCurrent = () => mounted.current && actionScopeGeneration.current === actionScope;
     setTmdbImportError(false);
     const discoveryPage = Number.parseInt(tmdbDiscoveryDraft.page, 10);
     const limit = Number.parseInt(tmdbDiscoveryDraft.limit, 10);
@@ -238,45 +412,84 @@ export default function AdminMovies({ onTotalChange }: Props) {
     setActionError("");
     try {
       const { data: response } = await discoverAndImportAdminTmdb(request);
+      if (!isCurrent()) return;
       setTmdbImportMessage(`${t("tmdbDiscoveryDone")}: ${response.imports.succeeded}/${response.discovered} · ${t("page")} ${response.page}/${response.totalPages}`);
       reloadFirstPage();
       setQualityRevision(value => value + 1);
       setError(false);
     } catch {
-      setTmdbImportError(true);
-      setTmdbImportMessage(t("tmdbImportError"));
+      if (isCurrent()) {
+        setTmdbImportError(true);
+        setTmdbImportMessage(t("tmdbImportError"));
+      }
     } finally {
-      setTmdbImportBusy(false);
+      if (isCurrent()) setTmdbImportBusy(false);
     }
   };
 
   const retry = () => {
+    catalogFocus.current = { page, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
+    setLoading(true);
+    setData(null);
+    setError(false);
     setRevision(value => value + 1);
   };
 
   const retryQuality = () => setQualityRevision(value => value + 1);
 
   return (
-    <section className={styles.section} aria-label={t("adminMovies")} aria-busy={loading || qualityLoading || mutationBusy || tmdbImportBusy || syncingMovieId !== null}>
-      <h2 className={styles.title}>{t("adminMovies")}</h2>
-       {actionError && <p className={styles.error} role="alert">{actionError}</p>}
-       <form className={styles.movieForm} onSubmit={saveMovie} aria-busy={mutationBusy}>
-        <label className={styles.field}>{t("movieTitle")}<input ref={movieTitleInput} required maxLength={255} value={movieDraft.title} onChange={event => setMovieDraft({ ...movieDraft, title: event.target.value })} /></label>
-        <label className={styles.field}>{t("releaseDate")}<input type="date" value={movieDraft.releaseDate ?? ""} onChange={event => setMovieDraft({ ...movieDraft, releaseDate: event.target.value })} /></label>
-        <label className={styles.field}>{t("rating")}<input type="number" min="0" max="10" step="0.1" value={movieDraft.rating ?? ""} onChange={event => setMovieDraft({ ...movieDraft, rating: event.target.value === "" ? null : Number(event.target.value) })} /></label>
-        <label className={styles.field}>{t("posterUrl")}<input type="url" value={movieDraft.photoUrl ?? ""} onChange={event => setMovieDraft({ ...movieDraft, photoUrl: event.target.value })} /></label>
-        <div className={styles.actions}><button type="submit" aria-busy={mutationBusy} disabled={mutationBusy}>{mutationBusy ? t("saving") : editingMovieId === null ? t("create") : t("save")}</button>{editingMovieId !== null && <button type="button" disabled={mutationBusy} onClick={cancelEdit}>{t("cancel")}</button>}</div>
-      </form>
-      <div className={styles.tmdbPanel}>
-        <h3 className={styles.tmdbTitle}>{t("tmdbImportTitle")}</h3>
-        {qualityLoading && !tmdbQuality && <p className={styles.feedback} role="status">{t("loading")}</p>}
-        {qualityError && <RetryNotice className={styles.error} message={t("tmdbQualityError")} retryLabel={t("retry")} disabled={qualityLoading} busy={qualityLoading} onRetry={retryQuality} />}
-        {tmdbQuality && <div className={styles.quality}><strong>{t("tmdbQualityTitle")}</strong><p>{t("tmdbQualitySummary")}: {tmdbQuality.tmdbLinkedMovies}/{tmdbQuality.totalMovies} · {t("tmdbCoverage")}: {tmdbQuality.linkedCoveragePercent.toFixed(1)}% · {t("tmdbCompleteness")}: {tmdbQuality.metadataCompletenessPercent.toFixed(1)}%</p><ul className={styles.qualityList}><li>{t("tmdbMissingPoster")}: {tmdbQuality.missingPoster}</li><li>{t("tmdbMissingBackdrop")}: {tmdbQuality.missingBackdrop}</li><li>{t("tmdbMissingPlot")}: {tmdbQuality.missingPlot}</li><li>{t("tmdbMissingRuntime")}: {tmdbQuality.missingRuntime}</li><li>{t("tmdbMissingTrailer")}: {tmdbQuality.missingTrailer}</li><li>{t("tmdbMissingRating")}: {tmdbQuality.missingTmdbRating}</li></ul></div>}
-        <form className={styles.importForm} onSubmit={importTmdbIds}><label className={styles.inlineField}>{t("tmdbIds")}<input aria-label={t("tmdbIds")} placeholder={t("tmdbIdsHint")} value={tmdbImportIds} onChange={event => setTmdbImportIds(event.target.value)} /></label><button type="submit" disabled={tmdbImportBusy}>{tmdbImportBusy ? t("loading") : t("tmdbImport")}</button></form>
-        <form className={`${styles.importForm} ${styles.discoveryForm}`} onSubmit={discoverAndImportTmdb}><label className={styles.inlineField}>{t("page")}<input type="number" min="1" max="500" value={tmdbDiscoveryDraft.page} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, page: event.target.value })} /></label><label className={styles.inlineField}>{t("year")}<input type="number" min="1888" max="2100" value={tmdbDiscoveryDraft.year} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, year: event.target.value })} /></label><label className={styles.inlineField}>{t("genre")}<input type="number" min="1" value={tmdbDiscoveryDraft.genreId} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, genreId: event.target.value })} /></label><label className={styles.inlineField}>{t("minRating")}<input type="number" min="0" max="10" step="0.1" value={tmdbDiscoveryDraft.minRating} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, minRating: event.target.value })} /></label><label className={styles.inlineField}>{t("limit")}<input type="number" min="1" max="20" value={tmdbDiscoveryDraft.limit} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, limit: event.target.value })} /></label><button type="submit" disabled={tmdbImportBusy}>{tmdbImportBusy ? t("loading") : t("tmdbDiscoveryImport")}</button></form>
-        {tmdbImportMessage && <p className={tmdbImportError ? styles.error : styles.status} role={tmdbImportError ? "alert" : "status"}>{tmdbImportMessage}</p>}
+    <section className={`${styles.section} ${editingMovieId !== null ? styles.editing : ""}`} aria-label={t("adminMovieDatabase")} aria-busy={loading || qualityLoading || mutationBusy || tmdbImportBusy || syncingMovieId !== null}>
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.title} ref={catalogTitle} tabIndex={-1}>{editingMovieId !== null ? t("adminMovieEditor") : t("adminMovieDatabase")}</h2>
+        <details className={styles.editor} ref={movieEditor} aria-busy={editorLoading}>
+          <summary ref={element => { movieEditorSummary.current = element; }} onClick={event => {
+            if (editorLoading) event.preventDefault();
+            else if (movieEditor.current?.open) {
+              editorRequestId.current += 1;
+              pendingFocus.current = null;
+            }
+          }}>{editingMovieId === null ? t("addMovie") : `${t("editMovie")}: ${editorialText(movieDraft.title, t("untitledFilm"))}`}</summary>
+          <div className={styles.editorContent}>
+            {editorLoading ? <p className={styles.feedback} role="status">{t("loading")}</p> : editorDetailsFailed ? <div className={styles.error} ref={movieDetailsError} tabIndex={-1}><RetryNotice className={styles.error} message={t("adminMovieDetailsError")} retryLabel={t("retry")} disabled={editorLoading} busy={editorLoading} onRetry={() => {
+              const movie = data?.content.find(item => item.id === editingMovieId);
+              const trigger = editingTrigger.current;
+              if (movie && trigger) void editMovie(movie, trigger, document.activeElement instanceof HTMLElement ? document.activeElement : null);
+            }} /></div> : <form className={styles.movieForm} onSubmit={saveMovie} aria-busy={mutationBusy}>
+              <div className={styles.editorPoster} aria-hidden="true"><ResilientImage src={movieDraft.photoUrl} alt="" fallback={<span>{editorialText(movieDraft.title, t("untitledFilm"))}</span>} /></div>
+              <div className={styles.editorFields}>
+                <label className={`${styles.field} ${styles.editorWideField}`}>{t("movieTitle")}<input ref={movieTitleInput} required maxLength={255} value={movieDraft.title} onChange={event => setMovieDraft({ ...movieDraft, title: event.target.value })} /></label>
+                <label className={styles.field}>{t("movieDurationMinutes")}<input type="number" min="1" max="1000" value={movieDraft.durationMinutes ?? ""} onChange={event => setMovieDraft({ ...movieDraft, durationMinutes: event.target.value === "" ? null : Number(event.target.value) })} /></label>
+                <label className={styles.field}>{t("releaseDate")}<input type="date" value={movieDraft.releaseDate ?? ""} onChange={event => setMovieDraft({ ...movieDraft, releaseDate: event.target.value })} /></label>
+                <label className={styles.field}>{t("imdbId")}<input maxLength={20} value={movieDraft.imdbId ?? ""} onChange={event => setMovieDraft({ ...movieDraft, imdbId: event.target.value })} /></label>
+                <label className={styles.field}>{t("ageRating")}<input maxLength={10} value={movieDraft.ageRating ?? ""} onChange={event => setMovieDraft({ ...movieDraft, ageRating: event.target.value })} /></label>
+                <label className={styles.field}>{t("rating")}<input type="number" min="0" max="10" step="0.1" value={movieDraft.rating ?? ""} onChange={event => setMovieDraft({ ...movieDraft, rating: event.target.value === "" ? null : Number(event.target.value) })} /></label>
+                <label className={styles.field}>{t("posterUrl")}<input type="url" maxLength={255} value={movieDraft.photoUrl ?? ""} onChange={event => setMovieDraft({ ...movieDraft, photoUrl: event.target.value })} /></label>
+                <label className={styles.field}>{t("backdropUrl")}<input type="url" maxLength={255} value={movieDraft.backdropUrl ?? ""} onChange={event => setMovieDraft({ ...movieDraft, backdropUrl: event.target.value })} /></label>
+                <label className={styles.field}>{t("trailerUrl")}<input type="url" maxLength={255} value={movieDraft.trailerUrl ?? ""} onChange={event => setMovieDraft({ ...movieDraft, trailerUrl: event.target.value })} /></label>
+              </div>
+              {editingMovieId !== null && (movieCredits.genres.length > 0 || movieCredits.directors.length > 0 || movieCredits.actors.length > 0) && <dl className={styles.editorMetadata}>
+                <div><dt>{t("genres")}</dt><dd>{movieCredits.genres.length ? movieCredits.genres.join(", ") : t("none")}</dd></div>
+                <div><dt>{t("directors")}</dt><dd>{movieCredits.directors.length ? movieCredits.directors.join(", ") : t("none")}</dd></div>
+                <div><dt>{t("actors")}</dt><dd>{movieCredits.actors.length ? movieCredits.actors.join(", ") : t("none")}</dd></div>
+              </dl>}
+              <label className={`${styles.field} ${styles.plotField}`}>{t("description")}<textarea maxLength={10000} rows={5} value={movieDraft.shortPlot ?? ""} onChange={event => setMovieDraft({ ...movieDraft, shortPlot: event.target.value })} /></label>
+              <div className={styles.actions}><button type="submit" aria-busy={mutationBusy} disabled={mutationBusy}>{mutationBusy ? t("saving") : editingMovieId === null ? t("create") : t("save")}</button>{editingMovieId !== null && <button type="button" disabled={mutationBusy} onClick={cancelEdit}>{t("cancel")}</button>}</div>
+            </form>}
+            {editingMovieId !== null && (editorLoading || editorDetailsFailed) && <div className={styles.actions}><button type="button" onClick={cancelEdit}>{t("cancel")}</button></div>}
+            {editingMovieId === null && <div className={styles.tmdbPanel}>
+              <h3 className={styles.tmdbTitle}>{t("tmdbImportTitle")}</h3>
+              {qualityLoading && !tmdbQuality && <p className={styles.feedback} role="status">{t("loading")}</p>}
+              {qualityError && <RetryNotice className={styles.error} message={t("tmdbQualityError")} retryLabel={t("retry")} disabled={qualityLoading} busy={qualityLoading} onRetry={retryQuality} />}
+              {tmdbQuality && <div className={styles.quality}><strong>{t("tmdbQualityTitle")}</strong><p>{t("tmdbQualitySummary")}: {tmdbQuality.tmdbLinkedMovies}/{tmdbQuality.totalMovies} · {t("tmdbCoverage")}: {tmdbQuality.linkedCoveragePercent.toFixed(1)}% · {t("tmdbCompleteness")}: {tmdbQuality.metadataCompletenessPercent.toFixed(1)}%</p><ul className={styles.qualityList}><li>{t("tmdbMissingPoster")}: {tmdbQuality.missingPoster}</li><li>{t("tmdbMissingBackdrop")}: {tmdbQuality.missingBackdrop}</li><li>{t("tmdbMissingPlot")}: {tmdbQuality.missingPlot}</li><li>{t("tmdbMissingRuntime")}: {tmdbQuality.missingRuntime}</li><li>{t("tmdbMissingTrailer")}: {tmdbQuality.missingTrailer}</li><li>{t("tmdbMissingRating")}: {tmdbQuality.missingTmdbRating}</li></ul></div>}
+              <form className={styles.importForm} onSubmit={importTmdbIds}><label className={styles.inlineField}>{t("tmdbIds")}<input aria-label={t("tmdbIds")} placeholder={t("tmdbIdsHint")} value={tmdbImportIds} onChange={event => setTmdbImportIds(event.target.value)} /></label><button type="submit" disabled={tmdbImportBusy}>{tmdbImportBusy ? t("loading") : t("tmdbImport")}</button></form>
+              <form className={`${styles.importForm} ${styles.discoveryForm}`} onSubmit={discoverAndImportTmdb}><label className={styles.inlineField}>{t("page")}<input type="number" min="1" max="500" value={tmdbDiscoveryDraft.page} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, page: event.target.value })} /></label><label className={styles.inlineField}>{t("year")}<input type="number" min="1888" max="2100" value={tmdbDiscoveryDraft.year} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, year: event.target.value })} /></label><label className={styles.inlineField}>{t("genre")}<input type="number" min="1" value={tmdbDiscoveryDraft.genreId} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, genreId: event.target.value })} /></label><label className={styles.inlineField}>{t("minRating")}<input type="number" min="0" max="10" step="0.1" value={tmdbDiscoveryDraft.minRating} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, minRating: event.target.value })} /></label><label className={styles.inlineField}>{t("limit")}<input type="number" min="1" max="20" value={tmdbDiscoveryDraft.limit} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, limit: event.target.value })} /></label><button type="submit" disabled={tmdbImportBusy}>{tmdbImportBusy ? t("loading") : t("tmdbDiscoveryImport")}</button></form>
+              {tmdbImportMessage && <p className={tmdbImportError ? styles.error : styles.status} role={tmdbImportError ? "alert" : "status"}>{tmdbImportMessage}</p>}
+            </div>}
+          </div>
+        </details>
       </div>
-       {syncMessage && <p className={syncError ? styles.error : styles.status} role={syncError ? "alert" : "status"}>{syncMessage}</p>}
+      {actionError && <p className={styles.error} role="alert" ref={movieActionAlert} tabIndex={-1}>{actionError}</p>}
+      {syncMessage && <p className={syncError ? styles.error : styles.status} role={syncError ? "alert" : "status"}>{syncMessage}</p>}
       {loading && <p className={styles.feedback} role="status">{t("loading")}</p>}
       {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={retry} />}
       {data && data.content.length === 0 && <p>{t("noAdminMovies")}</p>}
@@ -284,14 +497,31 @@ export default function AdminMovies({ onTotalChange }: Props) {
         <ul className={styles.movieList} aria-label={t("adminMovieResults")}>{data.content.map(movie => {
           const movieTitle = editorialText(movie.title, t("untitledFilm"));
           return <li className={styles.movieRow} key={movie.id}>
-          <div className={styles.movieMeta}>{movieTitle} · {movie.releaseDate || "—"} · {movie.rating ?? "—"}{" "}
-            <button type="button" disabled={mutationBusy} onClick={event => editMovie(movie, event.currentTarget)}>{t("editMovie")}</button>{" "}
-            <button type="button" disabled={mutationBusy} onClick={() => void removeMovie(movie)}>{t("deleteMovie")}</button>
-            <div className={styles.syncControls}><label className={styles.inlineField}>{t("tmdbId")}<input className={styles.tmdbIdInput} inputMode="numeric" pattern="[0-9]*" aria-label={`${t("tmdbId")} ${movieTitle}`} value={tmdbIds[movie.id] ?? ""} onChange={event => setTmdbIds(current => ({ ...current, [movie.id]: event.target.value }))} /></label><button type="button" disabled={syncingMovieId !== null} onClick={() => void syncMovie(movie)}>{syncingMovieId === movie.id ? t("loading") : t("syncTmdb")}</button></div>
-          </div>
-        </li>;
+            <div className={styles.poster}><ResilientImage src={movie.photoUrl} alt="" loading="lazy" fallback={<span>{movieTitle}</span>} /></div>
+            <div className={styles.movieCardContent}>
+              <div className={styles.movieCardHeading}>
+                <div><h3>{movieTitle}</h3><p>{movie.releaseDate || "—"}</p></div>
+                <span className={styles.movieRating} aria-label={`${t("rating")}: ${movie.rating ?? "—"}`}>★ {movie.rating ?? "—"}</span>
+              </div>
+              <div className={styles.movieCardActions}>
+                <button type="button" disabled={mutationBusy} onClick={event => editMovie(movie, event.currentTarget)}>{t("editMovie")}</button>
+                <details className={styles.movieActions}>
+                  <summary aria-label={`${t("moreActions")} · ${movieTitle}`}>{t("moreActions")}</summary>
+                  <div className={styles.movieActionsPanel}>
+                    <button type="button" disabled={mutationBusy} onClick={() => void removeMovie(movie)}>{t("deleteMovie")}</button>
+                    <div className={styles.syncControls}><label className={styles.inlineField}>{t("tmdbId")}<input className={styles.tmdbIdInput} inputMode="numeric" pattern="[0-9]*" aria-label={`${t("tmdbId")} ${movieTitle}`} value={tmdbIds[movie.id] ?? ""} onChange={event => setTmdbIds(current => ({ ...current, [movie.id]: event.target.value }))} /></label><button type="button" disabled={syncingMovieId !== null} onClick={() => void syncMovie(movie)}>{syncingMovieId === movie.id ? t("loading") : t("syncTmdb")}</button></div>
+                  </div>
+                </details>
+              </div>
+            </div>
+          </li>;
         })}</ul>
-        <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminMoviesPagination")} busy={loading} statusSuffix={data.totalElements} onPageChange={setPage} />
+        <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminMoviesPagination")} busy={loading} statusSuffix={data.totalElements} onPageChange={nextPage => {
+          catalogFocus.current = { page: nextPage, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
+          setLoading(true);
+          setData(null);
+          setPage(nextPage);
+        }} />
       </>}
     </section>
   );

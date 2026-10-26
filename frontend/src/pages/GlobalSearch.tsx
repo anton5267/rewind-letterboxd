@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { searchGlobal, type GlobalSearchResponse } from "../api/search.api";
 import ResilientImage from "../components/ResilientImage";
 import RetryNotice from "../components/RetryNotice";
-import { editorialText, formatMovieCount, formatMovieYear, localizeJournalCategory, useLocale } from "../i18n";
+import { editorialText, formatMovieCount, formatMovieYear, formatReviewDate, localizeJournalCategory, useLocale } from "../i18n";
 import { useRovingTabs } from "../hooks/useRovingTabs";
 import { getUserHandle, getUserInitial, getUserName } from "../utils/userIdentity";
 import styles from "./GlobalSearch.module.css";
@@ -36,7 +36,23 @@ export default function GlobalSearch() {
   const [loading, setLoading] = useState(Boolean(query));
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
+  const [compactPhone, setCompactPhone] = useState(() => typeof window !== "undefined"
+    && typeof window.matchMedia === "function"
+    && window.matchMedia("(max-width: 560px)").matches);
+  const [expandedQuery, setExpandedQuery] = useState<string | null>(null);
+  const [expansionFocusPending, setExpansionFocusPending] = useState(false);
   const categorySelectRef = useRef<HTMLSelectElement>(null);
+  const resultsPanelRef = useRef<HTMLDivElement>(null);
+  const expandedResults = expandedQuery === query;
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const media = window.matchMedia("(max-width: 560px)");
+    const update = () => setCompactPhone(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     setInput(query);
@@ -49,7 +65,7 @@ export default function GlobalSearch() {
     let active = true;
     setLoading(true);
     setError(false);
-    searchGlobal(query, lang).then(({ data }) => {
+    searchGlobal(query, lang, expandedResults ? 12 : 6).then(({ data }) => {
       if (active) setResults(data);
     }).catch(() => {
       if (active) {
@@ -60,10 +76,24 @@ export default function GlobalSearch() {
       if (active) setLoading(false);
     });
     return () => { active = false; };
-  }, [query, lang, retry]);
+  }, [query, lang, retry, expandedQuery]);
+
+  useEffect(() => {
+    if (loading || !expansionFocusPending) return;
+    if (error) {
+      setExpansionFocusPending(false);
+      resultsPanelRef.current?.focus({ preventScroll: false });
+      return;
+    }
+    if (!results || !expandedResults) return;
+    setExpansionFocusPending(false);
+    const firstExpandedSection = resultsPanelRef.current?.querySelector<HTMLElement>("#users, #people, #tags, #lists, #journal");
+    (firstExpandedSection ?? resultsPanelRef.current)?.focus({ preventScroll: false });
+  }, [loading, results, error, expandedResults, expansionFocusPending]);
 
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setExpandedQuery(null);
     const next = new URLSearchParams();
     if (input.trim()) next.set("q", input.trim());
     setSearchParams(next);
@@ -110,11 +140,22 @@ export default function GlobalSearch() {
     journal: results.journal.totalElements,
   } : null;
   const isEmptyState = !loading && !error && Boolean(query) && !hasVisibleResults;
+  const hasMoreAllResults = Boolean(results && (
+    results.films.totalElements > 6
+    || results.reviews.totalElements > (compactPhone ? 2 : 3)
+    || results.users.totalElements > 0
+    || results.lists.totalElements > 0
+    || results.tags.length > 0
+    || results.people.length > 0
+    || results.journal.totalElements > 0
+  ));
+  const hasVisibleAllPreview = Boolean(results && (results.films.content.length > 0 || results.reviews.content.length > 0));
+  const collapsedAllPreview = tab === "all" && !expandedResults && hasVisibleAllPreview;
   const categorySelect = <select ref={categorySelectRef} className={styles.categorySelect} aria-label={t("showSearchResultsFor")} aria-controls="global-search-results" value={tab} onChange={event => selectTab(event.target.value as SearchTab)}>
     {searchTabs.map(item => <option value={item} key={item}>{tabLabel(item)}{item !== "all" && resultCounts ? ` (${resultCounts[item]})` : ""}</option>)}
   </select>;
 
-  return <main className={`${styles.page} ${tab === "films" ? styles.filmsOnly : ""}`} aria-labelledby="global-search-title" aria-busy={loading}>
+  return <main className={`${styles.page} ${tab === "films" ? styles.filmsOnly : ""}`} data-global-search-empty={isEmptyState ? "true" : undefined} aria-labelledby="global-search-title" aria-busy={loading}>
     <div className={styles.shell}>
       <section className={styles.hero}>
         <div className={styles.heroHeading}>
@@ -138,10 +179,10 @@ export default function GlobalSearch() {
 
       {query && <div className={styles.matchesHeading}>
         <h2>{t("showingSearchMatches")} “{query}”</h2>
-        {isEmptyState ? <div className={styles.categoryPicker}>
-          <span className={styles.categoryPrompt} aria-hidden="true">{t("showSearchResultsFor")} <span>⌄</span></span>
+        <div className={styles.categoryPicker}>
+          {isEmptyState && <span className={styles.categoryPrompt} aria-hidden="true">{t("showSearchResultsFor")} <span>⌄</span></span>}
           {categorySelect}
-        </div> : categorySelect}
+        </div>
       </div>}
 
       {query && <nav className={styles.resultNav} role="tablist" aria-orientation="horizontal" aria-label={t("globalSearchResults")}>
@@ -170,7 +211,7 @@ export default function GlobalSearch() {
           </Link>)}
         </nav>
       </>}
-      {query && <div id="global-search-results" className={styles.results} role="tabpanel" tabIndex={0} aria-busy={loading} aria-labelledby={`global-search-tab-${tab}`}>
+      {query && <div ref={resultsPanelRef} id="global-search-results" className={`${styles.results} ${collapsedAllPreview ? styles.allPreview : ""}`} role="tabpanel" tabIndex={0} aria-busy={loading} aria-labelledby={`global-search-tab-${tab}`}>
       {loading && <p className={styles.feedback} role="status">{t("loadingSearch")}</p>}
       {error && <RetryNotice className={styles.alert} message={t("searchError")} retryLabel={t("retry")} busy={loading} onRetry={() => setRetry(value => value + 1)} />}
       {!loading && !error && query && !hasVisibleResults && <section className={styles.noMatches}>
@@ -213,6 +254,7 @@ export default function GlobalSearch() {
                   </div>
                   <div className={styles.reviewAuthorRow}>
                     <Link to={path(`/users/${review.userId}`)}>{getUserName({ username: review.username }, t("someone"))}</Link>
+                    <time className={styles.reviewDate} dateTime={review.createdAt}>{formatReviewDate(review.createdAt, lang)}</time>
                     <ResilientImage className={styles.reviewAvatar} src={review.userAvatarUrl} alt="" fallback={<span className={styles.reviewAvatarFallback} aria-hidden="true">{getUserInitial({ username: review.username })}</span>} />
                   </div>
                 </div>
@@ -222,16 +264,22 @@ export default function GlobalSearch() {
           })}</div>
         </section>}
 
-        {(tab === "all" || tab === "users") && results.users.content.length > 0 && <section id="users" className={styles.section} aria-labelledby="global-search-users-heading">
-          <div className={styles.sectionHeading}><div><p className={styles.sectionKicker}>02 / {t("users")}</p><h2 id="global-search-users-heading">{t("searchUsers")}</h2></div><span>{results.users.totalElements}</span></div>
+        {collapsedAllPreview && hasMoreAllResults && <button className={styles.showMoreResults} type="button" aria-controls="global-search-results" aria-expanded={false} disabled={loading} onClick={() => {
+          setLoading(true);
+          setExpansionFocusPending(true);
+          setExpandedQuery(query);
+        }}>{loading ? t("loadingSearch") : t("showMoreResults")}</button>}
+
+        {(tab === "all" || tab === "users") && results.users.content.length > 0 && <section id="users" className={`${styles.section} ${tab === "all" ? styles.expandedOnly : ""}`} aria-labelledby="global-search-users-heading" tabIndex={-1}>
+          <div className={styles.sectionHeading}><div><p className={styles.sectionKicker}>02 / {t("users")}</p><h2 id="global-search-users-heading" tabIndex={-1}>{t("searchUsers")}</h2></div><span>{results.users.totalElements}</span></div>
           <div className={styles.userGrid}>{results.users.content.map(user => <Link className={styles.userCard} to={path(`/users/${user.id}`)} key={user.id}>
             <ResilientImage src={user.avatarUrl} alt="" fallback={<span className={styles.avatarFallback}>{getUserInitial(user)}</span>} />
             <span><strong>{getUserName(user, t("someone"))}</strong><small>{getUserHandle(user, t("someone"))}</small></span>
           </Link>)}</div>
         </section>}
 
-        {(tab === "all" || tab === "people") && results.people.length > 0 && <section id="people" className={styles.section} aria-labelledby="global-search-people-heading">
-          <div className={styles.sectionHeading}><div><p className={styles.sectionKicker}>05 / {t("searchPeople")}</p><h2 id="global-search-people-heading">{t("searchPeople")}</h2></div><span>{results.people.length}</span></div>
+        {(tab === "all" || tab === "people") && results.people.length > 0 && <section id="people" className={`${styles.section} ${tab === "all" ? styles.expandedOnly : ""}`} aria-labelledby="global-search-people-heading" tabIndex={-1}>
+          <div className={styles.sectionHeading}><div><p className={styles.sectionKicker}>05 / {t("searchPeople")}</p><h2 id="global-search-people-heading" tabIndex={-1}>{t("searchPeople")}</h2></div><span>{results.people.length}</span></div>
           <div className={styles.peopleGrid}>{results.people.map(person => {
             const personName = editorialText(person.name, t("unknownPerson"));
             return <Link className={styles.personCard} to={path(`/people/${person.type.toLowerCase()}/${person.id}`)} key={`${person.type}-${person.id}`}>
@@ -241,15 +289,15 @@ export default function GlobalSearch() {
           })}</div>
         </section>}
 
-        {(tab === "all" || tab === "tags") && results.tags.length > 0 && <section id="tags" className={styles.section} aria-labelledby="global-search-tags-heading">
-          <div className={styles.sectionHeading}><div><p className={styles.sectionKicker}>04 / {t("tags")}</p><h2 id="global-search-tags-heading">{t("searchTags")}</h2></div><span>{results.tags.length}</span></div>
+        {(tab === "all" || tab === "tags") && results.tags.length > 0 && <section id="tags" className={`${styles.section} ${tab === "all" ? styles.expandedOnly : ""}`} aria-labelledby="global-search-tags-heading" tabIndex={-1}>
+          <div className={styles.sectionHeading}><div><p className={styles.sectionKicker}>04 / {t("tags")}</p><h2 id="global-search-tags-heading" tabIndex={-1}>{t("searchTags")}</h2></div><span>{results.tags.length}</span></div>
           <div className={styles.tagGrid} onFocusCapture={event => {
             if (event.target instanceof HTMLElement) event.target.scrollIntoView({ block: "nearest", inline: "nearest" });
           }}>{results.tags.map(tag => <Link className={styles.tag} to={path(`/lists/discover?tag=${encodeURIComponent(tag.slug)}`)} key={tag.id}>#{tag.name}</Link>)}</div>
         </section>}
 
-        {(tab === "all" || tab === "lists") && results.lists.content.length > 0 && <section id="lists" className={styles.section} aria-labelledby="global-search-lists-heading">
-          <div className={styles.sectionHeading}><div><p className={styles.sectionKicker}>03 / {t("lists")}</p><h2 id="global-search-lists-heading">{t("searchLists")}</h2></div><span>{results.lists.totalElements}</span></div>
+        {(tab === "all" || tab === "lists") && results.lists.content.length > 0 && <section id="lists" className={`${styles.section} ${tab === "all" ? styles.expandedOnly : ""}`} aria-labelledby="global-search-lists-heading" tabIndex={-1}>
+          <div className={styles.sectionHeading}><div><p className={styles.sectionKicker}>03 / {t("lists")}</p><h2 id="global-search-lists-heading" tabIndex={-1}>{t("searchLists")}</h2></div><span>{results.lists.totalElements}</span></div>
           <div className={styles.listGrid}>{results.lists.content.map(list => {
             const listName = editorialText(list.name, t("lists"));
             return <Link className={styles.listCard} to={path(`/lists/public/${list.id}`)} title={listName} key={list.id}>
@@ -262,8 +310,8 @@ export default function GlobalSearch() {
           })}</div>
         </section>}
 
-        {(tab === "all" || tab === "journal") && results.journal.content.length > 0 && <section id="journal" className={styles.section} aria-labelledby="global-search-journal-heading">
-          <div className={styles.sectionHeading}><div><p className={styles.sectionKicker}>07 / {t("journal")}</p><h2 id="global-search-journal-heading">{t("searchJournal")}</h2></div><span>{results.journal.totalElements}</span></div>
+        {(tab === "all" || tab === "journal") && results.journal.content.length > 0 && <section id="journal" className={`${styles.section} ${tab === "all" ? styles.expandedOnly : ""}`} aria-labelledby="global-search-journal-heading" tabIndex={-1}>
+          <div className={styles.sectionHeading}><div><p className={styles.sectionKicker}>07 / {t("journal")}</p><h2 id="global-search-journal-heading" tabIndex={-1}>{t("searchJournal")}</h2></div><span>{results.journal.totalElements}</span></div>
           <div className={styles.articleGrid}>{results.journal.content.map(article => {
             const articleTitle = editorialText(article.title, t("untitledArticle"));
             return <Link className={styles.articleCard} to={path(`/journal/${article.slug}`)} key={article.id}>

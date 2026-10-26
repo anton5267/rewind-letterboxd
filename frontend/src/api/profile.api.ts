@@ -68,7 +68,7 @@ export interface ProfileReview {
 export type ProfilePage<T> = NumberedPage<T>;
 
 export const getProfileCollection = (collection: ProfileCollection, page: number) =>
-  api.get<MoviePage>(`/profile/me/${collection}`, { params: { page, size: 12 } });
+  api.get<MoviePage>(`/profile/me/${collection}`, { params: { page, size: 24 } });
 
 export const getProfileRatings = (page: number) =>
   api.get<ProfilePage<ProfileRating>>("/profile/me/ratings", { params: { page, size: 12 } });
@@ -118,7 +118,7 @@ export const getPublicProfile = (userId: string | number) =>
   api.get<PublicProfileResponse>(`/users/${userId}/profile`);
 
 export const getPublicProfileCollection = (userId: string | number, collection: PublicCollection, page: number) =>
-  api.get<MoviePage>(`/users/${userId}/collections/${collection}`, { params: { page, size: 12 } });
+  api.get<MoviePage>(`/users/${userId}/collections/${collection}`, { params: { page, size: 24 } });
 
 export const getPublicProfileLists = (userId: string | number, page: number) =>
   api.get<PublicProfileListPage>(`/users/${userId}/lists`, { params: { page, size: 12 } });

@@ -10,7 +10,7 @@ import { getLastPageIndex, isPageOutOfRange } from "../utils/pagination";
 import { getUserInitial, getUserName } from "../utils/userIdentity";
 import styles from "./PopularReviews.module.css";
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 4;
 
 function ReviewerAvatar({ reviewer, label }: { reviewer: PopularReviewer; label: string }) {
   const { path } = useLocale();
@@ -85,9 +85,9 @@ export default function PopularReviews() {
   return <main className={styles.page} aria-labelledby="popular-reviews-title" aria-busy={pageBusy}>
     <section className={styles.hero}>
       <div className={styles.toolbar}>
-        <Link className={styles.toolbarButton} to={path("/home")} aria-label={t("home")}>←</Link>
+        <Link className={styles.toolbarButton} to={path("/home")} aria-label={t("home")}><span aria-hidden="true">←</span></Link>
         <h1 id="popular-reviews-title">{t("homePopularReviews")}</h1>
-        <Link className={styles.toolbarButton} to={path("/search")} aria-label={t("globalSearch")}>⌕</Link>
+        <Link className={styles.toolbarButton} to={path("/search")} aria-label={t("globalSearch")}><span aria-hidden="true">⌕</span></Link>
       </div>
     </section>
 

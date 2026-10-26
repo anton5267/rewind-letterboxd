@@ -1,37 +1,87 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import styles from "./ForgotPassword.module.css";
 import { forgotPassword } from "../api/auth.api";
 import { useLocale } from "../i18n";
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
-  const { path, t } = useLocale();
+  const { path, t, lang } = useLocale();
+  const location = useLocation();
 
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [message, setMessage] = useState(false);
+  const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submission, setSubmission] = useState(0);
+  const successMessage = useRef<HTMLParagraphElement>(null);
+  const errorMessage = useRef<HTMLParagraphElement>(null);
+  const mounted = useRef(false);
+  const activeRequest = useRef<object | null>(null);
+  const focusGeneration = useRef(0);
+  const pendingFocus = useRef<{ scope: number; origin: HTMLElement | null; target: "success" | "error" } | null>(null);
+
+  useLayoutEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      activeRequest.current = null;
+      focusGeneration.current += 1;
+      pendingFocus.current = null;
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    focusGeneration.current += 1;
+    pendingFocus.current = null;
+  }, [lang, location.key]);
+
+  useEffect(() => {
+    const pending = pendingFocus.current;
+    if (!pending || loading || (pending.target === "success" ? !message : !error)) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (pendingFocus.current !== pending) return;
+      pendingFocus.current = null;
+      if (!mounted.current || focusGeneration.current !== pending.scope) return;
+      if (document.activeElement !== document.body && document.activeElement !== pending.origin) return;
+      (pending.target === "success" ? successMessage.current : errorMessage.current)?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [error, message, loading, submission, lang, location.key]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading) return;
-    setMessage("");
-    setError("");
+    if (activeRequest.current !== null) return;
+    const request = {};
+    activeRequest.current = request;
+    const scope = focusGeneration.current;
+    const submitter = (e.nativeEvent as SubmitEvent).submitter;
+    const origin = submitter instanceof HTMLElement ? submitter : document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const isCurrent = () => mounted.current && activeRequest.current === request;
+    const requestFocus = (target: "success" | "error") => {
+      if (isCurrent() && focusGeneration.current === scope) pendingFocus.current = { scope, origin, target };
+    };
+    pendingFocus.current = null;
+    setSubmission(value => value + 1);
+    setMessage(false);
+    setError(false);
     setLoading(true);
-
     try {
       await forgotPassword(email.trim());
-      setMessage(t("resetSent"));
+      if (!isCurrent()) return;
+      setMessage(true);
+      requestFocus("success");
     } catch {
-      setError(t("resetInvalid"));
+      if (!isCurrent()) return;
+      setError(true);
+      requestFocus("error");
     } finally {
-      setLoading(false);
+      if (isCurrent()) { activeRequest.current = null; setLoading(false); }
     }
   };
 
   return (
-    <main className={`${styles.page} ${styles.forgotPage}`} aria-labelledby="forgot-password-title" aria-busy={loading}>
+    <main className={`${styles.page} ${styles.forgotPage}`} data-rewind-auth-page aria-labelledby="forgot-password-title" aria-busy={loading}>
       <div className={styles.card}>
 
         <button
@@ -101,15 +151,15 @@ export default function ForgotPassword() {
             required
           />
 
-          {message && <p className={styles.success} role="status">{message}</p>}
-          {error && <p className={styles.error} id="forgot-password-error" role="alert">{error}</p>}
+          {message && <p ref={successMessage} tabIndex={-1} className={styles.success} role="status">{t("resetSent")}</p>}
+          {error && <p ref={errorMessage} tabIndex={-1} className={styles.error} id="forgot-password-error" role="alert">{t("forgotRequestError")}</p>}
 
           <button className={styles.button} type="submit" aria-busy={loading} disabled={loading}>
             {loading ? t("loading") : t("resetPassword")}
           </button>
         </form>
 
-        <div className={styles.divider} aria-hidden="true"><span>Or</span></div>
+        <div className={styles.divider} aria-hidden="true"><span>{t("dividerOr")}</span></div>
 
         {/* → REGISTER */}
         <Link className={styles.create} to={path("/register")}>{t("createAccount")}</Link>

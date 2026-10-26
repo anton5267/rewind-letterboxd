@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import styles from "./Login.module.css";
@@ -25,27 +25,39 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const errorMessage = useRef<HTMLParagraphElement>(null);
+  const mounted = useRef(false);
+  const destination = useRef({ to: returnLocation ?? path("/films"), replace: returnLocation !== null });
+  destination.current = { to: returnLocation ?? path("/films"), replace: returnLocation !== null };
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
+
+  useEffect(() => {
+    if (error && !loading) errorMessage.current?.focus();
+  }, [error, loading]);
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (loading) return;
-    setError("");
+    setError(false);
     setLoading(true);
     try {
       await login(email.trim(), password);
-      if (returnLocation) navigate(returnLocation, { replace: true });
-      else navigate(path("/films"));
+      if (mounted.current) navigate(destination.current.to, { replace: destination.current.replace });
     } catch {
-      setError(t("loginError"));
+      if (mounted.current) setError(true);
     } finally {
-      setLoading(false);
+      if (mounted.current) setLoading(false);
     }
   };
 
   return (
-    <main className={`${styles.page} ${styles.loginPage}`} aria-labelledby="login-page-title" aria-busy={loading}>
+    <main className={`${styles.page} ${styles.loginPage}`} data-rewind-auth-page aria-labelledby="login-page-title" aria-busy={loading}>
       <div className={styles.card}>
         <button type="button" className={styles.mobileBack} aria-label={t("return")} onClick={() => navigate(path("/home"))}>←</button>
         <p className={styles.eyebrow}>{t("accountEyebrow")}</p>
@@ -106,15 +118,11 @@ export default function Login() {
               {t("forgotPassword")}
             </Link>
           </div>
-          {error && <p className={styles.error} id="login-error" role="alert">{error}</p>}
+          {error && <p ref={errorMessage} tabIndex={-1} className={styles.error} id="login-error" role="alert">{t("loginError")}</p>}
           <button type="submit" className={styles.button} aria-busy={loading} disabled={loading}>
             {loading ? t("loggingIn") : t("login")}
           </button>
         </form>
-        <div className={styles.social} aria-hidden="true">
-          <span>{t("signInWith")}</span>
-          <span className={styles.socialMark}>G</span>
-        </div>
         <p className={styles.footer}>
           {t("noAccount")} <Link to={path("/register")}>{t("createOne")}</Link>
         </p>

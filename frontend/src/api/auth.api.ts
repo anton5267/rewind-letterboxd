@@ -4,6 +4,7 @@ export interface CurrentUser {
   id: number;
   username: string;
   role: string;
+  avatarUrl?: string | null;
 }
 
 export const getCurrentUser = () => api.get<CurrentUser>("/users/me");

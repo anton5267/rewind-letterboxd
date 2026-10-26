@@ -17,6 +17,22 @@ export default function JournalArticle() {
   const [audioError, setAudioError] = useState(false);
   const [audioLoading, setAudioLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const focusAfterRetry = useRef(false);
+
+  useEffect(() => { focusAfterRetry.current = false; }, [lang, slug]);
+
+  useEffect(() => {
+    if (!focusAfterRetry.current || (!article && !error)) return;
+    focusAfterRetry.current = false;
+    const frame = window.requestAnimationFrame(() => titleRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [article, error, lang, slug]);
+
+  const retryArticle = () => {
+    focusAfterRetry.current = true;
+    setAttempt(value => value + 1);
+  };
 
   useEffect(() => {
     let current = true;
@@ -32,10 +48,10 @@ export default function JournalArticle() {
 
   if (error) {
     return (
-      <main className={styles.page} aria-labelledby="journal-article-state-title" aria-busy={false}>
-        <h1 id="journal-article-state-title" className={styles.stateTitle}>{t("journal")}</h1>
+      <main className={`${styles.page} ${styles.statePage}`} aria-labelledby="journal-article-state-title" aria-busy={false}>
+        <h1 id="journal-article-state-title" className={styles.stateTitle} ref={titleRef} tabIndex={-1}>{t("journal")}</h1>
         <div className={styles.error} role="alert">
-          {t("journalLoadError")} <RetryButton label={t("retry")} size="large" onClick={() => setAttempt(value => value + 1)} />
+          {t("journalLoadError")} <RetryButton label={t("retry")} size="large" onClick={retryArticle} />
           <div><Link to={path("/journal")}>{t("journal")}</Link></div>
         </div>
       </main>
@@ -43,7 +59,7 @@ export default function JournalArticle() {
   }
 
   if (!article) {
-    return <main className={styles.page} aria-labelledby="journal-article-state-title" aria-busy={true}><h1 id="journal-article-state-title" className={styles.stateTitle}>{t("journal")}</h1><p className={styles.status} role="status">{t("loading")}</p></main>;
+    return <main className={`${styles.page} ${styles.statePage}`} aria-labelledby="journal-article-state-title" aria-busy={true}><h1 id="journal-article-state-title" className={styles.stateTitle} ref={titleRef} tabIndex={-1}>{t("journal")}</h1><p className={styles.status} role="status">{t("loading")}</p></main>;
   }
 
   const audioUrl = safeHttpUrl(article.audioUrl);
@@ -66,7 +82,7 @@ export default function JournalArticle() {
           <div className={styles.articleLead}>
             <Link className={styles.back} to={path("/journal")}>← {t("journal")}</Link>
             <p className={styles.eyebrow}>{localizeJournalCategory(article.category, t)}</p>
-            <h1 id="journal-article-title" lang={article.title?.trim() ? articleLang : lang}>{title}</h1>
+            <h1 id="journal-article-title" ref={titleRef} tabIndex={-1} lang={article.title?.trim() ? articleLang : lang}>{title}</h1>
             <div className={styles.meta}>
               {article.publishedAt && <time dateTime={article.publishedAt}>{formatDateTime(article.publishedAt, lang)}</time>}
               {audioUrl && <span>{t("podcastAudio")}</span>}

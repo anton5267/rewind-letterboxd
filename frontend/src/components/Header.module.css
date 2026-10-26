@@ -175,21 +175,32 @@
   .mobileAuth .mobileMenu,
   .mobileAuth .menuBackdrop { display: none !important; }
 
+  .logo { min-height: 44px; }
   .logoImage { width: 126px; height: 26px; }
   .search { display: none; }
 
   .menuToggle {
     display: grid;
-    width: 40px;
-    height: 40px;
+    position: relative;
+    width: 44px;
+    height: 44px;
     grid-column: 3;
     place-items: center;
-    border: 1px solid color-mix(in srgb, var(--header-color) 28%, transparent);
-    border-radius: 50%;
+    border: 0;
     background: transparent;
     color: var(--header-color);
     cursor: pointer;
     font-size: 17px;
+  }
+
+  .menuToggle::before {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border: 1px solid color-mix(in srgb, var(--header-color) 28%, transparent);
+    border-radius: 50%;
+    content: "";
+    pointer-events: none;
   }
 
   .menuBackdrop {
@@ -266,13 +277,21 @@
     text-decoration: none;
   }
 
-  .mobileNav a i {
-    display: grid;
+  .mobileNav a svg {
+    display: block;
     width: 30px;
     height: 30px;
-    place-items: center;
     color: #fff;
-    font-size: 22px;
+  }
+
+  .visuallyHidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
   .logoutError {
     top: 64px;
@@ -282,6 +301,16 @@
 }
 
 @media (max-width: 720px) {
+  .header.mobileUserLists {
+    --header-background: transparent;
+    box-shadow: none;
+    pointer-events: none;
+  }
+
+  .mobileUserLists .logo,
+  .mobileUserLists .menuToggle,
+  .mobileUserLists .mobileNav { display: none !important; }
+
   .header.mobileListDetail {
     --header-background: transparent;
     box-shadow: none;
@@ -325,6 +354,25 @@
   .mobileProfile .menuToggle { display: none; }
 
   .mobileProfile .mobileNav { pointer-events: auto; }
+
+  /* Settings frames use their own Cancel/Settings/Save toolbar and omit the
+     app-level five-item navigation rail. */
+  .mobileProfileSettings .mobileNav { display: none !important; }
+
+  .header.mobileCommunity {
+    --header-background: transparent;
+    height: 1px;
+    min-height: 1px;
+    padding: 0;
+    overflow: visible;
+    box-shadow: none;
+    pointer-events: none;
+  }
+
+  .mobileCommunity .logo,
+  .mobileCommunity .menuToggle { display: none; }
+
+  .mobileCommunity .mobileNav { pointer-events: auto; }
 }
 
 @media (max-width: 560px) {
@@ -398,6 +446,14 @@
 
   .mobileSearch .mobileNav {
     pointer-events: auto;
+  }
+
+  :global(body:has([data-global-search-empty="true"])) .mobileSearch .mobileNav > a:nth-child(-n + 2) {
+    display: none;
+  }
+
+  :global(body:has([data-global-search-empty="true"])) .mobileSearch .mobileNav > a:nth-child(3) {
+    grid-column-start: 3;
   }
 
   .header.mobileHome {

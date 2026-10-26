@@ -29,19 +29,27 @@
 }
 
 .toolbarButton {
+  position: relative;
   display: grid;
   width: 44px;
   height: 44px;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, .35);
-  border-radius: 50%;
-  background: rgba(8, 10, 15, .25);
   color: #fff;
   font-size: 24px;
   text-decoration: none;
 }
 
-.toolbarButton:hover { border-color: #fff; }
+.toolbarButton::before {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, .35);
+  border-radius: 50%;
+  background: rgba(8, 10, 15, .25);
+  content: "";
+}
+
+.toolbarButton > span { position: relative; }
+.toolbarButton:hover::before { border-color: #fff; }
 
 .shell {
   width: min(100% - 32px, 980px);
@@ -152,9 +160,10 @@
 @media (max-width: 560px) {
   .page { padding-top: 64px; }
   .hero { min-height: 150px; padding: 18px 14px 22px; }
-  .toolbar { grid-template-columns: 36px minmax(0, 1fr) 36px; gap: 10px; }
+  .toolbar { grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 10px; }
   .toolbar h1 { font-size: 22px; }
-  .toolbarButton { width: 36px; height: 36px; font-size: 21px; }
+  .toolbarButton { font-size: 21px; }
+  .toolbarButton::before { inset: 4px; }
   .shell { width: calc(100% - 28px); margin-top: -18px; }
   .reviewerSection { padding: 18px 14px 16px; }
   .reviewsSection { padding: 18px 14px; }

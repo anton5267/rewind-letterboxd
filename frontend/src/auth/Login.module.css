@@ -11,8 +11,6 @@
 .success { composes: success from "./AuthShared.module.css"; }
 .footer { composes: footer from "./AuthShared.module.css"; }
 .mobileBack { composes: mobileBack from "./AuthShared.module.css"; }
-.social { composes: social from "./AuthShared.module.css"; }
-.socialMark { composes: socialMark from "./AuthShared.module.css"; }
 .loginPage { composes: page from "./AuthShared.module.css"; }
 
 .loginPage .card { min-height: 873px; }
@@ -21,37 +19,10 @@
 .loginPage .button { margin-top: 47px; }
 
 @media (min-width: 721px) {
-  .loginPage .social {
-    display: grid;
-    width: min(627px, 100%);
-    margin: 55px auto 0;
-    gap: 12px;
-    color: rgba(255, 255, 255, .52);
-    font-size: 13px;
-    text-align: center;
-  }
-
-  .loginPage .social::before {
-    display: block;
-    width: 100%;
-    border-top: 1px solid rgba(255, 255, 255, .18);
-    content: "";
-  }
-
-  .loginPage .socialMark {
-    display: grid;
-    width: 24px;
-    height: 24px;
-    margin: 0 auto;
-    place-items: center;
-    color: rgba(255, 255, 255, .62);
-    font-size: 21px;
-    font-weight: 800;
-  }
 }
 
 @media (max-width: 720px) {
-  .loginPage .card { padding-top: 169px; }
+  .loginPage .card { min-height: 852px; padding-top: 169px; }
   .loginPage .form { margin-top: 152px; }
   .loginPage .button { margin-top: -2px; }
   .loginPage .footer { margin-top: 5px; }

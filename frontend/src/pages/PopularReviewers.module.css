@@ -22,7 +22,7 @@
   .columnHeadings { padding-inline: 32px; }
 }
 @media (max-width: 720px) {
-  .page { padding: 64px 0 calc(96px + env(safe-area-inset-bottom)); }
+  .page { padding: 34px 0 calc(96px + env(safe-area-inset-bottom)); }
   .hero { min-height: 36px; overflow: visible; padding: 14px 16px; border-bottom: 0; background: #202020; }
   .hero::after { display: none; }
   .toolbar { display: grid; width: 100%; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 12px; }

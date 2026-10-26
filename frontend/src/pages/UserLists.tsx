@@ -271,10 +271,10 @@ export default function UserLists() {
     if (Number.isSafeInteger(sourceItemId) && targetIndex >= 0) void moveToIndex(sourceItemId, targetIndex);
   };
 
-  return <main className={styles.page} aria-labelledby="user-lists-title" aria-busy={listsLoading || itemsLoading || itemsBusy || createBusy || saveBusy || deleting}>
+  return <main className={`${styles.page} ${styles.mobileEditorPage}`} aria-labelledby="user-lists-title" aria-busy={listsLoading || itemsLoading || itemsBusy || createBusy || saveBusy || deleting}>
     <header className={styles.hero}>
       <p className={styles.eyebrow}>{t("listsEyebrow")}</p>
-      <h1 id="user-lists-title">{editorialText(selectedList?.name, t("newList"))}</h1>
+      <h1 id="user-lists-title">{selectedList?.listType === "CUSTOM" ? t("listSettings") : editorialText(selectedList?.name, t("newList"))}</h1>
       <p className={styles.heroCopy}>{t("createListIntro")}</p>
     </header>
     <div className={styles.content}>
@@ -307,17 +307,18 @@ export default function UserLists() {
       {selectedList.listType === "CUSTOM" && <form className={`${styles.form} ${styles.editForm}`} aria-labelledby="selected-list-heading" aria-busy={itemsBusy || saveBusy || deleting} onSubmit={saveList}>
         <label className={styles.nameField} htmlFor="edit-list-name">{t("listName")} <input ref={editorNameRef} id="edit-list-name" required maxLength={120} disabled={itemsBusy || saveBusy || deleting} value={editName} onChange={event => setEditName(event.target.value)} /></label>
         <label className={styles.descriptionField} htmlFor="edit-list-description">{t("description")} <textarea id="edit-list-description" rows={5} maxLength={5000} disabled={itemsBusy || saveBusy || deleting} value={editDescription} onChange={event => setEditDescription(event.target.value)} /></label>
-        <Link className={styles.browseFilms} to={path("/films")} aria-disabled={listControlsBusy || undefined} onClick={event => { if (listControlsBusy) event.preventDefault(); }}>
-          <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
-          <span className={styles.browseDesktop}>{t("browseFilms")}</span>
-          <span className={styles.browseMobile}>{t("addFilm")}</span>
-        </Link>
         <label className={styles.tagsField} htmlFor="edit-list-tags">{t("tags")} <input id="edit-list-tags" value={editTags} maxLength={509} disabled={itemsBusy || saveBusy || deleting} placeholder={t("tagsHint")} onChange={event => setEditTags(event.target.value)} /></label>
         <label className={styles.checkboxLabel}><input type="checkbox" checked={editPublic} disabled={itemsBusy || saveBusy || deleting} onChange={event => setEditPublic(event.target.checked)} /> <span>{t("publicList")}</span></label>
         <div className={styles.editActions}>
-          <button type="button" className={styles.secondaryButton} disabled={itemsBusy || saveBusy || deleting} onClick={() => { clearSelection(); setError(""); }}>{t("cancel")}</button>
-          <button type="submit" aria-busy={saveBusy} disabled={itemsBusy || saveBusy || deleting}>{saveBusy ? t("saving") : t("save")}</button>
+          <Link className={styles.browseFilms} to={path("/films")} aria-disabled={listControlsBusy || undefined} onClick={event => { if (listControlsBusy) event.preventDefault(); }}>
+            <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
+            <span className={styles.browseDesktop}>{t("addFilm")}</span>
+            <span className={styles.browseMobile}>{t("addFilm")}</span>
+          </Link>
+          <button type="button" className={styles.secondaryButton} disabled={itemsBusy || saveBusy || deleting} onClick={() => { clearSelection(); setError(""); }}>{t("cancelListChanges")}</button>
           <button type="button" className={styles.dangerButton} aria-busy={deleting} disabled={itemsBusy || deleting || saveBusy} onClick={() => void removeList()}>{deleting ? t("deletingList") : t("deleteList")}</button>
+          {selectedList.isPublic && <Link className={styles.viewListButton} to={path(`/lists/public/${selectedList.id}`)} aria-disabled={listControlsBusy || undefined} onClick={event => { if (listControlsBusy) event.preventDefault(); }}>{t("viewList")}</Link>}
+          <button type="submit" aria-busy={saveBusy} disabled={itemsBusy || saveBusy || deleting}>{saveBusy ? t("saving") : t("save")}</button>
         </div>
       </form>}
       {itemsLoading && <div className={styles.stateCard} role="status"><span className={styles.stateMark} aria-hidden="true">…</span><strong>{t("loading")}</strong></div>}

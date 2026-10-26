@@ -185,9 +185,19 @@ export default function PublicList() {
         </div>
         <div className={styles.informationCard}>
           <div className={styles.informationLikes}>
-            <span className={styles.informationHeart} aria-hidden="true">{likeStatus?.liked ? "♥" : "♡"}</span>
+            {isAuth ? <button
+              type="button"
+              className={styles.informationHeart}
+              aria-label={likeStatus?.liked ? t("unlikeList") : t("likeList")}
+              aria-pressed={likeStatus?.liked ?? false}
+              aria-busy={likeBusy || likeStatusLoading}
+              disabled={likeBusy || likeStatusLoading || !likeStatus}
+              onClick={() => void toggleLike()}
+            >{likeStatus?.liked ? "♥" : "♡"}</button> : <span className={styles.informationHeart} aria-hidden="true">♡</span>}
             <span>{likeStatus?.likes ?? list.likeCount ?? 0} {t("likes").toLocaleLowerCase(lang)}</span>
-            {likeControls}
+            {isAuth && likeStatusLoading && <span className={styles.inlineStatus} role="status">{t("loading")}</span>}
+            {isAuth && likeStatusLoadError && <span className={styles.inlineError} role="alert">{t("listLikeError")} <RetryButton label={t("retry")} onClick={() => setLikeStatusAttempt(value => value + 1)} /></span>}
+            {likeError && <span className={styles.inlineError} role="alert">{t("listLikeError")} <RetryButton label={t("retry")} disabled={likeBusy || likeStatusLoading} busy={likeBusy} onClick={() => void toggleLike()} /></span>}
           </div>
           <div className={styles.informationTags}>
             <p>{t("tags")}</p>

@@ -76,4 +76,5 @@ select:focus-visible {
 
 @media (max-width: 720px) {
   body { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+  body:has([data-rewind-auth-page]) { padding-bottom: env(safe-area-inset-bottom); }
 }

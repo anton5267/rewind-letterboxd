@@ -2,6 +2,24 @@
   margin-top: 32px;
 }
 
+.title:focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
+
+.section.reviewsSection > .list .rowActions button,
+.section.commentsSection > .list .rowActions button { min-height: 44px; }
+
+.usersSection .userRetryFocus:focus {
+  outline: 2px solid var(--rewind-cyan);
+  outline-offset: 4px;
+  scroll-margin-block: 120px;
+}
+
+.listsSection .listActionFocus:focus,
+.moderationSection .moderationFocus:focus {
+  outline: 2px solid var(--rewind-cyan);
+  outline-offset: 4px;
+  scroll-margin-block: 120px;
+}
+
 @media (max-width: 520px) {
   .commentSide {
     gap: 12px;
@@ -49,14 +67,18 @@
   }
 
   .commentsSection > .list .rowActions button {
-    min-height: 41px;
+    min-height: 44px;
     border-radius: 38px;
   }
 
   /* Figma Lists frame `1344:5249` uses 1200 px translucent cards with a
      38 px radius, 84 px rhythm and 393/364 px content states. */
+  .section.listsSection { margin-top: 53px; }
+
   .listsSection > .title {
     margin-bottom: 38px;
+    font-size: 24px;
+    line-height: 1.2;
     text-align: center;
   }
 
@@ -126,6 +148,23 @@
   gap: 18px;
 }
 
+.commentDate,
+.reviewDate {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.commentDate span,
+.reviewDate span {
+  color: var(--rewind-muted);
+}
+
+.commentDate time,
+.reviewDate time {
+  color: var(--rewind-paper);
+}
+
 .listMain,
 .listSide {
   min-width: 0;
@@ -162,9 +201,71 @@
   .auditSection > .list .row:first-child {
     min-height: 348px;
   }
+
+  .auditSection > .list .auditRow {
+    display: grid;
+    grid-template-columns: minmax(0, 417px) minmax(0, 1fr);
+    gap: 160px;
+  }
+}
+
+.auditMain,
+.auditSide {
+  min-width: 0;
+}
+
+.auditMain {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
+.auditMain strong,
+.auditMain p,
+.auditSide time {
+  overflow-wrap: anywhere;
+}
+
+.auditMain strong {
+  color: var(--rewind-paper);
+  font-size: 20px;
+}
+
+.auditMain p {
+  margin: 0;
+  color: var(--rewind-muted);
+  line-height: 1.55;
+}
+
+.auditSide {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.auditSide time {
+  color: var(--rewind-muted);
+}
+
+.auditAction {
+  max-width: 100%;
+  padding: 8px 16px;
+  border: 1px solid var(--rewind-line);
+  border-radius: 999px;
+  color: var(--rewind-paper);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .auditSection > .list .auditRow {
+    display: grid;
+    gap: 20px;
+  }
 }
 
 .listIdentity,
+.listDescription,
 .listMeta,
 .listStatus {
   overflow-wrap: anywhere;
@@ -176,6 +277,7 @@
 }
 
 .listMeta,
+.listDescription,
 .listStatus {
   margin: 0;
   color: var(--rewind-muted);
@@ -730,6 +832,34 @@
     border-radius: 38px;
   }
 
+  /* User Profile1237:4369: identity and overview are separate cards. */
+  .usersSection.userProfileSection {
+    margin-top: 54px;
+  }
+
+  .userProfileSection > .title {
+    margin-bottom: 0;
+    font-size: 24px;
+    line-height: 1.2;
+  }
+
+  .userProfileSection .detailPanel {
+    margin: 116px 0 0;
+    border: 0;
+    background: rgba(255, 255, 255, .05);
+    backdrop-filter: blur(4px);
+  }
+
+  .userProfileSection .detailOverviewGrid {
+    gap: clamp(24px, 11.6667vw, 168px);
+    margin-top: 85px;
+  }
+
+  .userProfileSection .detailSubsection {
+    border: 0;
+    background: rgba(255, 255, 255, .05);
+  }
+
   /* Figma Reviews frame `1310:3108` uses translucent 1200 px cards with a
      38 px radius, 84 px vertical rhythm and a two-column editorial layout. */
   .reviewsSection > .title {
@@ -770,7 +900,7 @@
   }
 
   .reviewsSection > .list .rowActions button {
-    min-height: 41px;
+    min-height: 44px;
     border-radius: 38px;
   }
 }

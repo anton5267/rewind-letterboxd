@@ -507,16 +507,16 @@ export default function MovieDetails() {
             {movie.externalRatings.map(item => <span className={styles.externalRatingPill} key={item.source}><strong>{item.source}</strong> {item.rating}</span>)}
           </div>
         </section>
-        {mobileCrew.length > 0 && <section className={styles.mobileDetailSection} aria-labelledby="mobile-crew-title">
-          <div className={styles.mobileSectionHeading}><h2 id="mobile-crew-title">{t("actors")} &amp; {t("directors")}</h2></div>
-          <div className={styles.crewRail}>
+        <section className={styles.mobileDetailSection} aria-labelledby="mobile-crew-title">
+          <div className={styles.mobileSectionHeading}><h2 id="mobile-crew-title">{t("castAndCrew")}</h2></div>
+          {mobileCrew.length > 0 ? <div className={styles.crewRail}>
             {mobileCrew.map(item => <Link className={styles.crewCard} key={item.id} to={path(`/people/${item.type}/${item.personId}`)}>
               <span className={styles.crewAvatar} aria-hidden="true">{item.name.slice(0, 1).toUpperCase()}</span>
               <strong>{item.name}</strong>
               <small>{item.role}</small>
             </Link>)}
-          </div>
-        </section>}
+          </div> : <p className={styles.empty}>{t("movieCrewUnavailable")}</p>}
+        </section>
         {isAuth && <MovieActionSheet
           open={mobileActionOpen}
           movie={movie}
@@ -608,10 +608,10 @@ export default function MovieDetails() {
             </Link>;
           })}</div>}
         </section>
-        {movie.shortPlot && <section className={`${styles.section} ${styles.storylineSection}`} aria-labelledby="storyline-title">
+        <section className={`${styles.section} ${styles.storylineSection}`} aria-labelledby="storyline-title">
           <div className={styles.sectionHeading}><h2 id="storyline-title">{t("storyline")}</h2></div>
-          <div className={styles.storylineCard}><h3>{movieTitle}</h3><p>{movie.shortPlot}</p></div>
-        </section>}
+          <div className={styles.storylineCard}><h3>{movieTitle}</h3><p className={movie.shortPlot ? undefined : styles.empty}>{movie.shortPlot || t("movieStorylineUnavailable")}</p></div>
+        </section>
       </>}
     </div>
   </main>;

@@ -13,7 +13,7 @@ import styles from "./UserFollowRow.module.css";
 
 type ReviewerMetrics = { watched: number; lists: number; likes: number };
 
-export default function UserFollowRow({ user, href, meta, subtitle, label, reviewerMetrics, presentation, onFollowSettled }: { user: CommunityUser; href: string; meta?: string; subtitle?: string; label?: string; reviewerMetrics?: ReviewerMetrics; presentation?: "communityShowcase" | "profileNetwork"; onFollowSettled?: () => void }) {
+export default function UserFollowRow({ user, href, meta, subtitle, label, reviewerMetrics, presentation, showMobileMoreAction = false, hideMobileNetworkStats = false, onFollowSettled }: { user: CommunityUser; href: string; meta?: string; subtitle?: string; label?: string; reviewerMetrics?: ReviewerMetrics; presentation?: "communityShowcase" | "profileNetwork"; showMobileMoreAction?: boolean; hideMobileNetworkStats?: boolean; onFollowSettled?: () => void }) {
   const { t, path } = useLocale();
   const { actorId, authReady, state, retry, toggle } = useFollowAction(user.id);
   const [memberSheetOpen, setMemberSheetOpen] = useState(false);
@@ -65,7 +65,7 @@ export default function UserFollowRow({ user, href, meta, subtitle, label, revie
     return () => { current = false; };
   }, [actorId, authReady, blockStatusAttempt, memberSheetOpen, user.id]);
   useEffect(() => {
-    if (memberSheetOpen && (!authReady || actorId === null || actorId === user.id || openedByActor.current !== actorId)) closeMemberSheet();
+    if (memberSheetOpen && (!authReady || openedByActor.current !== actorId || (actorId !== null && actorId === user.id))) closeMemberSheet();
   }, [actorId, authReady, closeMemberSheet, memberSheetOpen, user.id]);
   const feedbackId = useId();
   const identity = getUserIdentity(user, "?");
@@ -77,21 +77,22 @@ export default function UserFollowRow({ user, href, meta, subtitle, label, revie
   const loading = !authReady || state.phase === "loading" || state.busy;
   const actionLabel = `${t(state.phase === "error" ? "retry" : loading ? "loading" : state.blocked ? "interactionBlocked" : state.following ? "unfollow" : "follow")}: ${identity}`;
   const openMemberSheet = () => {
-    if (!authReady || actorId === null || actorId === user.id || state.busy) return;
+    if (!authReady || (actorId !== null && actorId === user.id) || state.busy || blockBusy) return;
     openedByActor.current = actorId;
     setMemberSheetOpen(true);
   };
   const changeSheetFollow = () => {
-    if (state.phase !== "ready" || state.busy || state.blocked) return;
+    if (state.phase !== "ready" || state.busy || state.blocked || blockBusy) return;
     sheetFollowRequested.current = true;
     toggle();
   };
   const retrySheetFollow = () => {
+    if (blockBusy || state.busy) return;
     if (state.error === "action") sheetFollowRequested.current = true;
     retry();
   };
   const changeSheetBlock = async () => {
-    if (actorId === null || actorId === user.id || blockStatus === null || blockBusy) return;
+    if (actorId === null || actorId === user.id || blockStatus === null || blockBusy || state.busy) return;
     const actor = actorId;
     const requestId = ++blockRequestId.current;
     setBlockBusy(true);
@@ -110,7 +111,7 @@ export default function UserFollowRow({ user, href, meta, subtitle, label, revie
     }
   };
 
-  return <li className={`${styles.row} ${reviewerMetrics ? styles.reviewerRow : ""} ${presentation ? styles[presentation] : ""}`}>
+  return <li data-network-member-id={user.id} className={`${styles.row} ${reviewerMetrics ? styles.reviewerRow : ""} ${presentation ? styles[presentation] : ""} ${hideMobileNetworkStats ? styles.hideMobileNetworkStats : ""}`}>
     <Link className={styles.userLink} to={href} aria-label={label ?? `${identity} ${getUserHandle(user)}`}>
       <ResilientImage className={styles.avatar} src={user.avatarUrl} alt="" width={44} height={44}
         fallback={<span className={styles.avatarFallback} aria-hidden="true">{getUserInitial(user)}</span>} />
@@ -129,17 +130,16 @@ export default function UserFollowRow({ user, href, meta, subtitle, label, revie
         <img src={icon} alt="" width="35" height="35" /><span className={styles.metricValue}>{value}</span><span className={styles.metricLabel}>{metricLabel}</span>
       </span>)}
     </div>}
-    {presentation === "profileNetwork" && authReady && actorId !== null && !self && <button className={`${styles.action} ${styles.moreAction}`} type="button" aria-label={`${t("moreActions")}: ${identity}`} aria-haspopup="dialog" aria-expanded={memberSheetOpen} onClick={openMemberSheet}><span className={styles.glyph} aria-hidden="true">•••</span></button>}
+    {(presentation === "profileNetwork" || showMobileMoreAction) && authReady && !self && <button data-network-action="more" className={`${styles.action} ${styles.moreAction}`} type="button" aria-label={`${t("moreActions")}: ${identity}`} aria-haspopup="dialog" aria-expanded={memberSheetOpen} disabled={state.busy || blockBusy} onClick={openMemberSheet}><span className={styles.glyph} aria-hidden="true">•••</span></button>}
     {!self && (guest ? <Link className={styles.action} to={path("/login")} aria-label={`${t("follow")}: ${identity}`} title={`${t("follow")}: ${identity}`}><span className={styles.glyph} aria-hidden="true">＋</span></Link> :
-      <button className={styles.action} type="button" aria-label={actionLabel} title={actionLabel}
+      <button data-network-action="follow" className={styles.action} type="button" aria-label={actionLabel} title={actionLabel}
         aria-pressed={state.phase === "ready" ? state.following : undefined} aria-busy={loading}
         aria-describedby={state.phase === "error" || state.blocked ? feedbackId : undefined}
-        disabled={loading || (state.blocked && state.phase !== "error")} onClick={state.phase === "error" ? retry : toggle}>
+        disabled={loading || blockBusy || (state.blocked && state.phase !== "error")} onClick={state.phase === "error" ? retry : toggle}>
         <span className={styles.glyph} aria-hidden="true">{state.phase === "error" ? "↻" : loading ? "…" : state.blocked ? "×" : state.following ? "✓" : "＋"}</span>
       </button>)}
-    {!self && !guest && state.phase === "error" && <p className={styles.error} id={feedbackId} role="alert">{t(state.error === "action" ? "followError" : "loadFollowStatusError")}</p>}
+    {!self && !guest && state.phase === "error" && <p className={styles.error} id={feedbackId} role="alert">{t(state.error === "action" ? "followError" : state.error === "blockStatus" ? "loadBlockStatusError" : "loadFollowStatusError")}</p>}
     {!self && !guest && state.phase === "ready" && state.blocked && <p className={styles.feedback} id={feedbackId}>{t("interactionBlocked")}</p>}
-    {presentation === "profileNetwork" && authReady && actorId !== null && state.countsError && <p className={styles.error} role="alert">{t("loadNetworkError")} <button type="button" className={styles.action} aria-label={`${t("retry")}: ${identity}`} onClick={retry}>↻</button></p>}
     {memberSheetOpen && <div className={styles.memberBackdrop} role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) closeMemberSheet(); }}>
       <section className={styles.memberSheet} ref={sheetRef} role="dialog" aria-modal="true" aria-labelledby={`${feedbackId}-member-title`} aria-busy={blockStatusLoading || blockBusy}>
         <header className={styles.memberHeading}>
@@ -147,12 +147,12 @@ export default function UserFollowRow({ user, href, meta, subtitle, label, revie
           <p>{getUserHandle(user)}</p>
         </header>
         <div className={styles.memberActions}>
-          <button type="button" disabled={state.phase !== "ready" || state.busy || state.blocked} aria-busy={state.busy} onClick={changeSheetFollow}>{state.busy ? t("loading") : state.following ? t("unfollow") : t("follow")}</button>
-          <button type="button" className={styles.memberBlock} disabled={blockStatusLoading || blockStatusError || blockBusy || state.busy || blockStatus === null} aria-busy={blockBusy} onClick={() => void changeSheetBlock()}>{blockBusy ? t("loading") : blockStatus ? t("unblockUser") : t("blockProfileUser")}</button>
+          {guest ? <Link to={path("/login")} onClick={closeMemberSheet}>{t("follow")}</Link> : <button type="button" disabled={state.phase !== "ready" || state.busy || state.blocked || blockBusy} aria-busy={state.busy} onClick={changeSheetFollow}>{state.busy ? t("loading") : state.following ? t("unfollow") : t("follow")}</button>}
+          {guest ? <Link className={styles.memberBlock} to={path("/login")} onClick={closeMemberSheet}>{t("blockProfileUser")}</Link> : <button type="button" className={styles.memberBlock} disabled={blockStatusLoading || blockStatusError || blockBusy || state.busy || blockStatus === null} aria-busy={blockBusy} onClick={() => void changeSheetBlock()}>{blockBusy ? t("loading") : blockStatus ? t("unblockUser") : t("blockProfileUser")}</button>}
           <Link to={href} onClick={closeMemberSheet}>{t("goToMember")}</Link>
         </div>
-        {state.phase === "loading" && <p className={styles.memberMessage} role="status">{t("loading")}</p>}
-        {state.phase === "error" && <p className={styles.memberError} role="alert">{t(state.error === "action" ? "followError" : "loadFollowStatusError")} <button type="button" onClick={retrySheetFollow}>{t("retry")}</button></p>}
+        {!guest && state.phase === "loading" && <p className={styles.memberMessage} role="status">{t("loading")}</p>}
+        {!guest && state.phase === "error" && <p className={styles.memberError} role="alert">{t(state.error === "action" ? "followError" : state.error === "blockStatus" ? "loadBlockStatusError" : "loadFollowStatusError")} <button type="button" disabled={blockBusy || state.busy} onClick={retrySheetFollow}>{t("retry")}</button></p>}
         {blockStatusLoading && <p className={styles.memberMessage} role="status">{t("loading")}</p>}
         {blockStatusError && <p className={styles.memberError} role="alert">{t("loadBlockStatusError")} <button type="button" onClick={() => setBlockStatusAttempt(value => value + 1)}>{t("retry")}</button></p>}
         {blockActionError && <p className={styles.memberError} role="alert">{t("blockError")}</p>}

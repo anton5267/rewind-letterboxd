@@ -40,6 +40,9 @@
 }
 
 .title {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   margin: 0;
   color: var(--rewind-paper);
   font-size: clamp(34px, 5vw, 54px);
@@ -48,6 +51,7 @@
 
 .hero {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   min-height: 470px;
   place-items: center;
   align-content: center;
@@ -59,9 +63,49 @@
     #101316;
   text-align: center;
 }
-.avatar { display: grid; width: 170px; height: 170px; place-items: center; border: 4px solid rgba(255, 255, 255, .45); border-radius: 50%; background: linear-gradient(145deg, #394f53, #725532); color: #fff; font-size: 64px; font-weight: 800; box-shadow: 0 18px 50px rgba(0,0,0,.35); }
+.avatar { display: grid; width: 170px; height: 170px; place-items: center; border-radius: 50%; background: linear-gradient(145deg, #394f53, #725532); color: #fff; font-size: 64px; font-weight: 800; }
 .hero .title { margin-top: 22px; }
+.avatar > img { width: 100%; height: 100%; min-width: 0; min-height: 0; object-fit: cover; border-radius: inherit; }
 .hero p { margin: 6px 0 0; color: var(--rewind-muted); }
+.adminNav {
+  display: flex;
+  width: max-content;
+  max-width: calc(100vw - 40px);
+  gap: 4px;
+  margin-top: 30px;
+  padding: 6px;
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 999px;
+  background: rgba(28, 28, 28, .9);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, .35) transparent;
+}
+
+.adminNav a {
+  display: grid;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 50%;
+  color: #f3f0ea;
+  text-decoration: none;
+}
+
+.adminNav a:hover,
+.adminNav a[aria-current="page"] {
+  background: #3c3c3c;
+  color: var(--rewind-gold);
+}
+
+.adminNav a:focus-visible {
+  outline: 2px solid var(--rewind-gold);
+  outline-offset: -2px;
+}
+
+.navLabel { display: none; }
+.adminNav i { font-size: 16px; }
 .workspaceTitle { width: min(1280px, calc(100% - 40px)); margin: 44px auto 0; color: #fff; font-size: 18px; text-align: center; }
 
 .summary {
@@ -105,6 +149,15 @@
 .settingsTitle {
   margin: 0 0 16px;
   color: var(--rewind-paper);
+}
+
+.workspaceTitle:focus,
+.page > .error:focus,
+.settingsTitle:focus,
+.settings .error:focus {
+  outline: 2px solid var(--rewind-cyan);
+  outline-offset: 4px;
+  scroll-margin-top: 120px;
 }
 
 .settingsList {
@@ -151,6 +204,8 @@
   .hero { min-height: 390px; }
   .avatar { width: 120px; height: 120px; font-size: 44px; }
 
+  .adminNav { margin-top: 22px; }
+
   .settings {
     padding: 16px;
   }
@@ -174,6 +229,11 @@
 /* Figma dashboard frames `1178:2466` and `1404:4076` use a 1020 px
    identity/workspace hero before the admin tables and settings begin. */
 @media (min-width: 721px) {
+  .page { padding-top: 0; }
+  /* Settings frame: workspace ends at1948, footer begins at2113. */
+  .settingsPage { padding-bottom: 165px; }
+  .userProfilePage { padding-bottom: 160px; }
+
   .page > section,
   .workspaceTitle {
     width: min(1200px, calc(100% - 48px));
@@ -192,8 +252,23 @@
 
   /* Figma Settings frame `1404:4076` uses a 1200×734 translucent workspace
      at x=120 with a 38 px radius. Keep the API-backed rows flexible inside it. */
-  .settings {
+  .page > .settings {
+    margin-top: 53px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .settingsTitle {
+    margin: 0;
+    font-size: 24px;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  .settingsWorkspace {
     min-height: 734px;
+    margin-top: 112px;
     box-sizing: border-box;
     padding: 30px 36px 36px;
     border-radius: 38px;
@@ -221,10 +296,60 @@
 
   .hero {
     min-height: 1020px;
+    align-content: start;
+    padding-top: 293px;
   }
 
   .avatar {
     width: 272px;
-    height: 272px;
+    height: 277px;
+  }
+
+  .hero .title {
+    margin-top: 12px;
+    font-size: 58px;
+    line-height: 1.12;
+  }
+
+  .hero p {
+    margin-top: 4px;
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .adminNav {
+    width: 776px;
+    min-height: 96px;
+    margin-top: 92px;
+    padding: 9px;
+    justify-content: space-between;
+  }
+
+  .adminNav a {
+    flex-basis: 48px;
+    width: 48px;
+    height: 76px;
+    border-radius: 38px;
+  }
+
+  .adminNav a[aria-current="page"] {
+    flex-basis: 160px;
+    min-width: 160px;
+    max-width: 170px;
+    padding: 8px 12px;
+    gap: 6px;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .adminNav a[aria-current="page"] .navLabel {
+    display: block;
+    font-size: 12px;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .adminNav i {
+    font-size: 22px;
   }
 }

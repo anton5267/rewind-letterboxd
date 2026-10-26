@@ -9,6 +9,7 @@ const Register = lazy(() => import("./auth/Register"));
 const ForgotPassword = lazy(() => import("./auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./auth/ResetPassword"));
 const Search = lazy(() => import("./pages/Search"));
+const FilmsDiscover = lazy(() => import("./pages/FilmsDiscover"));
 const GlobalSearch = lazy(() => import("./pages/GlobalSearch"));
 const Home = lazy(() => import("./pages/Home"));
 const MovieDetails = lazy(() => import("./pages/MovieDetails"));
@@ -53,6 +54,7 @@ function LocalizedApp() {
   return <Suspense fallback={<RouteLoading />}><Routes>
     <Route index element={<Navigate to="home" replace />} />
     <Route path="home" element={<Layout><Home /></Layout>} />
+    <Route path="films/discover" element={<Layout><FilmsDiscover /></Layout>} />
     <Route path="films" element={<Layout><Search /></Layout>} />
     <Route path="search" element={<Layout><GlobalSearch /></Layout>} />
     <Route path="films/:id" element={<Layout><MovieDetails /></Layout>} />
@@ -65,6 +67,7 @@ function LocalizedApp() {
     <Route path="journal" element={<Layout><Journal /></Layout>} />
     <Route path="journal/:slug" element={<Layout><JournalArticle /></Layout>} />
     <Route path="help" element={<Layout><ServicePage kind="help" /></Layout>} />
+    <Route path="faq" element={<Layout><ServicePage kind="faq" /></Layout>} />
     <Route path="contact" element={<Layout><ServicePage kind="contact" /></Layout>} />
     <Route path="rules" element={<Layout><ServicePage kind="rules" /></Layout>} />
     <Route path="privacy" element={<Layout><ServicePage kind="privacy" /></Layout>} />

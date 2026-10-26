@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { changePassword, deleteAccount, getProfile, getProfileCollection, getProfileRatings, getProfileReviews, getSocialLinks, updateSocialLinks, type ProfileCollection, type ProfilePage, type ProfileRating, type ProfileResponse, type ProfileReview, type SocialLink, updateProfile } from "../api/profile.api";
+import { clearMovieFlag } from "../api/movies.api";
+import { deleteReview as deleteReviewRequest, updateReview } from "../api/reviews.api";
 import { getNewsletterSubscription, updateNewsletterSubscription } from "../api/newsletter.api";
 import type { MoviePage } from "../api/search.api";
 import { getUserLists, type UserList } from "../api/lists.api";
@@ -8,7 +10,7 @@ import { getFollowers, getFollowing, getUserActivity, type ActivityPage, type Ne
 import ResilientImage from "../components/ResilientImage";
 import Pagination from "../components/Pagination";
 import RetryNotice from "../components/RetryNotice";
-import ProfileSettingsShell, { type ProfileSettingsTab } from "../components/ProfileSettingsShell";
+import ProfileSettingsShell, { type ProfileSettingsFeedback, type ProfileSettingsTab } from "../components/ProfileSettingsShell";
 import settingsStyles from "../components/ProfileSettingsShell.module.css";
 import ProfileListCard from "../components/ProfileListCard";
 import UserFollowRow from "../components/UserFollowRow";
@@ -55,6 +57,7 @@ export default function Profile() {
   const requestedCollection = new URLSearchParams(location.search).get("collection");
   const collectionKind: ProfileCollection = requestedCollection === "watchlist" || requestedCollection === "favorites" ? requestedCollection : "watched";
   const [collectionFiltersOpen, setCollectionFiltersOpen] = useState(false);
+  const collectionFilterButtonRef = useRef<HTMLButtonElement | null>(null);
   const { path, t, lang } = useLocale();
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
   const [activeProfileSection, setActiveProfileSection] = useActiveSection(profileSectionIds, "profile-overview", { enabled: profile !== null && !settingsTab, rootMargin: "-88px 0px -55% 0px", scopeKey: `${profile?.id ?? "loading"}:${profileView ?? "overview"}:${location.hash}` });
@@ -69,16 +72,28 @@ export default function Profile() {
   const [passwordConfirmError, setPasswordConfirmError] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [message, setMessage] = useState("");
+  const [settingsFeedback, setSettingsFeedback] = useState<ProfileSettingsFeedback | null>(null);
   const [error, setError] = useState("");
   const [collection, setCollection] = useState<MoviePage | null>(null);
   const [collectionPage, setCollectionPage] = useState(0);
   const [collectionLoading, setCollectionLoading] = useState(false);
   const [collectionError, setCollectionError] = useState(false);
   const [collectionAttempt, setCollectionAttempt] = useState(0);
+  const collectionHeadingRef = useRef<HTMLHeadingElement>(null);
+  const collectionMounted = useRef(false);
+  const collectionScopeGeneration = useRef(0);
+  const collectionRequest = useRef(0);
+  const pendingCollectionFocus = useRef<{ scope: number; request: number; origin: HTMLElement | null } | null>(null);
+  const collectionPageCarry = useRef<{ key: string; page: number; focus: NonNullable<typeof pendingCollectionFocus.current> } | null>(null);
+  const collectionScopeKey = JSON.stringify([lang, isAuth, user?.id ?? null, user?.role ?? null, settingsTab, profileView, collectionKind]);
+  const collectionToolbarHeadingRef = useRef<HTMLHeadingElement>(null);
+
   const [favoritePreview, setFavoritePreview] = useState<MoviePage | null>(null);
   const [favoritePreviewLoading, setFavoritePreviewLoading] = useState(false);
   const [favoritePreviewError, setFavoritePreviewError] = useState(false);
   const [favoritePreviewAttempt, setFavoritePreviewAttempt] = useState(0);
+  const [favoriteRemovalId, setFavoriteRemovalId] = useState<number | null>(null);
+  const favoriteSettingsRef = useRef<HTMLElement | null>(null);
   const [listMetadata, setListMetadata] = useState<UserList[] | null>(null);
   const [listMetadataLoading, setListMetadataLoading] = useState(false);
   const [listMetadataError, setListMetadataError] = useState(false);
@@ -93,6 +108,22 @@ export default function Profile() {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [reviewsError, setReviewsError] = useState(false);
   const [reviewsAttempt, setReviewsAttempt] = useState(0);
+  const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
+  const [reviewDraft, setReviewDraft] = useState("");
+  const [reviewActionBusy, setReviewActionBusy] = useState<"save" | "delete" | null>(null);
+  const [reviewActionMessage, setReviewActionMessage] = useState<"reviewUpdated" | "reviewDeleted" | null>(null);
+  const [reviewActionError, setReviewActionError] = useState<"updateReviewError" | "deleteReviewError" | null>(null);
+  const reviewEditButtonRefs = useRef(new Map<number, HTMLButtonElement>());
+  const reviewHeadingRef = useRef<HTMLHeadingElement>(null);
+  const reviewErrorRef = useRef<HTMLParagraphElement>(null);
+  const reviewMounted = useRef(false);
+  const reviewScopeGeneration = useRef(0);
+  const reviewsRequest = useRef(0);
+  const reviewMutation = useRef<object | null>(null);
+  const reviewActor = user?.id ?? null;
+  const currentReviewActor = useRef(reviewActor);
+  const pendingReviewFocus = useRef<{ scope: number; request: number; origin: HTMLElement | null; target: "edit" | "heading" | "error"; id?: number } | null>(null);
+  const reviewPageCarry = useRef<{ page: number; lang: string; actor: number | null; focus: NonNullable<typeof pendingReviewFocus.current> } | null>(null);
   const [following, setFollowing] = useState<NetworkPage | null>(null);
   const [followingPage, setFollowingPage] = useState(0);
   const [followingLoading, setFollowingLoading] = useState(false);
@@ -103,7 +134,28 @@ export default function Profile() {
   const [followersLoading, setFollowersLoading] = useState(false);
   const [followersError, setFollowersError] = useState(false);
   const [followersAttempt, setFollowersAttempt] = useState(0);
-  const refreshNetwork = useCallback(() => { setFollowingAttempt(value => value + 1); setFollowersAttempt(value => value + 1); }, []);
+  const networkMounted = useRef(false);
+  const networkToolbarHeadingRef = useRef<HTMLHeadingElement>(null);
+  const networkRequests = useRef({ following: 0, followers: 0 });
+  const networkFocusScope = JSON.stringify([location.key, lang, isAuth, user?.id ?? null, user?.role ?? null, profileView, settingsTab, followingPage, followersPage]);
+  const currentNetworkFocusScope = useRef(networkFocusScope);
+  currentNetworkFocusScope.current = networkFocusScope;
+  const networkFocusOrigin = useRef<{ element: HTMLElement; scope: string } | null>(null);
+  const pendingNetworkFocus = useRef<{ origin: HTMLElement; memberId: string; action: "more" | "follow"; sectionId: "profile-following" | "profile-followers"; scope: string; request: number } | null>(null);
+  const refreshNetwork = useCallback(() => {
+    const captured = networkFocusOrigin.current;
+    const origin = captured?.element;
+    const sectionId = origin?.closest("section")?.id;
+    const memberId = origin?.closest<HTMLElement>("[data-network-member-id]")?.dataset.networkMemberId;
+    const action = origin?.dataset.networkAction;
+    pendingNetworkFocus.current = captured?.scope === currentNetworkFocusScope.current && origin && memberId && (action === "more" || action === "follow") &&
+      (sectionId === "profile-following" || sectionId === "profile-followers") && (document.activeElement === origin || document.activeElement === document.body)
+      ? { origin, memberId, action, sectionId, scope: currentNetworkFocusScope.current, request: networkRequests.current[sectionId === "profile-following" ? "following" : "followers"] + 1 } : null;
+    setFollowingLoading(true);
+    setFollowersLoading(true);
+    setFollowingAttempt(value => value + 1);
+    setFollowersAttempt(value => value + 1);
+  }, []);
   const [activity, setActivity] = useState<ActivityPage | null>(null);
   const [activityPage, setActivityPage] = useState(0);
   const [activityLoading, setActivityLoading] = useState(false);
@@ -137,9 +189,126 @@ export default function Profile() {
   const passwordMutation = useRef(0);
   const deleteMutation = useRef(0);
   const previousSettingsView = useRef(Boolean(settingsTab));
+  const settingsMounted = useRef(false);
+  const settingsFeedbackGeneration = useRef(0);
+  const settingsFeedbackSequence = useRef(0);
   const socialLinkLabelKeys: Record<SocialLinkPlatform, TranslationKey> = { website: "socialWebsite", instagram: "socialInstagram", tiktok: "socialTiktok", letterboxd: "socialLetterboxd" };
 
+  useLayoutEffect(() => {
+    collectionMounted.current = true;
+    return () => {
+      collectionMounted.current = false;
+      collectionScopeGeneration.current += 1;
+      pendingCollectionFocus.current = null;
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    collectionScopeGeneration.current += 1;
+    const carry = collectionPageCarry.current;
+    pendingCollectionFocus.current = carry && carry.key === collectionScopeKey && carry.page === collectionPage && pendingCollectionFocus.current === carry.focus
+      ? { ...carry.focus, scope: collectionScopeGeneration.current } : null;
+    collectionPageCarry.current = null;
+  }, [collectionScopeKey, collectionPage]);
+
+  const changeCollectionPage = (nextPage: number) => {
+    if (nextPage === collectionPage || collectionLoading) return;
+    const focus = { scope: collectionScopeGeneration.current, request: collectionRequest.current + 1, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
+    pendingCollectionFocus.current = focus;
+    collectionPageCarry.current = { key: collectionScopeKey, page: nextPage, focus };
+    setCollectionLoading(true);
+    setCollectionPage(nextPage);
+  };
+
+  const retryCollection = () => {
+    pendingCollectionFocus.current = { scope: collectionScopeGeneration.current, request: collectionRequest.current + 1, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
+    setCollectionLoading(true);
+    setCollectionAttempt(value => value + 1);
+  };
+
   activeUserId.current = user?.id ?? null;
+
+  useLayoutEffect(() => {
+    networkMounted.current = true;
+    return () => {
+      networkMounted.current = false;
+      pendingNetworkFocus.current = null;
+      networkFocusOrigin.current = null;
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    pendingNetworkFocus.current = null;
+    networkFocusOrigin.current = null;
+  }, [networkFocusScope]);
+
+  useEffect(() => {
+    const pending = pendingNetworkFocus.current;
+    if (!pending) return;
+    const followingSection = pending.sectionId === "profile-following";
+    const request = networkRequests.current[followingSection ? "following" : "followers"];
+    const settled = followingSection ? !followingLoading && (followingError || following !== null) : !followersLoading && (followersError || followers !== null);
+    if (!settled || request !== pending.request) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (!networkMounted.current || pendingNetworkFocus.current !== pending || pending.scope !== currentNetworkFocusScope.current) return;
+      pendingNetworkFocus.current = null;
+      if (networkRequests.current[followingSection ? "following" : "followers"] !== pending.request) return;
+      if (document.activeElement !== document.body && document.activeElement !== pending.origin) return;
+      const section = document.getElementById(pending.sectionId);
+      const row = Array.from(section?.querySelectorAll<HTMLElement>("[data-network-member-id]") ?? []).find(item => item.dataset.networkMemberId === pending.memberId);
+      const action = row?.querySelector<HTMLButtonElement>(`[data-network-action="${pending.action}"]:not(:disabled)`);
+      const mobileTitle = networkToolbarHeadingRef.current;
+      const mobileBounds = mobileTitle?.getBoundingClientRect();
+      const target = action?.getClientRects().length ? action : mobileBounds && mobileBounds.width > 1 && mobileBounds.height > 1 ? mobileTitle : section?.querySelector<HTMLElement>("h2");
+      if (target) {
+        if (!target.hasAttribute("tabindex") && !target.matches("button, a, input, select, textarea")) target.tabIndex = -1;
+        target.focus();
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [following, followingError, followingLoading, followers, followersError, followersLoading, networkFocusScope]);
+
+  useLayoutEffect(() => {
+    reviewMounted.current = true;
+    return () => {
+      reviewMounted.current = false;
+      reviewScopeGeneration.current += 1;
+      pendingReviewFocus.current = null;
+      reviewMutation.current = null;
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    reviewScopeGeneration.current += 1;
+    const carry = reviewPageCarry.current;
+    pendingReviewFocus.current = carry && profileView === "reviews" && !settingsTab && carry.page === reviewsPage && carry.lang === lang && carry.actor === reviewActor && pendingReviewFocus.current === carry.focus
+      ? { ...carry.focus, scope: reviewScopeGeneration.current } : null;
+    reviewPageCarry.current = null;
+    setEditingReviewId(null);
+    setReviewDraft("");
+    setReviewActionMessage(null);
+    setReviewActionError(null);
+    if (currentReviewActor.current !== reviewActor) {
+      reviewMutation.current = null;
+      setReviewActionBusy(null);
+    }
+    currentReviewActor.current = reviewActor;
+  }, [isAuth, user?.id, lang, settingsTab, profileView, reviewsPage]);
+
+  useLayoutEffect(() => {
+    settingsMounted.current = true;
+    return () => {
+      settingsMounted.current = false;
+      settingsFeedbackGeneration.current += 1;
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    settingsFeedbackGeneration.current += 1;
+    setSettingsFeedback(null);
+    setMessage("");
+    setError("");
+  }, [settingsTab, profileView, lang, user?.id]);
 
   useEffect(() => {
     identityMutation.current += 1;
@@ -254,22 +423,48 @@ export default function Profile() {
   useEffect(() => {
     if (!isAuth) return;
     let current = true;
+    const scope = collectionScopeGeneration.current;
+    const request = ++collectionRequest.current;
+    const isCurrent = () => current && collectionMounted.current && collectionScopeGeneration.current === scope && collectionRequest.current === request;
     setCollectionLoading(true);
-    setCollectionError(false);
     setCollection(null);
+    setCollectionError(false);
     getProfileCollection(collectionKind, collectionPage)
       .then(({ data }) => {
-        if (!current) return;
+        if (!isCurrent()) return;
         if (isPageOutOfRange(collectionPage, data.totalPages)) {
-          setCollectionPage(getLastPageIndex(data.totalPages));
+          const page = getLastPageIndex(data.totalPages);
+          const pending = pendingCollectionFocus.current;
+          if (pending && pending.scope === scope && pending.request === request) {
+            const focus = { ...pending, request: request + 1 };
+            pendingCollectionFocus.current = focus;
+            collectionPageCarry.current = { key: collectionScopeKey, page, focus };
+          }
+          setCollectionPage(page);
           return;
         }
         setCollection(data);
       })
-      .catch(() => { if (current) setCollectionError(true); })
-      .finally(() => { if (current) setCollectionLoading(false); });
+      .catch(() => { if (isCurrent()) setCollectionError(true); })
+      .finally(() => { if (isCurrent()) setCollectionLoading(false); });
     return () => { current = false; };
-  }, [isAuth, collectionKind, collectionPage, collectionAttempt, user?.id]);
+  }, [collectionAttempt, collectionPage, collectionScopeKey, isAuth]);
+
+  useEffect(() => {
+    const pending = pendingCollectionFocus.current;
+    if (!pending || collectionLoading || collectionRequest.current !== pending.request || (!collectionError && collection === null)) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (pendingCollectionFocus.current !== pending) return;
+      pendingCollectionFocus.current = null;
+      if (!collectionMounted.current || collectionScopeGeneration.current !== pending.scope || collectionRequest.current !== pending.request) return;
+      if (document.activeElement !== document.body && document.activeElement !== pending.origin) return;
+      const mobileTitle = collectionToolbarHeadingRef.current;
+      const mobileBounds = mobileTitle?.getBoundingClientRect();
+      const target = mobileBounds && mobileBounds.width > 1 && mobileBounds.height > 1 ? mobileTitle : collectionHeadingRef.current;
+      target?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [collection, collectionError, collectionLoading, collectionPage, collectionScopeKey]);
 
   useEffect(() => {
     setFavoritePreview(null);
@@ -312,53 +507,87 @@ export default function Profile() {
   useEffect(() => {
     if (!isAuth) return;
     let current = true;
+    const request = ++reviewsRequest.current;
+    const actor = reviewActor;
+    const isCurrent = () => current && reviewMounted.current && currentReviewActor.current === actor && reviewsRequest.current === request;
     setReviewsLoading(true);
     setReviewsError(false);
     setReviewsHistory(null);
     getProfileReviews(reviewsPage)
       .then(({ data }) => {
-        if (!current) return;
+        if (!isCurrent()) return;
         if (isPageOutOfRange(reviewsPage, data.totalPages)) {
-          setReviewsPage(getLastPageIndex(data.totalPages));
+          const page = getLastPageIndex(data.totalPages);
+          const pending = pendingReviewFocus.current;
+          if (pending && pending.target !== "error" && pending.scope === reviewScopeGeneration.current && pending.request === request) {
+            const focus = { ...pending, request: request + 1 };
+            pendingReviewFocus.current = focus;
+            reviewPageCarry.current = { page, lang, actor, focus };
+          }
+          setReviewsPage(page);
           return;
         }
         setReviewsHistory(data);
       })
-      .catch(() => { if (current) setReviewsError(true); })
-      .finally(() => { if (current) setReviewsLoading(false); });
+      .catch(() => { if (isCurrent()) setReviewsError(true); })
+      .finally(() => { if (isCurrent()) setReviewsLoading(false); });
     return () => { current = false; };
-  }, [isAuth, reviewsPage, reviewsAttempt, user?.id]);
+  }, [isAuth, reviewsPage, reviewsAttempt, user?.id, lang]);
+
+  useEffect(() => {
+    const pending = pendingReviewFocus.current;
+    if (!pending || reviewActionBusy !== null) return;
+    if (pending.target !== "error" && (editingReviewId !== null || reviewsLoading || reviewsRequest.current !== pending.request || (!reviewsError && reviewsHistory === null))) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (pendingReviewFocus.current !== pending) return;
+      pendingReviewFocus.current = null;
+      if (!reviewMounted.current || reviewScopeGeneration.current !== pending.scope) return;
+      if (pending.target !== "error" && reviewsRequest.current !== pending.request) return;
+      if (document.activeElement !== document.body && document.activeElement !== pending.origin) return;
+      if (pending.target === "error") reviewErrorRef.current?.focus();
+      else if (pending.target === "edit" && pending.id !== undefined) {
+        const button = reviewEditButtonRefs.current.get(pending.id);
+        if (button && !button.disabled) button.focus();
+        else reviewHeadingRef.current?.focus();
+      } else reviewHeadingRef.current?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [editingReviewId, reviewActionBusy, reviewActionError, reviewsError, reviewsHistory, reviewsLoading, reviewsPage, profileView, settingsTab, lang, user?.id]);
 
   useEffect(() => {
     if (!isAuth || !user?.id) return;
     let current = true;
+    const request = ++networkRequests.current.following;
+    const isCurrent = () => current && networkMounted.current && networkRequests.current.following === request;
     setFollowingLoading(true);
     setFollowingError(false);
     setFollowing(null);
     getFollowing(user.id, followingPage)
       .then(({ data }) => {
-        if (!current) return;
+        if (!isCurrent()) return;
         if (isPageOutOfRange(followingPage, data.totalPages)) {
           setFollowingPage(getLastPageIndex(data.totalPages));
           return;
         }
         setFollowing(data);
       })
-      .catch(() => { if (current) setFollowingError(true); })
-      .finally(() => { if (current) setFollowingLoading(false); });
+      .catch(() => { if (isCurrent()) setFollowingError(true); })
+      .finally(() => { if (isCurrent()) setFollowingLoading(false); });
     return () => { current = false; };
   }, [isAuth, user?.id, followingPage, followingAttempt]);
 
   useEffect(() => {
     if (!isAuth || !user?.id) return;
     let current = true;
+    const request = ++networkRequests.current.followers;
+    const isCurrent = () => current && networkMounted.current && networkRequests.current.followers === request;
     setFollowers(null); setFollowersLoading(true); setFollowersError(false);
     getFollowers(user.id, followersPage).then(({ data }) => {
-      if (!current) return;
+      if (!isCurrent()) return;
       if (isPageOutOfRange(followersPage, data.totalPages)) { setFollowersPage(getLastPageIndex(data.totalPages)); return; }
       setFollowers(data);
-    }).catch(() => { if (current) setFollowersError(true); })
-      .finally(() => { if (current) setFollowersLoading(false); });
+    }).catch(() => { if (isCurrent()) setFollowersError(true); })
+      .finally(() => { if (isCurrent()) setFollowersLoading(false); });
     return () => { current = false; };
   }, [isAuth, user?.id, followersPage, followersAttempt]);
 
@@ -434,6 +663,19 @@ export default function Profile() {
 
   const { setTabRef, handleKeyDown } = useRovingTabs(collectionKinds, chooseCollection);
 
+  const closeCollectionFiltersOnEscape = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key !== "Escape" || !collectionFiltersOpen) return false;
+    event.preventDefault();
+    setCollectionFiltersOpen(false);
+    window.requestAnimationFrame(() => collectionFilterButtonRef.current?.focus());
+    return true;
+  };
+
+  const handleCollectionTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, kind: ProfileCollection) => {
+    if (closeCollectionFiltersOnEscape(event)) return;
+    handleKeyDown(event, kind);
+  };
+
   const focusIdentityForm = () => {
     setProfileActionsOpen(false);
     navigate(`${path("/profile")}?settings=profile`);
@@ -463,12 +705,23 @@ export default function Profile() {
     if (nameBusy) return;
     const requestId = ++identityMutation.current;
     const requestUserId = activeUserId.current;
-    const isCurrentRequest = () => requestUserId !== null && activeUserId.current === requestUserId && identityMutation.current === requestId;
+    const scope = ++settingsFeedbackGeneration.current;
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    const origin = submitter instanceof HTMLElement ? submitter : document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const isCurrentRequest = () => settingsMounted.current && requestUserId !== null && activeUserId.current === requestUserId && identityMutation.current === requestId;
+    const report = (kind: "success" | "error", text: string) => {
+      if (!isCurrentRequest() || settingsFeedbackGeneration.current !== scope) return;
+      if (kind === "success") { setError(""); setMessage(text); }
+      else { setMessage(""); setError(text); }
+      setSettingsFeedback({ id: ++settingsFeedbackSequence.current, origin, kind });
+    };
     setNameBusy(true);
+    setSettingsFeedback(null);
+    setMessage("");
     setError("");
     try {
       const normalizedAvatarUrl = safeHttpUrl(avatarUrl);
-      if (fields !== "name" && avatarUrl.trim() && !normalizedAvatarUrl) { if (isCurrentRequest()) setError(t("invalidAvatarUrl")); return; }
+      if (fields !== "name" && avatarUrl.trim() && !normalizedAvatarUrl) { report("error", t("invalidAvatarUrl")); return; }
       const { data } = await updateProfile({
         ...(fields !== "avatar" ? { displayName: displayName.trim() } : {}),
         ...(fields !== "name" ? { avatarUrl: normalizedAvatarUrl ?? "" } : {}),
@@ -477,8 +730,8 @@ export default function Profile() {
       setProfile(data);
       if (fields !== "avatar") setDisplayName(data.displayName ?? "");
       if (fields !== "name") setAvatarUrl(data.avatarUrl ?? "");
-      setMessage(fields === "avatar" ? (lang === "uk" ? "Аватар оновлено." : "Avatar updated.") : t("nameSaved"));
-    } catch { if (isCurrentRequest()) setError(t("saveNameError")); }
+      report("success", fields === "avatar" ? (lang === "uk" ? "Аватар оновлено." : "Avatar updated.") : t("nameSaved"));
+    } catch { report("error", t(fields === "avatar" ? "saveAvatarError" : "saveNameError")); }
     finally { if (isCurrentRequest()) setNameBusy(false); }
   };
 
@@ -571,8 +824,19 @@ export default function Profile() {
     if (socialLinksBusy) return;
     const requestId = ++socialLinksMutation.current;
     const requestUserId = activeUserId.current;
-    const isCurrentRequest = () => requestUserId !== null && activeUserId.current === requestUserId && socialLinksMutation.current === requestId;
+    const scope = ++settingsFeedbackGeneration.current;
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    const origin = submitter instanceof HTMLElement ? submitter : document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const isCurrentRequest = () => settingsMounted.current && requestUserId !== null && activeUserId.current === requestUserId && socialLinksMutation.current === requestId;
+    const report = (kind: "success" | "error", text: string) => {
+      if (!isCurrentRequest() || settingsFeedbackGeneration.current !== scope) return;
+      if (kind === "success") { setError(""); setMessage(text); }
+      else { setMessage(""); setError(text); }
+      setSettingsFeedback({ id: ++settingsFeedbackSequence.current, origin, kind });
+    };
     setSocialLinksBusy(true);
+    setSettingsFeedback(null);
+    setMessage("");
     setError("");
     try {
       const links: SocialLink[] = [];
@@ -580,15 +844,42 @@ export default function Profile() {
         const value = socialLinkValues[platform].trim();
         if (!value) continue;
         const normalizedUrl = safeHttpUrl(value);
-        if (!normalizedUrl) { if (isCurrentRequest()) setError(t("invalidSocialLinkUrl")); return; }
+        if (!normalizedUrl) { report("error", t("invalidSocialLinkUrl")); return; }
         links.push({ platform, url: normalizedUrl });
       }
       const { data } = await updateSocialLinks(links);
       if (!isCurrentRequest()) return;
       applySocialLinks(data);
-      setMessage(t("socialLinksSaved"));
-    } catch { if (isCurrentRequest()) setError(t("socialLinksSaveError")); }
+      report("success", t("socialLinksSaved"));
+    } catch { report("error", t("socialLinksSaveError")); }
     finally { if (isCurrentRequest()) setSocialLinksBusy(false); }
+  };
+
+  const removeFavorite = async (movieId: number, index: number) => {
+    if (favoriteRemovalId !== null) return;
+    setFavoriteRemovalId(movieId);
+    setError("");
+    setMessage("");
+    try {
+      await clearMovieFlag(movieId, "favorite");
+      setFavoritePreview(current => current ? {
+        ...current,
+        content: current.content.filter(movie => movie.id !== movieId),
+        totalElements: Math.max(0, current.totalElements - 1),
+      } : current);
+      setProfile(current => current ? { ...current, stats: { ...current.stats, favorites: Math.max(0, current.stats.favorites - 1) } } : current);
+      setMessage(t("favoriteRemoved"));
+      requestAnimationFrame(() => {
+        const section = favoriteSettingsRef.current;
+        const buttons = section?.querySelectorAll<HTMLButtonElement>("[data-favorite-remove]");
+        const next = buttons?.item(Math.min(index, (buttons?.length ?? 1) - 1));
+        (next ?? section?.querySelector<HTMLElement>("h2"))?.focus();
+      });
+    } catch {
+      setError(t("removeItemError"));
+    } finally {
+      setFavoriteRemovalId(null);
+    }
   };
 
   const passwordForm = <form id="settings-form-authentication" className={styles.form} aria-labelledby="profile-password-form-title" onSubmit={savePassword} aria-busy={passwordBusy}>
@@ -616,6 +907,7 @@ export default function Profile() {
     busy={passwordBusy || nameBusy || socialLinksBusy}
     error={error}
     message={message}
+    feedback={settingsFeedback}
     onRetry={() => setProfileAttempt(value => value + 1)}
   >{profile && <>
     {settingsTab === "authentication" && passwordForm}
@@ -627,14 +919,17 @@ export default function Profile() {
         <div><label htmlFor="settings-email">{t("email")}</label><output id="settings-email">{profile.email}</output></div>
         <button type="submit" disabled={nameBusy}>{nameBusy ? t("saving") : t("save")}</button>
       </form>
-      <section className={settingsStyles.favorites} aria-labelledby="settings-favorites-title" aria-busy={favoritePreviewLoading}>
-        <h2 id="settings-favorites-title">{t("favoriteFilms")}</h2>
+      <section ref={favoriteSettingsRef} className={settingsStyles.favorites} aria-labelledby="settings-favorites-title" aria-busy={favoritePreviewLoading || favoriteRemovalId !== null}>
+        <h2 id="settings-favorites-title" tabIndex={-1}>{t("favoriteFilms")}</h2>
         {favoritePreviewLoading && <p role="status">{t("loading")}</p>}
         {favoritePreviewError && <RetryNotice className={settingsStyles.error} message={t("loadCollectionError")} retryLabel={t("retry")} onRetry={() => setFavoritePreviewAttempt(value => value + 1)} />}
         {!favoritePreviewLoading && !favoritePreviewError && favoritePreview && (favoritePreview.content.length === 0 ? <p>{t("noCollectionFilms")}</p> : <ul>
-          {favoritePreview.content.slice(0, 4).map(movie => {
+          {favoritePreview.content.slice(0, 4).map((movie, index) => {
             const title = editorialText(movie.title, t("untitledFilm"));
-            return <li key={movie.id}><Link to={path(`/films/${movie.id}`)} aria-label={title}><ResilientImage src={movie.photoUrl} alt="" loading="lazy" fallback={<span>{title.slice(0, 1).toUpperCase()}</span>} /></Link></li>;
+            return <li key={movie.id}>
+              <Link to={path(`/films/${movie.id}`)} aria-label={title}><ResilientImage src={movie.photoUrl} alt="" loading="lazy" fallback={<span>{title.slice(0, 1).toUpperCase()}</span>} /></Link>
+              <button className={settingsStyles.favoriteRemove} data-favorite-remove type="button" aria-label={`${t("remove")} ${title}`} disabled={favoriteRemovalId !== null} onClick={() => void removeFavorite(movie.id, index)}>{favoriteRemovalId === movie.id ? <span role="status">{t("loading")}</span> : <span aria-hidden="true">×</span>}</button>
+            </li>;
           })}
         </ul>)}
         <Link className={settingsStyles.manageLink} to={`${path("/profile")}?view=collection&collection=favorites#profile-collections`}>{t("favoriteFilms")} <span aria-hidden="true">→</span></Link>
@@ -659,8 +954,9 @@ export default function Profile() {
 
   const pageBusy = profileLoading || followingLoading || activityLoading || newsletterLoading || socialLinksLoading || collectionLoading || favoritePreviewLoading || ratingsLoading || reviewsLoading || listMetadataLoading || nameBusy || passwordBusy || deleteBusy || newsletterBusy || socialLinksBusy;
 
-  const renderReviewCards = (items: ProfileReview[], withScore = true) => items.map(item => {
+  const renderReviewCards = (items: ProfileReview[], withScore = true, editable = false) => items.map(item => {
     const title = editorialText(item.movieTitle, t("untitledFilm"));
+    const isEditing = editable && editingReviewId === item.reviewId;
     const poster = item.moviePhotoUrl === undefined
       ? profile?.recentRatings.find(rating => rating.movieId === item.movieId)?.moviePhotoUrl
       : item.moviePhotoUrl;
@@ -669,18 +965,108 @@ export default function Profile() {
         <ResilientImage className={styles.railPoster} src={poster} alt="" loading="lazy" fallback={<span className={styles.railPosterFallback}>{title.slice(0, 1).toUpperCase()}</span>} />
       </Link>
       <div className={styles.reviewCopy}>
-        <div className={styles.reviewHeading}><h3><Link to={path(`/films/${item.movieId}`)}>{title}</Link></h3>{withScore && profile && <ProfileReviewScore movieId={item.movieId} ownerId={profile.id} title={title} />}</div>
+        <div className={styles.reviewHeading}>
+          <h3><Link to={path(`/films/${item.movieId}`)}>{title}</Link></h3>
+          <div className={styles.reviewHeadingActions}>
+            {withScore && profile && <ProfileReviewScore movieId={item.movieId} ownerId={profile.id} title={title} />}
+            {editable && profileView === "reviews" && !isEditing && <div className={styles.reviewActions}>
+              <button ref={button => { if (button) reviewEditButtonRefs.current.set(item.reviewId, button); else reviewEditButtonRefs.current.delete(item.reviewId); }} type="button" disabled={reviewActionBusy !== null} aria-label={`${t("editReview")}: ${title}`} title={t("editReview")} onClick={() => { pendingReviewFocus.current = null; setReviewDraft(item.content); setEditingReviewId(item.reviewId); setReviewActionMessage(null); setReviewActionError(null); }}><i className="fa-solid fa-pen" aria-hidden="true" /><span className={styles.mobileReviewActionLabel}>{t("editReview")}</span></button>
+              <button type="button" disabled={reviewActionBusy !== null} aria-label={`${t("deleteReview")}: ${title}`} title={t("deleteReview")} onClick={event => void removeProfileReview(item, event.currentTarget)}><i className="fa-solid fa-trash" aria-hidden="true" /><span className={styles.mobileReviewActionLabel}>{t("deleteReview")}</span></button>
+            </div>}
+          </div>
+        </div>
         <time dateTime={item.updatedAt}>{formatDateTime(item.updatedAt, lang)}</time>
-        <Link className={styles.reviewContent} to={path(`/reviews/${item.reviewId}`)}>{item.content}</Link>
+        {isEditing ? <form className={styles.reviewEditor} onSubmit={event => { void saveProfileReview(event, item); }} aria-busy={reviewActionBusy === "save"}>
+          <label className="srOnly" htmlFor={`profile-review-content-${item.reviewId}`}>{t("review")}</label>
+          <textarea id={`profile-review-content-${item.reviewId}`} aria-label={t("review")} autoFocus required minLength={1} maxLength={5000} disabled={reviewActionBusy !== null} value={reviewDraft} onChange={event => setReviewDraft(event.target.value)} onKeyDown={event => { if (event.key === "Escape" && reviewActionBusy === null) { event.preventDefault(); pendingReviewFocus.current = { scope: reviewScopeGeneration.current, request: reviewsRequest.current, origin: event.currentTarget, target: "edit", id: item.reviewId }; setEditingReviewId(null); setReviewDraft(""); } }} />
+          <div className={styles.reviewEditorActions}>
+            <button type="button" className={styles.reviewDeleteButton} disabled={reviewActionBusy !== null} onClick={event => void removeProfileReview(item, event.currentTarget)}>{reviewActionBusy === "delete" ? t("deleting") : t("deleteReview")}</button>
+            <button type="submit" className={styles.reviewSaveButton} disabled={reviewActionBusy !== null || reviewDraft.trim().length === 0}>{reviewActionBusy === "save" ? t("saving") : t("saveReview")}</button>
+          </div>
+        </form> : <Link className={styles.reviewContent} to={path(`/reviews/${item.reviewId}`)}>{item.content}</Link>}
       </div>
     </li>;
   });
 
+  const saveProfileReview = async (event: React.FormEvent<HTMLFormElement>, item: ProfileReview) => {
+    event.preventDefault();
+    const content = reviewDraft.trim();
+    if (reviewActionBusy !== null || reviewMutation.current !== null || !content || content.length > 5000) return;
+    const token = {};
+    reviewMutation.current = token;
+    const actor = reviewActor;
+    const scope = reviewScopeGeneration.current;
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    const origin = submitter instanceof HTMLElement ? submitter : document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const sameActor = () => reviewMounted.current && actor !== null && currentReviewActor.current === actor && reviewMutation.current === token;
+    const sameScope = () => sameActor() && reviewScopeGeneration.current === scope;
+    pendingReviewFocus.current = null;
+    setReviewActionBusy("save");
+    setReviewActionMessage(null);
+    setReviewActionError(null);
+    try {
+      const { data: updated } = await updateReview(item.reviewId, { content });
+      if (!sameActor()) return;
+      // Preserve cached poster/timestamp fields: the PATCH DTO only supplies content/createdAt.
+      setProfile(current => current?.id === actor ? { ...current, recentReviews: current.recentReviews.map(review => review.reviewId === item.reviewId ? { ...review, content: updated.content } : review) } : current);
+      if (sameScope()) {
+        setReviewActionMessage("reviewUpdated");
+        pendingReviewFocus.current = { scope, request: reviewsRequest.current + 1, origin, target: "edit", id: item.reviewId };
+        setEditingReviewId(null);
+        setReviewDraft("");
+      }
+      setReviewsLoading(true);
+      setReviewsAttempt(value => value + 1);
+    } catch {
+      if (!sameScope()) return;
+      setReviewActionError("updateReviewError");
+      pendingReviewFocus.current = { scope, request: reviewsRequest.current, origin, target: "error" };
+    } finally {
+      if (sameActor()) { reviewMutation.current = null; setReviewActionBusy(null); }
+    }
+  };
+
+  const removeProfileReview = async (item: ProfileReview, origin: HTMLButtonElement) => {
+    if (reviewActionBusy !== null || reviewMutation.current !== null || !window.confirm(t("deleteReviewConfirm"))) return;
+    const token = {};
+    reviewMutation.current = token;
+    const actor = reviewActor;
+    const scope = reviewScopeGeneration.current;
+    const sameActor = () => reviewMounted.current && actor !== null && currentReviewActor.current === actor && reviewMutation.current === token;
+    const sameScope = () => sameActor() && reviewScopeGeneration.current === scope;
+    pendingReviewFocus.current = null;
+    setReviewActionBusy("delete");
+    setReviewActionMessage(null);
+    setReviewActionError(null);
+    try {
+      await deleteReviewRequest(item.reviewId);
+      if (!sameActor()) return;
+      setProfile(current => current?.id === actor ? { ...current, recentReviews: current.recentReviews.filter(review => review.reviewId !== item.reviewId), stats: { ...current.stats, reviews: Math.max(0, current.stats.reviews - 1) } } : current);
+      if (sameScope()) {
+        setReviewActionMessage("reviewDeleted");
+        pendingReviewFocus.current = { scope, request: reviewsRequest.current + 1, origin, target: "heading" };
+        setEditingReviewId(null);
+        setReviewDraft("");
+      }
+      setReviewsLoading(true);
+      setReviewsAttempt(value => value + 1);
+    } catch {
+      if (!sameScope()) return;
+      setReviewActionError("deleteReviewError");
+      pendingReviewFocus.current = { scope, request: reviewsRequest.current, origin, target: "error" };
+    } finally {
+      if (sameActor()) { reviewMutation.current = null; setReviewActionBusy(null); }
+    }
+  };
+
   const filmsView = profileView === "collection" && collectionKind === "watched";
   const viewTitle = networkView ? t(profileView === "followers" ? "followers" : "following") : profileView === "ratings" ? t("allRatings") : profileView === "lists" ? t("searchLists") : profileView === "reviews" ? t("reviews") : filmsView ? t("films") : collectionKind === "favorites" ? t("likes") : t("watchlist");
-  return <FollowActionsProvider><main className={styles.page} data-profile-view={profileView ?? undefined} data-network-view={networkView || undefined} data-films-view={filmsView || networkView} aria-labelledby="profile-page-title" aria-busy={pageBusy || followersLoading}>
+  return <FollowActionsProvider><main className={styles.page} data-profile-view={profileView ?? undefined} data-network-view={networkView || undefined} data-films-view={filmsView || undefined} onFocusCapture={event => {
+    const target = event.target;
+    if (target instanceof HTMLElement && !target.closest('[role="dialog"]')) networkFocusOrigin.current = target.matches("[data-network-action]") ? { element: target, scope: currentNetworkFocusScope.current } : null;
+  }} aria-labelledby="profile-page-title" aria-busy={pageBusy || followersLoading}>
     <div className={styles.content}>
-    <h1 className={styles.pageTitle} id="profile-page-title">{profileView ? viewTitle : t("myProfile")}</h1>
+    <h1 className={profileView === "reviews" || filmsView || networkView ? "srOnly" : styles.pageTitle} id="profile-page-title">{profileView ? viewTitle : t("myProfile")}</h1>
     {error && <p className={styles.alert} id="profile-action-error" role="alert">{error}</p>}
     {message && <p className={styles.status} role="status">{message}</p>}
     {profileLoading && <p className={styles.feedback} role="status">{t("loading")}</p>}
@@ -688,8 +1074,8 @@ export default function Profile() {
     {profile && <>
       {(filmsView || networkView) && <div className={styles.collectionToolbar}>
         <Link to={sectionTarget("profile-overview", null)} aria-label={t("profile")}>←</Link>
-        <h2>{viewTitle}</h2>
-        {filmsView ? <button type="button" aria-label={t("filters")} aria-expanded={collectionFiltersOpen} aria-controls="profile-collection-filters" onClick={() => setCollectionFiltersOpen(value => !value)}><i className="fa-solid fa-sliders" aria-hidden="true" /></button> : <span />}
+        <h2 ref={filmsView ? collectionToolbarHeadingRef : networkView ? networkToolbarHeadingRef : undefined} tabIndex={filmsView || networkView ? -1 : undefined}>{viewTitle}</h2>
+        {filmsView ? <button ref={collectionFilterButtonRef} type="button" aria-label={t("filters")} aria-expanded={collectionFiltersOpen} aria-controls="profile-collection-filters" onClick={() => setCollectionFiltersOpen(value => !value)} onKeyDown={event => { closeCollectionFiltersOnEscape(event); }}><i className="fa-solid fa-sliders" aria-hidden="true" /></button> : <span className={styles.toolbarAdornment} aria-hidden="true"><i className="fa-solid fa-sliders" /></span>}
       </div>}
       <section className={styles.hero} aria-labelledby="profile-identity">
         {profileView === "lists" && <Link className={styles.heroCreate} to={path("/lists")} aria-label={t("newList")}>＋</Link>}
@@ -703,7 +1089,8 @@ export default function Profile() {
             <button type="button" role="menuitem" onClick={() => { void handleProfileLogout(); }}>{t("logout")}</button>
           </div>}
         </div>
-        {profileView ? <Link className={styles.heroEdit} to={sectionTarget("profile-overview", null)} aria-label={t("profile")}>←</Link> : <button className={styles.heroEdit} type="button" aria-label={t("accountSettings")} onClick={openProfileSettings}>
+        {(profileView === "reviews" || networkView) && <button className={styles.heroProfileEdit} type="button" onClick={openProfileSettings}>{t("editProfile")}</button>}
+        {profileView ? <Link className={`${styles.heroEdit} ${profileView === "reviews" ? styles.reviewsMobileBack : ""}`} to={sectionTarget("profile-overview", null)} aria-label={t("profile")}>←</Link> : <button className={styles.heroEdit} type="button" aria-label={t("accountSettings")} onClick={openProfileSettings}>
           <i className="fa-solid fa-gear" aria-hidden="true" />
         </button>}
         <ResilientImage className={styles.avatar} src={profile.avatarUrl} alt="" width={120} height={120}
@@ -712,7 +1099,6 @@ export default function Profile() {
           <p className={styles.eyebrow}>{t("profile")}</p>
           <h2 id="profile-identity">{getUserIdentity(profile, t("someone"))}</h2>
           <p className={styles.username}>{getUserHandle(profile, t("someone"))}</p>
-          <p className={styles.email}>{profile.email}</p>
         </div>
         <dl className={styles.heroMetrics}>
           <div><dt>{t("watched")}</dt><dd>{profile.stats.watched}</dd></div>
@@ -724,7 +1110,7 @@ export default function Profile() {
       </section>
       <nav className={styles.profileNav} aria-label={t("profile")}>
         {profileNavigation.map(({ id, label, collectionKind: itemKind }) => {
-          const visibleSection = profileView === "collection" ? "profile-collections" : profileView === "lists" ? "profile-lists" : profileView || ["profile-ratings", "profile-reviews", "profile-following", "profile-followers", "profile-statistics"].includes(activeProfileSection) ? "profile-overview" : activeProfileSection;
+          const visibleSection = profileView === "collection" ? "profile-collections" : profileView === "lists" ? "profile-lists" : profileView === "reviews" ? "profile-overview" : profileView || ["profile-ratings", "profile-reviews", "profile-following", "profile-followers", "profile-statistics"].includes(activeProfileSection) ? "profile-overview" : activeProfileSection;
           const active = visibleSection === id && (id !== "profile-collections" || itemKind === collectionKind);
           return <Link
             className={active ? styles.activeProfileNav : undefined}
@@ -736,6 +1122,7 @@ export default function Profile() {
           >{t(label)}</Link>;
         })}
       </nav>
+      {profileView === "reviews" && <div className={styles.reviewsBack}><Link to={sectionTarget("profile-overview", null)} aria-label={t("backToProfile")}>←</Link></div>}
       {networkView && <Link className={styles.networkBack} to={sectionTarget("profile-overview", null)} aria-label={t("profile")}>←</Link>}
       <section className={`${styles.section} ${styles.previewSection}`} id="profile-overview" aria-labelledby="profile-favorite-preview-title" aria-busy={favoritePreviewLoading}>
         <span id="profile-favorite-preview" aria-hidden="true" /><h2 id="profile-favorite-preview-title"><Link to={sectionTarget("profile-collections", "favorites")}>{t("favoriteFilms")}</Link></h2>
@@ -790,12 +1177,14 @@ export default function Profile() {
         {profile.recentReviews.length === 0 ? <p className={styles.empty}>{t("noReviews")}</p> : <ul className={styles.reviewCards}>{renderReviewCards(profile.recentReviews.slice(0, 2), !profileView)}</ul>}
       </section>
       {(profileView === "reviews" || (!profileView && location.hash.startsWith("#profile-reviews"))) && <>
-      <section className={styles.section} id="profile-reviews" aria-labelledby="profile-reviews-title" aria-busy={reviewsLoading}>
-        <h2 id="profile-reviews-title">{profileView === "reviews" ? t("allReviews") : <Link to={sectionTarget("profile-reviews", null)}>{t("allReviews")}</Link>}</h2>
+      <section className={styles.section} id="profile-reviews" aria-labelledby="profile-reviews-title" aria-busy={reviewsLoading || reviewActionBusy !== null}>
+        <h2 ref={reviewHeadingRef} id="profile-reviews-title" tabIndex={profileView === "reviews" ? -1 : undefined}>{profileView === "reviews" ? <><span className={styles.mobileReviewsHeading}>{t("reviews")}</span><span className={styles.desktopReviewsHeading}>{t("reviewsByUser").replace("{name}", getUserName(profile, t("someone")))}</span></> : <Link to={sectionTarget("profile-reviews", null)}>{t("allReviews")}</Link>}</h2>
+        {profileView === "reviews" && reviewActionMessage && <p className={styles.status} role="status">{t(reviewActionMessage)}</p>}
+        {profileView === "reviews" && reviewActionError && <p ref={reviewErrorRef} tabIndex={-1} className={`${styles.alert} ${styles.reviewFeedbackFocus}`} role="alert">{t(reviewActionError)}</p>}
         {reviewsLoading && <p className={styles.feedback} role="status">{t("loading")}</p>}
         {reviewsError && <RetryNotice className={styles.feedback} message={t("loadReviewsError")} retryLabel={t("retry")} onRetry={() => setReviewsAttempt(value => value + 1)} />}
         {!reviewsLoading && !reviewsError && reviewsHistory && <>
-          {reviewsHistory.content.length === 0 ? <p>{t("noReviews")}</p> : <ul className={styles.reviewCards}>{renderReviewCards(reviewsHistory.content)}</ul>}
+          {reviewsHistory.content.length === 0 ? <p>{t("noReviews")}</p> : <ul className={styles.reviewCards}>{renderReviewCards(reviewsHistory.content, true, true)}</ul>}
           <Pagination className={styles.pagination} page={reviewsPage} totalPages={reviewsHistory.totalPages} label={t("allReviews")} busy={reviewsLoading} onPageChange={setReviewsPage} />
         </>}
       </section>
@@ -837,7 +1226,7 @@ export default function Profile() {
       {!profileView && <nav className={styles.overviewLinks} aria-label={t("profileCollections")}>{overviewNavigation.map(({ id, label, collectionKind: kind }) => <Link key={label} to={sectionTarget(id, kind)} onClick={event => { if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && kind) setCollectionPage(0); }}>{t(label)}<span aria-hidden="true">›</span></Link>)}</nav>}
       {(profileView === "collection" || (!profileView && location.hash.startsWith("#profile-collection"))) && <>
       <section className={styles.section} id="profile-collections" aria-labelledby="profile-collections-title" aria-busy={collectionLoading}>
-        <h2 id="profile-collections-title">{profileView ? viewTitle : t("profileCollections")}</h2>
+        <h2 id="profile-collections-title" ref={collectionHeadingRef} tabIndex={-1}>{filmsView ? t("watched") : profileView ? viewTitle : t("profileCollections")}</h2>
         <div className={styles.tabs} data-filters-open={collectionFiltersOpen} id="profile-collection-filters" role="tablist" aria-orientation="horizontal" aria-label={t("profileCollections")}>
           {collectionKinds.map(kind => <button
             id={`profile-collection-tab-${kind}`}
@@ -849,14 +1238,14 @@ export default function Profile() {
             aria-selected={collectionKind === kind}
             aria-controls="profile-collection-content"
             onClick={() => chooseCollection(kind)}
-            onKeyDown={event => handleKeyDown(event, kind)}
+            onKeyDown={event => handleCollectionTabKeyDown(event, kind)}
           >
             {kind === "favorites" ? t("favorite") : t(kind)}
           </button>)}
         </div>
-        <div id="profile-collection-content" role="tabpanel" tabIndex={0} aria-labelledby={`profile-collection-tab-${collectionKind}`}>
+        <div id="profile-collection-content" role="tabpanel" tabIndex={collection && collection.content.length > 0 ? -1 : 0} aria-labelledby={`profile-collection-tab-${collectionKind}`}>
           {collectionLoading && <p className={styles.feedback} role="status">{t("loading")}</p>}
-          {collectionError && <RetryNotice className={styles.feedback} message={t("loadCollectionError")} retryLabel={t("retry")} onRetry={() => setCollectionAttempt(value => value + 1)} />}
+          {collectionError && <RetryNotice className={styles.feedback} message={t("loadCollectionError")} retryLabel={t("retry")} onRetry={retryCollection} />}
           {!collectionLoading && !collectionError && collection && <>
             {collection.content.length === 0 ? <p>{t("noCollectionFilms")}</p> : <div className={styles.collectionGrid}>
             {collection.content.map(movie => {
@@ -870,7 +1259,7 @@ export default function Profile() {
               </article>;
             })}
             </div>}
-            <Pagination className={styles.pagination} page={collectionPage} totalPages={collection.totalPages} label={t("profileCollectionPagination")} busy={collectionLoading} onPageChange={setCollectionPage} />
+            <Pagination className={styles.pagination} page={collectionPage} totalPages={collection.totalPages} label={t("profileCollectionPagination")} busy={collectionLoading} onPageChange={changeCollectionPage} />
           </>}
         </div>
       </section>

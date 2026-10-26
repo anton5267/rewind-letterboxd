@@ -5,6 +5,12 @@
   color: #fff;
 }
 
+.page.statePage { box-sizing: border-box; padding: 140px 24px 96px; }
+.page h1:focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
+@media (max-width: 720px) {
+  .page.statePage { padding: 80px 16px 110px; }
+}
+
 .article {
   width: 100%;
   margin: 0;
@@ -34,7 +40,7 @@
 
 .back {
   position: absolute;
-  top: -133px;
+  top: -85px;
   left: 0;
   display: inline-flex;
   min-height: 44px;
@@ -61,7 +67,7 @@
 }
 
 .article h1 {
-  max-width: 845px;
+  max-width: 1126px;
   margin: 0;
   color: #fff;
   font-size: clamp(38px, 4.03vw, 58px);
@@ -194,7 +200,7 @@
 .page button:not([data-retry-button]):focus-visible { outline: 2px solid var(--rewind-gold); outline-offset: 3px; }
 
 @media (max-width: 720px) {
-  .page { padding: 0 0 calc(96px + env(safe-area-inset-bottom)); }
+  .page { padding: 80px 0 calc(96px + env(safe-area-inset-bottom)); }
   .articleHeader {
     width: 100%;
     height: auto;

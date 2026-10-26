@@ -112,8 +112,17 @@
 }
 
 .guestExplainer { display: none; }
+
+.page [tabindex="-1"]:focus {
+  outline: 2px solid #7bdff2;
+  outline-offset: 4px;
+  scroll-margin-block: 124px;
+}
+
 .guestRecentReviews,
 .guestPitch { display: none; }
+.guestFeatureGrid,
+.guestPitchDesktop { display: none; }
 
 .homeReviewer {
   display: flex;
@@ -373,6 +382,7 @@
 
 .memberRecentNewsSection { display: none; }
 .memberRecentNewsGrid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+.memberRecentNewsEmpty { margin: 0; color: var(--rewind-muted); }
 .memberRecentNewsCard { overflow: hidden; border-radius: 20px; background: #282828; }
 .memberRecentNewsCover { position: relative; display: block; height: 145px; overflow: hidden; background: #303030; }
 .memberRecentNewsCover img,
@@ -759,7 +769,7 @@
   .guestExplainer {
     display: grid;
     gap: 16px;
-    margin-top: 38px;
+    margin-top: 43px;
     padding: 0;
     background: transparent;
   }
@@ -778,15 +788,16 @@
   .guestExplainerCard svg { flex: 0 0 38px; width: 38px; fill: none; stroke: #888; stroke-width: 2.2; }
   .guestExplainerCard p { margin: 0; font-size: 14px; line-height: 1.22; }
 
-  .guestRecentReviews { display: block; margin-top: 20px; border-top: 1px solid var(--rewind-line); padding-top: 8px; }
-  .guestRecentReviews .sectionHeading { margin-bottom: 14px; }
+  .guestRecentReviews { display: block; margin-top: 57px; border-top: 1px solid var(--rewind-line); padding-top: 8px; }
+  .guestRecentReviews .sectionHeading { margin-bottom: 22px; }
   .guestRecentReviews .sectionHeading h2 { font-size: 14px; }
   .guestRecentReviews .sectionHeading a { font-size: 11px; }
-  .guestReviewPosters { display: flex; gap: 15px; overflow-x: auto; padding: 0 0 3px; scrollbar-width: thin; }
+  .guestReviewPosters { display: flex; gap: 15px; overflow-x: auto; padding: 0; scrollbar-width: thin; }
   .guestReviewPosters a { flex: 0 0 79px; width: 79px; height: 116px; overflow: hidden; border-radius: 10px; background: #282828; color: #fff; text-decoration: none; }
   .guestReviewPosters img { display: block; width: 100%; height: 100%; object-fit: cover; }
   .guestReviewPosters a > span { display: grid; height: 100%; place-items: center; font-size: 24px; }
-  .guestPitch { display: block; margin: 22px 0 87px; color: #f5f5f5; font-size: 10px; line-height: 1.35; }
+  .guestPitch { display: block; margin: 25px 0 37px; color: #f5f5f5; font-size: 10px; line-height: 1.35; }
+  .guestPitchMobile { margin: 0; }
   .guestPitch a { color: #f5f5f5; text-decoration: underline; text-underline-offset: 2px; }
 
   .page:has(.hero:not(.memberHero)) .popularSection,
@@ -799,13 +810,25 @@
   .page:has(.hero:not(.memberHero)) .grid > :nth-child(1),
   .page:has(.hero:not(.memberHero)) .grid > :nth-child(2),
   .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) { border-top: 1px solid var(--rewind-line); padding-top: 8px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) { border: 0; padding: 8px 0 0; }
   .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .sectionHeading,
-  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) .sectionHeading { margin-bottom: 14px; }
-  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) .list { display: flex; min-height: 64px; align-items: center; gap: 8px; margin: 0; border: 0; border-radius: 14px; padding: 10px 14px; background: #282828; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) .sectionHeading { margin-bottom: 20px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .sectionHeading { margin-bottom: 17px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .listCards { padding-bottom: 3px; margin-bottom: -3px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .listPosterLink { width: calc(100% - 1px); margin-left: 1px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .listCard { position: relative; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .listCard h3 { margin-top: 13px; font-size: 13px; line-height: 1.12; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .listCard .preview { position: absolute; width: 1px; height: 1px; overflow: hidden; padding: 0; margin: -1px; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) .stack { gap: 11.6px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) .list { display: flex; min-height: 70.52px; align-items: center; gap: 0; margin: 0; border: 0; border-radius: 14px; padding: 14px 18px; background: #282828; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) .homeReviewer { gap: 14px; }
   .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) .homeReviewerAvatar,
-  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) .homeReviewerFallback { flex-basis: 40px; width: 40px; height: 40px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) .homeReviewerFallback { flex-basis: 42px; width: 42px; height: 42px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) .homeReviewerCopy { gap: 0; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) .homeReviewerCopy strong { font-size: 13px; line-height: 1.12; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) .homeReviewerCopy small { font-size: 12px; line-height: 1.25; }
   .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) .homeReviewerLikes { display: none; }
-  .page:has(.hero:not(.memberHero)) .journalSection { margin-top: 0; }
+  .page:has(.hero:not(.memberHero)) .journalSection { margin-top: 35px; padding-top: 7px; }
   .page:has(.hero:not(.memberHero)) .journalSection .sectionHeading h2 { font-size: 14px; }
   .page:has(.hero:not(.memberHero)) .journalSection .sectionHeading a { font-size: 11px; }
   .page:has(.hero:not(.memberHero)) .journalSection .journalCard { grid-template-columns: 1fr; border-radius: 18px; }
@@ -859,8 +882,12 @@
   .page:has(.memberHero) .leadingSection .sectionHeading a { font-size: 8px; }
   .page:has(.memberHero) .leadingSection .movieRow { overflow: hidden; margin-inline: 0; padding: 0; }
   .page:has(.memberHero) .leadingSection .movieCard:nth-child(n + 5) { display: none; }
-  .page:has(.memberHero) .journalSection { margin-top: 41px; }
+  .page:has(.memberHero) .popularSection { margin-top: 42px; }
+  .page:has(.memberHero) .popularSection .movieRow { scrollbar-width: none; }
+  .page:has(.memberHero) .popularSection .movieRow::-webkit-scrollbar { display: none; }
+  .page:has(.memberHero) .journalSection { margin-top: 29px; }
   .page:has(.memberHero) .journalSection .sectionHeading { margin-bottom: 30px; }
+  .page:has(.memberHero) .journalSection .journalEmptyStatus { display: flex; min-height: 149px; align-items: center; }
   .page:has(.memberHero) .grid { gap: 32px; margin-top: 36px; }
   .page:has(.memberHero) .grid > :nth-child(n + 3),
   .page:has(.memberHero) .recentWatchedSection { display: none; }
@@ -868,6 +895,13 @@
   .page:has(.memberHero) .memberRecentNewsSection .sectionHeading { margin-bottom: 22px; }
   .page:has(.memberHero) .memberRecentNewsGrid { grid-template-columns: 1fr; }
   .page:has(.memberHero) .memberRecentNewsCard:nth-child(n + 2) { display: none; }
+  .page:has(.memberHero) .memberRecentNewsSection { margin-top: 13px; }
+  .page:has(.memberHero) .listCard { position: relative; width: calc(100% - 2px); min-height: 231px; }
+  .page:has(.memberHero) .listPosterLink { width: calc(100% - 1px); height: 180px; margin-left: 1px; }
+  .page:has(.memberHero) .listPosterLink > div { width: 100%; height: 100%; aspect-ratio: auto; }
+  .page:has(.memberHero) .listCard h3 { margin: 11px 0 10px; font-size: 12px; line-height: 1.2; }
+  .page:has(.memberHero) .listCard .preview { position: absolute; width: 1px; height: 1px; overflow: hidden; padding: 0; margin: -1px; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+  .page:has(.memberHero) .listAuthor { font-size: 9px; line-height: 1.2; }
 
   .section {
     margin-top: 30px;
@@ -1017,6 +1051,203 @@
   }
 }
 
+/* Figma guest desktop 1413:6471: keep the API-backed sections in the frame's order. */
+@media (min-width: 1100px) {
+  .page:has(.hero:not(.memberHero)) {
+    display: flex;
+    flex-direction: column;
+    padding-top: 0;
+  }
+
+  .page:has(.hero:not(.memberHero)) > .hero { order: 0; }
+  .page:has(.hero:not(.memberHero)) > .status { order: 1; }
+  .page:has(.hero:not(.memberHero)) > .leadingSection { order: 2; }
+  .page:has(.hero:not(.memberHero)) > .guestExplainer { order: 3; }
+  .page:has(.hero:not(.memberHero)) > .guestRecentReviews { order: 4; }
+  .page:has(.hero:not(.memberHero)) > .guestPitch { order: 5; }
+  .page:has(.hero:not(.memberHero)) > .grid { order: 6; }
+  .page:has(.hero:not(.memberHero)) > .journalSection { order: 7; }
+  .page:has(.hero:not(.memberHero)) .popularSection,
+  .page:has(.hero:not(.memberHero)) .recentWatchedSection { display: none; }
+
+  .page:has(.hero:not(.memberHero)) .hero h1 { position: relative; left: -7px; }
+  .page:has(.hero:not(.memberHero)) .hero .actions {
+    position: absolute;
+    z-index: 1;
+    top: 929px;
+    left: 50%;
+    display: flex;
+    margin: 0;
+    transform: translateX(-50%);
+  }
+  .page:has(.hero:not(.memberHero)) .hero .actions .primary {
+    min-width: 150px;
+    min-height: 59px;
+    border: 0;
+    border-radius: 32px;
+    background: #f5f5f5;
+    color: #191919;
+    font-size: 18px;
+  }
+  .page:has(.hero:not(.memberHero)) .hero .actions .secondary { display: none; }
+
+  .page:has(.hero:not(.memberHero)) .leadingSection {
+    width: min(1200px, calc(100% - 32px));
+    margin-top: 224px;
+  }
+  .page:has(.hero:not(.memberHero)) .leadingSection .movieRow {
+    grid-template-columns: repeat(6, 174px);
+    gap: 31px;
+    overflow: visible;
+    margin-inline: -4px;
+    padding: 5px 4px 0;
+  }
+  .page:has(.hero:not(.memberHero)) .leadingSection .movieCard img,
+  .page:has(.hero:not(.memberHero)) .leadingSection .posterFallback { height: 260px; aspect-ratio: auto; }
+  .page:has(.hero:not(.memberHero)) .leadingSection .movieCard h3,
+  .page:has(.hero:not(.memberHero)) .leadingSection .movieCard p { display: none; }
+
+  .page:has(.hero:not(.memberHero)) .guestExplainer {
+    display: grid;
+    position: relative;
+    left: -6px;
+    width: min(1202px, calc(100% - 32px));
+    gap: 0;
+    margin: 85px auto 0;
+    padding: 18px 0 28px;
+    background: transparent;
+  }
+  .page:has(.hero:not(.memberHero)) .guestExplainer h2 {
+    position: relative;
+    left: 5px;
+    margin: 0 0 77px;
+    color: #f5f5f5;
+    font-size: 24px;
+    line-height: 28px;
+  }
+  .page:has(.hero:not(.memberHero)) .guestExplainerCard { display: none; }
+  .page:has(.hero:not(.memberHero)) .guestFeatureGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 270px);
+    column-gap: 137px;
+    row-gap: 77px;
+    margin: 0;
+    padding: 0 24px 0 94px;
+    list-style: none;
+  }
+  .page:has(.hero:not(.memberHero)) .guestFeatureGrid li {
+    min-height: 72px;
+    color: #d1d1d1;
+    font-size: 18px;
+    line-height: 24px;
+  }
+
+  .page:has(.hero:not(.memberHero)) .guestRecentReviews {
+    display: block;
+    position: relative;
+    left: -4px;
+    width: min(1200px, calc(100% - 32px));
+    margin: 85px auto 0;
+    border-top: 1px solid #3d3d3d;
+    padding-top: 16px;
+    min-height: 227px;
+    box-sizing: content-box;
+  }
+  .page:has(.hero:not(.memberHero)) .guestRecentReviews .sectionHeading { margin-bottom: 0; }
+  .page:has(.hero:not(.memberHero)) .guestRecentReviews .sectionHeading h2 { font-size: 24px; }
+  .page:has(.hero:not(.memberHero)) .guestReviewPosters { display: none; }
+
+  .page:has(.hero:not(.memberHero)) .guestPitch {
+    display: block;
+    position: relative;
+    left: -4px;
+    width: min(1128px, calc(100% - 32px));
+    margin: 85px auto 0;
+    color: #f5f5f5;
+    font-size: 18px;
+    line-height: 28px;
+    text-align: center;
+    padding-bottom: 3px;
+  }
+  .page:has(.hero:not(.memberHero)) .guestPitchMobile { display: none; }
+  .page:has(.hero:not(.memberHero)) .guestPitchDesktop { display: grid; gap: 28px; }
+  .page:has(.hero:not(.memberHero)) .guestPitchDesktop p { margin: 0; }
+  .page:has(.hero:not(.memberHero)) .guestPitch a { color: #f5f5f5; text-decoration: underline; text-underline-offset: 3px; }
+
+  .page:has(.hero:not(.memberHero)) .grid {
+    position: relative;
+    grid-template-columns: minmax(0, 756px) minmax(0, 386px);
+    column-gap: 58px;
+    row-gap: 0;
+    width: min(1200px, calc(100% - 32px));
+    min-height: 1606px;
+    margin: 85px auto 0;
+    left: -4px;
+  }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(1),
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) {
+    border-top: 1px solid #3d3d3d;
+    padding-top: 16px;
+  }
+  .page:has(.hero:not(.memberHero)) .grid .sectionHeading { margin-bottom: 49px; }
+  .page:has(.hero:not(.memberHero)) .grid .sectionHeading h2 { font-size: 24px; line-height: 28px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(1) .stack { gap: 54px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(1) .reviewCard { min-height: 337.45px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .listCards {
+    display: grid;
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    grid-template-columns: 1fr;
+    gap: 31px;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+  }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .listCard { min-height: 352.6px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) {
+    position: absolute;
+    top: 1270px;
+    right: 0;
+    width: 386px;
+    box-sizing: border-box;
+    border-top: 1px solid #3d3d3d;
+    padding: 22px 22px 10px;
+  }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) .sectionHeading { margin-bottom: 0; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(4) { display: none; }
+
+  .page:has(.hero:not(.memberHero)) .journalSection {
+    width: min(1200px, calc(100% - 32px));
+    position: relative;
+    left: -2px;
+    margin: 85px auto 0;
+    border-top: 1px solid #3d3d3d;
+    padding-top: 16px;
+  }
+  .page:has(.hero:not(.memberHero)) .journalSection .sectionHeading { margin-bottom: 43px; }
+  .page:has(.hero:not(.memberHero)) .journalSection .sectionHeading h2 { font-size: 24px; }
+  .page:has(.hero:not(.memberHero)) .journalSection .stack { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCard { grid-template-columns: 1fr; min-height: 347px; }
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCoverLink { min-height: 210px; }
+}
+
+@media (min-width: 1100px) and (max-width: 1217px) {
+  .page:has(.hero:not(.memberHero)) .leadingSection .movieRow {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: clamp(12px, 2vw, 24px);
+  }
+  .page:has(.hero:not(.memberHero)) .guestFeatureGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: clamp(20px, 5vw, 48px);
+    padding-inline: clamp(20px, 5vw, 60px);
+  }
+  .page:has(.hero:not(.memberHero)) .grid {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    column-gap: 32px;
+  }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) { width: calc((100% - 32px) / 3); }
+}
+
 /* Figma member desktop 1413:6263: long-form editorial sections run vertically. */
 @media (min-width: 1100px) {
   .page:has(.memberHero) .memberHero h1,
@@ -1052,6 +1283,16 @@
   .page:has(.memberHero) .journalSection .journalCard { grid-template-columns: 300px minmax(0, 1fr); min-height: 193px; }
   .page:has(.memberHero) .journalSection .journalCard:nth-child(n + 2) { display: none; }
   .page:has(.memberHero) .journalSection .journalCoverLink { min-height: 193px; }
+  .page:has(.memberHero) .journalSection .journalEmptyStatus {
+    display: flex;
+    box-sizing: border-box;
+    min-height: 193px;
+    align-items: center;
+    margin: 0;
+    padding: 28px 32px 28px 332px;
+    border-radius: 20px;
+    background: linear-gradient(90deg, #303030 0 300px, #282828 300px);
+  }
 
   .page:has(.memberHero) .grid {
     grid-template-columns: 1fr;
@@ -1097,4 +1338,29 @@
   .page:has(.memberHero) .memberRecentNewsCard { min-height: 347px; }
   .page:has(.memberHero) .memberRecentNewsCover { height: 219px; }
   .page:has(.memberHero) .memberRecentNewsCopy { min-height: 128px; padding: 16px; }
+  .page:has(.memberHero) .memberRecentNewsEmpty {
+    display: flex;
+    box-sizing: border-box;
+    min-height: 347px;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 24px;
+    border-radius: 20px;
+    background: linear-gradient(90deg, #282828 0 32.2%, transparent 32.2% 33.9%, #282828 33.9% 66.1%, transparent 66.1% 67.8%, #282828 67.8% 100%);
+    text-align: center;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 1099px) {
+  .page:has(.memberHero) .journalSection .journalEmptyStatus {
+    display: flex;
+    box-sizing: border-box;
+    min-height: 149px;
+    align-items: center;
+    margin: 0;
+    padding: 24px;
+    border-radius: 18px;
+    background: #282828;
+  }
 }

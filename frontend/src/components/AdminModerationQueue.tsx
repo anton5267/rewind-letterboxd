@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   bulkHideAdminModeration, getAdminModerationQueue, hideAdminModerationItem,
   type AdminModerationFilters, type AdminModerationQueueItem,
 } from "../api/admin.api";
 import type { Page } from "../api/types";
+import { useAuth } from "../context/AuthContext";
 import Pagination from "./Pagination";
 import RetryNotice from "./RetryNotice";
 import { useLocale } from "../i18n";
@@ -13,7 +14,8 @@ import styles from "./AdminShared.module.css";
 const itemKey = (item: AdminModerationQueueItem) => `${item.type}:${item.id}`;
 
 export default function AdminModerationQueue() {
-  const { t } = useLocale();
+  const { t, lang } = useLocale();
+  const { user } = useAuth();
   const [type, setType] = useState<"" | AdminModerationQueueItem["type"]>("");
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<AdminModerationFilters>({});
@@ -22,58 +24,138 @@ export default function AdminModerationQueue() {
   const [loading, setLoading] = useState(true);
   const [mutating, setMutating] = useState(false);
   const [error, setError] = useState(false);
-  const [mutationError, setMutationError] = useState("");
+  const [mutationError, setMutationError] = useState(false);
   const [revision, setRevision] = useState(0);
   const [reason, setReason] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
 
+  const heading = useRef<HTMLHeadingElement>(null);
+  const mutationAlert = useRef<HTMLParagraphElement>(null);
+  const mounted = useRef(false);
+  const scopeGeneration = useRef(0);
+  const catalogRequest = useRef(0);
+  const mutationToken = useRef<object | null>(null);
+  const actor = `${user?.id ?? ""}:${user?.role ?? ""}`;
+  const currentActor = useRef(actor);
+  const pendingFocus = useRef<{ scope: number; origin: HTMLElement | null; target: "heading" | "error" } | null>(null);
+  const transitionFocus = useRef<{ filters: AdminModerationFilters; page: number; lang: string; actor: string; focus: NonNullable<typeof pendingFocus.current> } | null>(null);
+
+  useLayoutEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      scopeGeneration.current += 1;
+      pendingFocus.current = null;
+      mutationToken.current = null;
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    scopeGeneration.current += 1;
+    const transition = transitionFocus.current;
+    pendingFocus.current = transition && transition.filters === filters && transition.page === page && transition.lang === lang && transition.actor === actor && pendingFocus.current === transition.focus
+      ? { ...transition.focus, scope: scopeGeneration.current } : null;
+    transitionFocus.current = null;
+    setMutationError(false);
+    if (currentActor.current !== actor) {
+      mutationToken.current = null;
+      setMutating(false);
+    }
+    currentActor.current = actor;
+  }, [filters, page, lang, actor]);
+
+  useEffect(() => {
+    const pending = pendingFocus.current;
+    if (!pending || loading || mutating || (!error && data === null)) return;
+    const request = catalogRequest.current;
+    const frame = window.requestAnimationFrame(() => {
+      if (pendingFocus.current !== pending) return;
+      pendingFocus.current = null;
+      if (!mounted.current || scopeGeneration.current !== pending.scope || catalogRequest.current !== request) return;
+      if (document.activeElement !== document.body && document.activeElement !== pending.origin) return;
+      (pending.target === "error" ? mutationAlert.current : heading.current)?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [loading, mutating, error, data, mutationError, filters, page, lang, actor]);
+
   useEffect(() => {
     let current = true;
+    const scope = scopeGeneration.current;
+    const request = ++catalogRequest.current;
+    const isCurrent = () => current && mounted.current && scopeGeneration.current === scope && catalogRequest.current === request;
     setLoading(true);
     setError(false);
+    setData(null);
     setSelected([]);
     getAdminModerationQueue(filters, page).then(({ data: result }) => {
-      if (!current) return;
+      if (!isCurrent()) return;
       const lastPage = Math.max(0, result.totalPages - 1);
       if (page > lastPage) {
-        setData(null);
+        const focus = pendingFocus.current;
+        if (focus?.target === "heading" && focus.scope === scope) transitionFocus.current = { filters, page: lastPage, lang, actor, focus };
         setPage(lastPage);
-      } else {
-        setData(result);
-      }
-    }).catch(() => { if (current) setError(true); })
-      .finally(() => { if (current) setLoading(false); });
+      } else setData(result);
+    }).catch(() => { if (isCurrent()) setError(true); })
+      .finally(() => { if (isCurrent()) setLoading(false); });
     return () => { current = false; };
-  }, [filters, page, revision]);
+  }, [filters, page, revision, lang, actor]);
 
   const busy = loading || mutating;
+  const captureHeadingFocus = () => {
+    const focus = { scope: scopeGeneration.current, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, target: "heading" as const };
+    pendingFocus.current = focus;
+    return focus;
+  };
   const refresh = () => {
+    captureHeadingFocus();
     setLoading(true);
     setRevision(value => value + 1);
   };
   const applyFilters = (event: React.FormEvent) => {
     event.preventDefault();
+    if (busy) return;
+    const nextFilters = { ...(type ? { type } : {}), ...(query.trim() ? { query: query.trim() } : {}) };
+    const focus = captureHeadingFocus();
+    transitionFocus.current = { filters: nextFilters, page: 0, lang, actor, focus };
     setLoading(true);
     setPage(0);
-    setFilters({ ...(type ? { type } : {}), ...(query.trim() ? { query: query.trim() } : {}) });
+    setFilters(nextFilters);
   };
   const changePage = (nextPage: number) => {
+    if (busy || nextPage === page) return;
+    const focus = captureHeadingFocus();
+    transitionFocus.current = { filters, page: nextPage, lang, actor, focus };
     setLoading(true);
     setPage(nextPage);
   };
-  const hide = async (items: AdminModerationQueueItem[], bulk: boolean) => {
-    if (busy || items.length === 0) return;
+  const hide = async (items: AdminModerationQueueItem[], bulk: boolean, origin: HTMLButtonElement) => {
+    if (busy || mutationToken.current !== null || items.length === 0) return;
     if (bulk && !window.confirm(t("hideSelectedModerationConfirm"))) return;
+    const token = {};
+    mutationToken.current = token;
+    const scope = scopeGeneration.current;
+    const sameActor = () => mounted.current && currentActor.current === actor && mutationToken.current === token;
+    const sameScope = () => sameActor() && scopeGeneration.current === scope;
+    pendingFocus.current = null;
     setMutating(true);
     setError(false);
-    setMutationError("");
+    setMutationError(false);
     try {
       const explanation = reason.trim() || t("moderationDefaultReason");
       if (bulk) await bulkHideAdminModeration(items.map(({ type, id }) => ({ type, id })), explanation);
       else await hideAdminModerationItem(items[0], explanation);
-      refresh();
-    } catch { setMutationError(t("adminModerationActionError")); }
-    finally { setMutating(false); }
+      if (!sameActor()) return;
+      if (sameScope()) pendingFocus.current = { scope, origin, target: "heading" };
+      setLoading(true);
+      setRevision(value => value + 1);
+    } catch {
+      if (!sameActor()) return;
+      if (!sameScope()) { setLoading(true); setRevision(value => value + 1); return; }
+      setMutationError(true);
+      pendingFocus.current = { scope, origin, target: "error" };
+    } finally {
+      if (sameActor()) { mutationToken.current = null; setMutating(false); }
+    }
   };
   const toggle = (item: AdminModerationQueueItem) => {
     const key = itemKey(item);
@@ -81,8 +163,8 @@ export default function AdminModerationQueue() {
   };
 
   return <section className={`${styles.section} ${styles.moderationSection}`} aria-labelledby="moderation-heading" aria-busy={busy}>
-    <h2 className={styles.title} id="moderation-heading">{t("moderationQueue")}</h2>
-    {mutationError && <p className={styles.error} role="alert">{mutationError}</p>}
+    <h2 ref={heading} tabIndex={-1} className={styles.title} id="moderation-heading">{t("moderationQueue")}</h2>
+    {mutationError && <p ref={mutationAlert} tabIndex={-1} className={`${styles.error} ${styles.moderationFocus}`} role="alert">{t("adminModerationActionError")}</p>}
     {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={busy} busy={busy} onRetry={refresh} />}
     <form onSubmit={applyFilters}>
       <fieldset className={styles.filterset} disabled={busy}>
@@ -96,7 +178,7 @@ export default function AdminModerationQueue() {
         <button type="submit">{t("filterModeration")}</button>
         <button type="button" disabled={!data?.content.length || error} onClick={() => setSelected(data?.content.map(itemKey) ?? [])}>{t("selectAllModeration")}</button>
         <input className={styles.control} aria-label={t("moderationReason")} placeholder={t("moderationReason")} maxLength={255} value={reason} onChange={event => setReason(event.target.value)} />
-        <button type="button" aria-busy={mutating} disabled={selected.length === 0 || error} onClick={() => void hide(data?.content.filter(item => selected.includes(itemKey(item))) ?? [], true)}>
+        <button type="button" aria-busy={mutating} disabled={selected.length === 0 || error} onClick={event => void hide(data?.content.filter(item => selected.includes(itemKey(item))) ?? [], true, event.currentTarget)}>
           {mutating ? t("loading") : `${t("hideSelectedModeration")} (${selected.length})`}
         </button>
       </fieldset>
@@ -105,7 +187,7 @@ export default function AdminModerationQueue() {
       {data.content.length === 0 ? <p>{t("noModerationItems")}</p> : <ul className={styles.list}>{data.content.map(item => <li className={styles.row} key={itemKey(item)}>
         <div className={styles.rowContent}><label><input type="checkbox" disabled={busy} checked={selected.includes(itemKey(item))} onChange={() => toggle(item)} /> {item.type === "REVIEW" ? t("moderationReview") : t("moderationComment")} · {item.subject} · {getUserName({ username: item.username }, t("someone"))}: {item.content}</label></div>
         <div className={styles.rowActions}>
-          <button type="button" aria-busy={mutating} disabled={busy} onClick={() => void hide([item], false)}>{mutating ? t("loading") : item.type === "REVIEW" ? t("hideReview") : t("hideComment")}</button>
+          <button type="button" aria-busy={mutating} disabled={busy} onClick={event => void hide([item], false, event.currentTarget)}>{mutating ? t("loading") : item.type === "REVIEW" ? t("hideReview") : t("hideComment")}</button>
         </div>
       </li>)}</ul>}
       <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("moderationQueue")} busy={busy} statusSuffix={data.totalElements} onPageChange={changePage} />

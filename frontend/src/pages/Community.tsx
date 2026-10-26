@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import Pagination from "../components/Pagination";
 import UserFollowRow from "../components/UserFollowRow";
@@ -25,6 +25,35 @@ export default function Community() {
   const [sectionErrors, setSectionErrors] = useState<CommunitySectionErrors>({});
   const [attempt, setAttempt] = useState(0);
   const [sectionAttempts, setSectionAttempts] = useState<Record<CommunitySection, number>>({ reviewers: 0, hq: 0, directory: 0 });
+  const retryFocus = useRef<{ section: CommunitySection | null; origin: HTMLElement } | null>(null);
+  const retryFocusScope = useRef(0);
+  const globalErrorRef = useRef<HTMLParagraphElement>(null);
+  const clearRetryFocus = useCallback(() => {
+    retryFocus.current = null;
+    retryFocusScope.current += 1;
+  }, []);
+
+  useEffect(() => {
+    clearRetryFocus();
+  }, [lang, clearRetryFocus]);
+
+  useEffect(() => {
+    const pending = retryFocus.current;
+    if (!pending) return;
+    if (pending.section ? sectionLoading[pending.section] : Object.values(sectionLoading).some(Boolean)) return;
+    if ((pending.section === null || pending.section === "hq") && !sectionErrors.hq && hqUsers === null) return;
+    if ((pending.section === null || pending.section === "directory") && !sectionErrors.directory && directory === null) return;
+    const scope = retryFocusScope.current;
+    const frame = window.requestAnimationFrame(() => {
+      if (retryFocus.current !== pending || scope !== retryFocusScope.current) return;
+      retryFocus.current = null;
+      if (pending.origin.isConnected || (document.activeElement !== document.body && document.activeElement !== null)) return;
+      const target = pending.section ? document.getElementById(`community-${pending.section}`) :
+        globalErrorRef.current ?? document.getElementById("community-hq");
+      target?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [sectionLoading, sectionErrors, hqUsers, directory, lang]);
 
   useEffect(() => {
     let current = true;
@@ -71,12 +100,21 @@ export default function Community() {
 
   const submitDirectorySearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    clearRetryFocus();
     setDirectoryPage(0);
     setDirectorySearch(directoryQuery.trim());
   };
 
   const retrySection = (section: CommunitySection) => {
+    clearRetryFocus();
+    retryFocus.current = document.activeElement instanceof HTMLElement ? { section, origin: document.activeElement } : null;
     setSectionAttempts(current => ({ ...current, [section]: current[section] + 1 }));
+  };
+
+  const retryAllSections = () => {
+    clearRetryFocus();
+    retryFocus.current = document.activeElement instanceof HTMLElement ? { section: null, origin: document.activeElement } : null;
+    setAttempt(value => value + 1);
   };
 
   const allSectionsLoading = Object.values(sectionLoading).some(Boolean);
@@ -88,23 +126,23 @@ export default function Community() {
         <p>{t("communitySubtitle")}</p>
       </section>
       {allSectionsLoading && <p className={styles.loading} role="status">{t("loading")}</p>}
-      {Object.keys(sectionErrors).length > 0 && <p className={styles.alert} role="alert">{t("loadCommunityError")} <RetryButton label={t("retry")} onClick={() => setAttempt(value => value + 1)} /></p>}
+      {Object.keys(sectionErrors).length > 0 && <p className={styles.alert} ref={globalErrorRef} tabIndex={-1} role="alert">{t("loadCommunityError")} <RetryButton label={t("retry")} onClick={retryAllSections} /></p>}
       <div className={styles.grid}>
         <section className={styles.card} aria-labelledby="community-hq" aria-busy={sectionLoading.hq}>
-          <div className={styles.cardHeading}><h2 id="community-hq">{t("hqUsers")}</h2></div>
-          {sectionLoading.hq ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.hq ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("hq")} /> : !hqUsers || hqUsers.content.length === 0 ? <p className={styles.empty}>{t("noHqUsers")}</p> : <ul className={`${styles.list} ${styles.showcaseList}`}>{hqUsers.content.slice(0, 5).map(member => <UserFollowRow key={member.id} presentation="communityShowcase" user={member} href={path(`/users/${member.id}`)} meta={t("hq")} />)}</ul>}
+          <div className={styles.cardHeading}><h2 id="community-hq" tabIndex={-1}>{t("featuredMembers")}</h2></div>
+          {sectionLoading.hq ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.hq ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("hq")} /> : !hqUsers || hqUsers.content.length === 0 ? <p className={styles.empty}>{t("noFeaturedMembers")}</p> : <ul className={`${styles.list} ${styles.showcaseList}`}>{hqUsers.content.slice(0, 5).map(member => <UserFollowRow key={member.id} presentation="communityShowcase" user={member} href={path(`/users/${member.id}`)} meta={t("hq")} />)}</ul>}
         </section>
         <section className={styles.card} aria-labelledby="community-reviewers" aria-busy={sectionLoading.reviewers}>
-          <div className={styles.cardHeading}><div className={styles.headingRow}><h2 id="community-reviewers">{t("popularThisWeek")}</h2><Link to={path("/community/reviewers")}>{t("viewAll")}</Link></div></div>
+          <div className={styles.cardHeading}><div className={styles.headingRow}><h2 id="community-reviewers" tabIndex={-1}>{t("popularThisWeek")}</h2><Link to={path("/community/reviewers")}>{t("viewAll")}</Link></div></div>
           {sectionLoading.reviewers ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.reviewers ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("reviewers")} /> : reviewers.length === 0 ? <p className={styles.empty}>{t("noPopularReviewers")}</p> : <ul className={`${styles.list} ${styles.showcaseList}`}>{reviewers.slice(0, 5).map(reviewer => <UserFollowRow key={reviewer.id} presentation="communityShowcase" user={reviewer} href={path(`/users/${reviewer.id}`)} meta={`${reviewer.likes} ${t("likes")}`} />)}</ul>}
         </section>
         <section className={`${styles.card} ${styles.directoryCard}`} aria-labelledby="community-directory" aria-busy={sectionLoading.directory}>
-          <div className={styles.cardHeading}><h2 id="community-directory">{t("allUsers")}</h2></div>
+          <div className={styles.cardHeading}><h2 id="community-directory" tabIndex={-1}>{t("allUsers")}</h2></div>
           <form className={styles.searchForm} onSubmit={submitDirectorySearch}>
             <label htmlFor="community-user-search">{t("searchUsers")}</label>
             <div><input id="community-user-search" aria-label={t("searchUsers")} value={directoryQuery} onChange={event => setDirectoryQuery(event.target.value)} placeholder={t("searchUsers")} /><button type="submit">{t("search")}</button></div>
           </form>
-          {sectionLoading.directory ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.directory ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("directory")} /> : !directory || directory.content.length === 0 ? <p className={styles.empty}>{t("noUsers")}</p> : <><ul className={styles.list}>{directory.content.map(member => <UserFollowRow key={member.id} user={member} href={path(`/users/${member.id}`)} />)}</ul><Pagination className={styles.pagination} page={directoryPage} totalPages={directory.totalPages} label={t("communityUsersPagination")} busy={sectionLoading.directory} onPageChange={setDirectoryPage} /></>}
+          {sectionLoading.directory ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.directory ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("directory")} /> : !directory || directory.content.length === 0 ? <p className={styles.empty}>{t("noUsers")}</p> : <><ul className={styles.list}>{directory.content.map(member => <UserFollowRow key={member.id} user={member} href={path(`/users/${member.id}`)} />)}</ul><Pagination className={styles.pagination} page={directoryPage} totalPages={directory.totalPages} label={t("communityUsersPagination")} busy={sectionLoading.directory} onPageChange={page => { clearRetryFocus(); setDirectoryPage(page); }} /></>}
         </section>
       </div>
     </div>

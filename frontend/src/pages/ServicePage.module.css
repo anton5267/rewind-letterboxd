@@ -97,6 +97,8 @@
 
   .heroCopy .eyebrow { display: none; }
   .title { margin: 0 auto 8px; color: #fff; font-size: 58px; line-height: 1.19; letter-spacing: 0; }
+  /* Keep the 534px Figma title on one line with the available Arial fallback. */
+  .faqTitle:lang(en) { letter-spacing: -.013em; }
   .lead { max-width: 547px; margin-inline: auto; color: #aaa; font-size: 24px; line-height: 1.2; }
 
   .content {
@@ -164,8 +166,20 @@
 .editorialSection ol li { display: list-item; }
 .privacyLinks { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 12px; }
 .privacyLinks a { display: inline-flex; min-height: 44px; align-items: center; }
+@media (min-width: 1024px) {
+  /* Film Data frame 1162:2305 places the first section heading at y848,
+     about 20px below the current English source preview. */
+  :lang(en) .filmDataContent .editorialIntro { padding-bottom: 58px; }
+}
 @media (min-width: 721px) {
   .content.editorialContent { margin-top: -105px; padding-top: 0; padding-bottom: 80px; }
+  .page.privacyPage { padding-bottom: 0; }
+  .content.editorialContent.privacyContent { padding-bottom: 126px; }
+  .content.editorialContent.deletionContent { padding-bottom: 46px; }
+  /*1176:2594 reserves two lines for the Security and Privacy paragraph. */
+  .deletionContent .editorialSection:nth-child(3) > p { min-height: 45px; }
+  .content.editorialContent.faqContent { padding-bottom: 46.5px; }
+  .content.editorialContent.filmDataContent { padding-bottom: 42px; }
 }
 @media (max-width: 720px) {
   .editorialBody { font-size: 16px; line-height: 1.45; }

@@ -11,20 +11,19 @@
 .error { composes: error from "./AuthShared.module.css"; }
 .footer { composes: footer from "./AuthShared.module.css"; }
 .mobileBack { composes: mobileBack from "./AuthShared.module.css"; }
-.social { composes: social from "./AuthShared.module.css"; }
-.socialMark { composes: socialMark from "./AuthShared.module.css"; }
 .registerPage { composes: page from "./AuthShared.module.css"; }
 
 .registerPage .card { min-height: 1011px; }
 .registerPage .form { margin-top: 58.4px; }
 .registerPage .button { margin-top: 32px; }
+.successButton { display: block; max-width: 627px; margin-inline: auto; }
 
 @media (min-width: 721px) {
   .registerPage .footer { margin-top: 191px; }
 }
 
 @media (max-width: 720px) {
-  .registerPage .card { padding-top: 101px; }
+  .registerPage .card { min-height: 852px; padding-top: 101px; }
   .registerPage .form { margin-top: 103px; }
   .registerPage .passwordHint {
     position: absolute;

@@ -40,11 +40,14 @@
 .noMatches > p:not(.sectionKicker) { max-width: 300px; margin: 14px 0 22px; color: var(--rewind-muted); line-height: 1.5; }
 .noMatchesAction { border: 1px solid #d4a85f; border-radius: 999px; padding: 10px 18px; background: #d4a85f; color: #1f1f1f; font-weight: 800; text-decoration: none; }
 .results { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr); gap: 40px; }
-.results:focus-visible { outline: 2px solid var(--rewind-gold); outline-offset: 3px; }
+.results:focus { outline: 2px solid var(--rewind-gold); outline-offset: 3px; }
+.showMoreResults { display: none; }
 .section { position: relative; min-width: 0; scroll-margin-top: 100px; }
+.section:focus { outline: 2px solid var(--rewind-gold); outline-offset: 3px; }
 .sectionHeading { display: flex; min-width: 0; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--rewind-line); padding-bottom: 12px; }
 .sectionHeading > div { min-width: 0; }
 .sectionHeading h2 { margin: 0; color: #fff; font-size: clamp(24px, 3vw, 36px); letter-spacing: -.04em; }
+.sectionHeading h2:focus-visible { outline: 2px solid var(--rewind-gold); outline-offset: 4px; }
 .sectionHeading > span { color: #d4a85f; font-size: 13px; }
 .filmGrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 24px 31px; }
 .filmCard { position: relative; min-width: 0; }
@@ -87,7 +90,7 @@
 .reviewGrid { display: grid; grid-template-columns: 1fr; gap: 16px; }
 .reviewCard { display: grid; grid-template-columns: minmax(120px, 160px) minmax(0, 1fr); gap: 22px; min-width: 0; border: 1px solid var(--rewind-line); padding: 18px; background: #292929; }
 .reviewCard > * { min-width: 0; }
-.reviewPoster { display: grid; width: 100%; aspect-ratio: 2 / 3; place-items: center; overflow: hidden; background: #202020; color: #d4a85f; font-size: 12px; font-weight: 800; text-decoration: none; }
+.reviewPoster { display: grid; width: 100%; aspect-ratio: 2 / 3; place-items: center; overflow: hidden; background: #202020; color: #d4a85f; font-size: 12px; font-weight: 800; text-decoration: none; scroll-margin-block: 120px; }
 .reviewPoster img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .reviewBody { display: flex; min-width: 0; flex-direction: column; padding: 4px 0; }
 .reviewTitleRow { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; min-width: 0; }
@@ -98,6 +101,7 @@
 .reviewRating { color: #f4d28c; font-size: 13px; font-weight: 700; }
 .reviewAuthorRow { display: flex; align-items: center; gap: 8px; color: var(--rewind-muted); }
 .reviewAuthorRow a { overflow: hidden; color: var(--rewind-muted); text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+.reviewDate { flex: 0 0 auto; color: var(--rewind-muted); font-size: inherit; white-space: nowrap; }
 .reviewAuthorRow a:hover, .reviewMovie:hover { color: #f4d28c; }
 .reviewBody > p { display: -webkit-box; overflow: hidden; margin: 22px 0 0; color: #ded8d2; line-height: 1.5; -webkit-box-orient: vertical; -webkit-line-clamp: 5; }
 .reviewBody > p a { color: inherit; overflow-wrap: anywhere; text-decoration: none; }
@@ -121,18 +125,33 @@
 /* Figma desktop results share one category control and an editorial rail.
    Cards can grow for translated or long API content. */
 @media (min-width: 1024px) {
+  .page:has(.noMatches) .searchForm { display: none; }
   .resultNav { position: absolute; width: 1px; height: 1px; overflow: hidden; margin: -1px; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
   .resultNav:focus-within { z-index: 3; right: 0; left: 0; width: auto; height: auto; overflow-x: auto; margin: 0; border: 1px solid var(--rewind-line); padding: 8px; background: var(--rewind-surface); clip: auto; clip-path: none; white-space: normal; }
   .categorySelect { display: block; flex: 0 0 200px; max-width: 40%; min-width: 0; height: 26px; border: 0; border-radius: 4px; padding: 0 8px; background: transparent; color: #aaa; font: inherit; font-size: 16px; color-scheme: dark; cursor: pointer; }
   .categorySelect:focus-visible { outline: 2px solid var(--rewind-gold); outline-offset: 3px; }
   .results { gap: 55px; padding-top: 46px; }
+  .allPreview .expandedOnly, .allPreview .reviewCard:nth-child(n + 4) { display: none; }
+  .showMoreResults { display: flex; min-width: 176px; min-height: 48px; align-items: center; justify-content: center; justify-self: center; border: 0; border-radius: 999px; padding: 12px 22px; background: #282828; color: #fff; font: inherit; font-size: 14px; cursor: pointer; }
+  .showMoreResults:hover:not(:disabled) { background: #343434; }
+  .showMoreResults:focus-visible { outline: 3px solid var(--rewind-gold); outline-offset: 3px; }
+  .showMoreResults:disabled { cursor: progress; opacity: .7; }
   .results > .section > .sectionHeading { position: absolute; width: 1px; height: 1px; overflow: hidden; margin: -1px; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+  .userGrid { grid-template-columns: 1fr; gap: 38px; }
+  .userCard { min-height: 120px; box-sizing: border-box; gap: 24px; border: 0; border-radius: 20px; padding: 20px 24px; background: #282828; }
+  .userCard img, .userCard .avatarFallback { width: 80px; height: 80px; flex-basis: 80px; }
+  .userCard strong { font-size: 20px; line-height: 1.15; }
+  .userCard small { font-size: 14px; line-height: 1.2; }
   .filmCard h3 { position: absolute; z-index: 1; right: 0; bottom: 36px; left: 0; margin: 0; padding: 0 8px; color: #fff; text-shadow: 0 1px 8px #000; }
   .filmCard p { position: absolute; z-index: 1; right: 0; bottom: 11px; left: 0; margin: 0; padding: 0 8px; text-shadow: 0 1px 8px #000; }
   .reviewGrid { gap: 38px; }
   .reviewCard { min-height: 315px; box-sizing: border-box; grid-template-columns: 175px minmax(0, 1fr); align-items: start; gap: 40px; border: 0; padding: 31px 26px 22px; }
   .reviewPoster { aspect-ratio: 175 / 262; align-self: start; }
-  .noMatches { width: min(540px, 100%); min-height: 166px; box-sizing: border-box; margin: 0 auto; }
+  .noMatches { display: block; width: min(540px, 100%); min-height: 0; box-sizing: border-box; margin: 20px auto 40px; border: 0; background: transparent; text-align: center; }
+  .noMatches .sectionKicker { display: none; }
+  .noMatches h2 { max-width: 540px; margin: 0 auto; }
+  .noMatches > p:not(.sectionKicker) { margin: 14px auto 22px; }
+  .noMatchesAction { display: inline-flex; min-width: 176px; min-height: 48px; align-items: center; justify-content: center; border: 0; padding: 12px 22px; background: #fff; color: #111; font-weight: 600; }
   .listGrid { gap: 38px; }
   .listCard { min-height: 339px; box-sizing: border-box; grid-template-columns: minmax(0, 446fr) minmax(0, 620fr); gap: clamp(24px, 4.6vw, 66px); padding: 44px 34px 35px; border: 0; border-radius: 20px; background: #282828; }
   .listPreview { width: 100%; min-height: 0; height: auto; aspect-ratio: 446 / 260; align-self: start; }
@@ -172,7 +191,8 @@
   .searchForm input { display: block; width: 100%; min-height: 32px; height: 32px; padding: 5px 44px 5px 16px; border: 0; border-radius: 999px; background: rgba(255, 255, 255, .14); font-size: 14px; font-weight: 400; }
   .searchForm button { position: absolute; inset: 0 0 auto auto; width: 44px; min-height: 32px; height: 32px; padding: 0; border: 0; border-radius: 999px; background: transparent; color: #d8d5d0; }
   .submitIcon { display: inline; font-size: 18px; }
-  .matchesHeading { align-items: flex-start; gap: 8px; min-height: 40px; margin: 34px 0 13px; padding-top: 8px; border-top: 1px solid #4d4d4d; }
+  .matchesHeading { align-items: flex-start; gap: 8px; min-height: 40px; margin: 34px 0 6px; padding-top: 8px; border-top: 1px solid #4d4d4d; }
+  .filmsOnly .matchesHeading { margin-bottom: 6px; }
   .matchesHeading h2 { flex: 1 1 auto; min-width: 0; padding-top: 0; font-size: 14px; line-height: 1.12; }
   .categorySelect { display: block; width: 160px; min-width: 0; height: 32px; flex: 0 0 160px; margin-top: -8px; border: 0; border-radius: 4px; padding: 0 4px; background: transparent; color: #aaa; font: inherit; font-size: 12px; cursor: pointer; color-scheme: dark; }
   .resultNav { display: none; }
@@ -194,11 +214,40 @@
   .filmCard .posterLink { width: 100%; aspect-ratio: 79 / 116; border: 0; border-radius: 10px; scroll-margin-block: 100px; }
   .filmCard h3 { display: none; }
   .posterFallback { padding: 6px; overflow-wrap: anywhere; font-size: 11px; }
-  /* Figma phone All results uses the same four-column poster grid as the
-     Films variant (79×116 slots on a 361 px rail), not a larger carousel. */
-  .filmRail { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 19px 15px; margin: -7px 0 0; padding: 0; overflow: visible; }
-  .filmRail .filmCard { min-width: 0; flex: initial; }
-  .filmRail .posterLink { aspect-ratio: 79 / 116; }
+  /* The collapsed All results preview is a horizontal four-poster window.
+     Keep the rest of the API results reachable by swipe and keyboard focus. */
+  .filmRail {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    margin: -7px 0 0;
+    padding: 0 0 8px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+  }
+  .filmRail .filmCard { min-width: 0; flex: 0 0 calc((100% - 45px) / 4); }
+  .filmRail .posterLink { aspect-ratio: 79 / 116; scroll-snap-align: start; }
+  .allPreview .expandedOnly,
+  .allPreview .reviewCard:nth-child(n + 3) { display: none; }
+  .showMoreResults {
+    display: flex;
+    min-width: 176px;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    justify-self: center;
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 22px;
+    background: #282828;
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .showMoreResults:hover:not(:disabled) { background: #343434; }
+  .showMoreResults:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 3px; }
+  .showMoreResults:disabled { cursor: progress; opacity: .7; }
   .userGrid, .peopleGrid, .listGrid, .articleGrid, .reviewGrid { grid-template-columns: 1fr; }
   .userGrid { gap: 24px; }
   .userCard { min-height: 52px; gap: 12px; border: 0; border-radius: 20px; padding: 10px 16px 10px 8px; background: #282828; }
@@ -208,7 +257,7 @@
   .listCard, .articleCard, .personCard, .reviewCard { border: 0; border-radius: 20px; background: #282828; }
   .personCard { min-height: 76px; padding: 12px 14px; }
   .personCard img, .personFallback { flex-basis: 54px; width: 54px; height: 54px; }
-  .reviewGrid { gap: 25px; }
+  .reviewGrid { gap: 24px; }
   .reviewCard { grid-template-columns: 79px minmax(0, 1fr); gap: 14px; min-height: 168px; padding: 26px 18px; }
   .reviewPoster { aspect-ratio: 79 / 116; align-self: start; border-radius: 10px; }
   .reviewBody { padding: 0; }

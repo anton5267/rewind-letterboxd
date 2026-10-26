@@ -50,8 +50,7 @@
 
 .title {
   max-width: 627px;
-  margin-inline: auto;
-  margin: 0;
+  margin: 0 auto;
   color: var(--rewind-paper);
   font-size: 36px;
   font-weight: 700;
@@ -61,10 +60,6 @@
 }
 
 .mobileBack {
-  display: none;
-}
-
-.social {
   display: none;
 }
 
@@ -243,11 +238,19 @@
   outline-offset: 3px;
 }
 
+.error:focus,
+.success:focus,
+.title[tabindex="-1"]:focus {
+  outline: var(--rewind-focus-width) solid var(--rewind-cyan);
+  outline-offset: 4px;
+  scroll-margin-block: 120px;
+}
+
 @media (max-width: 720px) {
   .page {
     min-height: 852px;
     display: block;
-    padding: 0 0 calc(96px + env(safe-area-inset-bottom));
+    padding: 0 0 env(safe-area-inset-bottom);
     background:
       linear-gradient(180deg, transparent 0 300px, rgba(21, 21, 21, .78) 500px, var(--rewind-surface) 760px),
       radial-gradient(circle at 48% 0%, rgba(98, 182, 194, .58), transparent 22rem),
@@ -258,48 +261,31 @@
 
   .mobileBack {
     position: absolute;
-    top: 52px;
-    left: 32px;
+    top: 45px;
+    left: 25px;
     z-index: 1;
     display: grid;
-    width: 30px;
-    height: 30px;
+    width: 44px;
+    height: 44px;
     place-items: center;
     padding: 0;
-    border: 1px solid rgba(255, 255, 255, .44);
+    border: 0;
     border-radius: 50%;
-    background: rgba(25, 25, 25, .35);
+    background: transparent;
     color: #fff;
     cursor: pointer;
     font-size: 13px;
     line-height: 1;
   }
 
-  .social {
-    display: grid;
-    gap: 12px;
-    margin-top: 72px;
-    color: rgba(255, 255, 255, .52);
-    font-size: 11px;
-    text-align: center;
-  }
-
-  .social::before {
-    display: block;
-    width: 100%;
-    border-top: 1px solid rgba(255, 255, 255, .18);
+  .mobileBack::before {
+    position: absolute;
+    inset: 7px;
+    border: 1px solid rgba(255, 255, 255, .44);
+    border-radius: 50%;
+    background: rgba(25, 25, 25, .35);
     content: "";
-  }
-
-  .socialMark {
-    display: grid;
-    width: 24px;
-    height: 24px;
-    margin: 0 auto;
-    place-items: center;
-    color: rgba(255, 255, 255, .62);
-    font-size: 21px;
-    font-weight: 800;
+    pointer-events: none;
   }
 
   .card {
@@ -315,7 +301,6 @@
   .form { width: 100%; gap: 28px; margin-top: 103px; }
   .input, .button { min-height: 45px; padding-block: 10px; border-width: 1px; }
   .button { min-height: 56px; }
-  .social { width: 100%; margin-top: 76px; }
   .footer { width: 100%; margin-top: 9px; }
 }
 

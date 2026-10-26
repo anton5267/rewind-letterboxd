@@ -48,6 +48,7 @@ export interface ReviewDetails {
 }
 
 export const getReviewDetails = (id: number) => api.get<ReviewDetails>(`/reviews/${id}`);
+export const getRecentReviews = (page = 0, size = 20) => api.get<ReviewFeedPage>("/reviews/recent", { params: { page, size } });
 export const getPopularReviews = (page = 0, size = 6) => api.get<ReviewFeedPage>("/reviews/popular", { params: { page, size } });
 export const getReviewLikeStatus = (id: number) => api.get<{ liked: boolean; likes: number }>(`/reviews/${id}/like-status`);
 export const getReviewLikes = (id: number) => api.get<number>(`/reviews/${id}/likes`);

@@ -55,6 +55,18 @@
 
 .page .profileRailLink:focus-visible { outline-offset: -3px; }
 
+.page .networkSection > h2:focus-visible,
+.page :global(#public-profile-collections-title):focus-visible,
+.page :global(#public-profile-lists-title):focus-visible,
+.page .collectionToolbar h1:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; border-radius: 2px; }
+
+.state .alert:focus,
+.page .identity h1:focus {
+  outline: 2px solid var(--rewind-cyan);
+  outline-offset: 4px;
+  scroll-margin-block: 120px;
+}
+
 .actionStatus {
   margin: 16px 0 0;
   padding: 12px 14px;
@@ -182,6 +194,21 @@
   background: var(--rewind-purple);
   color: #fff;
   font-weight: 700;
+}
+
+.guestFollowButton {
+  display: inline-flex;
+  width: min(265px, 100%);
+  min-height: 59px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 20px;
+  border-color: #fff;
+  border-radius: 37px;
+  background: #fff;
+  color: #191919;
+  text-align: center;
 }
 
 .secondaryButton {
@@ -415,6 +442,7 @@
   .profileActions { display: grid; width: min(100%, 361px); grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 20px; }
   .profileActions :is(button, a) { min-width: 0; min-height: 44px; box-sizing: border-box; border-radius: 24px; padding: 10px 14px; color: #fff; font-size: 14px; line-height: 1.25; overflow-wrap: anywhere; text-align: center; }
   .profileActions .primaryButton { grid-column: 1 / -1; justify-self: center; width: max-content; max-width: 100%; min-width: 124px; border-color: #fff; background: #fff; color: #191919; }
+  .profileActions .guestFollowButton { width: min(265px, 100%); min-width: 0; min-height: 59px; padding: 14px 20px; border-radius: 37px; }
   .profileActions > :only-child { grid-column: 1 / -1; justify-self: center; }
   /* Phone overview `825:1378` goes from the 547px identity hero to
      Favorites at y=590; its six section links are the lower navigation. */
@@ -449,7 +477,7 @@
   .identityCopy { width: min(100%, 361px); }
   .avatar,
   .avatarFallback { width: 120px; height: 120px; flex-basis: 120px; }
-  .identity h1 { max-width: 361px; font-size: 26px; line-height: 1.08; overflow-wrap: anywhere; text-wrap: balance; }
+  .identity h1 { max-width: 100%; font-size: clamp(22px, 6.6vw, 26px); line-height: 1.08; overflow-wrap: anywhere; text-wrap: balance; }
 }
 
 /* Profile design slice: the Figma profile frames use one dark editorial surface
@@ -669,6 +697,85 @@
   color: #fff !important;
 }
 
+.profileListTagCloud {
+  margin: 28px 0 0;
+}
+
+.profileListTagHeading {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.profileListTagHeading h3 {
+  margin: 0;
+  color: #f1f1f1;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.profileListTagMore,
+.profileListTagMoreStatic {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 4px;
+  color: #999;
+  font: inherit;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.profileListTagMore {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.profileListTagMore:hover {
+  color: #fff;
+}
+
+.profileListTagMore:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--rewind-cyan, #5ed7e8);
+  outline-offset: 2px;
+}
+
+.profileListTagChips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.profileListTagChip {
+  display: inline-flex;
+  min-width: 84px;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  overflow-wrap: anywhere;
+  padding: 4px 10px;
+  border: 1px solid #575757;
+  border-radius: 999px;
+  color: #e6e6e6 !important;
+  font-size: 12px;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+}
+
+.profileListTagChip:hover {
+  border-color: var(--rewind-cyan, #5ed7e8);
+  color: #fff !important;
+}
+
 @media (max-width: 620px) {
   .stats {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -715,6 +822,8 @@
   .shell {
     width: 1200px;
     max-width: calc(100% - 48px);
+    margin-left: max(24px, calc((100vw - 1200px) / 2));
+    margin-right: 0;
     padding: 0;
   }
 
@@ -833,6 +942,9 @@
     line-height: 1.12;
     text-align: center;
   }
+
+  .page[data-profile-view="collection"] .tabs { display: none; }
+  .page[data-profile-view="collection"] [id="public-profile-collections-title"] { text-align: left; }
 
   .stats {
     gap: 31px;
@@ -1045,7 +1157,7 @@
 
 .networkBack { display: none; }
 .networkList { margin: 0; padding: 0; list-style: none; }
-.shell > section.networkSection .networkList a { color: inherit; font-weight: inherit; }
+.shell > section.networkSection .networkList > li > a { color: inherit; font-weight: inherit; }
 @media (min-width: 721px) {
   .networkBack { display: inline-flex; width: 44px; min-height: 44px; align-items: center; justify-content: center; margin-top: 73px; color: #b9b9b9; font-size: 30px; text-decoration: none; }
   .page[data-network-view="true"] .shell > section.networkSection { margin-top: 16px; border: 0; border-top: 1px solid #4d4d4d; border-radius: 0; padding: 17px 0 0; background: transparent; box-shadow: none; }
@@ -1103,6 +1215,7 @@
   .page[data-profile-view] .shell > section.section > h2 { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .page[data-profile-view="collection"] .tabs[data-filters-open="false"] { display: none; }
   .page[data-profile-view="collection"] .tabs[data-filters-open="true"] { margin: 0 0 20px; }
+  .page[data-profile-view="collection"] .tabs button { min-height: 44px; }
   .page[data-profile-view="collection"] .collectionGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 19px 15px; }
   .page[data-profile-view="collection"] .collectionPosterLink,
   .page[data-profile-view="collection"] .collectionPoster,
@@ -1141,4 +1254,12 @@
   .listsOverview .publicListDescription { margin: 0; font-size: 12px; line-height: 1.45; }
   .listsOverview .publicListTags { gap: 5px; margin-top: 10px; }
   .listsOverview .publicListTags a { font-size: 10px; }
+  .listsOverview .profileListTagCloud { margin: 24px 0 0; }
+  .listsOverview .profileListTagHeading { margin-bottom: 6px; }
+  .listsOverview .profileListTagHeading h3 { font-size: 14px; }
+  .listsOverview .publicListDescription { display: none; }
+  .listsOverview .profileListTagChips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .listsOverview .profileListTagChip { min-width: 0; min-height: 32px; padding: 3px 8px; font-size: 11px; }
 }
+
+.collectionToolbar h1:focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }

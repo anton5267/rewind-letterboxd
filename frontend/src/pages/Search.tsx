@@ -8,7 +8,12 @@ import { editorialText, formatMovieYear, localizeGenreName, useLocale } from "..
 import { getLastPageIndex, isPageOutOfRange } from "../utils/pagination";
 import styles from "./Search.module.css";
 
-const PAGE_SIZE = 12;
+const PAGE_ROWS = 6;
+const getPageSize = () => window.matchMedia("(max-width: 820px)").matches
+  ? 4 * PAGE_ROWS
+  : window.matchMedia("(max-width: 1100px)").matches
+    ? 5 * PAGE_ROWS
+    : 6 * PAGE_ROWS;
 const MAX_PAGE = 2_147_483_647; // The API binds page to a Java int.
 
 export default function Search() {
@@ -25,13 +30,37 @@ export default function Search() {
   const [genreError, setGenreError] = useState(false);
   const [genreRetry, setGenreRetry] = useState(0);
   const [results, setResults] = useState<MoviePage | null>(null);
+  const [pageSize, setPageSize] = useState(getPageSize);
+  const pageSizeRef = useRef(pageSize);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const filtersFormRef = useRef<HTMLFormElement>(null);
   const filterToggleRef = useRef<HTMLButtonElement>(null);
+  const queryInputRef = useRef<HTMLInputElement>(null);
   const filterWasOpen = useRef(false);
+
+  useEffect(() => {
+    const updatePageSize = () => {
+      const nextPageSize = getPageSize();
+      const previousPageSize = pageSizeRef.current;
+      if (nextPageSize === previousPageSize) return;
+
+      const params = new URLSearchParams(window.location.search);
+      const currentPage = Number(params.get("page") ?? 0);
+      const safePage = Number.isSafeInteger(currentPage) && currentPage >= 0 ? currentPage : 0;
+      const nextPage = Math.min(MAX_PAGE, Math.floor((safePage * previousPageSize) / nextPageSize));
+      if (nextPage > 0) params.set("page", String(nextPage));
+      else params.delete("page");
+
+      pageSizeRef.current = nextPageSize;
+      setPageSize(nextPageSize);
+      setSearchParams(params, { replace: true });
+    };
+    window.addEventListener("resize", updatePageSize, { passive: true });
+    return () => window.removeEventListener("resize", updatePageSize);
+  }, [setSearchParams]);
 
   useEffect(() => {
     setGenreError(false);
@@ -66,7 +95,7 @@ export default function Search() {
       minRating: params.get("minRating") || undefined,
       sort: params.get("sort") || "newest",
       page: requestedPage,
-      size: PAGE_SIZE,
+      size: pageSize,
     };
     let current = true;
     setLoading(true);
@@ -84,12 +113,12 @@ export default function Search() {
       .catch(() => { if (current) { setResults(null); setError(t("loadFilmsError")); } })
       .finally(() => { if (current) setLoading(false); });
     return () => { current = false; };
-  }, [searchKey, lang, retry]);
+  }, [searchKey, lang, retry, pageSize]);
 
   useEffect(() => {
     if (mobileFiltersOpen && !filterWasOpen.current) {
       window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
-        const firstControl = filtersFormRef.current?.querySelector<HTMLElement>("select:not(:disabled), input:not(:disabled), button:not(:disabled)");
+        const firstControl = queryInputRef.current ?? filtersFormRef.current?.querySelector<HTMLElement>("select:not(:disabled), input:not(:disabled), button:not(:disabled)");
         firstControl?.focus();
       }));
     } else if (!mobileFiltersOpen && filterWasOpen.current) {
@@ -146,24 +175,33 @@ export default function Search() {
             aria-label={mobileFiltersOpen ? t("close") : t("filters")}
             onClick={() => setMobileFiltersOpen(open => !open)}
           >
-            <span className={styles.filterSummary} aria-hidden="true">
-              <span>{t("year")}</span><span className={styles.filterSummaryArrow}>›</span>
-              <span>{t("rating")}</span><span className={styles.filterSummaryArrow}>›</span>
-              <span>{t("genre")}</span>
-            </span>
-            <span className={styles.filterIcon} aria-hidden="true">☷</span>
+            <span className={styles.filterIcon} aria-hidden="true"><i className="fa-solid fa-sliders" /></span>
           </button>
+          <div className={styles.filterSummary} aria-hidden="true">
+            <span>{t("year")}</span><span className={styles.filterSummaryArrow}>⌄</span>
+            <span>{t("rating")}</span><span className={styles.filterSummaryArrow}>⌄</span>
+            <span>{t("genre")}</span>
+          </div>
         </div>
         <p className={styles.heroIntro}>{t("searchIntro")}</p>
         <form className={styles.searchForm} onSubmit={applyFilters} aria-busy={loading}>
           <label className={styles.queryField} htmlFor="film-search-query">{t("searchFilms")}
-            <input id="film-search-query" aria-label={t("searchFilms")} value={query} onChange={event => setQuery(event.target.value)} />
+            <input ref={queryInputRef} id="film-search-query" aria-label={t("searchFilms")} placeholder={results ? `${t("resultsCount")}: ${results.totalElements}` : t("searchFilms")} value={query} onChange={event => setQuery(event.target.value)} />
+          </label>
+          <label className={styles.sortControl} htmlFor="film-search-sort">{t("sortBy")}
+            <select id="film-search-sort" value={sort} onChange={event => setSort(event.target.value)}>
+              <option value="newest">{t("sortNewest")}</option>
+              <option value="oldest">{t("sortOldest")}</option>
+              <option value="rating_desc">{t("sortBestRated")}</option>
+              <option value="rating_asc">{t("sortLowestRated")}</option>
+              <option value="title_asc">{t("sortTitle")}</option>
+            </select>
           </label>
           <button className={styles.submit} type="submit" aria-busy={loading}>{t("search")}</button>
         </form>
       </section>
 
-      <form ref={filtersFormRef} id="film-filter-controls" className={`${styles.filters} ${mobileFiltersOpen ? styles.filtersOpen : ""}`} onSubmit={applyFilters} aria-label={t("sortBy")} aria-busy={genresLoading || loading}>
+      <form ref={filtersFormRef} id="film-filter-controls" className={`${styles.filters} ${mobileFiltersOpen ? styles.filtersOpen : ""}`} onSubmit={applyFilters} aria-label={t("filters")} aria-busy={genresLoading || loading}>
         <label htmlFor="film-search-genre">{t("genre")}
           <select id="film-search-genre" aria-busy={genresLoading} value={genreId} disabled={genresLoading || genreError} onChange={event => setGenreId(event.target.value)}>
             <option value="">{t("allGenres")}</option>
@@ -177,15 +215,6 @@ export default function Search() {
           <select id="film-search-rating" value={minRating} onChange={event => setMinRating(event.target.value)}>
             <option value="">{t("anyRating")}</option>
             {[1, 2, 3, 4, 5].map(value => <option key={value} value={value}>{value}+</option>)}
-          </select>
-        </label>
-        <label htmlFor="film-search-sort">{t("sortBy")}
-          <select id="film-search-sort" value={sort} onChange={event => setSort(event.target.value)}>
-            <option value="newest">{t("sortNewest")}</option>
-            <option value="oldest">{t("sortOldest")}</option>
-            <option value="rating_desc">{t("sortBestRated")}</option>
-            <option value="rating_asc">{t("sortLowestRated")}</option>
-            <option value="title_asc">{t("sortTitle")}</option>
           </select>
         </label>
         <button className={styles.filterSubmit} type="submit">{t("applyFilters")}</button>

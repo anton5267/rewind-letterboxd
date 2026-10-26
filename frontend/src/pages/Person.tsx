@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getPersonFilmography, type PersonFilmography, type PersonType } from "../api/people.api";
 import ResilientImage from "../components/ResilientImage";
@@ -25,6 +25,38 @@ export default function Person() {
   const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const personHeadingRef = useRef<HTMLHeadingElement>(null);
+  const filmographyHeadingRef = useRef<HTMLHeadingElement>(null);
+  const focusPersonAfterRetry = useRef(false);
+  const focusGenresAfterRetry = useRef(false);
+
+  useEffect(() => {
+    focusPersonAfterRetry.current = false;
+    focusGenresAfterRetry.current = false;
+  }, [type, personId, lang]);
+
+  useEffect(() => {
+    if (!focusPersonAfterRetry.current || loading) return;
+    focusPersonAfterRetry.current = false;
+    const frame = window.requestAnimationFrame(() => personHeadingRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [loading, error, person]);
+
+  useEffect(() => {
+    if (!focusGenresAfterRetry.current || genresLoading) return;
+    focusGenresAfterRetry.current = false;
+    const frame = window.requestAnimationFrame(() => filmographyHeadingRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [genresLoading, genreError, genres]);
+
+  const retryPerson = () => {
+    focusPersonAfterRetry.current = true;
+    setAttempt(value => value + 1);
+  };
+  const retryGenres = () => {
+    focusGenresAfterRetry.current = true;
+    setGenreRetry(value => value + 1);
+  };
   useEffect(() => {
     let current = true;
     if (!validPersonType || !validPersonId) {
@@ -60,10 +92,11 @@ export default function Person() {
   const personMatchesRoute = person !== null
     && person.id === personId
     && person.type.toLowerCase() === type;
-  if (!person || !personMatchesRoute) return <main className={styles.page} aria-labelledby="person-title" aria-busy={loading && !error}><h1 id="person-title" className={styles.stateTitle}>{t("filmography")}</h1>{error ? <p className={styles.error} role="alert">{!validPersonType || !validPersonId ? t("invalidPersonId") : t("loadPersonError")} {validPersonType && validPersonId && <RetryButton label={t("retry")} busy={loading} onClick={() => setAttempt(value => value + 1)} />}</p> : <p className={styles.status} role="status">{t("loading")}</p>}</main>;
+  if (!person || !personMatchesRoute) return <main className={`${styles.page} ${styles.statePage}`} aria-labelledby="person-title" aria-busy={loading && !error}><h1 id="person-title" className={styles.stateTitle} ref={personHeadingRef} tabIndex={-1}>{t("filmography")}</h1>{error ? <p className={styles.error} role="alert">{!validPersonType || !validPersonId ? t("invalidPersonId") : t("loadPersonError")} {validPersonType && validPersonId && <RetryButton label={t("retry")} busy={loading} onClick={retryPerson} />}</p> : <p className={styles.status} role="status">{t("loading")}</p>}</main>;
 
   const personName = editorialText(person.name, t("unknownPerson"));
   const personTypeLabel = type === "actor" ? t("actors") : type === "producer" ? t("producers") : t("directors");
+  const filmSectionTitle = type === "actor" ? t("filmsStarring") : type === "director" ? t("filmsDirected") : t("filmography");
 
   return <main className={styles.page} aria-labelledby="person-title" aria-busy={loading || genresLoading}>
     <section className={styles.hero}>
@@ -76,7 +109,7 @@ export default function Person() {
         <ResilientImage className={styles.avatar} src={person.photoUrl} alt={personName} fallback={<div className={styles.avatarFallback} aria-hidden="true">{personName.slice(0, 1).toUpperCase()}</div>} />
         <div className={styles.heroCopy}>
           <p className={styles.eyebrow}>{personTypeLabel}</p>
-          <h1 id="person-title">{personName}</h1>
+          <h1 id="person-title" ref={personHeadingRef} tabIndex={-1}>{personName}</h1>
           <p className={styles.heroMeta}>{t("filmography")}</p>
         </div>
       </div>
@@ -84,13 +117,13 @@ export default function Person() {
 
     <section className={styles.content} aria-labelledby="filmography-title" aria-busy={loading || genresLoading}>
       {loading && <p className={styles.status} role="status">{t("loading")}</p>}
-      {error && <RetryNotice className={styles.error} message={t("loadPersonError")} retryLabel={t("retry")} onRetry={() => setAttempt(value => value + 1)} />}
-      {genreError && <RetryNotice className={styles.error} message={t("loadGenresError")} retryLabel={t("retry")} onRetry={() => setGenreRetry(value => value + 1)} />}
+      {error && <RetryNotice className={styles.error} message={t("loadPersonError")} retryLabel={t("retry")} onRetry={retryPerson} />}
+      {genreError && <RetryNotice className={styles.error} message={t("loadGenresError")} retryLabel={t("retry")} onRetry={retryGenres} />}
       <div className={`${styles.controls} ${filtersOpen ? styles.controlsOpen : ""}`}>
         <label className={styles.field}>{t("sortBy")} <select value={sort} onChange={event => setSort(event.target.value)}><option value="newest">{t("sortNewest")}</option><option value="oldest">{t("sortOldest")}</option><option value="rating">{t("sortBestRated")}</option><option value="title">{t("sortTitle")}</option></select></label>
         <label className={styles.field}>{t("genre")} <select value={genreId} disabled={genresLoading || genreError} onChange={event => setGenreId(event.target.value)}><option value="">{t("allGenres")}</option>{genres.map(genre => <option key={genre.id} value={genre.id}>{localizeGenreName(genre.name, lang)}</option>)}</select></label>
       </div>
-      <div className={styles.sectionHeading}><h2 id="filmography-title">{t("filmography")}</h2></div>
+      <div className={styles.sectionHeading}><h2 id="filmography-title" ref={filmographyHeadingRef} tabIndex={-1}>{filmSectionTitle}</h2></div>
       {person.films.length === 0 ? <p className={styles.empty}>{t("noFilms")}</p> : <div className={styles.grid}>{person.films.map(film => {
         const filmTitle = editorialText(film.title, t("untitledFilm"));
         return <article className={styles.filmCard} key={film.id}>

@@ -38,6 +38,7 @@
 .error, .message, .feedback { margin: 0 0 24px; padding: 16px; line-height: 1.5; overflow-wrap: anywhere; }
 .error { background: #4a1f24; color: #ffd2d2; }
 .message { background: #1d4728; color: #d8ffd8; }
+.settingsSection :is(.error, .message):focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
 .page :is(a, button, input):focus-visible { outline: 2px solid #d4a85f; outline-offset: 4px; scroll-margin-block: 120px; }
 .hero h1:focus { outline: none; }
 .settingsSection output { display: block; overflow-wrap: anywhere; }
@@ -49,8 +50,12 @@
 .favorites { margin-top: 85px; border-top: 1px solid #4d4d4d; padding-top: 18px; }
 .favorites h2 { margin: 0 0 59px; font-size: 24px; font-weight: 500; line-height: 27px; }
 .favorites ul { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 46px; margin: 0; padding: 0; list-style: none; }
-.favorites li { min-width: 0; }
+.favorites li { position: relative; min-width: 0; }
 .favorites li a, .favorites li img, .favorites li span { display: grid; width: 100%; aspect-ratio: 265 / 395; box-sizing: border-box; place-items: center; border-radius: 20px; background: #282828; color: #fff; object-fit: cover; text-decoration: none; }
+.favorites li .favoriteRemove { position: absolute; top: 8px; right: 8px; display: grid; width: 44px; min-width: 44px; height: 44px; place-items: center; border: 1px solid rgba(255, 255, 255, .45); border-radius: 50%; padding: 0; background: rgba(0, 0, 0, .78); color: #fff; font-size: 24px; line-height: 1; cursor: pointer; }
+.favorites li .favoriteRemove span { width: auto; aspect-ratio: auto; border-radius: 0; background: transparent; font: inherit; }
+.favorites li .favoriteRemove:disabled { cursor: wait; opacity: .7; }
+.favorites h2:focus { outline: 2px solid #d4a85f; outline-offset: 5px; }
 .manageLink { display: inline-flex; min-height: 44px; align-items: center; gap: 12px; margin-top: 12px; color: #b9b9b9; }
 
 @media (min-width: 1024px) {
@@ -90,7 +95,7 @@
 /* Phone settings1043:2125 uses a flat page, toolbar near y106 and compact
    profile rows. Unsupported bio/pronoun/upload/OAuth controls stay absent. */
 @media (max-width: 720px) {
-  .page { padding-bottom: calc(124px + env(safe-area-inset-bottom)); }
+  .page { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
   .hero { min-height: 0; padding: 85px 64px 0; background: none; }
   .hero h1 { display: flex; min-height: 44px; align-items: center; justify-content: center; font-size: 16px; font-weight: 500; line-height: 1.3; }
   .hero > h1, .hero > p { display: none; }

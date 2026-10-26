@@ -8,6 +8,7 @@ export default function ServiceNavigation({ className = "" }: { className?: stri
   const links = [
     { href: "/about", label: t("about") },
     { href: "/help", label: t("help") },
+    { href: "/faq", label: t("faqTitle") },
     { href: "/film-data", label: t("filmData") },
     { href: "/profile?settings=profile", label: t("accountSettings") },
     { href: "/privacy", label: t("privacyTitle") },

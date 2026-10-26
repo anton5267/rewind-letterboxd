@@ -4,6 +4,7 @@ import type { MovieCard } from "./search.api";
 export interface MovieDetails {
   id: number;
   title: string;
+  imdbId: string | null;
   shortPlot: string | null;
   photoUrl: string | null;
   backdropUrl: string | null;

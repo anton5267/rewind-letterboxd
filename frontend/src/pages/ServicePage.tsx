@@ -3,7 +3,7 @@ import { useLocale, type TranslationKey } from "../i18n";
 import ServiceNavigation from "../components/ServiceNavigation";
 import styles from "./ServicePage.module.css";
 
-type ServiceKind = "help" | "contact" | "rules" | "privacy" | "film-data" | "delete-account";
+type ServiceKind = "help" | "faq" | "contact" | "rules" | "privacy" | "film-data" | "delete-account";
 type ServiceSection = { heading: string; body: string; items?: string[] };
 type ServiceCopy = {
   title: TranslationKey;
@@ -36,6 +36,31 @@ const content: Record<ServiceKind, ServiceCopy> = {
         { heading: "Your Account and Settings", body: "Open your profile for your films, reviews, lists, and recent activity. The settings button leads to password changes and links to your profile details, avatar, and social links. You can also manage your newsletter subscription there." },
         { heading: "Following and Activity", body: "Read reviews from other members to find voices you enjoy and follow them. Member profiles show collections, reviews, and activity, while the Community section helps you discover more people who share your love of cinema." },
         { heading: "Make and Share Lists", body: "Lists let you share collections of films by genre, actor, director, or theme. Create a list in your Lists section, add films from their pages, and make it public to share with other members." },
+      ],
+    },
+  },
+  faq: {
+    title: "faqTitle", body: "faqBody",
+    hero: {
+      uk: "Поширені запитання допоможуть швидко зорієнтуватися в Rewind і знайти потрібні відомості про спільноту та можливості сервісу.",
+      en: "Frequent Questions is Rewind’s guide to clarity, helping every reader feel confident, informed, and part of the cinema community.",
+    },
+    sections: {
+      uk: [
+        { heading: "Чому Rewind?", body: "Rewind створено як культурний простір для тих, хто живе кіно. Ми поєднуємо достовірну інформацію, вдумливий аналіз і спільноту глядачів." },
+        { heading: "Як користуватися сайтом?", body: "Відкривайте фільми, огляди, списки та матеріали Journal через головну сторінку й навігацію. Пошук і теги допоможуть знайти фільми, статті та інші матеріали за вашими інтересами." },
+        { heading: "Чи безкоштовний Rewind?", body: "Так. Основні можливості Rewind доступні без оплати: ви можете переглядати матеріали, ставити оцінки, писати огляди та створювати списки. Платної підписки в сервісі зараз немає." },
+        { heading: "Чи можу я долучитися?", body: "Так. Команда відкрита до пропозицій від критиків, журналістів і шанувальників кіно. Надішліть редакційну ідею, матеріал про фестиваль або пропозицію співпраці через сторінку контактів." },
+        { heading: "Як Rewind дбає про спільноту?", body: "Ми заохочуємо поважний діалог, конструктивну критику й різні погляди. Правила та модерація допомагають підтримувати безпечне й доброзичливе середовище." },
+        { heading: "Чим Rewind відрізняється?", body: "Rewind поєднує аналіз із розповідями про кіно. Ми говоримо не лише про прем’єри й нагороди, а й про те, як кіно впливає на суспільство, ідентичність та уяву." },
+      ],
+      en: [
+        { heading: "Why Rewind?", body: "Rewind is created as a cultural space for people who live and breathe cinema. We bring credible information, thoughtful analysis, and a community of film lovers together." },
+        { heading: "How do I use the site?", body: "Browse films, reviews, lists, and Journal stories from the homepage and main navigation. Search and tags help you find films, articles, and other features that match your interests." },
+        { heading: "Is Rewind free?", body: "Yes. Rewind’s core features are available at no charge: you can read stories, rate films, write reviews, and create lists. Rewind does not currently offer paid subscriptions." },
+        { heading: "Can I contribute?", body: "Yes. We welcome ideas from critics, journalists, and film enthusiasts. Send an editorial pitch, a festival report, or a collaboration proposal through the Contact page." },
+        { heading: "How does Rewind handle community?", body: "We encourage respectful dialogue, constructive criticism, and diverse perspectives. Our rules and moderation help keep discussions safe and welcoming." },
+        { heading: "What makes Rewind different?", body: "Rewind blends analysis with storytelling. We look beyond premieres and awards to explore how cinema shapes society, identity, and imagination." },
       ],
     },
   },
@@ -172,6 +197,8 @@ const helpIllustrations = [
 ] as const;
 
 function WatchedIllustration() {
+  const { t } = useLocale();
+
   return <div className={styles.watchedPreview} aria-hidden="true">
     <img className={styles.watchedBackdrop} src="/images/help-watched-backdrop.jpg" alt="" loading="lazy" />
     <span className={styles.watchedBack}><img src="/images/help-icon-back.png" alt="" loading="lazy" /></span>
@@ -180,9 +207,9 @@ function WatchedIllustration() {
     <span className={styles.watchedYear}>2021</span>
     <div className={styles.watchedActionSurface} />
     <div className={styles.watchedActions}>
-      <span><img src="/images/help-icon-watched.png" alt="" loading="lazy" /><span>Watch</span></span>
-      <span><img src="/images/help-icon-favorite.png" alt="" loading="lazy" /><span>Like</span></span>
-      <span><img src="/images/help-icon-watchlist.png" alt="" loading="lazy" /><span>Watchlist</span></span>
+      <span><img src="/images/help-icon-watched.png" alt="" loading="lazy" /><span>{t("watched")}</span></span>
+      <span><img src="/images/help-icon-favorite.png" alt="" loading="lazy" /><span>{t("favorite")}</span></span>
+      <span><img src="/images/help-icon-watchlist.png" alt="" loading="lazy" /><span>{t("watchlist")}</span></span>
     </div>
     <span className={styles.watchedHighlight} />
   </div>;
@@ -216,16 +243,16 @@ export default function ServicePage({ kind }: ServicePageProps) {
   const sections = copy.sections[lang];
 
   return (
-    <main className={styles.page} aria-labelledby="service-page-title">
+    <main className={`${styles.page} ${kind === "privacy" ? styles.privacyPage : ""}`} aria-labelledby="service-page-title">
       <div className={`${styles.hero} ${kind === "help" ? styles.helpHero : ""}`}>
         <ServiceNavigation className={styles.serviceNav} />
         <div className={styles.heroCopy}>
           <p className={styles.eyebrow}>REWIND / {t(copy.title)}</p>
-          <h1 className={styles.title} id="service-page-title">{t(copy.title)}</h1>
+          <h1 className={`${styles.title} ${kind === "faq" ? styles.faqTitle : ""}`} id="service-page-title">{t(copy.title)}</h1>
           <p className={styles.lead}>{copy.hero[lang]}</p>
         </div>
       </div>
-      <article className={[styles.content, kind === "help" ? styles.helpContent : styles.editorialContent, kind !== "help" && kind !== "contact" ? styles.documentContent : ""].filter(Boolean).join(" ")} aria-labelledby="service-details-title">
+      <article className={[styles.content, kind === "help" ? styles.helpContent : styles.editorialContent, kind !== "help" && kind !== "contact" ? styles.documentContent : "", kind === "delete-account" ? styles.deletionContent : "", kind === "film-data" ? styles.filmDataContent : "", kind === "privacy" ? styles.privacyContent : "", kind === "faq" ? styles.faqContent : ""].filter(Boolean).join(" ")} aria-labelledby="service-details-title">
         <h2 id="service-details-title" className="srOnly">{t(copy.title)}</h2>
         {kind === "help" ? <>
           <div className={styles.helpSteps}>{sections.map((section, index) => {
@@ -243,7 +270,7 @@ export default function ServicePage({ kind }: ServicePageProps) {
           </section>)}</div>
         </> : kind === "contact" ? <div className={styles.editorialBody}>
           <div className={styles.editorialIntro}>
-            <p>{lang === "uk" ? "Ми раді вашим думкам та ідеям про Rewind. Спершу перегляньте " : "We’d love to hear from you regarding any aspect of Rewind. Please check our "}<Link to={path("/help")}>{lang === "uk" ? "сторінку допомоги" : "Frequent Questions page"}</Link>{lang === "uk" ? ": можливо, відповідь на ваше запитання вже є там." : " first — your question may already be answered there."}</p>
+            <p>{lang === "uk" ? "Ми раді вашим думкам та ідеям про Rewind. Спершу перегляньте " : "We’d love to hear from you regarding any aspect of Rewind. Please check our "}<Link to={path("/faq")}>{lang === "uk" ? "сторінку поширених запитань" : "Frequent Questions page"}</Link>{lang === "uk" ? ": можливо, відповідь на ваше запитання вже є там." : " first — your question may already be answered there."}</p>
             <p className={styles.contactAvailability}>{lang === "uk" ? "Напишіть команді Rewind:" : "Contact the Rewind team:"} <a href="mailto:anonimua910@gmail.com">anonimua910@gmail.com</a></p>
           </div>
           {sections.map(section => <section key={section.heading} className={styles.editorialSection}>
@@ -256,18 +283,21 @@ export default function ServicePage({ kind }: ServicePageProps) {
           {copy.intro && <div className={styles.editorialIntro}><p>{copy.intro[lang]}</p></div>}
           {sections.map((section, index) => <section key={section.heading} className={styles.editorialSection}>
             <h3>{section.heading}</h3>
-            {section.items ? <ol>{section.items.map(item => <li key={item}>{item}</li>)}</ol> : <p>{section.body}</p>}
-            {kind === "film-data" && index === 0 && <a className={styles.guideLink} href="https://www.themoviedb.org">{lang === "uk" ? "Відкрити TMDB" : "Open TMDB"} <span aria-hidden="true">↗</span></a>}
-            {kind === "film-data" && index === 1 && <Link className={styles.guideLink} to={path("/contact")}>{t("contactTitle")} <span aria-hidden="true">→</span></Link>}
-            {kind === "privacy" && index === sections.length - 1 && <div className={styles.privacyLinks}>
-              <Link to={path("/profile#profile-identity-form-title")}>{lang === "uk" ? "Дані профілю" : "Profile details"}</Link>
-              <Link to={path("/profile#profile-delete-form-title")}>{t("deleteAccount")}</Link>
-            </div>}
+            {kind === "film-data" ? index === 0 ? <p>
+              {lang === "uk" ? "Відсутні фільми та неточності в метаданих спершу виправляйте через " : "Please add missing films and correct metadata through "}
+              <a href="https://www.themoviedb.org">TMDB</a>
+              {lang === "uk" ? ". Внесені зміни можуть з’явитися в Rewind після оновлення даних фільму; фіксованого строку оновлення немає." : " first. Changes may appear in Rewind when the film’s data is refreshed; there is no fixed update deadline."}
+            </p> : <p>
+              {lang === "uk" ? "Якщо ви знайшли кілька сторінок одного фільму, підготуйте посилання на кожну з них для команди підтримки. Доступні контактні канали наведено на " : "If you find multiple pages for the same film, collect their addresses for the support team. Available contact channels are listed on the "}
+              <Link to={path("/contact")}>{lang === "uk" ? "сторінці контактів" : "Contacts page"}</Link>.
+            </p> : section.items ? <ol>{section.items.map(item => <li key={item}>{item}</li>)}</ol> : kind === "privacy" && index === sections.length - 1 ? <p>
+              {lang === "uk" ? "У профілі можна " : "You can "}
+              <Link to={path("/profile#profile-identity-form-title")}>{lang === "uk" ? "переглянути й оновити дані" : "view and update your profile details"}</Link>
+              {lang === "uk" ? ", а для видалення акаунта скористайтеся " : ", and to delete your account use the "}
+              <Link to={path("/profile#profile-delete-form-title")}>{lang === "uk" ? "формою видалення акаунта" : "account deletion form"}</Link>.
+            </p> : <p>{section.body}</p>}
           </section>)}
         </div>}
-        {kind === "delete-account" && <Link className={styles.guideLink} to={path("/profile#profile-delete-form-title")}>
-          {lang === "uk" ? "Відкрити налаштування видалення акаунта" : "Open account deletion settings"} <span aria-hidden="true">→</span>
-        </Link>}
       </article>
     </main>
   );

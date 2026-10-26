@@ -8,9 +8,8 @@ type FollowState = {
   blocked: boolean;
   followersCount: number | null;
   followingCount: number | null;
-  countsError: boolean;
   busy: boolean;
-  error: "status" | "action" | null;
+  error: "followStatus" | "blockStatus" | "action" | null;
 };
 
 interface FollowActions {
@@ -21,22 +20,33 @@ interface FollowActions {
   toggle: (targetId: number) => void;
 }
 
-const initialState: FollowState = { phase: "loading", following: false, blocked: false, followersCount: null, followingCount: null, countsError: false, busy: false, error: null };
+const initialState: FollowState = { phase: "loading", following: false, blocked: false, followersCount: null, followingCount: null, busy: false, error: null };
 const FollowActionsContext = createContext<FollowActions | null>(null);
 
+class RelationshipStatusError extends Error {
+  constructor(readonly kind: "followStatus" | "blockStatus") {
+    super(kind);
+  }
+}
+
 async function readRelationship(targetId: number) {
-  // Read follow and block status independently so a failure in one does not
-  // hide the other; return sensible defaults on partial failure to avoid
-  // leaving the UI in a permanent error state when transient network issues occur.
-  const followPromise = getFollowStatus(targetId).then(r => r.data).catch(() => undefined);
-  const blockPromise = getBlockStatus(targetId).then(r => r.data.blocked).catch(() => undefined);
-  const [followStatus, blocked] = await Promise.all([followPromise, blockPromise]);
+  // Follow actions are safe only when both relationship statuses are known.
+  // Let either request fail so the row exposes its retry state instead of
+  // treating an unavailable status as false and incorrectly enabling actions.
+  const [followResult, blockResult] = await Promise.allSettled([
+    getFollowStatus(targetId),
+    getBlockStatus(targetId),
+  ]);
+  if (followResult.status === "rejected") throw new RelationshipStatusError("followStatus");
+  if (blockResult.status === "rejected") throw new RelationshipStatusError("blockStatus");
+  const followResponse = followResult.value;
+  const blockResponse = blockResult.value;
+  const followStatus = followResponse.data;
   return {
-    following: followStatus?.following ?? false,
-    followersCount: followStatus?.followers ?? null,
-    followingCount: followStatus?.followingCount ?? null,
-    countsError: followStatus === undefined,
-    blocked: blocked ?? false,
+    following: followStatus.following,
+    followersCount: followStatus.followers,
+    followingCount: followStatus.followingCount,
+    blocked: blockResponse.data.blocked,
   };
 }
 
@@ -71,9 +81,10 @@ function FollowActionsState({ actorId, authReady, children }: { actorId: number 
       if (mounted.current && requests.current[targetId] === requestId) {
         update(targetId, { ...relationship, phase: "ready", busy: false, error: null });
       }
-    } catch {
+    } catch (error) {
       if (mounted.current && requests.current[targetId] === requestId) {
-        update(targetId, { ...(previous ?? initialState), phase: "error", busy: false, error: "status" });
+        const statusError = error instanceof RelationshipStatusError ? error.kind : "followStatus";
+        update(targetId, { ...(previous ?? initialState), phase: "error", busy: false, error: statusError });
       }
     }
   }, [actorId, update]);
@@ -94,12 +105,13 @@ function FollowActionsState({ actorId, authReady, children }: { actorId: number 
       if (mounted.current && requests.current[targetId] === requestId) {
         update(targetId, { ...relationship, phase: "ready", busy: false, error: null });
       }
-    } catch {
+    } catch (error) {
       if (mounted.current && requests.current[targetId] === requestId) {
+        const statusError = error instanceof RelationshipStatusError ? error.kind : "followStatus";
         update(targetId, {
           ...previous, phase: "error", busy: false,
           following: mutationCompleted ? !previous.following : previous.following,
-          error: mutationCompleted ? "status" : "action",
+          error: mutationCompleted ? statusError : "action",
         });
       }
     }

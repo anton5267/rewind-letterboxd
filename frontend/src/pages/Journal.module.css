@@ -55,6 +55,9 @@
   min-width: 0;
 }
 
+.content:focus,
+.archive h2:focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
+
 .toolbar {
   display: flex;
   align-items: end;
@@ -381,10 +384,12 @@
   .archiveList { grid-template-columns: 1fr; }
 }
 
-/* Figma Journal list frames `604:967`, `604:1074`, `604:1172`,
-   `604:1275`, `604:1380` and `1494:5387`-`1494:5287` share a
-   full-bleed 818px artwork stage. The first API-backed feature row starts
-   at x=120/y=212 with a 513x612 cover; controls remain real native inputs. */
+/* Portrait-family baseline: the first API-backed feature starts at
+   x=120/y=212 with a 513x612 cover. Current Figma also has a wide family:
+   KK child 849:1483 is x=120/y=211, 514x296, followed by author bios.
+   Loaded landscape API covers select the wide family; missing/broken covers
+   retain the portrait fallback. Author bios and related art have no DTO.
+   Keep real native filters/archive controls and API-backed content. */
 @media (min-width: 901px) {
   .page {
     padding: 0 0 72px;
@@ -459,4 +464,64 @@
     gap: 61px;
     padding: 84px 0;
   }
+}
+
+@media (min-width: 901px) and (max-width: 1199px) {
+  .feature {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 32px 40px;
+  }
+
+  .feature .cover {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    width: 100%;
+    height: 100%;
+    min-height: 612px;
+  }
+
+  .feature .cardBody { grid-column: 2; grid-row: 1; align-self: end; }
+  .feature .thumb { position: static; grid-column: 2; grid-row: 2; align-self: start; }
+
+  .card:not(.feature) {
+    grid-template-columns: minmax(0, 1.42fr) minmax(0, 1fr) minmax(0, .55fr);
+    gap: 28px;
+  }
+
+  .card:not(.feature) .thumb { width: min(174px, 100%); }
+}
+
+/* Keep the feature stage while adapting real cover art to its observed family. */
+@media (min-width: 1200px) {
+  .feature.wideFeature { min-height: 699px; box-sizing: border-box; row-gap: 56px; }
+  .feature.wideFeature .cover { width: 514px; height: 296px; align-self: start; transform: translateY(-1px); }
+  .feature.wideFeature .cardBody {
+    align-self: start;
+    position: relative;
+    left: -2px;
+    width: calc(100% + 1px);
+    padding-top: 68px;
+  }
+  .feature.wideFeature .cardMeta {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.12;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .feature.wideFeature .cardMeta time { font-weight: inherit; }
+  .feature.wideFeature h3 { margin: 22px 0 8px; line-height: 1.12; letter-spacing: 0; }
+  .feature.wideFeature p { font-size: 20px; line-height: 1.2; }
+  .feature.wideFeature .thumb {
+    position: static;
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+    margin-right: 21px;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1199px) {
+  .feature.wideFeature { min-height: 699px; box-sizing: border-box; }
+  .feature.wideFeature .cover { height: auto; min-height: 0; aspect-ratio: 514 / 296; align-self: start; }
 }

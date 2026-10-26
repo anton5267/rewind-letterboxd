@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import styles from "./Register.module.css";
 import { register } from "../api/auth.api";
 import { useLocale } from "../i18n";
@@ -7,48 +7,98 @@ import { isPasswordWithinByteLimit, MAX_PASSWORD_BYTES } from "../utils/password
 
 export default function Register() {
   const navigate = useNavigate();
-  const { path, t } = useLocale();
+  const { path, t, lang } = useLocale();
+  const location = useLocation();
 
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<"passwordByteLimitError" | "registrationError" | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submission, setSubmission] = useState(0);
   const successHeading = useRef<HTMLHeadingElement>(null);
+  const errorMessage = useRef<HTMLParagraphElement>(null);
+  const mounted = useRef(false);
+  const activeRequest = useRef<object | null>(null);
+  const focusGeneration = useRef(0);
+  const pendingFocus = useRef<{ scope: number; origin: HTMLElement | null; target: "success" | "error" } | null>(null);
+
+  useLayoutEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      activeRequest.current = null;
+      focusGeneration.current += 1;
+      pendingFocus.current = null;
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    focusGeneration.current += 1;
+    pendingFocus.current = null;
+  }, [lang, location.key]);
 
   useEffect(() => {
-    if (success) successHeading.current?.focus();
-  }, [success]);
+    const pending = pendingFocus.current;
+    if (!pending || loading || (pending.target === "success" ? !success : !error)) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (pendingFocus.current !== pending) return;
+      pendingFocus.current = null;
+      if (!mounted.current || focusGeneration.current !== pending.scope) return;
+      if (document.activeElement !== document.body && document.activeElement !== pending.origin) return;
+      (pending.target === "success" ? successHeading.current : errorMessage.current)?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [error, success, loading, submission, lang, location.key]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading) return;
-    setError("");
-    if (!isPasswordWithinByteLimit(password)) { setError(t("passwordByteLimitError")); return; }
+    if (activeRequest.current !== null) return;
+    const request = {};
+    activeRequest.current = request;
+    const scope = focusGeneration.current;
+    const submitter = (e.nativeEvent as SubmitEvent).submitter;
+    const origin = submitter instanceof HTMLElement ? submitter : document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const isCurrent = () => mounted.current && activeRequest.current === request;
+    const requestFocus = (target: "success" | "error") => {
+      if (isCurrent() && focusGeneration.current === scope) pendingFocus.current = { scope, origin, target };
+    };
+    pendingFocus.current = null;
+    setSubmission(value => value + 1);
+    setError(null);
+    if (!isPasswordWithinByteLimit(password)) {
+      setError("passwordByteLimitError");
+      requestFocus("error");
+      activeRequest.current = null;
+      return;
+    }
     setLoading(true);
-
     try {
       await register(email.trim(), password, nickname.trim());
+      if (!isCurrent()) return;
       setSuccess(true);
+      requestFocus("success");
     } catch {
-      setError(t("registrationError"));
+      if (!isCurrent()) return;
+      setError("registrationError");
+      requestFocus("error");
     } finally {
-      setLoading(false);
+      if (isCurrent()) { activeRequest.current = null; setLoading(false); }
     }
   };
 
   if (success) {
     return (
-      <main className={`${styles.page} ${styles.registerPage}`} aria-labelledby="register-success-title" aria-busy={false}>
+      <main className={`${styles.page} ${styles.registerPage}`} data-rewind-auth-page aria-labelledby="register-success-title" aria-busy={false}>
         <div className={styles.card}>
           <p className={styles.eyebrow}>{t("accountEyebrow")}</p>
           <h1 ref={successHeading} tabIndex={-1} className={styles.title} id="register-success-title" aria-live="polite">{t("accountCreated")}</h1>
 
           <button
             type="button"
-            className={styles.button}
+            className={`${styles.button} ${styles.successButton}`}
             onClick={() => navigate(path("/login"))}
           >
             {t("goToLogin")}
@@ -59,7 +109,7 @@ export default function Register() {
   }
 
   return (
-    <main className={`${styles.page} ${styles.registerPage}`} aria-labelledby="register-page-title" aria-busy={loading}>
+    <main className={`${styles.page} ${styles.registerPage}`} data-rewind-auth-page aria-labelledby="register-page-title" aria-busy={loading}>
       <div className={styles.card}>
         <button type="button" className={styles.mobileBack} aria-label={t("return")} onClick={() => navigate(path("/home"))}>←</button>
         <p className={styles.eyebrow}>{t("accountEyebrow")}</p>
@@ -135,17 +185,12 @@ export default function Register() {
           </div>
           <p className={styles.passwordHint} id="register-password-hint">{t("passwordByteLimitHint")}</p>
 
-          {error && <p className={styles.error} id="register-error" role="alert">{error}</p>}
+          {error && <p ref={errorMessage} tabIndex={-1} className={styles.error} id="register-error" role="alert">{t(error)}</p>}
 
           <button className={styles.button} type="submit" aria-busy={loading} disabled={loading}>
             {loading ? t("loading") : t("createAccount")}
           </button>
         </form>
-
-        <div className={styles.social} aria-hidden="true">
-          <span>{t("signInWith")}</span>
-          <span className={styles.socialMark}>G</span>
-        </div>
 
         <p className={styles.footer}>
           {t("alreadyAccount")} <Link to={path("/login")}>{t("login")}</Link>

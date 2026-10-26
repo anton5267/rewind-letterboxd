@@ -25,7 +25,8 @@
   .profileNetwork .userLink { min-height: 44px; gap: 14px; }
   .profileNetwork .userCopy { gap: 3px; }
   .profileNetwork .userCopy strong { font-size: 14px; line-height: 17px; }
-  .profileNetwork .userCopy > span { font-size: 11px; line-height: 13px; }
+  .profileNetwork .userCopy > span { color: #8f8f8f; font-size: 12px; font-weight: 500; line-height: 1.12; }
+  .hideMobileNetworkStats .userCopy > span { display: none; }
   .profileNetwork > .action { width: 44px; height: 44px; flex-basis: 44px; }
   .profileNetwork > .action .glyph { width: 24px; height: 24px; font-size: 18px; }
   .profileNetwork .moreAction { display: inline-grid; }
@@ -128,6 +129,14 @@
   background: rgb(0 0 0 / 72%);
 }
 
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .memberBackdrop {
+    background: rgb(0 0 0 / 4%);
+    -webkit-backdrop-filter: blur(23.25px);
+    backdrop-filter: blur(23.25px);
+  }
+}
+
 .memberSheet {
   width: min(100%, 393px);
   max-height: calc(100dvh - 32px - env(safe-area-inset-bottom, 0px));
@@ -136,9 +145,9 @@
 }
 
 .memberHeading { min-height: 53px; text-align: center; }
-.memberHeading h2 { margin: 0; font-size: 18px; font-weight: 600; line-height: 21px; overflow-wrap: anywhere; }
-.memberHeading p { margin: 0; color: #c2bdb6; font-size: 14px; line-height: 18px; overflow-wrap: anywhere; }
-.memberActions { overflow: hidden; border-radius: 18px; background: #242424; }
+.memberHeading h2 { margin: 0 0 1px; font-size: 18px; font-weight: 700; line-height: 1.12; overflow-wrap: anywhere; }
+.memberHeading p { margin: 0; color: #a3a3a3; font-size: 14px; line-height: 1.12; overflow-wrap: anywhere; }
+.memberActions { overflow: hidden; border-radius: 20px; background: #282828; }
 .memberActions button,
 .memberActions a,
 .memberDone {
@@ -158,14 +167,17 @@
   overflow-wrap: anywhere;
   cursor: pointer;
 }
-.memberActions > * + * { border-top: 1px solid #4a4a4a; }
+.memberBackdrop .memberSheet .memberActions > button,
+.memberBackdrop .memberSheet .memberActions > a { color: #8f8f8f; font-size: 16px; font-weight: 500; line-height: 1.12; }
+.memberActions > :first-child { min-height: 57px; }
+.memberSheet .memberActions > * + * { border-top: 1px solid #000; }
 .memberActions button:disabled { cursor: default; opacity: .65; }
-.memberActions .memberBlock { color: #ffb8bd; }
-.memberDone { margin-top: 18px; border-radius: 18px; background: #242424; }
+.memberActions .memberBlock { color: #8f8f8f; }
+.memberDone { margin-top: 19px; border-radius: 37px; background: #282828; font-size: 14px; font-weight: 500; line-height: 1.12; }
 .memberMessage, .memberError { margin: 10px 4px 0; font-size: 13px; text-align: center; }
 .memberError { color: #ffb8bd; }
 .memberError button { margin-left: 8px; border: 0; background: none; color: #fff; font: inherit; text-decoration: underline; cursor: pointer; }
-.memberSheet :focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: -3px; border-radius: 8px; }
+.row .memberBackdrop .memberSheet :focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: -3px; }
 
 @media (max-width: 400px) {
   .memberBackdrop { padding-inline: 16px; }
@@ -188,6 +200,7 @@
 .communityShowcase .action { position: absolute; top: 0; right: 0; width: 34px; height: 34px; opacity: 0; }
 .communityShowcase:focus-within .action, .communityShowcase:hover .action { opacity: 1; }
 .profileNetwork .moreAction { display: none; }
+.reviewerRow .moreAction { display: none; }
 
 @media (min-width: 721px) {
   .reviewerRow { min-height: 112px; flex-wrap: nowrap; gap: 24px; padding: 16px 69px 16px 73px; }
@@ -202,6 +215,7 @@
 
 @media (max-width: 720px) {
   .profileNetwork .moreAction { display: inline-grid; }
+  .reviewerRow .moreAction { display: inline-grid; }
   .reviewerRow { position: relative; min-height: 65px; flex-wrap: nowrap; padding: 10px 0; border-bottom: 0; }
   .reviewerRow .avatar,
   .reviewerRow .avatarFallback { width: 40px; height: 40px; flex-basis: 40px; }
@@ -214,7 +228,7 @@
   .reviewerRow .action[aria-pressed="true"] .glyph { background: #d4a85f; color: #1f1f1f; }
   .communityShowcase { gap: 5px; }
   .communityShowcase .userLink { gap: 5px; }
-  .communityShowcase .avatar, .communityShowcase .avatarFallback { width: 48px; height: 48px; flex-basis: 48px; }
+  .communityShowcase .avatar, .communityShowcase .avatarFallback { width: 100%; height: auto; aspect-ratio: 1; flex-basis: auto; }
   .communityShowcase .userCopy strong { font-size: 9px; }
   .communityShowcase .userCopy span { font-size: 7px; }
   .communityShowcase .action { width: 44px; height: 44px; top: -8px; right: -10px; }

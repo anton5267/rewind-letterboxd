@@ -1,0 +1,132 @@
+.tableRail {
+  width: min(1200px, 100%);
+  margin-inline: auto;
+  border: 1px solid var(--rewind-line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, .04);
+}
+
+.table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  color: var(--rewind-paper);
+  text-align: left;
+}
+
+.caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.table th,
+.table td {
+  box-sizing: border-box;
+  padding: 18px 16px;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+.table th {
+  color: var(--rewind-muted);
+  font-weight: 500;
+}
+
+.table th:nth-child(1) { width: 17%; }
+.table th:nth-child(2) { width: 23%; }
+.table th:nth-child(3) { width: 16%; }
+.table th:nth-child(4) { width: 13%; }
+.table th:nth-child(5) { width: 31%; }
+
+.table tbody tr {
+  border-top: 1px solid var(--rewind-line);
+}
+
+.table select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.table .actions {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 0;
+}
+
+.table .actions > button {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 40px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.cellLabel {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .tableRail {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .table tbody {
+    display: grid;
+    gap: 12px;
+  }
+
+  .table tbody tr {
+    padding: 12px;
+    border: 1px solid var(--rewind-line);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, .04);
+  }
+
+  .table td {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    padding: 8px 0;
+  }
+
+  .cellLabel {
+    display: block;
+    color: var(--rewind-muted);
+    font-size: 14px;
+  }
+
+  .table .actions > button {
+    min-height: 44px;
+    flex: 1 1 160px;
+  }
+
+  .table select {
+    min-height: 44px;
+  }
+}

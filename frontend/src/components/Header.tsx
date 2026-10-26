@@ -8,6 +8,25 @@ import { getUnreadNotificationCount } from "../api/notifications.api";
 import { UNREAD_COUNTS_CHANGED_EVENT } from "../utils/unreadEvents";
 import { toTagSlug } from "../utils/tagSlug";
 
+type MobileNavIconName = "home" | "search" | "add" | "journal" | "profile";
+
+function MobileNavIcon({ name }: { name: MobileNavIconName }) {
+  const common = { fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+
+  switch (name) {
+    case "home":
+      return <svg viewBox="0 0 24 24" aria-hidden="true" {...common}><path d="m3 10 9-7 9 7" /><path d="M5.5 9v11h5v-6h3v6h5V9" /></svg>;
+    case "search":
+      return <svg viewBox="0 0 24 24" aria-hidden="true" {...common}><circle cx="10.8" cy="10.8" r="7.1" /><path d="m16 16 5 5" /></svg>;
+    case "add":
+      return <svg viewBox="0 0 24 24" aria-hidden="true" {...common}><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" /></svg>;
+    case "journal":
+      return <svg viewBox="0 0 24 24" aria-hidden="true" {...common}><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M9 8h7M9 12h7M9 16h7" /><circle cx="7" cy="8" r=".45" fill="currentColor" stroke="none" /><circle cx="7" cy="12" r=".45" fill="currentColor" stroke="none" /><circle cx="7" cy="16" r=".45" fill="currentColor" stroke="none" /></svg>;
+    case "profile":
+      return <svg viewBox="0 0 24 24" aria-hidden="true" {...common}><circle cx="12" cy="7.5" r="3.5" /><path d="M4.5 21v-1.4a7.5 7.5 0 0 1 15 0V21z" /></svg>;
+  }
+}
+
 export default function Header() {
   const { isAuth, user, logout } = useAuth();
   const navigate = useNavigate();
@@ -147,9 +166,13 @@ export default function Header() {
   const mobileListDetailHeader = /^\/(uk|en)\/lists\/public\/[^/]+\/?$/.test(location.pathname);
   const mobileSearchHeader = /^\/(uk|en)\/search\/?$/.test(location.pathname);
   const mobileHomeHeader = /^\/(uk|en)\/home\/?$/.test(location.pathname);
+  const mobileCommunityHeader = /^\/(uk|en)\/community(?:\/reviewers)?\/?$/.test(location.pathname);
   const mobilePersonHeader = /^\/(uk|en)\/people\/(actor|director|producer)\/[^/]+\/?$/.test(location.pathname);
   const mobilePublicProfileHeader = /^\/(uk|en)\/users\/\d+\/?$/.test(location.pathname);
   const mobileProfileHeader = /^\/(uk|en)\/profile\/?$/.test(location.pathname);
+  const mobileUserListsHeader = /^\/(uk|en)\/lists\/?$/.test(location.pathname);
+  const settingsView = new URLSearchParams(location.search).get("settings");
+  const mobileProfileSettingsHeader = mobileProfileHeader && ["profile", "authentication", "avatar", "connections"].includes(settingsView ?? "");
   const mobileAuthHeader = /^\/(uk|en)\/(login|register|forgot-password|reset-password)\/?$/.test(location.pathname);
   const listParams = new URLSearchParams(location.search);
   const listsLandingHeader = /^\/(uk|en)\/lists\/discover\/?$/.test(location.pathname)
@@ -157,7 +180,7 @@ export default function Header() {
   const listsFeedHeader = listsLandingHeader && Boolean(listParams.get("feed"));
 
   return (
-    <header className={`${styles.header} ${lightHeader ? styles.light : ""} ${mobileDetailHeader ? styles.mobileDetail : ""} ${mobileFilmsHeader ? styles.mobileFilms : ""} ${mobileListDetailHeader ? styles.mobileListDetail : ""} ${mobileSearchHeader ? styles.mobileSearch : ""} ${mobileHomeHeader ? styles.mobileHome : ""} ${mobilePersonHeader ? styles.mobilePerson : ""} ${mobilePublicProfileHeader ? styles.mobilePublicProfile : ""} ${mobileProfileHeader ? styles.mobileProfile : ""} ${mobileAuthHeader ? styles.mobileAuth : ""} ${listsLandingHeader ? styles.listsLanding : ""}`}>
+    <header className={`${styles.header} ${lightHeader ? styles.light : ""} ${mobileDetailHeader ? styles.mobileDetail : ""} ${mobileFilmsHeader ? styles.mobileFilms : ""} ${mobileListDetailHeader ? styles.mobileListDetail : ""} ${mobileSearchHeader ? styles.mobileSearch : ""} ${mobileHomeHeader ? styles.mobileHome : ""} ${mobileCommunityHeader ? styles.mobileCommunity : ""} ${mobilePersonHeader ? styles.mobilePerson : ""} ${mobilePublicProfileHeader ? styles.mobilePublicProfile : ""} ${mobileProfileHeader ? styles.mobileProfile : ""} ${mobileUserListsHeader ? styles.mobileUserLists : ""} ${mobileProfileSettingsHeader ? styles.mobileProfileSettings : ""} ${mobileAuthHeader ? styles.mobileAuth : ""} ${listsLandingHeader ? styles.listsLanding : ""}`}>
 
       {listsLandingHeader && <div className={styles.listLandingControls}>
         <Link to={path(listsFeedHeader ? "/lists/discover" : "/home")} aria-label={listsFeedHeader ? t("discoverLists") : t("home")}><i className="fa-solid fa-chevron-left" aria-hidden="true" /></Link>
@@ -174,7 +197,7 @@ export default function Header() {
       </Link>
 
       <nav className={styles.desktopNav} aria-label={t("mainNavigation")}>
-        <Link to={path("/films")}>{t("films")}</Link>
+        <Link to={path("/films/discover")}>{t("films")}</Link>
         <Link to={path("/lists/discover")}>{t("searchLists")}</Link>
         <Link to={path("/community")}>{t("searchMembers")}</Link>
         <Link to={path("/journal")}>{t("journal")}</Link>
@@ -240,11 +263,11 @@ export default function Header() {
       </>}
 
       <nav ref={mobileNavRef} className={styles.mobileNav} aria-label={t("mainNavigation")}>
-        <NavLink end to={path("/home")}><i className="fa-solid fa-house" aria-hidden="true"></i><span>{t("home")}</span></NavLink>
-        <NavLink to={path("/search")}><i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span>{t("search")}</span></NavLink>
-        <NavLink to={path("/films")}><i className="fa-solid fa-circle-plus" aria-hidden="true"></i><span>{t("add")}</span></NavLink>
-        <NavLink to={path("/journal")}><i className="fa-solid fa-book-open" aria-hidden="true"></i><span>{t("journal")}</span></NavLink>
-        <NavLink to={path(isAuth ? "/profile" : "/login")}><i className="fa-solid fa-user" aria-hidden="true"></i><span>{t("profile")}</span></NavLink>
+        <NavLink end to={path("/home")} aria-label={t("home")}><MobileNavIcon name="home" /><span className={mobileHomeHeader ? undefined : styles.visuallyHidden}>{t("home")}</span></NavLink>
+        <NavLink to={path("/search")} aria-label={t("search")}><MobileNavIcon name="search" /><span className={mobileHomeHeader ? undefined : styles.visuallyHidden}>{t("search")}</span></NavLink>
+        <NavLink to={path("/films")} aria-label={t("add")}><MobileNavIcon name="add" /><span className={mobileHomeHeader ? undefined : styles.visuallyHidden}>{t("add")}</span></NavLink>
+        <NavLink to={path("/journal")} aria-label={t("journal")}><MobileNavIcon name="journal" /><span className={mobileHomeHeader ? undefined : styles.visuallyHidden}>{t("journal")}</span></NavLink>
+        <NavLink to={path(isAuth ? "/profile" : "/login")} aria-label={t("profile")}><MobileNavIcon name="profile" /><span className={mobileHomeHeader ? undefined : styles.visuallyHidden}>{t("profile")}</span></NavLink>
       </nav>
 
     </header>

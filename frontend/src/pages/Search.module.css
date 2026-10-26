@@ -11,7 +11,7 @@
 .heroTitle { min-width: 0; }
 .mobileBack,
 .filterToggle { display: none; }
-.filterSummary { display: inline-flex; align-items: center; gap: 5px; }
+.filterSummary { display: none; }
 .filterSummaryArrow { color: currentColor; font-size: 15px; line-height: 1; }
 .filterIcon { display: none; }
 .eyebrow { margin: 0 0 14px; color: #f4d28c; font-size: 12px; font-weight: 700; letter-spacing: .18em; }
@@ -19,7 +19,7 @@
 .hero h1,
 .hero > p:not(.eyebrow) { overflow-wrap: anywhere; }
 .hero > p:not(.eyebrow) { max-width: 520px; margin: 20px 0 26px; color: #eef5f5; font-size: 18px; line-height: 1.45; }
-.searchForm { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; max-width: 760px; align-items: end; }
+.searchForm { display: grid; grid-template-columns: minmax(0, 1fr) minmax(130px, auto) auto; gap: 10px; max-width: 760px; align-items: end; }
 .searchForm label,
 .filters label { display: grid; gap: 7px; color: #e6ded5; font-size: 12px; font-weight: 700; letter-spacing: .03em; }
 .searchForm input,
@@ -58,6 +58,48 @@
 .pagination button:hover:not(:disabled) { border-color: #d4a85f; color: #d4a85f; }
 .pagination button:disabled { cursor: not-allowed; opacity: .4; }
 
+@media (min-width: 1400px) {
+  .shell { position: relative; display: flow-root; }
+  .hero {
+    box-sizing: border-box;
+    width: 100vw;
+    min-height: 525px;
+    margin: -110px calc((1200px - 100vw) / 2) 0;
+    padding: 281px calc((100vw - 1200px) / 2) 0;
+    background: linear-gradient(180deg, rgba(15, 20, 22, .12), rgba(15, 20, 22, .42)), url("/images/search-hero-desktop.png") center 43% / cover no-repeat;
+  }
+  .heroBar { display: flex; height: 45px; align-items: center; }
+  .eyebrow { display: none; }
+  .hero h1 { font-size: 24px; line-height: 45px; letter-spacing: 0; }
+  .heroIntro { display: none; }
+  .searchForm { width: 100%; max-width: none; height: 50px; grid-template-columns: minmax(0, 1fr) 170px auto; margin-top: 53px; align-items: stretch; }
+  .searchForm .queryField,
+  .searchForm .sortControl { min-width: 0; height: 50px; box-sizing: border-box; gap: 0; font-size: 0; }
+  .searchForm input,
+  .searchForm select { width: 100%; height: 50px; min-height: 50px; box-sizing: border-box; font-size: 14px; }
+  .searchForm input { border-radius: 25px; background: rgba(35, 35, 35, .82); }
+  .searchForm select { border-color: rgba(255, 255, 255, .16); background: rgba(35, 35, 35, .82); color: #fff; }
+  .searchForm .submit { min-height: 50px; }
+  .filters {
+    position: absolute;
+    z-index: 2;
+    top: 184px;
+    right: 0;
+    width: 331px;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  .filters label { min-width: 0; gap: 4px; font-size: 10px; letter-spacing: 0; }
+  .filters input,
+  .filters select { width: 100%; min-height: 32px; padding: 4px 6px; font-size: 11px; }
+  .filters .filterSubmit { min-height: 32px; padding: 4px 8px; white-space: nowrap; }
+  .resultsBar { position: absolute; width: 1px; height: 1px; overflow: hidden; margin: 0; padding: 0; border: 0; clip-path: inset(50%); white-space: nowrap; }
+  .grid { margin-top: 82px; }
+}
+
 @media (max-width: 1100px) { .grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } .filters { grid-template-columns: repeat(3, minmax(0, 1fr)); } .filterSubmit { grid-column: span 3; } }
 @media (max-width: 820px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 560px) {
@@ -65,38 +107,39 @@
   .hero { min-height: 165px; box-sizing: border-box; margin: 0 -16px; padding: 16px; border-bottom: 1px solid var(--rewind-line); background: linear-gradient(180deg, rgba(15, 20, 22, .16), rgba(15, 20, 22, .48)), url("/images/search-hero-phone.jpg") center / cover no-repeat; }
   .heroBar { position: relative; display: block; min-height: 133px; }
   .mobileBack,
-  .filterToggle { display: grid; place-items: center; border: 1px solid rgba(255, 255, 255, .35); background: rgba(12, 12, 16, .28); color: #fff; cursor: pointer; font: inherit; text-decoration: none; }
-  .mobileBack { position: absolute; top: 0; left: 0; width: 36px; height: 36px; border-radius: 50%; font-size: 22px; }
-  .filterToggle { position: absolute; top: 77px; right: 0; width: 215px; min-height: 31px; height: 31px; border-radius: 2px; padding: 0 12px; font-size: 11px; }
+  .filterToggle { display: grid; width: 44px; height: 44px; min-height: 44px; box-sizing: border-box; place-items: center; border: 0; background: transparent; color: #fff; cursor: pointer; font: inherit; text-decoration: none; }
+  .mobileBack { position: absolute; top: -4px; left: -4px; border-radius: 50%; font-size: 22px; }
+  .mobileBack::before { position: absolute; inset: 4px; border: 1px solid rgba(255, 255, 255, .35); border-radius: 50%; background: rgba(12, 12, 16, .28); content: ""; }
+  .filterToggle { position: absolute; top: -4px; right: 0; justify-items: end; border-radius: 50%; padding: 0; font-size: 16px; }
   .mobileBack:focus-visible,
   .filterToggle:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 2px; }
-  .heroTitle { position: absolute; top: 72px; right: 0; left: 0; text-align: left; }
+  .heroTitle { position: absolute; top: 84px; right: 0; left: 0; text-align: left; }
   .hero .eyebrow,
   .heroIntro { display: none; }
   .hero h1 { box-sizing: border-box; padding-right: 225px; font-size: 14px; letter-spacing: 0; line-height: 1; white-space: nowrap; }
-  .filterSummary { width: 100%; justify-content: flex-end; gap: 5px; }
-  .filterSummaryArrow { font-size: 13px; }
-  .filterIcon { display: none; }
+  .filterSummary { position: absolute; top: 84px; right: 0; display: flex; width: 215px; height: 31px; box-sizing: border-box; align-items: center; justify-content: flex-end; gap: 5px; border-radius: 16px; padding: 0 9px; background: rgba(40, 40, 40, .88); color: #aaa; font-size: 11px; }
+  .filterSummaryArrow { margin: 0 -2px; font-size: 12px; }
+  .filterIcon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 50%; background: #282828; }
   .searchForm { display: none; grid-template-columns: 1fr; margin-top: 16px; }
   .heroFiltersOpen .searchForm { display: grid; }
   .submit { width: 100%; }
   .filters { display: none; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px; }
   .filtersOpen { display: grid; }
   .filterSubmit { grid-column: span 2; }
-  .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; }
+  .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 19px 15px; margin-top: 28.25px; }
   .posterLink { aspect-ratio: 79 / 116; border-radius: 10px; }
-  .card h2,
+  .card h2 { display: none; }
   .card p { position: absolute; width: 1px; height: 1px; overflow: hidden; margin: -1px; padding: 0; clip: rect(0 0 0 0); white-space: nowrap; }
-  .resultsBar { align-items: flex-start; flex-direction: column; margin-top: 24px; }
+  .resultsBar { position: absolute; width: 1px; height: 1px; overflow: hidden; margin: -1px; padding: 0; border: 0; clip: rect(0 0 0 0); white-space: nowrap; }
 }
 
 @media (max-width: 340px) {
   .page { padding-inline: 10px; }
   .hero { margin-inline: -10px; padding: 22px 10px 18px; }
   .heroBar { grid-template-columns: 32px minmax(0, 1fr) 32px; gap: 6px; }
-  .mobileBack { width: 32px; height: 32px; }
-  .filterToggle { width: 215px; height: 31px; min-height: 31px; }
-  .hero h1 { font-size: clamp(21px, 8vw, 27px); }
+  .mobileBack,
+  .filterToggle { width: 44px; height: 44px; min-height: 44px; }
+  .hero h1 { font-size: 14px; }
   .filters { grid-template-columns: 1fr; }
   .filterSubmit { grid-column: auto; }
   .grid { gap: 16px 6px; }

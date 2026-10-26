@@ -4,7 +4,7 @@ import { getPopularReviewers, type PopularReviewer } from "../api/social.api";
 import UserFollowRow from "../components/UserFollowRow";
 import { FollowActionsProvider } from "../context/FollowActionsContext";
 import RetryNotice from "../components/RetryNotice";
-import { useLocale } from "../i18n";
+import { formatReviewCount, useLocale } from "../i18n";
 import { getUserIdentity } from "../utils/userIdentity";
 import styles from "./PopularReviewers.module.css";
 
@@ -51,10 +51,12 @@ export default function PopularReviewers() {
         <div className={styles.columnHeadings} aria-hidden="true"><span>{t("name")}</span><span>{t("watched")}</span><span>{t("searchLists")}</span><span>{t("likes")}</span><span /></div>
         <ul id="reviewer-list" className={styles.list}>
           {reviewers.map(reviewer => {
-            const hasMetrics = reviewer.reviewCount != null && reviewer.watchedCount != null && reviewer.listCount != null;
+            const reviewCount = reviewer.reviewCount;
+            const hasMetrics = reviewCount != null && reviewer.watchedCount != null && reviewer.listCount != null;
             return <UserFollowRow key={reviewer.id} user={reviewer} href={path(`/users/${reviewer.id}`)}
-              subtitle={hasMetrics ? `${reviewer.reviewCount} ${t("reviewCountUnit")}` : `${reviewer.likes} ${t("likes")}`}
+              subtitle={hasMetrics ? formatReviewCount(reviewCount, lang) : `${reviewer.likes} ${t("likes")}`}
               reviewerMetrics={hasMetrics ? { watched: reviewer.watchedCount!, lists: reviewer.listCount!, likes: reviewer.likes } : undefined}
+              showMobileMoreAction
               label={getUserIdentity(reviewer, t("someone"))} />;
           })}
         </ul>
