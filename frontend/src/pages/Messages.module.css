@@ -31,6 +31,7 @@
   font-size: clamp(34px, 6vw, 58px);
   line-height: 1;
   letter-spacing: -.04em;
+  overflow-wrap: anywhere;
 }
 
 .hero p:not(.eyebrow) {
@@ -161,7 +162,7 @@
   display: block;
   margin-top: 6px;
   color: var(--rewind-muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .composer {
@@ -215,7 +216,7 @@
 }
 .composer .error { flex: 1 0 100%; }
 
-@media (max-width: 760px) {
+@media (max-width: 767px) {
   .page { padding: 96px 12px 36px; }
   .layout { grid-template-columns: 1fr; }
   .panel { padding: 16px; }

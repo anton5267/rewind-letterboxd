@@ -46,8 +46,9 @@
   max-width: 100%;
   height: auto;
 }
+.credits > a { display: inline-flex; min-height: 44px; max-width: 100%; align-items: center; }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .page { padding-top: 64px; }
   .hero { min-height: 430px; }
   .content { width: min(100% - 32px, 1200px); padding-top: 36px; }
@@ -58,7 +59,7 @@
 /* About 1011:1916 uses the original f37f463 image with a distinct crop.
    The gradient approximates the blurred black 1011:1917 layer; 1011:1918
    is the opaque surface beginning at y628. */
-@media (min-width: 721px) {
+@media (min-width: 768px) {
   .page {
     padding: 0 0 60px;
     background: #1f1f1f;
@@ -118,7 +119,7 @@
   .story p {
     max-width: 940px;
     font-size: 20px;
-    line-height: 1.12;
+    line-height: 1.5;
   }
 
   .story section:nth-child(-n + 2) p { max-width: 1126px; }
@@ -128,8 +129,13 @@
   }
 }
 
-@media (min-width: 721px) and (max-width: 1100px) {
+@media (min-width: 768px) and (max-width: 1100px) {
   .hero { display: grid; align-content: start; gap: 48px; padding: 160px 24px 260px; }
   .serviceNav { position: relative; top: auto; left: auto; width: 100%; }
   .heroCopy { transform: none; }
+}
+
+@media (max-width: 767px) {
+  .hero { padding-inline: 16px; }
+  .content { width: min(1200px, calc(100% - 32px)); }
 }

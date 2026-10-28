@@ -31,6 +31,7 @@ export default function Journal() {
   const categoryRef = useRef<HTMLSelectElement>(null);
   const focusFeedAfterRetry = useRef(false);
   const focusArchiveAfterRetry = useRef(false);
+  const retryOrigin = useRef<{ feed: Element | null; archive: Element | null }>({ feed: null, archive: null });
   const feedResultReady = useRef(false);
   const [featureCover, setFeatureCover] = useState<{ key: string; wide: boolean } | null>(null);
   const featureCoverKey = JSON.stringify([lang, page, category, archiveMonth?.year, archiveMonth?.month, articles[0]?.id, articles[0]?.coverUrl]);
@@ -46,14 +47,18 @@ export default function Journal() {
   useEffect(() => {
     if (!focusFeedAfterRetry.current || loading || !feedResultReady.current) return;
     focusFeedAfterRetry.current = false;
-    const frame = window.requestAnimationFrame(() => contentRef.current?.focus());
+    const frame = window.requestAnimationFrame(() => {
+      if (document.activeElement === document.body || document.activeElement === retryOrigin.current.feed) contentRef.current?.focus();
+    });
     return () => window.cancelAnimationFrame(frame);
   }, [loading, error, articles, lang]);
 
   useEffect(() => {
     if (!focusArchiveAfterRetry.current || archiveLoading) return;
     focusArchiveAfterRetry.current = false;
-    const frame = window.requestAnimationFrame(() => archiveTitleRef.current?.focus());
+    const frame = window.requestAnimationFrame(() => {
+      if (document.activeElement === document.body || document.activeElement === retryOrigin.current.archive) archiveTitleRef.current?.focus();
+    });
     return () => window.cancelAnimationFrame(frame);
   }, [archiveLoading, archiveError, archive, lang]);
 
@@ -124,8 +129,17 @@ export default function Journal() {
           </div>
 
           <h2 id="journal-content-title" className="srOnly">{t("journal")}</h2>
-          {loading && <p className={styles.status} role="status">{t("loading")}</p>}
-          {error && <RetryNotice className={styles.error} message={t("journalLoadError")} retryLabel={t("retry")} onRetry={() => { focusFeedAfterRetry.current = true; setAttempt(value => value + 1); }} />}
+          {loading && <>
+            <p className="srOnly" role="status">{t("loading")}</p>
+            <div className={styles.grid} aria-hidden="true">
+              {[0, 1].map(index => <div className={`${styles.card} ${index === 0 ? styles.feature : ""}`} key={index}>
+                <div className={`${styles.cover} ${styles.skeleton}`} />
+                <div className={styles.cardBody}>{[0, 1, 2, 3].map(line => <div className={styles.skeletonLine} key={line} />)}</div>
+                <div className={`${styles.thumb} ${styles.skeleton}`} />
+              </div>)}
+            </div>
+          </>}
+          {error && <RetryNotice className={styles.error} message={t("journalLoadError")} retryLabel={t("retry")} onRetry={() => { retryOrigin.current.feed = document.activeElement; focusFeedAfterRetry.current = true; setAttempt(value => value + 1); }} />}
           {!loading && !error && articles.length === 0 && <p className={styles.empty}>{t("noJournalArticles")}</p>}
 
           {!loading && !error && articles.length > 0 && <div className={styles.grid}>
@@ -174,7 +188,7 @@ export default function Journal() {
         <aside className={styles.archive} aria-labelledby="journal-archive-title" aria-busy={archiveLoading}>
           <h2 id="journal-archive-title" ref={archiveTitleRef} tabIndex={-1}>{t("journalArchive")}</h2>
           {archiveLoading ? <p className={styles.status} role="status">{t("loading")}</p> : archiveError ? (
-            <RetryNotice className={styles.error} message={t("journalArchiveError")} retryLabel={t("retry")} onRetry={() => { focusArchiveAfterRetry.current = true; setArchiveAttempt(value => value + 1); }} />
+            <RetryNotice className={styles.error} message={t("journalArchiveError")} retryLabel={t("retry")} onRetry={() => { retryOrigin.current.archive = document.activeElement; focusArchiveAfterRetry.current = true; setArchiveAttempt(value => value + 1); }} />
           ) : archive.length === 0 ? <p className={styles.empty}>{t("noJournalArchive")}</p> : (
             <ul className={styles.archiveList}>
               {archive.map(item => (

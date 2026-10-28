@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import AdminLoading from "./AdminLoading";
+import { useEffect, useRef, useState } from "react";
 import {
   createAdminNotification,
   deleteAdminNotification,
@@ -15,6 +16,7 @@ import Pagination from "./Pagination";
 import RetryNotice from "./RetryNotice";
 import { useLocale, type Translator } from "../i18n";
 import styles from "./AdminNotifications.module.css";
+import dialogStyles from "./AdminConfirmDialog.module.css";
 
 const emptyDraft: AdminNotificationWrite = { recipientId: 0, type: "FOLLOW", actorId: null, relatedUserId: null, reviewId: null };
 
@@ -38,6 +40,19 @@ export default function AdminNotifications() {
   const [error, setError] = useState(false);
   const [actionError, setActionError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<
+    | { kind: "one"; notification: AdminNotification; trigger: HTMLButtonElement }
+    | { kind: "filtered"; filters: AdminNotificationFilters; trigger: HTMLButtonElement }
+    | null
+  >(null);
+  const deleteDialog = useRef<HTMLDialogElement>(null);
+  const deleteDialogCancel = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!pendingDelete || !deleteDialog.current) return;
+    if (!deleteDialog.current.open) deleteDialog.current.showModal();
+    deleteDialogCancel.current?.focus();
+  }, [pendingDelete]);
 
   useEffect(() => {
     let current = true;
@@ -110,7 +125,7 @@ export default function AdminNotifications() {
   };
 
   const removeNotification = async (notification: AdminNotification) => {
-    if (busy || !window.confirm(t("deleteNotificationConfirm"))) return;
+    if (busy) return;
     setBusy(true);
     setActionError("");
     try {
@@ -138,12 +153,12 @@ export default function AdminNotifications() {
     }
   };
 
-  const deleteFiltered = async () => {
-    if (busy || !window.confirm(t("deleteFilteredNotificationsConfirm"))) return;
+  const deleteFiltered = async (targetFilters: AdminNotificationFilters) => {
+    if (busy) return;
     setBusy(true);
     setActionError("");
     try {
-      await deleteAdminNotifications(filters);
+      await deleteAdminNotifications(targetFilters);
       setPage(0);
       setRevision(value => value + 1);
     } catch {
@@ -151,6 +166,32 @@ export default function AdminNotifications() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const requestDeleteNotification = (notification: AdminNotification, trigger: HTMLButtonElement) => {
+    if (busy) return;
+    setPendingDelete({ kind: "one", notification, trigger });
+  };
+
+  const requestDeleteFiltered = (trigger: HTMLButtonElement) => {
+    if (busy) return;
+    setPendingDelete({ kind: "filtered", filters: { ...filters }, trigger });
+  };
+
+  const cancelDelete = () => {
+    if (deleteDialog.current?.open) deleteDialog.current.close();
+    const trigger = pendingDelete?.trigger;
+    setPendingDelete(null);
+    window.requestAnimationFrame(() => { if (trigger?.isConnected) trigger.focus(); });
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete || busy) return;
+    const action = pendingDelete;
+    if (deleteDialog.current?.open) deleteDialog.current.close();
+    setPendingDelete(null);
+    if (action.kind === "one") void removeNotification(action.notification);
+    else void deleteFiltered(action.filters);
   };
 
   return <section className={styles.section} aria-label={t("adminNotifications")} aria-busy={loading || busy}>
@@ -169,9 +210,9 @@ export default function AdminNotifications() {
       <input className={styles.control} type="number" min="1" aria-label={t("notificationRecipientFilter")} placeholder={t("notificationRecipientFilter")} value={recipientFilter} onChange={event => setRecipientFilter(event.target.value)} />
       <button type="submit" disabled={busy}>{t("filterNotifications")}</button>
       <button type="button" aria-busy={busy} disabled={busy} onClick={() => void markFilteredRead()}>{busy ? t("loading") : t("markFilteredNotificationsRead")}</button>
-      <button type="button" aria-busy={busy} disabled={busy} onClick={() => void deleteFiltered()}>{busy ? t("loading") : t("deleteFilteredNotifications")}</button>
+      <button type="button" aria-busy={busy} disabled={busy} onClick={event => requestDeleteFiltered(event.currentTarget)}>{busy ? t("loading") : t("deleteFilteredNotifications")}</button>
     </form>
-    {loading && <p className={styles.feedback} role="status">{t("loading")}</p>}
+    {loading && <AdminLoading label={t("loading")} layout="logs" />}
     {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => setRevision(value => value + 1)} />}
     {data && data.content.length === 0 && <p>{t("noAdminNotifications")}</p>}
     {data && <>
@@ -179,10 +220,18 @@ export default function AdminNotifications() {
         <div className={styles.notificationContent}>{notificationTypeLabel(notification.type, t)} · {t("notificationRecipient")} #{notification.recipientId} · {notification.actorId ? `${t("notificationActor")} #${notification.actorId}` : ""} · {notification.readAt ? t("read") : t("unread")}</div>
         <div className={styles.notificationActions}>
           <button type="button" aria-busy={busy} disabled={busy} onClick={() => void toggleRead(notification)}>{busy ? t("loading") : notification.readAt ? t("markNotificationUnread") : t("markNotificationRead")}</button>
-          <button type="button" aria-busy={busy} disabled={busy} onClick={() => void removeNotification(notification)}>{busy ? t("loading") : t("deleteNotification")}</button>
+          <button type="button" aria-busy={busy} disabled={busy} onClick={event => requestDeleteNotification(notification, event.currentTarget)}>{busy ? t("loading") : t("deleteNotification")}</button>
         </div>
       </li>)}</ul>
       <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminNotificationsPagination")} busy={loading} statusSuffix={data.totalElements} onPageChange={setPage} />
     </>}
+    <dialog className={dialogStyles.deleteDialog} ref={deleteDialog} role="alertdialog" aria-labelledby="admin-notification-delete-title" aria-describedby="admin-notification-delete-description" onCancel={event => { event.preventDefault(); cancelDelete(); }}>
+      <h3 id="admin-notification-delete-title">{pendingDelete?.kind === "filtered" ? t("deleteFilteredNotifications") : t("deleteNotification")}</h3>
+      {pendingDelete && <p id="admin-notification-delete-description">{pendingDelete.kind === "filtered" ? t("deleteFilteredNotificationsConfirm") : <>{t("deleteNotificationConfirm")} <strong>{notificationTypeLabel(pendingDelete.notification.type, t)} · {t("notificationRecipient")} #{pendingDelete.notification.recipientId}</strong></>}</p>}
+      <div className={dialogStyles.deleteDialogActions}>
+        <button type="button" ref={deleteDialogCancel} disabled={busy} onClick={cancelDelete}>{t("cancel")}</button>
+        <button type="button" className={dialogStyles.deleteDialogConfirm} disabled={busy} aria-busy={busy} onClick={confirmDelete}>{busy ? t("loading") : pendingDelete?.kind === "filtered" ? t("deleteFilteredNotifications") : t("deleteNotification")}</button>
+      </div>
+    </dialog>
   </section>;
 }

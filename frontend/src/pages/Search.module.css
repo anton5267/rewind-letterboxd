@@ -57,9 +57,12 @@
 .pagination button { border: 1px solid var(--rewind-line); border-radius: 2px; padding: 9px 14px; background: transparent; color: #fff; cursor: pointer; }
 .pagination button:hover:not(:disabled) { border-color: #d4a85f; color: #d4a85f; }
 .pagination button:disabled { cursor: not-allowed; opacity: .4; }
+.pagination button[aria-current="page"] { color: #d4a85f; text-decoration: underline; text-underline-offset: 4px; }
+.visuallyHidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 
 @media (min-width: 1400px) {
   .shell { position: relative; display: flow-root; }
+  .page { overflow-x: clip; padding-bottom: 159px; }
   .hero {
     box-sizing: border-box;
     width: 100vw;
@@ -92,17 +95,24 @@
     border: 0;
     background: transparent;
   }
-  .filters label { min-width: 0; gap: 4px; font-size: 10px; letter-spacing: 0; }
+  .filters label { min-width: 0; gap: 4px; font-size: 12px; letter-spacing: 0; }
   .filters input,
-  .filters select { width: 100%; min-height: 32px; padding: 4px 6px; font-size: 11px; }
-  .filters .filterSubmit { min-height: 32px; padding: 4px 8px; white-space: nowrap; }
+  .filters select { width: 100%; min-height: 44px; padding: 4px 6px; font-size: 12px; }
+  .filters .filterSubmit { min-height: 44px; padding: 4px 8px; white-space: nowrap; }
   .resultsBar { position: absolute; width: 1px; height: 1px; overflow: hidden; margin: 0; padding: 0; border: 0; clip-path: inset(50%); white-space: nowrap; }
-  .grid { margin-top: 82px; }
+  .grid { margin-top: 82px; row-gap: 50px; }
+  .card h2,
+  .card p { display: none; }
+  .pagination { gap: 21px; margin-top: 84px; }
+  .pagination button { min-width: 23px; border: 0; border-radius: 0; padding: 0; color: #7e7e7e; font: inherit; font-size: 20px; line-height: 1.2; }
+  .pagination button:hover:not(:disabled) { border-color: transparent; color: #fff; }
+  .pagination button[aria-current="page"] { color: #7e7e7e; text-decoration-thickness: 1px; }
+  .pagination span:not(.visuallyHidden) { font-size: 20px; }
 }
 
 @media (max-width: 1100px) { .grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } .filters { grid-template-columns: repeat(3, minmax(0, 1fr)); } .filterSubmit { grid-column: span 3; } }
 @media (max-width: 820px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-@media (max-width: 560px) {
+@media (max-width: 767px) {
   .page { padding: 34px 16px 106px; }
   .hero { min-height: 165px; box-sizing: border-box; margin: 0 -16px; padding: 16px; border-bottom: 1px solid var(--rewind-line); background: linear-gradient(180deg, rgba(15, 20, 22, .16), rgba(15, 20, 22, .48)), url("/images/search-hero-phone.jpg") center / cover no-repeat; }
   .heroBar { position: relative; display: block; min-height: 133px; }
@@ -117,7 +127,7 @@
   .hero .eyebrow,
   .heroIntro { display: none; }
   .hero h1 { box-sizing: border-box; padding-right: 225px; font-size: 14px; letter-spacing: 0; line-height: 1; white-space: nowrap; }
-  .filterSummary { position: absolute; top: 84px; right: 0; display: flex; width: 215px; height: 31px; box-sizing: border-box; align-items: center; justify-content: flex-end; gap: 5px; border-radius: 16px; padding: 0 9px; background: rgba(40, 40, 40, .88); color: #aaa; font-size: 11px; }
+  .filterSummary { position: absolute; top: 84px; right: 0; display: flex; width: 215px; height: 31px; box-sizing: border-box; align-items: center; justify-content: flex-end; gap: 5px; border-radius: 16px; padding: 0 9px; background: rgba(40, 40, 40, .88); color: #aaa; font-size: 12px; }
   .filterSummaryArrow { margin: 0 -2px; font-size: 12px; }
   .filterIcon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 50%; background: #282828; }
   .searchForm { display: none; grid-template-columns: 1fr; margin-top: 16px; }
@@ -143,6 +153,7 @@
   .filters { grid-template-columns: 1fr; }
   .filterSubmit { grid-column: auto; }
   .grid { gap: 16px 6px; }
-  .card h2 { font-size: 11px; }
+  .card h2 { font-size: 12px; }
   .card p { font-size: 9px; }
 }
+.skeleton { background: var(--rewind-surface-raised); }

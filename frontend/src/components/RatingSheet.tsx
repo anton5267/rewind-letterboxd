@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { getUserRating, setRating as setMovieRating } from "../api/ratings.api";
-import ResilientImage from "./ResilientImage";
 import RetryButton from "./RetryButton";
 import { useLocale } from "../i18n";
 import { useDialogFocusTrap } from "../hooks/useDialogFocusTrap";
@@ -10,7 +9,6 @@ interface RatingSheetProps {
   movieId: number;
   movieTitle: string;
   subtitle?: string;
-  movieBackdropUrl?: string | null;
   likes: number;
   liked: boolean;
   likeBusy: boolean;
@@ -25,7 +23,6 @@ export default function RatingSheet({
   movieId,
   movieTitle,
   subtitle,
-  movieBackdropUrl,
   likes,
   liked,
   likeBusy,
@@ -113,9 +110,7 @@ export default function RatingSheet({
         </button>}
       </div>
 
-      {subtitle && <div className={styles.reviewCard}>
-        {movieBackdropUrl && <ResilientImage className={styles.reviewBackdrop} src={movieBackdropUrl} alt="" aria-hidden="true" fallback={null} />}
-        <div className={styles.reviewShade} aria-hidden="true" />
+      {subtitle && <div className={`${styles.reviewCard} ${likeStatusError ? styles.reviewCardError : ""}`}>
         <button
           className={`${styles.likeButton} ${styles.reviewLikeButton}`}
           type="button"
@@ -125,7 +120,7 @@ export default function RatingSheet({
           aria-label={`${liked ? t("unlike") : t("like")} ${movieTitle}`}
           onClick={onToggleLike}
         >
-          <span aria-hidden="true">{liked ? "♥" : "♡"}</span>
+          <img src="/images/movie-action-favorite.png" width={51} height={51} alt="" aria-hidden="true" />
           <span>{likeStatusLoading ? t("loading") : likes}</span>
         </button>
         {likeStatusError && <p className={styles.error} role="alert">{t("likeReviewError")} <RetryButton label={t("retry")} size="large" onClick={onRetryLikeStatus} /></p>}
@@ -141,7 +136,7 @@ export default function RatingSheet({
               aria-label={`${t("rateAs")} ${value}`}
               onClick={() => void saveRating(value)}
             >
-              <span aria-hidden="true">★</span>
+              <img src={`/images/rating-star-${value % 2 === 0 ? 38 : 37}.svg`} alt="" aria-hidden="true" />
             </button>)}
           </div>
           {ratingLoading && <p className={styles.status} role="status">{t("loading")}</p>}

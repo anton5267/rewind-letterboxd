@@ -1,13 +1,13 @@
 .navigation { display: grid; min-width: 0; border-left: 1px solid #7e7e7e; }
-.navigation a { display: flex; min-width: 0; min-height: 36px; align-items: center; border-radius: 4px; padding: 8px 16px; color: #aaa; font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; text-decoration: none; }
+.navigation a { display: flex; min-width: 0; min-height: 36px; align-items: center; border-radius: 4px; padding: 8px 16px; color: #aaa; font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; text-align: left; text-decoration: none; }
 .navigation a:hover, .navigation a[aria-current="page"] { background: rgba(255, 255, 255, .1); color: #fff; }
 .navigation a:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: -2px; color: #fff; }
 
 /* Contact 1122:2497 and the shared service rail use 24 px desktop text.
    Keep 44 px targets and supported routes when the reference is denser. */
 @media (min-width: 1101px) {
-  .navigation { padding-top: 47px; border-left: 0; }
-  .navigation::before { position: absolute; top: 37px; bottom: 0; left: 0; width: 1px; background: #7e7e7e; content: ""; }
+  .navigation { padding-top: 0; border-left: 0; }
+  .navigation::before { position: absolute; top: 0; bottom: 0; left: 0; width: 1px; background: #7e7e7e; content: ""; }
   .navigation a { min-height: 44px; padding: 8px 16px; font-size: 24px; line-height: 1.12; }
 }
 

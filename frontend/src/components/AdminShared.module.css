@@ -7,6 +7,8 @@
 .section.reviewsSection > .list .rowActions button,
 .section.commentsSection > .list .rowActions button { min-height: 44px; }
 
+.reviewsSection > .filter .control { min-height: 44px; }
+
 .usersSection .userRetryFocus:focus {
   outline: 2px solid var(--rewind-cyan);
   outline-offset: 4px;
@@ -26,7 +28,7 @@
   }
 }
 
-@media (min-width: 721px) {
+@media (min-width: 768px) {
   /* Figma Comments frame `1342:3589` uses the same rail and translucency,
      with shorter 249 px comment cards and the same editorial columns. */
   .commentsSection > .title {
@@ -41,7 +43,7 @@
   }
 
   .commentsSection > .filter .control {
-    min-height: 41px;
+    min-height: 44px;
     border-radius: 38px;
   }
 
@@ -108,7 +110,7 @@
   }
 
   .listsSection > .list .rowActions button {
-    min-height: 41px;
+    min-height: 44px;
     border-radius: 38px;
   }
 }
@@ -176,7 +178,7 @@
   gap: 18px;
 }
 
-@media (min-width: 721px) {
+@media (min-width: 768px) {
   /* Figma Moderator Logs frame `1404:3804` uses 1200 px translucent audit
      cards with a 38 px radius, 348 px lead state and 293 px follow-up rows. */
   .auditSection > .title {
@@ -257,7 +259,20 @@
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 720px) {
+.auditActorRole {
+  justify-self: start;
+  border: 1px solid var(--rewind-line);
+  border-radius: 999px;
+  padding: 6px 12px;
+  color: var(--rewind-paper);
+}
+
+.auditSection .auditProfileButton {
+  justify-self: start;
+  border-radius: 999px;
+}
+
+@media (max-width: 767px) {
   .auditSection > .list .auditRow {
     display: grid;
     gap: 20px;
@@ -291,7 +306,7 @@
   gap: 18px;
 }
 
-@media (min-width: 721px) {
+@media (min-width: 768px) {
   /* Figma moderation frame `1399:3300` places the queue controls and live
      items inside a single 1200×673 translucent workspace. */
   .moderationSection {
@@ -321,7 +336,7 @@
 
   .moderationSection .filterset .control,
   .moderationSection .filterset button {
-    min-height: 41px;
+    min-height: 44px;
     border-radius: 38px;
   }
 }
@@ -329,6 +344,24 @@
 .title {
   margin: 0 0 18px;
   color: var(--rewind-paper);
+}
+
+.moderationLogsLink {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 12px auto 24px;
+  padding: 8px 14px;
+  border: 1px solid var(--rewind-line);
+  border-radius: 999px;
+  color: var(--rewind-paper);
+  text-align: center;
+  text-decoration: none;
+}
+
+.moderationLogsLink:hover {
+  background: var(--rewind-surface-raised);
 }
 
 .toolbar {
@@ -340,7 +373,9 @@
 }
 
 .control {
-  min-height: 40px;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
   box-sizing: border-box;
   padding: 8px 10px;
   border: 1px solid var(--rewind-line);
@@ -363,6 +398,7 @@
 }
 
 .filterset {
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: end;
@@ -446,7 +482,7 @@
 .detailEyebrow {
   margin: 0 0 6px;
   color: var(--rewind-gold);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -538,7 +574,7 @@
 
 .detailActions a {
   display: inline-flex;
-  min-height: 40px;
+  min-height: 44px;
   box-sizing: border-box;
   align-items: center;
   padding: 8px 12px;
@@ -750,9 +786,20 @@
 }
 
 .reviewRating strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: var(--rewind-paper);
   font-size: 26px;
 }
+
+.reviewRating strong img { flex-shrink: 0; }
+
+.actionReceipt { display: flex; min-height: 327px; align-items: center; flex-direction: column; padding: 22px 0 80px; }
+.receiptMessage { max-width: 100%; margin: 0; padding: 6px 18px; border-radius: 38px; background: #3d6535; color: #fff; font-size: 24px; line-height: 1.4; text-align: center; overflow-wrap: anywhere; }
+.receiptMessage:focus { outline: 3px solid var(--rewind-cyan); outline-offset: 4px; }
+.actionReceipt > button { margin-top: 85px; }
+@media (max-width: 767px) { .receiptMessage { font-size: 18px; } }
 
 .reviewStatus {
   margin: 0;
@@ -761,7 +808,7 @@
 /* Figma User List frames `1218:2982`/`1260:3404` use a centered title,
    402 px search control and a single 1200 px table rail. The runtime keeps
    its live row actions and pagination inside that shell. */
-@media (min-width: 721px) {
+@media (min-width: 768px) {
   .usersSection > .title {
     margin-bottom: 38px;
     text-align: center;
@@ -774,7 +821,7 @@
 
   .usersSection > .toolbar .control,
   .usersSection > .toolbar button {
-    min-height: 41px;
+    min-height: 44px;
     border-radius: 38px;
   }
 
@@ -874,7 +921,6 @@
   }
 
   .reviewsSection > .filter .control {
-    min-height: 41px;
     border-radius: 38px;
   }
 

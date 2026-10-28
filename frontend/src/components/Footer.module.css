@@ -7,7 +7,7 @@
   font-size: 13px;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .footer { padding: 28px 16px; }
   .top { flex-wrap: wrap; gap: 14px; }
   .nav { position: static; transform: none; width: 100%; flex-wrap: wrap; justify-content: center; gap: 12px; }
@@ -119,8 +119,23 @@
   .secondaryNav a:focus-visible { outline-offset: -2px; }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .footer.mobileAuthFooter {
     display: none;
   }
+}
+
+@media (max-width: 767px) {
+  .footer.mobileDetailFooter { display: none; }
+}
+
+@media (max-width: 767px) {
+  .footer.mobileSearchFooter,
+  .footer.mobileHomeFooter,
+  .footer.mobilePersonFooter { display: none; }
+}
+
+@media (max-width: 767px) {
+  :global(body:has(main[data-list-editor="create"])) .footer,
+  :global(body:has(main[data-review-detail])) .footer { display: none; }
 }

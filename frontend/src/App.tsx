@@ -8,6 +8,7 @@ const Login = lazy(() => import("./auth/Login"));
 const Register = lazy(() => import("./auth/Register"));
 const ForgotPassword = lazy(() => import("./auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./auth/ResetPassword"));
+const AuthEntry = lazy(() => import("./auth/AuthEntry"));
 const Search = lazy(() => import("./pages/Search"));
 const FilmsDiscover = lazy(() => import("./pages/FilmsDiscover"));
 const GlobalSearch = lazy(() => import("./pages/GlobalSearch"));
@@ -70,8 +71,13 @@ function LocalizedApp() {
     <Route path="faq" element={<Layout><ServicePage kind="faq" /></Layout>} />
     <Route path="contact" element={<Layout><ServicePage kind="contact" /></Layout>} />
     <Route path="rules" element={<Layout><ServicePage kind="rules" /></Layout>} />
+    <Route path="terms" element={<Layout><ServicePage kind="terms" /></Layout>} />
+    <Route path="conditions" element={<Layout><ServicePage kind="conditions" /></Layout>} />
+    <Route path="safety-notice" element={<Layout><ServicePage kind="safety-notice" /></Layout>} />
+    <Route path="hq-accounts" element={<Layout><ServicePage kind="hq-accounts" /></Layout>} />
     <Route path="privacy" element={<Layout><ServicePage kind="privacy" /></Layout>} />
     <Route path="film-data" element={<Layout><ServicePage kind="film-data" /></Layout>} />
+    <Route path="important-data" element={<Layout><ServicePage kind="important-data" /></Layout>} />
     <Route path="delete-account" element={<Layout><ServicePage kind="delete-account" /></Layout>} />
     <Route path="users/:id" element={<Layout><PublicProfile /></Layout>} />
     <Route path="people/:type/:id" element={<Layout><Person /></Layout>} />
@@ -82,6 +88,7 @@ function LocalizedApp() {
     <Route path="community" element={<Layout><Community /></Layout>} />
     <Route path="community/reviewers" element={<Layout><PopularReviewers /></Layout>} />
     <Route path="login" element={<Layout><Login /></Layout>} />
+    <Route path="auth" element={<Layout><AuthEntry /></Layout>} />
     <Route path="register" element={<Layout><Register /></Layout>} />
     <Route path="forgot-password" element={<Layout><ForgotPassword /></Layout>} />
     <Route path="reset-password" element={<Layout><ResetPassword /></Layout>} />

@@ -99,7 +99,7 @@
   .page[data-network-view="true"] .content > .section > h2 { margin-bottom: 59px; line-height: 27px; text-align: left; }
 }
 .listCards { display: grid; gap: 24px; }
-@media (min-width: 721px) and (max-width: 1023px) {
+@media (min-width: 768px) and (max-width: 1023px) {
   .hero { flex-wrap: wrap; }
   .heroMetrics { flex-basis: 100%; }
 }
@@ -249,7 +249,7 @@
 }
 
 .heroActionsMenu button {
-  min-height: 42px;
+  min-height: 44px;
   padding: 9px 11px;
   border: 0;
   border-radius: 6px;
@@ -279,7 +279,7 @@
 .eyebrow {
   margin: 0;
   color: var(--rewind-gold);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -339,7 +339,7 @@
 .profileNav a {
   display: inline-flex;
   flex: 0 0 auto;
-  min-height: 40px;
+  min-height: 44px;
   box-sizing: border-box;
   align-items: center;
   padding: 9px 14px;
@@ -423,7 +423,7 @@
 .form input:not([type="checkbox"]) {
   width: 100%;
   box-sizing: border-box;
-  min-height: 42px;
+  min-height: 44px;
   padding: 9px 11px;
   border: 1px solid #4a4a4a;
   border-radius: 3px;
@@ -451,7 +451,7 @@
 .inlineForm input {
   width: 100%;
   box-sizing: border-box;
-  min-height: 42px;
+  min-height: 44px;
   padding: 9px 11px;
   border: 1px solid #4a4a4a;
   border-radius: 3px;
@@ -465,7 +465,7 @@
 
 .primaryButton,
 .dangerButton {
-  min-height: 42px;
+  min-height: 44px;
   border: 1px solid transparent;
   border-radius: 3px;
   padding: 9px 15px;
@@ -507,7 +507,7 @@
 }
 
 .tabs button {
-  min-height: 40px;
+  min-height: 44px;
   border: 1px solid #4a4a4a;
   border-radius: 999px;
   padding: 8px 13px;
@@ -537,7 +537,7 @@
 
 .pagination button:not([data-retry-button]),
 .feedback button:not([data-retry-button]) {
-  min-height: 38px;
+  min-height: 44px;
   border: 1px solid #4a4a4a;
   border-radius: 3px;
   padding: 8px 12px;
@@ -661,7 +661,7 @@
   font-size: 12px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .page {
     padding: 88px 16px 32px;
   }
@@ -712,7 +712,7 @@
   }
 
   .stat span {
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .inlineForm {
@@ -754,7 +754,7 @@
   .form button:not([data-retry-button]),
   .pagination button,
   .tabs button {
-    min-height: 42px;
+    min-height: 44px;
   }
 
 }
@@ -932,7 +932,7 @@
 .railRating {
   margin: 6px 0 0;
   color: #dedede;
-  font-size: 11px;
+  font-size: 12px;
   text-align: center;
 }
 
@@ -973,7 +973,7 @@
   display: block;
   margin-top: 6px;
   color: #aaa;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.4;
 }
 
@@ -1045,7 +1045,7 @@
   }
 
   .username {
-    font-size: 11px;
+    font-size: 12px;
     line-height: 1.45;
   }
 
@@ -1106,7 +1106,7 @@
 
   .stat span {
     color: #ddd;
-    font-size: 10px;
+    font-size: 12px;
     line-height: 1.3;
   }
 
@@ -1127,7 +1127,7 @@
     border: 0;
     background: linear-gradient(#282828, #282828) center / 100% 32px no-repeat;
     color: #fff;
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .profileNav a:focus-visible { outline-offset: -3px; }
@@ -1155,7 +1155,7 @@
   }
 
   .reviewCopy .reviewContent {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .userList {
@@ -1465,7 +1465,7 @@
 
 /* No tablet frame is available. Keep the existing responsive layout,
    interpolate the verified original artwork, and retain visible focus. */
-@media (min-width: 721px) and (max-width: 1023px) {
+@media (min-width: 768px) and (max-width: 1023px) {
   .hero {
     overflow: visible;
     isolation: isolate;
@@ -1487,7 +1487,7 @@
 
 /* Figma own profile phone `896:1838`: the identity artwork owns the top
    canvas, while the shared mobile navigation remains fixed at the bottom. */
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .page {
     padding: 0 16px 32px;
     background: #1f1f1f;
@@ -1557,7 +1557,7 @@
     line-height: 1.12;
   }
 
-  .username { font-size: 11px; }
+  .username { font-size: 12px; }
 
   .overviewSection {
     position: relative;
@@ -1576,7 +1576,7 @@
 
 /* Own phone variants:1015:2131 is standalone Films;1015:3356/4508 and
    1023:1867 keep identity/nav before the collection or review rail. */
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .hero { min-height: 496px; gap: 7px; padding-bottom: 4px; }
   .heroCreate { position: absolute; z-index: 3; top: 48px; right: 64px; display: grid; width: 44px; height: 44px; box-sizing: border-box; place-items: center; border: 1px solid #444; border-radius: 50%; background: #282828; color: #fff; font-size: 24px; text-decoration: none; }
   .profileNav { scrollbar-width: none; }
@@ -1584,7 +1584,7 @@
   .profileNav a:focus-visible { outline-offset: -3px; }
   .heroMetrics { width: min(100%, 300px); gap: 12px; margin: 34px 0 0; }
   .heroMetrics > div { gap: 3px; }
-  .heroMetrics dt { font-size: 11px; }
+  .heroMetrics dt { font-size: 12px; }
   .heroMetrics dd { font-size: 16px; }
   .listCards { gap: 12px; }
   .page[data-profile-view] .hero { min-height: 496px; }
@@ -1659,7 +1659,7 @@
 .followingPreview img, .followingInitial { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; }
 .followingInitial { display: grid; place-items: center; background: #343434; color: #fff; font-size: 26px; }
 .overviewLinks { display: none; }
-@media (min-width: 721px) {
+@media (min-width: 768px) {
   .page[data-profile-view="collection"] .tabs { display: none; }
 }
 @media (min-width: 1024px) {
@@ -1672,23 +1672,23 @@
   .reviewCopy .reviewContent { font-size: 18px; }
   .previewSection .reviewCards { gap: 36px; }
 }
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .profileNav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin: 35px 0 0; padding: 0; overflow: visible; border: 0; border-radius: 0; background: transparent; }
-  .profileNav a { min-width: 0; min-height: 44px; justify-content: center; padding: 8px 4px; font-size: 11px; line-height: 1.3; text-align: center; white-space: normal; overflow-wrap: anywhere; }
+  .profileNav a { min-width: 0; min-height: 44px; justify-content: center; padding: 8px 4px; font-size: 12px; line-height: 1.3; text-align: center; white-space: normal; overflow-wrap: anywhere; }
   .profileNav a[data-collection-kind="watched"] { display: none; }
   .content > section.section.previewSection { margin-top: 35px; padding-top: 8px; }
   .content > section.section.previewSection[id="profile-overview"] { margin-top: 23px; }
   .content > section.previewSection > h2 { margin-bottom: 24px; font-size: 14px; line-height: 16px; }
   .overviewPosterGrid { gap: 15px; }
   .overviewPosterGrid :is(.railPosterLink, .railPoster, .railPosterFallback) { aspect-ratio: 79 / 116; border-radius: 10px; }
-  .previewSection .activityCaption { margin-top: 9px; font-size: 10px; line-height: 1.4; }
-  .activityCaption time { font-size: 10px; }
+  .previewSection .activityCaption { margin-top: 9px; font-size: 12px; line-height: 1.4; }
+  .activityCaption time { font-size: 12px; }
   .previewSection .reviewCard { min-height: 208px; box-sizing: border-box; padding: 26px 18px; }
   .followingPreview a { width: 44px; min-height: 44px; }
   .followingPreview img, .followingInitial { width: 40px; height: 40px; }
   .followingInitial { font-size: 18px; }
   .overviewLinks { display: grid; gap: 5px; margin-top: 35px; }
-  .overviewLinks a { display: flex; min-width: 0; min-height: 44px; align-items: center; justify-content: space-between; gap: 16px; box-sizing: border-box; padding: 10px 15px; border-radius: 37px; background: #282828; color: #fff; font-size: 11px; line-height: 1.4; text-decoration: none; overflow-wrap: anywhere; }
+  .overviewLinks a { display: flex; min-width: 0; min-height: 44px; align-items: center; justify-content: space-between; gap: 16px; box-sizing: border-box; padding: 10px 15px; border-radius: 37px; background: #282828; color: #fff; font-size: 12px; line-height: 1.4; text-decoration: none; overflow-wrap: anywhere; }
   .overviewLinks a > span { font-size: 20px; line-height: 1; }
   .overviewLinks a:focus-visible { outline-offset: -3px; }
 }
@@ -1698,8 +1698,8 @@
   .profileNav a { flex: 0 0 auto; white-space: nowrap; overflow-wrap: normal; }
 }
 
-@media (min-width: 361px) and (max-width: 720px) {
-  .profileNav a[data-collection-kind="watchlist"] { padding-inline: 2px; font-size: 10px; white-space: nowrap; }
+@media (min-width: 361px) and (max-width: 767px) {
+  .profileNav a[data-collection-kind="watchlist"] { padding-inline: 2px; font-size: 12px; white-space: nowrap; }
 }
 
 @media (max-width: 560px) {
@@ -1707,7 +1707,7 @@
   .page[data-profile-view="reviews"] .reviewHeading h3 { flex-basis: 100%; }
   .page[data-profile-view="reviews"] .reviewHeadingActions { width: 100%; min-width: 0; flex-wrap: wrap; align-items: flex-start; gap: 8px; }
   .page[data-profile-view="reviews"] .reviewActions { max-width: 100%; flex-wrap: wrap; gap: 4px; }
-  .page[data-profile-view="reviews"] .reviewActions button { display: inline-flex; width: auto; min-width: 44px; height: 44px; align-items: center; justify-content: center; gap: 6px; padding: 0 6px; border: 0; border-radius: 0; font-size: 11px; white-space: nowrap; }
+  .page[data-profile-view="reviews"] .reviewActions button { display: inline-flex; width: auto; min-width: 44px; height: 44px; align-items: center; justify-content: center; gap: 6px; padding: 0 6px; border: 0; border-radius: 0; font-size: 12px; white-space: nowrap; }
   .page[data-profile-view="reviews"] .reviewActions button::before { display: none; }
   .page[data-profile-view="reviews"] .mobileReviewActionLabel { display: inline; }
   .page[data-profile-view="reviews"] .reviewActions button:first-child { flex-direction: row-reverse; }
@@ -1723,3 +1723,44 @@
 .page .reviewFeedbackFocus:focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
 
 .collectionToolbar h2:focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
+
+/* Statistics remain readable when localized labels or text zoom grow. */
+.stat :is(a, span, strong) { min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+
+.reviewDetailToolbar { display: none; }
+.reviewActionIcon { display: block; width: 35px; height: 35px; object-fit: contain; }
+.reviewLoading { display: grid; grid-template-columns: 175px minmax(0, 1fr); gap: 40px; margin-top: 24px; }
+.reviewLoading > span { display: block; aspect-ratio: 2 / 3; border-radius: 20px; background: #383838; }
+.reviewLoading > div { display: grid; align-content: start; gap: 24px; padding: 24px; border-radius: 20px; background: #282828; }
+.reviewLoading > div > span { display: block; height: 24px; border-radius: 6px; background: #454545; }
+.reviewLoading > div > span:last-child { height: 110px; }
+.globalReviewLink { display: inline-flex; min-height: 44px; align-items: center; margin-top: 12px; color: #ddd; font-size: 13px; }
+.page[data-review-detail] .reviewCopy .reviewContent { display: block; overflow: visible; margin-bottom: 0; -webkit-line-clamp: unset; line-clamp: unset; overflow-wrap: anywhere; }
+.page[data-review-detail] .reviewCopy p.reviewContent:hover { text-decoration: none; }
+
+@media (min-width: 1024px) {
+  .page[data-review-detail] .reviewCard { background: transparent; }
+  .page[data-review-detail] .reviewCopy { min-height: 395px; box-sizing: border-box; border-radius: 20px; padding: 40px; background: #282828; }
+  .page[data-review-detail] .reviewCopy .reviewContent { margin-top: 40px; }
+}
+
+@media (max-width: 767px) {
+  .reviewLoading { grid-template-columns: 79px minmax(0, 1fr); gap: 16px; }
+  .reviewActionIcon { width: 13px; height: 13px; }
+  .reviewLoading > div { padding: 16px; }
+  .page[data-review-detail] .hero, .page[data-review-detail] .profileNav, .page[data-review-detail] .reviewsBack { display: none; }
+  .reviewDetailToolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 8px; width: 100%; padding-top: 44px; margin-bottom: 28px; text-align: center; }
+  .reviewDetailToolbar a { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 50%; background: #282828; color: #fff; font-size: 24px; text-decoration: none; }
+  .reviewDetailToolbar > h2 { min-width: 0; margin: 0; overflow-wrap: anywhere; font-size: 14px; font-weight: 500; line-height: 1.4; }
+  .reviewDetailToolbar > h2:focus { outline: 3px solid var(--rewind-cyan); outline-offset: 4px; }
+  .page[data-review-detail] { min-height: calc(100dvh - 70px); }
+  .page[data-review-detail] .content > section[id="profile-reviews"] { margin: 0; padding: 0; border: 0; }
+  .page[data-review-detail] .content > section[id="profile-reviews"] > h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .page[data-review-detail] .reviewCard { position: relative; margin-bottom: 72px; }
+  .page[data-review-detail] .reviewCopy .reviewContent { font-size: 14px; line-height: 1.5; }
+  .page[data-review-detail] .reviewHeadingActions { width: auto; }
+  .page[data-review-detail] .reviewActions { position: absolute; top: calc(100% + 16px); right: 0; }
+  .page[data-review-detail] .reviewActions button { min-height: 44px; border-radius: 24px; padding-inline: 12px; background: #282828; font-size: 12px; }
+  .page[data-review-detail] .reviewEditorActions { align-items: stretch; }
+  .page[data-review-detail] .reviewEditor textarea { min-height: 280px; }
+}

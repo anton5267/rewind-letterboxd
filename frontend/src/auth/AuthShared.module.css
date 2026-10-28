@@ -7,12 +7,7 @@
   place-items: center;
   padding: 316px 16px 160px;
   overflow: hidden;
-  background:
-    linear-gradient(180deg, transparent 0 260px, rgba(21, 21, 21, .72) 430px, var(--rewind-black) 720px),
-    radial-gradient(circle at 48% 0%, rgba(98, 182, 194, .55), transparent 31rem),
-    radial-gradient(circle at 88% 0%, rgba(212, 168, 95, .58), transparent 34rem),
-    url("../assets/figma/auth-desktop.png") top center / 100% 501px no-repeat,
-    #151515;
+  background: #1f1f1f url("../assets/figma/auth-desktop.png") top center / 100% 501px no-repeat;
   color: #fff;
 }
 
@@ -20,7 +15,6 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .025), transparent);
   content: "";
   pointer-events: none;
 }
@@ -57,6 +51,7 @@
   letter-spacing: -.02em;
   line-height: 1.1;
   text-align: center;
+  overflow-wrap: anywhere;
 }
 
 .mobileBack {
@@ -67,7 +62,7 @@
   width: min(627px, 100%);
   margin-inline: auto;
   display: grid;
-  gap: 14px;
+  gap: 8px;
   margin-top: 55px;
   text-align: left;
 }
@@ -80,6 +75,10 @@
   font-weight: 700;
 }
 
+.fieldLabel { color: #c5c5c5; font-size: 14px; line-height: 1.4; }
+.fieldLabel:not(:first-child) { margin-top: 12px; }
+.validation { margin: 0; color: #ffd2d2; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+
 .passwordHint {
   margin: 0;
   color: var(--rewind-muted);
@@ -89,9 +88,9 @@
 
 .input {
   width: 100%;
-  min-height: 94px;
+  min-height: 72px;
   box-sizing: border-box;
-  padding: 16px 28px;
+  padding: 14px 40px;
   border: 2px solid rgba(255, 255, 255, .24);
   border-radius: 46px;
   outline: 0;
@@ -153,7 +152,7 @@
 .button {
   display: inline-flex;
   width: 100%;
-  min-height: 89px;
+  min-height: 72px;
   box-sizing: border-box;
   align-items: center;
   justify-content: center;
@@ -180,6 +179,8 @@
 .back {
   display: inline-flex;
   width: fit-content;
+  min-height: 44px;
+  align-items: center;
   margin: 0 0 26px;
   padding: 0;
   border: 0;
@@ -228,6 +229,8 @@
 .footer a,
 .card a { color: var(--rewind-cyan); }
 
+.footer a { display: inline-flex; min-height: 44px; align-items: center; }
+
 .footer a:hover,
 .card a:hover { color: #fff; }
 
@@ -246,17 +249,12 @@
   scroll-margin-block: 120px;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .page {
     min-height: 852px;
     display: block;
     padding: 0 0 env(safe-area-inset-bottom);
-    background:
-      linear-gradient(180deg, transparent 0 300px, rgba(21, 21, 21, .78) 500px, var(--rewind-surface) 760px),
-      radial-gradient(circle at 48% 0%, rgba(98, 182, 194, .58), transparent 22rem),
-      radial-gradient(circle at 95% 0%, rgba(212, 168, 95, .64), transparent 23rem),
-      url("../assets/figma/auth-mobile.png") top center / 100% 378px no-repeat,
-      var(--rewind-surface);
+    background: var(--rewind-surface) url("../assets/figma/auth-mobile.png") top center / 100% 378px no-repeat;
   }
 
   .mobileBack {
@@ -298,9 +296,47 @@
     box-shadow: none;
   }
   .title { font-size: 36px; line-height: 1.2; }
-  .form { width: 100%; gap: 28px; margin-top: 103px; }
-  .input, .button { min-height: 45px; padding-block: 10px; border-width: 1px; }
-  .button { min-height: 56px; }
+  .form { width: 100%; gap: 6px; margin-top: 103px; }
+  .fieldLabel:not(:first-child) { margin-top: 0; }
+  .input { min-height: 45px; padding-block: 10px; border-width: 1px; }
+  .input { padding-inline: 21px; }
+  .button {
+    position: relative;
+    isolation: isolate;
+    min-height: 56px;
+    padding: 0 0 11px;
+    border: 0;
+    border-radius: 46px;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .button::before,
+  .button::after {
+    position: absolute;
+    z-index: -1;
+    right: 0;
+    left: 0;
+    border-radius: 46px;
+    content: "";
+    pointer-events: none;
+  }
+  .button::before {
+    top: 0;
+    bottom: 11px;
+    box-sizing: border-box;
+    border: 2px solid #b4b4b6;
+    background: rgba(229, 229, 229, .2);
+    backdrop-filter: blur(20px);
+  }
+  .button::after {
+    z-index: -2;
+    top: 11px;
+    bottom: 0;
+    background: rgba(34, 34, 34, .66);
+    filter: blur(20px);
+  }
+  .button:disabled { color: rgba(255, 255, 255, .7); opacity: 1; }
   .footer { width: 100%; margin-top: 9px; }
 }
 

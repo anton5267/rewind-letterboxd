@@ -3,6 +3,7 @@ import { isAxiosError } from "axios";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { resetPassword } from "../api/auth.api";
 import { useLocale } from "../i18n";
+import { useAuthFieldValidation } from "./useAuthFieldValidation";
 import styles from "./ResetPassword.module.css";
 import { isPasswordWithinByteLimit, MAX_PASSWORD_BYTES } from "../utils/passwordValidation";
 
@@ -14,6 +15,7 @@ export default function ResetPassword() {
 
 function ResetPasswordForm({ token }: { token: string }) {
   const { path, t, lang } = useLocale();
+  const validation = useAuthFieldValidation();
   const location = useLocation();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -55,7 +57,7 @@ function ResetPasswordForm({ token }: { token: string }) {
     event.preventDefault();
     if (busy.current) return;
     const submitter = (event.nativeEvent as SubmitEvent).submitter;
-    focusIntent.current = { origin: submitter instanceof HTMLElement ? submitter : document.activeElement instanceof HTMLElement ? document.activeElement : null };
+    focusIntent.current = { origin: document.activeElement instanceof HTMLElement ? document.activeElement : submitter instanceof HTMLElement ? submitter : null };
     setSubmission(value => value + 1);
     setError(null);
     if (!isPasswordWithinByteLimit(password) || !isPasswordWithinByteLimit(confirm)) { setError("passwordByteLimitError"); return; }
@@ -84,16 +86,18 @@ function ResetPasswordForm({ token }: { token: string }) {
       <p className={styles.eyebrow}>{t("accountEyebrow")}</p>
       <h1 className={styles.title} id="reset-password-title">{t("resetTitle")}</h1>
       {!token && <p className={styles.missing} role="alert">{t("resetMissing")}</p>}
-      {done ? <p ref={successMessage} className={styles.success} role="status" tabIndex={-1}>{t("resetSuccess")} <Link to={path("/login")}>{t("login")}</Link></p> : token && <form className={styles.form} onSubmit={submit} aria-busy={loading}>
+      {done ? <p ref={successMessage} className={styles.success} role="status" tabIndex={-1}>{t("resetSuccess")} <Link to={path("/login")}>{t("login")}</Link></p> : token && <form className={styles.form} onSubmit={submit} onInvalidCapture={validation.onInvalid} aria-busy={loading}>
         <label className={styles.field} htmlFor="reset-password">
           {t("newPassword")}
-          <input className={styles.input} id="reset-password" name="newPassword" type="password" required disabled={loading} minLength={8} maxLength={MAX_PASSWORD_BYTES} autoComplete="new-password" value={password} onChange={event => setPassword(event.target.value)} aria-invalid={Boolean(error)} aria-describedby={`reset-password-hint${error ? " reset-password-error" : ""}`} />
+          <input className={styles.input} id="reset-password" name="newPassword" type="password" required disabled={loading} minLength={8} maxLength={MAX_PASSWORD_BYTES} autoComplete="new-password" value={password} onChange={event => { setPassword(event.target.value); validation.onInput(event.currentTarget); }} aria-invalid={Boolean(error) || validation.invalid("reset-password")} aria-describedby={validation.describedBy("reset-password", `reset-password-hint${error ? " reset-password-error" : ""}`)} />
         </label>
+        {validation.message("reset-password") && <p className={styles.validation} id="reset-password-validation">{validation.message("reset-password")}</p>}
         <p className={styles.passwordHint} id="reset-password-hint">{t("passwordByteLimitHint")}</p>
         <label className={styles.field} htmlFor="reset-password-confirm">
           {t("confirmPassword")}
-          <input className={styles.input} id="reset-password-confirm" name="confirmPassword" type="password" required disabled={loading} minLength={8} maxLength={MAX_PASSWORD_BYTES} autoComplete="new-password" value={confirm} onChange={event => setConfirm(event.target.value)} aria-invalid={Boolean(error)} aria-describedby={`reset-password-hint${error ? " reset-password-error" : ""}`} />
+          <input className={styles.input} id="reset-password-confirm" name="confirmPassword" type="password" required disabled={loading} minLength={8} maxLength={MAX_PASSWORD_BYTES} autoComplete="new-password" value={confirm} onChange={event => { setConfirm(event.target.value); validation.onInput(event.currentTarget); }} aria-invalid={Boolean(error) || validation.invalid("reset-password-confirm")} aria-describedby={validation.describedBy("reset-password-confirm", `reset-password-hint${error ? " reset-password-error" : ""}`)} />
         </label>
+        {validation.message("reset-password-confirm") && <p className={styles.validation} id="reset-password-confirm-validation">{validation.message("reset-password-confirm")}</p>}
         {error && <p ref={errorMessage} tabIndex={-1} className={styles.error} id="reset-password-error" role="alert">{t(error)}</p>}
         <button className={styles.button} type="submit" aria-busy={loading} disabled={loading}>{loading ? t("loading") : t("changePassword")}</button>
       </form>}

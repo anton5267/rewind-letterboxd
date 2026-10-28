@@ -1,3 +1,4 @@
+import AdminLoading from "./AdminLoading";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { deleteAdminReview, getAdminReviews, setAdminReviewHidden, type AdminReview } from "../api/admin.api";
 import type { Page } from "../api/types";
@@ -7,6 +8,7 @@ import RetryNotice from "./RetryNotice";
 import { editorialText, formatReviewDate, useLocale } from "../i18n";
 import { getUserName } from "../utils/userIdentity";
 import styles from "./AdminShared.module.css";
+import dialogStyles from "./AdminConfirmDialog.module.css";
 
 type VisibilityFilter = "all" | "visible" | "hidden";
 
@@ -22,7 +24,13 @@ export default function AdminReviews() {
   const [error, setError] = useState(false);
   const [actionError, setActionError] = useState<"moderate" | "delete" | false>(false);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ review: AdminReview; trigger: HTMLButtonElement } | null>(null);
+  const [receipt, setReceipt] = useState<"deleted" | "hidden" | null>(null);
+  const receiptMessage = useRef<HTMLParagraphElement>(null);
+  const receiptOrigin = useRef<HTMLElement | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const deleteDialog = useRef<HTMLDialogElement>(null);
+  const deleteDialogCancel = useRef<HTMLButtonElement>(null);
   const focusAfterReload = useRef(false);
   const reloadFocusOrigin = useRef<HTMLElement | null>(null);
   const queryGeneration = useRef(0);
@@ -31,8 +39,17 @@ export default function AdminReviews() {
   const currentActor = useRef(actor);
   const mutationToken = useRef<object | null>(null);
 
+  useEffect(() => { setReceipt(null); }, [filter, lang, actor]);
+  useEffect(() => {
+    if (!receipt) return;
+    const active = document.activeElement;
+    if (active === document.body || active === receiptOrigin.current) receiptMessage.current?.focus();
+  }, [receipt]);
+
   useLayoutEffect(() => {
     queryGeneration.current += 1;
+    if (deleteDialog.current?.open) deleteDialog.current.close();
+    setPendingDelete(null);
     if (currentActor.current !== actor) {
       currentActor.current = actor;
       mutationToken.current = null;
@@ -45,6 +62,12 @@ export default function AdminReviews() {
       reloadFocusOrigin.current = null;
     }
   }, [filter, page, lang, actor]);
+
+  useEffect(() => {
+    if (!pendingDelete || !deleteDialog.current) return;
+    if (!deleteDialog.current.open) deleteDialog.current.showModal();
+    deleteDialogCancel.current?.focus();
+  }, [pendingDelete]);
 
   useEffect(() => {
     mounted.current = true;
@@ -127,6 +150,11 @@ export default function AdminReviews() {
       } else {
         setData(current => current ? { ...current, content: current.content.map(item => item.id === updated.id ? updated : item) } : current);
       }
+      if (updated.isHidden) {
+        focusAfterReload.current = false;
+        receiptOrigin.current = origin;
+        setReceipt("hidden");
+      }
     } catch {
       if (!isCurrentActor()) return;
       setActionError("moderate");
@@ -144,8 +172,6 @@ export default function AdminReviews() {
 
   const deleteReview = async (review: AdminReview, origin: HTMLButtonElement) => {
     if (busyId !== null || currentActor.current !== actor) return;
-    const movieTitle = editorialText(review.movieTitle, t("untitledFilm"));
-    if (!window.confirm(`${t("adminReviewDeleteConfirm")}\n${movieTitle} · ${getUserName({ username: review.username }, t("someone"))}?`)) return;
     const token = {};
     mutationToken.current = token;
     const isCurrentActor = () => mounted.current && currentActor.current === actor && mutationToken.current === token;
@@ -166,6 +192,9 @@ export default function AdminReviews() {
       focusAfterReload.current = true;
       if (data?.content.length === 1 && page > 0) setPage(value => value - 1);
       else setRevision(value => value + 1);
+      focusAfterReload.current = false;
+      receiptOrigin.current = origin;
+      setReceipt("deleted");
     } catch {
       if (!isCurrentActor()) return;
       setActionError("delete");
@@ -181,8 +210,38 @@ export default function AdminReviews() {
     }
   };
 
+  const requestDelete = (review: AdminReview, trigger: HTMLButtonElement) => {
+    if (busyId !== null || currentActor.current !== actor) return;
+    focusAfterReload.current = false;
+    reloadFocusOrigin.current = null;
+    setPendingDelete({ review, trigger });
+  };
+
+  const cancelDelete = () => {
+    if (deleteDialog.current?.open) deleteDialog.current.close();
+    const trigger = pendingDelete?.trigger;
+    setPendingDelete(null);
+    window.requestAnimationFrame(() => { if (trigger?.isConnected) trigger.focus(); });
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete || busyId !== null) return;
+    const { review, trigger } = pendingDelete;
+    if (deleteDialog.current?.open) deleteDialog.current.close();
+    setPendingDelete(null);
+    void deleteReview(review, trigger);
+  };
+
+  if (receipt) return <section className={`${styles.section} ${styles.actionReceipt}`} aria-label={t("adminReviews")}>
+    <p ref={receiptMessage} className={styles.receiptMessage} tabIndex={-1} role="status">{t(receipt === "deleted" ? "adminReviewDeletedSuccess" : "adminReviewHiddenSuccess")}</p>
+    <button type="button" onClick={() => {
+      setReceipt(null);
+      window.requestAnimationFrame(() => headingRef.current?.focus());
+    }}>{t("adminReturnToReviews")}</button>
+  </section>;
+
   return <section className={`${styles.section} ${styles.reviewsSection}`} aria-label={t("adminReviews")} aria-busy={loading || busyId !== null}>
-    <h2 className={styles.title} ref={headingRef} tabIndex={-1}>{t("adminReviews")}</h2>
+    <h2 className={styles.title} ref={headingRef} tabIndex={-1}>{t("adminReviewsTitle")}</h2>
     {actionError && <p className={styles.error} role="alert">{t(actionError === "delete" ? "adminReviewDeleteError" : "adminReviewModerationError")}</p>}
     <label className={styles.filter}>{t("adminVisibilityFilter")}{" "}
       <select className={styles.control} value={filter} onChange={event => changeFilter(event.target.value as VisibilityFilter)}>
@@ -191,7 +250,7 @@ export default function AdminReviews() {
         <option value="hidden">{t("hiddenOnly")}</option>
       </select>
     </label>
-    {loading && <p className={styles.feedback} role="status">{t("loading")}</p>}
+    {loading && <AdminLoading label={t("loading")} layout="reviews" />}
     {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => { reloadFocusOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; focusAfterReload.current = true; setRevision(value => value + 1); }} />}
     {data && data.content.length === 0 && <p>{t("noAdminReviews")}</p>}
     {data && <>
@@ -208,7 +267,7 @@ export default function AdminReviews() {
           <div className={styles.reviewSide}>
             <div className={styles.reviewRating}>
               <span>{t("rating")}</span>
-              <strong>{review.rating ?? "—"}</strong>
+              <strong>{review.rating !== null && <img src="/images/admin-review-star.svg" alt="" />} {review.rating ?? "—"}</strong>
             </div>
             <div className={styles.reviewDate}>
               <span>{t("year")}</span>
@@ -217,12 +276,20 @@ export default function AdminReviews() {
             <p className={styles.reviewStatus}>{review.isHidden ? t("hiddenReview") : t("visibleReview")}</p>
             <div className={styles.rowActions}>
               <button type="button" aria-busy={busyId === review.id} disabled={busyId !== null} onClick={event => void toggleHidden(review, event.currentTarget)}>{busyId === review.id ? t("loading") : review.isHidden ? t("unhideReview") : t("hideReview")}</button>
-              <button type="button" aria-busy={busyId === review.id} disabled={busyId !== null} onClick={event => void deleteReview(review, event.currentTarget)}>{busyId === review.id ? t("loading") : t("deleteReview")}</button>
+              <button type="button" aria-busy={busyId === review.id} disabled={busyId !== null} onClick={event => requestDelete(review, event.currentTarget)}>{busyId === review.id ? t("loading") : t("deleteReview")}</button>
             </div>
           </div>
       </li>;
       })}</ul>
       <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminReviewsPagination")} busy={loading} statusSuffix={data.totalElements} onPageChange={nextPage => { focusAfterReload.current = false; reloadFocusOrigin.current = null; setPage(nextPage); }} />
     </>}
+    <dialog className={dialogStyles.deleteDialog} ref={deleteDialog} role="alertdialog" aria-labelledby="admin-review-delete-title" aria-describedby="admin-review-delete-description" onCancel={event => { event.preventDefault(); cancelDelete(); }}>
+      <h3 id="admin-review-delete-title">{t("deleteReview")}</h3>
+      {pendingDelete && <p id="admin-review-delete-description">{t("adminReviewDeleteConfirm")} <strong>{editorialText(pendingDelete.review.movieTitle, t("untitledFilm"))} · {getUserName({ username: pendingDelete.review.username }, t("someone"))}</strong></p>}
+      <div className={dialogStyles.deleteDialogActions}>
+        <button type="button" ref={deleteDialogCancel} disabled={busyId !== null} onClick={cancelDelete}>{t("cancel")}</button>
+        <button type="button" className={dialogStyles.deleteDialogConfirm} disabled={busyId !== null} aria-busy={busyId === pendingDelete?.review.id} onClick={confirmDelete}>{busyId === pendingDelete?.review.id ? t("loading") : t("deleteReview")}</button>
+      </div>
+    </dialog>
   </section>;
 }

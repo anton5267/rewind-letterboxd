@@ -19,17 +19,21 @@ export default function JournalArticle() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const focusAfterRetry = useRef(false);
+  const retryOrigin = useRef<Element | null>(null);
 
   useEffect(() => { focusAfterRetry.current = false; }, [lang, slug]);
 
   useEffect(() => {
     if (!focusAfterRetry.current || (!article && !error)) return;
     focusAfterRetry.current = false;
-    const frame = window.requestAnimationFrame(() => titleRef.current?.focus());
+    const frame = window.requestAnimationFrame(() => {
+      if (document.activeElement === document.body || document.activeElement === retryOrigin.current) titleRef.current?.focus();
+    });
     return () => window.cancelAnimationFrame(frame);
   }, [article, error, lang, slug]);
 
   const retryArticle = () => {
+    retryOrigin.current = document.activeElement;
     focusAfterRetry.current = true;
     setAttempt(value => value + 1);
   };
@@ -59,7 +63,17 @@ export default function JournalArticle() {
   }
 
   if (!article) {
-    return <main className={`${styles.page} ${styles.statePage}`} aria-labelledby="journal-article-state-title" aria-busy={true}><h1 id="journal-article-state-title" className={styles.stateTitle} ref={titleRef} tabIndex={-1}>{t("journal")}</h1><p className={styles.status} role="status">{t("loading")}</p></main>;
+    return <main className={styles.page} aria-labelledby="journal-article-state-title" aria-busy={true}>
+      <h1 id="journal-article-state-title" className="srOnly" ref={titleRef} tabIndex={-1}>{t("journal")}</h1>
+      <p className="srOnly" role="status">{t("loading")}</p>
+      <div className={styles.article} aria-hidden="true">
+        <div className={styles.mobileToolbar}><span className={styles.skeletonLine} /></div>
+        <div className={styles.articleHeader}>
+          <div className={styles.articleLead}><div className={styles.skeletonLine} /><div className={`${styles.skeletonLine} ${styles.skeletonTitle}`} /><div className={styles.skeletonLine} /></div>
+          <div className={`${styles.coverHero} ${styles.skeleton}`} />
+        </div>
+      </div>
+    </main>;
   }
 
   const audioUrl = safeHttpUrl(article.audioUrl);

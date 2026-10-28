@@ -1,8 +1,9 @@
+import ProfileLoading from "../components/ProfileLoading";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { changePassword, deleteAccount, getProfile, getProfileCollection, getProfileRatings, getProfileReviews, getSocialLinks, updateSocialLinks, type ProfileCollection, type ProfilePage, type ProfileRating, type ProfileResponse, type ProfileReview, type SocialLink, updateProfile } from "../api/profile.api";
 import { clearMovieFlag } from "../api/movies.api";
-import { deleteReview as deleteReviewRequest, updateReview } from "../api/reviews.api";
+import { deleteReview as deleteReviewRequest, getReviewDetails, updateReview } from "../api/reviews.api";
 import { getNewsletterSubscription, updateNewsletterSubscription } from "../api/newsletter.api";
 import type { MoviePage } from "../api/search.api";
 import { getUserLists, type UserList } from "../api/lists.api";
@@ -16,6 +17,7 @@ import ProfileListCard from "../components/ProfileListCard";
 import UserFollowRow from "../components/UserFollowRow";
 import PublicProfilePoster from "../components/PublicProfilePoster";
 import ProfileReviewScore from "../components/ProfileReviewScore";
+import ConfirmDialog from "../components/ConfirmDialog";
 import { FollowActionsProvider } from "../context/FollowActionsContext";
 import { useAuth } from "../context/AuthContext";
 import { editorialText, formatDateTime, formatMovieYear, localizeActivityType, useLocale, type TranslationKey } from "../i18n";
@@ -53,6 +55,11 @@ export default function Profile() {
   const settingsTab: ProfileSettingsTab | null = requestedSettings === "profile" || requestedSettings === "authentication" || requestedSettings === "avatar" || requestedSettings === "connections" ? requestedSettings : null;
   const requestedView = new URLSearchParams(location.search).get("view");
   const profileView = requestedView === "collection" || requestedView === "reviews" || requestedView === "lists" || requestedView === "following" || requestedView === "followers" || requestedView === "ratings" ? requestedView : null;
+  const requestedReviewValue = profileView === "reviews" ? new URLSearchParams(location.search).get("review") : null;
+  const requestedReviewId = requestedReviewValue !== null && /^\d+$/.test(requestedReviewValue) && Number.isSafeInteger(Number(requestedReviewValue)) && Number(requestedReviewValue) > 0 ? Number(requestedReviewValue) : null;
+  const [reviewDetail, setReviewDetail] = useState<ProfileReview | null>(null);
+  const [reviewDetailLoading, setReviewDetailLoading] = useState(false);
+  const [reviewDetailError, setReviewDetailError] = useState(false);
   const networkView = profileView === "following" || profileView === "followers";
   const requestedCollection = new URLSearchParams(location.search).get("collection");
   const collectionKind: ProfileCollection = requestedCollection === "watchlist" || requestedCollection === "favorites" ? requestedCollection : "watched";
@@ -111,10 +118,14 @@ export default function Profile() {
   const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
   const [reviewDraft, setReviewDraft] = useState("");
   const [reviewActionBusy, setReviewActionBusy] = useState<"save" | "delete" | null>(null);
+  const [pendingReviewDelete, setPendingReviewDelete] = useState<{ item: ProfileReview; trigger: HTMLButtonElement } | null>(null);
   const [reviewActionMessage, setReviewActionMessage] = useState<"reviewUpdated" | "reviewDeleted" | null>(null);
   const [reviewActionError, setReviewActionError] = useState<"updateReviewError" | "deleteReviewError" | null>(null);
   const reviewEditButtonRefs = useRef(new Map<number, HTMLButtonElement>());
   const reviewHeadingRef = useRef<HTMLHeadingElement>(null);
+  const reviewDetailMobileHeadingRef = useRef<HTMLHeadingElement>(null);
+  const detailFocusPending = useRef(false);
+  const detailRetryOrigin = useRef<HTMLElement | null>(null);
   const reviewErrorRef = useRef<HTMLParagraphElement>(null);
   const reviewMounted = useRef(false);
   const reviewScopeGeneration = useRef(0);
@@ -177,6 +188,8 @@ export default function Profile() {
   const [nameBusy, setNameBusy] = useState(false);
   const [passwordBusy, setPasswordBusy] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [accountDeletePending, setAccountDeletePending] = useState(false);
+  const deleteAccountButton = useRef<HTMLButtonElement>(null);
   const [accountDeleted, setAccountDeleted] = useState(false);
   const [passwordChanged, setPasswordChanged] = useState(false);
   const [profileActionsOpen, setProfileActionsOpen] = useState(false);
@@ -280,6 +293,7 @@ export default function Profile() {
 
   useLayoutEffect(() => {
     reviewScopeGeneration.current += 1;
+    detailRetryOrigin.current = null;
     const carry = reviewPageCarry.current;
     pendingReviewFocus.current = carry && profileView === "reviews" && !settingsTab && carry.page === reviewsPage && carry.lang === lang && carry.actor === reviewActor && pendingReviewFocus.current === carry.focus
       ? { ...carry.focus, scope: reviewScopeGeneration.current } : null;
@@ -293,7 +307,24 @@ export default function Profile() {
       setReviewActionBusy(null);
     }
     currentReviewActor.current = reviewActor;
-  }, [isAuth, user?.id, lang, settingsTab, profileView, reviewsPage]);
+  }, [isAuth, user?.id, lang, settingsTab, profileView, reviewsPage, requestedReviewValue]);
+
+  useEffect(() => {
+    setReviewDetail(null);
+    setReviewDetailError(false);
+    if (requestedReviewValue === null) { setReviewDetailLoading(false); return; }
+    if (!isAuth || !user?.id) return;
+    if (requestedReviewId === null) { setReviewDetailLoading(false); setReviewDetailError(true); return; }
+    let active = true;
+    setReviewDetailLoading(true);
+    getReviewDetails(requestedReviewId).then(({ data }) => {
+      if (!active) return;
+      if (data.author.id !== user.id) { setReviewDetailError(true); return; }
+      setReviewDetail({ reviewId: data.id, movieId: data.movie.id, movieTitle: data.movie.title, moviePhotoUrl: data.movie.photoUrl, content: data.content, updatedAt: data.createdAt });
+    }).catch(() => { if (active) setReviewDetailError(true); })
+      .finally(() => { if (active) setReviewDetailLoading(false); });
+    return () => { active = false; };
+  }, [isAuth, user?.id, requestedReviewValue, requestedReviewId, reviewsAttempt]);
 
   useLayoutEffect(() => {
     settingsMounted.current = true;
@@ -537,7 +568,7 @@ export default function Profile() {
   useEffect(() => {
     const pending = pendingReviewFocus.current;
     if (!pending || reviewActionBusy !== null) return;
-    if (pending.target !== "error" && (editingReviewId !== null || reviewsLoading || reviewsRequest.current !== pending.request || (!reviewsError && reviewsHistory === null))) return;
+    if (pending.target !== "error" && (editingReviewId !== null || reviewsLoading || reviewDetailLoading || reviewsRequest.current !== pending.request || (!reviewsError && reviewsHistory === null))) return;
     const frame = window.requestAnimationFrame(() => {
       if (pendingReviewFocus.current !== pending) return;
       pendingReviewFocus.current = null;
@@ -552,7 +583,27 @@ export default function Profile() {
       } else reviewHeadingRef.current?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [editingReviewId, reviewActionBusy, reviewActionError, reviewsError, reviewsHistory, reviewsLoading, reviewsPage, profileView, settingsTab, lang, user?.id]);
+  }, [editingReviewId, reviewActionBusy, reviewActionError, reviewsError, reviewsHistory, reviewsLoading, reviewDetailLoading, reviewsPage, profileView, settingsTab, lang, user?.id]);
+
+  useEffect(() => {
+    detailFocusPending.current = requestedReviewValue !== null || Boolean(location.state?.reviewDeleted);
+  }, [requestedReviewValue, profile?.id, location.state?.reviewDeleted]);
+  useEffect(() => {
+    if (!detailFocusPending.current || reviewDetailLoading || reviewsLoading || !profile || editingReviewId !== null) return;
+    detailFocusPending.current = false;
+    const target = requestedReviewValue !== null && window.matchMedia("(max-width: 767px)").matches ? reviewDetailMobileHeadingRef.current : reviewHeadingRef.current;
+    target?.focus();
+  }, [requestedReviewValue, profile?.id, reviewDetailLoading, reviewsLoading, location.state?.reviewDeleted]);
+
+  useEffect(() => {
+    const origin = detailRetryOrigin.current;
+    if (!origin || reviewDetailLoading || reviewsLoading) return;
+    detailRetryOrigin.current = null;
+    if (document.activeElement !== document.body && document.activeElement !== origin) return;
+    const mobileHeading = reviewDetailMobileHeadingRef.current;
+    const target = mobileHeading?.getClientRects().length ? mobileHeading : reviewHeadingRef.current;
+    target?.focus();
+  }, [reviewDetailLoading, reviewsLoading]);
 
   useEffect(() => {
     if (!isAuth || !user?.id) return;
@@ -634,6 +685,7 @@ export default function Profile() {
   const sectionTarget = (id: string, kind: ProfileCollection | null) => {
     const search = new URLSearchParams(location.search);
     search.delete("settings");
+    search.delete("review");
     if (kind !== null) { search.set("view", "collection"); search.set("collection", kind); }
     else if (id === "profile-reviews") search.set("view", "reviews");
     else if (id === "profile-lists") search.set("view", "lists");
@@ -654,7 +706,7 @@ export default function Profile() {
       const section = document.getElementById(id);
       if (section?.contains(document.activeElement) && document.activeElement?.matches('[role="tab"]')) return;
       const heading = section?.querySelector<HTMLElement>("h2");
-      if (profileView && window.matchMedia("(max-width: 720px)").matches) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      if (profileView && window.matchMedia("(max-width: 767px)").matches) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
       else section?.scrollIntoView({ block: "start", behavior: "instant" });
       if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
     });
@@ -776,7 +828,11 @@ export default function Profile() {
     event.preventDefault();
     if (deleteBusy) return;
     setError("");
-    if (!window.confirm(t("deleteAccountConfirm"))) return;
+    setAccountDeletePending(true);
+  };
+  const confirmRemoveAccount = async () => {
+    if (deleteBusy) return;
+    setAccountDeletePending(false);
     const requestId = ++deleteMutation.current;
     const requestUserId = activeUserId.current;
     const isCurrentRequest = () => requestUserId !== null && activeUserId.current === requestUserId && deleteMutation.current === requestId;
@@ -952,7 +1008,7 @@ export default function Profile() {
     </>}
   </>}</ProfileSettingsShell>;
 
-  const pageBusy = profileLoading || followingLoading || activityLoading || newsletterLoading || socialLinksLoading || collectionLoading || favoritePreviewLoading || ratingsLoading || reviewsLoading || listMetadataLoading || nameBusy || passwordBusy || deleteBusy || newsletterBusy || socialLinksBusy;
+  const pageBusy = profileLoading || followingLoading || activityLoading || newsletterLoading || socialLinksLoading || collectionLoading || favoritePreviewLoading || ratingsLoading || reviewsLoading || reviewDetailLoading || listMetadataLoading || nameBusy || passwordBusy || deleteBusy || newsletterBusy || socialLinksBusy;
 
   const renderReviewCards = (items: ProfileReview[], withScore = true, editable = false) => items.map(item => {
     const title = editorialText(item.movieTitle, t("untitledFilm"));
@@ -960,7 +1016,7 @@ export default function Profile() {
     const poster = item.moviePhotoUrl === undefined
       ? profile?.recentRatings.find(rating => rating.movieId === item.movieId)?.moviePhotoUrl
       : item.moviePhotoUrl;
-    return <li key={item.reviewId} className={styles.reviewCard}>
+    return <li key={item.reviewId} className={styles.reviewCard} data-review-editing={isEditing || undefined}>
       <Link className={styles.reviewPosterLink} to={path(`/films/${item.movieId}`)} aria-label={title}>
         <ResilientImage className={styles.railPoster} src={poster} alt="" loading="lazy" fallback={<span className={styles.railPosterFallback}>{title.slice(0, 1).toUpperCase()}</span>} />
       </Link>
@@ -970,8 +1026,8 @@ export default function Profile() {
           <div className={styles.reviewHeadingActions}>
             {withScore && profile && <ProfileReviewScore movieId={item.movieId} ownerId={profile.id} title={title} />}
             {editable && profileView === "reviews" && !isEditing && <div className={styles.reviewActions}>
-              <button ref={button => { if (button) reviewEditButtonRefs.current.set(item.reviewId, button); else reviewEditButtonRefs.current.delete(item.reviewId); }} type="button" disabled={reviewActionBusy !== null} aria-label={`${t("editReview")}: ${title}`} title={t("editReview")} onClick={() => { pendingReviewFocus.current = null; setReviewDraft(item.content); setEditingReviewId(item.reviewId); setReviewActionMessage(null); setReviewActionError(null); }}><i className="fa-solid fa-pen" aria-hidden="true" /><span className={styles.mobileReviewActionLabel}>{t("editReview")}</span></button>
-              <button type="button" disabled={reviewActionBusy !== null} aria-label={`${t("deleteReview")}: ${title}`} title={t("deleteReview")} onClick={event => void removeProfileReview(item, event.currentTarget)}><i className="fa-solid fa-trash" aria-hidden="true" /><span className={styles.mobileReviewActionLabel}>{t("deleteReview")}</span></button>
+              <button ref={button => { if (button) reviewEditButtonRefs.current.set(item.reviewId, button); else reviewEditButtonRefs.current.delete(item.reviewId); }} type="button" disabled={reviewActionBusy !== null} aria-label={`${t("editReview")}: ${title}`} title={t("editReview")} onClick={() => { pendingReviewFocus.current = null; setReviewDraft(item.content); setEditingReviewId(item.reviewId); setReviewActionMessage(null); setReviewActionError(null); }}><picture><source media="(max-width: 767px)" srcSet="/images/profile-review-edit-phone.png" /><img className={styles.reviewActionIcon} src="/images/profile-review-edit.png" alt="" /></picture><span className={styles.mobileReviewActionLabel}>{t("editReview")}</span></button>
+              <button type="button" disabled={reviewActionBusy !== null} aria-label={`${t("deleteReview")}: ${title}`} title={t("deleteReview")} onClick={event => requestProfileReviewDelete(item, event.currentTarget)}><picture><source media="(max-width: 767px)" srcSet="/images/profile-review-delete-phone.png" /><img className={styles.reviewActionIcon} src="/images/profile-review-delete.png" alt="" /></picture><span className={styles.mobileReviewActionLabel}>{t("deleteReview")}</span></button>
             </div>}
           </div>
         </div>
@@ -980,10 +1036,12 @@ export default function Profile() {
           <label className="srOnly" htmlFor={`profile-review-content-${item.reviewId}`}>{t("review")}</label>
           <textarea id={`profile-review-content-${item.reviewId}`} aria-label={t("review")} autoFocus required minLength={1} maxLength={5000} disabled={reviewActionBusy !== null} value={reviewDraft} onChange={event => setReviewDraft(event.target.value)} onKeyDown={event => { if (event.key === "Escape" && reviewActionBusy === null) { event.preventDefault(); pendingReviewFocus.current = { scope: reviewScopeGeneration.current, request: reviewsRequest.current, origin: event.currentTarget, target: "edit", id: item.reviewId }; setEditingReviewId(null); setReviewDraft(""); } }} />
           <div className={styles.reviewEditorActions}>
-            <button type="button" className={styles.reviewDeleteButton} disabled={reviewActionBusy !== null} onClick={event => void removeProfileReview(item, event.currentTarget)}>{reviewActionBusy === "delete" ? t("deleting") : t("deleteReview")}</button>
+            <button type="button" disabled={reviewActionBusy !== null} onClick={event => { pendingReviewFocus.current = { scope: reviewScopeGeneration.current, request: reviewsRequest.current, origin: event.currentTarget, target: "edit", id: item.reviewId }; setEditingReviewId(null); setReviewDraft(""); }}>{t("cancel")}</button>
+            <button type="button" className={styles.reviewDeleteButton} disabled={reviewActionBusy !== null} onClick={event => requestProfileReviewDelete(item, event.currentTarget)}>{reviewActionBusy === "delete" ? t("deleting") : t("deleteReview")}</button>
             <button type="submit" className={styles.reviewSaveButton} disabled={reviewActionBusy !== null || reviewDraft.trim().length === 0}>{reviewActionBusy === "save" ? t("saving") : t("saveReview")}</button>
           </div>
-        </form> : <Link className={styles.reviewContent} to={path(`/reviews/${item.reviewId}`)}>{item.content}</Link>}
+        </form> : requestedReviewValue !== null ? <p className={styles.reviewContent}>{item.content}</p> : <Link className={styles.reviewContent} to={path(`/profile?view=reviews&review=${item.reviewId}`)}>{item.content}</Link>}
+        {requestedReviewValue !== null && <Link className={styles.globalReviewLink} to={path(`/reviews/${item.reviewId}`)}>{t("review")}<span aria-hidden="true"> ↗</span></Link>}
       </div>
     </li>;
   });
@@ -1009,6 +1067,7 @@ export default function Profile() {
       if (!sameActor()) return;
       // Preserve cached poster/timestamp fields: the PATCH DTO only supplies content/createdAt.
       setProfile(current => current?.id === actor ? { ...current, recentReviews: current.recentReviews.map(review => review.reviewId === item.reviewId ? { ...review, content: updated.content } : review) } : current);
+      setReviewDetail(current => current?.reviewId === item.reviewId ? { ...current, content: updated.content } : current);
       if (sameScope()) {
         setReviewActionMessage("reviewUpdated");
         pendingReviewFocus.current = { scope, request: reviewsRequest.current + 1, origin, target: "edit", id: item.reviewId };
@@ -1026,8 +1085,12 @@ export default function Profile() {
     }
   };
 
-  const removeProfileReview = async (item: ProfileReview, origin: HTMLButtonElement) => {
-    if (reviewActionBusy !== null || reviewMutation.current !== null || !window.confirm(t("deleteReviewConfirm"))) return;
+  const requestProfileReviewDelete = (item: ProfileReview, trigger: HTMLButtonElement) => {
+    if (reviewActionBusy !== null || reviewMutation.current !== null) return;
+    setPendingReviewDelete({ item, trigger });
+  };
+  const confirmProfileReviewDelete = async (item: ProfileReview, origin: HTMLButtonElement) => {
+    if (reviewActionBusy !== null || reviewMutation.current !== null) return;
     const token = {};
     reviewMutation.current = token;
     const actor = reviewActor;
@@ -1050,6 +1113,7 @@ export default function Profile() {
       }
       setReviewsLoading(true);
       setReviewsAttempt(value => value + 1);
+      if (sameScope() && requestedReviewValue !== null) navigate(path("/profile?view=reviews"), { replace: true, state: { reviewDeleted: true } });
     } catch {
       if (!sameScope()) return;
       setReviewActionError("deleteReviewError");
@@ -1060,16 +1124,17 @@ export default function Profile() {
   };
 
   const filmsView = profileView === "collection" && collectionKind === "watched";
-  const viewTitle = networkView ? t(profileView === "followers" ? "followers" : "following") : profileView === "ratings" ? t("allRatings") : profileView === "lists" ? t("searchLists") : profileView === "reviews" ? t("reviews") : filmsView ? t("films") : collectionKind === "favorites" ? t("likes") : t("watchlist");
-  return <FollowActionsProvider><main className={styles.page} data-profile-view={profileView ?? undefined} data-network-view={networkView || undefined} data-films-view={filmsView || undefined} onFocusCapture={event => {
+  const viewTitle = networkView ? t(profileView === "followers" ? "followers" : "following") : profileView === "ratings" ? t("allRatings") : profileView === "lists" ? t("searchLists") : profileView === "reviews" ? t(requestedReviewValue === null ? "reviews" : "review") : filmsView ? t("films") : collectionKind === "favorites" ? t("likes") : t("watchlist");
+  return <FollowActionsProvider><main className={styles.page} data-profile-view={profileView ?? undefined} data-review-detail={requestedReviewValue !== null || undefined} data-network-view={networkView || undefined} data-films-view={filmsView || undefined} onFocusCapture={event => {
     const target = event.target;
     if (target instanceof HTMLElement && !target.closest('[role="dialog"]')) networkFocusOrigin.current = target.matches("[data-network-action]") ? { element: target, scope: currentNetworkFocusScope.current } : null;
   }} aria-labelledby="profile-page-title" aria-busy={pageBusy || followersLoading}>
     <div className={styles.content}>
+    {requestedReviewValue !== null && <div className={styles.reviewDetailToolbar}><Link to={path("/profile?view=reviews")} aria-label={t("allReviews")}>←</Link><h2 ref={reviewDetailMobileHeadingRef} tabIndex={-1}>{t("review")}</h2><span aria-hidden="true" /></div>}
     <h1 className={profileView === "reviews" || filmsView || networkView ? "srOnly" : styles.pageTitle} id="profile-page-title">{profileView ? viewTitle : t("myProfile")}</h1>
     {error && <p className={styles.alert} id="profile-action-error" role="alert">{error}</p>}
     {message && <p className={styles.status} role="status">{message}</p>}
-    {profileLoading && <p className={styles.feedback} role="status">{t("loading")}</p>}
+    {profileLoading && <ProfileLoading label={t("loading")} layout="identity" />}
     {profileLoadError && <RetryNotice className={styles.feedback} message={t("loadProfileError")} retryLabel={t("retry")} onRetry={() => setProfileAttempt(value => value + 1)} />}
     {profile && <>
       {(filmsView || networkView) && <div className={styles.collectionToolbar}>
@@ -1122,11 +1187,11 @@ export default function Profile() {
           >{t(label)}</Link>;
         })}
       </nav>
-      {profileView === "reviews" && <div className={styles.reviewsBack}><Link to={sectionTarget("profile-overview", null)} aria-label={t("backToProfile")}>←</Link></div>}
+      {profileView === "reviews" && <div className={styles.reviewsBack}><Link to={requestedReviewValue !== null ? path("/profile?view=reviews") : sectionTarget("profile-overview", null)} aria-label={requestedReviewValue !== null ? t("allReviews") : t("backToProfile")}>←</Link></div>}
       {networkView && <Link className={styles.networkBack} to={sectionTarget("profile-overview", null)} aria-label={t("profile")}>←</Link>}
       <section className={`${styles.section} ${styles.previewSection}`} id="profile-overview" aria-labelledby="profile-favorite-preview-title" aria-busy={favoritePreviewLoading}>
         <span id="profile-favorite-preview" aria-hidden="true" /><h2 id="profile-favorite-preview-title"><Link to={sectionTarget("profile-collections", "favorites")}>{t("favoriteFilms")}</Link></h2>
-        {favoritePreviewLoading && <p className={styles.feedback} role="status">{t("loading")}</p>}
+        {favoritePreviewLoading && <ProfileLoading label={t("loading")} layout="films" />}
         {favoritePreviewError && <RetryNotice className={styles.feedback} message={t("loadCollectionError")} retryLabel={t("retry")} onRetry={() => setFavoritePreviewAttempt(value => value + 1)} />}
         {!favoritePreviewLoading && !favoritePreviewError && favoritePreview && (favoritePreview.content.length === 0 ? <p className={styles.empty}>{t("noCollectionFilms")}</p> : <ul className={styles.overviewPosterGrid}>
           {favoritePreview.content.slice(0, 4).map(movie => {
@@ -1139,7 +1204,7 @@ export default function Profile() {
       </section>
       <section className={`${styles.section} ${styles.previewSection}`} id="profile-activity" aria-labelledby="profile-activity-title" aria-busy={activityLoading}>
         <h2 id="profile-activity-title">{t("recentActivity")}</h2>
-        {activityLoading && <p className={styles.feedback} role="status">{t("loading")}</p>}
+        {activityLoading && <ProfileLoading label={t("loading")} layout="films" />}
         {activityError && <RetryNotice className={styles.feedback} message={t("loadActivityError")} retryLabel={t("retry")} onRetry={() => setActivityAttempt(value => value + 1)} />}
         {!activityLoading && !activityError && activity && (activity.content.length === 0 ? <p className={styles.empty}>{t("noActivity")}</p> : <>
           <ul className={styles.overviewPosterGrid} id="profile-activity-preview">{(activityExpanded ? activity.content : activity.content.slice(0, 4)).map(item => {
@@ -1156,7 +1221,7 @@ export default function Profile() {
       {(profileView === "ratings" || (!profileView && location.hash.startsWith("#profile-ratings"))) && <>
       <section className={styles.section} id="profile-ratings" aria-labelledby="profile-ratings-title" aria-busy={ratingsLoading}>
         <h2 id="profile-ratings-title">{t("allRatings")}</h2>
-        {ratingsLoading && <p className={styles.feedback} role="status">{t("loading")}</p>}
+        {ratingsLoading && <ProfileLoading label={t("loading")} layout="films" />}
         {ratingsError && <RetryNotice className={styles.feedback} message={t("loadRatingsError")} retryLabel={t("retry")} onRetry={() => setRatingsAttempt(value => value + 1)} />}
         {!ratingsLoading && !ratingsError && ratingsHistory && <>
           {ratingsHistory.content.length === 0 ? <p>{t("noRatings")}</p> : <ul className={styles.posterRail}>{ratingsHistory.content.map(item => {
@@ -1177,13 +1242,23 @@ export default function Profile() {
         {profile.recentReviews.length === 0 ? <p className={styles.empty}>{t("noReviews")}</p> : <ul className={styles.reviewCards}>{renderReviewCards(profile.recentReviews.slice(0, 2), !profileView)}</ul>}
       </section>
       {(profileView === "reviews" || (!profileView && location.hash.startsWith("#profile-reviews"))) && <>
-      <section className={styles.section} id="profile-reviews" aria-labelledby="profile-reviews-title" aria-busy={reviewsLoading || reviewActionBusy !== null}>
-        <h2 ref={reviewHeadingRef} id="profile-reviews-title" tabIndex={profileView === "reviews" ? -1 : undefined}>{profileView === "reviews" ? <><span className={styles.mobileReviewsHeading}>{t("reviews")}</span><span className={styles.desktopReviewsHeading}>{t("reviewsByUser").replace("{name}", getUserName(profile, t("someone")))}</span></> : <Link to={sectionTarget("profile-reviews", null)}>{t("allReviews")}</Link>}</h2>
-        {profileView === "reviews" && reviewActionMessage && <p className={styles.status} role="status">{t(reviewActionMessage)}</p>}
+      <section className={styles.section} id="profile-reviews" aria-labelledby="profile-reviews-title" aria-busy={reviewsLoading || reviewDetailLoading || reviewActionBusy !== null}>
+        <h2 ref={reviewHeadingRef} id="profile-reviews-title" tabIndex={profileView === "reviews" ? -1 : undefined}>{profileView === "reviews" ? <><span className={styles.mobileReviewsHeading}>{t(requestedReviewValue === null ? "reviews" : "review")}</span><span className={styles.desktopReviewsHeading}>{requestedReviewValue === null ? t("reviewsByUser").replace("{name}", getUserName(profile, t("someone"))) : `${t("reviewBy")} ${getUserName(profile, t("someone"))}`}</span></> : <Link to={sectionTarget("profile-reviews", null)}>{t("allReviews")}</Link>}</h2>
+        {profileView === "reviews" && (reviewActionMessage || location.state?.reviewDeleted) && <p className={styles.status} role="status">{t(reviewActionMessage ?? "reviewDeleted")}</p>}
         {profileView === "reviews" && reviewActionError && <p ref={reviewErrorRef} tabIndex={-1} className={`${styles.alert} ${styles.reviewFeedbackFocus}`} role="alert">{t(reviewActionError)}</p>}
-        {reviewsLoading && <p className={styles.feedback} role="status">{t("loading")}</p>}
-        {reviewsError && <RetryNotice className={styles.feedback} message={t("loadReviewsError")} retryLabel={t("retry")} onRetry={() => setReviewsAttempt(value => value + 1)} />}
-        {!reviewsLoading && !reviewsError && reviewsHistory && <>
+        {(requestedReviewValue !== null ? reviewDetailLoading : reviewsLoading) && <div role="status" aria-label={t("loading")}><span className="srOnly">{t("loading")}</span><div className={styles.reviewLoading} aria-hidden="true"><span /><div><span /><span /><span /></div></div></div>}
+        {(requestedReviewValue !== null ? reviewDetailError : reviewsError) && <RetryNotice className={styles.feedback} message={t(requestedReviewValue !== null ? "reviewUnavailable" : "loadReviewsError")} retryLabel={t("retry")} disabled={reviewDetailLoading || reviewsLoading} busy={reviewDetailLoading || reviewsLoading} onRetry={() => {
+          detailRetryOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+          if (requestedReviewValue !== null && requestedReviewId === null) {
+            (window.matchMedia("(max-width: 767px)").matches ? reviewDetailMobileHeadingRef.current : reviewHeadingRef.current)?.focus();
+            detailRetryOrigin.current = null;
+            return;
+          }
+          setReviewDetailLoading(requestedReviewValue !== null);
+          setReviewsAttempt(value => value + 1);
+        }} />}
+        {requestedReviewValue !== null && !reviewDetailLoading && !reviewDetailError && reviewDetail && <ul className={styles.reviewCards}>{renderReviewCards([reviewDetail], true, true)}</ul>}
+        {requestedReviewValue === null && !reviewsLoading && !reviewsError && reviewsHistory && <>
           {reviewsHistory.content.length === 0 ? <p>{t("noReviews")}</p> : <ul className={styles.reviewCards}>{renderReviewCards(reviewsHistory.content, true, true)}</ul>}
           <Pagination className={styles.pagination} page={reviewsPage} totalPages={reviewsHistory.totalPages} label={t("allReviews")} busy={reviewsLoading} onPageChange={setReviewsPage} />
         </>}
@@ -1191,14 +1266,14 @@ export default function Profile() {
       </>}
       <section className={`${styles.section} ${styles.previewSection}`} id="profile-following-preview" aria-labelledby="profile-following-preview-title" aria-busy={followingLoading}>
         <h2 id="profile-following-preview-title"><Link to={sectionTarget("profile-following", null)}>{t("following")}</Link></h2>
-        {followingLoading && <p className={styles.feedback} role="status">{t("loading")}</p>}
+        {followingLoading && <ProfileLoading label={t("loading")} layout="rows" />}
         {followingError && <RetryNotice className={styles.feedback} message={t("loadNetworkError")} retryLabel={t("retry")} onRetry={() => setFollowingAttempt(value => value + 1)} />}
         {!followingLoading && !followingError && following && (following.content.length === 0 ? <p>{t("noFollowing")}</p> : <ul className={styles.followingPreview}>{following.content.map(networkUser => <li key={networkUser.id}><Link to={path(`/users/${networkUser.id}`)} aria-label={getUserName(networkUser, t("someone"))} title={getUserName(networkUser, t("someone"))}><ResilientImage src={networkUser.avatarUrl} alt="" width={80} height={80} loading="lazy" fallback={<span className={styles.followingInitial} aria-hidden="true">{getUserInitial(networkUser)}</span>} /></Link></li>)}</ul>)}
       </section>
       {(profileView === "following" || (!profileView && location.hash.startsWith("#profile-following"))) && <>
       <section className={styles.section} id="profile-following" aria-labelledby="profile-following-title" aria-busy={followingLoading}>
         <h2 id="profile-following-title">{t("following")}</h2>
-        {followingLoading && <p className={styles.feedback} role="status">{t("loading")}</p>}
+        {followingLoading && <ProfileLoading label={t("loading")} layout="rows" />}
         {followingError && <RetryNotice className={styles.feedback} message={t("loadNetworkError")} retryLabel={t("retry")} onRetry={() => setFollowingAttempt(value => value + 1)} />}
         {!followingLoading && !followingError && following && (following.content.length === 0 ? <p>{t("noFollowing")}</p> : <ul className={styles.networkList}>
           {(!profileView || profileView === "following") && following.content.map(networkUser => <UserFollowRow key={networkUser.id} user={networkUser} href={path(`/users/${networkUser.id}`)} presentation="profileNetwork" onFollowSettled={refreshNetwork} />)}
@@ -1209,7 +1284,7 @@ export default function Profile() {
       {(profileView === "followers" || (!profileView && location.hash.startsWith("#profile-followers"))) && <>
       <section className={styles.section} id="profile-followers" aria-labelledby="profile-followers-title" aria-busy={followersLoading}>
         <h2 id="profile-followers-title">{t("followers")}</h2>
-        {followersLoading && <p className={styles.feedback} role="status">{t("loading")}</p>}
+        {followersLoading && <ProfileLoading label={t("loading")} layout="rows" />}
         {followersError && <RetryNotice className={styles.feedback} message={t("loadNetworkError")} retryLabel={t("retry")} onRetry={() => setFollowersAttempt(value => value + 1)} />}
         {!followersLoading && !followersError && followers && (followers.content.length === 0 ? <p>{t("noFollowers")}</p> : <ul className={styles.networkList}>{(!profileView || profileView === "followers") && followers.content.map(networkUser => <UserFollowRow key={networkUser.id} user={networkUser} href={path(`/users/${networkUser.id}`)} presentation="profileNetwork" onFollowSettled={refreshNetwork} />)}</ul>)}
         {followers && <Pagination className={styles.pagination} page={followersPage} totalPages={followers.totalPages} label={t("networkPagination")} busy={followersLoading} onPageChange={setFollowersPage} />}
@@ -1244,7 +1319,7 @@ export default function Profile() {
           </button>)}
         </div>
         <div id="profile-collection-content" role="tabpanel" tabIndex={collection && collection.content.length > 0 ? -1 : 0} aria-labelledby={`profile-collection-tab-${collectionKind}`}>
-          {collectionLoading && <p className={styles.feedback} role="status">{t("loading")}</p>}
+          {collectionLoading && <ProfileLoading label={t("loading")} layout="films" />}
           {collectionError && <RetryNotice className={styles.feedback} message={t("loadCollectionError")} retryLabel={t("retry")} onRetry={retryCollection} />}
           {!collectionLoading && !collectionError && collection && <>
             {collection.content.length === 0 ? <p>{t("noCollectionFilms")}</p> : <div className={styles.collectionGrid}>
@@ -1304,10 +1379,12 @@ export default function Profile() {
         <p>{t("deleteAccountWarning")}</p>
         <label htmlFor="profile-delete-password">{t("currentPassword")}</label>
         <input id="profile-delete-password" type="password" required disabled={deleteBusy} autoComplete="current-password" value={deletePassword} onChange={e => setDeletePassword(e.target.value)} />
-        <button className={styles.dangerButton} type="submit" disabled={deleteBusy}>{deleteBusy ? t("deleting") : t("deleteAccount")}</button>
+              <button ref={deleteAccountButton} className={styles.dangerButton} type="submit" disabled={deleteBusy}>{deleteBusy ? t("deleting") : t("deleteAccount")}</button>
       </form>
       </>}
     </>}
     </div>
+    <ConfirmDialog open={accountDeletePending} title={t("deleteAccount")} description={t("deleteAccountConfirm")} cancelLabel={t("cancel")} confirmLabel={t("deleteAccount")} trigger={deleteAccountButton.current} onCancel={() => setAccountDeletePending(false)} onConfirm={() => void confirmRemoveAccount()} busy={deleteBusy} />
+    <ConfirmDialog open={pendingReviewDelete !== null} title={t("deleteReview")} description={t("deleteReviewConfirm")} cancelLabel={t("cancel")} confirmLabel={t("deleteReview")} trigger={pendingReviewDelete?.trigger ?? null} onCancel={() => setPendingReviewDelete(null)} onConfirm={() => { const pending = pendingReviewDelete; setPendingReviewDelete(null); if (pending) void confirmProfileReviewDelete(pending.item, pending.trigger); }} busy={reviewActionBusy !== null} />
   </main></FollowActionsProvider>;
 }

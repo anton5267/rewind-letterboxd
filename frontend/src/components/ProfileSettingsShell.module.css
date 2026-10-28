@@ -94,7 +94,7 @@
 
 /* Phone settings1043:2125 uses a flat page, toolbar near y106 and compact
    profile rows. Unsupported bio/pronoun/upload/OAuth controls stay absent. */
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .page { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
   .hero { min-height: 0; padding: 85px 64px 0; background: none; }
   .hero h1 { display: flex; min-height: 44px; align-items: center; justify-content: center; font-size: 16px; font-weight: 500; line-height: 1.3; }

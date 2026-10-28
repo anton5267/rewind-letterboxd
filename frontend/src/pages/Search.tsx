@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { getGenres, searchMovies, type Genre, type MoviePage, type MovieSearchParams } from "../api/search.api";
-import Pagination from "../components/Pagination";
 import ResilientImage from "../components/ResilientImage";
 import RetryNotice from "../components/RetryNotice";
 import { editorialText, formatMovieYear, localizeGenreName, useLocale } from "../i18n";
@@ -15,6 +14,17 @@ const getPageSize = () => window.matchMedia("(max-width: 820px)").matches
     ? 5 * PAGE_ROWS
     : 6 * PAGE_ROWS;
 const MAX_PAGE = 2_147_483_647; // The API binds page to a Java int.
+
+function getVisiblePages(page: number, totalPages: number) {
+  const pages = [...new Set([0, 1, 2, page - 1, page, page + 1, totalPages - 1])]
+    .filter(value => value >= 0 && value < totalPages)
+    .sort((left, right) => left - right);
+
+  return pages.flatMap((value, index) => [
+    ...(index > 0 && value - pages[index - 1] > 1 ? [{ type: "ellipsis" as const }] : []),
+    { type: "page" as const, value },
+  ]);
+}
 
 export default function Search() {
   const { lang, path, t } = useLocale();
@@ -221,7 +231,7 @@ export default function Search() {
       </form>
 
       {genreError && <RetryNotice className={styles.alert} message={t("loadGenresError")} retryLabel={t("retry")} busy={genresLoading} onRetry={() => setGenreRetry(value => value + 1)} />}
-      {loading && <p className={styles.feedback} role="status">{t("loadingFilms")}</p>}
+      {loading && <><p className="srOnly" role="status">{t("loadingFilms")}</p><div className={styles.grid} aria-hidden="true">{Array.from({ length: 12 }, (_, item) => <div className={styles.card} key={item}><div className={`${styles.posterLink} ${styles.skeleton}`} /></div>)}</div></>}
       {error && <RetryNotice className={styles.alert} message={error} retryLabel={t("retry")} busy={loading} onRetry={() => setRetry(value => value + 1)} />}
       {!loading && !error && results?.content.length === 0 && <p className={styles.empty}>{t("noFilms")}</p>}
       {!loading && !error && results && <>
@@ -239,7 +249,19 @@ export default function Search() {
             </article>;
           })}
           </div>
-          <Pagination className={styles.pagination} page={results.number} totalPages={results.totalPages} label={t("pagination")} busy={loading} onPageChange={turnPage} />
+          {results.totalPages > 1 && <nav className={styles.pagination} aria-label={t("pagination")} aria-busy={loading}>
+            {getVisiblePages(results.number, results.totalPages).map((item, index) => item.type === "ellipsis"
+              ? <span key={`ellipsis-${index}`} aria-hidden="true">…</span>
+              : <button
+                key={item.value}
+                type="button"
+                aria-label={`${t("page")} ${item.value + 1}`}
+                aria-current={item.value === results.number ? "page" : undefined}
+                disabled={loading}
+                onClick={() => turnPage(item.value)}
+              >{item.value + 1}</button>)}
+            <span className={styles.visuallyHidden} role="status">{t("page")} {results.number + 1} {t("of")} {results.totalPages}</span>
+          </nav>}
         </section>
       </>}
     </div>

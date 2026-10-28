@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { Link, useLocation, useNavigationType } from "react-router-dom";
 import { useLocale } from "../i18n";
 import RetryNotice from "./RetryNotice";
+import ProfileLoading from "./ProfileLoading";
 import styles from "./ProfileSettingsShell.module.css";
 
 const settingsAnchorIds = new Set(["profile-avatar-url", "profile-identity-form-title", "social-links-settings", "profile-password-form-title"]);
@@ -70,7 +71,7 @@ export default function ProfileSettingsShell({ activeTab, children, loading, loa
         key: location.key,
         id,
         origin: document.activeElement instanceof HTMLElement ? document.activeElement : null,
-        placeholder: window.matchMedia("(max-width: 720px)").matches ? mobileTitleRef.current : titleRef.current,
+        placeholder: window.matchMedia("(max-width: 767px)").matches ? mobileTitleRef.current : titleRef.current,
       };
     }
     return () => { pendingAnchor.current = null; };
@@ -79,7 +80,7 @@ export default function ProfileSettingsShell({ activeTab, children, loading, loa
   useEffect(() => {
     if (navigationType === "POP") return;
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-    const target = window.matchMedia("(max-width: 720px)").matches ? mobileTitleRef.current : titleRef.current;
+    const target = window.matchMedia("(max-width: 767px)").matches ? mobileTitleRef.current : titleRef.current;
     if (pendingAnchor.current?.key === location.key) pendingAnchor.current.placeholder = target;
     target?.focus({ preventScroll: true });
   }, [activeTab, navigationType]);
@@ -134,7 +135,7 @@ export default function ProfileSettingsShell({ activeTab, children, loading, loa
       <section className={styles.settingsSection} aria-label={tabs.find(tab => tab.id === activeTab)?.label}>
         {error && <p ref={errorRef} tabIndex={-1} className={styles.error} id="profile-action-error" role="alert">{error}</p>}
         {message && <p ref={messageRef} tabIndex={-1} className={styles.message} role="status">{message}</p>}
-        {loading && <p className={styles.feedback} role="status">{t("loading")}</p>}
+        {loading && <ProfileLoading label={t("loading")} layout="settings" />}
         {loadError && <RetryNotice className={styles.error} message={t("loadProfileError")} retryLabel={t("retry")} onRetry={onRetry} />}
         {!loading && !loadError && children}
       </section>

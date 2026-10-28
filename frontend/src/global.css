@@ -1,3 +1,19 @@
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/inter/InterVariable.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/inter/InterVariable-Italic.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 html, body, #root { margin: 0; min-width: 0; width: 100%; }
 html { scroll-behavior: smooth; }
@@ -39,19 +55,30 @@ a { color: inherit; }
 }
 
 :root {
-  --rewind-font-sans: Arial, sans-serif;
-  --rewind-black: #151515;
+  --rewind-font-sans: "Inter", system-ui, sans-serif;
+  --rewind-black: #000000;
   --rewind-surface: #1f1f1f;
-  --rewind-surface-raised: #292929;
+  --rewind-surface-raised: #282828;
   --rewind-line: rgba(255, 255, 255, .14);
   --rewind-muted: #aaa6a1;
-  --rewind-paper: #f4f0ea;
+  --rewind-paper: #ffffff;
+  --rewind-ink: #1a1e1f;
+  --rewind-brand-teal: #5a8a90;
+  --rewind-brand-stone: #938d7d;
+  --rewind-brand-amber: #d69251;
   --rewind-purple: #8a38f5;
   --rewind-cyan: #7bdff2;
   --rewind-gold: #d4a85f;
   --rewind-radius: 3px;
   --rewind-radius-lg: 12px;
-  --rewind-content-width: 1280px;
+  --rewind-radius-card: 20px;
+  --rewind-radius-pill: 37px;
+  --rewind-content-width: 1200px;
+  --rewind-type-display: 58px;
+  --rewind-type-title: 24px;
+  --rewind-type-section: 22px;
+  --rewind-type-body: 20px;
+  --rewind-type-caption: 13px;
   --rewind-shadow: 0 18px 40px rgba(0, 0, 0, .18);
   --rewind-focus-width: 3px;
 }
@@ -74,7 +101,11 @@ select:focus-visible {
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   body { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
   body:has([data-rewind-auth-page]) { padding-bottom: env(safe-area-inset-bottom); }
+}
+
+@media (max-width: 767px) {
+  body:has(main[data-list-editor="create"]) { padding-bottom: env(safe-area-inset-bottom); }
 }

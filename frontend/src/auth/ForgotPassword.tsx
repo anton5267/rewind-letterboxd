@@ -3,11 +3,18 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import styles from "./ForgotPassword.module.css";
 import { forgotPassword } from "../api/auth.api";
 import { useLocale } from "../i18n";
+import { useAuthFieldValidation } from "./useAuthFieldValidation";
+import { getAuthReturnTo } from "./authReturnTo";
+import lockDesktop from "./assets/forgot-lock-desktop.svg";
+import lockFront from "./assets/forgot-lock-front.svg";
+import lockBack from "./assets/forgot-lock-back.svg";
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
   const { path, t, lang } = useLocale();
+  const validation = useAuthFieldValidation();
   const location = useLocation();
+  const returnLocation = getAuthReturnTo(location.state, [path("/profile"), path("/messages"), path("/notifications")]);
 
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState(false);
@@ -88,7 +95,7 @@ export default function ForgotPassword() {
           type="button"
           className={styles.back}
           aria-label={t("return")}
-          onClick={() => navigate(path("/login"))}
+          onClick={() => navigate(path("/login"), { state: returnLocation ? { returnTo: returnLocation } : undefined })}
         >
           <svg className={styles.backIcon} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <circle cx="12" cy="12" r="10.5" />
@@ -98,43 +105,15 @@ export default function ForgotPassword() {
         </button>
 
         <p className={styles.eyebrow}>{t("accountEyebrow")}</p>
-        <svg className={styles.lockIllustration} viewBox="0 0 89 102" aria-hidden="true" focusable="false">
-          <defs>
-            <linearGradient id="forgot-lock-stroke" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stopColor="#b4b4b6" />
-              <stop offset="0.38" stopColor="#ffffff" />
-              <stop offset="1" stopColor="#dbdbdd" />
-            </linearGradient>
-            <filter id="forgot-lock-shadow" x="-25%" y="-20%" width="150%" height="160%">
-              <feDropShadow dx="0" dy="4" stdDeviation="5.25" floodColor="#000000" floodOpacity="0.25" />
-            </filter>
-          </defs>
-          <path
-            d="M28 46V29a16.5 16.5 0 0 1 33 0v17h4a7 7 0 0 1 7 7v39a7 7 0 0 1-7 7H18a7 7 0 0 1-7-7V53a7 7 0 0 1 7-7h10Z"
-            fill="#e5e5e5"
-            fillOpacity="0.2"
-            stroke="url(#forgot-lock-stroke)"
-            strokeOpacity="0.1"
-            strokeWidth="2"
-          />
-          <path
-            d="M33 50V33a16.5 16.5 0 0 1 33 0v17h4a7 7 0 0 1 7 7v39a7 7 0 0 1-7 7H23a7 7 0 0 1-7-7V57a7 7 0 0 1 7-7h10Z"
-            fill="#222222"
-            fillOpacity="0.66"
-            stroke="url(#forgot-lock-stroke)"
-            strokeOpacity="0.1"
-            strokeWidth="2"
-            filter="url(#forgot-lock-shadow)"
-          />
-        </svg>
+        <div className={styles.lockIllustration} aria-hidden="true"><img className={styles.lockDesktop} src={lockDesktop} alt="" /><img className={styles.lockBack} src={lockBack} alt="" /><img className={styles.lockFront} src={lockFront} alt="" /></div>
         <h1 className={styles.title} id="forgot-password-title">{t("forgotTitle")}</h1>
 
         <p className={styles.text}>
           {t("forgotDescription")}
         </p>
 
-        <form className={styles.form} onSubmit={submit} aria-busy={loading}>
-          <label className="srOnly" htmlFor="forgot-password-email">{t("email")}</label>
+        <form className={styles.form} onSubmit={submit} onInvalidCapture={validation.onInvalid} aria-busy={loading}>
+          <label className={styles.fieldLabel} htmlFor="forgot-password-email">{t("email")}</label>
           <input
             id="forgot-password-email"
             name="email"
@@ -143,13 +122,14 @@ export default function ForgotPassword() {
             placeholder={t("email")}
             value={email}
             disabled={loading}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => { setEmail(e.target.value); validation.onInput(e.currentTarget); }}
             autoComplete="email"
             maxLength={150}
-            aria-invalid={Boolean(error)}
-            aria-describedby={error ? "forgot-password-error" : undefined}
+            aria-invalid={Boolean(error) || validation.invalid("forgot-password-email")}
+            aria-describedby={validation.describedBy("forgot-password-email", error ? "forgot-password-error" : undefined)}
             required
           />
+          {validation.message("forgot-password-email") && <p className={styles.validation} id="forgot-password-email-validation">{validation.message("forgot-password-email")}</p>}
 
           {message && <p ref={successMessage} tabIndex={-1} className={styles.success} role="status">{t("resetSent")}</p>}
           {error && <p ref={errorMessage} tabIndex={-1} className={styles.error} id="forgot-password-error" role="alert">{t("forgotRequestError")}</p>}
@@ -162,7 +142,7 @@ export default function ForgotPassword() {
         <div className={styles.divider} aria-hidden="true"><span>{t("dividerOr")}</span></div>
 
         {/* → REGISTER */}
-        <Link className={styles.create} to={path("/register")}>{t("createAccount")}</Link>
+        <Link className={styles.create} to={path("/register")} state={returnLocation ? { returnTo: returnLocation } : undefined}>{t("createAccount")}</Link>
 
       </div>
     </main>

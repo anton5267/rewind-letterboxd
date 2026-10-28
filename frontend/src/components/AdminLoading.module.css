@@ -1,0 +1,30 @@
+.loading { min-width: 0; margin-block: 24px; }
+.placeholders { display: grid; gap: 24px; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; min-width: 0; min-height: 249px; padding: 24px; border-radius: 38px; background: rgba(255, 255, 255, .05); }
+.copy, .meta { display: grid; min-width: 0; align-content: start; gap: 18px; }
+.heading, .line, .short, .image { display: block; max-width: 100%; border-radius: 6px; background: #454848; }
+.heading { width: 65%; height: 28px; }
+.line { height: 18px; }
+.short { width: 45%; height: 18px; }
+.image { width: 120px; aspect-ratio: 2 / 3; }
+.placeholders[data-layout="users"] { gap: 0; border-radius: 20px; overflow: hidden; }
+.placeholders[data-layout="users"] .row { min-height: 90px; border-radius: 0; border-bottom: 1px solid #454848; }
+.placeholders[data-layout="users"] .copy { grid-template-columns: 1fr 1fr; align-items: center; }
+.placeholders[data-layout="users"] .copy > :nth-child(n+3) { display: none; }
+.placeholders[data-layout="reviews"] { gap: 84px; }
+.placeholders[data-layout="reviews"] .row { min-height: 429px; }
+.placeholders[data-layout="lists"] .row { min-height: 364px; }
+.placeholders[data-layout="logs"] .row { min-height: 293px; }
+.placeholders[data-layout="movies"] .row, .placeholders[data-layout="detail"] .row { grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr); }
+.placeholders[data-layout="editor"] .row, .placeholders[data-layout="settings"] .row { min-height: 400px; }
+@media (max-width: 767px) {
+  .row { grid-template-columns: minmax(0, 1fr); min-height: 210px; gap: 24px; padding: 20px; border-radius: 24px; }
+  .placeholders[data-layout="users"] { gap: 12px; }
+  .placeholders[data-layout="users"] .row { min-height: 240px; border-radius: 20px; }
+  .placeholders[data-layout="users"] .copy { grid-template-columns: minmax(0, 1fr); }
+  .placeholders[data-layout="reviews"] { gap: 24px; }
+  .placeholders[data-layout="reviews"] .row, .placeholders[data-layout="lists"] .row, .placeholders[data-layout="logs"] .row { min-height: 240px; }
+  .placeholders[data-layout="movies"] .row, .placeholders[data-layout="detail"] .row { grid-template-columns: auto minmax(0, 1fr); }
+  .placeholders[data-layout="movies"] .meta, .placeholders[data-layout="detail"] .meta { grid-column: 1 / -1; }
+  .image { width: 79px; }
+}

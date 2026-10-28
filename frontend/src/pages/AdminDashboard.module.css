@@ -1,19 +1,19 @@
 .page {
   min-height: 70vh;
   box-sizing: border-box;
-  padding: 80px 0 40px;
+  padding: 0 0 40px;
   background: var(--rewind-surface);
   color: #fff;
 }
 
 .page > section {
-  width: min(1280px, calc(100% - 40px));
+  width: min(1200px, calc(100% - 48px));
   margin: 32px auto 0;
 }
 
 /* Admin sections share this shell, so keep their controls on one visual contract. */
 .page button:not([data-retry-button]) {
-  min-height: 40px;
+  min-height: 44px;
   padding: 8px 12px;
   border: 1px solid var(--rewind-line);
   border-radius: var(--rewind-radius);
@@ -50,63 +50,30 @@
 }
 
 .hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  min-height: 470px;
-  place-items: center;
-  align-content: center;
-  padding: 54px 20px;
-  background:
-    linear-gradient(180deg, transparent 0 48%, #050505 96%),
-    radial-gradient(circle at 47% 0%, rgba(99, 188, 199, .72), transparent 34rem),
-    radial-gradient(circle at 96% 0%, rgba(211, 161, 79, .78), transparent 34rem),
-    #101316;
-  text-align: center;
+  box-sizing: border-box;
+  min-height: 390px;
+  padding: 140px 24px 44px;
+  background: #141717;
 }
-.avatar { display: grid; width: 170px; height: 170px; place-items: center; border-radius: 50%; background: linear-gradient(145deg, #394f53, #725532); color: #fff; font-size: 64px; font-weight: 800; }
-.hero .title { margin-top: 22px; }
+.profileHeader { display: flex; align-items: center; gap: 24px; min-height: 120px; width: min(1200px, 100%); margin: 0 auto; }
+.identity { display: grid; min-width: 0; gap: 8px; }
+.hero .title { margin: 0; font-size: 32px; font-weight: 700; line-height: 1.12; }
+.hero p { margin: 0; color: #aaa; font-size: 16px; font-weight: 500; line-height: 1.4; overflow-wrap: anywhere; }
+.avatar { display: grid; flex: 0 0 80px; width: 80px; height: 80px; place-items: center; border-radius: 50%; background: #394f53; color: #fff; font-size: 32px; font-weight: 700; }
 .avatar > img { width: 100%; height: 100%; min-width: 0; min-height: 0; object-fit: cover; border-radius: inherit; }
-.hero p { margin: 6px 0 0; color: var(--rewind-muted); }
-.adminNav {
-  display: flex;
-  width: max-content;
-  max-width: calc(100vw - 40px);
-  gap: 4px;
-  margin-top: 30px;
-  padding: 6px;
-  overflow-x: auto;
-  border: 1px solid rgba(255, 255, 255, .18);
-  border-radius: 999px;
-  background: rgba(28, 28, 28, .9);
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, .35) transparent;
-}
-
-.adminNav a {
-  display: grid;
-  flex: 0 0 44px;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-  border-radius: 50%;
-  color: #f3f0ea;
-  text-decoration: none;
-}
-
-.adminNav a:hover,
-.adminNav a[aria-current="page"] {
-  background: #3c3c3c;
-  color: var(--rewind-gold);
-}
-
-.adminNav a:focus-visible {
-  outline: 2px solid var(--rewind-gold);
-  outline-offset: -2px;
-}
-
-.navLabel { display: none; }
-.adminNav i { font-size: 16px; }
-.workspaceTitle { width: min(1280px, calc(100% - 40px)); margin: 44px auto 0; color: #fff; font-size: 18px; text-align: center; }
+.adminNav { display: flex; flex-wrap: wrap; width: min(1200px, 100%); gap: 8px; margin: 30px auto 0; padding: 0; }
+.adminNav a { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; min-height: 44px; box-sizing: border-box; padding: 12px; border-radius: 37px; background: rgba(235, 163, 69, .15); color: #fff; text-decoration: none; }
+.adminNav a:hover { background: rgba(235, 163, 69, .3); }
+.adminNav a[aria-current="page"] { background: rgba(123, 190, 204, .15); }
+.adminNav a:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: -3px; }
+.adminNav img { display: block; flex-shrink: 0; }
+.adminNav i { display: grid; flex: 0 0 20px; width: 20px; height: 20px; place-items: center; font-size: 20px; }
+.navLabel { font-size: 13px; line-height: 1.4; font-weight: 500; }
+.adminNav a[aria-current="page"] .navLabel { font-weight: 600; }
+.workspaceTitle { width: min(1200px, calc(100% - 48px)); margin: 0 auto; color: #fff; font-size: 32px; line-height: 1.2; text-align: center; overflow-wrap: anywhere; }
+.platformTitle { margin: 40px 24px 0; font-size: 24px; text-align: center; }
+.platformTitle:focus { outline: 3px solid var(--rewind-cyan); outline-offset: 4px; }
+.skeleton { background: linear-gradient(#555858, #555858) 20px 20px / 60% 18px no-repeat, linear-gradient(#454848, #454848) 20px 60px / 35% 32px no-repeat, #262828; }
 
 .summary {
   display: grid;
@@ -149,6 +116,7 @@
 .settingsTitle {
   margin: 0 0 16px;
   color: var(--rewind-paper);
+  overflow-wrap: anywhere;
 }
 
 .workspaceTitle:focus,
@@ -187,7 +155,7 @@
 .settingInput {
   width: 100%;
   min-width: 0;
-  min-height: 40px;
+  min-height: 44px;
   box-sizing: border-box;
   padding: 8px 10px;
   border: 1px solid var(--rewind-line);
@@ -196,15 +164,42 @@
   color: #fff;
 }
 
-@media (max-width: 720px) {
+.settingToggle {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 240px;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  color: var(--rewind-muted);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.settingToggle span { min-width: 0; }
+
+.settingToggle input {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  accent-color: var(--rewind-cyan);
+}
+
+@media (max-width: 767px) {
   .page {
-    padding: 64px 0 32px;
+    padding: 0 0 32px;
   }
 
-  .hero { min-height: 390px; }
-  .avatar { width: 120px; height: 120px; font-size: 44px; }
-
-  .adminNav { margin-top: 22px; }
+  .hero { min-height: 0; padding: 88px 16px 28px; }
+  .profileHeader { gap: 16px; min-height: 88px; }
+  .hero .title { font-size: 24px; }
+  .avatar { flex-basis: 64px; width: 64px; height: 64px; }
+  .adminNav { flex-wrap: nowrap; width: 100%; margin-top: 24px; padding: 4px; overflow-x: auto; box-sizing: border-box; scrollbar-width: thin; scrollbar-color: #aaa transparent; }
+  .navLabel { white-space: nowrap; }
+  .page > section, .workspaceTitle { width: calc(100% - 32px); }
+  .workspaceTitle { font-size: 28px; }
+  .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .summaryCard { padding: 16px; overflow-wrap: anywhere; }
 
   .settings {
     padding: 16px;
@@ -224,11 +219,14 @@
   .settingField {
     flex-basis: auto;
   }
+
+  .settingToggle {
+    flex-basis: auto;
+  }
 }
 
-/* Figma dashboard frames `1178:2466` and `1404:4076` use a 1020 px
-   identity/workspace hero before the admin tables and settings begin. */
-@media (min-width: 721px) {
+/* Compact shared Admin shell follows refreshed Dashboard `1178:2466`. */
+@media (min-width: 768px) {
   .page { padding-top: 0; }
   /* Settings frame: workspace ends at1948, footer begins at2113. */
   .settingsPage { padding-bottom: 165px; }
@@ -247,7 +245,7 @@
   }
 
   .summaryCard {
-    min-height: 233px;
+    min-height: 126px;
   }
 
   /* Figma Settings frame `1404:4076` uses a 1200×734 translucent workspace
@@ -290,66 +288,12 @@
   }
 
   .settingInput {
-    min-height: 41px;
+    min-height: 44px;
     border-radius: 38px;
   }
 
-  .hero {
-    min-height: 1020px;
-    align-content: start;
-    padding-top: 293px;
+  .settingToggle {
+    min-height: 44px;
   }
 
-  .avatar {
-    width: 272px;
-    height: 277px;
-  }
-
-  .hero .title {
-    margin-top: 12px;
-    font-size: 58px;
-    line-height: 1.12;
-  }
-
-  .hero p {
-    margin-top: 4px;
-    font-size: 24px;
-    font-weight: 500;
-    line-height: 1.2;
-  }
-
-  .adminNav {
-    width: 776px;
-    min-height: 96px;
-    margin-top: 92px;
-    padding: 9px;
-    justify-content: space-between;
-  }
-
-  .adminNav a {
-    flex-basis: 48px;
-    width: 48px;
-    height: 76px;
-    border-radius: 38px;
-  }
-
-  .adminNav a[aria-current="page"] {
-    flex-basis: 160px;
-    min-width: 160px;
-    max-width: 170px;
-    padding: 8px 12px;
-    gap: 6px;
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .adminNav a[aria-current="page"] .navLabel {
-    display: block;
-    font-size: 12px;
-    line-height: 1.2;
-    overflow-wrap: anywhere;
-  }
-
-  .adminNav i {
-    font-size: 22px;
-  }
 }

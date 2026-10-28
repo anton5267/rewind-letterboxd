@@ -74,6 +74,9 @@
 }
 
 .sectionHeading h2 { margin: 0; font-size: clamp(20px, 3vw, 28px); }
+.reviewerMore { flex: 0 0 auto; color: #9f9ca4; font-size: 12px; text-decoration: none; }
+.reviewerMore:hover { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+.reviewerMore:focus-visible { outline: 2px solid #64dbe2; outline-offset: 3px; }
 .sortLabel { color: #9f9ca4; font-size: 12px; }
 
 .reviewerRail {
@@ -136,12 +139,12 @@
   gap: 14px;
 }
 
-.reviewHeader h3 { margin: 0 0 5px; font-size: 18px; }
+.reviewHeader h3 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; margin: 0 0 5px; font-size: 18px; }
 .reviewHeader h3 a { color: #fff; text-decoration: none; }
 .reviewHeader h3 a:hover { color: #d7b1ff; }
 .reviewHeader p { margin: 0; overflow-wrap: anywhere; color: #a9a5ad; font-size: 12px; }
 .reviewHeader p a { color: #d4a8ff; }
-.reviewHeader strong { flex: 0 0 auto; color: #f0b95c; font-size: 14px; }
+.reviewHeader strong { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; color: #fff; font-size: inherit; white-space: nowrap; }
 .reviewText { margin: 14px 0 0; color: #d8d5da; font-size: 14px; line-height: 1.5; }
 .reviewText a { color: inherit; text-decoration: none; }
 .reviewText a:hover { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
@@ -157,7 +160,7 @@
 .reviewHeader a:focus-visible,
 .reviewText a:focus-visible { outline: 3px solid #64dbe2; outline-offset: 3px; }
 
-@media (max-width: 560px) {
+@media (max-width: 767px) {
   .page { padding-top: 64px; }
   .hero { min-height: 150px; padding: 18px 14px 22px; }
   .toolbar { grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 10px; }
@@ -168,6 +171,7 @@
   .reviewerSection { padding: 18px 14px 16px; }
   .reviewsSection { padding: 18px 14px; }
   .sectionHeading { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .reviewerSection .sectionHeading { align-items: center; flex-direction: row; }
   .sectionHeading h2 { font-size: 20px; }
   .reviewCard { grid-template-columns: 58px minmax(0, 1fr); gap: 12px; padding: 10px; }
   .poster { width: 58px; }
@@ -181,13 +185,13 @@
   .reviewCard { grid-template-columns: 50px minmax(0, 1fr); gap: 9px; }
   .poster { width: 50px; }
   .reviewHeader { display: block; }
-  .reviewHeader strong { display: block; margin-top: 5px; }
+  .reviewHeader strong { display: inline-flex; }
 }
 
 /* Figma frame `1480:4880` (desktop): the global header overlays a 486 px
    editorial hero. The two API-backed content groups sit on a 1200 px rail
    at x=120; review cards are 1200x315 with 175x262 poster slots. */
-@media (min-width: 721px) {
+@media (min-width: 768px) {
   .page {
     min-height: 100vh;
     padding: 0 0 72px;
@@ -268,13 +272,13 @@
   }
 
   .reviewCard {
-    height: 315px;
+    min-height: 315px;
     box-sizing: border-box;
     grid-template-columns: 175px minmax(0, 1fr);
     gap: 40px;
     padding: 31px 26px 22px;
     border: 0;
-    border-radius: 0;
+    border-radius: 20px;
     background: #282828;
   }
 
@@ -289,12 +293,16 @@
   }
 
   .reviewHeader h3 {
-    font-size: 20px;
+    font-size: 24px;
   }
+  .reviewHeader p { font-size: 14px; line-height: 1.4; }
 
   .reviewText {
     margin-top: 38px;
-    font-size: 16px;
-    line-height: 1.5;
+    font-size: 20px;
+    line-height: 1.4;
   }
 }
+.skeleton { background: var(--rewind-surface-raised); }
+.skeletonLine { height: 16px; margin: 16px 0; border-radius: 8px; background: var(--rewind-surface-raised); }
+.skeletonLine:last-child { width: 65%; }

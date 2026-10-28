@@ -38,16 +38,18 @@ export default function GlobalSearch() {
   const [retry, setRetry] = useState(0);
   const [compactPhone, setCompactPhone] = useState(() => typeof window !== "undefined"
     && typeof window.matchMedia === "function"
-    && window.matchMedia("(max-width: 560px)").matches);
+    && window.matchMedia("(max-width: 767px)").matches);
   const [expandedQuery, setExpandedQuery] = useState<string | null>(null);
   const [expansionFocusPending, setExpansionFocusPending] = useState(false);
   const categorySelectRef = useRef<HTMLSelectElement>(null);
   const resultsPanelRef = useRef<HTMLDivElement>(null);
+  const retryFocus = useRef<{ query: string; lang: string; origin: Element | null } | null>(null);
+  const clearQueryFocus = useRef(false);
   const expandedResults = expandedQuery === query;
 
   useEffect(() => {
     if (typeof window.matchMedia !== "function") return;
-    const media = window.matchMedia("(max-width: 560px)");
+    const media = window.matchMedia("(max-width: 767px)");
     const update = () => setCompactPhone(media.matches);
     update();
     media.addEventListener("change", update);
@@ -90,6 +92,29 @@ export default function GlobalSearch() {
     const firstExpandedSection = resultsPanelRef.current?.querySelector<HTMLElement>("#users, #people, #tags, #lists, #journal");
     (firstExpandedSection ?? resultsPanelRef.current)?.focus({ preventScroll: false });
   }, [loading, results, error, expandedResults, expansionFocusPending]);
+
+  useEffect(() => {
+    const pending = retryFocus.current;
+    if (loading || !pending) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (retryFocus.current !== pending) return;
+      retryFocus.current = null;
+      if (pending.query !== query || pending.lang !== lang) return;
+      if (document.activeElement === document.body || document.activeElement === pending.origin) {
+        resultsPanelRef.current?.focus();
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [loading, results, error, query, lang]);
+
+  useEffect(() => {
+    if (query || !clearQueryFocus.current) return;
+    const frame = window.requestAnimationFrame(() => {
+      clearQueryFocus.current = false;
+      document.getElementById("global-search-query")?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [query]);
 
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -159,13 +184,13 @@ export default function GlobalSearch() {
     <div className={styles.shell}>
       <section className={styles.hero}>
         <div className={styles.heroHeading}>
-          <Link className={styles.mobileBack} to={path("/home")} aria-label={t("home")}>←</Link>
+          <Link className={styles.mobileBack} to={path("/home")} aria-label={t("home")}><img src="/images/help-icon-back.png" width={25} height={25} alt="" aria-hidden="true" /></Link>
           <div>
             <p className={styles.eyebrow}>{t("discoverEyebrow")}</p>
             <h1 id="global-search-title">{t("globalSearch")}</h1>
           </div>
           {query && <button className={styles.mobileFilter} type="button" aria-label={t("showSearchResultsFor")} onClick={focusCategorySelect}>
-            <i className="fa-solid fa-sliders" aria-hidden="true" />
+            <img src="/images/search-filter.png" width={25} height={25} alt="" aria-hidden="true" />
           </button>}
         </div>
         <p className={styles.heroIntro}>{t("globalSearchIntro")}</p>
@@ -180,7 +205,7 @@ export default function GlobalSearch() {
       {query && <div className={styles.matchesHeading}>
         <h2>{t("showingSearchMatches")} “{query}”</h2>
         <div className={styles.categoryPicker}>
-          {isEmptyState && <span className={styles.categoryPrompt} aria-hidden="true">{t("showSearchResultsFor")} <span>⌄</span></span>}
+          <span className={styles.categoryPrompt} aria-hidden="true">{t("showSearchResultsFor")} <span>⌄</span></span>
           {categorySelect}
         </div>
       </div>}
@@ -212,13 +237,33 @@ export default function GlobalSearch() {
         </nav>
       </>}
       {query && <div ref={resultsPanelRef} id="global-search-results" className={`${styles.results} ${collapsedAllPreview ? styles.allPreview : ""}`} role="tabpanel" tabIndex={0} aria-busy={loading} aria-labelledby={`global-search-tab-${tab}`}>
-      {loading && <p className={styles.feedback} role="status">{t("loadingSearch")}</p>}
-      {error && <RetryNotice className={styles.alert} message={t("searchError")} retryLabel={t("retry")} busy={loading} onRetry={() => setRetry(value => value + 1)} />}
+      {loading && <>
+        <p className="srOnly" role="status">{t("loadingSearch")}</p>
+        <div className={`${styles.loadingResults} ${tab === "all" ? styles.allPreview : ""}`} aria-hidden="true">
+          {(tab === "all" || tab === "films") && <div className={`${styles.filmGrid} ${tab === "all" ? styles.filmRail : ""}`}>
+            {[0, 1, 2, 3, 4, 5].map(item => <div className={styles.filmCard} key={item}><div className={`${styles.posterLink} ${styles.skeleton}`} /></div>)}
+          </div>}
+          {(tab === "all" || tab === "reviews") && <div className={styles.reviewGrid}>{[0, 1].map(item => <div className={`${styles.reviewCard} ${styles.skeleton}`} key={item} />)}</div>}
+          {tab !== "all" && tab !== "films" && tab !== "reviews" && <div className={tab === "journal" ? styles.articleGrid : styles.userGrid}>
+            {[0, 1, 2, 3, 4, 5].map(item => <div className={`${tab === "lists" || tab === "journal" ? styles.skeletonPanel : styles.skeletonRow} ${styles.skeleton}`} key={item} />)}
+          </div>}
+        </div>
+      </>}
+      {error && <RetryNotice className={styles.alert} message={t("searchError")} retryLabel={t("retry")} busy={loading} onRetry={() => {
+        retryFocus.current = { query, lang, origin: document.activeElement };
+        setRetry(value => value + 1);
+      }} />}
       {!loading && !error && query && !hasVisibleResults && <section className={styles.noMatches}>
         <p className={styles.sectionKicker}>{t("emptyEyebrow")}</p>
         <h2>{t("noGlobalResults")}</h2>
         <p>{t("noGlobalResultsHint")}</p>
-        <Link className={styles.noMatchesAction} to={path("/home")}>{t("backToHome")}</Link>
+        <button className={styles.noMatchesAction} type="button" onClick={() => {
+          const next = new URLSearchParams(searchParams);
+          next.delete("q");
+          clearQueryFocus.current = true;
+          setExpandedQuery(null);
+          setSearchParams(next);
+        }}>{t("clearSearch")}</button>
       </section>}
 
       {!loading && !error && results && <>

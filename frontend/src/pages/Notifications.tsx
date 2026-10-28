@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { getNotificationPreferences, getNotifications, getUnreadNotificationCount, markAllNotificationsRead, markNotificationRead, updateNotificationPreferences, type NotificationItem, type NotificationPage, type NotificationPreferences } from "../api/notifications.api";
 import Pagination from "../components/Pagination";
 import RetryButton from "../components/RetryButton";
@@ -20,6 +20,7 @@ function label(item: NotificationItem, t: Translator) {
 export default function Notifications() {
   const { isAuth, ready, user } = useAuth();
   const { lang, path, t } = useLocale();
+  const location = useLocation();
   const [page, setPage] = useState(0);
   const [notificationsRevision, setNotificationsRevision] = useState(0);
   const [unreadRevision, setUnreadRevision] = useState(0);
@@ -120,7 +121,7 @@ export default function Notifications() {
   }, [isAuth, user?.id]);
 
   if (!ready) return <main className={styles.page} aria-labelledby="notifications-title" aria-busy={!ready}><div className={styles.shell}><h1 id="notifications-title" className="srOnly">{t("notifications")}</h1><p className={styles.notice} role="status">{t("loading")}</p></div></main>;
-  if (!isAuth) return <Navigate to={path("/login")} replace />;
+  if (!isAuth) return <Navigate to={path("/login")} state={{ returnTo: `${location.pathname}${location.search}${location.hash}` }} replace />;
 
   const markRead = async (item: NotificationItem) => {
     if (item.readAt || busyId !== null || markAllBusy) return;

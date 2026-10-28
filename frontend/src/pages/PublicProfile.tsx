@@ -1,3 +1,4 @@
+import ProfileLoading from "../components/ProfileLoading";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { getPublicProfile, getPublicProfileCollection, getPublicProfileLikedReviews, getPublicProfileLists, type PublicCollection, type PublicProfileListPage, type PublicProfileResponse, type PublicProfileReviewPage } from "../api/profile.api";
@@ -347,7 +348,7 @@ export default function PublicProfile() {
     focusFollowersHeadingAfterRetry.current = false;
     requestAnimationFrame(() => {
       const mobileTitle = document.getElementById("public-profile-view-title");
-      const target = window.matchMedia("(max-width: 720px)").matches ? mobileTitle : followersHeadingRef.current;
+      const target = window.matchMedia("(max-width: 767px)").matches ? mobileTitle : followersHeadingRef.current;
       target?.focus({ preventScroll: true });
     });
   }, [followers, followersError, followersLoading]);
@@ -378,7 +379,7 @@ export default function PublicProfile() {
     focusFollowingHeadingAfterRetry.current = false;
     const frame = window.requestAnimationFrame(() => {
       const mobileTitle = document.getElementById("public-profile-view-title");
-      const target = window.matchMedia("(max-width: 720px)").matches && mobileTitle ? mobileTitle : followingHeadingRef.current;
+      const target = window.matchMedia("(max-width: 767px)").matches && mobileTitle ? mobileTitle : followingHeadingRef.current;
       target?.focus({ preventScroll: true });
     });
     return () => window.cancelAnimationFrame(frame);
@@ -410,7 +411,7 @@ export default function PublicProfile() {
     focusPublicListsHeadingAfterRetry.current = false;
     requestAnimationFrame(() => {
       const mobileTitle = document.getElementById("public-profile-view-title");
-      const target = window.matchMedia("(max-width: 720px)").matches ? mobileTitle : publicListsHeadingRef.current;
+      const target = window.matchMedia("(max-width: 767px)").matches ? mobileTitle : publicListsHeadingRef.current;
       target?.focus({ preventScroll: true });
     });
   }, [publicLists, publicListsError, publicListsLoading]);
@@ -531,7 +532,7 @@ export default function PublicProfile() {
       // tablist. Rail links and direct section URLs move to the heading.
       if (section?.contains(document.activeElement) && document.activeElement?.matches('[role="tab"]')) return;
       const heading = section?.matches("h2") ? section : section?.querySelector<HTMLElement>("h2");
-      if (profileView && window.matchMedia(networkView ? "(max-width: 720px)" : "(max-width: 620px)").matches) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      if (profileView && window.matchMedia(networkView ? "(max-width: 767px)" : "(max-width: 767px)").matches) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
       else section?.scrollIntoView({ block: "start", behavior: "instant" });
       if (heading) {
         heading.tabIndex = -1;
@@ -608,7 +609,7 @@ export default function PublicProfile() {
   const profileListTagsExpanded = expandedProfileListTagsKey === profileListTagsKey;
 
   if (error) return <main className={styles.state} aria-labelledby="public-profile-state-title" aria-busy={false}><div className={styles.shell}><h1 id="public-profile-state-title" className="srOnly">{t("profile")}</h1><p className={styles.alert} ref={profileRetryAlertRef} tabIndex={-1} role="alert">{!validProfileId ? t("invalidProfileId") : t("loadPublicProfileError")} {validProfileId && <RetryButton label={t("retry")} onClick={() => { profileRetryOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; setProfileAttempt(value => value + 1); }} />}</p></div></main>;
-  if (!profile) return <main className={styles.state} aria-labelledby="public-profile-state-title" aria-busy={true}><div className={styles.shell}><h1 id="public-profile-state-title" className="srOnly">{t("profile")}</h1><p className={styles.loading} role="status">{t("loading")}</p></div></main>;
+  if (!profile) return <main className={styles.state} aria-labelledby="public-profile-state-title" aria-busy={true}><div className={styles.shell}><h1 id="public-profile-state-title" className="srOnly">{t("profile")}</h1><ProfileLoading label={t("loading")} layout="identity" /></div></main>;
   const identityName = getUserName(profile, t("someone"));
   const socialLinks = profile.socialLinks.flatMap(link => {
     const url = safeHttpUrl(link.url);
@@ -683,7 +684,7 @@ export default function PublicProfile() {
     {networkView && <Link className={styles.networkBack} to={sectionTarget("public-profile-overview", null)} aria-label={t("profile")}>←</Link>}
     <section className={`${styles.section} ${styles.overviewSection}`} id="public-profile-overview" aria-labelledby="public-profile-favorites-title" aria-busy={favoritePreviewLoading}>
       <h2 id="public-profile-favorites-title">{t("favoriteFilms")}</h2>
-      {favoritePreviewLoading && <p className={styles.loading} role="status">{t("loading")}</p>}
+      {favoritePreviewLoading && <ProfileLoading label={t("loading")} layout="films" />}
       {favoritePreviewError && <RetryNotice className={styles.alert} message={t("loadCollectionError")} retryLabel={t("retry")} onRetry={() => setFavoritePreviewAttempt(value => value + 1)} />}
       {!favoritePreviewLoading && !favoritePreviewError && favoritePreview && (favoritePreview.content.length === 0 ? <p>{t("noCollectionFilms")}</p> : <ul className={styles.previewGrid}>
         {favoritePreview.content.slice(0, 4).map(movie => {
@@ -697,7 +698,7 @@ export default function PublicProfile() {
     </section>
     <section className={`${styles.section} ${styles.overviewSection} ${styles.activityOverview}`} aria-labelledby="public-profile-activity" aria-busy={activityLoading}>
       <h2 id="public-profile-activity">{t("recentActivity")}</h2>
-      {activityLoading && <p className={styles.loading} role="status">{t("loading")}</p>}
+      {activityLoading && <ProfileLoading label={t("loading")} layout="films" />}
       {activityError && <RetryNotice className={styles.alert} message={t("loadActivityError")} retryLabel={t("retry")} onRetry={() => setActivityAttempt(value => value + 1)} />}
       {!activityLoading && !activityError && activity && (activity.content.length === 0 ? <p>{t("noActivity")}</p> : <>
         <ul className={`${styles.previewGrid} ${styles.activityPreview}`} id="public-profile-activity-content">{(expandedActivity ? activity.content : activity.content.slice(0, 4)).map(item => {
@@ -722,7 +723,7 @@ export default function PublicProfile() {
     </section>
     <section className={`${styles.section} ${styles.overviewSection}`} aria-labelledby="public-profile-following-preview-title" aria-busy={followingLoading}>
       <h2 id="public-profile-following-preview-title"><Link to={sectionTarget("public-profile-following", null)}>{t("following")}</Link></h2>
-      {followingLoading && <p className={styles.loading} role="status">{t("loading")}</p>}
+      {followingLoading && <ProfileLoading label={t("loading")} layout="rows" />}
       {followingError && <RetryNotice className={styles.alert} message={t("loadNetworkError")} retryLabel={t("retry")} onRetry={() => setFollowingAttempt(value => value + 1)} />}
       {!followingLoading && !followingError && following && (following.content.length === 0 ? <p>{t("noFollowing")}</p> : <>
         <ul className={styles.followingRail}>{following.content.map(networkUser => {
@@ -735,7 +736,7 @@ export default function PublicProfile() {
     </section>
     <section className={`${styles.section} ${styles.overviewSection} ${styles.listsOverview}`} id="public-profile-lists" aria-labelledby="public-profile-lists-title" aria-busy={publicListsLoading}>
       <h2 id="public-profile-lists-title" ref={publicListsHeadingRef} tabIndex={profileView === "lists" ? -1 : undefined}>{profileView === "lists" ? t("publicLists") : <Link to={sectionTarget("public-profile-lists", null)}>{t("searchLists")}</Link>}</h2>
-      {publicListsLoading && <p className={styles.loading} role="status">{t("loading")}</p>}
+      {publicListsLoading && <ProfileLoading label={t("loading")} layout="lists" />}
       {publicListsError && <RetryNotice className={styles.alert} message={t("loadPublicListError")} retryLabel={t("retry")} onRetry={() => { focusPublicListsHeadingAfterRetry.current = true; setPublicListsAttempt(value => value + 1); }} />}
       {!publicListsLoading && !publicListsError && publicLists && (publicLists.content.length === 0 ? <p>{t("noPublicLists")}</p> : <>
         <div className={styles.publicListGrid}>
@@ -762,9 +763,7 @@ export default function PublicProfile() {
         {profileView === "lists" && currentPublicListTags.length > 0 && <section className={styles.profileListTagCloud} aria-labelledby="public-profile-list-tags-title">
           <div className={styles.profileListTagHeading}>
             <h3 id="public-profile-list-tags-title">{t("profileListTags")}</h3>
-            {currentPublicListTags.length > 3 && (profileListTagsExpanded
-              ? <span className={styles.profileListTagMoreStatic} aria-hidden="true">{t("moreTags")}</span>
-              : <button className={styles.profileListTagMore} type="button" aria-expanded="false" aria-controls="public-profile-list-tags" onClick={() => setExpandedProfileListTagsKey(profileListTagsKey)}>{t("moreTags")}</button>)}
+            {currentPublicListTags.length > 3 && <button className={styles.profileListTagMore} type="button" aria-expanded={profileListTagsExpanded} aria-controls="public-profile-list-tags" onClick={() => setExpandedProfileListTagsKey(profileListTagsExpanded ? null : profileListTagsKey)}>{t(profileListTagsExpanded ? "lessTags" : "moreTags")}</button>}
           </div>
           <div className={styles.profileListTagChips} id="public-profile-list-tags">
             {(profileListTagsExpanded ? currentPublicListTags : currentPublicListTags.slice(0, 3)).map(tag => <Link className={styles.profileListTagChip} key={toTagSlug(tag)} to={path(`/lists/discover?feed=recent&tag=${encodeURIComponent(toTagSlug(tag))}`)}>{tag}</Link>)}
@@ -815,7 +814,7 @@ export default function PublicProfile() {
         >{kind === "favorites" ? t("favorite") : t(kind)}</button>)}
       </div>
       <div id="public-profile-collection-content" role="tabpanel" tabIndex={0} aria-labelledby={`public-profile-collection-tab-${collectionKind}`}>
-        {collectionLoading && <p className={styles.loading} role="status">{t("loading")}</p>}
+        {collectionLoading && <ProfileLoading label={t("loading")} layout="films" />}
         {collectionError && <RetryNotice className={styles.alert} message={t("loadCollectionError")} retryLabel={t("retry")} onRetry={retryCollection} />}
         {!collectionLoading && !collectionError && collection && <>
           {collection.content.length === 0 ? <p>{t("noCollectionFilms")}</p> : <div className={styles.collectionGrid}>{collection.content.map(movie => {
@@ -834,18 +833,18 @@ export default function PublicProfile() {
     </section>
     {(profileView === "following" || (!profileView && location.hash.startsWith("#public-profile-following"))) && <section className={`${styles.section} ${styles.networkSection}`} id="public-profile-following" aria-labelledby="public-profile-following-title" aria-busy={followingLoading}>
       <h2 id="public-profile-following-title" ref={followingHeadingRef} tabIndex={-1}>{t("following")}</h2>
-      {followingLoading && <p className={styles.loading} role="status">{t("loading")}</p>}
+      {followingLoading && <ProfileLoading label={t("loading")} layout="rows" />}
       {followingError && <RetryNotice className={styles.alert} message={t("loadNetworkError")} retryLabel={t("retry")} onRetry={() => { focusFollowingHeadingAfterRetry.current = true; setFollowingAttempt(value => value + 1); }} />}
       {!followingLoading && !followingError && following && (following.content.length === 0 ? <p>{t("noFollowing")}</p> : <><ul className={styles.networkList}>{following.content.map(networkUser => <UserFollowRow key={networkUser.id} user={networkUser} href={path(`/users/${networkUser.id}`)} presentation="profileNetwork" hideMobileNetworkStats onFollowSettled={refreshNetwork} />)}</ul><Pagination className={styles.pagination} page={followingPage} totalPages={following.totalPages} label={t("networkPagination")} busy={followingLoading} onPageChange={setFollowingPage} /></>)}
     </section>}
     {(profileView === "followers" || (!profileView && location.hash.startsWith("#public-profile-followers"))) && <section className={`${styles.section} ${styles.networkSection}`} id="public-profile-followers" aria-labelledby="public-profile-followers-title" aria-busy={followersLoading}>
       <h2 id="public-profile-followers-title" ref={followersHeadingRef} tabIndex={-1}>{t("followers")}</h2>
-      {followersLoading && <p className={styles.loading} role="status">{t("loading")}</p>}
+      {followersLoading && <ProfileLoading label={t("loading")} layout="rows" />}
       {followersError && <RetryNotice className={styles.alert} message={t("loadNetworkError")} retryLabel={t("retry")} onRetry={() => { focusFollowersHeadingAfterRetry.current = true; setFollowersAttempt(value => value + 1); }} />}
       {!followersLoading && !followersError && followers && (followers.content.length === 0 ? <p>{t("noFollowers")}</p> : <><ul className={styles.networkList}>{followers.content.map(networkUser => <UserFollowRow key={networkUser.id} user={networkUser} href={path(`/users/${networkUser.id}`)} presentation="profileNetwork" hideMobileNetworkStats onFollowSettled={refreshNetwork} />)}</ul><Pagination className={styles.pagination} page={followersPage} totalPages={followers.totalPages} label={t("networkPagination")} busy={followersLoading} onPageChange={setFollowersPage} /></>)}
     </section>}
     <section className={styles.section} id="public-profile-liked-reviews" aria-labelledby="public-profile-liked-reviews-title" aria-busy={likedReviewsLoading}><h2 id="public-profile-liked-reviews-title">{t("likedReviews")}</h2>
-      {likedReviewsLoading && <p className={styles.loading} role="status">{t("loading")}</p>}
+      {likedReviewsLoading && <ProfileLoading label={t("loading")} layout="reviews" />}
       {likedReviewsError && <RetryNotice className={styles.alert} message={t("loadLikedReviewsError")} retryLabel={t("retry")} onRetry={() => setLikedReviewsAttempt(value => value + 1)} />}
       {!likedReviewsLoading && !likedReviewsError && likedReviews && (likedReviews.content.length === 0 ? <p>{t("noLikedReviews")}</p> : <>
         <ul className={styles.reviewList}>{likedReviews.content.map(review => {

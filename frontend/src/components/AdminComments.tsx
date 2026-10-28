@@ -1,3 +1,4 @@
+import AdminLoading from "./AdminLoading";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { deleteAdminComment, getAdminComments, setAdminCommentHidden, type AdminComment } from "../api/admin.api";
 import type { Page } from "../api/types";
@@ -7,6 +8,7 @@ import RetryNotice from "./RetryNotice";
 import { formatReviewDate, useLocale } from "../i18n";
 import { getUserName } from "../utils/userIdentity";
 import styles from "./AdminShared.module.css";
+import dialogStyles from "./AdminConfirmDialog.module.css";
 
 type VisibilityFilter = "all" | "visible" | "hidden";
 
@@ -22,7 +24,10 @@ export default function AdminComments() {
   const [error, setError] = useState(false);
   const [actionError, setActionError] = useState<"moderate" | "delete" | false>(false);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ comment: AdminComment; trigger: HTMLButtonElement } | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const deleteDialog = useRef<HTMLDialogElement>(null);
+  const deleteDialogCancel = useRef<HTMLButtonElement>(null);
   const focusAfterReload = useRef(false);
   const reloadFocusOrigin = useRef<HTMLElement | null>(null);
   const queryGeneration = useRef(0);
@@ -33,6 +38,8 @@ export default function AdminComments() {
 
   useLayoutEffect(() => {
     queryGeneration.current += 1;
+    if (deleteDialog.current?.open) deleteDialog.current.close();
+    setPendingDelete(null);
     if (currentActor.current !== actor) {
       currentActor.current = actor;
       mutationToken.current = null;
@@ -45,6 +52,12 @@ export default function AdminComments() {
       reloadFocusOrigin.current = null;
     }
   }, [filter, page, lang, actor]);
+
+  useEffect(() => {
+    if (!pendingDelete || !deleteDialog.current) return;
+    if (!deleteDialog.current.open) deleteDialog.current.showModal();
+    deleteDialogCancel.current?.focus();
+  }, [pendingDelete]);
 
   useEffect(() => {
     mounted.current = true;
@@ -143,7 +156,7 @@ export default function AdminComments() {
   };
 
   const deleteComment = async (comment: AdminComment, origin: HTMLButtonElement) => {
-    if (busyId !== null || currentActor.current !== actor || !window.confirm(t("adminCommentDeleteConfirm"))) return;
+    if (busyId !== null || currentActor.current !== actor) return;
     const token = {};
     mutationToken.current = token;
     const isCurrentActor = () => mounted.current && currentActor.current === actor && mutationToken.current === token;
@@ -179,8 +192,32 @@ export default function AdminComments() {
     }
   };
 
+  const requestDelete = (comment: AdminComment, trigger: HTMLButtonElement) => {
+    if (busyId !== null || currentActor.current !== actor) return;
+    focusAfterReload.current = false;
+    reloadFocusOrigin.current = null;
+    setPendingDelete({ comment, trigger });
+  };
+
+  const cancelDelete = () => {
+    if (deleteDialog.current?.open) deleteDialog.current.close();
+    const trigger = pendingDelete?.trigger;
+    setPendingDelete(null);
+    window.requestAnimationFrame(() => {
+      if (trigger?.isConnected) trigger.focus();
+    });
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete || busyId !== null) return;
+    const { comment, trigger } = pendingDelete;
+    if (deleteDialog.current?.open) deleteDialog.current.close();
+    setPendingDelete(null);
+    void deleteComment(comment, trigger);
+  };
+
   return <section className={`${styles.section} ${styles.commentsSection}`} aria-label={t("adminComments")} aria-busy={loading || busyId !== null}>
-    <h2 className={styles.title} ref={headingRef} tabIndex={-1}>{t("adminComments")}</h2>
+    <h2 className={styles.title} ref={headingRef} tabIndex={-1}>{t("adminCommentsTitle")}</h2>
     {actionError && <p className={styles.error} role="alert">{t(actionError === "delete" ? "adminCommentDeleteError" : "adminCommentModerationError")}</p>}
     <label className={styles.filter}>{t("adminVisibilityFilter")}{" "}
       <select className={styles.control} value={filter} onChange={event => changeFilter(event.target.value as VisibilityFilter)}>
@@ -189,7 +226,7 @@ export default function AdminComments() {
         <option value="hidden">{t("hiddenOnly")}</option>
       </select>
     </label>
-    {loading && <p className={styles.feedback} role="status">{t("loading")}</p>}
+    {loading && <AdminLoading label={t("loading")} layout="comments" />}
     {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => { reloadFocusOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; focusAfterReload.current = true; setRevision(value => value + 1); }} />}
     {data && data.content.length === 0 && <p>{t("noAdminComments")}</p>}
     {data && <>
@@ -207,12 +244,23 @@ export default function AdminComments() {
           <p className={styles.commentStatus}>{comment.isHidden ? t("hiddenComment") : t("visibleComment")}</p>
           <div className={styles.rowActions}>
             <button type="button" aria-busy={busyId === comment.id} disabled={busyId !== null} onClick={event => void toggleHidden(comment, event.currentTarget)}>{busyId === comment.id ? t("loading") : comment.isHidden ? t("unhideComment") : t("hideComment")}</button>
-            <button type="button" aria-busy={busyId === comment.id} disabled={busyId !== null} onClick={event => void deleteComment(comment, event.currentTarget)}>{busyId === comment.id ? t("loading") : t("deleteComment")}</button>
+            <button type="button" aria-busy={busyId === comment.id} disabled={busyId !== null} onClick={event => requestDelete(comment, event.currentTarget)}>{busyId === comment.id ? t("loading") : t("deleteComment")}</button>
           </div>
         </div>
       </li>;
       })}</ul>
       <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminCommentsPagination")} busy={loading} statusSuffix={data.totalElements} onPageChange={nextPage => { focusAfterReload.current = false; reloadFocusOrigin.current = null; setPage(nextPage); }} />
     </>}
+    <dialog className={dialogStyles.deleteDialog} ref={deleteDialog} role="alertdialog" aria-labelledby="admin-comment-delete-title" aria-describedby="admin-comment-delete-description" onCancel={event => {
+      event.preventDefault();
+      cancelDelete();
+    }}>
+      <h3 id="admin-comment-delete-title">{t("deleteComment")}</h3>
+      {pendingDelete && <p id="admin-comment-delete-description">{t("adminCommentDeleteConfirm")} <strong>{getUserName({ username: pendingDelete.comment.username }, t("someone"))}</strong></p>}
+      <div className={dialogStyles.deleteDialogActions}>
+        <button type="button" ref={deleteDialogCancel} disabled={busyId !== null} onClick={cancelDelete}>{t("cancel")}</button>
+        <button type="button" className={dialogStyles.deleteDialogConfirm} disabled={busyId !== null} aria-busy={busyId === pendingDelete?.comment.id} onClick={confirmDelete}>{busyId === pendingDelete?.comment.id ? t("loading") : t("deleteComment")}</button>
+      </div>
+    </dialog>
   </section>;
 }

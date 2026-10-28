@@ -5,7 +5,7 @@
 .section > button,
 .item > button,
 .form button {
-  min-height: 40px;
+  min-height: 44px;
   padding: 8px 12px;
   border: 1px solid #cfc6bb;
   border-radius: var(--rewind-radius);
@@ -56,7 +56,6 @@
 }
 
 .item > button {
-  min-height: 36px;
   margin: 2px 6px 0 0;
 }
 
@@ -96,6 +95,8 @@
   gap: 8px;
   margin: 16px 0;
 }
+
+.pagination button { min-height: 44px; }
 
 .loading {
   margin: 12px 0;

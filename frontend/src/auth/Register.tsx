@@ -4,11 +4,15 @@ import styles from "./Register.module.css";
 import { register } from "../api/auth.api";
 import { useLocale } from "../i18n";
 import { isPasswordWithinByteLimit, MAX_PASSWORD_BYTES } from "../utils/passwordValidation";
+import { useAuthFieldValidation } from "./useAuthFieldValidation";
+import { getAuthReturnTo } from "./authReturnTo";
 
 export default function Register() {
   const navigate = useNavigate();
   const { path, t, lang } = useLocale();
+  const validation = useAuthFieldValidation();
   const location = useLocation();
+  const returnLocation = getAuthReturnTo(location.state, [path("/profile"), path("/messages"), path("/notifications")]);
 
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
@@ -99,7 +103,7 @@ export default function Register() {
           <button
             type="button"
             className={`${styles.button} ${styles.successButton}`}
-            onClick={() => navigate(path("/login"))}
+            onClick={() => navigate(path("/login"), { state: returnLocation ? { returnTo: returnLocation } : undefined })}
           >
             {t("goToLogin")}
           </button>
@@ -115,8 +119,8 @@ export default function Register() {
         <p className={styles.eyebrow}>{t("accountEyebrow")}</p>
         <h1 className={styles.title} id="register-page-title">{t("createAccount")}</h1>
 
-        <form className={styles.form} onSubmit={submit} aria-busy={loading}>
-          <label className="srOnly" htmlFor="register-username">{t("username")}</label>
+        <form className={styles.form} onSubmit={submit} onInvalidCapture={validation.onInvalid} aria-busy={loading}>
+          <label className={styles.fieldLabel} htmlFor="register-username">{t("username")}</label>
           <input
             id="register-username"
             name="username"
@@ -124,16 +128,17 @@ export default function Register() {
             placeholder={t("username")}
             value={nickname}
             disabled={loading}
-            onChange={(e) => setNickname(e.target.value)}
+            onChange={(e) => { setNickname(e.target.value); validation.onInput(e.currentTarget); }}
             autoComplete="username"
             minLength={3}
             maxLength={50}
-            aria-invalid={Boolean(error)}
-            aria-describedby={error ? "register-error" : undefined}
+            aria-invalid={Boolean(error) || validation.invalid("register-username")}
+            aria-describedby={validation.describedBy("register-username", error ? "register-error" : undefined)}
             required
           />
+          {validation.message("register-username") && <p className={styles.validation} id="register-username-validation">{validation.message("register-username")}</p>}
 
-          <label className="srOnly" htmlFor="register-email">{t("email")}</label>
+          <label className={styles.fieldLabel} htmlFor="register-email">{t("email")}</label>
           <input
             id="register-email"
             name="email"
@@ -142,15 +147,16 @@ export default function Register() {
             placeholder={t("email")}
             value={email}
             disabled={loading}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => { setEmail(e.target.value); validation.onInput(e.currentTarget); }}
             autoComplete="email"
             maxLength={150}
-            aria-invalid={Boolean(error)}
-            aria-describedby={error ? "register-error" : undefined}
+            aria-invalid={Boolean(error) || validation.invalid("register-email")}
+            aria-describedby={validation.describedBy("register-email", error ? "register-error" : undefined)}
             required
           />
+          {validation.message("register-email") && <p className={styles.validation} id="register-email-validation">{validation.message("register-email")}</p>}
 
-          <label className="srOnly" htmlFor="register-password">{t("password")}</label>
+          <label className={styles.fieldLabel} htmlFor="register-password">{t("password")}</label>
           <div className={styles.passwordField}>
             <input
               id="register-password"
@@ -160,12 +166,12 @@ export default function Register() {
               placeholder={t("password")}
               value={password}
               disabled={loading}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => { setPassword(e.target.value); validation.onInput(e.currentTarget); }}
               autoComplete="new-password"
               minLength={6}
               maxLength={MAX_PASSWORD_BYTES}
-              aria-invalid={Boolean(error)}
-              aria-describedby={`register-password-hint${error ? " register-error" : ""}`}
+              aria-invalid={Boolean(error) || validation.invalid("register-password")}
+              aria-describedby={validation.describedBy("register-password", `register-password-hint${error ? " register-error" : ""}`)}
               required
             />
             <button
@@ -183,6 +189,7 @@ export default function Register() {
               </svg>
             </button>
           </div>
+          {validation.message("register-password") && <p className={styles.validation} id="register-password-validation">{validation.message("register-password")}</p>}
           <p className={styles.passwordHint} id="register-password-hint">{t("passwordByteLimitHint")}</p>
 
           {error && <p ref={errorMessage} tabIndex={-1} className={styles.error} id="register-error" role="alert">{t(error)}</p>}
@@ -193,7 +200,7 @@ export default function Register() {
         </form>
 
         <p className={styles.footer}>
-          {t("alreadyAccount")} <Link to={path("/login")}>{t("login")}</Link>
+          {t("alreadyAccount")} <Link to={path("/login")} state={returnLocation ? { returnTo: returnLocation } : undefined}>{t("login")}</Link>
         </p>
       </div>
     </main>

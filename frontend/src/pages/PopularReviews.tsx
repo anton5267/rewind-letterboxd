@@ -5,7 +5,7 @@ import { getPopularReviewers, type PopularReviewer } from "../api/social.api";
 import Pagination from "../components/Pagination";
 import ResilientImage from "../components/ResilientImage";
 import RetryNotice from "../components/RetryNotice";
-import { editorialText, formatDateTime, useLocale } from "../i18n";
+import { editorialText, formatReviewDate, useLocale } from "../i18n";
 import { getLastPageIndex, isPageOutOfRange } from "../utils/pagination";
 import { getUserInitial, getUserName } from "../utils/userIdentity";
 import styles from "./PopularReviews.module.css";
@@ -93,8 +93,11 @@ export default function PopularReviews() {
 
     <div className={styles.shell}>
       <section className={styles.reviewerSection} aria-labelledby="popular-reviewers-title" aria-busy={reviewersLoading}>
-        <div className={styles.sectionHeading}><h2 id="popular-reviewers-title">{t("popularReviewers")}</h2></div>
-        {reviewersLoading && <p className={styles.status} role="status">{t("loading")}</p>}
+        <div className={styles.sectionHeading}>
+          <h2 id="popular-reviewers-title">{t("popularReviewers")}</h2>
+          <Link className={styles.reviewerMore} to={path("/community/reviewers")} aria-label={`${t("homeMore")} ${t("popularReviewers")}`}>{t("homeMore")}</Link>
+        </div>
+        {reviewersLoading && <><p className="srOnly" role="status">{t("loading")}</p><div className={styles.reviewerRail} aria-hidden="true">{[0, 1, 2, 3, 4, 5, 6, 7].map(item => <div className={`${styles.reviewerAvatar} ${styles.skeleton}`} key={item} />)}</div></>}
         {reviewersError && <RetryNotice className={styles.status} message={t("loadCommunityError")} retryLabel={t("retry")} busy={reviewersLoading} onRetry={() => setReviewersRetry(value => value + 1)} />}
         {!reviewersLoading && !reviewersError && reviewers.length === 0 && <p className={styles.empty}>{t("noPopularReviewers")}</p>}
         {!reviewersLoading && !reviewersError && reviewers.length > 0 && <div className={styles.reviewerRail} role="group" aria-label={t("popularReviewers")}>
@@ -107,7 +110,7 @@ export default function PopularReviews() {
           <h2 id="reviews-title">{t("homePopularReviews")}</h2>
           <span className={styles.sortLabel}>{t("sortBy")}: {t("sortPopularReviews")}</span>
         </div>
-        {reviewsLoading && <p className={styles.status} role="status">{t("loading")}</p>}
+        {reviewsLoading && <><p className="srOnly" role="status">{t("loading")}</p><div className={styles.reviewList} aria-hidden="true">{[0, 1, 2, 3].map(item => <div className={styles.reviewCard} key={item}><div className={`${styles.poster} ${styles.skeleton}`} /><div className={styles.reviewCopy}><div className={styles.skeletonLine} /><div className={styles.skeletonLine} /><div className={styles.skeletonLine} /></div></div>)}</div></>}
         {reviewsError && <RetryNotice className={styles.status} message={t("loadReviewsError")} retryLabel={t("retry")} busy={reviewsLoading} onRetry={() => setReviewsRetry(value => value + 1)} />}
         {!reviewsLoading && !reviewsError && reviews.length === 0 && <p className={styles.empty}>{t("noRecentReviews")}</p>}
         {!reviewsLoading && !reviewsError && reviews.length > 0 && <div className={styles.reviewList}>
@@ -118,10 +121,9 @@ export default function PopularReviews() {
             <div className={styles.reviewCopy}>
               <div className={styles.reviewHeader}>
                 <div>
-                  <h3><Link to={path(`/films/${review.movieId}`)}>{movieTitle}</Link></h3>
-                  <p><Link to={path(`/users/${review.userId}`)}>{getUserName({ username: review.username }, t("someone"))}</Link> · <time dateTime={review.createdAt}>{formatDateTime(review.createdAt, lang)}</time></p>
+                  <h3><Link to={path(`/films/${review.movieId}`)}>{movieTitle}</Link> <strong role="img" aria-label={review.rating == null ? `${t("rating")}: —` : `${t("rating")}: ${review.rating}/5`}>{review.rating != null ? <><img src="/images/movie-star.png" width={14} height={14} alt="" aria-hidden="true" />{review.rating}</> : "—"}</strong></h3>
+                  <p><Link to={path(`/users/${review.userId}`)}>{getUserName({ username: review.username }, t("someone"))}</Link> · <time dateTime={review.createdAt}>{formatReviewDate(review.createdAt, lang)}</time></p>
                 </div>
-                <strong role="img" aria-label={`${t("rating")}: ${review.rating ?? 0}/5`}>{review.rating != null ? `★ ${review.rating}` : "—"}</strong>
               </div>
               <p className={styles.reviewText}><Link to={path(`/reviews/${review.id}`)}>{review.content}</Link></p>
             </div>

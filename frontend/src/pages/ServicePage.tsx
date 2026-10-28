@@ -3,8 +3,8 @@ import { useLocale, type TranslationKey } from "../i18n";
 import ServiceNavigation from "../components/ServiceNavigation";
 import styles from "./ServicePage.module.css";
 
-type ServiceKind = "help" | "faq" | "contact" | "rules" | "privacy" | "film-data" | "delete-account";
-type ServiceSection = { heading: string; body: string; items?: string[] };
+type ServiceKind = "help" | "faq" | "contact" | "rules" | "privacy" | "film-data" | "important-data" | "delete-account" | "terms" | "conditions" | "safety-notice" | "hq-accounts";
+type ServiceSection = { heading: string; body: string; items?: string[]; contactLink?: boolean };
 type ServiceCopy = {
   title: TranslationKey;
   body: TranslationKey;
@@ -14,6 +14,90 @@ type ServiceCopy = {
 };
 
 const content: Record<ServiceKind, ServiceCopy> = {
+  terms: {
+    title: "termsTitle", body: "termsBody",
+    hero: { uk: "Умови користування допомагають розуміти можливості Rewind і відповідально брати участь у спільноті.", en: "Terms explain how to use Rewind and participate responsibly in its cinema community." },
+    sections: {
+      uk: [
+        { heading: "Користування сервісом", body: "Rewind дає змогу знаходити фільми, читати огляди та переглядати публічні списки. Для оцінок, власних оглядів, списків і підписок потрібен вхід в акаунт." },
+        { heading: "Акаунт і безпека", body: "Зберігайте пароль у таємниці. Змінити його можна в налаштуваннях профілю; якщо ви забули пароль, скористайтеся відновленням доступу." },
+        { heading: "Контент і спільнота", body: "Публікуйте лише матеріали, якими маєте право ділитися. Поважайте інших учасників, не поширюйте спам, погрози чи чужі приватні дані. Правила користування описують очікувану поведінку." },
+        { heading: "Модерація", body: "Модератори можуть приховувати огляди та коментарі, видаляти матеріали й обмежувати доступ відповідно до наявних прав модерації." },
+        { heading: "Оплата й перегляд фільмів", body: "У поточному Rewind немає платних підписок, продажу чи прокату відео. Сторінки фільмів містять інформацію та активність спільноти." },
+        { heading: "Ваші дані", body: "Налаштування профілю дозволяють змінювати підтримувані дані та видаляти акаунт із підтвердженням поточного пароля. Подробиці наведено на сторінках приватності й видалення акаунта." },
+        { heading: "Контакти", body: "Якщо виникло питання щодо користування Rewind, додайте до звернення адресу відповідної сторінки. Не надсилайте пароль.", contactLink: true },
+      ],
+      en: [
+        { heading: "Using the Service", body: "Rewind lets you discover films, read reviews, and browse public lists. Sign in to rate films, write reviews, create lists, and follow members." },
+        { heading: "Account Security", body: "Keep your password private. Change it in Profile settings, or use password recovery if you have forgotten it." },
+        { heading: "Content and Community", body: "Only publish material you have permission to share. Respect other members and avoid spam, threats, and sharing private information. Rules of Use describe expected conduct." },
+        { heading: "Moderation", body: "Moderators can hide reviews and comments, remove content, and restrict access using the available moderation permissions." },
+        { heading: "Payments and Film Viewing", body: "Rewind currently has no paid subscriptions, video sales, or rentals. Film pages provide information and community activity." },
+        { heading: "Your Data", body: "Profile settings let you change supported details and delete your account with your current password. See Privacy Policy and Account Deletion for details." },
+        { heading: "Contact Us", body: "For questions about using Rewind, include the relevant page address in your message. Never send your password.", contactLink: true },
+      ],
+    },
+  },
+  conditions: {
+    title: "conditionsTitle", body: "conditionsBody",
+    hero: { uk: "Умови роботи Rewind пояснюють доступність функцій, стан матеріалів і можливості спільноти.", en: "Conditions explain feature availability, content status, and the current Rewind experience." },
+    sections: {
+      uk: [
+        { heading: "Призначення сервісу", body: "Rewind поєднує каталог фільмів, оцінки, огляди, списки та матеріали Journal." },
+        { heading: "Доступність функцій", body: "Публічні матеріали доступні без входу. Особиста активність потребує авторизації. Адміністративні інструменти доступні лише користувачам із відповідними правами." },
+        { heading: "Матеріали та їхній стан", body: "Видимість списків визначають їхні власники, а публікацію матеріалів Journal і модерацію контенту — користувачі з відповідними правами." },
+        { heading: "Оновлення даних", body: "Каталог відображає збережені дані. Оновлення зовнішніх джерел не гарантує негайного оновлення сторінки Rewind; фіксованого інтервалу немає." },
+        { heading: "Оплата", body: "Поточні можливості не потребують платної підписки. Оплата, прокат і продаж відео не підтримуються." },
+        { heading: "Правила та приватність", body: "Ознайомтеся з правилами користування, політикою приватності й описом видалення акаунта в навігації цього розділу." },
+      ],
+      en: [
+        { heading: "Purpose of the Service", body: "Rewind brings together a film catalogue, ratings, reviews, lists, and Journal articles." },
+        { heading: "Feature Availability", body: "Public content is available without signing in. Personal activity requires authentication. Administrative tools require the appropriate permissions." },
+        { heading: "Content and Status", body: "List owners control list visibility. Journal publishing and content moderation are available to users with the appropriate permissions." },
+        { heading: "Data Updates", body: "The catalogue displays stored information. Changes at an external source do not guarantee immediate changes on Rewind; there is no fixed update interval." },
+        { heading: "Payments", body: "Current features do not require a paid subscription. Payments, video rentals, and video sales are not supported." },
+        { heading: "Rules and Privacy", body: "Use this section’s navigation to read Rules of Use, Privacy Policy, and Account Deletion." },
+      ],
+    },
+  },
+  "safety-notice": {
+    title: "safetyNoticeTitle", body: "safetyNoticeBody",
+    hero: { uk: "Безпека Rewind починається із захисту акаунта, поваги до співрозмовників і відповідального поширення інформації.", en: "Safety on Rewind starts with account protection, respectful interaction, and responsible sharing." },
+    sections: {
+      uk: [
+        { heading: "Призначення", body: "Ця пам’ятка пояснює чинні засоби захисту та дії, які допомагають безпечно користуватися спільнотою." },
+        { heading: "Захист даних", body: "Паролі зберігаються як хеші, а дані авторизованої сесії використовують HttpOnly cookies. Email не показується в публічному профілі. Не публікуйте паролі й особисті контактні дані." },
+        { heading: "Контент і взаємодія", body: "Уникайте погроз, переслідування й поширення чужих приватних даних. Модератори можуть приховувати огляди й коментарі, що порушують правила." },
+        { heading: "Безпека спільноти", body: "Керуйте своїми підписками й за потреби використовуйте блокування учасника. Про проблему можна повідомити команді; не додавайте пароль або токени сесії.", contactLink: true },
+        { heading: "Актуальна інформація", body: "Ця сторінка описує поточні можливості Rewind. Додаткові відомості про дані й видалення акаунта наведено в сусідніх розділах." },
+      ],
+      en: [
+        { heading: "Purpose", body: "This notice describes current safeguards and steps that help you use the community safely." },
+        { heading: "Data Protection", body: "Passwords are stored as hashes, and authenticated sessions use HttpOnly cookies. Public profiles do not display email addresses. Do not publish passwords or personal contact details." },
+        { heading: "Content and Interaction", body: "Avoid threats, harassment, and sharing private information about others. Moderators can hide reviews and comments that violate the rules." },
+        { heading: "Community Safety", body: "Manage your follows and use member blocking when needed. Contact the team about a problem without including passwords or session tokens.", contactLink: true },
+        { heading: "Current Information", body: "This page describes current Rewind capabilities. See the neighbouring sections for information about data and account deletion." },
+      ],
+    },
+  },
+  "hq-accounts": {
+    title: "hqAccountsTitle", body: "hqAccountsBody",
+    hero: { uk: "HQ — позначка профілю в спільноті Rewind. Вона допомагає впізнати відповідний акаунт серед інших учасників.", en: "HQ is a profile badge in the Rewind community, helping members recognise the account." },
+    sections: {
+      uk: [
+        { heading: "Що означає HQ", body: "Позначка HQ відображається в публічному профілі та керується адміністраторами. Вона не є платною підпискою й не надає адміністративних прав." },
+        { heading: "Доступні можливості", body: "Акаунт використовує наявні можливості профілю: списки фільмів, огляди, оцінки та взаємодію зі спільнотою. Видимість списків залежить від налаштувань їхнього власника." },
+        { heading: "Межі поточної реалізації", body: "Окремі інструменти HQ для аналітики показів, закріплення списків, завантаження фонів чи керування командою наразі не підтримуються. Позначка HQ сама по собі не змінює правила розрахунку оцінок фільмів." },
+        { heading: "Питання про акаунт", body: "З питаннями про позначку HQ звертайтеся до команди й додайте посилання на профіль.", contactLink: true },
+      ],
+      en: [
+        { heading: "What HQ Means", body: "The HQ badge appears on a public profile and is managed by administrators. It is not a paid subscription and does not grant administrative permissions." },
+        { heading: "Available Features", body: "The account uses existing profile features: film lists, reviews, ratings, and community interaction. List visibility depends on the owner’s settings." },
+        { heading: "Current Limitations", body: "Separate HQ tools for impression analytics, pinned lists, background uploads, or team management are not currently supported. The HQ badge itself does not change how film ratings are calculated." },
+        { heading: "Account Questions", body: "Contact the team about the HQ badge and include the profile address.", contactLink: true },
+      ],
+    },
+  },
   help: {
     title: "helpTitle", body: "helpBody",
     hero: {
@@ -162,6 +246,27 @@ const content: Record<ServiceKind, ServiceCopy> = {
       ],
     },
   },
+  "important-data": {
+    title: "importantDataTitle", body: "importantDataBody",
+    hero: {
+      uk: "Дані фільмів Rewind допомагають підтримувати точність, послідовність і довіру до каталогу.",
+      en: "Important Data is Rewind’s source of truth, ensuring accuracy, consistency, and credibility in every film we share with our community.",
+    },
+    intro: {
+      uk: "Усі метадані фільмів у Rewind — імена акторів, режисерів і студій, синопсиси, дати виходу, трейлери та постери — надходять із The Movie Database (TMDB). Rewind використовує TMDB API, але не схвалений і не сертифікований TMDB.",
+      en: "All film-related metadata used in Rewind—including actor, director, and studio names, synopses, release dates, trailers, and poster art—is supplied by The Movie Database (TMDB). Rewind uses the TMDB API but is not endorsed or certified by TMDB.",
+    },
+    sections: {
+      uk: [
+        { heading: "Джерела й оновлення", body: "Дані про акторський склад, режисерів, студії, синопсиси, дати виходу, трейлери та постери надходять із TMDB. Записи Rewind можуть оновлюватися з цього джерела; фіксованого інтервалу оновлення немає." },
+        { heading: "Дублікати", body: "Якщо ви знайшли кілька сторінок одного фільму, надішліть команді посилання на кожну. Автоматичне об’єднання сторінок і перенесення активності наразі не підтримуються.", contactLink: true },
+      ],
+      en: [
+        { heading: "Sources and Updates", body: "Film data comes from TMDB, including cast, directors, studios, synopses, release dates, trailers, and posters. Rewind records may be refreshed from this source; there is no fixed update interval." },
+        { heading: "Duplicates", body: "If you find multiple pages for the same film, send the team a link to each page. Automatic merging and transfer of activity are not currently supported.", contactLink: true },
+      ],
+    },
+  },
   "delete-account": {
     title: "deleteAccountTitle", body: "deleteAccountBody",
     hero: {
@@ -171,15 +276,15 @@ const content: Record<ServiceKind, ServiceCopy> = {
     sections: {
       uk: [
         { heading: "Призначення", body: "Видалення акаунта — остаточний крок, який прибирає профіль і пов’язану активність із платформи. Перед підтвердженням збережіть потрібну інформацію." },
-        { heading: "Що станеться після видалення", items: ["Ваш профіль більше не буде видимий іншим учасникам.", "Пов’язані з акаунтом огляди, вподобання та коментарі буде видалено або знеособлено.", "Ваші підписки й активні сесії буде завершено.", "Відновити видалений акаунт неможливо."], body: "" },
-        { heading: "Безпека та приватність", body: "Після видалення дані не використовуються для подальшої активності. Процес захищено сучасними заходами безпеки." },
-        { heading: "Оновлення політики", body: "Правила видалення можуть оновлюватися відповідно до вимог безпеки та законодавства." },
+        { heading: "Що станеться після видалення", items: ["Ваш профіль більше не буде видимий іншим учасникам.", "Пов’язані з акаунтом огляди, вподобання та коментарі буде видалено.", "Ваші підписки й активні сесії буде завершено.", "Відновити видалений акаунт неможливо."], body: "" },
+        { heading: "Безпека та приватність", body: "Щоб подати запит, підтвердьте його поточним паролем. Видалення акаунта відбувається через форму в налаштуваннях профілю." },
+        { heading: "Оновлення політики", body: "Опис на цій сторінці стосується поточного процесу в Rewind. Перед відправленням запиту збережіть інформацію, яка може знадобитися вам пізніше." },
       ],
       en: [
         { heading: "Purpose", body: "Account deletion is a final step that removes your profile and related activity from the platform. Save anything you need before confirming." },
-        { heading: "What happens after deletion", items: ["Your profile will no longer be visible to other members.", "Reviews, likes, and comments associated with your account are deleted or anonymised.", "Your follows and active sessions will end.", "Once deleted, your account cannot be restored."], body: "" },
-        { heading: "Security and Privacy", body: "After deletion, your data is not used for further activity. Modern security measures protect the confidentiality of this process." },
-        { heading: "Policy Updates", body: "Account deletion rules may be updated to comply with new security standards and legal requirements." },
+        { heading: "What happens after deletion", items: ["Your profile will no longer be visible to other members.", "Reviews, likes, and comments associated with your account will be deleted.", "Your follows and active sessions will end.", "Once deleted, your account cannot be restored."], body: "" },
+        { heading: "Security and Privacy", body: "To submit a request, confirm it with your current password. Account deletion is handled through the form in Profile settings." },
+        { heading: "Policy Updates", body: "This page describes the current Rewind process. Before submitting a request, save any information you may need later." },
       ],
     },
   },
@@ -270,8 +375,8 @@ export default function ServicePage({ kind }: ServicePageProps) {
           </section>)}</div>
         </> : kind === "contact" ? <div className={styles.editorialBody}>
           <div className={styles.editorialIntro}>
-            <p>{lang === "uk" ? "Ми раді вашим думкам та ідеям про Rewind. Спершу перегляньте " : "We’d love to hear from you regarding any aspect of Rewind. Please check our "}<Link to={path("/faq")}>{lang === "uk" ? "сторінку поширених запитань" : "Frequent Questions page"}</Link>{lang === "uk" ? ": можливо, відповідь на ваше запитання вже є там." : " first — your question may already be answered there."}</p>
-            <p className={styles.contactAvailability}>{lang === "uk" ? "Напишіть команді Rewind:" : "Contact the Rewind team:"} <a href="mailto:anonimua910@gmail.com">anonimua910@gmail.com</a></p>
+            <p>{lang === "uk" ? "Будемо раді вашим думкам та ідеям про Rewind. Спершу перегляньте " : "We’d love to hear from you about any aspect of Rewind. Please check our "}<Link to={path("/faq")}>{lang === "uk" ? "сторінку поширених запитань" : "Frequent Questions page"}</Link>{lang === "uk" ? ". Якщо там немає відповіді або ви хочете надіслати загальне повідомлення про проєкт, напишіть нам на адресу нижче. Додайте сторінку чи функцію, якої стосується звернення, щоб ми краще його зрозуміли." : " first. If it does not answer your question, or you want to send a general message about the project, contact us using the address below. Please include the relevant page or feature so we can understand your enquiry."}</p>
+            <p className={styles.contactAvailability}><a aria-label={lang === "uk" ? "Написати команді Rewind: anonimua910@gmail.com" : "Contact the Rewind team: anonimua910@gmail.com"} href="mailto:anonimua910@gmail.com">anonimua910@gmail.com</a></p>
           </div>
           {sections.map(section => <section key={section.heading} className={styles.editorialSection}>
             <h3>{section.heading}</h3>
@@ -295,7 +400,7 @@ export default function ServicePage({ kind }: ServicePageProps) {
               <Link to={path("/profile#profile-identity-form-title")}>{lang === "uk" ? "переглянути й оновити дані" : "view and update your profile details"}</Link>
               {lang === "uk" ? ", а для видалення акаунта скористайтеся " : ", and to delete your account use the "}
               <Link to={path("/profile#profile-delete-form-title")}>{lang === "uk" ? "формою видалення акаунта" : "account deletion form"}</Link>.
-            </p> : <p>{section.body}</p>}
+            </p> : <p>{section.body}{section.contactLink && <> {lang === "uk" ? "Зв’яжіться з командою через " : "Contact the team through "}<Link to={path("/contact")}>{lang === "uk" ? "Контакти" : "Contacts"}</Link>.</>}</p>}
           </section>)}
         </div>}
       </article>

@@ -5,9 +5,13 @@ import { useLocale } from "../i18n";
 export default function Footer() {
   const { path, t } = useLocale();
   const location = useLocation();
-  const mobileAuthFooter = /^\/(uk|en)\/(login|register|forgot-password|reset-password)\/?$/.test(location.pathname);
+  const mobileAuthFooter = /^\/(uk|en)\/(auth|login|register|forgot-password|reset-password)\/?$/.test(location.pathname);
+  const mobileDetailFooter = /^\/(uk|en)\/(films|reviews)\/\d+\/?$/.test(location.pathname);
+  const mobileSearchFooter = /^\/(uk|en)\/search\/?$/.test(location.pathname);
+  const mobileHomeFooter = /^\/(uk|en)\/home\/?$/.test(location.pathname);
+  const mobilePersonFooter = /^\/(uk|en)\/people\/(actor|director|producer)\/[^/]+\/?$/.test(location.pathname);
   return (
-    <footer className={`${styles.footer} ${mobileAuthFooter ? styles.mobileAuthFooter : ""}`}>
+    <footer className={`${styles.footer} ${mobileAuthFooter ? styles.mobileAuthFooter : ""} ${mobileDetailFooter ? styles.mobileDetailFooter : ""} ${mobileSearchFooter ? styles.mobileSearchFooter : ""} ${mobileHomeFooter ? styles.mobileHomeFooter : ""} ${mobilePersonFooter ? styles.mobilePersonFooter : ""}`}>
 
       {/* TOP LINE */}
       <div className={styles.top}>
@@ -22,7 +26,7 @@ export default function Footer() {
           <Link to={path("/about")}>{t("about")}</Link>
           <Link to={path("/journal")}>{t("journalNews")}</Link>
           <Link to={path("/help")}>{t("help")}</Link>
-          <Link to={path("/rules")}>{t("footerTerms")}</Link>
+          <Link to={path("/terms")}>{t("footerTerms")}</Link>
           <Link to={path("/contact")}>{t("footerContacts")}</Link>
         </nav>
 

@@ -33,9 +33,11 @@ export default function PublicList() {
   const [attempt, setAttempt] = useState(0);
   const [infoOpen, setInfoOpen] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  const retryFocus = useRef<{ listId: number; lang: string; origin: Element | null } | null>(null);
   const restoreHeadingFocus = useRef(false);
   const closeInformation = useCallback(() => {
-    restoreHeadingFocus.current = window.matchMedia("(min-width: 721px)").matches;
+    restoreHeadingFocus.current = window.matchMedia("(min-width: 768px)").matches;
     setInfoOpen(false);
   }, []);
   const doneRef = useRef<HTMLButtonElement>(null);
@@ -51,6 +53,20 @@ export default function PublicList() {
   currentListId.current = listId;
 
   useEffect(() => { setInfoOpen(false); }, [listId, lang]);
+
+  useEffect(() => {
+    const pending = retryFocus.current;
+    if (loading || !pending) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (retryFocus.current !== pending) return;
+      retryFocus.current = null;
+      if (pending.listId !== listId || pending.lang !== lang) return;
+      if (document.activeElement === document.body || document.activeElement === pending.origin) {
+        (error ? errorRef.current : headingRef.current)?.focus();
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [loading, list, error, listId, lang]);
 
   useEffect(() => {
     mutationRequest.current += 1;
@@ -120,8 +136,16 @@ export default function PublicList() {
     }
   };
 
-  if (error) return <main className={styles.statePage} aria-labelledby="public-list-state-title" aria-busy={false}><h1 id="public-list-state-title" className="srOnly">{t("lists")}</h1><p className={styles.stateError} role="alert">{!validListId ? t("invalidListId") : t("loadPublicListError")} {validListId && <RetryButton label={t("retry")} onClick={() => setAttempt(value => value + 1)} />}</p></main>;
-  if (loading || !list) return <main className={styles.statePage} aria-labelledby="public-list-state-title" aria-busy={true}><h1 id="public-list-state-title" className="srOnly">{t("lists")}</h1><p className={styles.stateLoading} role="status">{t("loading")}</p></main>;
+  if (error) return <main className={styles.statePage} aria-labelledby="public-list-state-title" aria-busy={false}><h1 id="public-list-state-title" className="srOnly">{t("lists")}</h1><p ref={errorRef} tabIndex={-1} className={styles.stateError} role="alert">{!validListId ? t("invalidListId") : t("loadPublicListError")} {validListId && <RetryButton label={t("retry")} onClick={() => {
+    retryFocus.current = { listId, lang, origin: document.activeElement };
+    setAttempt(value => value + 1);
+  }} />}</p></main>;
+  if (loading || !list) return <main className={styles.page} aria-labelledby="public-list-state-title" aria-busy={true}>
+    <h1 id="public-list-state-title" className="srOnly">{t("lists")}</h1><p className="srOnly" role="status">{t("loading")}</p>
+    <div aria-hidden="true"><div className={styles.hero}><div className={styles.heroInner}><div className={styles.skeletonTitle} /><div className={styles.skeletonLine} /></div></div>
+      <div className={styles.content}><div className={styles.movieGrid}>{[0, 1, 2, 3, 4, 5].map(item => <div className={styles.skeletonPoster} key={item} />)}</div></div>
+    </div>
+  </main>;
 
   const heroImage = list.movies.find(movie => movie.photoUrl)?.photoUrl;
   const listName = editorialText(list.name, t("lists"));
@@ -138,9 +162,9 @@ export default function PublicList() {
     <section className={styles.hero} aria-labelledby="public-list-heading">
       <ResilientImage className={styles.heroBackdrop} src={heroImage} alt="" aria-hidden="true" loading="eager" fallback={null} />
       <div className={styles.mobileToolbar}>
-        <Link className={styles.mobileBack} to={path("/lists/discover")} aria-label={t("lists")}>←</Link>
+        <Link className={styles.mobileBack} to={path("/lists/discover")} aria-label={t("lists")}><img src="/images/help-icon-back.png" width={25} height={25} alt="" aria-hidden="true" /></Link>
         <span>{t("publicLists")}</span>
-        <button type="button" className={styles.mobileMore} aria-label={t("listInformation")} aria-haspopup="dialog" aria-expanded={infoOpen} aria-controls="public-list-information" onClick={() => setInfoOpen(true)}>⋯</button>
+        <button type="button" className={styles.mobileMore} aria-label={t("listInformation")} aria-haspopup="dialog" aria-expanded={infoOpen} aria-controls="public-list-information" onClick={() => setInfoOpen(true)}><img src="/images/movie-more.png" width={25} height={25} alt="" aria-hidden="true" /></button>
       </div>
       <div className={styles.heroInner}>
         <p className={styles.eyebrow}>{t("listEyebrow")}</p>
@@ -193,7 +217,7 @@ export default function PublicList() {
               aria-busy={likeBusy || likeStatusLoading}
               disabled={likeBusy || likeStatusLoading || !likeStatus}
               onClick={() => void toggleLike()}
-            >{likeStatus?.liked ? "♥" : "♡"}</button> : <span className={styles.informationHeart} aria-hidden="true">♡</span>}
+            ><img src="/images/movie-action-favorite.png" width={51} height={51} alt="" aria-hidden="true" /></button> : <span className={styles.informationHeart} aria-hidden="true"><img src="/images/movie-action-favorite.png" width={51} height={51} alt="" /></span>}
             <span>{likeStatus?.likes ?? list.likeCount ?? 0} {t("likes").toLocaleLowerCase(lang)}</span>
             {isAuth && likeStatusLoading && <span className={styles.inlineStatus} role="status">{t("loading")}</span>}
             {isAuth && likeStatusLoadError && <span className={styles.inlineError} role="alert">{t("listLikeError")} <RetryButton label={t("retry")} onClick={() => setLikeStatusAttempt(value => value + 1)} /></span>}

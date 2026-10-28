@@ -79,6 +79,27 @@ export default function PublicLists() {
   const [landingLoading, setLandingLoading] = useState<Record<LandingFeed, boolean>>(createLandingLoading);
   const landingActive = useRef(false);
   const landingRequestIds = useRef<Record<LandingFeed, number>>(createLandingRequestIds());
+  const retryFocus = useRef<{ origin: Element | null; target: string; key: LandingFeed | "tags" | "feed"; route: string } | null>(null);
+
+  const rememberRetryFocus = (target: string, key: LandingFeed | "tags" | "feed") => {
+    retryFocus.current = { origin: document.activeElement, target, key, route: location.pathname + location.search };
+  };
+
+  useEffect(() => {
+    const pending = retryFocus.current;
+    if (!pending) return;
+    const busy = pending.key === "tags" ? tagsLoading : pending.key === "feed" ? loading : landingLoading[pending.key];
+    if (busy) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (retryFocus.current !== pending) return;
+      retryFocus.current = null;
+      if (pending.route !== location.pathname + location.search) return;
+      if (document.activeElement === document.body || document.activeElement === pending.origin) {
+        document.getElementById(pending.target)?.focus();
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [loading, tagsLoading, landingLoading, location.pathname, location.search]);
 
   useEffect(() => {
     if (!tag || !feedParam || feedParam === "recent") return;
@@ -233,11 +254,14 @@ export default function PublicLists() {
 
   const tagsSection = <section className={styles.tagsSection} aria-labelledby="popular-tags-heading" aria-busy={tagsLoading}>
     <div className={styles.sectionHeading}>
-      <h2 id="popular-tags-heading">{t("popularTags")}</h2>
+      <h2 id="popular-tags-heading" tabIndex={-1}>{t("popularTags")}</h2>
       <Link to={path("/lists/discover?feed=recent")}>{t("viewAll")}</Link>
     </div>
     {tagsLoading && <p className={styles.muted} role="status">{t("loading")}</p>}
-    {tagsError && <RetryNotice className={styles.alert} message={t("loadTagsError")} retryLabel={t("retry")} onRetry={() => setTagsAttempt(value => value + 1)} />}
+    {tagsError && <RetryNotice className={styles.alert} message={t("loadTagsError")} retryLabel={t("retry")} onRetry={() => {
+      rememberRetryFocus("popular-tags-heading", "tags");
+      setTagsAttempt(value => value + 1);
+    }} />}
     {!tagsLoading && !tagsError && tags.length === 0 && <p className={styles.muted}>{t("noTags")}</p>}
     {!tagsLoading && !tagsError && tags.length > 0 && <div className={styles.tagRail}>
       {tags.map(item => <Link className={tag === item.slug ? styles.selectedTag : undefined} aria-current={tag === item.slug ? "page" : undefined} key={item.id} to={path(`/lists/discover?feed=recent&tag=${encodeURIComponent(item.slug)}`)}>#{item.name}</Link>)}
@@ -252,15 +276,15 @@ export default function PublicLists() {
         {isTagged ? <>
           <h1 id="public-lists-title" className={styles.visuallyHidden}>{t("discoverLists")}</h1>
           <div className={styles.taggedToolbar}>
-            <Link className={styles.taggedBack} to={path("/lists/discover?feed=recent")} aria-label={t("discoverLists")}>←</Link>
+            <Link className={styles.taggedBack} to={path("/lists/discover?feed=recent")} aria-label={t("discoverLists")}><img src="/images/help-icon-back.png" width={25} height={25} alt="" aria-hidden="true" /></Link>
             <Link className={styles.taggedSearch} to={path("/search")} aria-label={t("globalSearch")}><span>{t("globalSearchPlaceholder")}</span><span aria-hidden="true">⌕</span></Link>
-            <Link className={styles.taggedFilter} to={path("/lists/discover?feed=recent")} aria-label={t("filters")}>☷</Link>
+            <Link className={styles.taggedFilter} to={path("/lists/discover?feed=recent")} aria-label={t("filters")}><img src="/images/search-filter.png" width={20} height={20} alt="" aria-hidden="true" /></Link>
           </div>
         </> : isFeedView ? <>
           <div className={styles.feedToolbar}>
-            <Link className={styles.feedBack} to={path("/lists/discover")} aria-label={t("discoverLists")}>←</Link>
+            <Link className={styles.feedBack} to={path("/lists/discover")} aria-label={t("discoverLists")}><img src="/images/help-icon-back.png" width={25} height={25} alt="" aria-hidden="true" /></Link>
             <span className={styles.feedToolbarTitle}>{feedHeroTitle}</span>
-            <Link className={styles.feedFilter} to={path("/lists/discover?feed=recent")} aria-label={t("filters")}>☷</Link>
+            <Link className={styles.feedFilter} to={path("/lists/discover?feed=recent")} aria-label={t("filters")}><img src="/images/search-filter.png" width={20} height={20} alt="" aria-hidden="true" /></Link>
           </div>
           <div className={styles.feedHeroCopy}>
             <p className={styles.eyebrow}>{t("collectionsEyebrow")}</p>
@@ -268,6 +292,10 @@ export default function PublicLists() {
             <p>{feedHeroIntro}</p>
           </div>
         </> : <>
+          <nav className={styles.landingToolbar} aria-label={t("discoverLists")}>
+            <Link to={path("/home")} aria-label={t("home")}><img src="/images/help-icon-back.png" width={25} height={25} alt="" aria-hidden="true" /></Link>
+            <Link to={path("/lists/discover?feed=recent")} aria-label={t("listFeedRecent")}><img src="/images/search-filter.png" width={20} height={20} alt="" aria-hidden="true" /></Link>
+          </nav>
           <p className={styles.eyebrow}>{t("collectionsEyebrow")}</p>
           <h1 id="public-lists-title">{t("discoverLists")}</h1>
           <p className={styles.landingIntro}>{t("listsLandingIntro")}</p>
@@ -295,13 +323,16 @@ export default function PublicLists() {
           return (
             <section className={`${styles.landingSection}${section.key === "recentlyLiked" ? ` ${styles.likedLandingSection}` : ""}`} key={section.key} aria-labelledby={`landing-${section.key}-heading`} aria-busy={sectionLoading}>
               <div className={styles.sectionHeading}>
-                <h2 id={`landing-${section.key}-heading`}>{section.label}</h2>
+                <h2 id={`landing-${section.key}-heading`} tabIndex={-1}>{section.label}</h2>
                 <Link to={path(`/lists/discover?feed=${section.feed}`)}>{t("viewAll")}</Link>
               </div>
               {sectionLoading && <div className={styles.landingRail} aria-label={t("loading")} role="status">
                 {Array.from({ length: 2 }, (_, index) => <div className={`${styles.skeleton} ${styles.railSkeleton}`} key={index} />)}
               </div>}
-              {landingErrors[section.key] && <RetryNotice className={styles.alert} message={t("loadPublicListError")} retryLabel={t("retry")} disabled={sectionLoading} onRetry={() => loadLandingFeed(section.key)} />}
+              {landingErrors[section.key] && <RetryNotice className={styles.alert} message={t("loadPublicListError")} retryLabel={t("retry")} disabled={sectionLoading} onRetry={() => {
+                rememberRetryFocus(`landing-${section.key}-heading`, section.key);
+                loadLandingFeed(section.key);
+              }} />}
               {!sectionLoading && !landingErrors[section.key] && landingLists[section.key].length === 0 && <p className={styles.muted}>{t("noPublicLists")}</p>}
               {!sectionLoading && !landingErrors[section.key] && landingLists[section.key].length > 0 && <div className={styles.landingRail}>
                 {landingLists[section.key].map(list => renderListCard(list, section.key === "recentlyLiked" ? "liked" : "rail"))}
@@ -312,7 +343,7 @@ export default function PublicLists() {
       </section> : <>
         <section aria-labelledby="lists-grid-heading" aria-busy={loading}>
           <div className={styles.sectionHeading}>
-            <h2 id="lists-grid-heading">{isTagged ? t("listsTaggedHeading") : feedSectionHeading}</h2>
+            <h2 id="lists-grid-heading" tabIndex={-1}>{isTagged ? t("listsTaggedHeading") : feedSectionHeading}</h2>
             {feed === "popular" && <span className={styles.popularSortLabel}><span>{t("sortByPopularity")}</span><span aria-hidden="true">⌄</span></span>}
             {tag && <span className={styles.filter}>#{filterLabel}</span>}
           </div>
@@ -320,7 +351,10 @@ export default function PublicLists() {
           {loading && <div className={isTagged ? styles.taggedGrid : isCompactFeed ? styles.featuredGrid : styles.grid} aria-label={t("loading")} role="status">
             {Array.from({ length: pageSize }, (_, index) => <div className={`${styles.skeleton} ${isCompactFeed ? styles.featuredSkeleton : ""}`} key={index} />)}
           </div>}
-          {error && <RetryNotice className={styles.alert} message={t("loadPublicListError")} retryLabel={t("retry")} busy={loading} onRetry={() => setAttempt(value => value + 1)} />}
+          {error && <RetryNotice className={styles.alert} message={t("loadPublicListError")} retryLabel={t("retry")} busy={loading} onRetry={() => {
+            rememberRetryFocus("lists-grid-heading", "feed");
+            setAttempt(value => value + 1);
+          }} />}
           {!loading && !error && lists.length === 0 && <div className={styles.empty}><p>{tag && feed === "recent" ? t("noTaggedLists") : t("noPublicLists")}</p></div>}
           {!loading && !error && lists.length > 0 && <div className={isTagged ? styles.taggedGrid : isCompactFeed ? styles.featuredGrid : styles.grid}>
             {lists.map(list => renderListCard(list, isTagged ? "tagged" : "feed"))}

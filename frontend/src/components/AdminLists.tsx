@@ -1,3 +1,4 @@
+import AdminLoading from "./AdminLoading";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { deleteAdminList, getAdminLists, setAdminListVisibility, type AdminList } from "../api/admin.api";
 import type { Page } from "../api/types";
@@ -7,6 +8,7 @@ import RetryNotice from "./RetryNotice";
 import { editorialText, formatMovieCount, useLocale } from "../i18n";
 import { getUserName } from "../utils/userIdentity";
 import styles from "./AdminShared.module.css";
+import dialogStyles from "./AdminConfirmDialog.module.css";
 
 export default function AdminLists() {
   const { lang, t } = useLocale();
@@ -18,6 +20,9 @@ export default function AdminLists() {
   const [error, setError] = useState(false);
   const [actionError, setActionError] = useState<"visibility" | "delete" | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ list: AdminList; trigger: HTMLButtonElement } | null>(null);
+  const deleteDialog = useRef<HTMLDialogElement>(null);
+  const deleteDialogCancel = useRef<HTMLButtonElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const mutationAlert = useRef<HTMLParagraphElement>(null);
   const visibilityButtons = useRef(new Map<number, HTMLButtonElement>());
@@ -42,6 +47,8 @@ export default function AdminLists() {
 
   useLayoutEffect(() => {
     scopeGeneration.current += 1;
+    if (deleteDialog.current?.open) deleteDialog.current.close();
+    setPendingDelete(null);
     const clamp = internalClamp.current;
     pendingFocus.current = clamp && clamp.page === page && clamp.lang === lang && clamp.actor === actor && pendingFocus.current === clamp.focus
       ? { ...clamp.focus, scope: scopeGeneration.current } : null;
@@ -53,6 +60,12 @@ export default function AdminLists() {
     }
     currentActor.current = actor;
   }, [page, lang, actor]);
+
+  useEffect(() => {
+    if (!pendingDelete || !deleteDialog.current) return;
+    if (!deleteDialog.current.open) deleteDialog.current.showModal();
+    deleteDialogCancel.current?.focus();
+  }, [pendingDelete]);
 
   useEffect(() => {
     const pending = pendingFocus.current;
@@ -125,7 +138,7 @@ export default function AdminLists() {
   };
 
   const remove = async (list: AdminList, origin: HTMLButtonElement) => {
-    if (list.listType !== "CUSTOM" || mutationToken.current !== null || !window.confirm(t("deleteListConfirm"))) return;
+    if (list.listType !== "CUSTOM" || mutationToken.current !== null) return;
     const token = {};
     mutationToken.current = token;
     const scope = scopeGeneration.current;
@@ -151,10 +164,31 @@ export default function AdminLists() {
     }
   };
 
+  const requestDelete = (list: AdminList, trigger: HTMLButtonElement) => {
+    if (list.listType !== "CUSTOM" || mutationToken.current !== null) return;
+    pendingFocus.current = null;
+    setPendingDelete({ list, trigger });
+  };
+
+  const cancelDelete = () => {
+    if (deleteDialog.current?.open) deleteDialog.current.close();
+    const trigger = pendingDelete?.trigger;
+    setPendingDelete(null);
+    window.requestAnimationFrame(() => { if (trigger?.isConnected) trigger.focus(); });
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete || mutationToken.current !== null) return;
+    const { list, trigger } = pendingDelete;
+    if (deleteDialog.current?.open) deleteDialog.current.close();
+    setPendingDelete(null);
+    void remove(list, trigger);
+  };
+
   return <section className={`${styles.section} ${styles.listsSection}`} aria-label={t("adminLists")} aria-busy={loading || busyId !== null}>
     <h2 className={styles.title} ref={heading} tabIndex={-1}>{t("adminLists")}</h2>
     {actionError && <p className={`${styles.error} ${styles.listActionFocus}`} ref={mutationAlert} tabIndex={-1} role="alert">{t(actionError === "visibility" ? "adminListVisibilityError" : "adminListDeleteError")}</p>}
-    {loading && <p className={styles.feedback} role="status">{t("loading")}</p>}
+    {loading && <AdminLoading label={t("loading")} layout="lists" />}
     {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => {
       pendingFocus.current = { scope: scopeGeneration.current, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, target: "heading" };
       setLoading(true);
@@ -172,7 +206,7 @@ export default function AdminLists() {
           <p className={styles.listStatus}>{list.isPublic ? t("publicList") : t("hiddenList")}</p>
           <div className={styles.rowActions}>
             <button ref={button => { if (button) visibilityButtons.current.set(list.id, button); else visibilityButtons.current.delete(list.id); }} type="button" aria-busy={busyId === list.id} disabled={busyId !== null} onClick={event => void toggleVisibility(list, event.currentTarget)}>{busyId === list.id ? t("loading") : list.isPublic ? t("hideList") : t("publishList")}</button>
-            {list.listType === "CUSTOM" && <button type="button" aria-busy={busyId === list.id} disabled={busyId !== null} onClick={event => void remove(list, event.currentTarget)}>{busyId === list.id ? t("loading") : t("deleteList")}</button>}
+            {list.listType === "CUSTOM" && <button type="button" aria-busy={busyId === list.id} disabled={busyId !== null} onClick={event => requestDelete(list, event.currentTarget)}>{busyId === list.id ? t("loading") : t("deleteList")}</button>}
           </div>
         </div>
       </li>)}</ul>
@@ -185,5 +219,13 @@ export default function AdminLists() {
         setPage(nextPage);
       }} />
     </>}
+    <dialog className={dialogStyles.deleteDialog} ref={deleteDialog} role="alertdialog" aria-labelledby="admin-list-delete-title" aria-describedby="admin-list-delete-description" onCancel={event => { event.preventDefault(); cancelDelete(); }}>
+      <h3 id="admin-list-delete-title">{t("deleteList")}</h3>
+      {pendingDelete && <p id="admin-list-delete-description">{t("deleteListConfirm")} <strong>{editorialText(pendingDelete.list.name, t("lists"))}</strong> · {getUserName({ username: pendingDelete.list.username }, t("someone"))}</p>}
+      <div className={dialogStyles.deleteDialogActions}>
+        <button type="button" ref={deleteDialogCancel} disabled={busyId !== null} onClick={cancelDelete}>{t("cancel")}</button>
+        <button type="button" className={dialogStyles.deleteDialogConfirm} disabled={busyId !== null} aria-busy={busyId === pendingDelete?.list.id} onClick={confirmDelete}>{busyId === pendingDelete?.list.id ? t("loading") : t("deleteList")}</button>
+      </div>
+    </dialog>
   </section>;
 }

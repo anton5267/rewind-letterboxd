@@ -6,17 +6,18 @@ import styles from "./ServiceNavigation.module.css";
 export default function ServiceNavigation({ className = "" }: { className?: string }) {
   const { path, t } = useLocale();
   const links = [
-    { href: "/about", label: t("about") },
-    { href: "/help", label: t("help") },
-    { href: "/faq", label: t("faqTitle") },
-    { href: "/film-data", label: t("filmData") },
-    { href: "/profile?settings=profile", label: t("accountSettings") },
+    { href: "/hq-accounts", label: t("hqAccountsTitle") },
+    { href: "/faq", label: t("serviceFaqLabel") },
+    { href: "/film-data", label: t("serviceFilmDataLabel") },
+    { href: "/important-data", label: t("serviceImportantDataLabel") },
     { href: "/privacy", label: t("privacyTitle") },
     { href: "/rules", label: t("rulesTitle") },
-    { href: "/contact", label: t("contact") },
-    { href: "/delete-account", label: t("deleteAccount") },
+    { href: "/terms", label: t("termsTitle") },
+    { href: "/conditions", label: t("conditionsTitle") },
+    { href: "/safety-notice", label: t("safetyNoticeTitle") },
+    { href: "/delete-account", label: t("deleteAccountTitle") },
   ];
-  return <nav className={`${styles.navigation} ${className}`} aria-label={t("help")}>
+  return <nav className={`${styles.navigation} ${className}`} aria-label={t("serviceNavigation")}>
     {links.map(link => <NavLink key={link.href} to={path(link.href)} end>{link.label}</NavLink>)}
   </nav>;
 }

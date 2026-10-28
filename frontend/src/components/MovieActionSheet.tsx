@@ -61,10 +61,10 @@ export default function MovieActionSheet({
 
   const busy = mutationBusy !== null;
   const movieTitle = editorialText(movie.title, t("untitledFilm"));
-  const flagActions: { kind: MovieFlag; label: string; symbol: string; enabled: boolean }[] = [
-    { kind: "watched", label: t("watched"), symbol: "◉", enabled: movie.myFlags?.watched ?? false },
-    { kind: "favorite", label: t("favorite"), symbol: "♡", enabled: movie.myFlags?.favorites ?? false },
-    { kind: "watchlist", label: t("watchlist"), symbol: "＋", enabled: movie.myFlags?.watchlist ?? false },
+  const flagActions: { kind: MovieFlag; label: string; icon: string; enabled: boolean }[] = [
+    { kind: "watched", label: t("watched"), icon: "/images/movie-action-eye.png", enabled: movie.myFlags?.watched ?? false },
+    { kind: "favorite", label: t("favorite"), icon: "/images/movie-action-favorite.png", enabled: movie.myFlags?.favorites ?? false },
+    { kind: "watchlist", label: t("watchlist"), icon: "/images/movie-action-watchlist.png", enabled: movie.myFlags?.watchlist ?? false },
   ];
 
   return <div className={styles.backdrop} role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
@@ -76,56 +76,58 @@ export default function MovieActionSheet({
         </div>
       </div>
 
-      <div className={styles.flagGrid}>
-        {flagActions.map(action => <button
-          className={`${styles.flagButton} ${action.enabled ? styles.active : ""}`}
-          key={action.kind}
-          type="button"
-          disabled={busy}
-          aria-pressed={action.enabled}
-          aria-busy={mutationBusy === action.kind}
-          onClick={() => onToggle(action.kind, action.enabled)}
-        >
-          <span className={styles.symbol} aria-hidden="true">{action.symbol}</span>
-          <span>{mutationBusy === action.kind ? t("loading") : action.label}</span>
-        </button>)}
-      </div>
-
-      <div className={styles.ratingBlock}>
-        <span className={styles.blockLabel}>{t("rateFilm")}</span>
-        <div className={styles.stars} role="group" aria-label={t("myRating")}>
-          {[1, 2, 3, 4, 5].map(value => <button
-            className={`${styles.star} ${rating === value ? styles.starActive : ""}`}
-            key={value}
+      <div className={styles.actionPanel}>
+        <div className={styles.flagGrid}>
+          {flagActions.map(action => <button
+            className={`${styles.flagButton} ${action.enabled ? styles.active : ""}`}
+            key={action.kind}
             type="button"
-            disabled={busy || ratingLoading}
-            aria-pressed={rating === value}
-            aria-label={`${t("rateAs")} ${value}`}
-            onClick={() => onSaveRating(value)}
-          >★</button>)}
+            disabled={busy}
+            aria-pressed={action.enabled}
+            aria-busy={mutationBusy === action.kind}
+            onClick={() => onToggle(action.kind, action.enabled)}
+          >
+            <img className={styles.symbol} src={action.icon} width={51} height={51} alt="" aria-hidden="true" />
+            <span>{mutationBusy === action.kind ? t("loading") : action.kind === "favorite" ? t("like") : action.label}</span>
+          </button>)}
         </div>
-        {ratingLoading && <span className={styles.inlineStatus} role="status">{t("loading")}</span>}
-        {ratingLoadError && <span className={styles.inlineError} role="alert">{t("loadRatingsError")} <RetryButton label={t("retry")} onClick={onRetryRating} /></span>}
-        {rating > 0 && !ratingLoading && !busy && <button className={styles.removeRating} type="button" onClick={onDeleteRating}>{t("deleteRating")}</button>}
-      </div>
 
-      <div className={styles.sheetRow}>
-        <label htmlFor="mobile-movie-list">{t("addToList")}</label>
-        {listsLoading && <span className={styles.inlineStatus} role="status">{t("loading")}</span>}
-        {listsLoadError && <span className={styles.inlineError} role="alert">{t("loadListsError")} <RetryButton label={t("retry")} onClick={onRetryLists} /></span>}
-        {!listsLoading && !listsLoadError && lists.length === 0 && <span className={styles.inlineStatus}>{t("noLists")}</span>}
-        {!listsLoading && !listsLoadError && lists.length > 0 && <div className={styles.listControl}>
-          <select id="mobile-movie-list" value={selectedList} onChange={event => onSelectedListChange(event.target.value)} disabled={busy}>
-            <option value="">{t("chooseList")}</option>
-            {lists.map(list => <option key={list.id} value={list.id}>{editorialText(list.name, t("lists"))}</option>)}
-          </select>
-          <button type="button" disabled={!selectedList || busy} aria-busy={mutationBusy === "list"} onClick={onAddToList}>{t("add")}</button>
-        </div>}
-      </div>
+        <div className={styles.ratingBlock}>
+          <span className={styles.blockLabel}>{t("rate")}</span>
+          <div className={styles.stars} role="group" aria-label={t("myRating")}>
+            {[1, 2, 3, 4, 5].map(value => <button
+              className={`${styles.star} ${rating === value ? styles.starActive : ""}`}
+              key={value}
+              type="button"
+              disabled={busy || ratingLoading}
+              aria-pressed={rating === value}
+              aria-label={`${t("rateAs")} ${value}`}
+              onClick={() => onSaveRating(value)}
+            >★</button>)}
+          </div>
+          {ratingLoading && <span className={styles.inlineStatus} role="status">{t("loading")}</span>}
+          {ratingLoadError && <span className={styles.inlineError} role="alert">{t("loadRatingsError")} <RetryButton label={t("retry")} onClick={onRetryRating} /></span>}
+          {rating > 0 && !ratingLoading && !busy && <button className={styles.removeRating} type="button" onClick={onDeleteRating}>{t("deleteRating")}</button>}
+        </div>
 
-      <div className={styles.secondaryActions}>
-        <button type="button" onClick={onReview}>{t("review")}</button>
-        <button type="button" onClick={onShare}>{t("share")}</button>
+        <div className={styles.sheetRow}>
+          <label htmlFor="mobile-movie-list">{t("addToList")}</label>
+          {listsLoading && <span className={styles.inlineStatus} role="status">{t("loading")}</span>}
+          {listsLoadError && <span className={styles.inlineError} role="alert">{t("loadListsError")} <RetryButton label={t("retry")} onClick={onRetryLists} /></span>}
+          {!listsLoading && !listsLoadError && lists.length === 0 && <span className={styles.inlineStatus}>{t("noLists")}</span>}
+          {!listsLoading && !listsLoadError && lists.length > 0 && <div className={styles.listControl}>
+            <select id="mobile-movie-list" value={selectedList} onChange={event => onSelectedListChange(event.target.value)} disabled={busy}>
+              <option value="">{t("chooseList")}</option>
+              {lists.map(list => <option key={list.id} value={list.id}>{editorialText(list.name, t("lists"))}</option>)}
+            </select>
+            <button type="button" disabled={!selectedList || busy} aria-busy={mutationBusy === "list"} onClick={onAddToList}>{t("add")}</button>
+          </div>}
+        </div>
+
+        <div className={styles.secondaryActions}>
+          <button type="button" onClick={onReview}>{t("review")}</button>
+          <button type="button" onClick={onShare}>{t("share")}</button>
+        </div>
       </div>
 
       <button className={styles.doneButton} ref={closeButtonRef} type="button" onClick={onClose}>{t("done")}</button>

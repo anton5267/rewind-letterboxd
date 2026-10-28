@@ -1,3 +1,4 @@
+import AdminLoading from "./AdminLoading";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { getAdminUser, getAdminUserOverview, getAdminUsers, setAdminHq, setAdminUserActive, updateAdminUser, type AdminUser, type AdminUserOverview } from "../api/admin.api";
@@ -43,7 +44,7 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
   const detailOverviewRequest = useRef(0);
   const detailHeading = useRef<HTMLHeadingElement>(null);
   const usersHeading = useRef<HTMLHeadingElement>(null);
-  const detailTrigger = useRef<HTMLButtonElement | null>(null);
+  const detailTrigger = useRef<{ element: HTMLButtonElement; userId: number } | null>(null);
   const overviewHeading = useRef<HTMLHeadingElement>(null);
   const identityError = useRef<HTMLDivElement>(null);
   const overviewError = useRef<HTMLDivElement>(null);
@@ -138,12 +139,14 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
       return;
     }
     const trigger = detailTrigger.current;
-    if (trigger) {
-      if (trigger.isConnected) trigger.focus();
-      else usersHeading.current?.focus();
-      detailTrigger.current = null;
-    }
-  }, [selectedId]);
+    if (!trigger || loading || (!data && !error)) return;
+    detailTrigger.current = null;
+    if (document.activeElement !== document.body && document.activeElement !== trigger.element) return;
+    const restored = trigger.element.isConnected ? trigger.element : usersSection.current?.querySelector<HTMLButtonElement>(
+      `[data-admin-user-id="${trigger.userId}"][data-admin-user-action="profile"]`,
+    );
+    (restored && !restored.disabled ? restored : usersHeading.current)?.focus();
+  }, [selectedId, loading, data, error]);
 
   const explainActionError = (reason: unknown) => {
     const message = (reason as { response?: { data?: { message?: unknown } } })?.response?.data?.message;
@@ -291,7 +294,7 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
   };
 
   const selectUser = (target: AdminUser, trigger: HTMLButtonElement) => {
-    detailTrigger.current = trigger;
+    detailTrigger.current = { element: trigger, userId: target.id };
     setActionError(null);
     setDetailAttempt(0);
     setDetailOverviewAttempt(0);
@@ -320,7 +323,7 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
         </div>
         <button type="button" onClick={closeUserProfile}>{t("close")}</button>
       </div>
-      {detailLoading && <p className={styles.feedback} role="status">{t("loading")}</p>}
+      {detailLoading && <AdminLoading label={t("loading")} layout="detail" />}
       {detailError && <div ref={identityError} className={styles.userRetryFocus} tabIndex={-1}><RetryNotice className={styles.error} message={t("loadAdminUserError")} retryLabel={t("retry")} disabled={detailLoading} busy={detailLoading} onRetry={() => retry("identity")} /></div>}
       {selectedUser && <>
         <div className={styles.detailIdentity}>
@@ -349,7 +352,7 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
         </div>
       </>}
     </section>
-      {detailOverviewLoading && <p className={styles.feedback} role="status">{t("loading")}</p>}
+      {detailOverviewLoading && <AdminLoading label={t("loading")} layout="detail" />}
       {detailOverviewError && <div ref={overviewError} className={styles.userRetryFocus} tabIndex={-1}><RetryNotice className={styles.error} message={t("loadAdminUserOverviewError")} retryLabel={t("retry")} disabled={detailOverviewLoading} busy={detailOverviewLoading} onRetry={() => retry("overview")} /></div>}
       {detailOverview && <div className={styles.detailOverviewGrid}>
         <section className={styles.detailSubsection} aria-labelledby="admin-user-history">
@@ -372,7 +375,7 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
         </section>
       </div>}
     </>}
-    {profileUserId === undefined && loading && <p className={styles.feedback} role="status">{t("loading")}</p>}
+    {profileUserId === undefined && loading && <AdminLoading label={t("loading")} layout="users" />}
     {profileUserId === undefined && error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => retry("catalog")} />}
     {profileUserId === undefined && data && data.content.length === 0 && <p>{t("noAdminUsers")}</p>}
     {profileUserId === undefined && data && <>
@@ -409,7 +412,7 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
         <td>
           <span className={tableStyles.cellLabel} aria-hidden="true">{t("adminUserActionsColumn")}</span>
           <div className={`${styles.rowActions} ${tableStyles.actions}`}>
-          <button type="button" onClick={event => selectUser(target, event.currentTarget)}>{t("viewUserProfile")}</button>
+          <button type="button" data-admin-user-id={target.id} data-admin-user-action="profile" onClick={event => selectUser(target, event.currentTarget)}>{t("viewUserProfile")}</button>
           <button className={styles.userRetryFocus} data-admin-user-id={target.id} data-admin-user-action="hq" type="button" aria-busy={busyId === target.id} disabled={busyId !== null} onClick={event => void mutateUser(target, "hq", event.currentTarget)}>{busyId === target.id ? t("loading") : target.isHq ? t("revokeHq") : t("grantHq")}</button>
           <button className={styles.userRetryFocus} data-admin-user-id={target.id} data-admin-user-action="active" type="button" aria-busy={busyId === target.id} disabled={busyId !== null} onClick={event => void mutateUser(target, "active", event.currentTarget)}>{busyId === target.id ? t("loading") : target.isActive ? t("blockUser") : t("activateUser")}</button>
         </div>

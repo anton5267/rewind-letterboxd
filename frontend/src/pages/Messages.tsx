@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, Navigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useSearchParams } from "react-router-dom";
 import { getConversations, getMessages, markConversationRead, sendMessage, startConversation, type Conversation, type Message } from "../api/messages.api";
 import Pagination from "../components/Pagination";
 import RetryNotice from "../components/RetryNotice";
@@ -14,6 +14,7 @@ import styles from "./Messages.module.css";
 export default function Messages() {
   const { isAuth, ready, user } = useAuth();
   const { lang, path, t } = useLocale();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const targetUserId = Number(searchParams.get("user"));
   const validTargetUserId = Number.isSafeInteger(targetUserId) && targetUserId > 0;
@@ -150,7 +151,7 @@ export default function Messages() {
   }, [messagePage, messageRevision, selected, user?.id]);
 
   if (!ready) return <main className={styles.page} aria-labelledby="messages-title" aria-busy={!ready}><div className={styles.shell}><h1 id="messages-title" className="srOnly">{t("messages")}</h1><p className={styles.notice} role="status">{t("loading")}</p></div></main>;
-  if (!isAuth) return <Navigate to={path("/login")} replace />;
+  if (!isAuth) return <Navigate to={path("/login")} state={{ returnTo: `${location.pathname}${location.search}${location.hash}` }} replace />;
 
   const chooseConversation = (conversation: Conversation) => {
     targetConversationRequest.current += 1;

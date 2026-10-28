@@ -54,6 +54,7 @@
 }
 
 .page .profileRailLink:focus-visible { outline-offset: -3px; }
+.page .section :is(a, button, input, select, textarea, [tabindex]):focus-visible { scroll-margin-block: 122px; }
 
 .page .networkSection > h2:focus-visible,
 .page :global(#public-profile-collections-title):focus-visible,
@@ -179,7 +180,7 @@
 .messageLink,
 .tabs button,
 .pagination button {
-  min-height: 40px;
+  min-height: 44px;
   padding: 9px 15px;
   border: 1px solid rgba(255, 255, 255, .3);
   border-radius: 3px;
@@ -417,12 +418,12 @@
   opacity: .5;
 }
 
-@media (max-width: 620px) {
+@media (max-width: 767px) {
   .page { padding: 0 0 92px; background: #1f1f1f; }
   .shell { box-sizing: border-box; padding: 0 16px; }
   /* Figma 825:1393: original Whiplash layer in a 430x295 slot at x=-19.
      The gradient approximates the black blur; the flat surface starts at547. */
-  .hero { width: 100vw; min-height: 547px; box-sizing: border-box; margin-left: calc(50% - 50vw); align-items: center; justify-content: flex-start; flex-direction: column; gap: 0; border-radius: 0; padding: 50px 16px 35px; background: linear-gradient(180deg, rgba(0, 0, 0, .12), #000 295px, #000 547px, #1f1f1f 547px), #000 url("/images/public-profile-hero-phone.png") center -1px / max(100%, 430px) 304px no-repeat; box-shadow: none; text-align: center; }
+  .hero { width: 100vw; min-height: 547px; box-sizing: border-box; margin-left: calc(50% - 50vw); align-items: center; justify-content: flex-start; flex-direction: column; gap: 0; border-radius: 0; padding: 50px 16px 10px; background: linear-gradient(180deg, rgba(0, 0, 0, .12), #000 295px, #000 547px, #1f1f1f 547px), #000 url("/images/public-profile-hero-phone.png") center -1px / max(100%, 430px) 304px no-repeat; box-shadow: none; text-align: center; }
   .hero .eyebrow { display: none; }
   .identity { width: 100%; align-items: center; flex-direction: column; gap: 7px; }
   .identityCopy { width: min(100%, 361px); }
@@ -447,14 +448,14 @@
   /* Phone overview `825:1378` goes from the 547px identity hero to
      Favorites at y=590; its six section links are the lower navigation. */
   .profileRail { display: none; }
-  .profileRailLink { display: inline-flex; flex: 0 0 auto; min-height: 40px; box-sizing: border-box; align-items: center; padding: 9px 14px; border: 1px solid #464646; border-radius: 999px; background: #242424; color: #f1f1f1; font-size: 12px; font-weight: 800; line-height: 1; text-decoration: none; }
+  .profileRailLink { display: inline-flex; flex: 0 0 auto; min-height: 44px; box-sizing: border-box; align-items: center; padding: 9px 14px; border: 1px solid #464646; border-radius: 999px; background: #242424; color: #f1f1f1; font-size: 12px; font-weight: 800; line-height: 1; text-decoration: none; }
   .profileRailLinkActive { border-color: var(--rewind-gold); background: var(--rewind-gold); color: #17120d; }
   .profileRailLink:hover { border-color: var(--rewind-cyan); color: #fff; }
 }
 
 /* Desktop Public Profile `238:596`: centered identity header and state rail.
    The photographic layer is added only when its original Figma asset is available. */
-@media (min-width: 621px) {
+@media (min-width: 768px) {
   .hero { width: 100vw; min-height: 458px; box-sizing: border-box; margin-left: calc(50% - 50vw); align-items: center; justify-content: flex-start; flex-direction: column; gap: 0; padding: 112px 24px 76px; border-radius: 0; background: linear-gradient(180deg, rgba(0, 0, 0, .24), rgba(0, 0, 0, .88)), #111 url("/images/public-profile-hero.jpg") center / cover no-repeat; text-align: center; }
   .identity { flex-direction: column; gap: 12px; }
   .avatar, .avatarFallback { width: 120px; height: 120px; flex-basis: 120px; }
@@ -464,7 +465,7 @@
   .profileActions { justify-content: center; margin-top: 20px; }
   .profileRail { display: flex; width: max-content; max-width: calc(100vw - 48px); margin: -20px auto 24px; padding: 5px; gap: 4px; overflow-x: auto; border: 1px solid rgba(255, 255, 255, .13); border-radius: 999px; background: #222; scrollbar-width: none; }
   .profileRail::-webkit-scrollbar { display: none; }
-  .profileRailLink { display: inline-flex; min-height: 36px; align-items: center; justify-content: center; padding: 8px 19px; border-radius: 999px; color: #aaa; font-size: 13px; font-weight: 700; line-height: 1; text-decoration: none; white-space: nowrap; }
+  .profileRailLink { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: 8px 19px; border-radius: 999px; color: #aaa; font-size: 13px; font-weight: 700; line-height: 1; text-decoration: none; white-space: nowrap; }
   .profileRailLink:hover { color: #fff; }
   .profileRailLinkActive { background: #fff; color: #171717; }
 }
@@ -717,8 +718,7 @@
   font-weight: 600;
 }
 
-.profileListTagMore,
-.profileListTagMoreStatic {
+.profileListTagMore {
   display: inline-flex;
   min-width: 44px;
   min-height: 44px;
@@ -757,7 +757,7 @@
 .profileListTagChip {
   display: inline-flex;
   min-width: 84px;
-  min-height: 36px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   overflow-wrap: anywhere;
@@ -776,14 +776,14 @@
   color: #fff !important;
 }
 
-@media (max-width: 620px) {
+@media (max-width: 767px) {
   .stats {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .stat { min-height: 76px; padding: 11px 8px; }
   .stat strong { font-size: 23px; }
-  .stat span { font-size: 11px; line-height: 1.25; }
+  .stat span { font-size: 12px; line-height: 1.25; }
 
   .publicListCard {
     grid-template-columns: 132px minmax(0, 1fr);
@@ -1036,7 +1036,7 @@
   }
 
   .publicListCount {
-    font-size: 11px;
+    font-size: 12px;
     white-space: normal;
   }
 
@@ -1076,6 +1076,13 @@
 .heroMetrics dt { color: #bcbcbc; font-size: 18px; line-height: 1.3; overflow-wrap: anywhere; }
 .heroMetrics dd { margin: 0; color: #fff; font-size: 32px; font-weight: 600; line-height: 1.15; overflow-wrap: anywhere; }
 .heroMetrics dd a { display: inline-flex; min-height: 44px; align-items: center; color: inherit; text-decoration: none; }
+.heroMetrics dd a { min-width: 44px; box-sizing: border-box; }
+
+.overviewSection > h2 > a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+}
 
 .shell > section.section.overviewSection {
   box-sizing: border-box;
@@ -1158,12 +1165,12 @@
 .networkBack { display: none; }
 .networkList { margin: 0; padding: 0; list-style: none; }
 .shell > section.networkSection .networkList > li > a { color: inherit; font-weight: inherit; }
-@media (min-width: 721px) {
+@media (min-width: 768px) {
   .networkBack { display: inline-flex; width: 44px; min-height: 44px; align-items: center; justify-content: center; margin-top: 73px; color: #b9b9b9; font-size: 30px; text-decoration: none; }
   .page[data-network-view="true"] .shell > section.networkSection { margin-top: 16px; border: 0; border-top: 1px solid #4d4d4d; border-radius: 0; padding: 17px 0 0; background: transparent; box-shadow: none; }
   .shell > section.networkSection > h2 { margin-bottom: 59px; font-size: 24px; line-height: 27px; }
 }
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .page[data-network-view="true"] { padding-top: 0; }
   .page[data-network-view="true"] .hero, .page[data-network-view="true"] .profileRail, .page[data-network-view="true"] .shell > p { display: none; }
   .page[data-network-view="true"] .collectionToolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 10px; padding-top: 50px; margin-bottom: 29px; }
@@ -1193,7 +1200,7 @@
   .previewGrid { gap: 46px; }
 }
 
-@media (min-width: 621px) and (max-width: 1023px) {
+@media (min-width: 768px) and (max-width: 1023px) {
   .listsOverview .publicListCard { min-height: 260px; }
   .listsOverview .publicListPoster { padding: 24px 12px 24px 20px; --catalog-poster-height: 212px; }
   .listsOverview .publicListHeading { padding: 30px 24px 0 12px; }
@@ -1202,8 +1209,8 @@
   .listsOverview .publicListDescription { font-size: 15px; }
 }
 
-@media (max-width: 620px) {
-  /* 845:1679 / 861:1474 / 863:2474 / 863:2717: toolbar50, content123. */
+@media (max-width: 767px) {
+  /* Confirmed profile collection frames 861:1474, 863:2474 and 863:2717: toolbar50, content123. */
   .page[data-profile-view] .hero,
   .page[data-profile-view] .profileRail,
   .page[data-profile-view] .shell > p { display: none; }
@@ -1224,7 +1231,7 @@
   .page[data-profile-view="collection"] .collectionCard > p { display: none; }
   /* 831:1568 has six361px links. Keep44px targets instead of its32px. */
   .mobileCollectionNavigation { display: grid; gap: 5px; margin-top: 35px; }
-  .mobileCollectionNavigation a { display: flex; min-width: 0; min-height: 44px; box-sizing: border-box; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 15px; border-radius: 37px; background: #282828; color: #fff; font-size: 11px; font-weight: 500; line-height: 1.4; text-decoration: none; overflow-wrap: anywhere; }
+  .mobileCollectionNavigation a { display: flex; min-width: 0; min-height: 44px; box-sizing: border-box; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 15px; border-radius: 37px; background: #282828; color: #fff; font-size: 12px; font-weight: 500; line-height: 1.4; text-decoration: none; overflow-wrap: anywhere; }
   .mobileCollectionNavigation a:hover { background: #343434; }
   .mobileCollectionNavigation a:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: 2px; }
   .mobileCollectionNavigation a > span { font-size: 20px; line-height: 1; }
@@ -1236,8 +1243,8 @@
   .shell > section.section.overviewSection > h2 { margin-bottom: 24px; font-size: 14px; line-height: 16px; }
   .previewGrid { gap: 15px; }
   .previewPosterLink, .previewPoster, .previewPosterFallback, .activityPlaceholder { aspect-ratio: 79 / 116; border-radius: 10px; }
-  .shell > section.overviewSection .activityCaption { gap: 4px; margin-top: 9px; font-size: 10px; line-height: 1.4; }
-  .activityCaption strong { font-size: 11px; }
+  .shell > section.overviewSection .activityCaption { gap: 4px; margin-top: 9px; font-size: 12px; line-height: 1.4; }
+  .activityCaption strong { font-size: 12px; }
   .activityCaption time { font-size: 9px; }
   .reviewCards { gap: 12px; }
   .followingRail a { width: 44px; min-height: 44px; }
@@ -1250,16 +1257,16 @@
   .listsOverview .publicListBody:empty { display: none; }
   .listsOverview .publicListHeading { grid-column: 1; grid-row: 1; align-items: baseline; flex-direction: row; gap: 12px; padding: 24px 18px 9px; }
   .listsOverview .publicListTitle { font-size: 13px; line-height: 1.3; }
-  .listsOverview .publicListCount { font-size: 10px; }
+  .listsOverview .publicListCount { font-size: 12px; }
   .listsOverview .publicListDescription { margin: 0; font-size: 12px; line-height: 1.45; }
   .listsOverview .publicListTags { gap: 5px; margin-top: 10px; }
-  .listsOverview .publicListTags a { font-size: 10px; }
+  .listsOverview .publicListTags a { font-size: 12px; }
   .listsOverview .profileListTagCloud { margin: 24px 0 0; }
   .listsOverview .profileListTagHeading { margin-bottom: 6px; }
   .listsOverview .profileListTagHeading h3 { font-size: 14px; }
   .listsOverview .publicListDescription { display: none; }
   .listsOverview .profileListTagChips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .listsOverview .profileListTagChip { min-width: 0; min-height: 32px; padding: 3px 8px; font-size: 11px; }
+  .listsOverview .profileListTagChip { min-width: 0; min-height: 44px; padding: 3px 8px; font-size: 12px; }
 }
 
 .collectionToolbar h1:focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }

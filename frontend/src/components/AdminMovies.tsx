@@ -1,3 +1,4 @@
+import AdminLoading from "./AdminLoading";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   createAdminMovie,
@@ -56,6 +57,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
   const [movieDraft, setMovieDraft] = useState<AdminMovieWrite>(emptyMovie);
   const [movieCredits, setMovieCredits] = useState(emptyMovieCredits);
   const [editingMovieId, setEditingMovieId] = useState<number | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<AdminMovie | null>(null);
   const [editorLoading, setEditorLoading] = useState(false);
   const [editorDetailsFailed, setEditorDetailsFailed] = useState(false);
   const [tmdbIds, setTmdbIds] = useState<Record<number, string>>({});
@@ -78,12 +80,15 @@ export default function AdminMovies({ onTotalChange }: Props) {
   const movieEditor = useRef<HTMLDetailsElement>(null);
   const movieEditorSummary = useRef<HTMLElement | null>(null);
   const movieActionAlert = useRef<HTMLParagraphElement>(null);
+  const deleteDialog = useRef<HTMLDialogElement>(null);
+  const deleteDialogCancel = useRef<HTMLButtonElement>(null);
+  const deleteTrigger = useRef<HTMLElement | null>(null);
   const movieDetailsError = useRef<HTMLDivElement>(null);
   const mounted = useRef(false);
   const scopeGeneration = useRef(0);
   const actionScopeGeneration = useRef(0);
   const saveToken = useRef<object | null>(null);
-  const pendingFocus = useRef<{ scope: number; request: number; origin: HTMLElement | null; target: "title" | "return" | "error" | "details-error"; trigger: HTMLButtonElement | null } | null>(null);
+  const pendingFocus = useRef<{ scope: number; request: number; origin: HTMLElement | null; target: "title" | "return" | "error" | "details-error"; trigger: HTMLButtonElement | null; movieId?: number | null } | null>(null);
 
   useLayoutEffect(() => {
     catalogFocus.current = null;
@@ -138,6 +143,12 @@ export default function AdminMovies({ onTotalChange }: Props) {
   }, [lang, user?.id, user?.role, page]);
 
   useEffect(() => {
+    if (!pendingDelete || !deleteDialog.current) return;
+    if (!deleteDialog.current.open) deleteDialog.current.showModal();
+    deleteDialogCancel.current?.focus();
+  }, [pendingDelete]);
+
+  useEffect(() => {
     const pending = pendingFocus.current;
     if (!pending || editorLoading || mutationBusy || (pending.target === "return" && loading)) return;
     const frame = window.requestAnimationFrame(() => {
@@ -146,10 +157,24 @@ export default function AdminMovies({ onTotalChange }: Props) {
       if (!mounted.current || scopeGeneration.current !== pending.scope || editorRequestId.current !== pending.request) return;
       if (document.activeElement !== document.body && document.activeElement !== pending.origin) return;
       if (pending.target === "title") {
-        if (movieEditor.current?.open) movieTitleInput.current?.focus();
+        if (movieEditor.current?.open) {
+          movieTitleInput.current?.focus();
+          const heading = catalogTitle.current;
+          if (heading) {
+            const headerBottom = document.querySelector("header")?.getBoundingClientRect().bottom ?? 0;
+            const hiddenByHeader = heading.getBoundingClientRect().top - headerBottom - 16;
+            if (hiddenByHeader < 0) window.scrollBy({ top: hiddenByHeader, behavior: "instant" });
+          }
+        }
       } else if (pending.target === "details-error") {
         if (movieEditor.current?.open) movieDetailsError.current?.focus();
       } else if (pending.target === "error") movieActionAlert.current?.focus();
+      else if (pending.target === "return") {
+        const returnButton = pending.movieId == null ? null : document.querySelector<HTMLButtonElement>(`[data-admin-movie-edit-id="${pending.movieId}"]`);
+        if (returnButton && !returnButton.disabled) returnButton.focus();
+        else if (pending.trigger?.isConnected && !pending.trigger.disabled) pending.trigger.focus();
+        else movieEditorSummary.current?.focus();
+      }
       else if (pending.trigger?.isConnected && !pending.trigger.disabled) pending.trigger.focus();
       else movieEditorSummary.current?.focus();
     });
@@ -250,10 +275,11 @@ export default function AdminMovies({ onTotalChange }: Props) {
   };
 
   const cancelEdit = () => {
+    const origin = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const trigger = editingTrigger.current;
     resetMovieDraft();
+    pendingFocus.current = { scope: scopeGeneration.current, request: editorRequestId.current, origin, target: "return", trigger, movieId: editingMovieId };
     if (movieEditor.current) movieEditor.current.open = false;
-    if (editingTrigger.current?.isConnected) editingTrigger.current.focus();
-    else movieEditorSummary.current?.focus();
     editingTrigger.current = null;
   };
 
@@ -286,7 +312,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
       if (!currentEditor()) return;
       resetMovieDraft();
       if (movieEditor.current) movieEditor.current.open = false;
-      pendingFocus.current = { scope, request: editorRequestId.current, origin, target: "return", trigger: wasEditing ? trigger : null };
+      pendingFocus.current = { scope, request: editorRequestId.current, origin, target: "return", trigger: wasEditing ? trigger : null, movieId: wasEditing ? editingMovieId : null };
       editingTrigger.current = null;
       setError(false);
     } catch {
@@ -305,22 +331,67 @@ export default function AdminMovies({ onTotalChange }: Props) {
   const removeMovie = async (movie: AdminMovie) => {
     const actionScope = actionScopeGeneration.current;
     const isCurrent = () => mounted.current && actionScopeGeneration.current === actionScope;
-    const movieTitle = editorialText(movie.title, t("untitledFilm"));
-    if (mutationBusy || !window.confirm(`${t("deleteMovieConfirm")} ${movieTitle}?`) || !isCurrent()) return;
+    if (mutationBusy || !isCurrent()) return;
+    pendingFocus.current = null;
+    const deleteFocusOrigin = deleteTrigger.current?.isConnected
+      ? deleteTrigger.current
+      : document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setMutationBusy(true);
     setActionError("");
     try {
       await deleteAdminMovie(movie.id);
       if (!isCurrent()) return;
-      if (data?.content.length === 1 && page > 0) setPage(value => value - 1);
-      else setRevision(value => value + 1);
-      if (editingMovieId === movie.id) resetMovieDraft();
+      const nextPage = data?.content.length === 1 && page > 0 ? page - 1 : page;
+      catalogFocus.current = { page: nextPage, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
+      if (nextPage !== page) setPage(nextPage);
+      else {
+        setLoading(true);
+        setData(null);
+        setRevision(value => value + 1);
+      }
+      if (editingMovieId === movie.id) {
+        resetMovieDraft();
+        if (movieEditor.current) movieEditor.current.open = false;
+        editingTrigger.current = null;
+      }
       setError(false);
     } catch {
-      if (isCurrent()) setActionError(t("adminMovieDeleteError"));
+      if (isCurrent()) {
+        setActionError(t("adminMovieDeleteError"));
+        pendingFocus.current = {
+          scope: scopeGeneration.current,
+          request: editorRequestId.current,
+          origin: deleteFocusOrigin,
+          target: "error",
+          trigger: null,
+          movieId: editingMovieId,
+        };
+      }
     } finally {
       if (isCurrent()) setMutationBusy(false);
     }
+  };
+
+  const requestMovieDelete = (movie: AdminMovie, trigger: HTMLElement) => {
+    if (mutationBusy) return;
+    deleteTrigger.current = trigger;
+    setPendingDelete(movie);
+  };
+
+  const cancelMovieDelete = () => {
+    if (deleteDialog.current?.open) deleteDialog.current.close();
+    setPendingDelete(null);
+    window.requestAnimationFrame(() => {
+      if (deleteTrigger.current?.isConnected) deleteTrigger.current.focus();
+    });
+  };
+
+  const confirmMovieDelete = () => {
+    if (!pendingDelete || mutationBusy) return;
+    const movie = pendingDelete;
+    if (deleteDialog.current?.open) deleteDialog.current.close();
+    setPendingDelete(null);
+    void removeMovie(movie);
   };
 
   const syncMovie = async (movie: AdminMovie) => {
@@ -436,6 +507,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
   };
 
   const retryQuality = () => setQualityRevision(value => value + 1);
+  const editingMovie = editingMovieId === null ? null : data?.content.find(movie => movie.id === editingMovieId) ?? null;
 
   return (
     <section className={`${styles.section} ${editingMovieId !== null ? styles.editing : ""}`} aria-label={t("adminMovieDatabase")} aria-busy={loading || qualityLoading || mutationBusy || tmdbImportBusy || syncingMovieId !== null}>
@@ -450,7 +522,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
             }
           }}>{editingMovieId === null ? t("addMovie") : `${t("editMovie")}: ${editorialText(movieDraft.title, t("untitledFilm"))}`}</summary>
           <div className={styles.editorContent}>
-            {editorLoading ? <p className={styles.feedback} role="status">{t("loading")}</p> : editorDetailsFailed ? <div className={styles.error} ref={movieDetailsError} tabIndex={-1}><RetryNotice className={styles.error} message={t("adminMovieDetailsError")} retryLabel={t("retry")} disabled={editorLoading} busy={editorLoading} onRetry={() => {
+            {editorLoading ? <AdminLoading label={t("loading")} layout="editor" /> : editorDetailsFailed ? <div className={styles.error} ref={movieDetailsError} tabIndex={-1}><RetryNotice className={styles.error} message={t("adminMovieDetailsError")} retryLabel={t("retry")} disabled={editorLoading} busy={editorLoading} onRetry={() => {
               const movie = data?.content.find(item => item.id === editingMovieId);
               const trigger = editingTrigger.current;
               if (movie && trigger) void editMovie(movie, trigger, document.activeElement instanceof HTMLElement ? document.activeElement : null);
@@ -473,7 +545,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
                 <div><dt>{t("actors")}</dt><dd>{movieCredits.actors.length ? movieCredits.actors.join(", ") : t("none")}</dd></div>
               </dl>}
               <label className={`${styles.field} ${styles.plotField}`}>{t("description")}<textarea maxLength={10000} rows={5} value={movieDraft.shortPlot ?? ""} onChange={event => setMovieDraft({ ...movieDraft, shortPlot: event.target.value })} /></label>
-              <div className={styles.actions}><button type="submit" aria-busy={mutationBusy} disabled={mutationBusy}>{mutationBusy ? t("saving") : editingMovieId === null ? t("create") : t("save")}</button>{editingMovieId !== null && <button type="button" disabled={mutationBusy} onClick={cancelEdit}>{t("cancel")}</button>}</div>
+              <div className={styles.actions}><button type="submit" aria-busy={mutationBusy} disabled={mutationBusy}>{mutationBusy ? t("saving") : editingMovieId === null ? t("create") : t("save")}</button>{editingMovieId !== null && <button type="button" disabled={mutationBusy} onClick={cancelEdit}>{t("cancel")}</button>}{editingMovie && <button type="button" className={styles.deleteAction} disabled={mutationBusy} onClick={event => requestMovieDelete(editingMovie, event.currentTarget)}>{t("deleteMovie")}</button>}</div>
             </form>}
             {editingMovieId !== null && (editorLoading || editorDetailsFailed) && <div className={styles.actions}><button type="button" onClick={cancelEdit}>{t("cancel")}</button></div>}
             {editingMovieId === null && <div className={styles.tmdbPanel}>
@@ -489,11 +561,22 @@ export default function AdminMovies({ onTotalChange }: Props) {
         </details>
       </div>
       {actionError && <p className={styles.error} role="alert" ref={movieActionAlert} tabIndex={-1}>{actionError}</p>}
+      <dialog className={styles.deleteDialog} ref={deleteDialog} role="alertdialog" aria-labelledby="admin-movie-delete-title" aria-describedby="admin-movie-delete-description" onCancel={event => {
+        event.preventDefault();
+        cancelMovieDelete();
+      }}>
+        <h3 id="admin-movie-delete-title">{t("deleteMovie")}</h3>
+        {pendingDelete && <p id="admin-movie-delete-description">{t("deleteMovieConfirm")} <strong>{editorialText(pendingDelete.title, t("untitledFilm"))}</strong></p>}
+        <div className={styles.deleteDialogActions}>
+          <button type="button" ref={deleteDialogCancel} disabled={mutationBusy} onClick={cancelMovieDelete}>{t("cancel")}</button>
+          <button type="button" className={styles.deleteDialogConfirm} disabled={mutationBusy} aria-busy={mutationBusy} onClick={confirmMovieDelete}>{mutationBusy ? t("loading") : t("deleteMovie")}</button>
+        </div>
+      </dialog>
       {syncMessage && <p className={syncError ? styles.error : styles.status} role={syncError ? "alert" : "status"}>{syncMessage}</p>}
-      {loading && <p className={styles.feedback} role="status">{t("loading")}</p>}
+      {loading && <AdminLoading label={t("loading")} layout="movies" />}
       {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={retry} />}
-      {data && data.content.length === 0 && <p>{t("noAdminMovies")}</p>}
-      {data && <>
+      {editingMovieId === null && data && data.content.length === 0 && <p>{t("noAdminMovies")}</p>}
+      {editingMovieId === null && data && <>
         <ul className={styles.movieList} aria-label={t("adminMovieResults")}>{data.content.map(movie => {
           const movieTitle = editorialText(movie.title, t("untitledFilm"));
           return <li className={styles.movieRow} key={movie.id}>
@@ -504,11 +587,11 @@ export default function AdminMovies({ onTotalChange }: Props) {
                 <span className={styles.movieRating} aria-label={`${t("rating")}: ${movie.rating ?? "—"}`}>★ {movie.rating ?? "—"}</span>
               </div>
               <div className={styles.movieCardActions}>
-                <button type="button" disabled={mutationBusy} onClick={event => editMovie(movie, event.currentTarget)}>{t("editMovie")}</button>
+                <button type="button" data-admin-movie-edit-id={movie.id} disabled={mutationBusy} onClick={event => editMovie(movie, event.currentTarget)}>{t("editMovie")}</button>
                 <details className={styles.movieActions}>
                   <summary aria-label={`${t("moreActions")} · ${movieTitle}`}>{t("moreActions")}</summary>
                   <div className={styles.movieActionsPanel}>
-                    <button type="button" disabled={mutationBusy} onClick={() => void removeMovie(movie)}>{t("deleteMovie")}</button>
+                    <button type="button" disabled={mutationBusy} onClick={event => requestMovieDelete(movie, event.currentTarget)}>{t("deleteMovie")}</button>
                     <div className={styles.syncControls}><label className={styles.inlineField}>{t("tmdbId")}<input className={styles.tmdbIdInput} inputMode="numeric" pattern="[0-9]*" aria-label={`${t("tmdbId")} ${movieTitle}`} value={tmdbIds[movie.id] ?? ""} onChange={event => setTmdbIds(current => ({ ...current, [movie.id]: event.target.value }))} /></label><button type="button" disabled={syncingMovieId !== null} onClick={() => void syncMovie(movie)}>{syncingMovieId === movie.id ? t("loading") : t("syncTmdb")}</button></div>
                   </div>
                 </details>
@@ -516,7 +599,8 @@ export default function AdminMovies({ onTotalChange }: Props) {
             </div>
           </li>;
         })}</ul>
-        <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminMoviesPagination")} busy={loading} statusSuffix={data.totalElements} onPageChange={nextPage => {
+        <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminMoviesPagination")} busy={loading || mutationBusy} statusSuffix={data.totalElements} onPageChange={nextPage => {
+          if (loading || mutationBusy) return;
           catalogFocus.current = { page: nextPage, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
           setLoading(true);
           setData(null);

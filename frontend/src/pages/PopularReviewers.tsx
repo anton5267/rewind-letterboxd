@@ -44,7 +44,7 @@ export default function PopularReviewers() {
 
     <section className={styles.shell} aria-labelledby="popular-reviewers-title" aria-busy={loading}>
       <div className={styles.sectionHeading}><h2>{t("popularReviewers")}</h2><span>{t("sortByPopularity")}</span></div>
-      {loading && <p className={styles.status} role="status">{t("loading")}</p>}
+      {loading && <><p className="srOnly" role="status">{t("loading")}</p><div className={styles.table} aria-hidden="true">{Array.from({ length: PAGE_SIZE }, (_, item) => <div className={styles.skeletonRow} key={item}><div className={styles.skeletonAvatar} /><div className={styles.skeletonLine} /></div>)}</div></>}
       {error && <RetryNotice className={styles.status} message={t("loadCommunityError")} retryLabel={t("retry")} busy={loading} onRetry={() => setRetry(value => value + 1)} />}
       {!loading && !error && reviewers.length === 0 && <p className={styles.empty}>{t("noPopularReviewers")}</p>}
       {!loading && !error && reviewers.length > 0 && <div className={styles.table}>

@@ -95,7 +95,7 @@ export default function Header() {
     const closeOutside = (event: PointerEvent) => {
       if (event.target instanceof Node && !accountAreaRef.current?.contains(event.target)) setAccountOpen(false);
     };
-    const desktop = window.matchMedia("(min-width: 721px)");
+    const desktop = window.matchMedia("(min-width: 768px)");
     const closeAtBreakpoint = () => {
       if (desktop.matches) return;
       setAccountOpen(false);
@@ -118,7 +118,7 @@ export default function Header() {
     if (!mobileMenuOpen) return;
     const firstFocusable = mobileMenuRef.current?.querySelector<HTMLElement>("a, button");
     firstFocusable?.focus();
-    const mobile = window.matchMedia("(max-width: 720px)");
+    const mobile = window.matchMedia("(max-width: 767px)");
     const closeAtBreakpoint = () => {
       if (mobile.matches) return;
       setMobileMenuOpen(false);
@@ -160,7 +160,6 @@ export default function Header() {
 
   // Person/filmography pages use the same dark canvas as the Figma Actor frames;
   // only Journal keeps its light editorial header treatment.
-  const lightHeader = /^\/(uk|en)\/journal\//.test(location.pathname);
   const mobileDetailHeader = /^\/(uk|en)\/(films|reviews)\/[^/]+\/?$/.test(location.pathname);
   const mobileFilmsHeader = /^\/(uk|en)\/films\/?$/.test(location.pathname);
   const mobileListDetailHeader = /^\/(uk|en)\/lists\/public\/[^/]+\/?$/.test(location.pathname);
@@ -173,14 +172,14 @@ export default function Header() {
   const mobileUserListsHeader = /^\/(uk|en)\/lists\/?$/.test(location.pathname);
   const settingsView = new URLSearchParams(location.search).get("settings");
   const mobileProfileSettingsHeader = mobileProfileHeader && ["profile", "authentication", "avatar", "connections"].includes(settingsView ?? "");
-  const mobileAuthHeader = /^\/(uk|en)\/(login|register|forgot-password|reset-password)\/?$/.test(location.pathname);
+  const mobileAuthHeader = /^\/(uk|en)\/(auth|login|register|forgot-password|reset-password)\/?$/.test(location.pathname);
   const listParams = new URLSearchParams(location.search);
   const listsLandingHeader = /^\/(uk|en)\/lists\/discover\/?$/.test(location.pathname)
     && !toTagSlug(listParams.get("tag") ?? "");
   const listsFeedHeader = listsLandingHeader && Boolean(listParams.get("feed"));
 
   return (
-    <header className={`${styles.header} ${lightHeader ? styles.light : ""} ${mobileDetailHeader ? styles.mobileDetail : ""} ${mobileFilmsHeader ? styles.mobileFilms : ""} ${mobileListDetailHeader ? styles.mobileListDetail : ""} ${mobileSearchHeader ? styles.mobileSearch : ""} ${mobileHomeHeader ? styles.mobileHome : ""} ${mobileCommunityHeader ? styles.mobileCommunity : ""} ${mobilePersonHeader ? styles.mobilePerson : ""} ${mobilePublicProfileHeader ? styles.mobilePublicProfile : ""} ${mobileProfileHeader ? styles.mobileProfile : ""} ${mobileUserListsHeader ? styles.mobileUserLists : ""} ${mobileProfileSettingsHeader ? styles.mobileProfileSettings : ""} ${mobileAuthHeader ? styles.mobileAuth : ""} ${listsLandingHeader ? styles.listsLanding : ""}`}>
+    <header className={`${styles.header} ${mobileDetailHeader ? styles.mobileDetail : ""} ${mobileFilmsHeader ? styles.mobileFilms : ""} ${mobileListDetailHeader ? styles.mobileListDetail : ""} ${mobileSearchHeader ? styles.mobileSearch : ""} ${mobileHomeHeader ? styles.mobileHome : ""} ${mobileCommunityHeader ? styles.mobileCommunity : ""} ${mobilePersonHeader ? styles.mobilePerson : ""} ${mobilePublicProfileHeader ? styles.mobilePublicProfile : ""} ${mobileProfileHeader ? styles.mobileProfile : ""} ${mobileUserListsHeader ? styles.mobileUserLists : ""} ${mobileProfileSettingsHeader ? styles.mobileProfileSettings : ""} ${mobileAuthHeader ? styles.mobileAuth : ""} ${listsLandingHeader ? styles.listsLanding : ""}`}>
 
       {listsLandingHeader && <div className={styles.listLandingControls}>
         <Link to={path(listsFeedHeader ? "/lists/discover" : "/home")} aria-label={listsFeedHeader ? t("discoverLists") : t("home")}><i className="fa-solid fa-chevron-left" aria-hidden="true" /></Link>
@@ -225,6 +224,7 @@ export default function Header() {
               {user?.role === "ADMIN" && <Link to={path("/admin")}>{t("adminDashboard")}</Link>}
               <button type="button" onClick={() => { void handleLogout(); }}>{t("logout")}</button>
             </> : <>
+              <Link to={path("/auth")}>{t("account")}</Link>
               <Link to={path("/login")}>{t("login")}</Link>
               <Link to={path("/register")}>{t("register")}</Link>
             </>}
@@ -255,6 +255,7 @@ export default function Header() {
             {user?.role === "ADMIN" && <Link to={path("/admin")}>{t("adminDashboard")}</Link>}
             <button type="button" onClick={() => { void handleLogout(); }}>{t("logout")}</button>
           </> : <>
+            <Link to={path("/auth")}>{t("account")}</Link>
             <Link to={path("/login")}>{t("login")}</Link>
             <Link to={path("/register")}>{t("register")}</Link>
           </>}
@@ -267,7 +268,7 @@ export default function Header() {
         <NavLink to={path("/search")} aria-label={t("search")}><MobileNavIcon name="search" /><span className={mobileHomeHeader ? undefined : styles.visuallyHidden}>{t("search")}</span></NavLink>
         <NavLink to={path("/films")} aria-label={t("add")}><MobileNavIcon name="add" /><span className={mobileHomeHeader ? undefined : styles.visuallyHidden}>{t("add")}</span></NavLink>
         <NavLink to={path("/journal")} aria-label={t("journal")}><MobileNavIcon name="journal" /><span className={mobileHomeHeader ? undefined : styles.visuallyHidden}>{t("journal")}</span></NavLink>
-        <NavLink to={path(isAuth ? "/profile" : "/login")} aria-label={t("profile")}><MobileNavIcon name="profile" /><span className={mobileHomeHeader ? undefined : styles.visuallyHidden}>{t("profile")}</span></NavLink>
+        <NavLink to={path(isAuth ? "/profile" : "/auth")} aria-label={t("profile")}><MobileNavIcon name="profile" /><span className={mobileHomeHeader ? undefined : styles.visuallyHidden}>{t("profile")}</span></NavLink>
       </nav>
 
     </header>

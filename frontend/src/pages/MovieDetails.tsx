@@ -5,6 +5,7 @@ import ResilientImage from "../components/ResilientImage";
 import RetryButton from "../components/RetryButton";
 import RetryNotice from "../components/RetryNotice";
 import MovieActionSheet from "../components/MovieActionSheet";
+import ConfirmDialog from "../components/ConfirmDialog";
 import { addMovieToList, getUserLists, type UserList } from "../api/lists.api";
 import { deleteRating as deleteMovieRating, getUserRating, setRating as setMovieRating } from "../api/ratings.api";
 import { createMovieReview, deleteReview as deleteReviewRequest, getMovieReviews, getMyMovieReview, getReviewLikeStatus, getReviewLikes, likeReview, unlikeReview, updateReview, type MovieReview } from "../api/reviews.api";
@@ -115,6 +116,7 @@ export default function MovieDetails() {
   const [reviewsLoadError, setReviewsLoadError] = useState(false);
   const [reviewsAttempt, setReviewsAttempt] = useState(0);
   const [mutationBusy, setMutationBusy] = useState<string | null>(null);
+  const [reviewDeleteTrigger, setReviewDeleteTrigger] = useState<HTMLButtonElement | null>(null);
   const [message, setMessage] = useState("");
   const [mobileActionOpen, setMobileActionOpen] = useState(false);
   const loadRequest = useRef(0);
@@ -357,7 +359,7 @@ export default function MovieDetails() {
   };
 
   const deleteReview = async () => {
-    if (!myReview || currentMovieId.current !== movieId || !window.confirm(t("deleteReviewConfirm"))) return;
+    if (!myReview || currentMovieId.current !== movieId) return;
     const requestId = startMutation("delete-review");
     if (requestId === null) return;
     try {
@@ -411,6 +413,18 @@ export default function MovieDetails() {
 
   const closeMobileActions = useCallback(() => setMobileActionOpen(false), []);
 
+  const focusReview = () => {
+    closeMobileActions();
+    // Run after the sheet's focus-return cleanup so the destination keeps focus.
+    window.requestAnimationFrame(() => {
+      const composer = document.getElementById("review-content");
+      const destination = composer instanceof HTMLTextAreaElement && !composer.disabled
+        ? composer : document.getElementById("reviews-title");
+      destination?.focus({ preventScroll: true });
+      destination?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  };
+
   const shareMovie = useCallback(async () => {
     if (!movie) return;
     try {
@@ -438,7 +452,7 @@ export default function MovieDetails() {
       <div className={styles.mobileReviewHeading}>
         <span className={styles.mobileReviewAvatar} aria-hidden="true">{reviewerName.slice(0, 1).toLocaleUpperCase(lang === "uk" ? "uk-UA" : "en-US")}</span>
         <span className={styles.mobileReviewByline}><Link to={path(`/reviews/${item.id}`)}>{reviewerName}</Link><time dateTime={item.createdAt}>{reviewDate}</time></span>
-        <strong className={styles.mobileReviewRating}>{item.rating == null ? "—" : `★ ${item.rating}`}</strong>
+        <strong className={styles.mobileReviewRating}>{item.rating == null ? "—" : <><img src="/images/movie-star.png" width={8} height={8} alt="" aria-hidden="true" />{item.rating}</>}</strong>
       </div>
       <p>{item.content}</p><ReviewLikeButton reviewId={item.id} /><Comments reviewId={item.id} />
     </article>;
@@ -459,26 +473,36 @@ export default function MovieDetails() {
       {loadError && <RetryNotice className={styles.alert} message={loadError} retryLabel={t("retry")} onRetry={() => setLoadAttempt(value => value + 1)} />}
       {error && <div className={styles.alert} role="alert">{error}</div>}
       {message && <div className={styles.status} role="status">{message}</div>}
-      {loading && !movie && <p className={styles.loading} role="status">{t("loading")}</p>}
+      {loading && !movie && <><p className="srOnly" role="status">{t("loading")}</p>
+        <div className={styles.hero} aria-hidden="true"><div className={styles.heroGrid}>
+          <div className={styles.posterFrame}><div className={`${styles.poster} ${styles.skeleton}`} /></div>
+          <div className={styles.heroCopy}><div className={styles.mobileTitleControls}><div className={styles.skeletonLine} /></div><div className={styles.skeletonTitle} /><div className={styles.skeletonLine} /><div className={styles.plot}>{[0, 1, 2, 3].map(item => <div className={styles.skeletonLine} key={item} />)}</div></div>
+        </div></div>
+      </>}
       {movie && <>
         <section className={styles.hero} aria-labelledby="movie-title">
           <ResilientImage className={styles.heroBackdrop} src={heroImage} alt="" aria-hidden="true" loading="eager" fallback={null} />
           <div className={styles.heroToolbar}>
-            <Link className={styles.heroToolbarButton} to={path("/films")} aria-label={t("films")}>←</Link>
+            <Link className={styles.heroToolbarButton} to={path("/films")} aria-label={t("films")}><img src="/images/help-icon-back.png" width={25} height={25} alt="" aria-hidden="true" /></Link>
             <span aria-hidden="true">{movieTitle}</span>
-            {isAuth ? <button className={styles.heroToolbarButton} type="button" aria-haspopup="dialog" aria-controls={mobileActionOpen ? "movie-action-sheet" : undefined} aria-expanded={mobileActionOpen} onClick={() => setMobileActionOpen(true)} aria-label={t("myActions")}>⋯</button> : <Link className={styles.heroToolbarButton} to={path("/search")} aria-label={t("globalSearch")}>⌕</Link>}
+            {isAuth ? <button className={styles.heroToolbarButton} type="button" aria-haspopup="dialog" aria-controls={mobileActionOpen ? "movie-action-sheet" : undefined} aria-expanded={mobileActionOpen} onClick={() => setMobileActionOpen(true)} aria-label={t("myActions")}><img src="/images/movie-more.png" width={25} height={25} alt="" aria-hidden="true" /></button> : <Link className={styles.heroToolbarButton} to={path("/search")} aria-label={t("globalSearch")}>⌕</Link>}
           </div>
           <div className={styles.heroGrid}>
             <div className={styles.posterFrame}>
               <ResilientImage className={styles.poster} src={movie.photoUrl} alt={`${t("poster")} ${movieTitle}`} fallback={<div className={styles.posterFallback} aria-hidden="true">{movieTitle.slice(0, 1)}</div>} />
+              <div className={styles.posterTrailer}>{trailerUrl ? <a className={styles.textLink} href={trailerUrl} target="_blank" rel="noopener noreferrer">{t("watchTrailer")}</a> : <p>{t("trailerUnavailable")}</p>}</div>
             </div>
             <div className={styles.heroCopy}>
+              <div className={styles.mobileTitleControls}>
+                {movie.ageRating && <span className={styles.mobileAgeRating}>{movie.ageRating}</span>}
+                {trailerUrl ? <a href={trailerUrl} target="_blank" rel="noopener noreferrer">{t("watchTrailer")}</a> : <span className={styles.mobileTrailerUnavailable}>{t("trailerUnavailable")}</span>}
+              </div>
               <h1 id="movie-title">{movieTitle}</h1>
               <ul className={styles.meta} aria-label={t("filmData")}>
                 <li>{formatMovieYear(movie.releaseDate, t("unknownYear"))}</li>
                 {movie.durationMinutes ? <li>{movie.durationMinutes} {t("minutes")}</li> : null}
-                {movie.ageRating ? <li>{movie.ageRating}</li> : null}
-                {movie.rating != null ? <li>★ {movie.rating}</li> : null}
+                {movie.ageRating ? <li className={styles.desktopMeta}>{movie.ageRating}</li> : null}
+                {movie.rating != null ? <li className={styles.desktopMeta}>★ {movie.rating}</li> : null}
               </ul>
               {movie.genres.length > 0 && <div className={styles.genres}>{movie.genres.map(item => <span key={item.id}>{localizeGenreName(item.name, lang)}</span>)}</div>}
               {movie.shortPlot && <p className={styles.plot}>{movie.shortPlot}</p>}
@@ -497,13 +521,39 @@ export default function MovieDetails() {
                 </div>}
               </div>
             </div>
+            {isAuth && <section className={`${styles.actionSection} ${styles.heroActions}`} aria-label={t("myActions")}>
+              <div className={styles.sectionHeading}><p className={styles.eyebrow}>{t("myActions")}</p><h2>{t("myActions")}</h2></div>
+              <div className={styles.actionButtons}>
+                <button className={`${styles.actionButton} ${movie.myFlags?.watched ? styles.actionButtonActive : ""}`} type="button" disabled={mutationBusy !== null} aria-busy={mutationBusy === "watched"} onClick={() => void toggle("watched", movie.myFlags?.watched ?? false)} aria-pressed={movie.myFlags?.watched ?? false}><i className="fa-solid fa-eye" aria-hidden="true" />{mutationBusy === "watched" ? t("loading") : t("watched")}</button>
+                <button className={`${styles.actionButton} ${movie.myFlags?.favorites ? styles.actionButtonActive : ""}`} type="button" disabled={mutationBusy !== null} aria-busy={mutationBusy === "favorite"} onClick={() => void toggle("favorite", movie.myFlags?.favorites ?? false)} aria-pressed={movie.myFlags?.favorites ?? false}><i className="fa-solid fa-heart" aria-hidden="true" />{mutationBusy === "favorite" ? t("loading") : t("favorite")}</button>
+                <button className={`${styles.actionButton} ${movie.myFlags?.watchlist ? styles.actionButtonActive : ""}`} type="button" disabled={mutationBusy !== null} aria-busy={mutationBusy === "watchlist"} onClick={() => void toggle("watchlist", movie.myFlags?.watchlist ?? false)} aria-pressed={movie.myFlags?.watchlist ?? false}><i className="fa-solid fa-bookmark" aria-hidden="true" />{mutationBusy === "watchlist" ? t("loading") : t("watchlist")}</button>
+              </div>
+              <div className={styles.ratingRow}>
+                {ratingLoading ? <span className={styles.inlineStatus} role="status">{t("loading")}</span> : <span className={styles.ratingLabel}>{t("rate")}</span>}
+                {ratingLoadError && <span className={styles.inlineError} role="alert">{t("loadRatingsError")} <RetryButton label={t("retry")} onClick={() => setRatingAttempt(value => value + 1)} /></span>}
+                <div className={styles.ratingButtons} role="group" aria-label={t("myRating")}>
+                  {[1, 2, 3, 4, 5].map(value => <button className={rating === value ? styles.ratingActive : ""} key={value} type="button" disabled={mutationBusy !== null || ratingLoading} onClick={() => void saveRating(value)} aria-label={`${t("rateAs")} ${value}`} aria-pressed={rating === value}>★</button>)}
+                </div>
+                {rating > 0 && !myReview && <button className={styles.textButton} type="button" disabled={mutationBusy !== null || ratingLoading} onClick={() => void deleteRating()}>{mutationBusy === "delete-rating" ? t("deleting") : t("deleteRating")}</button>}
+              </div>
+              <div className={styles.listPicker}>
+                {listsLoading && <><p className="srOnly" role="status">{t("loading")}</p><div className={styles.skeletonControl} aria-hidden="true" /></>}
+                {listsLoadError && <RetryNotice className={styles.alert} message={t("loadListsError")} retryLabel={t("retry")} onRetry={() => setListsAttempt(value => value + 1)} />}
+                {!listsLoading && !listsLoadError && lists.length === 0 && <p className={styles.empty}>{t("noLists")}</p>}
+                {!listsLoading && !listsLoadError && lists.length > 0 && <>
+                  <label htmlFor="movie-list">{t("addToList")}</label>
+                  <select id="movie-list" value={selectedList} onChange={event => setSelectedList(event.target.value)}><option value="">{t("chooseList")}</option>{lists.map(list => <option key={list.id} value={list.id}>{editorialText(list.name, t("lists"))}</option>)}</select>
+                  <button className={styles.primaryButton} type="button" disabled={!selectedList || mutationBusy !== null} aria-busy={mutationBusy === "list"} onClick={() => void addToList()}>{mutationBusy === "list" ? t("saving") : t("add")}</button>
+                </>}
+              </div>
+              <button className={styles.heroActionReview} type="button" onClick={focusReview}>{t("review")}</button>
+            </section>}
           </div>
         </section>
         <section className={`${styles.mobileDetailSection} ${styles.mobileRatingSummary}`} aria-labelledby="mobile-rating-title">
           <div className={styles.mobileSectionHeading}><h2 id="mobile-rating-title">{t("ratings")} &amp; {t("reviews")}</h2></div>
           <div className={styles.ratingSummaryRow}>
-            <strong className={styles.movieRating}>{movie.rating != null ? `★ ${movie.rating}` : "—"}</strong>
-            <span>{t("ratings")}</span>
+            <strong className={styles.movieRating}>{movie.rating != null ? <><img src="/images/movie-star.png" width={18} height={18} alt="" aria-hidden="true" />{movie.rating}</> : "—"}</strong>
             {movie.externalRatings.map(item => <span className={styles.externalRatingPill} key={item.source}><strong>{item.source}</strong> {item.rating}</span>)}
           </div>
         </section>
@@ -535,45 +585,19 @@ export default function MovieDetails() {
           onSelectedListChange={setSelectedList}
           onAddToList={() => void addToList()}
           onRetryLists={() => setListsAttempt(value => value + 1)}
-          onReview={() => { closeMobileActions(); document.getElementById("reviews-title")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
+          onReview={focusReview}
           onShare={() => void shareMovie()}
           onClose={closeMobileActions}
         />}
-        {isAuth && <section className={styles.actionSection} aria-labelledby="my-actions-title">
-          <div className={styles.sectionHeading}><p className={styles.eyebrow}>{t("myActions")}</p><h2 id="my-actions-title">{t("myActions")}</h2></div>
-          <div className={styles.actionButtons}>
-            <button className={`${styles.actionButton} ${movie.myFlags?.watched ? styles.actionButtonActive : ""}`} type="button" disabled={mutationBusy !== null} aria-busy={mutationBusy === "watched"} onClick={() => void toggle("watched", movie.myFlags?.watched ?? false)} aria-pressed={movie.myFlags?.watched ?? false}>{mutationBusy === "watched" ? t("loading") : t("watched")}</button>
-            <button className={`${styles.actionButton} ${movie.myFlags?.watchlist ? styles.actionButtonActive : ""}`} type="button" disabled={mutationBusy !== null} aria-busy={mutationBusy === "watchlist"} onClick={() => void toggle("watchlist", movie.myFlags?.watchlist ?? false)} aria-pressed={movie.myFlags?.watchlist ?? false}>{mutationBusy === "watchlist" ? t("loading") : t("watchlist")}</button>
-            <button className={`${styles.actionButton} ${movie.myFlags?.favorites ? styles.actionButtonActive : ""}`} type="button" disabled={mutationBusy !== null} aria-busy={mutationBusy === "favorite"} onClick={() => void toggle("favorite", movie.myFlags?.favorites ?? false)} aria-pressed={movie.myFlags?.favorites ?? false}>{mutationBusy === "favorite" ? t("loading") : t("favorite")}</button>
-          </div>
-          <div className={styles.ratingRow}>
-            {ratingLoading ? <span className={styles.inlineStatus} role="status">{t("loading")}</span> : <span>{t("myRating")}: <strong>{rating || t("none")}</strong></span>}
-            {ratingLoadError && <span className={styles.inlineError} role="alert">{t("loadRatingsError")} <RetryButton label={t("retry")} onClick={() => setRatingAttempt(value => value + 1)} /></span>}
-            <div className={styles.ratingButtons} role="group" aria-label={t("myRating")}>
-              {[1, 2, 3, 4, 5].map(value => <button className={rating === value ? styles.ratingActive : ""} key={value} type="button" disabled={mutationBusy !== null || ratingLoading} onClick={() => void saveRating(value)} aria-label={`${t("rateAs")} ${value}`} aria-pressed={rating === value}>{value} ★</button>)}
-            </div>
-            {rating > 0 && !myReview && <button className={styles.textButton} type="button" disabled={mutationBusy !== null || ratingLoading} onClick={() => void deleteRating()}>{mutationBusy === "delete-rating" ? t("deleting") : t("deleteRating")}</button>}
-          </div>
-          <div className={styles.listPicker}>
-            {listsLoading && <p className={styles.loading} role="status">{t("loading")}</p>}
-            {listsLoadError && <RetryNotice className={styles.alert} message={t("loadListsError")} retryLabel={t("retry")} onRetry={() => setListsAttempt(value => value + 1)} />}
-            {!listsLoading && !listsLoadError && lists.length === 0 && <p className={styles.empty}>{t("noLists")}</p>}
-            {!listsLoading && !listsLoadError && lists.length > 0 && <>
-              <label htmlFor="movie-list">{t("addToList")}</label>
-              <select id="movie-list" value={selectedList} onChange={event => setSelectedList(event.target.value)}><option value="">{t("chooseList")}</option>{lists.map(list => <option key={list.id} value={list.id}>{editorialText(list.name, t("lists"))}</option>)}</select>
-              <button className={styles.primaryButton} type="button" disabled={!selectedList || mutationBusy !== null} aria-busy={mutationBusy === "list"} onClick={() => void addToList()}>{mutationBusy === "list" ? t("saving") : t("add")}</button>
-            </>}
-          </div>
-        </section>}
         <section className={`${styles.section} ${styles.reviewsSection}`} data-reviews-expanded={showAllReviews} aria-labelledby="reviews-title" aria-busy={reviewsLoading || (isAuth && !myReviewReady)}>
-          <div className={styles.sectionHeading}><p className={styles.eyebrow}>{t("reviews")}</p><h2 id="reviews-title"><span className={styles.desktopReviewTitle}>{t("reviews")}</span><span className={styles.mobileReviewTitle}>{t("recentReviews")}</span></h2></div>
-          {reviewsLoading && <p className={styles.loading} role="status">{t("loading")}</p>}
+          <div className={styles.sectionHeading}><p className={styles.eyebrow}>{t("reviews")}</p><h2 id="reviews-title" tabIndex={-1}><span className={styles.desktopReviewTitle}>{t("reviews")}</span><span className={styles.mobileReviewTitle}>{t("recentReviews")}</span></h2></div>
+          {reviewsLoading && <><p className="srOnly" role="status">{t("loading")}</p>{[0, 1].map(item => <div className={`${styles.review} ${styles.skeletonReview}`} aria-hidden="true" key={item}><div className={styles.skeletonLine} /><div className={styles.skeletonLine} /><div className={styles.skeletonLine} /></div>)}</>}
           {reviewsLoadError && <RetryNotice className={styles.alert} message={t("loadReviewsError")} retryLabel={t("retry")} onRetry={() => setReviewsAttempt(value => value + 1)} />}
           {isAuth && myReview && <article className={`${styles.review} ${styles.myReview}`}>
             <h3>{t("yourReview")} · {myReview.rating ?? "—"}/5</h3>
             {!editingReview && <><p><Link to={path(`/reviews/${myReview.id}`)}>{myReview.content}</Link></p>
               <div className={styles.reviewActions}><button type="button" disabled={mutationBusy !== null} onClick={() => { setReviewText(myReview.content); setReviewRating(myReview.rating ?? rating); setEditingReview(true); }}>{t("editReview")}</button>
-                <button type="button" disabled={mutationBusy !== null} onClick={() => void deleteReview()}>{mutationBusy === "delete-review" ? t("deleting") : t("deleteReview")}</button></div>
+                <button type="button" disabled={mutationBusy !== null} onClick={event => setReviewDeleteTrigger(event.currentTarget)}>{mutationBusy === "delete-review" ? t("deleting") : t("deleteReview")}</button></div>
               <ReviewLikeButton reviewId={myReview.id} />
               <Comments reviewId={myReview.id} />
             </>}
@@ -613,6 +637,7 @@ export default function MovieDetails() {
           <div className={styles.storylineCard}><h3>{movieTitle}</h3><p className={movie.shortPlot ? undefined : styles.empty}>{movie.shortPlot || t("movieStorylineUnavailable")}</p></div>
         </section>
       </>}
+      <ConfirmDialog open={reviewDeleteTrigger !== null} title={t("deleteReview")} description={t("deleteReviewConfirm")} cancelLabel={t("cancel")} confirmLabel={t("deleteReview")} trigger={reviewDeleteTrigger} onCancel={() => setReviewDeleteTrigger(null)} onConfirm={() => { setReviewDeleteTrigger(null); void deleteReview(); }} />
     </div>
   </main>;
 }

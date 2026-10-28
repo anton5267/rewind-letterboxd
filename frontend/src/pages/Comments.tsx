@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { addComment, deleteComment, getComments, updateComment, type Comment } from "../api/comments.api";
 import Pagination from "../components/Pagination";
 import RetryNotice from "../components/RetryNotice";
+import ConfirmDialog from "../components/ConfirmDialog";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
 import { getUserName } from "../utils/userIdentity";
@@ -21,6 +22,7 @@ export default function Comments({ reviewId }: { reviewId: number }) {
   const [pendingAction, setPendingAction] = useState<CommentAction | null>(null);
   const [loading, setLoading] = useState(false);
   const [mutationBusy, setMutationBusy] = useState<"save" | "delete" | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ id: number; trigger: HTMLButtonElement } | null>(null);
   const requestId = useRef(0);
   const mutationRequest = useRef(0);
   const currentReviewId = useRef(reviewId);
@@ -124,9 +126,9 @@ export default function Comments({ reviewId }: { reviewId: number }) {
     }
   };
 
-  const remove = async (id: number) => {
-    if (!window.confirm(t("deleteCommentConfirm"))) return;
-    await deleteCommentAction(id);
+  const remove = (id: number, trigger: HTMLButtonElement) => {
+    if (mutationBusy !== null) return;
+    setPendingDelete({ id, trigger });
   };
 
   const retryAction = () => {
@@ -152,7 +154,7 @@ export default function Comments({ reviewId }: { reviewId: number }) {
               <button type="submit" aria-busy={mutationBusy === "save"} disabled={mutationBusy !== null}>{mutationBusy === "save" ? t("saving") : t("save")}</button>{" "}
               <button type="button" disabled={mutationBusy !== null} onClick={() => { setEditing(null); setText(""); }}>{t("cancel")}</button>
             </form> : <p className={styles.itemText}>{comment.text}</p>}
-            {canChange && !isEditing && <><button type="button" disabled={mutationBusy !== null} onClick={() => { setEditing(comment.id); setText(comment.text); }}>{t("editComment")}</button>{" "}<button type="button" disabled={mutationBusy !== null} aria-busy={mutationBusy === "delete"} onClick={() => void remove(comment.id)}>{mutationBusy === "delete" ? t("deleting") : t("deleteComment")}</button></>}
+            {canChange && !isEditing && <><button type="button" disabled={mutationBusy !== null} onClick={() => { setEditing(comment.id); setText(comment.text); }}>{t("editComment")}</button>{" "}<button type="button" disabled={mutationBusy !== null} aria-busy={mutationBusy === "delete"} onClick={event => remove(comment.id, event.currentTarget)}>{mutationBusy === "delete" ? t("deleting") : t("deleteComment")}</button></>}
           </li>;
         })}
       </ul>
@@ -162,5 +164,6 @@ export default function Comments({ reviewId }: { reviewId: number }) {
         {editing === null && <button type="submit" aria-busy={mutationBusy === "save"} disabled={mutationBusy !== null}>{mutationBusy === "save" ? t("saving") : t("sendComment")}</button>}
       </form> : <p>{t("loginToComment")}</p>}
     </div>}
+    <ConfirmDialog open={pendingDelete !== null} title={t("deleteComment")} description={t("deleteCommentConfirm")} cancelLabel={t("cancel")} confirmLabel={t("deleteComment")} trigger={pendingDelete?.trigger ?? null} onCancel={() => setPendingDelete(null)} onConfirm={() => { const id = pendingDelete?.id; setPendingDelete(null); if (id !== undefined) void deleteCommentAction(id); }} />
   </section>;
 }

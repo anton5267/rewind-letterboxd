@@ -23,7 +23,7 @@
 }
 
 .control {
-  min-height: 40px;
+  min-height: 44px;
   box-sizing: border-box;
   padding: 8px 10px;
   border: 1px solid var(--rewind-line);

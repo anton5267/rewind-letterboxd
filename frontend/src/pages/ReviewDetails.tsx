@@ -6,7 +6,7 @@ import RatingSheet from "../components/RatingSheet";
 import ResilientImage from "../components/ResilientImage";
 import RetryButton from "../components/RetryButton";
 import { useAuth } from "../context/AuthContext";
-import { editorialText, formatDateTime, formatMovieYear, useLocale } from "../i18n";
+import { editorialText, formatMovieYear, formatRelativeTime, useLocale } from "../i18n";
 import { safeHttpUrl } from "../utils/externalUrl";
 import { getUserName } from "../utils/userIdentity";
 import styles from "./ReviewDetails.module.css";
@@ -18,7 +18,7 @@ function Initial({ value }: { value: string }) {
 export default function ReviewDetails() {
   const { id } = useParams();
   const reviewId = Number(id);
-  const { isAuth, ready } = useAuth();
+  const { isAuth, ready, user } = useAuth();
   const { lang, path, t } = useLocale();
   const validReviewId = Number.isSafeInteger(reviewId) && reviewId > 0;
   const [review, setReview] = useState<ReviewDetailsModel | null>(null);
@@ -36,13 +36,31 @@ export default function ReviewDetails() {
   const mutationRequest = useRef(0);
   const currentReviewId = useRef(reviewId);
   currentReviewId.current = reviewId;
+  const reviewTitle = useRef<HTMLHeadingElement>(null);
+  const stateTitle = useRef<HTMLHeadingElement>(null);
+  const retryFocus = useRef<{ reviewId: number; origin: Element | null } | null>(null);
 
   useEffect(() => {
     mutationRequest.current += 1;
     setLikeBusy(false);
     setLikeError(false);
     setRatingSheetOpen(false);
+    retryFocus.current = null;
   }, [reviewId, isAuth]);
+
+  useEffect(() => {
+    const pending = retryFocus.current;
+    if (loading || !pending) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (retryFocus.current !== pending) return;
+      retryFocus.current = null;
+      if (pending.reviewId !== currentReviewId.current) return;
+      if (document.activeElement === document.body || document.activeElement === pending.origin) {
+        (error ? stateTitle.current : reviewTitle.current)?.focus();
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [loading, error, review]);
 
   const load = useCallback(async () => {
     const requestId = ++loadRequest.current;
@@ -110,7 +128,14 @@ export default function ReviewDetails() {
       const nextLiked = !likedAtStart;
       setLiked(nextLiked);
       setReview(previous => previous
-        ? { ...previous, likes: Math.max(0, previous.likes + (nextLiked ? 1 : -1)) }
+        ? {
+          ...previous,
+          likes: Math.max(0, previous.likes + (nextLiked ? 1 : -1)),
+          likedBy: nextLiked && user
+            ? previous.likedBy.some(member => member.id === user.id) ? previous.likedBy
+              : [...previous.likedBy, { id: user.id, username: user.username, displayName: null, avatarUrl: user.avatarUrl ?? null }]
+            : previous.likedBy.filter(member => member.id !== user?.id),
+        }
         : previous);
     } catch {
       if (requestId === mutationRequest.current && currentReviewId.current === reviewIdAtStart) setLikeError(true);
@@ -121,8 +146,18 @@ export default function ReviewDetails() {
 
   const closeRatingSheet = useCallback(() => setRatingSheetOpen(false), []);
 
-  if (loading) return <main className={styles.state} aria-labelledby="review-state-title" aria-busy={true}><h1 id="review-state-title" className="srOnly">{t("review")}</h1><p className={styles.stateLoading} role="status">{t("loadingReview")}</p></main>;
-  if (error || !review) return <main className={styles.state} aria-labelledby="review-state-title" aria-busy={false}><div className={styles.stateError} role="alert"><h1 id="review-state-title">{t("reviewUnavailable")}</h1><p>{!validReviewId ? t("invalidReviewId") : t("loadReviewError")}</p>{validReviewId && <RetryButton label={t("retry")} onClick={() => setRetry(value => value + 1)} />}</div></main>;
+  if (loading) return <main className={styles.page} aria-labelledby="review-state-title" aria-busy={true}>
+    <h1 id="review-state-title" className="srOnly">{t("review")}</h1><p className="srOnly" role="status">{t("loadingReview")}</p>
+    <div className={`${styles.back} ${styles.skeleton}`} aria-hidden="true" />
+    <div className={styles.hero} aria-hidden="true"><div className={styles.heroInner}><div className={styles.filmBlock}>
+      <div className={styles.posterColumn}><div className={`${styles.poster} ${styles.skeleton}`} /></div>
+      <div className={styles.filmCopy}><div className={styles.skeletonTitle} /><div className={styles.skeletonLine} /><div className={styles.authorMeta}><div className={styles.skeletonLine} /></div><div className={styles.reviewBody}>{[0, 1, 2, 3, 4].map(item => <div className={styles.skeletonLine} key={item} />)}</div></div>
+    </div></div></div>
+  </main>;
+  if (error || !review) return <main className={styles.state} aria-labelledby="review-state-title" aria-busy={false}><div className={styles.stateError} role="alert"><h1 id="review-state-title" ref={stateTitle} tabIndex={-1}>{t("reviewUnavailable")}</h1><p>{!validReviewId ? t("invalidReviewId") : t("loadReviewError")}</p>{validReviewId && <RetryButton label={t("retry")} onClick={() => {
+    retryFocus.current = { reviewId, origin: document.activeElement };
+    setRetry(value => value + 1);
+  }} />}</div></main>;
 
   const authorName = getUserName(review.author, t("someone"));
   const movieTitle = editorialText(review.movie.title, t("untitledFilm"));
@@ -146,36 +181,36 @@ export default function ReviewDetails() {
           </div>
           <div className={styles.filmCopy}>
             <p className={styles.eyebrow}>{t("review")}</p>
-            <h1 id="review-title"><Link to={path(`/films/${review.movie.id}`)}>{movieTitle}</Link></h1>
+            <h1 id="review-title" ref={reviewTitle} tabIndex={-1}><Link to={path(`/films/${review.movie.id}`)}>{movieTitle}</Link></h1>
             {metaItems.length > 0 && <ul className={styles.meta} aria-label={t("filmData")}>{metaItems.map((item, index) => <li className={item === review.movie.ageRating ? styles.ageRating : undefined} key={`${item}-${index}`}>{item}</li>)}</ul>}
-            <Link className={styles.author} to={path(`/users/${review.author.id}`)}>
-              <ResilientImage src={review.author.avatarUrl} alt="" fallback={<Initial value={authorName} />} />
-              <span><small>{t("reviewBy")}</small>{" "}<strong>{authorName}</strong></span>
-            </Link>
+            <div className={styles.authorMeta}>
+              <Link className={styles.author} to={path(`/users/${review.author.id}`)}>
+                <ResilientImage src={review.author.avatarUrl} alt="" fallback={<Initial value={authorName} />} />
+                <span><small>{t("reviewBy")}</small>{" "}<strong>{authorName}</strong></span>
+              </Link>
+              <time className={styles.published} dateTime={review.createdAt}>{t("publishedAt")} {formatRelativeTime(review.createdAt, lang)}</time>
+            </div>
             <article className={styles.reviewBody}>
               <p className={styles.reviewText}>{review.content}</p>
             </article>
           </div>
           <aside className={styles.socialPanel}>
-            <div className={styles.reviewMeta}>
-              <div className={styles.reviewMetaPrimary}>
-                <div className={styles.stars} role="img" aria-label={`${t("rating")}: ${review.rating ?? 0}/5`}>
-                  {[1, 2, 3, 4, 5].map(star => <span aria-hidden="true" className={review.rating != null && star <= review.rating ? styles.starActive : ""} key={star}>★</span>)}
-                </div>
-                {isAuth && <button className={styles.rateTrigger} type="button" aria-haspopup="dialog" aria-controls={ratingSheetOpen ? "rating-sheet-dialog" : undefined} aria-expanded={ratingSheetOpen} onClick={() => setRatingSheetOpen(true)}>
-                  <span aria-hidden="true">★</span>{t("rateFilm")}
-                </button>}
-              </div>
-              <time dateTime={review.createdAt}>{formatDateTime(review.createdAt, lang)}</time>
-            </div>
             <div className={styles.likeActions}>
               {isAuth && likeStatusLoading && <p className={styles.likeStatus} role="status">{t("loading")}</p>}
               {isAuth && likeStatusError && <p className={styles.likeError} role="alert">{t("likeReviewError")} <RetryButton label={t("retry")} onClick={() => setLikeStatusAttempt(value => value + 1)} /></p>}
-              {isAuth && !likeStatusLoading && !likeStatusError && <button className={`${styles.likeButton} ${liked ? styles.likeButtonActive : ""}`} type="button" aria-busy={likeBusy} aria-pressed={liked} disabled={likeBusy} onClick={() => void toggleLike()}>
-                <span aria-hidden="true">{liked ? "♥" : "♡"}</span>{likeBusy ? t("loading") : liked ? t("unlike") : t("like")}
+              {isAuth && !likeStatusLoading && !likeStatusError && <button className={`${styles.likeButton} ${liked ? styles.likeButtonActive : ""}`} type="button" aria-label={`${liked ? t("unlike") : t("like")} (${review.likes})`} aria-busy={likeBusy} aria-pressed={liked} disabled={likeBusy} onClick={() => void toggleLike()}>
+                <img src="/images/review-like.png" width={36} height={36} alt="" aria-hidden="true" /><span className={styles.likeCount}>{likeBusy ? t("loading") : review.likes}</span>
               </button>}
-              {!isAuth && <Link className={styles.likeButton} to={path("/login")}>♡ {t("loginToLikeReview")}</Link>}
+              {!isAuth && <Link className={styles.likeButton} to={path("/login")} aria-label={`${t("loginToLikeReview")} (${review.likes})`}><img src="/images/review-like.png" width={36} height={36} alt="" aria-hidden="true" /><span className={styles.likeCount}>{review.likes}</span></Link>}
               {likeError && <p className={styles.likeError} role="alert">{t("likeReviewError")} <RetryButton label={t("retry")} disabled={likeBusy} busy={likeBusy} onClick={() => void toggleLike()} /></p>}
+            </div>
+            <div className={styles.reviewMeta}>
+              <span className={styles.rateLabel}>{t("rate")}</span>
+              {isAuth ? <button className={styles.rateTrigger} type="button" aria-label={`${t("rateFilm")} (${review.rating ?? 0}/5)`} aria-haspopup="dialog" aria-controls={ratingSheetOpen ? "rating-sheet-dialog" : undefined} aria-expanded={ratingSheetOpen} onClick={() => setRatingSheetOpen(true)}>
+                <span className={styles.stars} aria-hidden="true">{[1, 2, 3, 4, 5].map(star => <img src={`/images/review-star-${review.rating != null && star <= review.rating ? "active" : "empty"}.svg`} alt="" key={star} />)}</span>
+              </button> : <div className={styles.stars} role="img" aria-label={`${t("rating")}: ${review.rating ?? 0}/5`}>
+                {[1, 2, 3, 4, 5].map(star => <img src={`/images/review-star-${review.rating != null && star <= review.rating ? "active" : "empty"}.svg`} alt="" aria-hidden="true" key={star} />)}
+              </div>}
             </div>
           </aside>
         </div>
@@ -199,7 +234,6 @@ export default function ReviewDetails() {
       movieId={review.movie.id}
       movieTitle={movieTitle}
       subtitle={`${t("reviewBy")} ${authorName}`}
-          movieBackdropUrl={review.movie.backdropUrl}
       likes={review.likes}
       liked={liked}
       likeBusy={likeBusy}

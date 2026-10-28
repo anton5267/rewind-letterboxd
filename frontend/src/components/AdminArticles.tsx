@@ -1,3 +1,4 @@
+import AdminLoading from "./AdminLoading";
 import { useEffect, useRef, useState } from "react";
 import {
   createAdminArticle,
@@ -150,7 +151,7 @@ export default function AdminArticles() {
       <button type="submit" aria-busy={creating} disabled={creating}>{creating ? t("loading") : t(editingId === null ? "create" : "save")}</button>
       {editingId !== null && <button type="button" disabled={creating} onClick={cancelEditing}>{t("cancel")}</button>}
     </form>
-    {loading && <p className={styles.feedback} role="status">{t("loading")}</p>}
+    {loading && <AdminLoading label={t("loading")} layout="logs" />}
     {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => setRevision(value => value + 1)} />}
     {data && data.content.length === 0 && <p>{t("noAdminArticles")}</p>}
     {data && <>

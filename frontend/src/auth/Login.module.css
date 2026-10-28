@@ -4,6 +4,8 @@
 .title { composes: title from "./AuthShared.module.css"; }
 .form { composes: form from "./AuthShared.module.css"; }
 .input { composes: input from "./AuthShared.module.css"; }
+.fieldLabel { composes: fieldLabel from "./AuthShared.module.css"; }
+.validation { composes: validation from "./AuthShared.module.css"; }
 .passwordField { composes: passwordField from "./AuthShared.module.css"; }
 .passwordVisibility { composes: passwordVisibility from "./AuthShared.module.css"; }
 .button { composes: button from "./AuthShared.module.css"; }
@@ -15,15 +17,16 @@
 
 .loginPage .card { min-height: 873px; }
 .loginPage .form { margin-top: 58.4px; }
-.loginPage .row { margin-top: -17px; margin-bottom: 0; }
+.loginPage .row { margin-top: 0; margin-bottom: 0; }
 .loginPage .button { margin-top: 47px; }
 
-@media (min-width: 721px) {
+@media (min-width: 768px) {
 }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .loginPage .card { min-height: 852px; padding-top: 169px; }
-  .loginPage .form { margin-top: 152px; }
+  .loginPage .form { margin-top: 126px; }
+  .loginPage .row { margin-top: 0; }
   .loginPage .button { margin-top: -2px; }
   .loginPage .footer { margin-top: 5px; }
 }
@@ -35,6 +38,9 @@
 }
 
 .forgot {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
   color: var(--rewind-muted);
   font-size: 13px;
   text-decoration: none;
