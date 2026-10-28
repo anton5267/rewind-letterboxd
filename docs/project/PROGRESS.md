@@ -4,6 +4,10 @@
 
 ## Поточний стан
 
+- Home list cards/retry: 3/3 Playwright пройшли на Docker. Свіжий screenshot `1413:6471` повернув 1×1, тому ці тести підтверджують поведінку, не відповідність геометрії Figma.
+
+- Review Details і release responsive matrix: повторний Playwright 2/2; UK/EN довгий контент і mobile RatingSheet/Escape/focus на 320/393/480/768/1440, а також 14 маршрутів на 320/393/768/1440 без overflow. Знімки 393/1440 — тестові API fixtures, не нове Figma-приймання; phone frame `1480:9249` прихований.
+
 - Повторний огляд Figma Search `1480:5809` і `1480:8856`: у макеті дія Back to home, а поточний застосунок очищає запит. Це відкритий вибір поведінки; попередні записи про Back to home є історичними й не підтверджують поточний код. Цільовий прогін геометричних/маршрутних тестів: 7 passed / 19 failed. Після оновлення селекторів маршрутні сценарії окремо пройшли 8/8; решта причин потребують подальшого розбору.
 
 - Додаткова перевірка після першого full run: Profile 10/10, navigation/Admin/community 19/19, list mobile header/dialog 12/12, Movie/Person 6/6; у повторному наборі Movie/Search/localization Search і localization пройшли. Full suite ще не повторено успішно: залишаються геометричні та маршрутні перевірки.

@@ -1,5 +1,10 @@
 # Rewind — докази перевірок
 
+## Review and responsive regression follow-up — 29.10.2026
+
+On Docker web, `review-details-responsive.spec.ts` and `release-responsive-matrix.spec.ts` passed 2/2. Review tests exercise UK/EN, complete long text, liker keyboard reachability, mobile RatingSheet Escape and focus return at 320/393/480/768/1440. The route matrix checked 14 routes at 320/393/768/1440 for page errors, overflow, main/heading and the intended mobile footer visibility. Browser fixtures are isolated from the live database. Screenshots `artifacts/visual-audit-20261028/review-393-long-content.png` and `review-1440-long-content.png` show the fixture, not visual acceptance; desktop source `1480:6826`, mobile `1480:9249` remains hidden. `npm run verify:build` passed as a technical check. Home lists failure/retry/empty targeted check also passed 1/1; other Home and full-suite failures remain open.
+
+
 ### Updated Docker smoke and Admin focus — 29.10.2026
 
 The Admin user detail is a separate routed state. Its catalog row unmounts on entry, so returning previously focused the heading even when the originating row reappeared. AdminUsers now waits for the catalog request to settle and restores the equivalent View profile button by user ID; when that row is absent it focuses the Users heading. It avoids taking focus if the user has moved elsewhere. Browser fixture checks passed both paths; Admin film edit keyboard/cancel checks passed at320/1440. `admin-focus-final.log`. `npm run verify:build` passed251 modules. Rebuilt/recreated only web afterward; current web image `sha256:6a22aa5c69ab99c1dbe6b2b94767ef8500eb172b06a7e65e892ccbbdfbad73ab`. Re-ran `verify-admin-browser.ps1`:12 passed,0 skipped, fixture cleanup completed (`admin-regression-after-focus.log`).

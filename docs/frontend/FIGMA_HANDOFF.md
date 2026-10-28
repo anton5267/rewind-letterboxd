@@ -28,6 +28,8 @@ Current names correctly label `363:411` Followers → /profile?view=followers an
 
 ### Review Details and RatingSheet current runtime — 28.10.2026
 
+29.10 follow-up: controlled UK/EN Playwright fixture passed long-content, liker keyboard reachability and mobile sheet Escape/focus at 320/393/480/768/1440. Screenshots 393/1440 capture runtime only; hidden phone source `1480:9249` cannot establish matched visual parity.
+
 `1480:6826` → `/reviews/:id` desktop: refined author/date, body, original local like/star assets and dark hero; current UK/EN populated runtime and seven target widths reviewed. Fixed live liker-rail/count synchronization and page Retry focus. Hidden `1480:9249` remains phone detail; hidden `1480:9407` remains More → RatingSheet. Their root screenshots are1×1, so phone overlay refinements follow structured geometry with current local runtime, not a new hidden-frame visual acceptance claim. Sheet actions, keyboard, error/retry and short-screen bounds passed. `560:1003` full phone screenshot confirms app bottom navigation without the desktop footer; valid film/review detail routes now follow that through480px. MovieActionSheet Review transfers focus to the composer after closing; clipboard Share fallback passed, OS-level Share success remains unobserved. [Evidence](../operations/RELEASE_EVIDENCE.md#review-details-layout-assets-and-recovery--28102026).
 
 ### Movie ActionSheet asset/action runtime follow-up — 28.10.2026

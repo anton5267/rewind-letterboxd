@@ -44,7 +44,11 @@ test("release routes keep landmarks and no horizontal overflow across the viewpo
         h1: 1,
       });
       await expect(page.getByRole("banner")).toHaveCount(1);
-      await expect(page.getByRole("contentinfo")).toHaveCount(1);
+      const footer = page.locator("footer");
+      await expect(footer).toHaveCount(1);
+      const mobileFooterHidden = width < 768 && /\/(home|search|login|register|forgot-password)(?:\?|$)|\/films\/\d+$/.test(route);
+      if (mobileFooterHidden) await expect(footer).toBeHidden();
+      else await expect(footer).toBeVisible();
       if (route === "/uk/route-that-does-not-exist") {
         await expect(page.getByRole("heading", { name: "Ой! Сторінку не знайдено" })).toBeVisible();
         await expect(page.getByRole("link", { name: "На головну" })).toHaveAttribute("href", "/uk/home");

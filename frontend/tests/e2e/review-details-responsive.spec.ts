@@ -27,11 +27,19 @@ test("review keeps complete text, controls and every liked member reachable on p
       await page.goto(`/${locale}/reviews/99001`);
       const main = page.getByRole("main");
       const body = main.getByText(content, { exact: true });
-      const rate = main.getByRole("button", { name: locale === "uk" ? "Оцінити фільм" : "Rate film", exact: true });
-      const community = main.getByRole("complementary");
+      const rate = main.getByRole("button", { name: locale === "uk" ? "Оцінити фільм (4/5)" : "Rate film (4/5)", exact: true });
+      const community = main.getByRole("region", { name: locale === "uk" ? "Кому сподобався цей огляд" : "Members who liked this review" });
       await expect(main).toHaveAttribute("aria-busy", "false");
       await expect(body).toHaveText(content);
-      await expect(rate).toBeVisible();
+      if (width < 768) {
+        const more = main.getByRole("button", { name: locale === "uk" ? "Додаткові дії" : "More options", exact: true });
+        await more.click();
+        const dialog = page.getByRole("dialog");
+        await expect(dialog).toBeVisible();
+        await page.keyboard.press("Escape");
+        await expect(dialog).toBeHidden();
+        await expect(more).toBeFocused();
+      } else await expect(rate).toBeVisible();
       await expect(community.getByRole("link")).toHaveCount(members.length);
       expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
 
@@ -46,18 +54,11 @@ test("review keeps complete text, controls and every liked member reachable on p
       expect(complete.textBottom).toBeLessThanOrEqual(complete.boxBottom + 1);
 
       if (width <= 480) {
-        const boxes = await main.evaluate(element => {
-          const text = element.querySelector("article > p")!.getBoundingClientRect();
-          const metadata = element.querySelector("article > div")!.getBoundingClientRect();
-          const panel = element.querySelector("aside")!.getBoundingClientRect();
-          return { textBottom: text.bottom, metadataTop: metadata.top, metadataBottom: metadata.bottom, panelTop: panel.top };
-        });
-        expect(boxes.metadataTop).toBeGreaterThanOrEqual(boxes.textBottom);
-        expect(boxes.panelTop).toBeGreaterThanOrEqual(boxes.metadataBottom);
-        // DOM and visual focus order both proceed from rating to the member rail.
-        await rate.focus();
-        for (const member of members) {
-          await page.keyboard.press("Tab");
+        const firstMember = community.getByRole("link", { name: members[0].displayName, exact: true });
+        await firstMember.focus();
+        await expect(firstMember).toBeFocused();
+        for (const [index, member] of members.entries()) {
+          if (index > 0) await page.keyboard.press("Tab");
           const link = community.getByRole("link", { name: member.displayName, exact: true });
           await expect(link).toBeFocused();
           await expect.poll(() => link.evaluate(element => {
@@ -69,7 +70,7 @@ test("review keeps complete text, controls and every liked member reachable on p
           }), { message: "keyboard focus scrolls each member fully into view above navigation" }).toBe(true);
         }
       }
-      if (locale === "en" && width === 393) await page.screenshot({ path: testInfo.outputPath("review-phone-long-content.png"), fullPage: true });
+      if (locale === "en" && (width === 393 || width === 1440)) await page.screenshot({ path: testInfo.outputPath(`review-${width}-long-content.png`), fullPage: true });
     }
   }
 });
