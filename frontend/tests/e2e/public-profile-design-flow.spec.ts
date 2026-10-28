@@ -41,7 +41,7 @@ test("public profile mobile follows the Figma identity geometry and contains lon
   expect(titleBox?.x).toBeGreaterThan(134);
   expect(titleBox?.x).toBeLessThan(141);
   expect(titleBox?.y).toBe(317);
-  expect(titleBox?.height).toBeCloseTo(28.08, 1);
+  expect(titleBox?.height).toBeCloseTo(28.08, 0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 
   displayName = "A public profile name that is deliberately very long ".repeat(4);

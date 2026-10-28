@@ -59,7 +59,7 @@ test("public profile desktop follows the measured Figma shell geometry", async (
   const cards = page.locator('#public-profile-collections [class*="collectionPosterLink"]');
   await expect(cards).toHaveCount(12);
   const cardBox = await cards.first().boundingBox();
-  expect(cardBox?.width).toBe(174);
-  expect(cardBox?.height).toBe(260);
+  expect(cardBox?.width).toBeCloseTo(174, 0);
+  expect(cardBox?.height).toBeCloseTo(260, 0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });

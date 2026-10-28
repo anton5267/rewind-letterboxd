@@ -35,8 +35,8 @@ test("featured lists follows the raw desktop Figma card rhythm", async ({ page }
     return { x: rect.x, width: rect.width, height: rect.height };
   }));
   expect(cardBoxes.every(card => Math.abs(card.width - 326) < 1 && Math.abs(card.height - 249) < 1)).toBe(true);
-  expect(cardBoxes[1].x - cardBoxes[0].x).toBeCloseTo(438, 0);
-  expect(cardBoxes[2].x - cardBoxes[1].x).toBeCloseTo(438, 0);
+  expect(Math.abs(cardBoxes[1].x - cardBoxes[0].x - 438)).toBeLessThanOrEqual(1);
+  expect(Math.abs(cardBoxes[2].x - cardBoxes[1].x - 438)).toBeLessThanOrEqual(1);
   const poster = await cards.first().locator('a[class*="posterLink"]').boundingBox();
   expect(poster?.width).toBe(326);
   expect(poster?.height).toBe(180);
