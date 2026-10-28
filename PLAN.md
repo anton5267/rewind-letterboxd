@@ -1,60 +1,98 @@
-# Rewind — план завершення
+# Rewind — повний редизайн за актуальним Figma
 
-Оновлено 26.10.2026. Це єдине джерело порядку наступної роботи. Поточні результати — у [PROGRESS](docs/project/PROGRESS.md), frame/route/state статуси — у [FIGMA_HANDOFF](docs/frontend/FIGMA_HANDOFF.md#current-package-matrix--26102026), докази й історичні checkpoints — у [RELEASE_EVIDENCE](docs/operations/RELEASE_EVIDENCE.md).
+Оновлено 28.10.2026. Цей план замінює попередній поетапний порядок. Основу визначають START HERE і167 READY frames/states; збережений інвентар268 кандидатів повторно не генерувати без виявленої розбіжності.
 
-## Ціль і критерій завершення
+- [Поточний прогрес](docs/project/PROGRESS.md)
+- [Інвентар Figma → routes/states](docs/frontend/FIGMA_HANDOFF.md)
+- [Докази перевірок та історичні checkpoints](docs/operations/RELEASE_EVIDENCE.md)
 
-Завершити дизайн усіх наявних маршрутів Rewind за доступними Figma-макетами зі збереженням API, UK/EN та доступності; закрити інвентар явними статусами «перевірено», «виправлено й перевірено», «погоджений API/data gap» або «відкрите питання». Після visual stage пройти регресію, оновити локальний Docker, доставити власні commits у GitHub і отримати зелений CI. Збірка або сам node ID не доводять відповідність дизайну.
+Поточний checkpoint28.10: погоджені інформаційні Service4routes реалізовано й перевірено56cases; captions288, collections90, Settings focus/password/name, Search52 і NotFound10 мають поточні runtime-докази. Далі — закрити залишкові READY mapping/конкретні gaps у матриці; після visual closure перейти до ізольованої регресії, Docker і доставки.
 
-## Наступний порядок
+## Ціль
 
-1. Продовжити Profile/PublicProfile та Admin visual gaps: Movies/editor має перевірений scoped desktop/phone layout на семи ширинах і виправлену доступну висоту контролів; лишаються висота editor workspace, populated read-only credits та контрактні gaps. Далі Reviews/Comments/Moderation/Logs composition і named phone variants. Dashboard identity/navigation/Retry та Users table/email перевірено.
-2. Закрити залишені Profile/PublicProfile й Admin пакети, потім Journal та решту маршрутів за таблицею нижче. Не повторювати вже підтверджені anchors без зміни коду; generic actor/page/locale mutation permutations виконати у фінальній регресії, не оголошуючи їх уже перевіреними.
-3. Паралельно завершити canonical інвентар: підтверджені aliases/duplicates, component/board/prototype exclusions і всі невизначені candidates. Main route table має72 рядки/203 distinct numeric ID labels з кількох Figma file keys; це не unique node count чи coverage denominator. Старий archive snapshot `orb73jiLJnIsZNCRtJsWgS` має250 visible frames; numeric-token comparison показує58 archive labels поза таблицею, але same-number IDs across files можуть означати різні вузли. `orb73…/1390:4021` — відкритий Admin Activity candidate; старі phone candidates `1033:6171`/`1034:6494`, `1023:2343`/`1023:2837`, `1480:5390` і `1480:9494` явно зазначені з невирішеною поточною identity/transition. `BDO…/1480:9494` окремо є current-Copy information sheet. `845:1679` — hidden Profile Films phone collection; owner/prototype branch і populated runtime parity відкриті. IDs/пакети не є denominator або відсотком готовності.
-4. Після кожного UI-блоку: `npm run verify:build`, ручний Chrome огляд застосовних320/393/600/720/768/1024/1440px, UK/EN, populated/loading/error/empty/retry, довгі тексти, keyboard/focus/Escape/trap/return/scroll/overflow. Оновити canonical docs стисло. Automated suites до завершення visual stage не писати й не запускати.
-5. Після закриття visual stage виконати фінальні gates нижче; ціль завершувати лише за їхніми фактичними доказами.
+Перенести актуальні доступні макети Figma в Rewind для всіх наявних маршрутів: desktop, phone, мови UK/EN, ролі користувача та релевантні стани. Перебудувати спільні стилі й компоненти там, де вони не відповідають макетам. Зберегти справжні API-дані, робочі дії, клавіатуру, доступність і адаптивність.
 
-## Черга UI —19 робочих пакетів
+Екран закривається лише після зв’язки **конкретний Figma frame/state → маршрут та умови → runtime-огляд → результат**. Збірка або наявність node ID окремо не є доказом відповідності.
 
-Це групування роботи, не19 окремих frames. Точні verified/fixed/gap/open межі й попередні докази визначає current matrix FIGMA_HANDOFF.
+## Нова основа Figma
 
-| Блок | Залишена перевірка |
-| --- | --- |
-| 1. Profile overview | Own/public overview section placement, невкриті locale/populated/keyboard states; перевірені long-name/avatar anchors не повторювати |
-| 2. Profile collections/lists |24-poster grid і named own/public Next/Previous/Retry focus перевірено; лишились інші collection kinds/lists, full geometry та delayed actor/locale/page-clamp permutations |
-| 3. Profile network/More | Populated UK393 own/public rows, More structured paint/geometry/long-name/trap/Escape, own subtitle typography, UK sheet Follow/Unfollow та EN1440 direct action перевірено; own remount/last-row focus виправлено. Clipped reference group адаптовано за правилом доступності. Лишається desktop full composition |
-| 4. Profile reviews/editor | Named EN1440/UK320 edit/Escape/save/delete/error/empty/focus та overview sync перевірено; лишились full-frame geometry і delayed actor/view/page/locale permutations |
-| 5. Profile settings | Avatar/social named save/error/validation/phone toolbar states перевірено; лишились identity/password, delayed scope/focus та unified phone UK full geometry; unsupported fields/OAuth лишаються gaps |
-| 6. Admin geometry | Dashboard1178:2466 identity/navigation/Retry verified with explicit analytics gap; Users1222:3530 supported table/email/UKEN responsive перевірено; Movies1260:3772 catalog/editor1260:4840 supported API fields, nested layout and matched1440 anchors checked; workspace height mismatch/populated credit view remain open; Reviews1310:3108/Comments1342:3589; Moderation1399:3300 supported composition; Logs1404:3804/1494:7933 now has a two-column supported-field layout and focus recovery, with actor name/email/profile destination gap and runtime review open. Settings/UserProfile landmarks already checked |
-| 7. Admin read/locale states | Movie editor current UK/EN widths320/393/600/720/768/1024/1440 no overflow; all form controls >=44px, matched1440 workspace x120/y1218, poster x150/y1246; Cancel focus returned to Edit. Metadata round-trip and error/retry are prior checked flows; populated credits are confirmed from GET payloads, while their authenticated Admin rendering and keyboard layout need visual evidence. Reviews/Comments UK populated layout remains; Logs two-column supported-field source has passed build but needs populated UK/EN responsive/focus runtime review. [Movies evidence](docs/operations/RELEASE_EVIDENCE.md#admin-movies-supported-editor-fields-and-catalog-layout--26102026) |
-| 8. Admin mutations/inventory | Named Users/Lists/Reviews/Comments/Settings/bulk mutations і delayed outcomes перевірено; Review/Comment DELETE UI wired to existing API with localized confirmation/error, actor-scope and focus/page recovery; build PASS. Manual confirm/success/focus verification remains open after browser dialog blocked. Generic page/failure/locale та nullable clearing semantics — фінальні regression gates. Report/edit/activity audit classified API gaps; current-Copy report-ID conflict, Block semantics and Activity destination need confirmation, без нових endpoints; cleanup після disposable fixtures |
-| 9. Auth geometry | Named form geometry UK/EN320/393/1440 перевірено. За прямим рішенням користувача intro605:2173/915:1598/911:1596/922:1788 — невикористані прототипи; прямий Login/Register збережено |
-| 10. Auth results | Named Register UK/EN success/error responsive results, isolated Reset success, locale/delayed focus та real API Auth checks перевірено; Profile→Login→return query/hash/anchor focus EN1440/UK393 виправлено й перевірено. Programmatic in-flight token replacement та реальний Reset/session flow — явні фінальні regression gates |
-| 11. Service | Named static layout/link checks закриті: Film Data/Privacy1440, UK phone rights focus, Deletion desktop slot/document1748 і supplementary UK/EN widths. About/Rules/Help/Contact/FAQ попередні докази збережені. Content/font/sidebar/absent-route gaps явні; реальне видалення — Profile/final regression |
-| 12. Journal feeds | Сім feed frames класифіковано: wide+author strip і portrait без strip; КК — visible List1 copy. Wide514×296/portrait513×612 switching і fallback перевірено; КК text anchors і255/500-char wide flow перевірено; наступне — решта full composition/runtime/locale/state scope та newsletter/phone mapping; author/related-art DTO gaps зберегти |
-| 13. Journal article | Невкриті content-specific body layouts/locale/state permutations; populated1440/responsive anchors, Back і successful recovery вже перевірено. Illustration/collage gaps зберегти |
-| 14. Home/shared chrome | Guest/member1440/phone, authenticated member feeds/states, header/footer |
-| 15. Search | Відкриті desktop categories/compact/no-results та phone Lists; states/довгі дані |
-| 16. Films | All Films/Discovery desktop і решта states; phone anchors/keyboard уже перевірені |
-| 17. Lists | Catalog/popular/team states; authenticated create/edit/dialogs; погоджені gaps і matched-width waiver збережені |
-| 18. Movie/Review/Person | Populated downstream sections/actions, role variants, Person genre/mobile retry |
-| 19. Community/Messages/Notifications | Community desktop/phone shell anchors now cross-checked against saved measurements/CSS; post-reserve empty-state runtime remeasure is still open, as are populated rows, directory downstream geometry/states, Popular Reviewers UK states, supported messaging/notification interactions. Немає public message/notification Figma mapping |
+Пам’ятка [START HERE `5321:8872`](https://www.figma.com/design/BDO9GO1oscOeUTcu4VXVKA/REWIND?node-id=5321-8872) і свіжі MCP context/screenshots визначають джерело. Індекс містить253 top-level frames разом із пам’яткою; **167 READY включають20 STATE**, не167 маршрутів. `ALTERNATE`, `REFERENCE`, `PROTOTYPE` та колекції `1480:11279`/`1237:4689` не є основою реалізації. Зберігати історичні268 кандидатів, поточну класифікацію й окремий runtime-результат у [матриці](docs/frontend/FIGMA_SCREEN_CANDIDATES.md); повторний повний інвентар не потрібен.
 
-## Інваріанти й погоджені винятки
+Єдиний цільовий шрифт — локальний Inter із кирилицею; SF Pro у старих frames — спадковий орієнтир. Font-only вплив показано на Home перед глобальним підключенням. Mobile<768: gutter16; tablet/desktop: gutter24, fluid content до1200 за доречності. Перевіряти360/393/768/1024/1440 і200% text; попередні320/600/720 лишаються додатковими.
 
-- Чинні маршрути/API та UK/EN зберігаються; нових публічних endpoints/міграцій не планується. Backend змінювати лише для підтвердженого функціонального дефекту зі збереженням сумісності. `ProfileReview.moviePhotoUrl` лишається nullable з підтримкою legacy API.
-- Journal у production читає API; тимчасові browser fixtures допустимі для візуальної перевірки, Figma-контент не підміняє production-дані. Відсутній production-контент не блокує готовність коду.
-- Assets зберігати у стабільних frontend-шляхах без тимчасових URL; використовувати доступні ліцензовані шрифти або найближчий fallback зі збереженням розмірів і перенесення.
-- Погоджені gaps: OAuth/Remember me/phone recovery, ranked/Featured/Crew feeds, непідтримані profile/person поля, Journal illustrations, частина Admin reports/edit/history, відсутні Service routes та production/legal content. Не вигадувати даних/контролів без контракту. PublicList/Ranked List — без нового matched-width огляду за прямим винятком користувача; це не доказ parity.
-- Figma MCP використовувати коли доступний; за Starter quota продовжувати через browser canvas і збережені references. Не оголошувати pixel-perfect без покадрової перевірки.
-- Берегти сторонні зміни, diploma artifacts, локальний `AGENTS.md`, Figma raw references, кеші, backups, `.env` і DB volumes. Disposable fixtures прибирати exact ID/identity predicates із перевіркою counts.
-- VPS, домен, production secrets, TLS, monitoring та реальний production restore drill — окремий інфраструктурний етап.
+Останні змінені джерела: Dashboard `1178:2466`, Film phone `560:1003`, Create List phone `1480:9542`. Перед блоком і звітом повторно отримувати контекст/зображення, бо дизайнер продовжує редагування. READY не означає перевірену реалізацію.
 
-## Фінальна перевірка й доставка
+У першому проході також прочитані brand frames `1423:4557` і `1423:4621`: є різні логотип-варіанти й окрема палітра `#5A8A90`, `#938D7D`, `#D69251`, `#1A1E1F`, `#FFFFFF`. Визначити по route frames, де саме застосовується кожна версія; поки не замінювати tokens за одним moodboard/brand slide.
 
-1. `npm run verify:build`; повний Playwright suite та Admin disposable fixture з cleanup. Перевірити programmatic in-flight Reset token replacement (ізоляція draft/result/focus); real valid-token reset і session revocation. Обов'язкові сценарії без skips; зафіксувати фактичні counts і причину кожного пропуску. Старі125/87 — лише історичний орієнтир.
-2. Backend suite через Maven wrapper із `backend/`; наявні API/security/contracts/password-reset/schema/cache/concurrency та backup/restore checks. Restore — лише в тимчасовій БД.
-3. Compose/Caddy/production config validation на локальних fixtures; не заявляти production-готовність без інфраструктурних доступів.
-4. Чисто перебудувати API/web images; контрольовано оновити локальні containers без втрати `.env`/DB. Docker smoke Home/Auth/Journal/Admin, основні user flows та nullable poster contract.
-5. Звести актуальні докази в RELEASE_EVIDENCE, відокремити історичні результати. Перевірити diff, зробити логічні commits лише власних змін, push у чинний репозиторій, дочекатися зеленого `CI / verify (push)` і виправити failures.
-6. Закрити ціль лише після інвентарю з явними погодженими винятками, повної успішної регресії, Docker smoke та зеленого CI. Якщо доказу немає, пункт лишається відкритим.
+**Поточна звірка 28.10.2026:** system frame `153:2` є reference без variables; типографіку визначає нова Inter-пам’ятка. Admin Movies READY editor — `1260:4840`; `1494:6790` виключений і лишається історичним посиланням. PublicProfile phone Search погоджено замість невизначеного More. Journal article `844:1547` показує collage/byline/inline stills, яких немає в поточному DTO — це data gaps. Детальні докази — у [PROGRESS.md](docs/project/PROGRESS.md) та [RELEASE_EVIDENCE.md](docs/operations/RELEASE_EVIDENCE.md).
+
+## Етапи
+
+### 0. Підтримувати наявний інвентар
+
+1. Наявні268 кандидатів уже класифіковано за свіжими іменами/статусами. Оновлювати конкретні змінені IDs; повний перелік повторно знімати лише за виявленої розбіжності.
+2. Для кожного екраноподібного frame записати: node ID, назву, розмір, visible/hidden, desktop/phone, відповідний маршрут, guest/member/admin, мову, дані та UI state.
+3. Класифікувати вузли як canonical screen, окремий state/variant, прототип, reusable component, hidden duplicate або невизначений. Hidden варіанти не викидати, доки не перевірено їхню відмінність.
+4. Звірити нові інвентарні дані з попередніми доказами. Старі збіги, які суперечать новому Figma, позначити як superseded і перевірити заново.
+5. Єдина матриця `frame → route/state → source → runtime result → evidence/gap` — `docs/frontend/FIGMA_SCREEN_CANDIDATES.md`; handoff містить пояснення й історичні checkpoints. READY не підміняє runtime-статус; розрізняти реалізацію без runtime, перевірені результати, погоджені винятки, API/data gaps і prototype/component.
+
+### 1. Відновити дизайн-систему й shell
+
+1. Витягти підтверджені токени кольору, типографіки, розмірів, spacing, grid, радіусів, тіней, градієнтів, навігації й footer із Figma system frames та повторно вживаних component frames.
+2. Використовувати локальний Inter із кирилицею за актуальною пам’яткою. Font-only Home порівняння desktop/mobile та глобальне підключення вже виконано; зберігати природне перенесення контенту.
+3. Узгодити токени у `global.css` і спільних компонентах без глобальної заміни стилів навмання.
+4. Переробити спільні Header, Footer, navigation, search, button, form, card, poster, tabs, dialogs та loading/error/empty стани за повторно використовуваними Figma-патернами.
+5. Перевірити assets: джерело, локальна копія, ліцензійність, правильний компонент і ефективний розмір у runtime. Тимчасові Figma URLs не залишати в застосунку.
+
+### 2. Перенести екрани сімействами
+
+Після shell пройти кожен frame і variant, зафіксований на етапі 0:
+
+1. **Auth та Service:** Login/Register/Forgot/Reset; About, Help/FAQ, Contact, Rules, Privacy/Terms, Film Data, Account Deletion, інші актуальні service frames.
+2. **Home та discovery:** Home guest/member/phone, Films Discovery/All Films, Popular Reviews/Reviewers, Global Search categories/results/empty/error/phone.
+3. **Film та review:** Movie Details і phone, Person/Actor/Director, Review Details, Comments та їхні пов’язані стани.
+4. **Lists:** catalog/feeds, Featured/Crew, public/ranked/unranked, create/edit, tags, filters, dialogs, phone.
+5. **Profiles та social:** own/public profile, identity/avatar/banner/settings, films/lists/reviews/followers/following, More sheet, Community, Messages, Notifications.
+6. **Journal:** feed, archive, categories, article, newsletter та phone/empty/error states.
+7. **Admin:** Dashboard, Users/User Profile/Films, Movies/editor, Reviews/Comments/Lists, reported variants, moderation, Moderator Logs, Activity, Settings та доступні dialogs.
+
+Порядок можна міняти за залежностями компонентів, але жодне сімейство не зникає з матриці. Після кожного сімейства оновити матрицю, прогрес і докази.
+
+### 3. Відповідність, API й доступність
+
+- Зіставляти кадри за призначенням і компонентами, а не лише за схожим заголовком. Для кожного canonical frame зробити runtime capture відповідної мови, ролі й стану.
+- Phone frames перевіряти за їхньою реальною шириною; desktop — за frame width. Додатково перевірити переходи 320/393/600/720/768/1024/1440 px і відсутність горизонтального overflow.
+- Перевірити реальні дані, loading/error/empty/retry, довгі тексти, клавіатуру, видимий focus, Escape, dialog focus trap/return, scroll та цільові області.
+- Figma sample data не підміняє дані production. Не додавати імітаційні кнопки, лічильники чи результати.
+- Зберігати чинні публічні маршрути/API. Якщо новий frame потребує поля або операції, яких немає в API, відмітити конкретний gap. Новий контракт чи міграцію робити лише після підтвердження потреби й backward-compatible дизайну рішення.
+- Зберегти раніше погоджені відмінності, доки новий файл або користувач явно їх не змінить: прямий Login/Register замість необов’язкових стартових прототипів; наявні Featured/Crew feeds, якщо окремих API немає; PublicList/Ranked List виняток від повторного matched-width огляду залишається лише якщо його не скасують нові актуальні frames.
+
+### 4. Перевірки та доставка
+
+Поки триває visual stage, після кожного блока виконувати `npm run verify:build` і ручний огляд Chrome. Автотести не запускати до завершення візуального етапу, як було погоджено раніше.
+
+Після закриття frame/state матриці:
+
+1. `npm run verify:build`, повний Playwright suite з фактичними skips, backend suite та погоджені security/API/backup/production-config перевірки.
+2. Повторити Compose/Caddy/config validation; перебудувати Docker images та smoke-перевірити основні UI/API flows, не змінюючи `.env` і DB volume.
+3. Переглянути diff і вибрати лише власні зміни роботи; захистити дипломні артефакти, локальний `AGENTS.md`, references, backups, кеші, `.env` і БД.
+4. Логічні commits, push у GitHub, перевірити `CI / verify (push)`.
+
+VPS, production secrets, домен, TLS, monitoring і реальний production restore лишаються поза цим етапом.
+
+## Поточна позиція
+
+- Основу167 READY/20 STATE актуалізовано; усі268 історичних кандидатів збережено в єдиній матриці. Кожен має конкретне runtime evidence, API/data gap, source-render limitation або component/prototype classification; загальних pending-позначок немає. Це не blanket pixel-perfect погодження.
+- Inter normal/italic з кирилицею локально; font-only Home preview показано перед глобальним переходом. Phone/tablet boundary767/768, природне зростання довгого контенту.
+- Спільна компактна Admin-оболонка1178:2466 для12 розділів. Personal/platform metrics розділено; unsupported history/session недоступні. Loading/result states і active/focus rail перевірено; Audit Logs зберігає page size50.
+- Create List — самостійна phone сторінка, local draft до Save. Повний успіх → readonly owner detail за ID + success + явне Edit/Add film; failure/partial Retry зберігають форму. Ранжування без API не вигадувати.
+- Actor використовує погоджений baked asset5340:4508 із окремими чорними overlays. Phone F1 artwork лишається data gap. Person Back працює під час loading/error.
+- Auth/Service, Home/Person, Search/Films/Reviews, Lists/Journal і Profile/social мають парні screenshots та поточні поведінкові перевірки; receipts і конкретні обмеження у Release evidence. Terms/Conditions/Safety/HQ — погоджені інформаційні routes на спільному ServicePage,56 cases +112 rechecks існуючого rail. List information sheet1480:9494 —14 current cases, Done/Escape/Tab/focus return.
+- Settings API gaps перелічені по source field IDs: email/bio/pronoun/location/reply preference, banner/file upload, OAuth/import і watched-date не створювати заради макета. Реальні displayName/password/avatar URL/social links збережені й перевірені. Journal live populated дані відсутні; populated screenshots лише isolated browser responses.
+- Backend delta походить від документованого stale rating/cache після account deletion; додано commit-aware Redis eviction і реальні deletion/cache regression cases. Ізольована MySQL3318/rewind_test:90 tests,0 failures/errors/skips, BUILD SUCCESS. Frontend verify:build251 modules пройшов; це технічна перевірка.
+- Docker config --quiet, Caddy і production-config із тимчасовими синтетичними значеннями пройшли. Старі API/web image IDs і rollback tags, .env hash та DB mount checkpoint збережено поза Git. Чистий Docker build завершено; лише API/web оновлено, .env hash і DB mount не змінилися. Disposable rating/cache/null-poster перевірка та точний cleanup пройшли.
+- Наступне: виправити фактичні збої full Playwright158 (перший запуск64 passed/94 failed) та Admin run (4 passed/8 failed), повторити без mandatory skips → API/security/contracts/reset/schema/cache/concurrency/backup-restore scripts і Docker smoke → прибрати тимчасові файли, scoped commits/push та green CI. Admin і browser tests оновлюються під маршрути, діалоги та Inter; підтверджені функціональні збої виправляти в коді, не приховувати.
+- Зберегти погоджені matched-width/PublicList/Ranked винятки; hidden1×1 sources не вважати підтвердженою геометрією. Native OS Share success, екранна клавіатура та нативний200% zoom не заявляються перевіреними.
+- Дипломні артефакти, локальний AGENTS.md, secrets, references, backups і сторонні зміни — поза commits. VPS/production deployment окремо.
+
+[Top-level source index](docs/frontend/FIGMA_FRAME_INVENTORY.md) · [Єдина матриця268 кандидатів](docs/frontend/FIGMA_SCREEN_CANDIDATES.md).
