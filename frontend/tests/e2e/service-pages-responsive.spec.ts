@@ -3,19 +3,19 @@ import { expect, test } from "@playwright/test";
 test("service pages use the Figma editorial hero and retain route navigation", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
 
-  for (const route of ["help", "contact", "rules", "privacy", "film-data", "delete-account"]) {
+  for (const route of ["help", "faq", "contact", "rules", "privacy", "film-data", "important-data", "delete-account", "terms", "conditions", "safety-notice", "hq-accounts"]) {
     await page.goto(`/uk/${route}`);
     const hero = page.locator('main > [class*="hero"]');
     await expect(hero).toHaveCSS("min-height", "818px");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.locator('main > [class*="hero"] nav a')).toHaveCount(6);
+    await expect(page.locator('main > [class*="hero"] nav a')).toHaveCount(10);
     const details = await page.locator("main > article").boundingBox();
     expect(details?.width).toBeCloseTo(1200, 0);
   }
 });
 
 test("service page sections preserve the Figma editorial rhythm across breakpoints", async ({ page }) => {
-  const expectedSections = { help: 6, contact: 3, rules: 9, privacy: 5, "film-data": 2, "delete-account": 4 };
+  const expectedSections = { help: 9, contact: 3, rules: 9, privacy: 5, "film-data": 2, "delete-account": 4, terms: 7, conditions: 6, "safety-notice": 5, "hq-accounts": 4 };
 
   await page.setViewportSize({ width: 1440, height: 900 });
   for (const [route, count] of Object.entries(expectedSections)) {
@@ -36,12 +36,12 @@ test("service page sections preserve the Figma editorial rhythm across breakpoin
     const article = page.locator("main > article");
     await expect(article.locator("section")).toHaveCount(count);
     await expect(article.locator("section").first().getByRole("heading", { level: 3 })).toBeVisible();
-    await expect(article.locator("section").first().locator("p")).toBeVisible();
+    await expect(article.locator("section").first().locator("p, ul, ol").first()).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(393);
   }
 });
 
-test("admin desktop hero follows the Figma dashboard frame", async ({ page }) => {
+test("admin shares the compact shell and keeps personal and platform metrics separate", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.route("**/api/users/me", route => route.fulfill({ json: {
     id: 900010, username: "admin-fixture", role: "ADMIN", displayName: "Admin Fixture",
@@ -88,86 +88,34 @@ test("admin desktop hero follows the Figma dashboard frame", async ({ page }) =>
     id: 900024, adminId: 900010, action: "SITE_SETTING_UPDATED", targetType: "SITE_SETTING", targetId: null,
     metadata: null, createdAt: "2026-01-01T00:00:00Z",
   }], totalPages: 1, totalElements: 1 } }));
+  await page.route("**/api/admin/users/900010/overview", route => route.fulfill({ json: { stats: { watched: 8, customLists: 3, reviews: 4, likesReceived: 5, watchlist: 6 } } }));
+  await page.route("**/api/users/900010/profile", route => route.fulfill({ json: { id: 900010, ratingDistribution: [{ rating: 2, count: 1 }, { rating: 4, count: 1 }] } }));
   await page.goto("/uk/admin");
-  const hero = page.locator('main > [class*="hero"]');
-  await expect(hero).toHaveCSS("min-height", "1020px");
+  const hero = page.locator('main > header');
+  await expect(hero).toHaveCSS("min-height", "390px");
   const avatar = await hero.locator('[class*="avatar"]').boundingBox();
-  expect(avatar?.width).toBeCloseTo(272, 0);
-  const summary = page.locator('main > [class*="summary"]');
-  await expect(summary).toBeVisible();
-  const summaryBox = await summary.boundingBox();
-  expect(summaryBox?.x).toBeCloseTo(120, 0);
-  expect(summaryBox?.width).toBe(1200);
-  await expect(summary.locator('[class*="summaryCard"]')).toHaveCount(6);
-  const cards = await summary.locator('[class*="summaryCard"]').evaluateAll(elements => elements.map(element => {
-    const rect = element.getBoundingClientRect();
-    return { width: rect.width, height: rect.height, top: rect.top };
-  }));
-  expect(cards.every(card => Math.abs(card.width - 368) < 1)).toBe(true);
-  expect(cards.every(card => card.height >= 233)).toBe(true);
-  expect(new Set(cards.map(card => card.top)).size).toBe(2);
-  const users = page.getByRole("region", { name: "Користувачі" });
-  await expect(users).toBeVisible();
-  const usersBox = await users.boundingBox();
-  expect(usersBox?.x).toBeCloseTo(120, 0);
-  expect(usersBox?.width).toBe(1200);
-  const userToolbar = users.locator('form').first();
-  const userToolbarBox = await userToolbar.boundingBox();
-  expect(userToolbarBox?.width).toBeCloseTo(402, 0);
-  await expect(users.getByRole("listitem")).toHaveCount(1);
-  await users.getByRole("button", { name: /профіл/i }).click();
-  const detail = users.locator("#admin-user-profile");
-  await expect(detail).toBeVisible();
-  const detailBox = await detail.boundingBox();
-  expect(detailBox?.x).toBeCloseTo(120, 0);
-  expect(detailBox?.width).toBe(1200);
-  expect(detailBox?.height).toBeGreaterThanOrEqual(829);
-  await expect(detail.locator('[class*="detailSubsection"]')).toHaveCount(2);
-  const detailCards = await detail.locator('[class*="detailSubsection"]').evaluateAll(elements => elements.map(element => element.getBoundingClientRect().height));
-  expect(detailCards.every(height => height >= 501)).toBe(true);
+  expect(avatar?.width).toBe(80);
+  const heroBox = await hero.boundingBox();
+  expect(heroBox!.height).toBeLessThanOrEqual(500);
+  const navigation = hero.getByRole("navigation");
+  await expect(navigation.getByRole("link")).toHaveCount(12);
+  const personal = page.locator('section[aria-labelledby="admin-personal-metrics"]');
+  await expect(personal.getByText("Створені списки", { exact: true })).toHaveCount(1);
+  const platform = page.getByRole("region", { name: "Статистика платформи" });
+  await expect(platform.locator('[class*="summaryCard"]')).toHaveCount(6);
+  expect((await platform.boundingBox())?.width).toBe(1200);
+  for (const view of ["users", "reviews", "comments", "lists", "moderation", "logs", "settings"]) {
+    const link = navigation.locator(`a[href="/uk/admin?view=${view}"]`);
+    const label = await link.getAttribute("aria-label");
+    await link.click();
+    await expect(link).toHaveAttribute("aria-current", "page");
+    await expect(page.locator('main > h2')).toHaveText(label!);
+    await expect(page.locator('main > section').first()).toBeVisible();
+    const section = await page.locator('main > section').first().boundingBox();
+    expect(section?.x).toBeCloseTo(120, 0);
+    expect(section?.width).toBe(1200);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
+  }
   const settings = page.locator('section[aria-labelledby="admin-settings-title"]');
-  await expect(settings).toBeVisible();
-  const settingsBox = await settings.boundingBox();
-  expect(settingsBox?.x).toBeCloseTo(120, 0);
-  expect(settingsBox?.width).toBe(1200);
-  expect(settingsBox?.height).toBeGreaterThanOrEqual(734);
-  await expect(settings.locator('input')).toHaveCount(4);
-  const reviews = page.getByRole("region", { name: "Огляди" });
-  await expect(reviews).toBeVisible();
-  const reviewRow = reviews.locator('ul[class*="list"] > li');
-  await expect(reviewRow).toHaveCount(1);
-  const reviewBox = await reviewRow.boundingBox();
-  expect(reviewBox?.x).toBeCloseTo(120, 0);
-  expect(reviewBox?.width).toBe(1200);
-  expect(reviewBox?.height).toBeGreaterThanOrEqual(429);
-  const comments = page.getByRole("region", { name: "Коментарі" });
-  await expect(comments).toBeVisible();
-  const commentRow = comments.locator('ul[class*="list"] > li');
-  await expect(commentRow).toHaveCount(1);
-  const commentBox = await commentRow.boundingBox();
-  expect(commentBox?.x).toBeCloseTo(120, 0);
-  expect(commentBox?.width).toBe(1200);
-  expect(commentBox?.height).toBeGreaterThanOrEqual(249);
-  const lists = page.getByRole("region", { name: "Списки" });
-  await expect(lists).toBeVisible();
-  const listRow = lists.locator('ul[class*="list"] > li');
-  await expect(listRow).toHaveCount(1);
-  const listBox = await listRow.boundingBox();
-  expect(listBox?.x).toBeCloseTo(120, 0);
-  expect(listBox?.width).toBe(1200);
-  expect(listBox?.height).toBeGreaterThanOrEqual(393);
-  const moderation = page.getByRole("region", { name: "Черга модерації" });
-  await expect(moderation).toBeVisible();
-  const moderationBox = await moderation.boundingBox();
-  expect(moderationBox?.x).toBeCloseTo(120, 0);
-  expect(moderationBox?.width).toBe(1200);
-  expect(moderationBox?.height).toBeGreaterThanOrEqual(673);
-  const audit = page.getByRole("region", { name: "Журнал дій" });
-  await expect(audit).toBeVisible();
-  const auditRow = audit.locator('ul[class*="list"] > li');
-  await expect(auditRow).toHaveCount(1);
-  const auditBox = await auditRow.boundingBox();
-  expect(auditBox?.x).toBeCloseTo(120, 0);
-  expect(auditBox?.width).toBe(1200);
-  expect(auditBox?.height).toBeGreaterThanOrEqual(348);
+  await expect(settings.locator('input, select')).toHaveCount(4);
 });

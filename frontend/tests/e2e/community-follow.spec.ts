@@ -106,13 +106,14 @@ async function expectControls(page: Page, name: string, count: number, disabled 
 }
 
 async function switchActor(page: Page) {
+  await page.locator("header").getByRole("button", { name: "Account", exact: true }).click();
   await page.locator("header").getByRole("button", { name: "Log out", exact: true }).click();
   await expect(page).toHaveURL(/\/en\/login$/);
   await page.locator("#login-email").fill("otherreader@example.invalid");
   await page.locator("#login-password").fill("legacy");
   await page.locator('main button[type="submit"]').click();
   await expect(page).toHaveURL(/\/en\/films$/);
-  await page.locator("header").getByRole("link", { name: "Community", exact: true }).click();
+  await page.locator("header").getByRole("link", { name: "Members", exact: true }).click();
   await expect(page).toHaveURL(/\/en\/community$/);
   await waitForPageContent(page);
 }
@@ -135,7 +136,7 @@ for (const failedKind of ["follow-status", "block-status"] as const) {
       expect(state.statusCalls.filter(call => call.targetId === ada.id)).toHaveLength(2);
       gate.resolve();
       const retry = await expectControls(page, "Retry: Ada Finch", 3);
-      const error = "Could not load the follow status.";
+      const error = failedKind === "block-status" ? "Could not load the block status." : "Could not load the follow status.";
       await expect(page.getByRole("alert").filter({ hasText: error }).first()).toBeVisible();
       await retry.first().click();
       await expectControls(page, "Follow: Ada Finch", 3);

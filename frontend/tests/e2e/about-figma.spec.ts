@@ -24,6 +24,6 @@ test("About follows the measured Figma editorial shell", async ({ page }) => {
 
   await page.setViewportSize({ width: 393, height: 852 });
   await page.goto("/en/about");
-  await expect(page.getByRole("heading", { name: /About us Rewind/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /^About Us$/i })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });

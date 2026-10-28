@@ -71,6 +71,7 @@ test("admin user detail focuses its heading and restores the exact triggering ro
   const users = [1, 2].map(id => ({ id: 930000 + id, username: `focus-user-${id}`, displayName: `Focus reader ${id}`, email: `focus-user-${id}@example.invalid`, role: "USER", avatarUrl: null, isActive: true, isHq: false, createdAt: "2026-10-01T12:00:00Z" }));
   const emptyPage = { content: [], totalPages: 0, totalElements: 0 };
   const mutations: string[] = [];
+  let hideSecond = false;
   await page.route(/^https?:\/\/[^/]+\/api\//, route => {
     const request = route.request();
     if (request.method() !== "GET") {
@@ -83,7 +84,7 @@ test("admin user detail focuses its heading and restores the exact triggering ro
     if (url.pathname === "/api/admin/dashboard") return route.fulfill({ json: { users: 2, activeUsers: 2, hqUsers: 0, movies: 0, reviews: 0, hiddenReviews: 0 } });
     if (url.pathname === "/api/admin/settings") return route.fulfill({ json: [] });
     if (url.pathname === "/api/admin/movies/tmdb-quality") return route.fulfill({ json: { totalMovies: 0, tmdbLinkedMovies: 0, completeTmdbMovies: 0, missingPoster: 0, missingBackdrop: 0, missingPlot: 0, missingRuntime: 0, missingTrailer: 0, missingTmdbRating: 0, linkedCoveragePercent: 0, metadataCompletenessPercent: 0 } });
-    if (url.pathname === "/api/admin/users") return route.fulfill({ json: { content: url.searchParams.has("q") ? [] : users, totalPages: 1, totalElements: 2 } });
+    if (url.pathname === "/api/admin/users") return route.fulfill({ json: { content: url.searchParams.has("q") ? [] : hideSecond ? users.filter(user => user.id !== 930002) : users, totalPages: 1, totalElements: 2 } });
     const detail = url.pathname.match(/^\/api\/admin\/users\/(\d+)(\/overview)?$/);
     if (detail) return route.fulfill({ json: detail[2]
       ? { stats: { watched: 0, reviews: 0, ratings: 0, watchlist: 0, favorites: 0, comments: 0, likesReceived: 0, customLists: 0 }, adminHistory: [] }
@@ -91,9 +92,9 @@ test("admin user detail focuses its heading and restores the exact triggering ro
     return route.fulfill({ json: emptyPage });
   });
 
-  await page.goto("/en/admin");
+  await page.goto("/en/admin?view=users");
   const usersSection = page.getByRole("region", { name: "Users", exact: true });
-  const secondRow = usersSection.getByRole("listitem").filter({ hasText: "Focus reader 2" });
+  const secondRow = usersSection.locator("tbody tr").filter({ hasText: "Focus reader 2" });
   const trigger = secondRow.getByRole("button", { name: "View profile", exact: true });
   await trigger.focus();
   await trigger.press("Enter");
@@ -103,14 +104,13 @@ test("admin user detail focuses its heading and restores the exact triggering ro
   const detailPanel = page.locator("#admin-user-profile");
   await detailPanel.getByRole("button", { name: "Close", exact: true }).click();
   await expect(trigger).toBeFocused();
-  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  await expect(page).toHaveURL(/view=users/);
 
   await trigger.press("Enter");
   await expect(heading).toBeFocused();
-  await usersSection.getByRole("textbox", { name: "Search users", exact: true }).fill("no-longer-visible");
-  await usersSection.getByRole("button", { name: "Search", exact: true }).click();
-  await expect(trigger).toHaveCount(0);
+  hideSecond = true;
   await detailPanel.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(trigger).toHaveCount(0);
   await expect(usersSection.getByRole("heading", { name: "Users", exact: true, level: 2 })).toBeFocused();
   expect(mutations).toEqual([]);
 });

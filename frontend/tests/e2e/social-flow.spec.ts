@@ -86,7 +86,7 @@ test("user can follow another profile and receive a notification", async ({ page
     await page.getByRole("button", { name: "Вийти" }).click();
     await expect(page).toHaveURL(/\/uk\/login$/);
     await page.getByLabel("Електронна пошта").fill(firstCredentials.email);
-    await page.getByLabel("Пароль").fill(firstCredentials.password);
+    await page.getByLabel("Пароль", { exact: true }).fill(firstCredentials.password);
     await page.getByRole("button", { name: "Увійти" }).click();
     await expect(page).toHaveURL(/\/uk\/films$/);
     await expect(page.getByRole("button", { name: "Вийти" })).toBeVisible();

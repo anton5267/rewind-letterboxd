@@ -21,16 +21,18 @@ async function adminMovieFixture(page: Page) {
     if (url.pathname === "/api/admin/settings") return route.fulfill({ json: [] });
     if (url.pathname === "/api/admin/movies/tmdb-quality") return route.fulfill({ json: { totalMovies: 1, tmdbLinkedMovies: 0, completeTmdbMovies: 0, missingPoster: 1, missingBackdrop: 1, missingPlot: 1, missingRuntime: 1, missingTrailer: 1, missingTmdbRating: 1, linkedCoveragePercent: 0, metadataCompletenessPercent: 0 } });
     if (url.pathname === "/api/admin/movies") return route.fulfill({ json: { content: [movie], totalPages: 1, totalElements: 1 } });
+    if (url.pathname === `/api/movies/${movie.id}/details`) return route.fulfill({ json: { ...movie, genres: [], directors: [], actors: [], producers: [], shortPlot: null, backdropUrl: null, trailerUrl: null, durationMinutes: null, ageRating: null } });
     return route.fulfill({ json: emptyPage });
   });
-  await page.goto("/en/admin");
-  const movies = page.getByRole("region", { name: "Films", exact: true });
+  await page.goto("/en/admin?view=movies");
+  const movies = page.getByRole("region", { name: "Film database", exact: true });
   await expect(movies).toHaveAttribute("aria-busy", "false");
   return { movie, movies, writes };
 }
 
 test("single TMDB sync rejects malformed IDs and submits the exact valid ID", async ({ page }) => {
   const { movie, movies, writes } = await adminMovieFixture(page);
+  await movies.locator("summary").filter({ hasText: "More actions" }).click();
   const field = movies.getByRole("textbox", { name: `TMDB ID ${movie.title}`, exact: true });
   const sync = movies.getByRole("button", { name: "Sync TMDB", exact: true });
   for (const invalid of ["550abc", "1.5", "1e3", "0", "-1", "Infinity", "9007199254740992", ""]) {
@@ -47,6 +49,7 @@ test("single TMDB sync rejects malformed IDs and submits the exact valid ID", as
 
 test("batch TMDB import rejects the whole invalid input and deduplicates valid IDs", async ({ page }) => {
   const { movies, writes } = await adminMovieFixture(page);
+  await movies.locator("summary").filter({ hasText: "Add film" }).click();
   const field = movies.getByRole("textbox", { name: "TMDB IDs", exact: true });
   const submit = movies.getByRole("button", { name: "Import IDs", exact: true });
   for (const invalid of ["550abc 603", "550,1.5", "550 9007199254740992", "550,0", "550,-1", "550,1e3", "", Array.from({ length: 21 }, (_, index) => index + 1).join(",")]) {
@@ -76,9 +79,10 @@ for (const width of [320, 1440]) {
     const focusedLayout = await title.evaluate(element => ({ top: element.getBoundingClientRect().top, headerBottom: document.querySelector("header")!.getBoundingClientRect().bottom }));
     expect(focusedLayout.top).toBeGreaterThanOrEqual(focusedLayout.headerBottom);
     await page.keyboard.press("Tab");
-    await expect(movies.getByLabel("Release date", { exact: true })).toBeFocused();
+    await expect(movies.getByLabel("Duration (minutes)", { exact: true })).toBeFocused();
     await movies.getByRole("button", { name: "Cancel", exact: true }).click();
     await expect(edit).toBeFocused();
+    await movies.locator("summary").filter({ hasText: "Add film" }).click();
     await expect(title).toHaveValue("");
     expect(writes).toEqual([]);
   });

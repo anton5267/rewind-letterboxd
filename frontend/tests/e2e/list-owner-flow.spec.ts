@@ -10,13 +10,13 @@ test("owner creates and deletes a custom list", async ({ page, baseURL }) => {
   await page.goto("/uk/register");
   await page.getByLabel("Нікнейм").fill(`list${suffix.slice(-12)}`);
   await page.getByLabel("Електронна пошта").fill(email);
-  await page.getByLabel("Пароль").fill(password);
+  await page.getByLabel("Пароль", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Створити акаунт" }).click();
   await expect(page.getByRole("heading", { name: /Акаунт створено/ })).toBeVisible();
 
   await page.getByRole("button", { name: "Перейти до входу" }).click();
   await page.getByLabel("Електронна пошта").fill(email);
-  await page.getByLabel("Пароль").fill(password);
+  await page.getByLabel("Пароль", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/uk\/films$/);
 
@@ -105,12 +105,12 @@ test("owner retries failed list items and returns from an emptied last page", as
   await page.goto("/uk/register");
   await page.getByLabel("Нікнейм").fill(`retry${suffix.slice(-12)}`);
   await page.getByLabel("Електронна пошта").fill(email);
-  await page.getByLabel("Пароль").fill(password);
+  await page.getByLabel("Пароль", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Створити акаунт" }).click();
   await expect(page.getByRole("heading", { name: /Акаунт створено/ })).toBeVisible();
   await page.getByRole("button", { name: "Перейти до входу" }).click();
   await page.getByLabel("Електронна пошта").fill(email);
-  await page.getByLabel("Пароль").fill(password);
+  await page.getByLabel("Пароль", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/uk\/films$/);
 

@@ -13,7 +13,7 @@ test("password reset delivers a one-time Mailpit link and permits the new login"
     await page.goto("/uk/register");
     await page.getByLabel("Нікнейм").fill(`e2ereset${suffix}`);
     await page.getByLabel("Електронна пошта").fill(email);
-    await page.getByLabel("Пароль").fill(oldPassword);
+    await page.getByLabel("Пароль", { exact: true }).fill(oldPassword);
     const registration = page.waitForResponse(response => response.url().endsWith("/api/auth/register") && response.request().method() === "POST");
     await page.getByRole("button", { name: "Створити акаунт" }).click();
     expect((await registration).status()).toBe(200);
@@ -46,7 +46,7 @@ test("password reset delivers a one-time Mailpit link and permits the new login"
 
     await page.getByRole("status").getByRole("link", { name: "Увійти" }).click();
     await page.getByLabel("Електронна пошта").fill(email);
-    await page.getByLabel("Пароль").fill(newPassword);
+    await page.getByLabel("Пароль", { exact: true }).fill(newPassword);
     await page.getByRole("button", { name: "Увійти" }).click();
     await expect(page).toHaveURL(/\/uk\/films$/);
   } finally {

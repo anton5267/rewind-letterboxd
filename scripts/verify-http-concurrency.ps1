@@ -5,6 +5,9 @@ Add-Type -AssemblyName System.Net.Http
 $suffix = [guid]::NewGuid().ToString('N').Substring(0, 12)
 $email = "concurrency-$suffix@example.invalid"
 $username = "concurrency_$suffix"
+$targetEmail = "concurrency-target-$suffix@example.invalid"
+$targetUsername = "concurrency_target_$suffix"
+$targetUserId = $null
 $password = 'ConcurrencyPass123!'
 $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
 $headers = @{}
@@ -94,6 +97,10 @@ function ExpectConcurrentStatuses($responses, [int[]]$expected, [string]$step) {
 try {
     ExpectStatus (InvokeApi 'GET' '/auth/csrf') @(200) 'csrf bootstrap'
     ExpectStatus (InvokeApi 'POST' '/auth/register' @{ username = $username; email = $email; password = $password }) @(200) 'concurrency user registration'
+    $targetRegistration = InvokeApi 'POST' '/auth/register' @{ username = $targetUsername; email = $targetEmail; password = $password }
+    ExpectStatus $targetRegistration @(200) 'concurrency target registration'
+    $targetUserId = [long]($targetRegistration.Content | ConvertFrom-Json).id
+    if ($targetUserId -le 0) { throw 'Target registration did not return a valid ID' }
     ExpectStatus (InvokeApi 'POST' '/auth/login' @{ email = $email; password = $password }) @(200) 'concurrency user login'
     $loggedIn = $true
 
@@ -180,11 +187,11 @@ try {
     $readAllWrites = InvokeConcurrent 'POST' '/notifications/read-all' @($null, $null)
     ExpectConcurrentStatuses $readAllWrites @(204) 'concurrent notification read-all writes'
 
-    $followWrites = InvokeConcurrent 'POST' '/users/1/follow' @($null, $null)
+    $followWrites = InvokeConcurrent 'POST' "/users/$targetUserId/follow" @($null, $null)
     ExpectConcurrentStatuses $followWrites @(204) 'concurrent follow writes'
-    $followers = InvokeApi 'GET' '/users/1/followers?size=50'
+    $followers = InvokeApi 'GET' "/users/$targetUserId/followers?size=50"
     ExpectStatus $followers @(200) 'followers read after concurrency'
-    ExpectStatus (InvokeApi 'DELETE' '/users/1/follow') @(204) 'follow cleanup'
+    ExpectStatus (InvokeApi 'DELETE' "/users/$targetUserId/follow") @(204) 'follow cleanup'
 
     $likeWrites = InvokeConcurrent 'POST' "/reviews/$reviewId/likes" @($null, $null)
     ExpectConcurrentStatuses $likeWrites @(204) 'concurrent review-like writes'
@@ -200,9 +207,23 @@ try {
             try { $null = InvokeApi 'DELETE' "/comments/$commentId" } catch { }
         }
         try { if ($reviewId) { $null = InvokeApi 'DELETE' "/reviews/$reviewId" } } catch { }
-        try { $null = InvokeApi 'DELETE' '/users/1/follow' } catch { }
+        try { if ($targetUserId) { $null = InvokeApi 'DELETE' "/users/$targetUserId/follow" } } catch { }
         try { $null = InvokeApi 'DELETE' '/movies/1/watchlist' } catch { }
         try { if ($listId) { $null = InvokeApi 'DELETE' "/lists/$listId/items/1" } } catch { }
         try { $null = InvokeApi 'DELETE' '/profile/me' @{ currentPassword = $password } } catch { }
+    }
+    if ($targetUserId) {
+        $targetSession = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+        $null = Invoke-WebRequest -UseBasicParsing "$BaseUrl/api/auth/csrf" -WebSession $targetSession
+        $targetCsrf = ($targetSession.Cookies.GetCookies([uri]"$BaseUrl/api/auth/csrf") | Where-Object Name -eq 'XSRF-TOKEN').Value
+        $targetHeaders = @{ 'X-XSRF-TOKEN' = $targetCsrf }
+        $loginBody = @{ email = $targetEmail; password = $password } | ConvertTo-Json -Compress
+        $null = Invoke-WebRequest -Method POST -UseBasicParsing "$BaseUrl/api/auth/login" -WebSession $targetSession -Headers $targetHeaders -ContentType 'application/json' -Body $loginBody
+        $identity = (Invoke-WebRequest -UseBasicParsing "$BaseUrl/api/profile/me" -WebSession $targetSession).Content | ConvertFrom-Json
+        if ([long]$identity.id -ne $targetUserId -or $identity.username -ne $targetUsername -or $identity.email -ne $targetEmail) { throw 'Disposable target identity did not match' }
+        $targetHeaders['X-XSRF-TOKEN'] = ($targetSession.Cookies.GetCookies([uri]"$BaseUrl/api/profile/me") | Where-Object Name -eq 'XSRF-TOKEN').Value
+        $deleteBody = @{ currentPassword = $password } | ConvertTo-Json -Compress
+        $removed = Invoke-WebRequest -Method DELETE -UseBasicParsing "$BaseUrl/api/profile/me" -WebSession $targetSession -Headers $targetHeaders -ContentType 'application/json' -Body $deleteBody
+        if ($removed.StatusCode -ne 204) { throw 'Disposable concurrency target cleanup failed' }
     }
 }

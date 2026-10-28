@@ -139,7 +139,7 @@ test("desktop categories remain visible and keyboard tabs reveal their focused c
   }
 });
 
-test("localized desktop empty states contain their message and working home action", async ({ page }) => {
+test("localized desktop empty states contain their message and clear search action", async ({ page }) => {
   await mockSearch(page);
   for (const locale of locales) {
     for (const width of desktopWidths) {
@@ -149,16 +149,18 @@ test("localized desktop empty states contain their message and working home acti
         await expect(page.getByRole("main")).toHaveAttribute("aria-busy", "false");
         const empty = page.locator('main section[class*="noMatches"]');
         await expect(empty).toBeVisible();
-        await expectContentsWithin(empty, ":scope > p, h2, a");
-        const home = empty.getByRole("link", { name: locale === "uk" ? "На головну" : "Back to home", exact: true });
-        await expect(home).toHaveAttribute("href", `/${locale}/home`);
-        await home.focus();
-        await expect(home).toBeFocused();
-        expect(await home.evaluate(element => {
+        await expectContentsWithin(empty, ":scope > p, h2, button");
+        const clear = empty.getByRole("button", { name: locale === "uk" ? "Очистити пошук" : "Clear search", exact: true });
+        await clear.focus();
+        await expect(clear).toBeFocused();
+        expect(await clear.evaluate(element => {
           const box = element.getBoundingClientRect();
-          return document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)?.closest("a") === element;
+          return document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)?.closest("button") === element;
         })).toBe(true);
         await expectNoPageOverflow(page);
+        await clear.press("Enter");
+        await expect(page).toHaveURL(new RegExp(`/${locale}/search(?:\\?.*)?$`));
+        expect(new URL(page.url()).searchParams.has("q")).toBe(false);
       });
     }
   }

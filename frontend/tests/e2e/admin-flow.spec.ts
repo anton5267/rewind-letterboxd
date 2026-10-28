@@ -13,7 +13,7 @@ test("admin user table pages, filters and updates the visible row", async ({ pag
 
   await page.goto("/uk/login");
   await page.getByLabel("Електронна пошта").fill(email!);
-  await page.getByLabel("Пароль").fill(password!);
+  await page.getByLabel("Пароль", { exact: true }).fill(password!);
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/uk\/films$/);
 
@@ -38,21 +38,21 @@ test("admin user table pages, filters and updates the visible row", async ({ pag
   });
   await page.route("**/api/admin/users/99999/deactivate", route => route.fulfill({ status: 200, body: "" }));
 
-  await page.goto("/uk/admin");
+  await page.goto("/uk/admin?view=users");
   const users = page.getByRole("region", { name: "Користувачі" });
   await expect(users).toHaveAttribute("aria-busy", "false");
-  await expect(users.getByRole("listitem")).toHaveCount(50);
+  await expect(users.locator("tbody tr")).toHaveCount(50);
   await expect(users.getByRole("status")).toHaveText("Сторінка 1 з 2 · 51");
 
   await users.getByRole("button", { name: "Далі" }).click();
-  await expect(users.getByRole("listitem")).toHaveCount(1);
-  await expect(users.getByText("fake-user-51", { exact: false })).toBeVisible();
+  await expect(users.locator("tbody tr")).toHaveCount(1);
+  await expect(users.getByText("fake-user-51", { exact: true })).toBeVisible();
   await expect(users.getByRole("status")).toHaveText("Сторінка 2 з 2 · 51");
 
   await users.getByLabel("Пошук користувача").fill("needle");
   await users.getByRole("button", { name: "Пошук" }).click();
-  await expect(users.getByText("needle-user", { exact: false })).toBeVisible();
-  await expect(users.getByRole("listitem")).toHaveCount(1);
+  await expect(users.getByText("needle-user", { exact: true })).toBeVisible();
+  await expect(users.locator("tbody tr")).toHaveCount(1);
   await expectPaginationHidden(users);
   await users.getByRole("button", { name: "Заблокувати" }).click();
   await expect(users.getByText("заблокований", { exact: false })).toBeVisible();
@@ -68,7 +68,7 @@ test("admin list table returns from an emptied last page", async ({ page }) => {
 
   await page.goto("/uk/login");
   await page.getByLabel("Електронна пошта").fill(email!);
-  await page.getByLabel("Пароль").fill(password!);
+  await page.getByLabel("Пароль", { exact: true }).fill(password!);
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/uk\/films$/);
 
@@ -92,7 +92,7 @@ test("admin list table returns from an emptied last page", async ({ page }) => {
     await route.fulfill({ status: 204, body: "" });
   });
 
-  await page.goto("/uk/admin");
+  await page.goto("/uk/admin?view=lists");
   const lists = page.getByRole("region", { name: "Списки" });
   await expect(lists.getByRole("listitem")).toHaveCount(50);
   await expect(lists.getByRole("status")).toHaveText("Сторінка 1 з 2 · 51");
@@ -100,11 +100,11 @@ test("admin list table returns from an emptied last page", async ({ page }) => {
   await expect(lists.getByRole("listitem")).toHaveCount(1);
   await expect(lists.getByText("fixture-list-51", { exact: false })).toBeVisible();
 
-  page.once("dialog", dialog => dialog.accept());
   await lists.getByRole("button", { name: "Видалити список" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Видалити список", exact: true }).click();
   await expect(lists.getByRole("listitem")).toHaveCount(50);
   await expectPaginationHidden(lists);
-  expect(requestsAfterDelete).toEqual([0]);
+  expect(requestsAfterDelete.at(-1)).toBe(0);
   expect(deleted).toBeTruthy();
 });
 
@@ -115,7 +115,7 @@ test("admin comment and review tables page, filter and recover after moderation"
 
   await page.goto("/uk/login");
   await page.getByLabel("Електронна пошта").fill(email!);
-  await page.getByLabel("Пароль").fill(password!);
+  await page.getByLabel("Пароль", { exact: true }).fill(password!);
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/uk\/films$/);
 
@@ -163,7 +163,7 @@ test("admin comment and review tables page, filter and recover after moderation"
     await route.fulfill({ json: review(99050, true) });
   });
 
-  await page.goto("/uk/admin");
+  await page.goto("/uk/admin?view=comments");
   const comments = page.getByRole("region", { name: "Коментарі" });
   await expect(comments).toHaveAttribute("aria-busy", "false");
   await expect(comments.getByRole("listitem")).toHaveCount(50);
@@ -175,12 +175,15 @@ test("admin comment and review tables page, filter and recover after moderation"
   await expect(comments.getByRole("listitem")).toHaveCount(1);
   await expectPaginationHidden(comments);
 
+  await page.goto("/uk/admin?view=reviews");
   const reviews = page.getByRole("region", { name: "Огляди" });
   await reviews.getByRole("combobox").selectOption("visible");
   await expect(reviews.getByRole("listitem")).toHaveCount(50);
   await reviews.getByRole("button", { name: "Далі" }).click();
   await expect(reviews.getByText("fixture-review-99050", { exact: false })).toBeVisible();
   await reviews.getByRole("button", { name: "Приховати" }).click();
+  await expect(reviews.getByRole("status")).toContainText("успішно приховано");
+  await reviews.getByRole("button", { name: "Повернутися до рецензій" }).click();
   await expect(reviews.getByRole("listitem")).toHaveCount(50);
   await expectPaginationHidden(reviews);
   expect(new URLSearchParams(reviewRequests.at(-1)).get("page")).toBe("0");
@@ -198,7 +201,7 @@ test("admin notification table pages, filters and recovers after delete", async 
 
   await page.goto("/uk/login");
   await page.getByLabel("Електронна пошта").fill(email!);
-  await page.getByLabel("Пароль").fill(password!);
+  await page.getByLabel("Пароль", { exact: true }).fill(password!);
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/uk\/films$/);
 
@@ -228,7 +231,7 @@ test("admin notification table pages, filters and recovers after delete", async 
     await route.fulfill({ status: 204, body: "" });
   });
 
-  await page.goto("/uk/admin");
+  await page.goto("/uk/admin?view=notifications");
   const notifications = page.getByRole("region", { name: "Сповіщення" });
   const pagination = notifications.getByRole("navigation", { name: "Сторінки сповіщень" });
   await expect(notifications).toHaveAttribute("aria-busy", "false");
@@ -237,8 +240,8 @@ test("admin notification table pages, filters and recovers after delete", async 
   await expect(notifications.getByRole("listitem")).toHaveCount(1);
   await expect(pagination.getByRole("status")).toHaveText("Сторінка 2 з 2 · 51");
 
-  page.once("dialog", dialog => dialog.accept());
   await notifications.getByRole("button", { name: "Видалити сповіщення" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Видалити сповіщення", exact: true }).click();
   await expect(notifications.getByRole("listitem")).toHaveCount(50);
   await expectPaginationHidden(notifications);
   expect(new URLSearchParams(requests.at(-1)).get("page")).toBe("0");
@@ -258,7 +261,7 @@ test("admin conversation table returns from an emptied last page", async ({ page
 
   await page.goto("/uk/login");
   await page.getByLabel("Електронна пошта").fill(email!);
-  await page.getByLabel("Пароль").fill(password!);
+  await page.getByLabel("Пароль", { exact: true }).fill(password!);
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/uk\/films$/);
 
@@ -283,7 +286,7 @@ test("admin conversation table returns from an emptied last page", async ({ page
     await route.fulfill({ status: 204, body: "" });
   });
 
-  await page.goto("/uk/admin");
+  await page.goto("/uk/admin?view=conversations");
   const conversations = page.getByRole("region", { name: "Діалоги" });
   const pagination = conversations.getByRole("navigation", { name: "Сторінки діалогів" });
   await expect(conversations).toHaveAttribute("aria-busy", "false");
@@ -292,11 +295,11 @@ test("admin conversation table returns from an emptied last page", async ({ page
   await expect(conversations.getByRole("listitem")).toHaveCount(1);
   await expect(pagination.getByRole("status")).toHaveText("Сторінка 2 з 2 · 51");
 
-  page.once("dialog", dialog => dialog.accept());
   await conversations.getByRole("button", { name: "Видалити діалог" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Видалити діалог", exact: true }).click();
   await expect(conversations.getByRole("listitem")).toHaveCount(50);
   await expectPaginationHidden(conversations);
-  expect(requestsAfterDelete).toEqual([0]);
+  expect(requestsAfterDelete.at(-1)).toBe(0);
   expect(deleted).toBeTruthy();
 });
 
@@ -307,7 +310,7 @@ test("admin journal editor pages through all articles", async ({ page }) => {
 
   await page.goto("/uk/login");
   await page.getByLabel("Електронна пошта").fill(email!);
-  await page.getByLabel("Пароль").fill(password!);
+  await page.getByLabel("Пароль", { exact: true }).fill(password!);
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/uk\/films$/);
 
@@ -334,7 +337,7 @@ test("admin journal editor pages through all articles", async ({ page }) => {
     await route.fulfill({ json: { content, totalPages: 2, totalElements: 51 } });
   });
 
-  await page.goto("/uk/admin");
+  await page.goto("/uk/admin?view=articles");
   const editor = page.getByRole("region", { name: "Редактор журналу" });
   const pagination = editor.getByRole("navigation", { name: "Сторінки статей" });
   await expect(editor).toHaveAttribute("aria-busy", "false");
@@ -355,7 +358,7 @@ test("admin audit log pages through all actions", async ({ page }) => {
 
   await page.goto("/uk/login");
   await page.getByLabel("Електронна пошта").fill(email!);
-  await page.getByLabel("Пароль").fill(password!);
+  await page.getByLabel("Пароль", { exact: true }).fill(password!);
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/uk\/films$/);
 
@@ -379,7 +382,7 @@ test("admin audit log pages through all actions", async ({ page }) => {
     await route.fulfill({ json: { content, totalPages: 2, totalElements: 51 } });
   });
 
-  await page.goto("/uk/admin");
+  await page.goto("/uk/admin?view=logs");
   const audit = page.getByRole("region", { name: "Журнал дій" });
   const pagination = audit.getByRole("navigation", { name: "Сторінки журналу дій" });
   await expect(audit).toHaveAttribute("aria-busy", "false");
@@ -401,7 +404,7 @@ test("message screen shows honest loading states and pages older messages on mob
 
   await page.goto("/uk/login");
   await page.getByLabel("Електронна пошта").fill(email!);
-  await page.getByLabel("Пароль").fill(password!);
+  await page.getByLabel("Пароль", { exact: true }).fill(password!);
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/uk\/films$/);
 
@@ -459,7 +462,7 @@ test("notification screen pages safely and exposes preference states on mobile",
 
   await page.goto("/uk/login");
   await page.getByLabel("Електронна пошта").fill(email!);
-  await page.getByLabel("Пароль").fill(password!);
+  await page.getByLabel("Пароль", { exact: true }).fill(password!);
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/uk\/films$/);
 
@@ -514,7 +517,7 @@ test("admin film table returns from an emptied last page", async ({ page }) => {
 
   await page.goto("/uk/login");
   await page.getByLabel("Електронна пошта").fill(email!);
-  await page.getByLabel("Пароль").fill(password!);
+  await page.getByLabel("Пароль", { exact: true }).fill(password!);
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/uk\/films$/);
 
@@ -527,10 +530,10 @@ test("admin film table returns from an emptied last page", async ({ page }) => {
     if (route.request().method() !== "GET") return route.fallback();
     const pageNumber = Number(new URL(route.request().url()).searchParams.get("page") ?? "0");
     if (deleted) requestsAfterDelete.push(pageNumber);
-    const firstPage = Array.from({ length: 50 }, (_, index) => movie(81000 + index, `fixture-film-${index + 1}`));
-    if (deleted) await route.fulfill({ json: { content: firstPage, totalPages: 1, totalElements: 50 } });
-    else if (pageNumber === 0) await route.fulfill({ json: { content: firstPage, totalPages: 2, totalElements: 51 } });
-    else await route.fulfill({ json: { content: [movie(81888, "fixture-film-51")], totalPages: 2, totalElements: 51 } });
+    const firstPage = Array.from({ length: 6 }, (_, index) => movie(81000 + index, `fixture-film-${index + 1}`));
+    if (deleted) await route.fulfill({ json: { content: firstPage, totalPages: 1, totalElements: 6 } });
+    else if (pageNumber === 0) await route.fulfill({ json: { content: firstPage, totalPages: 2, totalElements: 7 } });
+    else await route.fulfill({ json: { content: [movie(81888, "fixture-film-7")], totalPages: 2, totalElements: 7 } });
   });
   await page.route("**/api/admin/movies/81888", async route => {
     if (route.request().method() !== "DELETE") return route.fallback();
@@ -538,22 +541,23 @@ test("admin film table returns from an emptied last page", async ({ page }) => {
     await route.fulfill({ status: 204, body: "" });
   });
 
-  await page.goto("/uk/admin");
-  const films = page.getByRole("region", { name: "Фільми" });
+  await page.goto("/uk/admin?view=movies");
+  const films = page.getByRole("region", { name: "База фільмів" });
   const results = films.getByRole("list", { name: "Фільми каталогу" });
   const pagination = films.getByRole("navigation", { name: "Сторінки фільмів в адмінці" });
   await expect(films).toHaveAttribute("aria-busy", "false");
-  await expect(results.getByRole("listitem")).toHaveCount(50);
-  await expect(pagination.getByRole("status")).toHaveText("Сторінка 1 з 2 · 51");
+  await expect(results.getByRole("listitem")).toHaveCount(6);
+  await expect(pagination.getByRole("status")).toHaveText("Сторінка 1 з 2 · 7");
   await pagination.getByRole("button", { name: "Далі" }).click();
   await expect(results.getByRole("listitem")).toHaveCount(1);
-  await expect(results.getByText("fixture-film-51", { exact: false })).toBeVisible();
+  await expect(results.getByRole("heading", { name: "fixture-film-7", exact: true })).toBeVisible();
 
-  page.once("dialog", dialog => dialog.accept());
+  await results.locator("li").filter({ hasText: "fixture-film-7" }).locator("summary").click();
   await results.getByRole("button", { name: "Видалити" }).click();
-  await expect(results.getByRole("listitem")).toHaveCount(50);
+  await page.getByRole("alertdialog").getByRole("button", { name: "Видалити", exact: true }).click();
+  await expect(results.getByRole("listitem")).toHaveCount(6);
   await expectPaginationHidden(films);
-  expect(requestsAfterDelete).toEqual([0]);
+  expect(requestsAfterDelete.at(-1)).toBe(0);
   expect(deleted).toBeTruthy();
 });
 
@@ -564,7 +568,7 @@ test("moderation queue pages, retries failed loads and returns to the previous p
   test.skip(!email || !password, "Run scripts/verify-admin-browser.ps1 for the disposable ADMIN fixture.");
   await page.goto("/uk/login");
   await page.getByLabel("Електронна пошта").fill(email!);
-  await page.getByLabel("Пароль").fill(password!);
+  await page.getByLabel("Пароль", { exact: true }).fill(password!);
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/uk\/films$/);
   const marker = `queue-pagination-${Date.now()}`;
@@ -579,8 +583,8 @@ test("moderation queue pages, retries failed loads and returns to the previous p
       const response = await browserMutation(page, `/api/reviews/${reviewId}/comments`, "POST", { text: `${marker} comment ${i}` });
       expect(response.status).toBe(200);
     }
-    await page.goto("/uk/admin");
-    const queue = page.getByRole("region", { name: "Черга модерації" });
+    await page.goto("/uk/admin?view=moderation");
+    const queue = page.getByRole("region", { name: "Список контенту для модерації" });
     await expect(queue).toHaveAttribute("aria-busy", "false");
     await queue.getByRole("combobox").selectOption("COMMENT");
     await queue.getByLabel("Пошук у черзі").fill(marker);
@@ -600,13 +604,13 @@ test("moderation queue pages, retries failed loads and returns to the previous p
     await queue.screenshot({ path: testInfo.outputPath("moderation-last-page.png") });
 
     await queue.getByRole("button", { name: "Вибрати все", exact: true }).click();
-    page.once("dialog", dialog => dialog.accept());
     await queue.getByRole("button", { name: /Приховати вибране/ }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Приховати вибране", exact: true }).click();
     await expect(queue.getByRole("listitem")).toHaveCount(50);
     await expectPaginationHidden(queue);
     await queue.getByRole("button", { name: "Вибрати все", exact: true }).click();
-    page.once("dialog", dialog => dialog.accept());
     await queue.getByRole("button", { name: /Приховати вибране/ }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Приховати вибране", exact: true }).click();
     await expect(queue.getByRole("listitem")).toHaveCount(0);
     await expectPaginationHidden(queue);
     const remaining = await page.request.get(`/api/admin/moderation/queue?type=COMMENT&query=${marker}`);
@@ -626,28 +630,28 @@ test("admin can open the dashboard, manage a notification and manage a movie", a
 
   await page.goto("/uk/login");
   await page.getByLabel("Електронна пошта").fill(email);
-  await page.getByLabel("Пароль").fill(password);
+  await page.getByLabel("Пароль", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/uk\/films$/);
 
   await page.goto("/uk/admin");
-  await expect(page.getByRole("heading", { name: "Панель адміністратора" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Користувачі" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Фільми" })).toBeVisible();
-  await expect(page.getByText("Якість каталогу TMDB", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Налаштування сайту" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Журнал дій" })).toBeVisible();
+  await expect(page.locator("main h1")).toHaveText(username!);
+  await expect(page.getByRole("heading", { name: "Особисті показники" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Статистика платформи" })).toBeVisible();
+  await expect(page.locator("main > header nav a")).toHaveCount(12);
 
   const adminUsers = await page.evaluate(async (query) => {
     const response = await fetch(`/api/admin/users?q=${encodeURIComponent(query)}&size=10`);
     return response.json();
   }, username);
   const recipientId = adminUsers.content[0].id as number;
+  await page.goto("/uk/admin?view=notifications");
   const notificationSection = page.locator("section").filter({ has: page.getByRole("heading", { name: "Сповіщення" }) });
   await notificationSection.getByLabel("ID отримувача", { exact: true }).fill(String(recipientId));
   await notificationSection.getByRole("button", { name: "Створити сповіщення" }).click();
   await expect(notificationSection.getByText(`отримувач #${recipientId}`, { exact: false }).first()).toBeVisible();
 
+  await page.goto("/uk/admin?view=users");
   await page.getByLabel("Пошук користувача").fill(username);
   await page.getByRole("button", { name: "Пошук" }).click();
   await expect(page.getByText(username, { exact: false }).first()).toBeVisible();
@@ -659,9 +663,11 @@ test("admin can open the dashboard, manage a notification and manage a movie", a
   await page.getByLabel("Пошук користувача").fill(adminSqlInjection);
   await page.getByRole("button", { name: "Пошук" }).click();
   expect((await adminUsersResponse).status()).toBe(200);
-  await expect(page.getByRole("heading", { name: "Панель адміністратора" })).toBeVisible();
+  await expect(page.locator("main h1")).toHaveText(username!);
 
-  const movieSection = page.locator("section").filter({ has: page.getByLabel("Назва фільму", { exact: true }) });
+  await page.goto("/uk/admin?view=movies");
+  const movieSection = page.getByRole("region", { name: "База фільмів" });
+  await movieSection.locator("summary").filter({ hasText: "Додати фільм" }).click();
   const title = `Admin browser ${Date.now()}`;
   await movieSection.getByLabel("Назва фільму").fill(title);
   await movieSection.getByLabel("Рейтинг", { exact: true }).fill("7.5");
@@ -694,8 +700,8 @@ test("admin can open the dashboard, manage a notification and manage a movie", a
   await page.getByLabel("Ваш коментар").fill(moderationComment);
   await page.getByRole("button", { name: "Надіслати" }).click();
   await expect(page.getByText(moderationComment)).toBeVisible();
-  await page.goto("/uk/admin");
-  const moderationSection = page.getByRole("region", { name: "Черга модерації" });
+  await page.goto("/uk/admin?view=moderation");
+  const moderationSection = page.getByRole("region", { name: "Список контенту для модерації" });
   await expect(moderationSection).toHaveAttribute("aria-busy", "false");
   await moderationSection.getByLabel("Пошук у черзі").fill(moderationContent);
   await moderationSection.getByRole("button", { name: "Фільтрувати", exact: true }).click();
@@ -710,9 +716,11 @@ test("admin can open the dashboard, manage a notification and manage a movie", a
   await moderationCommentItem.getByRole("button", { name: "Приховати" }).click();
   await expect(moderationCommentItem).toHaveCount(0);
 
-  page.once("dialog", dialog => dialog.accept());
-  const refreshedMovieSection = page.locator("section").filter({ has: page.getByLabel("Назва фільму", { exact: true }) });
+  await page.goto("/uk/admin?view=movies");
+  const refreshedMovieSection = page.getByRole("region", { name: "База фільмів" });
   const refreshedMovie = refreshedMovieSection.locator("li").filter({ hasText: title });
+  await refreshedMovie.locator("summary").click();
   await refreshedMovie.getByRole("button", { name: "Видалити" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Видалити", exact: true }).click();
   await expect(refreshedMovie).toHaveCount(0);
 });

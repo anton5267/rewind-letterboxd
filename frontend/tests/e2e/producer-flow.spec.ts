@@ -48,7 +48,7 @@ test("guest opens a producer filmography from movie details", async ({ page }) =
   await expect(page).toHaveURL(/\/uk\/people\/producer\/900002$/);
   await expect(page.getByRole("heading", { level: 1, name: "Producer Fixture" })).toBeVisible();
   const hero = page.locator("main > section").first();
-  await expect(hero).toHaveCSS("min-height", "827px");
+  await expect(hero).toHaveCSS("min-height", "907px");
   const avatar = await hero.locator('[class*="avatar"]').boundingBox();
   expect(avatar?.width).toBeCloseTo(265, 0);
   const filmography = await page.locator('section[aria-labelledby="filmography-title"]').boundingBox();
@@ -73,7 +73,7 @@ test("person mobile layout follows the actor Figma frame", async ({ page }) => {
   await page.goto("/uk/people/actor/900003");
   await expect(page.getByRole("heading", { level: 1, name: "Actor Fixture" })).toBeVisible();
   const hero = page.locator("main > section").first();
-  await expect(hero).toHaveCSS("min-height", "465px");
+  await expect(hero).toHaveCSS("min-height", "499px");
   const avatar = await hero.locator('[class*="avatar"]').boundingBox();
   expect(avatar?.width).toBeCloseTo(120, 0);
   await expect(page.locator('[aria-labelledby="filmography-title"] [class*="controls"]')).toBeHidden();

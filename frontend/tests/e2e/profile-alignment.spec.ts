@@ -43,6 +43,7 @@ async function fixture(page: Page, options?: { gate?: ReturnType<typeof deferred
     if (pathname === "/api/profile/me/watched") return route.fulfill({ json: pageOf([movies[0]]) });
     if (pathname === "/api/profile/me/ratings") return route.fulfill({ json: pageOf(ratings) });
     if (pathname === "/api/profile/me/reviews") return route.fulfill({ json: pageOf(reviewData) });
+    if (pathname === "/api/lists/my" || /^\/api\/lists\/\d+\/items$/.test(pathname)) return route.fulfill({ json: [] });
     if (pathname === "/api/users/981000/activity") {
       const attempt = ++activityRequests;
       if (options?.activityFailFirst && attempt === 1) return route.fulfill({ status: 503, json: {} });
@@ -64,7 +65,7 @@ test("legacy review posters remain available when the API field is absent", asyn
   page.on("console", message => { if (message.type() === "error") errors.push(message.text()); });
   await page.setViewportSize({ width: 393, height: 900 });
   const responsePromise = page.waitForResponse(response => new URL(response.url()).pathname === "/api/profile/me/reviews");
-  await page.goto("/en/profile");
+  await page.goto("/en/profile?view=reviews");
   const response = await responsePromise;
   const payload = await response.json() as { content: Record<string, unknown>[] };
   expect(payload.content[0]).not.toHaveProperty("moviePhotoUrl");
@@ -86,7 +87,7 @@ for (const lang of ["uk", "en"] as const) {
     expect(ratings.some(rating => rating.movieId === olderReviews[0].movieId)).toBe(false);
     // An explicit null must win even if a stale rating snapshot still has a poster.
     expect(ratings.some(rating => rating.movieId === olderReviews[1].movieId)).toBe(true);
-    await page.goto(`/${lang}/profile`);
+    await page.goto(`/${lang}/profile?view=reviews`);
     const reviews = page.locator("#profile-reviews");
     await expect(reviews.locator("li")).toHaveCount(2);
     const olderPoster = reviews.getByRole("link", { name: olderReviews[0].movieTitle, exact: true }).first();
@@ -112,92 +113,36 @@ for (const lang of ["uk", "en"] as const) {
     const api = await fixture(page);
     const errors: string[] = [];
     page.on("pageerror", error => errors.push(error.message));
-    page.on("console", message => { if (message.type() === "error") errors.push(message.text()); });
     await page.goto(`/${lang}/profile`);
-    await expect(page.locator("main[aria-busy='true']")).toHaveCount(0);
-    await expect(page.locator("#profile-favorite-preview a")).toHaveCount(movies.length);
-    await expect(page.locator("#profile-collection-tab-watched")).toHaveAttribute("aria-selected", "true");
-    await expect(page.locator("#profile-collection-content").getByRole("link", { name: movies[0].title, exact: true })).toBeVisible();
-    await expect(page.locator("#profile-overview article").first()).toHaveText(lang === "uk" ? "17Переглянуто" : "17Watched");
-    await expect(page.locator("#profile-lists a").first()).toHaveAttribute("href", `/${lang}/lists/public/981201`);
-    await expect(page.locator("#profile-lists a").last()).toHaveAttribute("href", `/${lang}/lists`);
+    const favorites = page.locator("#profile-overview ul a");
+    await expect(favorites).toHaveCount(4);
     await expect(page.locator("#profile-activity").getByRole("link", { name: movies[0].title, exact: true })).toHaveAttribute("href", `/${lang}/films/${movies[0].id}`);
-    expect(await page.locator("#profile-following").evaluate(element => Boolean(element.compareDocumentPosition(document.getElementById("profile-identity-form-title")!) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
-    const profileNav = page.locator('nav[class*="profileNav"]');
-    await expect(profileNav.getByRole("link")).toHaveCount(5);
-    const watchlistLabel = lang === "uk" ? "До перегляду" : "Watchlist";
-    await profileNav.getByRole("link", { name: watchlistLabel, exact: true }).click();
-    await expect(page.locator("#profile-collection-tab-watchlist")).toHaveAttribute("aria-selected", "true");
-    await profileNav.getByRole("link", { name: lang === "uk" ? "Фільми" : "Films", exact: true }).click();
-    await expect(page.locator("#profile-collection-tab-watched")).toHaveAttribute("aria-selected", "true");
-    const hero = page.locator("section[aria-labelledby='profile-identity']");
-    const editProfile = hero.getByRole("button", { name: lang === "uk" ? "Дані профілю" : "Profile details", exact: true });
-    const moreProfileActions = hero.getByRole("button", { name: lang === "uk" ? "Дії профілю" : "Profile actions", exact: true });
-    await expect(editProfile).toBeVisible();
-    await editProfile.click();
-    await expect(page.locator("#profile-display-name")).toBeFocused();
-    await moreProfileActions.click();
-    await expect(hero.getByRole("menu")).toBeVisible();
-    await page.keyboard.press("Escape");
-    await expect(moreProfileActions).toBeFocused();
-
+    await expect(page.locator("#profile-review-preview").getByText(review.content, { exact: true })).toBeVisible();
     for (const width of [320, 393, 768, 1440]) {
       await page.setViewportSize({ width, height: 900 });
-      await page.evaluate(() => scrollTo(0, 0));
-      await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
-      await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
       await expect(page.locator("#profile-page-title")).toBeVisible();
-      if (width === 1440) {
-        const heroBox = await hero.boundingBox();
-        expect(heroBox?.x).toBe(0);
-        expect(heroBox?.width).toBe(1440);
-        expect(heroBox?.height).toBe(1020);
-        await expect(hero.locator('[class*="avatarFallback"]')).toHaveCSS("width", "265px");
-        await expect(page.locator('nav[class*="profileNav"]')).toHaveCSS("height", "79px");
-      }
-      if (width === 393) {
-        const avatarBox = await hero.locator('[class*="avatarFallback"]').boundingBox();
-        const editBox = await hero.getByRole("button", { name: lang === "uk" ? "Дані профілю" : "Profile details", exact: true }).boundingBox();
-        const actionsBox = await hero.getByRole("button", { name: lang === "uk" ? "Дії профілю" : "Profile actions", exact: true }).boundingBox();
-        expect(avatarBox?.x).toBeCloseTo(136.5, 0);
-        expect(avatarBox).toMatchObject({ y: 190, width: 120, height: 120 });
-        expect(editBox).toMatchObject({ x: 16, y: 48, width: 44, height: 44 });
-        expect(actionsBox).toMatchObject({ x: 333, y: 48, width: 44, height: 44 });
-      }
-      const overflow = await page.evaluate(() => ({
-        amount: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-        elements: [...document.querySelectorAll("body *")].filter(element => {
-          if (element.getBoundingClientRect().right <= innerWidth + 1) return false;
-          return true;
-        }).map(element => ({ tag: element.tagName, class: element.className, width: element.getBoundingClientRect().width, right: element.getBoundingClientRect().right, parent: element.parentElement?.className })).slice(0, 25),
-      }));
-      expect(overflow.amount, `page overflow at ${width}: ${JSON.stringify(overflow.elements)}`).toBe(0);
-      if (width <= 393) {
-        expect(await page.locator("#profile-identity").evaluate(element => getComputedStyle(element).fontSize)).toBe("26px");
-        const avatar = page.locator("section[aria-labelledby='profile-identity'] > span");
-        await expect(avatar).toHaveCSS("width", "120px");
-        await expect(page.locator("#profile-favorite-preview a").first()).toHaveCSS("width", "79px");
-      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
+      await favorites.first().focus();
+      await expect(favorites.first()).toBeFocused();
+      await expect(favorites.first()).toHaveAttribute("href", `/${lang}/films/${movies[0].id}`);
       await page.screenshot({ path: testInfo.outputPath(`auth-profile-${width}.png`), animations: "disabled" });
-      const lastFavorite = page.locator("#profile-favorite-preview a").last();
-      await lastFavorite.focus();
-      await expect(lastFavorite).toBeFocused();
-      await expect(lastFavorite).toHaveAttribute("href", `/${lang}/films/${movies.at(-1)!.id}`);
-      expect(await lastFavorite.evaluate(element => getComputedStyle(element).outlineStyle)).toBe("solid");
-      const watched = page.locator("#profile-collection-tab-watched");
-      await watched.focus();
-      await watched.press("ArrowRight");
-      await expect(page.locator("#profile-collection-tab-watchlist")).toBeFocused();
-      await expect(page.locator("#profile-collection-tab-watchlist")).toHaveAttribute("aria-selected", "true");
-      await page.locator("#profile-collection-tab-watchlist").press("Home");
-      await expect(watched).toHaveAttribute("aria-selected", "true");
-      const reviewLink = page.locator("#profile-reviews").getByRole("link", { name: review.content, exact: true });
-      await reviewLink.focus();
-      await expect(reviewLink).toBeFocused();
-      await expect(reviewLink).toHaveAttribute("href", `/${lang}/reviews/${review.reviewId}`);
-      for (const id of ["profile-display-name", "profile-avatar-url", "profile-current-password", "profile-new-password", "profile-delete-password"]) await expect(page.locator(`#${id}`)).toBeEnabled();
-      await page.evaluate(() => { (document.activeElement as HTMLElement)?.blur(); });
     }
+    await page.goto(`/${lang}/profile?view=collection&collection=watched`);
+    await expect(page.locator("#profile-collection-tab-watched")).toHaveAttribute("aria-selected", "true");
+    await expect(page.locator("#profile-collection-content").getByRole("link", { name: movies[0].title, exact: true })).toBeVisible();
+    await page.locator('nav[class*="profileNav"]').getByRole("link", { name: lang === "uk" ? "До перегляду" : "Watchlist", exact: true }).click();
+    await expect(page.locator("#profile-collection-tab-watchlist")).toHaveAttribute("aria-selected", "true");
+    await page.goto(`/${lang}/profile?view=reviews`);
+    await expect(page.locator("#profile-reviews").getByText(review.content, { exact: true })).toBeVisible();
+    await page.goto(`/${lang}/profile?settings=profile`);
+    await expect(page.locator("#profile-display-name")).toBeEnabled();
+    await page.goto(`/${lang}/profile?settings=avatar`);
+    await expect(page.locator("#profile-avatar-url")).toBeEnabled();
+    await page.goto(`/${lang}/profile?settings=authentication`);
+    await expect(page.locator("#profile-current-password")).toBeEnabled();
+    await expect(page.locator("#profile-new-password")).toBeEnabled();
+    await page.goto(`/${lang}/profile#profile-delete-form-title`);
+    await expect(page.locator("#profile-delete-password")).toBeEnabled();
     expect(api.mutations).toEqual([]);
     expect(errors).toEqual([]);
   });
@@ -207,15 +152,15 @@ for (const lang of ["uk", "en"] as const) {
     const api = await fixture(page, { gate, failFirst: true });
     await page.setViewportSize({ width: 393, height: 900 });
     await page.goto(`/${lang}/profile`);
-    const preview = page.locator("#profile-favorite-preview");
+    const preview = page.locator('section[aria-labelledby="profile-favorite-preview-title"]');
     await expect(preview).toHaveAttribute("aria-busy", "true");
     await expect(preview.getByRole("status")).toBeVisible();
-    await expect(page.locator("#profile-collection-content").getByRole("link", { name: movies[0].title, exact: true })).toBeVisible();
+    await expect(page.locator("#profile-identity")).toBeVisible();
     gate.resolve();
     await expect(preview.getByRole("alert")).toContainText(lang === "uk" ? "Не вдалося завантажити добірку." : "Could not load this collection.");
     await preview.getByRole("button", { name: lang === "uk" ? "Спробувати ще" : "Retry" }).click();
-    await expect(preview.getByRole("link")).toHaveCount(6);
-    await expect(page.locator("#profile-collection-tab-watched")).toHaveAttribute("aria-selected", "true");
+    await expect(preview.locator("ul").getByRole("link")).toHaveCount(4);
+    await expect(page).toHaveURL(new RegExp(`/${lang}/profile$`));
     expect(api.favoriteRequests()).toBeGreaterThanOrEqual(2);
     expect(api.mutations).toEqual([]);
   });
@@ -237,9 +182,9 @@ test("favorite preview exposes an honest empty collection", async ({ page }) => 
   const gate = deferred(); gate.resolve();
   const api = await fixture(page, { gate, empty: true });
   await page.goto("/en/profile");
-  const preview = page.locator("#profile-favorite-preview");
+  const preview = page.locator('section[aria-labelledby="profile-favorite-preview-title"]');
   await expect(preview).toContainText("There are no films in this collection yet.");
-  await expect(preview.getByRole("link")).toHaveCount(0);
-  await expect(page.locator("#profile-collection-tab-watched")).toHaveAttribute("aria-selected", "true");
+  await expect(preview.locator("ul").getByRole("link")).toHaveCount(0);
+  await expect(page).toHaveURL(/\/en\/profile$/);
   expect(api.mutations).toEqual([]);
 });

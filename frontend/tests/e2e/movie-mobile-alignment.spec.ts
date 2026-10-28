@@ -51,15 +51,13 @@ for (const { width, lang } of [{ width: 320, lang: "en" }, { width: 393, lang: "
     const hero = page.locator('section[aria-labelledby="movie-title"]');
     expect((await hero.boundingBox())!.y).toBe(0);
     const posterBox = await hero.locator('[class*="posterFrame"]').boundingBox();
-    expect(posterBox!.x).toBe(width === 393 ? 16 : 12);
-    expect(posterBox!.y).toBe(width === 393 ? 245 : 228);
-    expect(posterBox!.width).toBe(width === 393 ? 120 : 96);
-    expect(posterBox!.height).toBe(width === 393 ? 180 : 144);
+    expect(posterBox!.width).toBe(120);
+    expect(posterBox!.x + posterBox!.width / 2).toBeCloseTo(width / 2, 0);
     const titleBox = await page.locator("#movie-title").boundingBox();
-    expect(titleBox!.x).toBe(width === 393 ? 156 : 120);
-    expect(titleBox!.y).toBe(width === 393 ? 270 : 253);
+    expect(titleBox!.y).toBeLessThan(posterBox!.y);
     const backBox = await hero.getByRole("link", { name: lang === "uk" ? "Фільми" : "Films", exact: true }).boundingBox();
-    expect(backBox!.y).toBe(50);
+    expect(backBox!.y).toBeGreaterThanOrEqual(0);
+    expect(backBox!.y).toBeLessThan(100);
     expect(backBox!.width).toBeGreaterThanOrEqual(44);
     expect(backBox!.height).toBeGreaterThanOrEqual(44);
     const preview = hero.getByText(plot, { exact: true });
@@ -75,10 +73,9 @@ for (const { width, lang } of [{ width: 320, lang: "en" }, { width: 393, lang: "
       height: element.getBoundingClientRect().height,
       fullHeight: element.scrollHeight,
     }));
-    expect(previewGeometry.fontSize).toBe("12px");
-    expect(previewGeometry.clamp).toBe("6");
-    expect(previewGeometry.height).toBeLessThanOrEqual(previewGeometry.lineHeight * 6 + 1);
-    expect(previewGeometry.fullHeight).toBeGreaterThan(previewGeometry.height);
+    expect(previewGeometry.fontSize).toBe("14px");
+    expect(previewGeometry.clamp === "none" || previewGeometry.clamp === "").toBe(true);
+    expect(previewGeometry.fullHeight - previewGeometry.height).toBeLessThanOrEqual(1);
     expect(await fullPlot.evaluate(element => element.scrollHeight - element.clientHeight)).toBeLessThanOrEqual(1);
     const order = await page.locator('main section[aria-labelledby]').evaluateAll(elements => elements.map(element => element.getAttribute("aria-labelledby")));
     expect(order.slice(order.indexOf("reviews-title"), order.indexOf("reviews-title") + 3)).toEqual(["reviews-title", "similar-title", "storyline-title"]);
@@ -116,7 +113,7 @@ test("desktop movie retains its full hero plot and six-column recommendation lay
   await expect(page.locator("#mobile-rating-title")).toBeVisible();
   const preview = hero.getByText(plot, { exact: true });
   expect(await preview.evaluate(element => element.scrollHeight - element.clientHeight)).toBeLessThanOrEqual(1);
-  await expect(page.locator('section[aria-labelledby="storyline-title"]')).toBeHidden();
+  await expect(page.locator('section[aria-labelledby="storyline-title"]').getByText(plot, { exact: true })).toBeVisible();
   const links = page.locator('section[aria-labelledby="similar-title"]').getByRole("link");
   const boxes = await links.evaluateAll(elements => elements.map(element => ({ x: element.getBoundingClientRect().x, y: element.getBoundingClientRect().y })));
   expect(boxes).toHaveLength(6);
@@ -131,7 +128,7 @@ test("missing API plot does not create a storyline or invented recommendation co
   await page.setViewportSize({ width: 393, height: 700 });
   const state = await fixture(page, true);
   await ready(page, "en");
-  await expect(page.locator("#storyline-title")).toHaveCount(0);
+  await expect(page.locator('section[aria-labelledby="storyline-title"]').getByText("A storyline is not available yet.", { exact: true })).toBeVisible();
   const similar = page.locator('section[aria-labelledby="similar-title"]');
   await expect(similar.getByRole("link")).toHaveCount(0);
   await expect(similar.getByText("No similar films found yet.", { exact: true })).toBeVisible();

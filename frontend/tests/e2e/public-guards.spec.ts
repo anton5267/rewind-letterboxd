@@ -52,13 +52,13 @@ test("public list catalog paginates server-side", async ({ page }) => {
   await page.goto("/uk/register");
   await page.getByLabel("Нікнейм").fill(username);
   await page.getByLabel("Електронна пошта").fill(email);
-  await page.getByLabel("Пароль").fill(password);
+  await page.getByLabel("Пароль", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Створити акаунт" }).click();
   await expect(page.getByRole("heading", { name: /Акаунт створено/ })).toBeVisible();
 
   await page.getByRole("button", { name: "Перейти до входу" }).click();
   await page.getByLabel("Електронна пошта").fill(email);
-  await page.getByLabel("Пароль").fill(password);
+  await page.getByLabel("Пароль", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/uk\/films$/);
 
@@ -111,12 +111,12 @@ test("public list discovery reaches tag, detail, author and movie in both locale
   await page.goto("/uk/register");
   await page.getByLabel("Нікнейм").fill(username);
   await page.getByLabel("Електронна пошта").fill(email);
-  await page.getByLabel("Пароль").fill(password);
+  await page.getByLabel("Пароль", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Створити акаунт" }).click();
   await expect(page.getByRole("heading", { name: /Акаунт створено/ })).toBeVisible();
   await page.getByRole("button", { name: "Перейти до входу" }).click();
   await page.getByLabel("Електронна пошта").fill(email);
-  await page.getByLabel("Пароль").fill(password);
+  await page.getByLabel("Пароль", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Увійти" }).click();
   await expect(page).toHaveURL(/\/uk\/films$/);
 

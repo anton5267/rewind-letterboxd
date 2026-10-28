@@ -1,7 +1,8 @@
 import { expect, request, type Page } from "@playwright/test";
 
 export async function waitForPageContent(page: Page) {
-  await expect(page.getByRole("banner")).toBeVisible();
+  // Standalone phone Auth/Person screens have their own navigation. Readiness
+  // follows main content; landmark assertions belong to accessibility checks.
   await expect(page.locator("#route-loading-title")).toHaveCount(0);
   await expect(page.locator("main h1").first()).toBeVisible();
 }

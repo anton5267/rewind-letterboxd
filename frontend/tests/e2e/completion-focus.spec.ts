@@ -16,7 +16,7 @@ test("canceling the article editor restores its exact row or the editor when tha
     if (url.pathname === "/api/admin/journal/articles") return route.fulfill({ json: { content: url.searchParams.get("page") === "1" ? [articles[2]] : articles.slice(0, 2), totalPages: 2, totalElements: 3 } });
     return route.fulfill({ json: emptyPage });
   });
-  await page.goto("/en/admin");
+  await page.goto("/en/admin?view=articles");
   const editor = page.getByRole("region", { name: "Journal editor", exact: true });
   const trigger = editor.getByRole("button", { name: "Edit article: Editor fixture 2", exact: true });
   await trigger.focus();

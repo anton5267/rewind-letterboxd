@@ -13,7 +13,7 @@ test("register, use a film, edit and remove review", async ({ page, baseURL }) =
     await page.goto("/uk/register");
     await page.getByLabel("Нікнейм").fill(`e2e${suffix}`);
     await page.getByLabel("Електронна пошта").fill(email);
-    await page.getByLabel("Пароль").fill(password);
+    await page.getByLabel("Пароль", { exact: true }).fill(password);
     const registration = page.waitForResponse(response => response.url().endsWith("/api/auth/register") && response.request().method() === "POST");
     await page.getByRole("button", { name: "Створити акаунт" }).click();
     expect((await registration).status()).toBe(200);
@@ -22,7 +22,7 @@ test("register, use a film, edit and remove review", async ({ page, baseURL }) =
 
     await page.getByRole("button", { name: "Перейти до входу" }).click();
     await page.getByLabel("Електронна пошта").fill(email);
-    await page.getByLabel("Пароль").fill(password);
+    await page.getByLabel("Пароль", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Увійти" }).click();
     await expect(page).toHaveURL(/\/uk\/films$/);
     await expect(page.getByRole("status").filter({ hasText: "Знайдено фільмів" })).toContainText("Знайдено фільмів");

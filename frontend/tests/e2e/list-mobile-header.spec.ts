@@ -105,7 +105,7 @@ for (const locale of ["uk", "en"] as const) {
       const like = dialog.getByRole("button", { name: locale === "uk" ? "Вподобати список" : "Like list", exact: true });
       await expect(like).toHaveAttribute("aria-pressed", "false");
       await like.click();
-      const pending = dialog.getByRole("button", { name: locale === "uk" ? "Завантаження..." : "Loading...", exact: true });
+      const pending = like;
       await expect(pending).toBeDisabled();
       await expect(pending).toHaveAttribute("aria-busy", "true");
       releaseLike();
@@ -168,7 +168,7 @@ async function assertBottomLinks(header: Locator, locale: "uk" | "en") {
 async function assertOrdinaryHeader(header: Locator, locale: "uk" | "en", width: number) {
   await expect(header.getByRole("link", { name: "REWIND", exact: true })).toBeVisible();
   const menu = header.getByRole("button", { name: locale === "uk" ? "Меню" : "Menu", exact: true });
-  if (width <= 720) await expect(menu).toBeVisible();
+  if (width <= 767) await expect(menu).toBeVisible();
   else await expect(menu).toBeHidden();
 }
 
@@ -198,7 +198,7 @@ for (const locale of ["uk", "en"] as const) for (const width of [320, 393, 600, 
     const filtersName = locale === "uk" ? "Фільтри" : "Filters";
     const back = main.locator(`a[aria-label="${locale === "uk" ? "Мої списки" : "My lists"}"]`);
 
-    if (width <= 720) {
+    if (width <= 767) {
       await expect(logo).toBeHidden();
       await expect(menu).toBeHidden();
       await assertBottomLinks(header, locale);
@@ -216,7 +216,7 @@ for (const locale of ["uk", "en"] as const) for (const width of [320, 393, 600, 
     await expect(page).toHaveURL(new RegExp(`/${locale}/lists/discover$`));
     await expect(main).toHaveAttribute("aria-busy", "false");
 
-    if (width <= 560) {
+    if (width <= 767) {
       await expect(logo).toBeHidden();
       await expect(menu).toBeHidden();
       await assertBottomLinks(header, locale);
@@ -229,24 +229,24 @@ for (const locale of ["uk", "en"] as const) for (const width of [320, 393, 600, 
       await expect(page).toHaveURL(new RegExp(`/${locale}/lists/discover$`));
       await expect(logo).toBeHidden();
       // The labelled top control is distinct from the visible bottom Home link.
-      await header.locator(`a[aria-label="${homeName}"]`).click({ position: { x: 5, y: 5 } });
+      await header.locator(`a[aria-label="${homeName}"]`).first().click({ position: { x: 5, y: 5 } });
     } else {
       await assertOrdinaryHeader(header, locale, width);
       await expect(header.locator(`a[aria-label="${filtersName}"]`)).toBeHidden();
-      if (width <= 720) {
+      if (width <= 767) {
         await assertBottomLinks(header, locale);
         await header.locator("nav:visible").getByRole("link", { name: homeName, exact: true }).click();
       } else await logo.click();
     }
     await expect(page).toHaveURL(new RegExp(`/${locale}/home$`));
     await expect(main).toHaveAttribute("aria-busy", "false");
-    if (width <= 560) {
+    if (width <= 767) {
       await expect(logo).toBeHidden();
       await expect(menu).toBeHidden();
       await assertBottomLinks(header, locale);
     } else {
       await assertOrdinaryHeader(header, locale, width);
-      if (width <= 720) await assertBottomLinks(header, locale);
+      if (width <= 767) await assertBottomLinks(header, locale);
     }
     expect(api.mutations).toEqual([]);
     expect(api.unexpectedGets).toEqual([]);
