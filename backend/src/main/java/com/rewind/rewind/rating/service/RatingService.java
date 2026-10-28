@@ -1,6 +1,7 @@
 package com.rewind.rewind.rating.service;
 
 import com.rewind.rewind.movie.repo.MovieRepository;
+import com.rewind.rewind.movie.service.MovieDetailsCacheService;
 import com.rewind.rewind.rating.dto.UpsertRatingRequest;
 import com.rewind.rewind.rating.repo.RatingRepository;
 import com.rewind.rewind.user.repo.UserRepository;
@@ -17,12 +18,14 @@ public class RatingService {
     private final RatingRepository ratings;
     private final UserRepository users;
     private final MovieRepository movies;
+    private final MovieDetailsCacheService movieDetailsCache;
     private final ActivityService activities;
 
-    public RatingService(RatingRepository ratings, UserRepository users, MovieRepository movies, ActivityService activities) {
+    public RatingService(RatingRepository ratings, UserRepository users, MovieRepository movies, MovieDetailsCacheService movieDetailsCache, ActivityService activities) {
         this.ratings = ratings;
         this.users = users;
         this.movies = movies;
+        this.movieDetailsCache = movieDetailsCache;
         this.activities = activities;
     }
 
@@ -46,6 +49,7 @@ public class RatingService {
         ratings.upsertAtomic(user.getId(), movieId, req.getRating().byteValue());
 
         movies.recalcAverageRating(movieId);
+        movieDetailsCache.evict(movieId);
         if (recordActivity) activities.record(user.getId(), ActivityType.RATING, movieId, null, null, null);
     }
 
@@ -66,5 +70,6 @@ public class RatingService {
         ratings.flush();
 
         movies.recalcAverageRating(movieId);
+        movieDetailsCache.evict(movieId);
     }
 }

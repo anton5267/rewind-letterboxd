@@ -24,6 +24,6 @@ public class CacheConfig {
                 .disableCachingNullValues()
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(
                         new JacksonJsonRedisSerializer<>(MovieDetailsResponse.class)));
-        return RedisCacheManager.builder(connectionFactory).cacheDefaults(defaults).build();
+        return RedisCacheManager.builder(connectionFactory).cacheDefaults(defaults).transactionAware().build();
     }
 }

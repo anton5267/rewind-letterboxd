@@ -14,6 +14,8 @@ import java.util.List;
 
 public interface RatingRepository extends JpaRepository<Rating, Long> {
     Optional<Rating> findByUserIdAndMovieId(Long userId, Long movieId);
+    @Query("select r.movie.id from Rating r where r.user.id = :userId")
+    List<Long> findMovieIdsByUserId(@Param("userId") Long userId);
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
         INSERT INTO ratings (user_id, movie_id, rating, created_at, updated_at)

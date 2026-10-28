@@ -7,6 +7,8 @@ import com.rewind.rewind.list.dto.PublicListCardResponse;
 import com.rewind.rewind.list.repo.ListItemRepository;
 import com.rewind.rewind.list.repo.MovieListRepository;
 import com.rewind.rewind.movie.dto.MovieCardResponse;
+import com.rewind.rewind.movie.repo.MovieRepository;
+import com.rewind.rewind.movie.service.MovieDetailsCacheService;
 import com.rewind.rewind.profile.dto.ChangePasswordRequest;
 import com.rewind.rewind.profile.dto.DeleteAccountRequest;
 import com.rewind.rewind.profile.dto.ProfileResponse;
@@ -43,6 +45,8 @@ public class ProfileService {
     private static final Set<String> SUPPORTED_SOCIAL_PLATFORMS = Set.of("website", "instagram", "tiktok", "letterboxd");
 
     private final UserRepository users;
+    private final MovieRepository movies;
+    private final MovieDetailsCacheService movieDetailsCache;
     private final MovieListRepository lists;
     private final RatingRepository ratings;
     private final ReviewRepository reviews;
@@ -55,6 +59,8 @@ public class ProfileService {
 
     public ProfileService(
             UserRepository users,
+            MovieRepository movies,
+            MovieDetailsCacheService movieDetailsCache,
             MovieListRepository lists,
             RatingRepository ratings,
             ReviewRepository reviews,
@@ -66,6 +72,8 @@ public class ProfileService {
             UserSocialLinkRepository socialLinks
     ) {
         this.users = users;
+        this.movies = movies;
+        this.movieDetailsCache = movieDetailsCache;
         this.lists = lists;
         this.ratings = ratings;
         this.reviews = reviews;
@@ -335,11 +343,16 @@ public class ProfileService {
         if (!passwordEncoder.matches(req.getCurrentPassword(), user.getPasswordHash())) {
             throw new IllegalArgumentException("Current password is incorrect");
         }
+        var affectedMovieIds = ratings.findMovieIdsByUserId(user.getId());
         sessions.revokeAllForUser(user.getId());
         entityManager.flush();
         entityManager.createNativeQuery("delete from users where id = :id")
                 .setParameter("id", user.getId())
                 .executeUpdate();
         entityManager.clear();
+        affectedMovieIds.forEach(movieId -> {
+            movies.recalcAverageRating(movieId);
+            movieDetailsCache.evict(movieId);
+        });
     }
 }
