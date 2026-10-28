@@ -72,7 +72,7 @@ for (const width of [320, 1440]) {
       await ready(page, "#films-page-title");
       await expect(page.locator("#films-page-title")).not.toBeFocused();
       await page.keyboard.press("Control+End");
-      const film = page.locator("main article h2 a").last();
+      const film = page.getByRole("region", { name: "Films" }).locator("article > a").last();
       await film.scrollIntoViewIfNeeded();
       await film.focus();
       const before = await page.evaluate(() => scrollY);
@@ -105,17 +105,12 @@ for (const width of [320, 1440]) {
     } finally { gate.resolve(); }
   });
 
-  test(`profile hash and Review Link Enter at ${width}px retain anchor behavior and focus the new screen`, async ({ page }) => {
+  test(`expanded profile review link at ${width}px focuses the new screen`, async ({ page }) => {
     await page.setViewportSize({ width, height: 700 });
     const writes = await fixture(page);
     await page.goto(`/en/users/${authorId}`);
     await ready(page, "#public-profile-title");
-    if (width === 320) {
-      await page.locator('nav a[href="#public-profile-liked-reviews"]').click();
-      await expect(page).toHaveURL(/#public-profile-liked-reviews$/);
-      await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(100);
-      await expect(page.locator("#public-profile-title")).not.toBeFocused();
-    }
+    await page.getByRole("button", { name: "View all : Recent reviews" }).click();
     const link = page.locator(`main a[href="/en/reviews/${reviews.at(-1)!.id}"]`).first();
     await link.scrollIntoViewIfNeeded();
     await link.focus();
@@ -133,7 +128,7 @@ test("an unavailable film focuses its loaded error main instead of the hidden st
   const writes = await fixture(page, undefined, true);
   await page.goto("/en/films");
   await ready(page, "#films-page-title");
-  const link = page.locator("main article h2 a").last();
+  const link = page.getByRole("region", { name: "Films" }).locator("article > a").last();
   await link.focus();
   await link.press("Enter");
   await expect(page.getByRole("alert")).toBeVisible();
