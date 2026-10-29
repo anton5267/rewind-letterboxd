@@ -56,9 +56,10 @@
 .sectionHeading > span { color: #d4a85f; font-size: 13px; }
 .filmGrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 24px 31px; }
 .filmCard { position: relative; min-width: 0; }
-.posterLink { display: block; overflow: hidden; aspect-ratio: 174 / 260; border: 0; border-radius: 20px; background: #292929; }
+.posterLink { display: block; overflow: hidden; aspect-ratio: 174 / 260; border: 0; border-radius: 20px; background: #292929; text-decoration: none; }
 .poster, .posterFallback { display: block; width: 100%; height: 100%; object-fit: cover; }
 .posterFallback { display: grid; place-items: center; padding: 12px; box-sizing: border-box; color: #d8d0c8; font-size: 12px; font-weight: 700; text-align: center; }
+.posterFallback > span { display: -webkit-box; overflow: hidden; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; }
 .filmCard h3, .listCard h3, .articleCard h3 { overflow: hidden; margin: 10px 0 4px; font-size: 15px; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
 .filmCard h3 a, .listCard h3, .articleCard h3 { color: #fff; text-decoration: none; }
 .filmCard p, .listCard p { margin: 0; color: var(--rewind-muted); font-size: 12px; }
@@ -139,7 +140,7 @@
   .categoryPrompt > span { font-size: 18px; line-height: 1; }
   .categorySelect { position: absolute; inset: 0; display: block; width: 100%; min-width: 100%; min-height: 44px; height: 44px; box-sizing: border-box; border: 0; border-radius: 4px; padding: 0; background: transparent; color: #aaa; font: inherit; font-size: 16px; color-scheme: dark; cursor: pointer; opacity: 0; }
   .categoryPicker:focus-within { outline: 2px solid var(--rewind-gold); outline-offset: 3px; border-radius: 4px; }
-  .results { gap: 55px; padding-top: 46px; }
+  .results { gap: 55px; padding-top: 29px; }
   .allPreview .expandedOnly, .allPreview .reviewCard:nth-child(n + 4) { display: none; }
   .showMoreResults { display: flex; min-width: 176px; min-height: 48px; align-items: center; justify-content: center; justify-self: center; border: 0; border-radius: 999px; padding: 12px 22px; background: #282828; color: #fff; font: inherit; font-size: 14px; cursor: pointer; }
   .showMoreResults:hover:not(:disabled) { background: #343434; }
@@ -156,7 +157,7 @@
   .reviewGrid { gap: 38px; }
   .reviewCard { min-height: 315px; box-sizing: border-box; grid-template-columns: 175px minmax(0, 1fr); align-items: start; gap: 40px; border: 0; padding: 31px 26px 22px; }
   .reviewPoster { aspect-ratio: 175 / 262; align-self: start; }
-  .noMatches { display: block; width: min(680px, 100%); min-height: 0; box-sizing: border-box; margin: 20px auto 40px; border: 0; background: transparent; text-align: center; }
+  .noMatches { display: block; width: min(540px, 100%); min-height: 0; box-sizing: border-box; margin: 13px auto 40px; border: 0; background: transparent; text-align: center; }
   .noMatches .sectionKicker { display: none; }
   .noMatches h2 { width: min(680px, 100%); max-width: none; margin: 0 auto; font-size: clamp(44px, 4.03vw, 58px); line-height: 1.12; letter-spacing: 0; }
   .noMatches > p:not(.sectionKicker) { width: min(547px, 100%); max-width: none; margin: 14px auto 59px; font-size: 24px; line-height: 1.2; }

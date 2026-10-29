@@ -21,7 +21,7 @@ const searchShortcuts = [
 ] as const;
 
 function Poster({ src, alt, fallback }: { src: string | null; alt: string; fallback: string }) {
-  return <ResilientImage className={styles.poster} src={src} alt={alt} fallback={<span className={styles.posterFallback}>{fallback}</span>} />;
+  return <ResilientImage className={styles.poster} src={src} alt={alt} fallback={<span className={styles.posterFallback} aria-hidden="true"><span>{fallback}</span></span>} />;
 }
 
 export default function GlobalSearch() {
@@ -44,7 +44,6 @@ export default function GlobalSearch() {
   const categorySelectRef = useRef<HTMLSelectElement>(null);
   const resultsPanelRef = useRef<HTMLDivElement>(null);
   const retryFocus = useRef<{ query: string; lang: string; origin: Element | null } | null>(null);
-  const clearQueryFocus = useRef(false);
   const expandedResults = expandedQuery === query;
 
   useEffect(() => {
@@ -106,15 +105,6 @@ export default function GlobalSearch() {
     });
     return () => window.cancelAnimationFrame(frame);
   }, [loading, results, error, query, lang]);
-
-  useEffect(() => {
-    if (query || !clearQueryFocus.current) return;
-    const frame = window.requestAnimationFrame(() => {
-      clearQueryFocus.current = false;
-      document.getElementById("global-search-query")?.focus();
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [query]);
 
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -257,13 +247,7 @@ export default function GlobalSearch() {
         <p className={styles.sectionKicker}>{t("emptyEyebrow")}</p>
         <h2>{t("noGlobalResults")}</h2>
         <p>{t("noGlobalResultsHint")}</p>
-        <button className={styles.noMatchesAction} type="button" onClick={() => {
-          const next = new URLSearchParams(searchParams);
-          next.delete("q");
-          clearQueryFocus.current = true;
-          setExpandedQuery(null);
-          setSearchParams(next);
-        }}>{t("clearSearch")}</button>
+        <Link className={styles.noMatchesAction} to={path("/home")}>{t("backToHome")}</Link>
       </section>}
 
       {!loading && !error && results && <>
