@@ -93,7 +93,7 @@ async function loginAndReachFollowRows(page: Page, state: Awaited<ReturnType<typ
   expect(state.loginPair).toEqual({ cookie: "http-csrf-generation-1", header: "http-csrf-generation-1" });
   // Inspect only: the cookie boundary is produced by the login response's Set-Cookie.
   expect((await page.context().cookies()).some(cookie => cookie.name === "XSRF-TOKEN")).toBe(false);
-  await page.locator("header").getByRole("link", { name: "Community", exact: true }).click();
+  await page.locator("header").getByRole("link", { name: "Members", exact: true }).click();
   for (const member of members) await expect(page.getByRole("button", { name: `Follow: ${member.displayName}`, exact: true })).toBeEnabled();
 }
 

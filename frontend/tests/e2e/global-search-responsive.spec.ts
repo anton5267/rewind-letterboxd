@@ -72,7 +72,7 @@ async function expectContentsWithin(cards: Locator, selector: string) {
   expect(failures).toEqual([]);
 }
 
-test("long localized search results stay within every responsive viewport and desktop card", async ({ page }) => {
+test("long localized search results stay within every responsive viewport and desktop card", async ({ page }, testInfo) => {
   test.setTimeout(60_000);
   const mutations = await mockSearch(page);
   for (const locale of locales) {
@@ -88,7 +88,16 @@ test("long localized search results stay within every responsive viewport and de
         await expect(main.locator('#lists a[href*="/lists/public/"]')).toHaveCount(1);
         const firstFilm = response(locale, false).films.content[0];
         await expect(films.first().locator(":scope > a")).toHaveAccessibleName(`${firstFilm.title} ${locale === "uk" ? "Постер" : "Poster"}`);
+        const fallback = films.first().locator('[class*="posterFallback"] > span');
+        await expect(fallback).toBeVisible();
+        expect(await fallback.evaluate(element => {
+          const text = element.getBoundingClientRect();
+          const poster = element.closest('a')!.getBoundingClientRect();
+          const heading = element.closest('article')!.querySelector('h3')!.getBoundingClientRect();
+          return text.top >= poster.top && text.bottom <= poster.bottom && (!heading.height || text.bottom < heading.top);
+        })).toBe(true);
         await expectNoPageOverflow(page);
+        if (locale === "en" && (width === 393 || width === 1440)) await page.screenshot({ path: testInfo.outputPath(`search-${width}-fixture.png`), fullPage: true });
         if (width >= 1024) {
           await expectContentsWithin(films, "h3, p");
           await expectContentsWithin(main.locator("#reviews article"), '[class*="reviewBody"], [class*="reviewMeta"], p');
@@ -139,28 +148,29 @@ test("desktop categories remain visible and keyboard tabs reveal their focused c
   }
 });
 
-test("localized desktop empty states contain their message and clear search action", async ({ page }) => {
+test("localized responsive empty states return home with keyboard access", async ({ page }, testInfo) => {
   await mockSearch(page);
   for (const locale of locales) {
-    for (const width of desktopWidths) {
+    for (const width of widths) {
       await test.step(`${locale} at ${width}px`, async () => {
         await page.setViewportSize({ width, height: 900 });
         await page.goto(`/${locale}/search?q=missing`);
         await expect(page.getByRole("main")).toHaveAttribute("aria-busy", "false");
         const empty = page.locator('main section[class*="noMatches"]');
         await expect(empty).toBeVisible();
-        await expectContentsWithin(empty, ":scope > p, h2, button");
-        const clear = empty.getByRole("button", { name: locale === "uk" ? "Очистити пошук" : "Clear search", exact: true });
-        await clear.focus();
-        await expect(clear).toBeFocused();
-        expect(await clear.evaluate(element => {
+        await expectContentsWithin(empty, ":scope > p, h2, a");
+        const home = empty.getByRole("link", { name: locale === "uk" ? "На головну" : "Back to home", exact: true });
+        await expect(home).toHaveAttribute("href", `/${locale}/home`);
+        await home.focus();
+        await expect(home).toBeFocused();
+        if (locale === "en" && (width === 393 || width === 1440)) await page.screenshot({ path: testInfo.outputPath(`search-empty-${width}.png`), fullPage: true });
+        expect(await home.evaluate(element => {
           const box = element.getBoundingClientRect();
-          return document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)?.closest("button") === element;
+          return document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)?.closest("a") === element;
         })).toBe(true);
         await expectNoPageOverflow(page);
-        await clear.press("Enter");
-        await expect(page).toHaveURL(new RegExp(`/${locale}/search(?:\\?.*)?$`));
-        expect(new URL(page.url()).searchParams.has("q")).toBe(false);
+        await home.press("Enter");
+        await expect(page).toHaveURL(new RegExp(`/${locale}/home$`));
       });
     }
   }

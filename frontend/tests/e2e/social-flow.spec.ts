@@ -18,7 +18,13 @@ async function registerAndLogin(page: import("@playwright/test").Page, suffix: s
 }
 
 function getByLabel(page: import("@playwright/test").Page, label: string) {
-  return page.getByLabel(label);
+  return page.getByLabel(label, { exact: true });
+}
+
+async function logoutThroughAccount(page: import("@playwright/test").Page) {
+  await page.getByRole("banner").getByRole("button", { name: "Акаунт" }).click();
+  await page.getByRole("button", { name: "Вийти" }).click();
+  await expect(page).toHaveURL(/\/uk\/login$/);
 }
 
 async function deleteCurrentSession(page: import("@playwright/test").Page, password: string) {
@@ -67,8 +73,7 @@ test("user can follow another profile and receive a notification", async ({ page
     const firstCredentials = first!;
     const firstUser = await page.evaluate(async () => (await fetch("/api/users/me")).json() as { id: number });
 
-    await page.getByRole("button", { name: "Вийти" }).click();
-    await expect(page).toHaveURL(/\/uk\/login$/);
+    await logoutThroughAccount(page);
 
     second = await registerAndLogin(page, suffix, "social-b");
     const secondUser = await page.evaluate(async () => (await fetch("/api/users/me")).json() as { id: number });
@@ -78,18 +83,19 @@ test("user can follow another profile and receive a notification", async ({ page
     await expect(followButton).toBeVisible();
     await followButton.click();
     await expect(page.getByRole("button", { name: "Відписатися" })).toBeVisible();
-    const followersSection = page.locator("section").filter({ has: page.getByRole("heading", { name: "Підписники" }) });
+    await page.goto(`/uk/users/${firstUser.id}?view=followers`);
+    const followersSection = page.getByRole("region", { name: "Підписники" });
     await expect(followersSection).toBeVisible();
     await expect(followersSection.getByRole("link", { name: new RegExp(`social-b${suffix}`) })).toBeVisible();
+    await page.goto(`/uk/users/${firstUser.id}`);
     await expect(page.getByRole("heading", { name: "Остання активність" })).toBeVisible();
 
-    await page.getByRole("button", { name: "Вийти" }).click();
-    await expect(page).toHaveURL(/\/uk\/login$/);
+    await logoutThroughAccount(page);
     await page.getByLabel("Електронна пошта").fill(firstCredentials.email);
     await page.getByLabel("Пароль", { exact: true }).fill(firstCredentials.password);
     await page.getByRole("button", { name: "Увійти" }).click();
     await expect(page).toHaveURL(/\/uk\/films$/);
-    await expect(page.getByRole("button", { name: "Вийти" })).toBeVisible();
+    await expect(page.getByRole("banner").getByRole("button", { name: "Акаунт" })).toBeVisible();
     await expect(page.getByLabel(/не прочитано: \d+/)).toBeVisible();
     await page.goto("/uk/notifications");
     await expect(page.getByRole("heading", { name: "Сповіщення" })).toBeVisible();
@@ -111,12 +117,11 @@ test("user can follow another profile and receive a notification", async ({ page
     await page.getByRole("button", { name: "Написати" }).click();
     await expect(page.getByText(message).last()).toBeVisible();
 
-    await page.getByRole("button", { name: "Вийти" }).click();
-    await expect(page).toHaveURL(/\/uk\/login$/);
+    await logoutThroughAccount(page);
     await page.getByLabel("Електронна пошта").fill(`${"social-b"}-${suffix}@example.invalid`);
     await getByLabel(page, "Пароль").fill("E2e-password-123!");
     await page.getByRole("button", { name: "Увійти" }).click();
-    await expect(page).toHaveURL(/\/uk\/films$/);
+    await expect(page).toHaveURL(/\/uk\/messages$/);
     await page.goto(`/uk/users/${firstUser.id}`);
     await expect(page.getByRole("button", { name: "Заблокувати" })).toBeVisible();
     await page.getByRole("button", { name: "Заблокувати" }).click();

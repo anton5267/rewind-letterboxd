@@ -1,12 +1,12 @@
 # Rewind — повний редизайн за актуальним Figma
 
-Оновлено 28.10.2026. Цей план замінює попередній поетапний порядок. Основу визначають START HERE і167 READY frames/states; збережений інвентар268 кандидатів повторно не генерувати без виявленої розбіжності.
+Оновлено 29.10.2026. Цей план замінює попередній поетапний порядок. Основу визначають START HERE і167 READY frames/states; збережений інвентар268 кандидатів повторно не генерувати без виявленої розбіжності.
 
 - [Поточний прогрес](docs/project/PROGRESS.md)
 - [Інвентар Figma → routes/states](docs/frontend/FIGMA_HANDOFF.md)
 - [Докази перевірок та історичні checkpoints](docs/operations/RELEASE_EVIDENCE.md)
 
-Поточний checkpoint28.10: погоджені інформаційні Service4routes реалізовано й перевірено56cases; captions288, collections90, Settings focus/password/name, Search52 і NotFound10 мають поточні runtime-докази. Далі — закрити залишкові READY mapping/конкретні gaps у матриці; після visual closure перейти до ізольованої регресії, Docker і доставки.
+Поточний checkpoint29.10: Search READY `1480:6991`/`1480:8464` і empty STATE `1480:5809`/`1480:8856` повторно звірено; погоджена дія Back to home реалізована, цільові Search-тести8/8. Новий web image зібрано без кешу й запущено зі збереженим DB volume; Docker Search/Journal/Popular/Films21/21. Повний Docker Playwright suite158/158 без skips, `verify:build` успішний. Далі — scoped commit, push і новий CI; візуальні/API gaps залишаються явно позначеними в матриці.
 
 ## Ціль
 

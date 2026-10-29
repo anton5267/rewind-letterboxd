@@ -100,10 +100,10 @@ for (const lang of ["uk", "en"] as const) {
   test(`profile validates UTF-8 password boundaries in ${lang}`, async ({ page }) => {
     const mutations = await isolateFormApi(page);
     await page.setViewportSize({ width: 320, height: 900 });
-    await page.goto(`/${lang}/profile`);
-    await waitForPageContent(page);
+    await page.goto(`/${lang}/profile?settings=authentication`);
+    await expect(page.locator("#profile-current-password")).toBeVisible();
     await page.locator("#profile-current-password").fill("legacy");
-    await checkWritingBoundary(page, page.locator("#profile-new-password"), page.locator('form[aria-labelledby="profile-password-form-title"] button[type="submit"]'), messages[lang], mutations, "/api/profile/me/password", "newPassword");
+    await checkWritingBoundary(page, page.locator("#profile-new-password"), page.locator('button[form="settings-form-authentication"]'), messages[lang], mutations, "/api/profile/me/password", "newPassword", page.locator("#profile-confirm-new-password"));
   });
 }
 

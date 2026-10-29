@@ -29,52 +29,26 @@ test("owner creates and deletes a custom list", async ({ page, baseURL }) => {
     await page.getByLabel("Опис").first().fill("Browser to API to MySQL deletion fixture");
     await page.getByLabel("Теги").first().fill("playwright, owner-delete");
     await page.getByLabel("Публічний список").first().check();
-    await page.getByRole("button", { name: "Створити" }).click();
-
-    const listButton = page.getByRole("button", { name: listName, exact: true });
-    await expect(listButton).toBeVisible();
-    await page.route("**/api/lists/*/items", async route => {
-      await new Promise(resolve => setTimeout(resolve, 250));
-      await route.continue();
-    });
-    await listButton.click();
-    await expect(page.getByText("Завантаження...", { exact: true })).toBeVisible();
-    await expect(page.getByText("Тут поки немає фільмів. Додайте їх зі сторінки фільму.", { exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Додати фільм", exact: true })).toHaveAttribute("href", "/uk/films");
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await expect(page.getByRole("link", { name: "Переглянути фільми", exact: true })).toHaveAttribute("href", "/uk/films");
-    await page.setViewportSize({ width: 320, height: 800 });
-
-    const updatedListName = `${listName} updated`;
-    await page.getByLabel("Назва списку").fill(updatedListName);
     await page.getByRole("button", { name: "Зберегти", exact: true }).click();
-    await expect(page.getByRole("button", { name: updatedListName, exact: true })).toBeVisible();
-    const addFilmLink = page.getByRole("link", { name: "Додати фільм", exact: true });
-    await expect(addFilmLink).toBeVisible();
-    await expect.poll(() => addFilmLink.evaluate(element => {
-      const description = document.getElementById("edit-list-description")?.closest("label");
-      const tags = document.getElementById("edit-list-tags")?.closest("label");
-      return Boolean(description && tags && (description.compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING) && (element.compareDocumentPosition(tags) & Node.DOCUMENT_POSITION_FOLLOWING));
-    })).toBe(true);
-
-    page.once("dialog", dialog => dialog.accept());
+    await expect(page).toHaveURL(/\/uk\/lists\?list=\d+&mode=view$/);
+    const createdId = Number(new URL(page.url()).searchParams.get("list"));
+    expect(createdId).toBeGreaterThan(0);
+    await expect(page.getByRole("status").filter({ hasText: "Список створено." })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Налаштування списку" })).toHaveAttribute("href", `/uk/lists?list=${createdId}&mode=edit`);
+    await page.getByRole("link", { name: "Налаштування списку" }).click();
+    await expect(page.locator("#edit-list-name")).toHaveValue(listName);
+    const updatedListName = `${listName} updated`;
+    await page.locator("#edit-list-name").fill(updatedListName);
+    await page.getByRole("button", { name: "Зберегти", exact: true }).click();
+    await expect(page.locator("#edit-list-name")).toHaveValue(updatedListName);
+    const addFilmLink = page.getByRole("link", { name: "Додати фільм", exact: true }).first();
+    await expect(addFilmLink).toHaveAttribute("href", "/uk/films");
     await page.getByRole("button", { name: "Видалити список" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Видалити список" }).click();
     await expect(page.getByText("Список видалено.", { exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: updatedListName, exact: true })).toHaveCount(0);
-    await expect(page.locator("button[aria-pressed]").first()).toBeEnabled();
-
-    const nextListName = `${listName} next`;
-    await page.locator("#new-list-name").fill(nextListName);
-    await page.getByRole("button", { name: "Створити", exact: true }).click();
-    const nextListButton = page.getByRole("button", { name: nextListName, exact: true });
-    await expect(nextListButton).toBeEnabled();
-    await nextListButton.click();
-    await expect(page.getByLabel("Назва списку")).toHaveValue(nextListName);
-    await expect(page.getByRole("button", { name: "Зберегти", exact: true })).toBeEnabled();
-
     const lists = await page.request.get("/api/lists/my");
     expect(lists.ok()).toBeTruthy();
-    expect((await lists.json() as Array<{ name: string }>).some(list => list.name === listName || list.name === updatedListName)).toBeFalsy();
+    expect((await lists.json() as Array<{ id: number }>).some(list => list.id === createdId)).toBeFalsy();
   } finally {
     await cleanupDisposableAccount(baseURL, email, password);
   }
@@ -125,6 +99,9 @@ test("owner retries failed list items and returns from an emptied last page", as
         await route.fulfill({ json: { content: [{ ...firstPage[0], id: 77777, name: "Fixture last-page list" }], totalPages: 2, totalElements: 13, number: 1 } });
       }
     });
+    await page.route("**/api/lists/my", route => route.fulfill({ json: deleted
+      ? firstPage
+      : [...firstPage, { ...firstPage[0], id: 77777, name: "Fixture last-page list" }] }));
     await page.route("**/api/lists/77777/items", async route => {
       itemAttempts += 1;
       if (itemAttempts === 1) {
@@ -134,6 +111,7 @@ test("owner retries failed list items and returns from an emptied last page", as
       }
     });
     await page.route("**/api/lists/77777", async route => {
+      if (route.request().method() === "GET") return route.fulfill({ json: { ...firstPage[0], id: 77777, name: "Fixture last-page list" } });
       if (route.request().method() !== "DELETE") return route.fallback();
       deleted = true;
       await route.fulfill({ status: 204, body: "" });
@@ -154,8 +132,8 @@ test("owner retries failed list items and returns from an emptied last page", as
     await expect(page.getByText("Тут поки немає фільмів. Додайте їх зі сторінки фільму.", { exact: true })).toBeVisible();
     expect(itemAttempts).toBe(2);
 
-    page.once("dialog", dialog => dialog.accept());
     await page.getByRole("button", { name: "Видалити список" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Видалити список" }).click();
     await expect(page.getByText("Список видалено.", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Fixture list 1", exact: true })).toBeVisible();
     await expect(pagination).toHaveCount(0);

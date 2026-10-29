@@ -42,7 +42,6 @@ test("parallel authenticated reads do not invalidate rapid review mutations", as
       });
     })());
   });
-  page.on("dialog", dialog => dialog.accept());
 
   try {
     await page.goto("/uk/register");
@@ -94,6 +93,7 @@ test("parallel authenticated reads do not invalidate rapid review mutations", as
         await expect(ownReview.getByText(commentText, { exact: true })).toBeVisible();
         const removed = page.waitForResponse(response => /\/api\/reviews\/\d+$/.test(new URL(response.url()).pathname) && response.request().method() === "DELETE");
         await ownReview.getByRole("button", { name: "Видалити огляд", exact: true }).click();
+        await page.getByRole("alertdialog").getByRole("button", { name: "Видалити огляд", exact: true }).click();
         await expectMutation(await removed, 204);
         await expect(ownReview).toHaveCount(0);
       } finally {

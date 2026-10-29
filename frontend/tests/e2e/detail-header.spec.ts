@@ -36,8 +36,8 @@ for (const sample of [
     await expect(bottom).toBeVisible();
     await expect(bottom.getByRole("link")).toHaveCount(5);
     const back = page.getByRole("main").getByRole("link", { name: sample.back, exact: true });
-    // This point overlaps the transparent fixed header; it must reach the back link.
-    await back.click({ position: { x: 5, y: 5 } });
+    // The point stays inside the rounded control while overlapping the transparent fixed header.
+    await back.click({ position: { x: 8, y: 8 } });
     await expect(page).toHaveURL(new RegExp(`${sample.backRoute}$`));
     await bottom.locator(`a[href="/${sample.lang}/films"]`).click();
     await expect(page).toHaveURL(new RegExp(`/${sample.lang}/films$`));

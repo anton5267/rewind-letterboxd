@@ -47,6 +47,7 @@ test("review text is rendered as text and search rejects no SQL input", async ({
     await expect(page.locator('img[src="x"]')).toHaveCount(0);
 
     await ownReview.getByRole("button", { name: "Видалити огляд" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Видалити огляд" }).click();
     await expect(ownReview).toHaveCount(0);
     await page.getByRole("button", { name: "Видалити оцінку" }).click();
     dialogSeen = false;

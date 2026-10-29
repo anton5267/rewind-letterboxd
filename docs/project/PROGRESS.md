@@ -1,16 +1,19 @@
 # Rewind — поточний прогрес
 
-Оновлено 28.10.2026. Ціль активна: завершити Figma-аудит наявних маршрутів, регресію, локальний Docker і доставку в GitHub із зеленим CI. Повне завершення ще не підтверджене.
+Оновлено 29.10.2026. Ціль активна: завершити Figma-аудит наявних маршрутів, регресію, локальний Docker і доставку в GitHub із зеленим CI. Повне завершення ще не підтверджене.
 
 ## Поточний стан
+
+- Search: за рішенням користувача no-match `1480:5809`/`1480:8856` тепер має локалізоване Back to home; Enter відкриває `/uk/home` або `/en/home`. Desktop empty-секція x450/y377/540px, populated rail y377. Довгі назви без постера обмежено в межах картки, повна назва доступна через accessible name. Ізольовані browser tests8/8 на Vite, ширини320–1440, UK/EN, категорії, retry, focus; парні fixture screenshots393/1440. `verify:build` пройшов як технічна перевірка. Docker Desktop відновлено, web clean rebuild; Search/Journal/Popular/Films на оновленому Docker21/21. Повний Docker Playwright158/158 без skips; три точні залишкові USER fixtures від попередніх невдалих спроб видалені через API.
+- Journal `844:1547` і Popular Reviews: цільовий browser suite4/4; стаття росте разом із cover/content, reviewer link перевірено. Live Journal feed порожній; це не підтвердження багатого контенту макета.
 
 - Home list cards/retry: 3/3 Playwright пройшли на Docker. Свіжий screenshot `1413:6471` повернув 1×1, тому ці тести підтверджують поведінку, не відповідність геометрії Figma.
 
 - Review Details і release responsive matrix: повторний Playwright 2/2; UK/EN довгий контент і mobile RatingSheet/Escape/focus на 320/393/480/768/1440, а також 14 маршрутів на 320/393/768/1440 без overflow. Знімки 393/1440 — тестові API fixtures, не нове Figma-приймання; phone frame `1480:9249` прихований.
 
-- Повторний огляд Figma Search `1480:5809` і `1480:8856`: у макеті дія Back to home, а поточний застосунок очищає запит. Це відкритий вибір поведінки; попередні записи про Back to home є історичними й не підтверджують поточний код. Цільовий прогін геометричних/маршрутних тестів: 7 passed / 19 failed. Після оновлення селекторів маршрутні сценарії окремо пройшли 8/8; решта причин потребують подальшого розбору.
+- Історичний перший full run:64 passed/94 failed; після серії реалізацій і оновлень сценаріїв новий повний прогін29.10 має158/158 passed. Окремий перший Docker прогін поточної серії мав144/158 через застарілі селектори після редизайну; це збережено як історичний failed run.
 
-- Додаткова перевірка після першого full run: Profile 10/10, navigation/Admin/community 19/19, list mobile header/dialog 12/12, Movie/Person 6/6; у повторному наборі Movie/Search/localization Search і localization пройшли. Full suite ще не повторено успішно: залишаються геометричні та маршрутні перевірки.
+- Додаткова перевірка після першого full run: Profile 10/10, navigation/Admin/community 19/19, list mobile header/dialog 12/12, Movie/Person 6/6; новий повний Docker suite158/158 закрив ці регресійні сценарії.
 
 - Погоджені чотири інформаційні Service-сторінки додано на спільному компоненті: Terms, Conditions, Safety Notice, HQ Accounts. UK/EN,56 перевірок ширини без overflow, клавіатура й активна навігація; парні393/1440 screenshots. Тексти не обіцяють непідтриманих платних/HQ функцій. Нових API немає. Останній build251 — технічна перевірка.
 - Додатково перевірено читабельні captions288cases, колекції профілів90cases, Settings focus720/767/768 і справжні password/displayName Save, Search/Journal categories52cases та NotFound10cases. Точні докази в Release evidence; це не повна регресія.
@@ -22,7 +25,7 @@
 - Create List — самостійна mobile сторінка й локальна чернетка до Save. Після підтвердженого Save відкривається owner read-only `/lists?list=<id>&mode=view`, короткий успіх та явні Edit/Add film. Private/public, частковий збій додавання й Retry, невалідний ID перевірено. При помилці форма й дані зберігаються.
 - Auth/Service, Search/Films/Reviews, Lists/Journal та Profile/social пройшли окремі поточні runtime-блоки UK/EN з реальними API й парними screenshots. Actor desktop отримав погоджений baked фон5340:4508 без повторного crop; phone Person має власну навігацію й Back під час loading/error. Специфічний F1 phone artwork лишається data gap. Не всі READY frame/state мають закриту композицію; точні API/data gaps лишаються відкритими в матриці.
 - Спільний modal hook блокує фон через inert, утримує фокус і повертає його. Реальні Followers sheet та MovieActionSheet перевірено; native OS Share, реальна екранна клавіатура й нативний200% zoom не заявляються як перевірені.
-- Admin loading24cases/text20030cases та owner-review detail Save/Delete/Retry/ownership перевірено; placeholders профілів identity6cases без overflow. Остання інтеграційна `verify:build` пройшла TypeScript/Vite,251 modules. Це технічна перевірка. Backend на ізольованій MySQL:90 tests,0 failures/errors/skips. Docker API/web чисто перебудовано й оновлено; .env і DB volume збережені. Full browser run64 passed/94 failed; виправлення й повторна регресія тривають. Окремий Admin12/12 без skips, API/security/contracts/cache/concurrency/reset/ER/backup-restore/Caddy/config scripts пройшли. Backend `c7cb26a` та UI `aba9e03` уже в origin/master; CI / verify для `aba9e03` успішний. Тести й документація ще потребують фінального commit/push та повторного CI.
+- Admin loading24cases/text20030cases та owner-review detail Save/Delete/Retry/ownership перевірено; placeholders профілів identity6cases без overflow. Остання інтеграційна `verify:build` пройшла TypeScript/Vite,251 modules. Це технічна перевірка. Backend на ізольованій MySQL:90 tests,0 failures/errors/skips. Docker API/web чисто перебудовано й оновлено; .env і DB volume збережені. Повторний повний browser run158/158 без skips. Окремий Admin12/12 без skips, API/security/contracts/cache/concurrency/reset/ER/backup-restore/Caddy/config scripts пройшли. Backend `c7cb26a` та UI `aba9e03` уже в origin/master; CI / verify для `aba9e03` успішний. Поточні тести й документація ще потребують фінального commit/push та повторного CI.
 
 Докази й обмеження: [Release evidence](../operations/RELEASE_EVIDENCE.md), [Figma handoff](../frontend/FIGMA_HANDOFF.md). Парні знімки та JSON — в ігнорованому `artifacts/visual-audit-20261028/`.
 

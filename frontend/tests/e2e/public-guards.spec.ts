@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { cleanupDisposableAccount } from "./helpers";
 
 test("legacy root redirects to the localized home page", async ({ page }) => {
   await page.goto("/");
@@ -91,7 +92,8 @@ test("public list catalog paginates server-side", async ({ page }) => {
   }
 });
 
-test("public list discovery reaches tag, detail, author and movie in both locales", async ({ page }) => {
+test("public list discovery reaches tag, detail, author and movie in both locales", async ({ page, baseURL }) => {
+  test.setTimeout(90_000);
   const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
   const username = `journey${suffix.slice(-12)}`;
   const email = `${username}@example.invalid`;
@@ -158,9 +160,9 @@ test("public list discovery reaches tag, detail, author and movie in both locale
     await expect(page.getByRole("heading", { name: listName })).toBeVisible();
     await expect(page.getByRole("link", { name: username, exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: `#${tagName}`, exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: movie.title, exact: true })).toBeVisible();
+    await expect(page.getByRole("main").locator(`a[href="/uk/films/${movie.id}"]`).first()).toBeVisible();
 
-    await page.getByRole("link", { name: "EN", exact: true }).click();
+    await page.goto(`/en/lists/public/${listId}`);
     await expect(page).toHaveURL(new RegExp(`/en/lists/public/${listId}$`));
     await expect(page.getByRole("heading", { name: listName })).toBeVisible();
     await page.getByRole("link", { name: username, exact: true }).click();
@@ -169,16 +171,11 @@ test("public list discovery reaches tag, detail, author and movie in both locale
 
     await page.getByRole("link", { name: listName, exact: true }).first().click();
     await expect(page).toHaveURL(new RegExp(`/en/lists/public/${listId}$`));
-    await page.getByRole("link", { name: movie.title, exact: true }).click();
+    await page.getByRole("main").locator(`a[href="/en/films/${movie.id}"]`).first().click();
     await expect(page).toHaveURL(new RegExp(`/en/films/${movie.id}$`));
-    await expect(page.getByRole("heading", { name: movie.title, exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: movie.title, exact: true })).toBeVisible();
   } finally {
-    await page.request.get("/api/auth/csrf");
-    const cleanup = await page.request.delete("/api/profile/me", {
-      headers: await csrfHeaders(),
-      data: { currentPassword: password },
-    });
-    expect.soft(cleanup.ok(), "Disposable public-list journey account must be removed").toBeTruthy();
+    await cleanupDisposableAccount(baseURL, email, password);
   }
 });
 

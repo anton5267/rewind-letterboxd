@@ -40,7 +40,7 @@ test("popular reviews follows the measured desktop Figma rail and card geometry"
   expect(reviewerBox?.y).toBeCloseTo(280, 0);
   expect(reviewerBox?.width).toBe(1200);
   expect(reviewerBox?.height).toBe(180);
-  expect(await reviewers.locator("a").first().boundingBox()).toMatchObject({ width: 80, height: 80 });
+  expect(await reviewers.locator('a[href="/en/users/982500"]').boundingBox()).toMatchObject({ width: 80, height: 80 });
 
   const reviewsRegion = page.getByRole("region", { name: "Popular reviews" }).last();
   const reviewsBox = await reviewsRegion.boundingBox();

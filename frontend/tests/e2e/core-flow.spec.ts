@@ -30,14 +30,15 @@ test("register, use a film, edit and remove review", async ({ page, baseURL }) =
     const firstFilm = page.locator("main article h2 a").first();
     await expect(firstFilm).toBeVisible();
     await firstFilm.click();
-    await expect(page.getByRole("heading", { name: "Мої дії" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Мої дії" })).toBeVisible();
 
     const watchlist = page.getByRole("button", { name: "До перегляду" });
     await watchlist.click();
     await expect(watchlist).toHaveAttribute("aria-pressed", "true");
 
-    await page.getByRole("button", { name: "Оцінити на 4" }).click();
-    await expect(page.getByText("Ваша оцінка: 4")).toBeVisible();
+    const fourStar = page.getByRole("button", { name: "Оцінити на 4" });
+    await fourStar.click();
+    await expect(fourStar).toHaveAttribute("aria-pressed", "true");
 
     await page.getByRole("textbox", { name: "Ваш огляд" }).fill(review);
     await page.getByRole("button", { name: "Опублікувати огляд" }).click();
@@ -87,8 +88,8 @@ test("register, use a film, edit and remove review", async ({ page, baseURL }) =
     await reviewArticle.getByRole("textbox", { name: "Редагувати коментар" }).fill(`${review} comment 20 edited`);
     await reviewArticle.getByRole("button", { name: "Зберегти" }).click();
     await expect(reviewArticle.getByText(`${review} comment 20 edited`)).toBeVisible();
-    page.once("dialog", dialog => dialog.accept());
     await reviewArticle.getByRole("button", { name: "Видалити коментар" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Видалити коментар" }).click();
     await expect(reviewArticle.getByText(`${review} comment 20 edited`)).toHaveCount(0);
 
     await page.getByRole("button", { name: "Редагувати", exact: true }).click();
@@ -97,8 +98,8 @@ test("register, use a film, edit and remove review", async ({ page, baseURL }) =
     await expect(page.getByRole("status").filter({ hasText: "Огляд оновлено" })).toContainText("Огляд оновлено");
     await expect(page.getByText(editedReview)).toBeVisible();
 
-    page.once("dialog", dialog => dialog.accept());
     await page.getByRole("button", { name: "Видалити огляд" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Видалити огляд" }).click();
     await expect(page.getByRole("status").filter({ hasText: "Огляд видалено" })).toContainText("Огляд видалено");
     await expect(page.getByText(editedReview)).toHaveCount(0);
 

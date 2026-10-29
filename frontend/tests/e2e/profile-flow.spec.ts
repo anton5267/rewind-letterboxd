@@ -1,14 +1,16 @@
 import { expect, test } from "@playwright/test";
+import { cleanupDisposableAccount } from "./helpers";
 
 test.setTimeout(60_000);
 
-test("profile collection is visible in own and public profile", async ({ page }) => {
+test("profile collection is visible in own and public profile", async ({ page, baseURL }) => {
   const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
   const username = `profile${suffix.slice(-12)}`;
   const email = `${username}@example.invalid`;
   const password = "E2e-password-123!";
   const changedPassword = "E2e-password-changed-123!";
   let activePassword = password;
+  let deleted = false;
 
   const csrfHeaders = async () => {
     const cookie = (await page.context().cookies()).find(item => item.name === "XSRF-TOKEN");
@@ -63,25 +65,26 @@ test("profile collection is visible in own and public profile", async ({ page })
     await expect(page.getByRole("heading", { name: "Підписки" })).toBeVisible();
     const watchedStat = page.locator("article").filter({ has: page.getByText("Переглянуто", { exact: true }) });
     await expect(watchedStat.getByText("1", { exact: true })).toBeVisible();
-    await expect(page.getByRole("tab", { name: "Переглянуто" })).toHaveAttribute("aria-selected", "true");
-    await expect(page.getByRole("tabpanel").getByRole("link", { name: movieTitle!.trim(), exact: true })).toBeVisible();
+    await page.goto("/uk/profile?view=collection&collection=watched");
+    await expect(page.getByRole("tabpanel", { name: "Переглянуто" }).getByRole("link", { name: `${movieTitle!.trim()} Постер`, exact: true })).toBeVisible();
 
-    const ownReviewLink = page.locator("#profile-reviews").getByRole("link", { name: reviewText, exact: true });
-    await expect(ownReviewLink).toHaveAttribute("href", `/uk/reviews/${reviewId}`);
+    await page.goto("/uk/profile");
+    const ownReviewLink = page.getByRole("region", { name: "Останні огляди" }).getByRole("link", { name: reviewText, exact: true });
+    await expect(ownReviewLink).toHaveAttribute("href", `/uk/profile?view=reviews&review=${reviewId}`);
     await ownReviewLink.focus();
     await expect(ownReviewLink).toBeFocused();
     await ownReviewLink.press("Enter");
-    await expect(page).toHaveURL(new RegExp(`/uk/reviews/${reviewId}$`));
-    await expect(page.getByText(reviewText, { exact: true })).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`/uk/profile\\?view=reviews&review=${reviewId}$`));
+    await expect(page.getByText(reviewText, { exact: true }).last()).toBeVisible();
     await page.goto("/uk/profile");
 
     const ownProfile = await page.request.get("/api/profile/me");
     expect(ownProfile.ok()).toBeTruthy();
     expect((await ownProfile.json() as { stats: { watched: number } }).stats.watched).toBe(1);
 
-    await page.getByRole("button", { name: "Меню" }).click();
-    await expect(page.getByRole("button", { name: "Вийти" })).toBeVisible();
-    await page.getByRole("button", { name: "Вийти" }).click();
+    await page.getByRole("button", { name: "Дії профілю" }).click();
+    await expect(page.getByRole("menuitem", { name: "Вийти" })).toBeVisible();
+    await page.getByRole("menuitem", { name: "Вийти" }).click();
     await expect(page).toHaveURL(/\/uk\/login$/);
     await page.goto(`/uk/users/${currentUser.id}`);
     const publicOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -90,8 +93,9 @@ test("profile collection is visible in own and public profile", async ({ page })
     await expect(page.getByRole("heading", { name: "Статистика" })).toBeVisible();
     const publicWatchedStat = page.locator("article").filter({ has: page.getByText("Переглянуто", { exact: true }) });
     await expect(publicWatchedStat.getByText("1", { exact: true })).toBeVisible();
-    await expect(page.getByRole("tab", { name: "Переглянуто" })).toBeVisible();
-    await expect(page.getByRole("tabpanel").getByRole("link", { name: movieTitle!.trim(), exact: true })).toBeVisible();
+    await page.goto(`/uk/users/${currentUser.id}?view=collection&collection=watched`);
+    await expect(page.getByRole("tabpanel", { name: "Переглянуто" }).getByRole("link", { name: `${movieTitle!.trim()} Постер`, exact: true })).toBeVisible();
+    await page.goto(`/uk/users/${currentUser.id}`);
     await expect(page.getByText("Не вдалося завантажити публічний список.")).toHaveCount(0);
     await expect(page.getByText("Публічних списків поки немає.")).toBeVisible();
 
@@ -100,33 +104,28 @@ test("profile collection is visible in own and public profile", async ({ page })
     await page.getByLabel("Пароль", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Увійти" }).click();
     await expect(page).toHaveURL(/\/uk\/films$/);
-    await page.goto("/uk/profile");
+    await page.goto("/uk/profile?settings=authentication");
     const passwordForm = page.locator("form").filter({ has: page.getByRole("heading", { name: "Змінити пароль" }) });
     await passwordForm.getByLabel("Поточний пароль").fill(activePassword);
-    await passwordForm.getByLabel("Новий пароль").fill(changedPassword);
-    await passwordForm.getByRole("button", { name: "Змінити пароль" }).click();
+    await passwordForm.getByLabel("Новий пароль", { exact: true }).fill(changedPassword);
+    await passwordForm.getByLabel("Підтвердіть новий пароль").fill(changedPassword);
+    await page.locator('button[form="settings-form-authentication"]').click();
     activePassword = changedPassword;
     await expect(page).toHaveURL(/\/uk\/login\?passwordChanged=1$/);
     await page.getByLabel("Електронна пошта").fill(email);
     await page.getByLabel("Пароль", { exact: true }).fill(activePassword);
     await page.getByRole("button", { name: "Увійти" }).click();
     await expect(page).toHaveURL(/\/uk\/films$/);
-    await page.goto("/uk/profile");
+    await page.goto("/uk/profile#profile-delete-form-title");
     const deletionForm = page.locator("form").filter({ has: page.getByRole("heading", { name: "Видалення акаунта" }) });
     await deletionForm.getByLabel("Поточний пароль").fill(activePassword);
-    page.once("dialog", dialog => dialog.accept());
     await deletionForm.getByRole("button", { name: "Видалення акаунта" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Видалення акаунта" }).click();
     await expect(page).toHaveURL(/\/uk\/home$/);
+    deleted = true;
     await page.goto("/uk/profile");
     await expect(page).toHaveURL(/\/uk\/login$/);
   } finally {
-    const login = await page.request.post("/api/auth/login", { data: { email, password: activePassword }, headers: await csrfHeaders() });
-    if (login.ok()) {
-      const cleanup = await page.request.delete("/api/profile/me", {
-        headers: await csrfHeaders(),
-        data: { currentPassword: activePassword },
-      });
-      expect.soft(cleanup.ok(), "Disposable profile-test account must be removed").toBeTruthy();
-    }
+    if (!deleted) await cleanupDisposableAccount(baseURL, email, [activePassword, password]);
   }
 });

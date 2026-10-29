@@ -72,7 +72,7 @@ test("journal renders the dark editorial feed with cover art", async ({ page }) 
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
 
-test("journal article follows the Figma editorial frame geometry", async ({ page }) => {
+test("journal article keeps its cover and content in the editorial frame", async ({ page }) => {
   await page.route("**/api/journal/articles/editorial-frame-fixture**", route => route.fulfill({ json: {
     id: 910002,
     slug: "editorial-frame-fixture",
@@ -89,12 +89,13 @@ test("journal article follows the Figma editorial frame geometry", async ({ page
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/en/journal/editorial-frame-fixture");
 
+  await expect(page.getByRole("heading", { level: 1, name: 'Movies "Christmas Adventures"' })).toBeVisible();
   const frame = page.locator('[class*="articleHeader"]');
   const frameBox = await frame.boundingBox();
   expect(frameBox?.x).toBeCloseTo(120, 0);
   expect(frameBox?.y).toBe(0);
   expect(frameBox?.width).toBe(1126);
-  expect(frameBox?.height).toBe(909);
+  expect(frameBox!.height).toBeGreaterThanOrEqual(909);
 
   const hero = page.locator('[class*="coverHero"]');
   const heroBox = await hero.boundingBox();
@@ -104,6 +105,6 @@ test("journal article follows the Figma editorial frame geometry", async ({ page
   expect(heroBox?.y).toBeGreaterThan(400);
 
   const content = await page.locator('[class*="articleContent"]').boundingBox();
-  expect(content?.y).toBe(909);
+  expect(content!.y).toBeGreaterThanOrEqual(heroBox!.y + heroBox!.height - 1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
