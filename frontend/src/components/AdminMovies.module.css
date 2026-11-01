@@ -525,7 +525,41 @@
   .movieCardHeading { flex-direction: column; }
 }
 
+/* READY Admin editor `1260:4840`: keep the supported edit state inside the
+   same broad panel, with the poster, compact metadata columns, then plot. */
+@media (min-width: 1200px) {
+  .editing .editorContent { padding: 28px 30px; }
+  .editing .movieForm { max-width: 890px; grid-template-columns: 275px minmax(0, 1fr); column-gap: 59px; }
+  .editing .editorFields { grid-template-columns: 406px 111px; gap: 18px 32px; }
+  .editing .editorWideField { grid-column: auto; }
+  .editing .durationField { width: 117px; }
+  .editing .durationField input { width: 117px; }
+  .editing .releaseDateField { grid-column: 1; width: 386px; max-width: calc(100vw - 48px); }
+  .editing .editorMetadata { grid-column: 1 / -1; max-width: 848px; }
+  .editing .field { color: var(--rewind-paper); font-size: 24px; line-height: 1.2; }
+  .editing .field input,
+  .editing .field textarea {
+    min-height: 41px;
+    border: 3px solid #b4b4b6;
+    border-radius: 38px;
+    background: rgba(255, 255, 255, .05);
+    backdrop-filter: blur(2px);
+    color: var(--rewind-paper);
+    font-size: 20px;
+  }
+  .editing .field textarea { min-height: 249px; border-radius: 38px; }
+  .editing .plotField { max-width: 653px; }
+  .editing .editorMetadata { gap: 16px; font-size: 20px; }
+  .editing .editorMetadata dt { color: var(--rewind-paper); font-size: 24px; }
+  .editing .editorMetadata dd { color: var(--rewind-muted); line-height: 1.4; }
+  .editing .movieForm .actions > button { min-height: 41px; border-radius: 38px; }
+}
+
 @media (min-width: 768px) and (max-width: 1100px) {
   .movieRow { gap: 20px; }
   .poster { flex-basis: 120px; width: 120px; height: 180px; min-height: 180px; }
+  .editing .movieForm { max-width: none; grid-template-columns: minmax(160px, 220px) minmax(0, 1fr); gap: 18px 24px; }
+  .editing .editorFields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .editing .editorWideField { grid-column: 1 / -1; }
+  .editing .editorPoster { width: 100%; height: auto; aspect-ratio: 275 / 411; }
 }

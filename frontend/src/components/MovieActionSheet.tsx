@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MovieDetails } from "../api/movies.api";
 import type { UserList } from "../api/lists.api";
 import RetryButton from "./RetryButton";
@@ -56,6 +56,11 @@ export default function MovieActionSheet({
   const { t } = useLocale();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const sheetRef = useDialogFocusTrap<HTMLElement>(open, onClose, { initialFocusRef: closeButtonRef });
+  const [listPickerOpen, setListPickerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) setListPickerOpen(false);
+  }, [open]);
 
   if (!open) return null;
 
@@ -111,17 +116,27 @@ export default function MovieActionSheet({
         </div>
 
         <div className={styles.sheetRow}>
-          <label htmlFor="mobile-movie-list">{t("addToList")}</label>
-          {listsLoading && <span className={styles.inlineStatus} role="status">{t("loading")}</span>}
-          {listsLoadError && <span className={styles.inlineError} role="alert">{t("loadListsError")} <RetryButton label={t("retry")} onClick={onRetryLists} /></span>}
-          {!listsLoading && !listsLoadError && lists.length === 0 && <span className={styles.inlineStatus}>{t("noLists")}</span>}
-          {!listsLoading && !listsLoadError && lists.length > 0 && <div className={styles.listControl}>
-            <select id="mobile-movie-list" value={selectedList} onChange={event => onSelectedListChange(event.target.value)} disabled={busy}>
-              <option value="">{t("chooseList")}</option>
-              {lists.map(list => <option key={list.id} value={list.id}>{editorialText(list.name, t("lists"))}</option>)}
-            </select>
-            <button type="button" disabled={!selectedList || busy} aria-busy={mutationBusy === "list"} onClick={onAddToList}>{t("add")}</button>
-          </div>}
+          <label className={styles.desktopListLabel} htmlFor="mobile-movie-list">{t("addToLists")}</label>
+          <button
+            className={styles.mobileListToggle}
+            type="button"
+            aria-expanded={listPickerOpen}
+            aria-controls="mobile-movie-list-picker"
+            disabled={busy}
+            onClick={() => setListPickerOpen(value => !value)}
+          >{t("addToLists")}</button>
+          <div id="mobile-movie-list-picker" className={`${styles.listPicker} ${listPickerOpen ? styles.listPickerOpen : ""}`}>
+            {listsLoading && <span className={styles.inlineStatus} role="status">{t("loading")}</span>}
+            {listsLoadError && <span className={styles.inlineError} role="alert">{t("loadListsError")} <RetryButton label={t("retry")} onClick={onRetryLists} /></span>}
+            {!listsLoading && !listsLoadError && lists.length === 0 && <span className={styles.inlineStatus}>{t("noLists")}</span>}
+            {!listsLoading && !listsLoadError && lists.length > 0 && <div className={styles.listControl}>
+              <select id="mobile-movie-list" aria-label={t("chooseList")} value={selectedList} onChange={event => onSelectedListChange(event.target.value)} disabled={busy}>
+                <option value="">{t("chooseList")}</option>
+                {lists.map(list => <option key={list.id} value={list.id}>{editorialText(list.name, t("lists"))}</option>)}
+              </select>
+              <button type="button" disabled={!selectedList || busy} aria-busy={mutationBusy === "list"} onClick={onAddToList}>{t("add")}</button>
+            </div>}
+          </div>
         </div>
 
         <div className={styles.secondaryActions}>

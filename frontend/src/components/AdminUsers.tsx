@@ -457,7 +457,7 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
           <th scope="col">{t("email")}</th>
           <th scope="col">{t("adminUserRoleColumn")}</th>
           <th scope="col">{t("userStatus")}</th>
-          <th scope="col">{t("adminUserActionsColumn")}</th>
+          <th scope="col"><span className="srOnly">{t("adminUserActionsColumn")}</span></th>
         </tr></thead>
         <tbody>{data.content.map(target => <tr key={target.id}>
         <td>

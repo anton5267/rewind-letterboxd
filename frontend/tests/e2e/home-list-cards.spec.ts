@@ -102,3 +102,79 @@ test("Member Home keeps the dedicated desktop and mobile hero", async ({ page })
   await expect(page.getByRole("heading", { level: 1, name: "Welcome back. Here’s what we’ve been watching…" })).toBeVisible();
   await expect(page.locator("main > section").nth(1).locator("article:visible")).toHaveCount(4);
 });
+
+test("Guest Home recent-review poster rail stays responsive, keyboard reachable, and resilient", async ({ page }) => {
+  const recentReviews = Array.from({ length: 10 }, (_, index) => ({
+    id: 940_000 + index,
+    movieId: 950_000 + index,
+    movieTitle: index === 0 ? "A very long film title used to exercise accessible poster names" : `Recent film ${index + 1}`,
+    userId: 960_000 + index,
+    username: `reviewer-${index + 1}`,
+    content: `Review content ${index + 1}`,
+    rating: index % 2 === 0 ? 4 : null,
+    createdAt: "2026-10-31T12:00:00Z",
+    moviePhotoUrl: null,
+    userAvatarUrl: null,
+  }));
+  await page.route("**/api/reviews/recent?**", route => route.fulfill({
+    json: { content: recentReviews, totalElements: 10, totalPages: 1, number: 0, size: 10 },
+  }));
+
+  for (const locale of ["uk", "en"] as const) {
+    const heading = locale === "uk" ? "Щойно переглянули…" : "Just reviewed…";
+    for (const width of [320, 393, 600, 720, 768, 1024, 1440]) {
+      await page.setViewportSize({ width, height: 1000 });
+      await page.goto(`/${locale}/home`);
+      const section = page.locator("#home-guest-reviews");
+      await expect(section).toHaveAttribute("aria-busy", "false");
+      await expect(section.getByRole("heading", { level: 2, name: heading })).toBeVisible();
+      const rail = section.getByRole("group", { name: heading });
+      const cards = rail.getByRole("link");
+      await expect(cards).toHaveCount(10);
+      await expect(cards.nth(0)).toHaveAttribute("href", `/${locale}/reviews/${recentReviews[0].id}`);
+      await expect(cards.nth(0)).toHaveAttribute("aria-label", `${recentReviews[0].movieTitle} — ${heading}`);
+      await expect(cards.nth(0).getByText("A", { exact: true })).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+
+      const lastCard = cards.last();
+      await lastCard.focus();
+      await expect(lastCard).toBeFocused();
+      await expect.poll(() => lastCard.evaluate(element => {
+        const card = element.getBoundingClientRect();
+        const rail = element.parentElement!.getBoundingClientRect();
+        return card.left >= rail.left && card.right <= rail.right;
+      })).toBe(true);
+
+      if (locale === "uk" && [393, 1440].includes(width)) {
+        await section.screenshot({ path: `../artifacts/visual-audit-20261101/home-recent-reviews/recent-reviews-${locale}-${width}.png` });
+      }
+    }
+  }
+});
+
+test("Guest Home recent reviews recover from an API error and show the empty state", async ({ page }) => {
+  for (const [locale, heading, retry, empty] of [
+    ["uk", "Щойно переглянули…", "Спробувати ще", "Оглядів поки немає."],
+    ["en", "Just reviewed…", "Retry", "No reviews yet."],
+  ] as const) {
+    await page.unroute("**/api/reviews/recent?**");
+    let attempts = 0;
+    await page.route("**/api/reviews/recent?**", route => {
+      attempts += 1;
+      return attempts === 1 ? route.fulfill({ status: 503, json: {} })
+        : route.fulfill({ json: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 } });
+    });
+    await page.setViewportSize({ width: 393, height: 852 });
+    await page.goto(`/${locale}/home`);
+    const section = page.locator("#home-guest-reviews");
+    await expect(section.getByRole("heading", { level: 2, name: heading })).toBeVisible();
+    const retryButton = section.getByRole("button", { name: retry, exact: true });
+    await expect(retryButton).toBeVisible();
+    await retryButton.click();
+    await expect(section).toHaveAttribute("aria-busy", "false");
+    await expect(section.getByRole("heading", { level: 2, name: heading })).toBeFocused();
+    await expect(section.getByText(empty, { exact: true })).toBeVisible();
+    await expect(section.getByRole("group", { name: heading })).toHaveCount(0);
+    expect(attempts).toBe(2);
+  }
+});

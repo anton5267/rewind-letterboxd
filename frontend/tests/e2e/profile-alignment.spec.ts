@@ -125,6 +125,27 @@ for (const lang of ["uk", "en"] as const) {
       await favorites.first().focus();
       await expect(favorites.first()).toBeFocused();
       await expect(favorites.first()).toHaveAttribute("href", `/${lang}/films/${movies[0].id}`);
+      if (width === 393) {
+        await page.setViewportSize({ width, height: 2319 });
+        const anchors = await page.evaluate(() => {
+          const top = (selector: string) => {
+            const element = document.querySelector<HTMLElement>(selector);
+            return element ? Math.round((element.getBoundingClientRect().top + window.scrollY) * 10) / 10 : null;
+          };
+          const hero = document.querySelector<HTMLElement>('section[aria-labelledby="profile-identity"]');
+          return {
+            heroBottom: hero ? Math.round((hero.getBoundingClientRect().bottom + window.scrollY) * 10) / 10 : null,
+            profileTabs: top('nav[class*="profileNav"]'),
+            favoritesHeading: top("#profile-favorite-preview-title"),
+            activityHeading: top("#profile-activity-title"),
+            reviewHeading: top("#profile-review-preview-title"),
+            followingHeading: top("#profile-following-preview-title"),
+            listsHeading: top("#profile-lists-title"),
+            bottomNavigation: top('nav[class*="mobileNav"]'),
+          };
+        });
+        console.log(`OWN_PROFILE_OVERVIEW_ANCHORS ${lang} ${JSON.stringify(anchors)}`);
+      }
       await page.screenshot({ path: testInfo.outputPath(`auth-profile-${width}.png`), animations: "disabled" });
     }
     await page.goto(`/${lang}/profile?view=collection&collection=watched`);

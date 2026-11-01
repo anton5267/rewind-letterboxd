@@ -235,7 +235,9 @@
   .grid,
   .featuredGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .feedPage .featuredGrid { grid-template-columns: minmax(0, 1fr); }
-  .teamFeed .grid { grid-template-columns: minmax(0, 1fr); }
+  /* The READY Featured phone frame `1480:8012` keeps the curated cards in
+     two poster-led columns; let long real titles wrap inside each card. */
+  .teamFeed .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px clamp(16px, 15.8vw, 62px); }
   .taggedGrid { gap: 12px; }
   .card,
   .featuredCard,

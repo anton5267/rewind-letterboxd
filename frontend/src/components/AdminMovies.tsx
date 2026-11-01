@@ -530,8 +530,8 @@ export default function AdminMovies({ onTotalChange }: Props) {
               <div className={styles.editorPoster} aria-hidden="true"><ResilientImage src={movieDraft.photoUrl} alt="" fallback={<span>{editorialText(movieDraft.title, t("untitledFilm"))}</span>} /></div>
               <div className={styles.editorFields}>
                 <label className={`${styles.field} ${styles.editorWideField}`}>{t("movieTitle")}<input ref={movieTitleInput} required maxLength={255} value={movieDraft.title} onChange={event => setMovieDraft({ ...movieDraft, title: event.target.value })} /></label>
-                <label className={styles.field}>{t("movieDurationMinutes")}<input type="number" min="1" max="1000" value={movieDraft.durationMinutes ?? ""} onChange={event => setMovieDraft({ ...movieDraft, durationMinutes: event.target.value === "" ? null : Number(event.target.value) })} /></label>
-                <label className={styles.field}>{t("releaseDate")}<input type="date" value={movieDraft.releaseDate ?? ""} onChange={event => setMovieDraft({ ...movieDraft, releaseDate: event.target.value })} /></label>
+                <label className={`${styles.field} ${styles.durationField}`}>{t("movieDurationMinutes")}<input type="number" min="1" max="1000" value={movieDraft.durationMinutes ?? ""} onChange={event => setMovieDraft({ ...movieDraft, durationMinutes: event.target.value === "" ? null : Number(event.target.value) })} /></label>
+                {editingMovieId === null && <label className={styles.field}>{t("releaseDate")}<input type="date" value={movieDraft.releaseDate ?? ""} onChange={event => setMovieDraft({ ...movieDraft, releaseDate: event.target.value })} /></label>}
                 <label className={styles.field}>{t("imdbId")}<input maxLength={20} value={movieDraft.imdbId ?? ""} onChange={event => setMovieDraft({ ...movieDraft, imdbId: event.target.value })} /></label>
                 <label className={styles.field}>{t("ageRating")}<input maxLength={10} value={movieDraft.ageRating ?? ""} onChange={event => setMovieDraft({ ...movieDraft, ageRating: event.target.value })} /></label>
                 <label className={styles.field}>{t("rating")}<input type="number" min="0" max="10" step="0.1" value={movieDraft.rating ?? ""} onChange={event => setMovieDraft({ ...movieDraft, rating: event.target.value === "" ? null : Number(event.target.value) })} /></label>
@@ -539,6 +539,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
                 <label className={styles.field}>{t("backdropUrl")}<input type="url" maxLength={255} value={movieDraft.backdropUrl ?? ""} onChange={event => setMovieDraft({ ...movieDraft, backdropUrl: event.target.value })} /></label>
                 <label className={styles.field}>{t("trailerUrl")}<input type="url" maxLength={255} value={movieDraft.trailerUrl ?? ""} onChange={event => setMovieDraft({ ...movieDraft, trailerUrl: event.target.value })} /></label>
               </div>
+              {editingMovieId !== null && <label className={`${styles.field} ${styles.releaseDateField}`}>{t("releaseDate")}<input type="date" value={movieDraft.releaseDate ?? ""} onChange={event => setMovieDraft({ ...movieDraft, releaseDate: event.target.value })} /></label>}
               {editingMovieId !== null && (movieCredits.genres.length > 0 || movieCredits.directors.length > 0 || movieCredits.actors.length > 0) && <dl className={styles.editorMetadata}>
                 <div><dt>{t("genres")}</dt><dd>{movieCredits.genres.length ? movieCredits.genres.join(", ") : t("none")}</dd></div>
                 <div><dt>{t("directors")}</dt><dd>{movieCredits.directors.length ? movieCredits.directors.join(", ") : t("none")}</dd></div>

@@ -122,6 +122,7 @@
 /* Raw desktop create/edit frames 1480:5333 / 1480:5182 share a
    1200 px editor rail. Minimum sizes let live text and controls grow. */
 @media (min-width: 1024px) {
+  .createPage { min-height: 0; }
   .page { padding: 0 0 160px; }
   .hero {
     min-height: 818px;
@@ -285,6 +286,7 @@
 /* READY 1480:9542 is a standalone create page. API-backed drafts stay local
    until Save; unsupported ranking settings are explicitly unavailable. */
 .createMobileHeader { display: none; }
+.settingsLegendDesktop { display: none; }
 .createSettings { min-width: 0; margin: 0; border: 0; padding: 0; }
 .createSettings legend { margin-bottom: 10px; color: #b9b9b9; }
 .createSettings .checkboxLabel { margin: 0; }
@@ -314,14 +316,37 @@
 .ownerDetail .editActions { flex-wrap: wrap; margin-top: 20px; }
 .ownerDetail .viewListButton { max-width: 100%; border-radius: 16px; overflow-wrap: anywhere; }
 .createPage > .content > .emptyPreview { display: none; }
+.createPage .listPicker { display: none; }
 .createPage :is(input, textarea, button, a):focus-visible { outline: 2px solid #fff; outline-offset: 3px; scroll-margin-block: 24px; }
 
 @media (min-width: 1024px) {
   .createTags { grid-column: 1; grid-row: 2; }
   .createSettings { grid-column: 1; grid-row: 3; }
+  .createSettings .settingsLegendMobile { display: none; }
+  .createSettings .settingsLegendDesktop { display: inline; }
   .createSettings legend { font-size: 22px; line-height: 25px; }
-  .createForm .draftFilms { grid-row: 4; }
-  .createForm .createActions { grid-row: 5; }
+  .createForm .createSettings .checkboxLabel { min-height: 79px; }
+  .createForm .rankingUnavailable { display: flex; min-height: 48px; align-items: center; gap: 12px; margin-top: 10px; color: #b9b9b9; font-size: 18px; line-height: 1.25; }
+  .createForm .rankingUnavailable .settingIcon { display: grid; flex: 0 0 28px; width: 28px; height: 28px; border-radius: 50%; background: #282828; }
+  .createForm .draftFilms { position: relative; display: grid; grid-row: 4; grid-template-columns: 220px 351px minmax(163px, 1fr) 184px; grid-template-rows: 79px auto; align-items: center; column-gap: 16px; row-gap: 56px; margin-top: 80px; }
+  .createForm .draftFilms::before { position: absolute; top: -48px; right: 0; left: 0; border-top: 1px solid #3a3a3a; content: ""; }
+  .createForm .draftFilmsHeading { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+  .createForm .draftAddFilms { grid-column: 1; grid-row: 1; width: 220px; height: 79px; min-height: 79px; box-sizing: border-box; border: 1px solid transparent; border-radius: 37px; padding: 12px 18px; background: #fff; color: #191919; font-size: 18px; line-height: 1.2; white-space: nowrap; }
+  .createForm .draftFilmSearch { position: relative; grid-column: 2; grid-row: 1; min-width: 0; margin: 0; }
+  .createForm .draftFilmSearch[hidden] { display: block; }
+  .createForm .draftFilmSearch > label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+  .createForm .draftFilmSearch > input { min-height: 79px; border-radius: 37px; }
+  .createForm .draftResults { position: absolute; z-index: 2; top: 100%; right: 0; left: 0; max-height: 350px; overflow: auto; border: 1px solid #3a3a3a; border-radius: 20px; padding: 12px; background: #191919; }
+  .createForm .draftResults button { width: 100%; min-height: 52px; border-radius: 16px; background: #282828; color: #fff; font-size: 16px; }
+  .createForm .createActions { display: contents; }
+  .createForm .createActions > .createCancel { grid-column: 3; grid-row: 1; justify-self: start; width: 163px; min-height: 79px; border-radius: 37px; padding: 20px 24px; font-size: 22px; }
+  .createForm .createActions > button { grid-column: 4; grid-row: 1; min-width: 0; width: 184px; min-height: 79px; box-sizing: border-box; border-radius: 37px; padding: 20px 24px; font-size: 22px; }
+  .createForm .draftEmpty { grid-column: 1 / -1; grid-row: 2; display: flex; min-height: 195px; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; margin: 0; border: 0; border-radius: 37px; padding: 28px; background: #282828; text-align: center; }
+  .createForm .draftEmpty strong { font-size: 32px; }
+  .createForm .draftEmpty p { margin-top: 8px; font-size: 18px; }
+  .createForm .draftSelection { grid-column: 1 / -1; grid-row: 2; margin: 0; }
+  .createForm .draftSelection li { min-height: 79px; border-radius: 37px; padding: 16px 30px; }
+  .createForm .draftSelection li > span { font-size: 22px; }
   .createCancel { min-height: 79px; border-radius: 37px; padding: 20px 30px; font-size: 22px; }
   .draftFilmsHeading { font-size: 22px; }
 }
@@ -348,11 +373,14 @@
   .settingIcon { display: grid; flex: 0 0 34px; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: #282828; }
   .rankingUnavailable { display: flex; align-items: center; gap: 8px; min-width: 0; margin: 0; border: 1px solid #3a3a3a; border-radius: 16px; padding: 10px; background: #191919; font-size: 12px; line-height: 1.25; }
   .rankingUnavailable > span:last-child { overflow-wrap: anywhere; }
-  .createPage .draftFilms { order: 5; width: 100%; }
-  .draftFilmsHeading { font-size: 12px; line-height: 15px; }
+  .createPage .draftFilms { display: contents; }
+  .draftFilmsHeading { order: 5; font-size: 12px; line-height: 15px; }
   .draftFilmsHeading h2 { letter-spacing: .04em; text-transform: uppercase; }
-  .createPage .form .draftAddFilms { width: 100%; min-height: 52px; border: 1px solid #3a3a3a; border-radius: 16px; background: #191919; color: #fff; font-size: 14px; font-weight: 600; }
-  .createPage .createForm .createActions { order: 6; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; width: calc(100% + 32px); gap: 12px; margin: 46px -16px 0; padding: 0; }
+  .createPage .form .draftAddFilms { order: 6; width: 100%; min-height: 52px; border: 1px solid #3a3a3a; border-radius: 16px; background: #191919; color: #fff; font-size: 14px; font-weight: 600; }
+  .createPage .draftFilmSearch:not([hidden]) { order: 7; }
+  .createPage .draftEmpty, .createPage .draftSelection { order: 8; }
+  .createPage .draftEmpty { width: 100%; box-sizing: border-box; }
+  .createPage .createForm .createActions { order: 9; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; width: calc(100% + 32px); gap: 12px; margin: 46px -16px 0; padding: 0; }
   .createPage .createActions > button, .createPage .createActions > a { min-width: 0; width: 100%; min-height: 56px; border-radius: 16px; font-size: 15px; font-weight: 600; }
   .createPage .createActions > a { border: 1px solid #3a3a3a; background: #191919; }
   .createPage .createActions > button { font-weight: 700; }

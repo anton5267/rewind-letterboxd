@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { cleanupDisposableAccount } from "./helpers";
+import { browserMutation, cleanupDisposableAccount } from "./helpers";
 
 test("owner creates and deletes a custom list", async ({ page, baseURL }) => {
   const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
@@ -60,6 +60,8 @@ test("owner retries failed list items and returns from an emptied last page", as
   const password = "E2e-password-123!";
   let itemAttempts = 0;
   let deleted = false;
+  const requestedPages: number[] = [];
+  let linkedListId = 0;
   const firstPage = Array.from({ length: 12 }, (_, index) => ({
     id: 77000 + index,
     name: `Fixture list ${index + 1}`,
@@ -89,8 +91,16 @@ test("owner retries failed list items and returns from an emptied last page", as
   await expect(page).toHaveURL(/\/uk\/films$/);
 
   try {
+    const createdList = await browserMutation(page, "/api/lists", "POST", {
+      name: `Retry owner ${suffix}`, description: "Disposable list for the paginated editor flow", isPublic: false, tags: [],
+    });
+    expect(createdList.status).toBe(200);
+    linkedListId = Number((createdList.data as { id: number }).id);
+    expect(linkedListId).toBeGreaterThan(0);
+
     await page.route("**/api/lists/my/page**", async route => {
       const currentPage = Number(new URL(route.request().url()).searchParams.get("page") ?? "0");
+      requestedPages.push(currentPage);
       if (deleted) {
         await route.fulfill({ json: { content: firstPage, totalPages: 1, totalElements: 12, number: 0 } });
       } else if (currentPage === 0) {
@@ -101,7 +111,7 @@ test("owner retries failed list items and returns from an emptied last page", as
     });
     await page.route("**/api/lists/my", route => route.fulfill({ json: deleted
       ? firstPage
-      : [...firstPage, { ...firstPage[0], id: 77777, name: "Fixture last-page list" }] }));
+      : [...firstPage, { ...firstPage[0], id: 77777, name: "Fixture last-page list" }, { ...firstPage[0], id: linkedListId, name: `Retry owner ${suffix}` }] }));
     await page.route("**/api/lists/77777/items", async route => {
       itemAttempts += 1;
       if (itemAttempts === 1) {
@@ -117,8 +127,11 @@ test("owner retries failed list items and returns from an emptied last page", as
       await route.fulfill({ status: 204, body: "" });
     });
 
-    await page.goto("/uk/lists");
-    const listRegion = page.getByRole("region", { name: "Списки" }).first();
+    // The current /lists default is the standalone Create List screen. Open
+    // an existing editable list so its supported list picker is visible.
+    await page.goto(`/uk/lists?list=${linkedListId}&mode=edit`);
+    await expect(page.locator('main[data-list-editor="edit"]')).toBeVisible();
+    const listRegion = page.getByRole("region", { name: "Списки" });
     const pagination = listRegion.getByRole("navigation", { name: "Сторінки списків" });
     await expect(listRegion).toHaveAttribute("aria-busy", "false");
     await expect(pagination.getByText("Сторінка 1 з 2 · 13", { exact: true })).toBeVisible();
@@ -135,8 +148,8 @@ test("owner retries failed list items and returns from an emptied last page", as
     await page.getByRole("button", { name: "Видалити список" }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "Видалити список" }).click();
     await expect(page.getByText("Список видалено.", { exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Fixture list 1", exact: true })).toBeVisible();
-    await expect(pagination).toHaveCount(0);
+    await expect(page.locator("#new-list-name")).toBeVisible();
+    await expect.poll(() => requestedPages.at(-1)).toBe(0);
     expect(deleted).toBeTruthy();
   } finally {
     const cleanup = await page.request.delete("/api/profile/me", {
