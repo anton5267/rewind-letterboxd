@@ -5,7 +5,7 @@ import type { Page } from "../api/types";
 import { useAuth } from "../context/AuthContext";
 import Pagination from "./Pagination";
 import RetryNotice from "./RetryNotice";
-import { editorialText, formatMovieCount, useLocale } from "../i18n";
+import { editorialText, formatMovieCount, formatReviewDate, useLocale } from "../i18n";
 import { getUserName } from "../utils/userIdentity";
 import styles from "./AdminShared.module.css";
 import dialogStyles from "./AdminConfirmDialog.module.css";
@@ -185,8 +185,8 @@ export default function AdminLists() {
     void remove(list, trigger);
   };
 
-  return <section className={`${styles.section} ${styles.listsSection}`} aria-label={t("adminLists")} aria-busy={loading || busyId !== null}>
-    <h2 className={styles.title} ref={heading} tabIndex={-1}>{t("adminLists")}</h2>
+  return <section className={`${styles.section} ${styles.listsSection}`} aria-label={t("adminAllLists")} aria-busy={loading || busyId !== null}>
+    <h2 className={styles.title} ref={heading} tabIndex={-1}>{t("adminAllLists")}</h2>
     {actionError && <p className={`${styles.error} ${styles.listActionFocus}`} ref={mutationAlert} tabIndex={-1} role="alert">{t(actionError === "visibility" ? "adminListVisibilityError" : "adminListDeleteError")}</p>}
     {loading && <AdminLoading label={t("loading")} layout="lists" />}
     {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => {
@@ -203,6 +203,10 @@ export default function AdminLists() {
           {list.description?.trim() && <p className={styles.listDescription}>{list.description}</p>}
         </div>
         <div className={styles.listSide}>
+          <div className={styles.listCreated}>
+            <span>{t("adminListCreatedDate")}</span>
+            <time dateTime={list.createdAt}>{formatReviewDate(list.createdAt, lang)}</time>
+          </div>
           <p className={styles.listStatus}>{list.isPublic ? t("publicList") : t("hiddenList")}</p>
           <div className={styles.rowActions}>
             <button ref={button => { if (button) visibilityButtons.current.set(list.id, button); else visibilityButtons.current.delete(list.id); }} type="button" aria-busy={busyId === list.id} disabled={busyId !== null} onClick={event => void toggleVisibility(list, event.currentTarget)}>{busyId === list.id ? t("loading") : list.isPublic ? t("hideList") : t("publishList")}</button>

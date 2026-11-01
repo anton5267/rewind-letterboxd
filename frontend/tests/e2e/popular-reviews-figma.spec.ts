@@ -50,6 +50,7 @@ test("popular reviews follows the measured desktop Figma rail and card geometry"
   const cards = reviewsRegion.locator("article");
   await expect(cards).toHaveCount(4);
   const cardBox = await cards.first().boundingBox();
+  expect(cardBox?.y).toBeCloseTo(733, 0);
   expect(cardBox?.width).toBe(1200);
   expect(cardBox?.height).toBe(315);
   const posterBox = await cards.first().locator("a").first().boundingBox();

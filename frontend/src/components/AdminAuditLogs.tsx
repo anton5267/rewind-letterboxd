@@ -149,8 +149,8 @@ export default function AdminAuditLogs({ onOpenUserProfile }: { onOpenUserProfil
 
   const visibleActorRetryIds = actorRetryIds.filter(id => data?.content.some(log => log.adminId === id));
 
-  return <section className={`${styles.section} ${styles.auditSection}`} aria-label={t("auditLogs")} aria-busy={loading || actorsLoading}>
-    <h2 className={styles.title} ref={heading} tabIndex={-1}>{t("auditLogs")}</h2>
+  return <section className={`${styles.section} ${styles.auditSection}`} aria-label={t("moderatorLogs")} aria-busy={loading || actorsLoading}>
+    <h2 className={styles.title} ref={heading} tabIndex={-1}>{t("moderatorLogs")}</h2>
     {loading && <AdminLoading label={t("loading")} layout="logs" />}
     {actorsLoading && <p className={styles.feedback} role="status">{t("loading")}</p>}
     {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => {
@@ -168,6 +168,7 @@ export default function AdminAuditLogs({ onOpenUserProfile }: { onOpenUserProfil
     {data && <>
       <ul className={styles.list}>{data.content.map(log => <li className={`${styles.row} ${styles.auditRow}`} key={log.id}>
         <div className={styles.auditMain}>
+          <span className={styles.auditGroupLabel}>{t("adminActivityHistory")}</span>
           <strong>{actors[log.adminId] ? getUserName(actors[log.adminId]!, `${t("adminActorId")} #${log.adminId}`) : `${t("adminActorId")} #${log.adminId}`}</strong>
           {actors[log.adminId] && <>
             <p>{actors[log.adminId]!.email}</p>
@@ -177,8 +178,14 @@ export default function AdminAuditLogs({ onOpenUserProfile }: { onOpenUserProfil
           <p>{localizeAuditTarget(log.targetType, lang)} #{log.targetId ?? "—"}</p>
         </div>
         <div className={styles.auditSide}>
-          <span className={styles.auditAction}>{localizeAuditAction(log.action, lang)}</span>
-          <time dateTime={log.createdAt}>{formatDateTime(log.createdAt, lang)}</time>
+          <div className={styles.auditMetaGroup}>
+            <span className={styles.auditGroupLabel}>{t("adminAuditDateLabel")}</span>
+            <time dateTime={log.createdAt}>{formatDateTime(log.createdAt, lang)}</time>
+          </div>
+          <div className={styles.auditMetaGroup}>
+            <span className={styles.auditGroupLabel}>{t("adminAuditActionType")}</span>
+            <span className={styles.auditAction}>{localizeAuditAction(log.action, lang)}</span>
+          </div>
         </div>
       </li>)}</ul>
       <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminAuditPagination")} busy={loading || actorsLoading} statusSuffix={data.totalElements} onPageChange={nextPage => {

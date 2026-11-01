@@ -109,7 +109,9 @@ test("admin shares the compact shell and keeps personal and platform metrics sep
     const label = await link.getAttribute("aria-label");
     await link.click();
     await expect(link).toHaveAttribute("aria-current", "page");
-    await expect(page.locator('main > h2')).toHaveText(label!);
+    // Current READY Admin content screens use their own heading. The shared
+    // shell title is intentionally reserved for Dashboard to avoid duplication.
+    await expect(page.locator('main > h2')).toHaveCount(0);
     await expect(page.locator('main > section').first()).toBeVisible();
     const section = await page.locator('main > section').first().boundingBox();
     expect(section?.x).toBeCloseTo(120, 0);

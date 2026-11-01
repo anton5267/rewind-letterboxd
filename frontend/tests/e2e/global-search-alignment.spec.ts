@@ -8,7 +8,7 @@ const movies = Array.from({ length: 6 }, (_, index) => ({
 }));
 
 async function searchFixture(page: Page) {
-  const searches: string[] = [], mutations: string[] = [];
+  const searches: string[] = [], searchSizes: string[] = [], mutations: string[] = [];
   await page.route("https://search-fixture.invalid/**", route => route.fulfill({ contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="149"><rect width="100" height="149" fill="#3b4950"/></svg>' }));
   await page.route(url => url.pathname.startsWith("/api/"), route => {
     const request = route.request(), pathname = new URL(request.url()).pathname;
@@ -16,7 +16,9 @@ async function searchFixture(page: Page) {
     if (pathname === "/api/users/me") return route.fulfill({ json: { id: 982000, username: "search-reader", role: "USER" } });
     if (pathname.endsWith("/unread-count")) return route.fulfill({ json: { count: 0 } });
     if (pathname === "/api/search/global") {
-      searches.push(new URL(request.url()).searchParams.get("q") ?? "");
+      const params = new URL(request.url()).searchParams;
+      searches.push(params.get("q") ?? "");
+      searchSizes.push(params.get("size") ?? "");
       return route.fulfill({ json: {
         films: { content: movies, number: 0, size: 6, totalElements: 21, totalPages: 4 },
         users: { content: [{ id: 982010, username: "reader", displayName: "Search Reader", avatarUrl: null }], totalElements: 1 },
@@ -29,7 +31,38 @@ async function searchFixture(page: Page) {
     }
     return route.fulfill({ status: 404, json: {} });
   });
-  return { searches, mutations };
+  return { searches, searchSizes, mutations };
+}
+
+for (const width of [393, 1440]) {
+  test(`All search expands categories from the same response and preserves the phone rail at ${width}px`, async ({ page }) => {
+    const api = await searchFixture(page);
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(`/uk/search?q=${encodeURIComponent(query)}`);
+
+    const showMore = page.getByRole("button", { name: "Показати більше результатів", exact: true });
+    await expect(showMore).toBeVisible();
+    await expect(page.locator("#users")).toBeHidden();
+    expect(api.searchSizes).toEqual(["6"]);
+
+    await showMore.click();
+    await expect(page.locator("#users")).toBeVisible();
+    await expect(page.locator("#people")).toBeVisible();
+    await expect(page.locator("#tags")).toBeVisible();
+    await expect(page.locator("#lists")).toBeVisible();
+    await expect(page.locator("#journal")).toBeVisible();
+    await expect(page.locator("#users")).toBeFocused();
+    await expect(page.locator("#films article")).toHaveCount(6);
+    const firstPoster = await page.locator("#films article > a").first().boundingBox();
+    if (width === 393) {
+      expect(firstPoster?.width).toBe(100);
+      expect(firstPoster?.height).toBeCloseTo(149, 0);
+    }
+    expect(api.searches).toEqual([query]);
+    expect(api.searchSizes).toEqual(["6"]);
+    expect(new URL(page.url()).searchParams.get("tab")).toBeNull();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+  });
 }
 
 for (const locale of ["uk", "en"] as const) {

@@ -22,8 +22,8 @@ export default function AuthEntry() {
       <div className={styles.film} aria-hidden="true"><img src={filmImage} alt="" /></div>
       <div className={styles.mobileLogo} aria-hidden="true"><img src={logo} alt="" /></div>
       <div className={styles.actions}>
-        <Link className={styles.button} to={path("/register")} state={authState}>{t("createAccount")}</Link>
-        <Link className={styles.button} to={path("/login")} state={authState}>{t("login")}</Link>
+        <Link className={styles.button} to={path("/register")} state={authState}><span className={styles.buttonLabel}>{t("createAccount")}</span></Link>
+        <Link className={styles.button} to={path("/login")} state={authState}><span className={styles.buttonLabel}>{t("login")}</span></Link>
       </div>
     </section>
   </main>;

@@ -33,6 +33,9 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
   const [busyId, setBusyId] = useState<number | null>(null);
   const selectedId = profileUserId ?? null;
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [displayNameDraft, setDisplayNameDraft] = useState("");
+  const [avatarUrlDraft, setAvatarUrlDraft] = useState("");
+  const [profileSaveFeedback, setProfileSaveFeedback] = useState<"saved" | "error" | "invalidName" | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState(false);
   const [detailOverview, setDetailOverview] = useState<AdminUserOverview | null>(null);
@@ -192,6 +195,9 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
     const scope = scopeGeneration.current;
     if (selectedId === null) {
       setSelectedUser(null);
+      setDisplayNameDraft("");
+      setAvatarUrlDraft("");
+      setProfileSaveFeedback(null);
       setDetailLoading(false);
       setDetailError(false);
       return;
@@ -203,7 +209,12 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
     setSelectedUser(null);
     getAdminUser(selectedId)
       .then(({ data: response }) => {
-        if (current && scopeGeneration.current === scope && requestId === detailRequest.current) setSelectedUser(response);
+        if (current && scopeGeneration.current === scope && requestId === detailRequest.current) {
+          setSelectedUser(response);
+          setDisplayNameDraft(response.displayName ?? "");
+          setAvatarUrlDraft(response.avatarUrl ?? "");
+          setProfileSaveFeedback(null);
+        }
       })
       .catch(() => {
         if (current && scopeGeneration.current === scope && requestId === detailRequest.current) setDetailError(true);
@@ -293,6 +304,54 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
     }
   };
 
+  const saveProfileFields = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selectedUser || mutationToken.current !== null || busyId !== null) return;
+    const displayName = displayNameDraft.trim();
+    if (displayName.length === 1) {
+      setProfileSaveFeedback("invalidName");
+      return;
+    }
+
+    const targetId = selectedUser.id;
+    const token = {};
+    mutationToken.current = token;
+    const scope = scopeGeneration.current;
+    const sameActor = () => mounted.current && currentActor.current === actor && mutationToken.current === token;
+    const sameScope = () => sameActor() && scopeGeneration.current === scope && currentSelectedId.current === targetId;
+    setProfileSaveFeedback(null);
+    setActionError(null);
+    setBusyId(targetId);
+    try {
+      const { data: updated } = await updateAdminUser(targetId, {
+        displayName,
+        avatarUrl: avatarUrlDraft.trim(),
+      });
+      if (!sameActor()) return;
+      if (!sameScope()) {
+        refreshCurrentView();
+        return;
+      }
+      setSelectedUser(updated);
+      setDisplayNameDraft(updated.displayName ?? "");
+      setAvatarUrlDraft(updated.avatarUrl ?? "");
+      setData(current => current ? { ...current, content: current.content.map(item => item.id === updated.id ? updated : item) } : current);
+      setProfileSaveFeedback("saved");
+    } catch {
+      if (!sameActor()) return;
+      if (!sameScope()) {
+        refreshCurrentView();
+        return;
+      }
+      setProfileSaveFeedback("error");
+    } finally {
+      if (sameActor()) {
+        mutationToken.current = null;
+        setBusyId(null);
+      }
+    }
+  };
+
   const selectUser = (target: AdminUser, trigger: HTMLButtonElement) => {
     detailTrigger.current = { element: trigger, userId: target.id };
     setActionError(null);
@@ -309,11 +368,11 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
   };
 
   return <section ref={usersSection} className={`${styles.section} ${styles.usersSection} ${selectedId !== null ? styles.userProfileSection : ""}`} aria-label={t(profileUserId === undefined ? "adminUsers" : "adminUserProfile")} aria-busy={loading || detailLoading || detailOverviewLoading || busyId !== null}>
-    <h2 ref={profileUserId === undefined ? usersHeading : undefined} className={styles.title} tabIndex={profileUserId === undefined ? -1 : undefined}>{t(profileUserId === undefined ? "adminUsers" : "adminUserProfile")}</h2>
+    <h2 ref={profileUserId === undefined ? usersHeading : undefined} className={`${styles.title} ${profileUserId !== undefined ? "srOnly" : ""}`} tabIndex={profileUserId === undefined ? -1 : undefined}>{t(profileUserId === undefined ? "adminUserList" : "adminUserProfile")}</h2>
     {actionError && <p ref={actionAlert} className={`${styles.error} ${styles.userRetryFocus}`} tabIndex={-1} role="alert">{t(actionError)}</p>}
     {profileUserId === undefined && <form className={styles.toolbar} onSubmit={search} aria-busy={loading}>
-      <input className={styles.control} aria-label={t("userSearch")} placeholder={t("userSearch")} value={draftQuery} onChange={event => setDraftQuery(event.target.value)} />
-      <button type="submit">{t("search")}</button>
+      <input className={styles.control} type="search" aria-label={t("userSearch")} placeholder={t("userSearch")} value={draftQuery} onChange={event => setDraftQuery(event.target.value)} />
+      <button type="submit" aria-label={t("search")} data-admin-users-search><i className="fa-solid fa-magnifying-glass" aria-hidden="true" /></button>
     </form>}
     {selectedId !== null && <><section className={styles.detailPanel} id="admin-user-profile" aria-labelledby="admin-user-profile-title" aria-busy={detailLoading || busyId === selectedId}>
       <div className={styles.detailHeader}>
@@ -339,7 +398,18 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
           <div><dt>{t("userStatus")}</dt><dd>{selectedUser.isActive ? t("activeUser") : t("blockedUser")}</dd></div>
           <div><dt>{t("userHqStatus")}</dt><dd>{selectedUser.isHq ? t("hqMember") : t("notHqMember")}</dd></div>
           <div><dt>{t("userCreatedAt")}</dt><dd>{selectedUser.createdAt ? formatDateTime(selectedUser.createdAt, lang) : "—"}</dd></div>
+          <div><dt>{t("userId")}</dt><dd>{selectedUser.id}</dd></div>
         </dl>
+        <form className={styles.detailEditForm} onSubmit={saveProfileFields} aria-busy={busyId === selectedUser.id}>
+          <label>{t("displayName")}
+            <input className={`${styles.control} ${styles.userRetryFocus}`} type="text" maxLength={60} value={displayNameDraft} disabled={busyId !== null} onChange={event => { setDisplayNameDraft(event.target.value); setProfileSaveFeedback(null); }} />
+          </label>
+          <label>{t("avatarUrl")}
+            <input className={`${styles.control} ${styles.userRetryFocus}`} type="url" pattern="https?://.+" maxLength={255} value={avatarUrlDraft} disabled={busyId !== null} onChange={event => { setAvatarUrlDraft(event.target.value); setProfileSaveFeedback(null); }} />
+          </label>
+          <button type="submit" disabled={busyId !== null} aria-busy={busyId === selectedUser.id}>{busyId === selectedUser.id ? t("loading") : t("save")}</button>
+          {profileSaveFeedback && <p className={profileSaveFeedback === "error" ? styles.error : styles.feedback} role={profileSaveFeedback === "error" || profileSaveFeedback === "invalidName" ? "alert" : "status"}>{t(profileSaveFeedback === "saved" ? "adminUserProfileSaved" : profileSaveFeedback === "invalidName" ? "adminUserProfileInvalidName" : "adminUserProfileSaveError")}</p>}
+        </form>
         <div className={styles.detailActions}>
           <select className={`${styles.control} ${styles.userRetryFocus}`} data-admin-user-id={selectedUser.id} data-admin-user-action="role" aria-label={`${t("userRole")}: ${getUserName(selectedUser, t("someone"))}`} value={selectedUser.role} disabled={busyId !== null} onChange={event => void mutateUser(selectedUser, "role", event.currentTarget, event.target.value as "USER" | "ADMIN")}>
             <option value="USER">{localizeUserRole("USER", t)}</option>

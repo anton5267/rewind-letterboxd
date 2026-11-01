@@ -111,6 +111,6 @@ test("admin user detail focuses its heading and restores the exact triggering ro
   hideSecond = true;
   await detailPanel.getByRole("button", { name: "Close", exact: true }).click();
   await expect(trigger).toHaveCount(0);
-  await expect(usersSection.getByRole("heading", { name: "Users", exact: true, level: 2 })).toBeFocused();
+  await expect(usersSection.getByRole("heading", { name: "User List", exact: true, level: 2 })).toBeFocused();
   expect(mutations).toEqual([]);
 });

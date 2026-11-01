@@ -159,6 +159,30 @@ export default function Search() {
     if (minRating) next.set("minRating", minRating);
     if (sort !== "newest") next.set("sort", sort);
     setSearchParams(next);
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    if (submitter instanceof HTMLElement) {
+      window.requestAnimationFrame(() => {
+        if (submitter.isConnected && !submitter.matches(":disabled")) submitter.focus({ preventScroll: true });
+      });
+    }
+  };
+
+  const applyDesktopFilterChange = (event: React.ChangeEvent<HTMLFormElement>) => {
+    if (!window.matchMedia("(min-width: 1400px)").matches) return;
+    const form = event.currentTarget;
+    if (!form.checkValidity()) return;
+    const value = (id: string) => form.querySelector<HTMLInputElement | HTMLSelectElement>(`#${id}`)?.value ?? "";
+    const next = new URLSearchParams();
+    if (query.trim()) next.set("q", query.trim());
+    const nextGenre = value("film-search-genre");
+    const nextYear = value("film-search-year");
+    const nextRating = value("film-search-rating");
+    const nextSort = value("film-search-sort");
+    if (nextGenre) next.set("genreId", nextGenre);
+    if (nextYear) next.set("year", nextYear);
+    if (nextRating) next.set("minRating", nextRating);
+    if (nextSort !== "newest") next.set("sort", nextSort);
+    setSearchParams(next);
   };
 
   const turnPage = (page: number) => {
@@ -198,33 +222,33 @@ export default function Search() {
           <label className={styles.queryField} htmlFor="film-search-query">{t("searchFilms")}
             <input ref={queryInputRef} id="film-search-query" aria-label={t("searchFilms")} placeholder={results ? `${t("resultsCount")}: ${results.totalElements}` : t("searchFilms")} value={query} onChange={event => setQuery(event.target.value)} />
           </label>
-          <label className={styles.sortControl} htmlFor="film-search-sort">{t("sortBy")}
-            <select id="film-search-sort" value={sort} onChange={event => setSort(event.target.value)}>
-              <option value="newest">{t("sortNewest")}</option>
-              <option value="oldest">{t("sortOldest")}</option>
-              <option value="rating_desc">{t("sortBestRated")}</option>
-              <option value="rating_asc">{t("sortLowestRated")}</option>
-              <option value="title_asc">{t("sortTitle")}</option>
-            </select>
-          </label>
-          <button className={styles.submit} type="submit" aria-busy={loading}>{t("search")}</button>
+          <button className={styles.submit} type="submit" aria-label={t("search")} aria-busy={loading}><i className="fa-solid fa-magnifying-glass" aria-hidden="true" /><span className={styles.submitLabel}>{t("search")}</span></button>
         </form>
       </section>
 
-      <form ref={filtersFormRef} id="film-filter-controls" className={`${styles.filters} ${mobileFiltersOpen ? styles.filtersOpen : ""}`} onSubmit={applyFilters} aria-label={t("filters")} aria-busy={genresLoading || loading}>
+      <form ref={filtersFormRef} id="film-filter-controls" className={`${styles.filters} ${mobileFiltersOpen ? styles.filtersOpen : ""}`} onSubmit={applyFilters} onChange={applyDesktopFilterChange} aria-label={t("filters")} aria-busy={genresLoading || loading}>
+        <label htmlFor="film-search-year">{t("year")}
+          <input id="film-search-year" type="number" min="1888" max="2100" placeholder={t("year")} value={year} onChange={event => setYear(event.target.value)} />
+        </label>
+        <label htmlFor="film-search-rating">{t("minRating")}
+          <select id="film-search-rating" value={minRating} onChange={event => setMinRating(event.target.value)}>
+            <option value="">{t("anyRating")}</option>
+            {[1, 2, 3, 4, 5].map(value => <option key={value} value={value}>{value}+</option>)}
+          </select>
+        </label>
         <label htmlFor="film-search-genre">{t("genre")}
           <select id="film-search-genre" aria-busy={genresLoading} value={genreId} disabled={genresLoading || genreError} onChange={event => setGenreId(event.target.value)}>
             <option value="">{t("allGenres")}</option>
             {genres.map(genre => <option key={genre.id} value={genre.id}>{localizeGenreName(genre.name, lang)}</option>)}
           </select>
         </label>
-        <label htmlFor="film-search-year">{t("year")}
-          <input id="film-search-year" type="number" min="1888" max="2100" value={year} onChange={event => setYear(event.target.value)} />
-        </label>
-        <label htmlFor="film-search-rating">{t("minRating")}
-          <select id="film-search-rating" value={minRating} onChange={event => setMinRating(event.target.value)}>
-            <option value="">{t("anyRating")}</option>
-            {[1, 2, 3, 4, 5].map(value => <option key={value} value={value}>{value}+</option>)}
+        <label htmlFor="film-search-sort">{t("sortBy")}
+          <select id="film-search-sort" value={sort} onChange={event => setSort(event.target.value)}>
+            <option value="newest">{t("sortNewest")}</option>
+            <option value="oldest">{t("sortOldest")}</option>
+            <option value="rating_desc">{t("sortBestRated")}</option>
+            <option value="rating_asc">{t("sortLowestRated")}</option>
+            <option value="title_asc">{t("sortTitle")}</option>
           </select>
         </label>
         <button className={styles.filterSubmit} type="submit">{t("applyFilters")}</button>

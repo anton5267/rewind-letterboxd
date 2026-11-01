@@ -32,7 +32,7 @@ export const getAdminDashboard = () => api.get<AdminDashboard>("/admin/dashboard
 export const getAdminUsers = (q = "", page = 0) => api.get<Page<AdminUser>>("/admin/users", { params: { size: 50, page, ...(q.trim() ? { q: q.trim() } : {}) } });
 export const getAdminUser = (id: number) => api.get<AdminUser>(`/admin/users/${id}`);
 export const getAdminUserOverview = (id: number) => api.get<AdminUserOverview>(`/admin/users/${id}/overview`);
-export const updateAdminUser = (id: number, update: Pick<AdminUser, "role">) => api.patch<AdminUser>(`/admin/users/${id}`, update);
+export const updateAdminUser = (id: number, update: Partial<Pick<AdminUser, "username" | "displayName" | "avatarUrl" | "role">>) => api.patch<AdminUser>(`/admin/users/${id}`, update);
 export const setAdminHq = (id: number, hq: boolean) => api.put<AdminUser>(`/admin/users/${id}/hq`, { hq });
 export const setAdminUserActive = (id: number, active: boolean) => api.post<void>(`/admin/users/${id}/${active ? "activate" : "deactivate"}`);
 export const getAuditLogs = (page = 0) => api.get<Page<AuditLog>>("/admin/audit-logs", { params: { size: 50, page } });

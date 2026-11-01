@@ -244,9 +244,9 @@
   }
   .filmRail .filmCard { min-width: 0; flex: 0 0 calc((100% - 45px) / 4); }
   .filmRail .posterLink { aspect-ratio: 79 / 116; scroll-snap-align: start; }
-  .allPreview .filmRail { gap: 8px; margin: 0; padding: 0; }
-  .allPreview .filmRail .filmCard { flex-basis: 100px; }
-  .allPreview .filmRail .posterLink { aspect-ratio: 100 / 149; }
+  .filmRail { gap: 8px; margin: 0; padding: 0; }
+  .filmRail .filmCard { flex-basis: 100px; }
+  .filmRail .posterLink { aspect-ratio: 100 / 149; }
   .allPreview .expandedOnly,
   .allPreview .reviewCard:nth-child(n + 3) { display: none; }
   .showMoreResults {

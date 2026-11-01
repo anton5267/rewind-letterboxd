@@ -383,7 +383,7 @@ test("admin audit log pages through all actions", async ({ page }) => {
   });
 
   await page.goto("/uk/admin?view=logs");
-  const audit = page.getByRole("region", { name: "Журнал дій" });
+  const audit = page.getByRole("region", { name: "Журнал модераторів" });
   const pagination = audit.getByRole("navigation", { name: "Сторінки журналу дій" });
   await expect(audit).toHaveAttribute("aria-busy", "false");
   await expect(audit.getByRole("listitem")).toHaveCount(50);

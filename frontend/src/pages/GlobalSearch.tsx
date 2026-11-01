@@ -66,7 +66,7 @@ export default function GlobalSearch() {
     let active = true;
     setLoading(true);
     setError(false);
-    searchGlobal(query, lang, expandedResults ? 12 : 6).then(({ data }) => {
+    searchGlobal(query, lang, 6).then(({ data }) => {
       if (active) setResults(data);
     }).catch(() => {
       if (active) {
@@ -77,7 +77,7 @@ export default function GlobalSearch() {
       if (active) setLoading(false);
     });
     return () => { active = false; };
-  }, [query, lang, retry, expandedQuery]);
+  }, [query, lang, retry]);
 
   useEffect(() => {
     if (loading || !expansionFocusPending) return;
@@ -294,7 +294,6 @@ export default function GlobalSearch() {
         </section>}
 
         {collapsedAllPreview && hasMoreAllResults && <button className={styles.showMoreResults} type="button" aria-controls="global-search-results" aria-expanded={false} disabled={loading} onClick={() => {
-          setLoading(true);
           setExpansionFocusPending(true);
           setExpandedQuery(query);
         }}>{loading ? t("loadingSearch") : t("showMoreResults")}</button>}

@@ -53,7 +53,6 @@ export default function AdminDashboard() {
     { id: "logs", label: t("auditLogs"), icon: "fa-solid fa-clock-rotate-left" },
     { id: "settings", label: t("adminSettings"), icon: "fa-solid fa-gear" },
   ] as const;
-  const activeTitle = activeView === "user-profile" ? t("adminUserProfile") : navigation.find(item => item.id === activeView)?.label;
   const navAssets: Record<string, string> = Object.fromEntries(["dashboard", "users", "movies", "reviews", "comments", "lists", "moderation", "settings"].map(id => [id, `/images/admin-nav-${id}.svg`]));
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [settings, setSettings] = useState<AdminSetting[]>([]);
@@ -252,7 +251,7 @@ export default function AdminDashboard() {
   const pageBusy = (activeView === "dashboard" && dashboardLoading) || (activeView === "settings" && (settingsLoading || saveBusyKey !== null));
   const settingsPanel = (
     <section className={styles.settings} aria-labelledby="admin-settings-title" aria-busy={settingsLoading || saveBusyKey !== null}>
-      <h2 className={styles.settingsTitle} id="admin-settings-title" ref={settingsTitle} tabIndex={-1}>{t("adminSettings")}</h2>
+      <h2 className={styles.settingsTitle} id="admin-settings-title" ref={settingsTitle} tabIndex={-1}>{t("adminGeneralSettings")}</h2>
       <div className={styles.settingsWorkspace}>
       {settingsLoading && settings.length === 0 ? <AdminLoading label={t("loading")} layout="settings" />
         : settingsError ? <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={settingsLoading} busy={settingsLoading} onRetry={() => {
@@ -297,7 +296,7 @@ export default function AdminDashboard() {
         </Link>)}
       </nav>
     </header>
-    <h2 className={styles.workspaceTitle}>{activeView === "dashboard" ? t("adminWorkspace") : activeTitle}</h2>
+    {activeView === "dashboard" && <h2 className={styles.workspaceTitle}>{t("adminWorkspace")}</h2>}
     {activeView === "dashboard" && <>
     <AdminPersonalMetrics key={user.id} userId={user.id} />
     <h3 className={styles.platformTitle} ref={dashboardTitle} tabIndex={-1}>{t("adminPlatformMetrics")}</h3>

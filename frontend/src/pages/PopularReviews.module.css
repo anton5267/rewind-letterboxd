@@ -264,6 +264,9 @@
   }
 
   .reviewsSection .sectionHeading {
+    height: 44px;
+    box-sizing: border-box;
+    align-items: flex-start;
     margin-bottom: 55px;
   }
 

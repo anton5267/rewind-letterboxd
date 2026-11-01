@@ -105,6 +105,18 @@
     min-height: 393px;
   }
 
+  .listsSection .listIdentity,
+  .listsSection .listMeta,
+  .listsSection .listDescription,
+  .listsSection .listCreated {
+    font-size: 24px;
+    line-height: 1.2;
+  }
+
+  .listsSection .listSide {
+    padding-top: 44px;
+  }
+
   .listsSection > .list .rowActions {
     margin-top: auto;
   }
@@ -222,6 +234,13 @@
   gap: 18px;
 }
 
+.auditGroupLabel {
+  color: var(--rewind-paper);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
 .auditMain strong,
 .auditMain p,
 .auditSide time {
@@ -243,7 +262,14 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 18px;
+  gap: 24px;
+}
+
+.auditMetaGroup {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  min-width: 0;
 }
 
 .auditSide time {
@@ -282,13 +308,34 @@
 .listIdentity,
 .listDescription,
 .listMeta,
-.listStatus {
+.listStatus,
+.listCreated {
   overflow-wrap: anywhere;
 }
 
 .listIdentity {
   color: var(--rewind-paper);
   font-size: 20px;
+}
+
+.listCreated {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  min-width: 0;
+  color: var(--rewind-paper);
+}
+
+.listCreated span {
+  font-weight: 600;
+}
+
+.listCreated time {
+  max-width: 100%;
+  padding: 4px 10px;
+  border: 1px solid var(--rewind-line);
+  border-radius: 999px;
+  overflow-wrap: anywhere;
 }
 
 .listMeta,
@@ -565,6 +612,47 @@
   overflow-wrap: anywhere;
 }
 
+.detailEditForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.detailEditForm label {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  color: var(--rewind-muted);
+  font-size: 14px;
+}
+
+.detailEditForm .control {
+  width: 100%;
+}
+
+.detailEditForm > button {
+  justify-self: start;
+  min-height: 44px;
+  border: 1px solid var(--rewind-line);
+  border-radius: var(--rewind-radius);
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, .18);
+  color: var(--rewind-paper);
+}
+
+.detailEditForm > button:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+
+.detailEditForm > .feedback,
+.detailEditForm > .error {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
 .detailActions {
   display: flex;
   flex-wrap: wrap;
@@ -702,6 +790,10 @@
 
   .detailGrid { grid-template-columns: 1fr; }
 
+  .detailEditForm { grid-template-columns: 1fr; }
+
+  .detailEditForm > button { width: 100%; }
+
   .detailOverviewGrid { grid-template-columns: 1fr; }
 
   .detailListHeading { align-items: flex-start; flex-direction: column; }
@@ -808,22 +900,61 @@
 /* Figma User List frames `1218:2982`/`1260:3404` use a centered title,
    402 px search control and a single 1200 px table rail. The runtime keeps
    its live row actions and pagination inside that shell. */
+.usersSection > .toolbar {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0;
+  width: min(402px, 100%);
+  min-height: 44px;
+  box-sizing: border-box;
+  margin: 0 auto 36px;
+  padding: 0 10px 0 14px;
+  border: 1px solid var(--rewind-line);
+  border-radius: 38px;
+  background: var(--rewind-surface-raised);
+}
+
+.usersSection > .toolbar:focus-within {
+  outline: 2px solid var(--rewind-cyan);
+  outline-offset: 3px;
+}
+
+.usersSection > .toolbar .control {
+  order: 1;
+  flex: 1 1 auto;
+  min-height: 40px;
+  padding-inline: 0;
+  border: 0;
+  background: transparent;
+}
+
+.usersSection.usersSection > .toolbar [data-admin-users-search] {
+  order: 0;
+  display: grid;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--rewind-muted);
+}
+
+.usersSection.usersSection > .toolbar [data-admin-users-search]:focus-visible {
+  outline: 2px solid var(--rewind-cyan);
+  outline-offset: 1px;
+}
+
 @media (min-width: 768px) {
   .usersSection > .title {
     margin-bottom: 38px;
     text-align: center;
   }
 
-  .usersSection > .toolbar {
-    width: min(402px, 100%);
-    margin: 0 auto 36px;
-  }
-
-  .usersSection > .toolbar .control,
-  .usersSection > .toolbar button {
-    min-height: 44px;
-    border-radius: 38px;
-  }
+  .usersSection > .toolbar .control { min-height: 40px; }
 
   .usersSection > .list {
     gap: 0;
@@ -942,7 +1073,51 @@
   }
 
   .reviewsSection > .list .rowActions {
-    margin-top: auto;
+    grid-column: 1;
+    grid-row: 2;
+    margin-top: 0;
+  }
+
+  .reviewsSection > .list .reviewIdentity strong,
+  .reviewsSection > .list .reviewIdentity span,
+  .reviewsSection > .list .reviewText,
+  .reviewsSection > .list .reviewRating,
+  .reviewsSection > .list .reviewDate {
+    font-size: 24px;
+    line-height: 1.2;
+  }
+
+  .reviewsSection > .list .reviewSide {
+    display: grid;
+    grid-template-columns: minmax(0, .9fr) minmax(0, 1fr);
+    align-content: start;
+    gap: 42px 38px;
+    padding-top: 44px;
+  }
+
+  .reviewsSection > .list .reviewRating,
+  .reviewsSection > .list .reviewDate {
+    align-content: start;
+  }
+
+  .reviewsSection > .list .reviewRating strong,
+  .reviewsSection > .list .reviewDate time {
+    justify-self: start;
+    padding: 4px 10px;
+    border: 1px solid var(--rewind-line);
+    border-radius: 999px;
+  }
+
+  .reviewsSection > .list .reviewRating strong {
+    gap: 6px;
+    font-size: 24px;
+  }
+
+  .reviewsSection > .list .reviewStatus {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+    margin: 0;
   }
 
   .reviewsSection > .list .rowActions button {

@@ -1258,8 +1258,8 @@ export default function Profile() {
           setReviewsAttempt(value => value + 1);
         }} />}
         {requestedReviewValue !== null && !reviewDetailLoading && !reviewDetailError && reviewDetail && <ul className={styles.reviewCards}>{renderReviewCards([reviewDetail], true, true)}</ul>}
-        {requestedReviewValue === null && !reviewsLoading && !reviewsError && reviewsHistory && <>
-          {reviewsHistory.content.length === 0 ? <p>{t("noReviews")}</p> : <ul className={styles.reviewCards}>{renderReviewCards(reviewsHistory.content, true, true)}</ul>}
+          {requestedReviewValue === null && !reviewsLoading && !reviewsError && reviewsHistory && <>
+          {reviewsHistory.content.length === 0 ? <p>{t("noReviews")}</p> : <ul className={styles.reviewCards}>{renderReviewCards(reviewsHistory.content, true)}</ul>}
           <Pagination className={styles.pagination} page={reviewsPage} totalPages={reviewsHistory.totalPages} label={t("allReviews")} busy={reviewsLoading} onPageChange={setReviewsPage} />
         </>}
       </section>

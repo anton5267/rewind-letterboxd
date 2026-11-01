@@ -94,12 +94,26 @@ for (const width of [320, 1440]) {
 
       if (width === 320) await page.getByRole("button", { name: "Filters", exact: true }).click();
       await page.locator("#film-search-year").fill("2002");
+      if (width >= 1400) {
+        // Desktop filters apply as soon as a valid value changes. Let that URL
+        // update/data reload settle before checking keyboard submit behavior.
+        await expect(page).toHaveURL(/year=2002/);
+        await ready(page, "#films-page-title");
+      }
       const apply = page.locator('#film-filter-controls button[type="submit"]');
-      await apply.focus();
-      await apply.press("Enter");
-      await expect(page).toHaveURL(/year=2002/);
-      await ready(page, "#films-page-title");
-      await expect(apply).toBeFocused();
+      if (width === 320) {
+        await apply.focus();
+        await apply.press("Enter");
+        await expect(page).toHaveURL(/year=2002/);
+        await ready(page, "#films-page-title");
+        await expect(apply).toBeFocused();
+      } else {
+        // The desktop frame applies valid filters immediately and hides the
+        // mobile-only submit button; keyboard focus stays on the changed field.
+        await expect(page).toHaveURL(/year=2002/);
+        await ready(page, "#films-page-title");
+        await expect(page.locator("#film-search-year")).toBeFocused();
+      }
       await expect(page.locator("#films-page-title")).not.toBeFocused();
       expect(writes).toEqual([]);
     } finally { gate.resolve(); }

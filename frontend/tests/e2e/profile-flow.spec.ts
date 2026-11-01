@@ -82,6 +82,20 @@ test("profile collection is visible in own and public profile", async ({ page, b
     expect(ownProfile.ok()).toBeTruthy();
     expect((await ownProfile.json() as { stats: { watched: number } }).stats.watched).toBe(1);
 
+    await page.goto("/uk/profile?view=reviews");
+    const reviewCard = page.locator("#profile-reviews li").filter({ hasText: reviewText });
+    await expect(reviewCard).toBeVisible();
+    await expect(reviewCard.getByRole("button", { name: /Редагувати огляд/ })).toHaveCount(0);
+    await expect(reviewCard.getByRole("button", { name: /Видалити огляд/ })).toHaveCount(0);
+    const detailLink = reviewCard.getByRole("link", { name: reviewText, exact: true });
+    await expect(detailLink).toHaveAttribute("href", `/uk/profile?view=reviews&review=${reviewId}`);
+    await detailLink.focus();
+    await detailLink.press("Enter");
+    await expect(page).toHaveURL(new RegExp(`/uk/profile\\?view=reviews&review=${reviewId}$`));
+    await expect(page.getByRole("button", { name: /Редагувати:/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Видалити огляд/ })).toBeVisible();
+
+    await page.goto("/uk/profile");
     await page.getByRole("button", { name: "Дії профілю" }).click();
     await expect(page.getByRole("menuitem", { name: "Вийти" })).toBeVisible();
     await page.getByRole("menuitem", { name: "Вийти" }).click();
