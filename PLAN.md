@@ -2,7 +2,7 @@
 
 ## Актуальний план завершення — 02.11.2026
 
-Це поточний порядок робіт; нижче збережені попередні checkpoints як історія. Останній зелений CI на момент checkpoint — commit `03e5328` у `master`, run `41408997435`; наступний documentation commit фіксує результати після нього. Повний інвентар 268 кандидатів і попередня повна регресія вже виконані; повторювати їх без зміни відповідного коду/джерела не потрібно. Member Home follow-up і Search no-match follow-up пройшли цільову перевірку, Docker web rebuild, scoped commit/push та зелений CI. На поточному Docker runtime цільово повторно пройшли Profile/Social, Home guest, Search/Films, Journal, Admin і Lists (66 сценаріїв). Новий Person блок виправив Escape у mobile filters; 2/2 сценарії пройшли на source Vite і Docker, build успішний, web image оновлений. Це не є загальним pixel acceptance. Далі — інші незакриті READY стани, source/device залежності й погоджені gaps.
+Це поточний порядок робіт; нижче збережені попередні checkpoints як історія. Останній продуктовий checkpoint — commit `0b7dc71` у `master`, CI run `41409799880` зелений. Повний інвентар 268 кандидатів і попередня повна регресія вже виконані; повторювати їх без зміни відповідного коду/джерела не потрібно. Member Home follow-up і Search no-match follow-up пройшли цільову перевірку, Docker web rebuild, scoped commit/push та зелений CI. На поточному Docker runtime цільово повторно пройшли Profile/Social, Home guest, Search/Films, Journal, Admin і Lists (66 сценаріїв). Новий Person блок виправив Escape у mobile filters; 2/2 сценарії пройшли на source Vite і Docker, build успішний, web image оновлений. Це не є загальним pixel acceptance. Далі — інші незакриті READY стани, source/device залежності й погоджені gaps.
 
 ### Черга за сімействами
 
