@@ -131,8 +131,11 @@
 /* Figma desktop results share one category control and an editorial rail.
    Cards can grow for translated or long API content. */
 @media (min-width: 1024px) {
+  .page:has(.noMatches) { min-height: calc(100vh - 265px); padding-bottom: 46px; }
   .page:has(.noMatches) .searchForm { display: none; }
   .page:has(.noMatches) .results { padding-top: 16px; }
+  .page:has(.noMatches) .noMatches h2 { position: relative; left: 50%; width: min(700px, calc(100vw - 32px)); transform: translateX(-50%); }
+  .page:has(.noMatches) .noMatches > p:not(.sectionKicker) { width: min(547px, calc(100vw - 32px)); }
   .resultNav { position: absolute; width: 1px; height: 1px; overflow: hidden; margin: -1px; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
   .resultNav:focus-within { z-index: 3; right: 0; left: 0; width: auto; height: auto; overflow-x: auto; margin: 0; border: 1px solid var(--rewind-line); padding: 8px; background: var(--rewind-surface); clip: auto; clip-path: none; white-space: normal; }
   .categoryPicker { position: relative; display: flex; width: max-content; max-width: 40%; min-width: 160px; height: 44px; flex: 0 0 auto; align-items: center; padding-right: 10px; color: #7e7e7e; font-size: 20px; line-height: 1.12; white-space: nowrap; }
@@ -225,7 +228,8 @@
   .noMatches .sectionKicker { display: none; }
   .noMatches h2 { max-width: 270px; font-size: 24px; line-height: 1.12; letter-spacing: 0; }
   .noMatches > p:not(.sectionKicker) { max-width: 359px; margin: 16px 0 35px; font-size: 12px; line-height: 1.2; }
-  .noMatchesAction { display: inline-flex; min-width: 95px; min-height: 44px; align-items: center; justify-content: center; border: 0; padding: 8px 15px; background: #fff; color: #000; font-size: 12px; font-weight: 500; line-height: 16px; }
+  .noMatchesAction { position: relative; z-index: 0; display: inline-flex; min-width: 95px; min-height: 44px; align-items: center; justify-content: center; border: 0; padding: 8px 15px 20px; background: transparent; color: #000; font-size: 12px; font-weight: 500; line-height: 16px; }
+  .noMatchesAction::before { position: absolute; z-index: -1; inset: 0 0 12px; border-radius: 999px; background: #fff; content: ""; }
   .filmGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 19px 15px; }
   .filmCard { display: block; min-width: 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
   .filmCard .posterLink { width: 100%; aspect-ratio: 79 / 116; border: 0; border-radius: 10px; scroll-margin-block: 100px; }
@@ -318,7 +322,7 @@
   .page:has(.noMatches) .searchForm { display: none; }
   .page:has(.noMatches) .matchesHeading { min-height: 44px; margin: 0 0 13px; padding-top: 7px; }
   .page:has(.noMatches) .matchesHeading h2 { overflow: hidden; font-size: 14px; line-height: 16px; text-overflow: ellipsis; white-space: nowrap; }
-  .page:has(.noMatches) .results { padding-top: 185.5px; }
+  .page:has(.noMatches) .results { padding-top: 165.5px; }
   .page:has(.noMatches) .noMatches { display: block; width: min(359px, 100%); min-height: 0; margin: 0 auto 40px; text-align: center; }
   .page:has(.noMatches) .noMatches h2 { max-width: 270px; margin: 0 auto; }
   .page:has(.noMatches) .noMatches > p:not(.sectionKicker) { max-width: 359px; margin: 17px auto 0; }
