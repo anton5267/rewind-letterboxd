@@ -63,7 +63,15 @@ export default function PublicLists() {
   const isTagged = Boolean(tag);
   const isFeedView = !isLanding && !isTagged;
   const isCompactFeed = feed === "popular" || feed === "recently-liked";
-  const pageSize = feed === "popular" ? 4 : 12;
+  const [mobileViewport, setMobileViewport] = useState(() => window.matchMedia("(max-width: 767px)").matches);
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const update = () => setMobileViewport(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  const pageSize = isTagged ? (mobileViewport ? 3 : 4) : feed === "popular" ? 4 : 12;
   const [lists, setLists] = useState<PublicList[]>([]);
   const [tags, setTags] = useState<PopularTag[]>([]);
   const [loading, setLoading] = useState(true);
@@ -241,13 +249,13 @@ export default function PublicLists() {
     const posterClass = tagged ? styles.taggedPosterLink : landing ? `${styles.posterLink} ${styles.railPosterLink}` : compact ? styles.featuredPosterLink : styles.posterLink;
     return <article className={cardClass} key={list.id}>
       <Link className={posterClass} to={path(`/lists/public/${list.id}`)} aria-label={listName}>
-        <ListPosterStack movies={list.previewMovies ?? []} label={listName} fallbackTitle={t("untitledFilm")} size={compact ? "featured" : "compact"} layout={landing || compact ? "catalog" : "fan"} />
+        <ListPosterStack movies={list.previewMovies ?? []} label={listName} fallbackTitle={t("untitledFilm")} size={compact ? "featured" : "compact"} layout={landing || compact || tagged ? "catalog" : "fan"} />
       </Link>
       <div className={styles.cardBody}>
         <h2><Link to={path(`/lists/public/${list.id}`)}>{listName}</Link>{tagged && list.itemCount != null && <span className={styles.taggedCount}>{formatMovieCount(list.itemCount, lang)}</span>}{popularFeedCard && list.itemCount != null && <span className={styles.feedCount}>{formatMovieCount(list.itemCount, lang)}</span>}{variant === "liked" && list.itemCount != null && <span className={styles.landingCount}>{formatMovieCount(list.itemCount, lang)}</span>}</h2>
         {list.description && <p className={styles.description}>{list.description}</p>}
         {list.tags.length > 0 && <div className={styles.cardTags}>{list.tags.slice(0, 3).map(name => <Link key={name} to={path(`/lists/discover?feed=recent&tag=${encodeURIComponent(toTagSlug(name))}`)}>#{name}</Link>)}</div>}
-        <p className={styles.meta}><span className={landing ? styles.catalogMetric : undefined}>{list.itemCount != null && <>{formatMovieCount(list.itemCount, lang)} · </>}</span>{t("byUser")} <Link to={path(`/users/${list.ownerId}`)}>{landing && <span className={styles.catalogAvatar} aria-hidden="true">{getUserInitial({ username: list.ownerUsername })}</span>}{getUserName({ username: list.ownerUsername }, t("someone"))}</Link><span className={landing ? styles.catalogMetric : undefined}>{list.likeCount != null && <> · {list.likeCount} {t("likes").toLocaleLowerCase(lang)}</>}</span></p>
+        {tagged ? <p className={`${styles.meta} ${styles.taggedMeta}`}><Link to={path(`/users/${list.ownerId}`)}>{getUserName({ username: list.ownerUsername }, t("someone"))}</Link><span>{list.itemCount != null && formatMovieCount(list.itemCount, lang)}{list.likeCount != null && <> · ♡ {list.likeCount}</>}</span></p> : <p className={styles.meta}><span className={landing ? styles.catalogMetric : undefined}>{list.itemCount != null && <>{formatMovieCount(list.itemCount, lang)} · </>}</span>{t("byUser")} <Link to={path(`/users/${list.ownerId}`)}>{landing && <span className={styles.catalogAvatar} aria-hidden="true">{getUserInitial({ username: list.ownerUsername })}</span>}{getUserName({ username: list.ownerUsername }, t("someone"))}</Link><span className={landing ? styles.catalogMetric : undefined}>{list.likeCount != null && <> · {list.likeCount} {t("likes").toLocaleLowerCase(lang)}</>}</span></p>}
       </div>
     </article>;
   };
@@ -343,9 +351,8 @@ export default function PublicLists() {
       </section> : <>
         <section aria-labelledby="lists-grid-heading" aria-busy={loading}>
           <div className={styles.sectionHeading}>
-            <h2 id="lists-grid-heading" tabIndex={-1}>{isTagged ? t("listsTaggedHeading") : feedSectionHeading}</h2>
+            <h2 id="lists-grid-heading" tabIndex={-1}>{isTagged ? <>{t("listsTaggedHeading")} <span className={styles.taggedHeadingTag}>{filterLabel}</span></> : feedSectionHeading}</h2>
             {feed === "popular" && <span className={styles.popularSortLabel}><span>{t("sortByPopularity")}</span><span aria-hidden="true">⌄</span></span>}
-            {tag && <span className={styles.filter}>#{filterLabel}</span>}
           </div>
 
           {loading && <div className={isTagged ? styles.taggedGrid : isCompactFeed ? styles.featuredGrid : styles.grid} aria-label={t("loading")} role="status">

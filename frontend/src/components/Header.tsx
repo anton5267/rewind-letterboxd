@@ -176,10 +176,12 @@ export default function Header() {
   const listParams = new URLSearchParams(location.search);
   const listsLandingHeader = /^\/(uk|en)\/lists\/discover\/?$/.test(location.pathname)
     && !toTagSlug(listParams.get("tag") ?? "");
+  const mobileTaggedListsHeader = /^\/(uk|en)\/lists\/discover\/?$/.test(location.pathname)
+    && Boolean(toTagSlug(listParams.get("tag") ?? ""));
   const listsFeedHeader = listsLandingHeader && Boolean(listParams.get("feed"));
 
   return (
-    <header className={`${styles.header} ${mobileDetailHeader ? styles.mobileDetail : ""} ${mobileFilmsHeader ? styles.mobileFilms : ""} ${mobileListDetailHeader ? styles.mobileListDetail : ""} ${mobileSearchHeader ? styles.mobileSearch : ""} ${mobileHomeHeader ? styles.mobileHome : ""} ${mobileCommunityHeader ? styles.mobileCommunity : ""} ${mobilePersonHeader ? styles.mobilePerson : ""} ${mobilePublicProfileHeader ? styles.mobilePublicProfile : ""} ${mobileProfileHeader ? styles.mobileProfile : ""} ${mobileUserListsHeader ? styles.mobileUserLists : ""} ${mobileProfileSettingsHeader ? styles.mobileProfileSettings : ""} ${mobileAuthHeader ? styles.mobileAuth : ""} ${listsLandingHeader ? styles.listsLanding : ""}`}>
+    <header className={`${styles.header} ${mobileDetailHeader ? styles.mobileDetail : ""} ${mobileFilmsHeader ? styles.mobileFilms : ""} ${mobileListDetailHeader ? styles.mobileListDetail : ""} ${mobileSearchHeader ? styles.mobileSearch : ""} ${mobileHomeHeader ? styles.mobileHome : ""} ${mobileCommunityHeader ? styles.mobileCommunity : ""} ${mobilePersonHeader ? styles.mobilePerson : ""} ${mobilePublicProfileHeader ? styles.mobilePublicProfile : ""} ${mobileProfileHeader ? styles.mobileProfile : ""} ${mobileUserListsHeader ? styles.mobileUserLists : ""} ${mobileProfileSettingsHeader ? styles.mobileProfileSettings : ""} ${mobileAuthHeader ? styles.mobileAuth : ""} ${listsLandingHeader ? styles.listsLanding : ""} ${mobileTaggedListsHeader ? styles.mobileTaggedLists : ""}`}>
 
       {listsLandingHeader && <div className={styles.listLandingControls}>
         <Link to={path(listsFeedHeader ? "/lists/discover" : "/home")} aria-label={listsFeedHeader ? t("discoverLists") : t("home")}><i className="fa-solid fa-chevron-left" aria-hidden="true" /></Link>

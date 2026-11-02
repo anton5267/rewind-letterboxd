@@ -11,6 +11,7 @@ export default defineConfig({
     "films-discovery-matched-runtime.spec.ts",
     "list-create-draft.spec.ts",
     "public-list-detail-figma.spec.ts",
+    "tagged-lists-ready-layout.spec.ts",
   ],
   fullyParallel: false,
   workers: 1,

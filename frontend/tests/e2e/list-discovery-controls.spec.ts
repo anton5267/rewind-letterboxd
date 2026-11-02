@@ -75,8 +75,8 @@ test("long list tags fit mobile and desktop widths on the real API", async ({ pa
     });
     await page.goto(`/uk/lists/discover?feed=recent&tag=${tag}`);
     expect((await response).ok()).toBe(true);
-    const filter = page.locator("section[aria-labelledby='lists-grid-heading'] > div > span");
-    await expect(filter).toHaveText(`#${tag}`);
+    const filter = page.locator("#lists-grid-heading [class*='taggedHeadingTag']");
+    await expect(filter).toHaveText(tag);
     const bounds = await filter.evaluate(element => {
       const rect = element.getBoundingClientRect();
       return { left: rect.left, right: rect.right, viewport: innerWidth, overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth };

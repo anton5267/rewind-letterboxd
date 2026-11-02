@@ -361,6 +361,22 @@
   .mobileCommunity .menuToggle { display: none; }
 
   .mobileCommunity .mobileNav { pointer-events: auto; }
+
+  /* Tagged Lists owns its own back/search/filter controls above the results. */
+  .header.mobileTaggedLists {
+    --header-background: transparent;
+    height: 1px;
+    min-height: 1px;
+    padding: 0;
+    overflow: visible;
+    box-shadow: none;
+    pointer-events: none;
+  }
+
+  .mobileTaggedLists .logo,
+  .mobileTaggedLists .menuToggle { display: none; }
+
+  .mobileTaggedLists .mobileNav { pointer-events: auto; }
 }
 
 @media (max-width: 767px) {
