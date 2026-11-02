@@ -1,7 +1,12 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { waitForPageContent } from "./helpers";
+
+async function activate(locator: Locator, projectName: string) {
+  if (projectName.includes("emulation")) await locator.tap();
+  else await locator.click();
+}
 
 test("All Films phone catalog matches the 4-by-6 layout and keeps working pagination in Android/iOS", async ({ page }, testInfo) => {
   const pageErrors: string[] = [];
@@ -69,7 +74,7 @@ test("All Films phone catalog matches the 4-by-6 layout and keeps working pagina
   await page.screenshot({ path: resolve(captureDirectory, `${platform}-uk-393x1215.png`), scale: "css" });
 
   const filter = page.locator('main button[aria-controls="film-filter-controls"]');
-  await filter.tap();
+  await activate(filter, testInfo.project.name);
   await expect(filter).toHaveAttribute("aria-expanded", "true");
   const query = page.locator("#film-search-query");
   await expect(query).toBeVisible();
@@ -78,17 +83,17 @@ test("All Films phone catalog matches the 4-by-6 layout and keeps working pagina
   await expect(filter).toHaveAttribute("aria-expanded", "false");
   await expect(filter).toBeFocused();
 
-  await next.tap();
+  await activate(next, testInfo.project.name);
   await expect(page).toHaveURL(/page=1/);
   await expect(pagination.getByRole("status")).toContainText("Сторінка 2 з");
   await expect(previous).toBeEnabled();
-  await previous.tap();
+  await activate(previous, testInfo.project.name);
   await expect(page).toHaveURL(/page=0/);
   await expect(pagination.getByRole("status")).toContainText("Сторінка 1 з");
   expect(pageErrors).toEqual([]);
 });
 
-test("All Films phone paging localizes and fits narrow widths in Android/iOS", async ({ page }) => {
+test("All Films phone paging localizes and fits narrow widths in Android/iOS", async ({ page }, testInfo) => {
   for (const scenario of [
     { lang: "uk", width: 320, previous: "Назад", next: "Далі", nav: "Сторінки фільмів" },
     { lang: "en", width: 393, previous: "Previous", next: "Next", nav: "Film pages" },
@@ -104,10 +109,10 @@ test("All Films phone paging localizes and fits narrow widths in Android/iOS", a
     await expect(previous).toBeDisabled();
     await expect(next).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(scenario.width);
-    await next.tap();
+    await activate(next, testInfo.project.name);
     await expect(page).toHaveURL(/page=1/);
     await expect(previous).toBeEnabled();
-    await previous.tap();
+    await activate(previous, testInfo.project.name);
     await expect(page).toHaveURL(/page=0/);
   }
 });

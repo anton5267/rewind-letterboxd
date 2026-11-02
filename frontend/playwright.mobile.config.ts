@@ -9,6 +9,8 @@ export default defineConfig({
     "global-search-journal-populated.spec.ts",
     "films-mobile-catalog-runtime.spec.ts",
     "films-discovery-matched-runtime.spec.ts",
+    "list-create-draft.spec.ts",
+    "public-list-detail-figma.spec.ts",
   ],
   fullyParallel: false,
   workers: 1,

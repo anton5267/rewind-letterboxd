@@ -1,6 +1,11 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
+
+async function activate(locator: Locator, projectName: string) {
+  if (projectName.includes("emulation")) await locator.tap();
+  else await locator.click();
+}
 
 test("mobile touch flow for Movie ActionSheet in Android and iOS browser emulation", async ({ page }, testInfo) => {
   const mutations: string[] = [];
@@ -40,7 +45,7 @@ test("mobile touch flow for Movie ActionSheet in Android and iOS browser emulati
   await page.goto("/uk/films/35");
   await expect(page.locator("main")).toHaveAttribute("aria-busy", "false");
   const trigger = page.getByRole("button", { name: "Мої дії" });
-  await trigger.tap();
+  await activate(trigger, testInfo.project.name);
   const dialog = page.getByRole("dialog", { name: "Dune" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Готово", exact: true })).toBeFocused();
@@ -49,30 +54,30 @@ test("mobile touch flow for Movie ActionSheet in Android and iOS browser emulati
   const platform = testInfo.project.name.includes("iOS") ? "ios-webkit" : "android-chromium";
   await page.screenshot({ path: resolve(captureDirectory, `${platform}-movie-action-sheet-393.png`) });
 
-  await dialog.getByRole("button", { name: "Додати до списків", exact: true }).tap();
+  await activate(dialog.getByRole("button", { name: "Додати до списків", exact: true }), testInfo.project.name);
   await expect(dialog.getByRole("button", { name: "Додати до списків", exact: true })).toHaveAttribute("aria-expanded", "true");
   await dialog.getByRole("combobox", { name: "Оберіть список" }).selectOption("11");
-  await dialog.getByRole("button", { name: "Додати", exact: true }).tap();
+  await activate(dialog.getByRole("button", { name: "Додати", exact: true }), testInfo.project.name);
   await expect(page.getByRole("status").filter({ hasText: "Фільм додано до списку." })).toBeVisible();
 
-  await dialog.getByRole("button", { name: "Переглянуто", exact: true }).tap();
+  await activate(dialog.getByRole("button", { name: "Переглянуто", exact: true }), testInfo.project.name);
   await expect(page.getByRole("status").filter({ hasText: "Збережено." })).toBeVisible();
   expect(mutations).toEqual(["add-to-list", "watched"]);
 
-  await dialog.getByRole("button", { name: "Огляд", exact: true }).tap();
+  await activate(dialog.getByRole("button", { name: "Огляд", exact: true }), testInfo.project.name);
   await expect(dialog).toBeHidden();
   await expect(page.getByRole("textbox", { name: "Ваш огляд" })).toBeFocused();
 
   await page.goto("/uk/films/35");
-  await trigger.tap();
+  await activate(trigger, testInfo.project.name);
   await expect(dialog).toBeVisible();
   await page.evaluate(() => Object.defineProperty(navigator, "share", {
     configurable: true,
     value: async (payload: ShareData) => { (window as Window & { __sharedUrl?: string }).__sharedUrl = payload.url; },
   }));
-  await dialog.getByRole("button", { name: "Поділитися", exact: true }).tap();
+  await activate(dialog.getByRole("button", { name: "Поділитися", exact: true }), testInfo.project.name);
   await expect.poll(() => page.evaluate(() => (window as Window & { __sharedUrl?: string }).__sharedUrl)).toBe(page.url());
-  await dialog.getByRole("button", { name: "Готово", exact: true }).tap();
+  await activate(dialog.getByRole("button", { name: "Готово", exact: true }), testInfo.project.name);
   await expect(dialog).toBeHidden();
   await expect(trigger).toBeFocused();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(394);
@@ -110,7 +115,7 @@ test("mobile touch flow for Review RatingSheet in Android and iOS browser emulat
   await page.setViewportSize({ width: 393, height: 852 });
   await page.goto("/uk/reviews/99001");
   const more = page.getByRole("button", { name: "Додаткові дії", exact: true });
-  await more.tap();
+  await activate(more, testInfo.project.name);
   const dialog = page.getByRole("dialog", { name: "Dune" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Готово", exact: true })).toBeFocused();
@@ -120,12 +125,12 @@ test("mobile touch flow for Review RatingSheet in Android and iOS browser emulat
   const platform = testInfo.project.name.includes("iOS") ? "ios-webkit" : "android-chromium";
   await page.screenshot({ path: resolve(captureDirectory, `${platform}-review-rating-sheet-393.png`) });
 
-  await dialog.getByRole("button", { name: /Вподобати Dune/ }).tap();
+  await activate(dialog.getByRole("button", { name: /Вподобати Dune/ }), testInfo.project.name);
   await expect.poll(() => mutations.includes("like-review")).toBe(true);
-  await dialog.getByRole("button", { name: "Оцінити на 5", exact: true }).tap();
+  await activate(dialog.getByRole("button", { name: "Оцінити на 5", exact: true }), testInfo.project.name);
   await expect.poll(() => mutations.includes("rate-movie")).toBe(true);
   expect(mutations).toEqual(["like-review", "rate-movie"]);
-  await dialog.getByRole("button", { name: "Готово", exact: true }).tap();
+  await activate(dialog.getByRole("button", { name: "Готово", exact: true }), testInfo.project.name);
   await expect(dialog).toBeHidden();
   await expect(more).toBeFocused();
   await expect(more).toHaveAttribute("aria-expanded", "false");

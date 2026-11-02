@@ -48,8 +48,13 @@ export default function UserLists() {
   const [isPublic, setIsPublic] = useState(false);
   const [tags, setTags] = useState("");
   const [tagsEditing, setTagsEditing] = useState(true);
+  const tagsCollapseTimer = useRef<number | null>(null);
   const tagsInputRef = useRef<HTMLInputElement>(null);
   const tagsToggleRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => () => {
+    if (tagsCollapseTimer.current !== null) window.clearTimeout(tagsCollapseTimer.current);
+  }, []);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editPublic, setEditPublic] = useState(false);
@@ -433,8 +438,8 @@ export default function UserLists() {
       <label className={styles.nameField} htmlFor="new-list-name">{t("listName")} <input ref={editorNameRef} id="new-list-name" required disabled={createBusy || draftLocked} value={name} maxLength={120} onChange={e => setName(e.target.value)} /></label>
       <label className={styles.descriptionField} htmlFor="new-list-description">{t("description")} <textarea id="new-list-description" rows={5} disabled={createBusy || draftLocked} value={description} maxLength={5000} onChange={e => setDescription(e.target.value)} /></label>
       <div className={styles.createTags}>
-        <label className={styles.tagsField} htmlFor="new-list-tags">{t("tags")} <input ref={tagsInputRef} id="new-list-tags" className={!tagsEditing && tags.trim() ? styles.tagsInputCollapsed : ""} value={tags} maxLength={509} disabled={createBusy || draftLocked} placeholder={t("tagsHint")} onChange={e => setTags(e.target.value)} onBlur={() => setTagsEditing(false)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); setTagsEditing(false); if (tags.trim()) window.requestAnimationFrame(() => tagsToggleRef.current?.focus()); } }} /></label>
-        {tags.trim() && <div className={styles.draftTags}>{tags.split(",").map(tag => tag.trim()).filter(Boolean).map((tag, index) => <span key={`${tag}-${index}`}>{tag}</span>)}<button ref={tagsToggleRef} type="button" disabled={createBusy || draftLocked} aria-label={t("tags")} onClick={() => { setTagsEditing(true); window.requestAnimationFrame(() => tagsInputRef.current?.focus()); }}><img src="/images/list-create-tag-add.svg" alt="" width="16" height="16" /></button></div>}
+        <label className={styles.tagsField} htmlFor="new-list-tags">{t("tags")} <input ref={tagsInputRef} id="new-list-tags" className={!tagsEditing && tags.trim() ? styles.tagsInputCollapsed : ""} value={tags} maxLength={509} disabled={createBusy || draftLocked} placeholder={t("tagsHint")} onChange={e => setTags(e.target.value)} onFocus={() => { if (tagsCollapseTimer.current !== null) window.clearTimeout(tagsCollapseTimer.current); tagsCollapseTimer.current = null; setTagsEditing(true); }} onBlur={() => { if (tagsCollapseTimer.current !== null) window.clearTimeout(tagsCollapseTimer.current); tagsCollapseTimer.current = window.setTimeout(() => { tagsCollapseTimer.current = null; setTagsEditing(false); }, 250); }} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); if (tagsCollapseTimer.current !== null) window.clearTimeout(tagsCollapseTimer.current); tagsCollapseTimer.current = null; setTagsEditing(false); if (tags.trim()) window.requestAnimationFrame(() => tagsToggleRef.current?.focus()); } }} /></label>
+        {tags.trim() && <div className={styles.draftTags}>{tags.split(",").map(tag => tag.trim()).filter(Boolean).map((tag, index) => <span key={`${tag}-${index}`}>{tag}</span>)}<button ref={tagsToggleRef} type="button" disabled={createBusy || draftLocked} aria-label={t("tags")} onClick={() => { if (tagsCollapseTimer.current !== null) window.clearTimeout(tagsCollapseTimer.current); tagsCollapseTimer.current = null; setTagsEditing(true); window.requestAnimationFrame(() => tagsInputRef.current?.focus()); }}><img src="/images/list-create-tag-add.svg" alt="" width="16" height="16" /></button></div>}
       </div>
       <fieldset className={styles.createSettings}>
         <legend><span className={styles.settingsLegendMobile}>{t("settings")}</span><span className={styles.settingsLegendDesktop}>{t("whoCanView")}</span></legend>

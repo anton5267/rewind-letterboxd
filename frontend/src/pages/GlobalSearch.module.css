@@ -162,7 +162,7 @@
   .reviewGrid { gap: 38px; }
   .reviewCard { min-height: 315px; box-sizing: border-box; grid-template-columns: 175px minmax(0, 1fr); align-items: start; gap: 40px; border: 0; padding: 31px 26px 22px; }
   .reviewPoster { aspect-ratio: 175 / 262; align-self: start; }
-  .noMatches { display: block; width: min(540px, 100%); min-height: 0; box-sizing: border-box; margin: 13px auto 40px; border: 0; background: transparent; text-align: center; }
+  .noMatches { display: flow-root; width: min(540px, 100%); min-height: 0; box-sizing: border-box; margin: 13px auto 40px; border: 0; background: transparent; text-align: center; }
   .noMatches .sectionKicker { display: none; }
   .noMatches h2 { width: min(680px, 100%); max-width: none; margin: 0 auto; font-size: clamp(44px, 4.03vw, 58px); line-height: 1.12; letter-spacing: 0; }
   .noMatches > p:not(.sectionKicker) { width: min(547px, 100%); max-width: none; margin: 14px auto 59px; font-size: 24px; line-height: 1.2; }

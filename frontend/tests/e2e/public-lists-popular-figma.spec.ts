@@ -47,6 +47,8 @@ test("popular lists keeps the measured phone poster rail inside the viewport", a
   await expect(page.getByRole("main")).toHaveAttribute("aria-busy", "false");
   const card = page.locator('section[aria-labelledby="lists-grid-heading"] article').first();
   await expect(card).toHaveCSS("width", "361px");
+  const cardBox = await card.boundingBox();
+  expect(cardBox?.y).toBeCloseTo(248, 0);
   const poster = await card.locator('a[class*="featuredPosterLink"]').boundingBox();
   expect(poster?.width).toBeCloseTo(323, 0);
   expect(poster?.height).toBeCloseTo(116, 0);

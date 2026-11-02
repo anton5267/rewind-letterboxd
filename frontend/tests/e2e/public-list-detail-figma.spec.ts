@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 
@@ -9,6 +9,11 @@ const movies = Array.from({ length: 12 }, (_, index) => ({
   rating: null,
   photoUrl: null,
 }));
+
+async function activate(locator: Locator, projectName: string) {
+  if (projectName.includes("emulation")) await locator.tap();
+  else await locator.click();
+}
 
 async function mockList(page: Page) {
   await page.route(/^https?:\/\/[^/]+\/api\//, route => {
@@ -79,12 +84,12 @@ test("public list detail follows phone rows and its information sheet works with
   await page.screenshot({ path: path.join(captureDir, `${engine}-uk-393.png`), fullPage: true });
 
   const more = page.locator('button[aria-haspopup="dialog"]');
-  await more.tap();
+  await activate(more, testInfo.project.name);
   const dialog = page.getByRole("dialog", { name: "Christopher Nolan Best Films" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText(/554/)).toBeVisible();
   await expect(dialog.getByRole("link", { name: "Science Fiction" })).toBeVisible();
-  await dialog.getByRole("button", { name: "Готово" }).tap();
+  await activate(dialog.getByRole("button", { name: "Готово" }), testInfo.project.name);
   await expect(dialog).toBeHidden();
   await expect(more).toBeFocused();
 });

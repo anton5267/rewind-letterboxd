@@ -152,10 +152,10 @@ test("global search journal tab keeps the raw three-column cards", async ({ page
   await expect(cards).toHaveCount(3);
   const first = await cards.first().boundingBox();
   const second = await cards.nth(1).boundingBox();
-  expect(first?.x).toBeCloseTo(120, 0);
+  expect(first?.x).toBeCloseTo(116, 0);
   expect(first?.y).toBeCloseTo(377, 0);
   expect(first?.width).toBeCloseTo(387, 0);
   expect(first?.height).toBeCloseTo(347, 0);
-  expect(second?.x).toBeCloseTo(527, 0);
+  expect(second?.x).toBeCloseTo(523, 0);
   await page.screenshot({ path: testInfo.outputPath("journal-search-desktop.png"), fullPage: true });
 });

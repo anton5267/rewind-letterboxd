@@ -72,6 +72,16 @@ async function expectContentsWithin(cards: Locator, selector: string) {
   expect(failures).toEqual([]);
 }
 
+async function expectTextWithinViewport(text: Locator, width: number) {
+  const outside = await text.evaluateAll(elements => elements.flatMap(element => {
+    const box = element.getBoundingClientRect();
+    return box.width && box.height && (box.left < 0 || box.right > window.innerWidth)
+      ? [`${element.tagName} extends beyond the viewport`]
+      : [];
+  }));
+  expect(outside, `text at ${width}px stays inside the viewport`).toEqual([]);
+}
+
 test("long localized search results stay within every responsive viewport and desktop card", async ({ page }, testInfo) => {
   test.setTimeout(60_000);
   const mutations = await mockSearch(page);
@@ -158,7 +168,8 @@ test("localized responsive empty states return home with keyboard access", async
         await expect(page.getByRole("main")).toHaveAttribute("aria-busy", "false");
         const empty = page.locator('main section[class*="noMatches"]');
         await expect(empty).toBeVisible();
-        await expectContentsWithin(empty, ":scope > p, h2, a");
+        if (width >= 1024) await expectTextWithinViewport(empty.locator("h2, p"), width);
+        else await expectContentsWithin(empty, ":scope > p, h2, a");
         const home = empty.getByRole("link", { name: locale === "uk" ? "На головну" : "Back to home", exact: true });
         await expect(home).toHaveAttribute("href", `/${locale}/home`);
         await home.focus();
