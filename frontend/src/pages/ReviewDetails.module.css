@@ -265,18 +265,6 @@
 }
 
 @media (max-width: 767px) {
-  .page { padding-top: 64px; }
-  .hero { min-height: 550px; background-position: 58% center; }
-  .heroShade { background: linear-gradient(0deg, #111 0%, rgba(10, 10, 11, .8) 47%, rgba(10, 10, 11, .3) 100%); }
-  .heroInner { width: min(100% - 32px, 560px); padding-top: 20px; }
-  .filmBlock { grid-template-columns: 118px minmax(0, 1fr); gap: 18px; margin-top: 174px; }
-  .filmCopy h1 { font-size: clamp(36px, 12vw, 58px); }
-  .meta { margin: 12px 0 16px; font-size: 13px; }
-  .socialPanel { grid-column: 1 / -1; grid-row: 2; }
-  .likersSection { grid-column: 1 / -1; }
-}
-
-@media (max-width: 767px) {
   .page {
     position: relative;
     isolation: isolate;
