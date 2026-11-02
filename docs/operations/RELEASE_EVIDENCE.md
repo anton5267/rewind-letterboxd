@@ -1,5 +1,11 @@
 # Rewind — докази перевірок
 
+### Actor expanded READY state — matched starring grid — 02.11.2026
+
+Fresh MCP screenshot for READY/STATE `551:705` rendered at565×1600 from its1440×4082 natural frame; the 24px phone status-strip offset is not applicable to this desktop frame. At1440px the runtime hero ends at y907, the filmography section begins x120/y907 at1200px, and the first starring poster begins x120/y1092 at174.16×260.22. The downscaled Figma screenshot gives the same first-poster anchor (approximately x120/y1092, 174×260 after normalizing scale). Source and runtime: [Figma `551:705`](../../artifacts/visual-audit-20261102/actor-expanded/figma-551-705.png) / [Docker runtime, UK1440](../../artifacts/visual-audit-20261102/actor-expanded/runtime-551-705-1440-uk.png).
+
+The expanded-state E2E uses isolated 13-film data, keyboard Enter to expand12→13, confirms `aria-expanded`, all items and no horizontal overflow, then collapses to12 and restores focus to the section heading. `person-filmography-responsive.spec.ts` passed3/3 on current Docker; `npm run verify:build` passed TypeScript and Vite (251 modules). Runtime fixture titles and null-poster fallbacks are test-only. The source screenshot also shows an actor biography/roles and a separate Films Produced section; current person API exposes no biography or person-to-produced-film mapping, and live actor85 is David Bradley with one movie. These remain API/data gaps. This confirms the supported starring grid anchor and interaction only, not full expanded-frame content parity. No product/API code changed, so no Docker rebuild or backend regression was needed.
+
 ### ПК-емуляція Android/iOS на актуальному Docker — 02.11.2026
 
 На ПК повторно виконано весь `frontend/playwright.mobile.config.ts` проти актуального Compose app (`http://127.0.0.1:3000`): **30/30 passed**, 15 тестів у Pixel 7/Android Chrome emulation і 15 у iPhone 13/iOS Safari WebKit emulation. Пройшли Movie ActionSheet і Review RatingSheet touch flows, Films Discovery та All Films, populated Journal Search, Create List (успішне збереження й збереження чернетки при помилці), Public List detail та Tagged Lists. На обох рушіях у All Films phone viewport393 CSS px grid має x16/y228.25/361×791; браузерний набір також перевірив responsive/locale сценарії, визначені цими тестами.

@@ -79,3 +79,65 @@ test("Person filmography retries an API failure and focuses its heading", async 
   await expect(page.getByRole("heading", { name: "Brad Pitt", level: 1 })).toBeFocused();
   expect(attempts).toBe(2);
 });
+
+test("expanded Actor READY state keeps the matched desktop starring grid and keyboard controls", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.route(url => url.pathname.startsWith("/api/"), async route => {
+    const pathname = new URL(route.request().url()).pathname;
+    if (pathname === "/api/actors/85") return route.fulfill({ json: { id: 85, name: "Brad Pitt", photoUrl: null, type: "ACTOR", films: films(13) } });
+    if (pathname === "/api/genres") return route.fulfill({ json: [{ id: 16, name: "Science Fiction" }] });
+    if (pathname === "/api/users/me") return route.fulfill({ status: 401, json: {} });
+    return route.fulfill({ json: pageOf });
+  });
+
+  await page.goto("/uk/people/actor/85");
+  const section = page.locator('section[aria-labelledby="filmography-title"]');
+  await expect(section).toHaveAttribute("aria-busy", "false");
+  const heading = section.getByRole("heading", { level: 2, name: "Фільми за участі", exact: true });
+  const grid = section.locator("#person-films");
+  await expect(grid.locator("article")).toHaveCount(12);
+  const initialGeometry = await page.evaluate(() => {
+    const content = document.querySelector('section[aria-labelledby="filmography-title"]');
+    const grid = content?.querySelector("#person-films");
+    const poster = grid?.querySelector("article img, article [class*=posterFallback]");
+    const rect = (element: Element | null | undefined) => {
+      const box = element?.getBoundingClientRect();
+      return box ? { x: box.x, y: box.y, width: box.width, height: box.height } : null;
+    };
+    return { content: rect(content), grid: rect(grid), poster: rect(poster), scrollWidth: document.documentElement.scrollWidth };
+  });
+  expect(initialGeometry.content?.x).toBe(120);
+  expect(initialGeometry.content?.width).toBe(1200);
+  expect(initialGeometry.grid?.x).toBe(120);
+  expect(initialGeometry.grid?.width).toBe(1200);
+  expect(initialGeometry.poster?.x).toBe(120);
+  expect(initialGeometry.poster?.y).toBeCloseTo(1092, 0);
+  expect(initialGeometry.poster?.width).toBeCloseTo(174, 0);
+  expect(initialGeometry.scrollWidth).toBe(1440);
+  console.log(`PERSON_EXPANDED_SOURCE_ANCHOR ${JSON.stringify(initialGeometry)}`);
+
+  const showAll = section.getByRole("button", { name: "Усі фільми", exact: true });
+  await showAll.focus();
+  await showAll.press("Enter");
+  const fewer = section.getByRole("button", { name: "Менше фільмів", exact: true });
+  await expect(fewer).toHaveAttribute("aria-expanded", "true");
+  await expect(grid.locator("article")).toHaveCount(13);
+  await expect(grid.getByRole("link", { name: /Film 13/ })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBe(1440);
+  await expect(fewer).toBeFocused();
+  const expandedGrid = await grid.evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    return { x: rect.x, y: rect.y + window.scrollY, width: rect.width, height: rect.height };
+  });
+  expect(expandedGrid.x).toBe(120);
+  expect(expandedGrid.y).toBe(1092);
+  expect(expandedGrid.width).toBe(1200);
+  console.log(`PERSON_EXPANDED_RUNTIME_GRID ${JSON.stringify(expandedGrid)}`);
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await page.screenshot({ path: "../artifacts/visual-audit-20261102/actor-expanded/runtime-551-705-1440-uk.png", fullPage: true });
+
+  await fewer.click();
+  await expect(showAll).toHaveAttribute("aria-expanded", "false");
+  await expect(grid.locator("article")).toHaveCount(12);
+  await expect(heading).toBeFocused();
+});
