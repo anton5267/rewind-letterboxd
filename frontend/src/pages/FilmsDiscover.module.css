@@ -89,6 +89,14 @@
 .crewSection .heading { margin-bottom: 0; }
 .crewSection .empty { border: 1px dashed var(--rewind-line); border-radius: 12px; }
 
+@media (min-width: 821px) {
+  .popularHeading { margin-bottom: 44px; }
+  .section:nth-child(2) { padding-top: 11px; }
+  .section:nth-child(2) .heading { margin-bottom: 42px; }
+  .section:nth-child(3) { margin-top: 74px; padding-top: 11px; }
+  .section:nth-child(3) .heading { margin-bottom: 44px; }
+}
+
 .poster:focus-visible,
 .railPoster:focus-visible,
 .heading a:focus-visible,
