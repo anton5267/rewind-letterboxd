@@ -1,5 +1,13 @@
 # Rewind — докази перевірок
 
+### Desktop 200% zoom reflow proxy — route smoke and representative captures — 02.11.2026
+
+Ran the current Docker frontend with Playwright Chromium using a 1440×1800 physical screen, 720×900 CSS layout viewport, and device scale factor 2. This models the reflow/physical rendering scale expected at 200% desktop browser zoom; it is not a native mobile zoom or text-only scaling check. Across 70 locale/route combinations (35 routes in UK and EN), every navigation returned HTTP 200, attached one main landmark, rendered one H1, reported the expected `html[lang]`, had no uncaught page errors, and kept document width within 1 CSS pixel of the viewport. This is route/layout smoke evidence, not full interaction or matched-Figma acceptance.
+
+Captured representative full-page screenshots at the same model in `artifacts/visual-audit-20261102/zoom-200/`: Home (UK/EN), Films, Films Discovery, Search, Film 5, Reviews, Community/Reviewers, Lists Discovery, Journal, Help, Contact, Login, and Register. Manual review found no page-level horizontal overflow or lost primary content in the inspected captures. Live API poster fallbacks/empty content and the fixed bottom mobile rail in full-page screenshots remain expected; full-page capture can place fixed UI over scrolled content and is not evidence of a runtime overlap.
+
+Keyboard sampling sent 15 Tab presses on representative routes at the 720 CSS px viewport: 14–15 focused targets were visible within the viewport for each sampled route; no JavaScript errors. This sampling does not establish full keyboard flow, modal trap/return, or every control's accessibility. An initial generic text-clipping DOM scan was discarded because inline/flex carousel descendants report intrinsic scroll dimensions despite rendering correctly; no clipping defect was inferred from those false positives. Focused interaction tests and device-only native Share, soft keyboard, and physical-device zoom remain separate checks. Screenshots are local ignored audit artifacts, not release assets.
+
 ### Figma top-level inventory recheck — `1043:2322` — 02.11.2026
 
 Current MCP metadata confirms `1043:2322` is a separate top-level 393×802 frame named `Group 134`, not a nested component of adjacent READY Bio editor `1043:2303`. Its fresh screenshot contains only a dark rounded rectangle and a horizontal line, with no labels, controls, or product content ([local audit capture](../../artifacts/visual-audit-20261102/unclassified-1043-2322.png)). It remains unmarked, has no mapped route, and is retained as an unclassified source artifact rather than treated as a screen requirement. No code or API change; no runtime/build verification applies.
