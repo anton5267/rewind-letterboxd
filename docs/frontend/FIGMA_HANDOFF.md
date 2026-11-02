@@ -2385,3 +2385,7 @@ The open mobile recheck for guest Home `1411:3473` / desktop `1413:6471` is now 
 ### Popular Reviews phone populated-state follow-up — 02.11.2026
 
 `1480:9087` is still hidden and its screenshot returns1×1. An API-mocked phone runtime scenario now verifies populated reviewers/reviews, image fallback, overflow, keyboard focus, and More navigation to the existing localized Reviewers route on UK320/EN393. Desktop geometry and the phone scenario pass2/2 on Docker. Runtime-only desktop/phone captures and details: [release evidence](../operations/RELEASE_EVIDENCE.md#popular-reviews-phone-populated-runtime-and-navigation--02112026). This does not establish matched-source phone geometry or live API content parity.
+
+### Search Journal populated response behavior — 02.11.2026
+
+Desktop `1480:7549` and phone `1480:8889` remain the same Search Journal category route. A fresh desktop source screenshot and runtime comparison now align the first card at x116/y377 (runtime width386.66px vs source385.64px). Isolated test-only articles pass on UK393/EN1024/EN1440 with long title/excerpt, null cover fallback, localized slug link, no overflow and no page errors. The real API currently has0 published articles; fixture content is not product data. Phone source remains1×1, so matched-source phone geometry stays open. [Evidence](../operations/RELEASE_EVIDENCE.md#search-journal-populated-result-runtime--02112026).

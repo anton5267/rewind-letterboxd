@@ -136,6 +136,8 @@
   .page:has(.noMatches) .results { padding-top: 16px; }
   .page:has(.noMatches) .noMatches h2 { position: relative; left: 50%; width: min(700px, calc(100vw - 32px)); transform: translateX(-50%); }
   .page:has(.noMatches) .noMatches > p:not(.sectionKicker) { width: min(547px, calc(100vw - 32px)); }
+  /* READY desktop Journal cards start four pixels left of the shared results rail. */
+  .articleGrid { position: relative; left: -4px; }
   .resultNav { position: absolute; width: 1px; height: 1px; overflow: hidden; margin: -1px; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
   .resultNav:focus-within { z-index: 3; right: 0; left: 0; width: auto; height: auto; overflow-x: auto; margin: 0; border: 1px solid var(--rewind-line); padding: 8px; background: var(--rewind-surface); clip: auto; clip-path: none; white-space: normal; }
   .categoryPicker { position: relative; display: flex; width: max-content; max-width: 40%; min-width: 160px; height: 44px; flex: 0 0 auto; align-items: center; padding-right: 10px; color: #7e7e7e; font-size: 20px; line-height: 1.12; white-space: nowrap; }
