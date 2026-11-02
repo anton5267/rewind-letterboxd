@@ -58,14 +58,36 @@ test("popular reviews follows the measured desktop Figma rail and card geometry"
   expect(posterBox?.height).toBe(262);
 });
 
-test("popular reviews remains within the phone viewport", async ({ page }) => {
+test("popular reviews phone content, fallbacks, focus and More navigation work in UK and EN", async ({ page }) => {
   await page.route("**/api/users/me", route => route.fulfill({ json: { id: 982400, username: "review-reader", role: "USER" } }));
   await page.route("**/api/auth/csrf", route => route.fulfill({ json: { token: "popular-reviews-csrf" } }));
-  await page.route("**/api/users/popular-reviewers**", route => route.fulfill({ json: [] }));
-  await page.route("**/api/reviews/popular**", route => route.fulfill({ json: { content: [], totalPages: 0, totalElements: 0, number: 0, size: 6 } }));
+  await page.route("**/api/users/popular-reviewers**", route => route.fulfill({ json: Array.from({ length: 6 }, (_, index) => ({ id: 982500 + index, username: `reviewer-${index}`, displayName: `Reviewer ${index}`, avatarUrl: null, likes: 12 })) }));
+  await page.route("**/api/reviews/popular**", route => route.fulfill({ json: { content: reviews, totalPages: 1, totalElements: reviews.length, number: 0, size: 4 } }));
   await page.route("**/api/*/unread-count", route => route.fulfill({ json: { count: 0 } }));
-  await page.setViewportSize({ width: 393, height: 844 });
-  await page.goto("/uk/reviews");
-  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(393);
+
+  for (const scenario of [
+    { lang: "uk", width: 320, moreName: "Більше Популярні рецензенти", destination: "/uk/community/reviewers", destinationHeading: "Популярні рецензенти" },
+    { lang: "en", width: 393, moreName: "More Popular reviewers", destination: "/en/community/reviewers", destinationHeading: "Popular reviewers" },
+  ]) {
+    await page.setViewportSize({ width: scenario.width, height: 844 });
+    await page.goto(`/${scenario.lang}/reviews`);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+
+    const reviewersGroup = page.getByRole("group", { name: scenario.lang === "uk" ? "Популярні рецензенти" : "Popular reviewers" });
+    await expect(reviewersGroup.getByRole("link")).toHaveCount(6);
+    const reviewsRegion = page.getByRole("region", { name: scenario.lang === "uk" ? "Популярні огляди" : "Popular reviews" }).last();
+    const cards = reviewsRegion.locator("article");
+    await expect(cards).toHaveCount(4);
+    await expect(cards.first().getByRole("link", { name: /reviewer-0|CineMindset/i })).toBeVisible();
+    await expect(cards.first().locator("a").first().locator("span")).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(scenario.width);
+
+    const more = page.getByRole("link", { name: scenario.moreName, exact: true });
+    await more.focus();
+    await expect(more).toBeFocused();
+    await expect(more).toHaveCSS("outline-style", "solid");
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(scenario.destination);
+    await expect(page.getByRole("heading", { level: 1, name: scenario.destinationHeading })).toBeVisible();
+  }
 });

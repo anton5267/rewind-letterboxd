@@ -19,3 +19,5 @@
 - Деякі READY джерела приховані або мають screenshot1×1; приклади Dune, Journal, actor phone та окремих постерів відсутні в реальному API. Матриця позначає це як source/data limitation, не як підтверджену pixel parity.
 
 Frame-level open/pending статуси зіставлені з пізнішими доказами. Далі — закривати лише конкретні supported UI states, отримати відповідь на надісланий Figma source-запит, виконати matched-source review після отримання PNG та провести device acceptance для OS Share/keyboard/zoom. Погоджені API/data gaps лишаються документованими. Дипломні артефакти й локальний `AGENTS.md` залишаються поза комітами.
+
+02.11 follow-up: Popular Reviews `1480:9087` phone runtime now covers populated cards and reviewer navigation in UK320/EN393. Desktop geometry + populated phone behavior passed2/2 on Docker; paired runtime captures and the 1×1 Figma source limitation are recorded in [release evidence](../operations/RELEASE_EVIDENCE.md#popular-reviews-phone-populated-runtime-and-navigation--02112026). No API or production content changed.

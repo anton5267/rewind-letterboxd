@@ -1,5 +1,11 @@
 # Rewind — докази перевірок
 
+### Popular Reviews phone populated runtime and navigation — 02.11.2026
+
+READY `1480:9087` `/uk/reviews` був відкритий лише в порожньому phone стані в попередньому тесті. Розширений API-mocked Playwright scenario тепер перевіряє UK 320px та EN 393px: шість reviewer avatars, чотири review cards, null-poster fallback, відсутність горизонтального overflow, видимий клавіатурний focus на More і Enter-перехід до локалізованого `/community/reviewers`. Desktop geometry test та phone populated test пройшли2/2 на актуальному Docker; окремо знято runtime screenshots: [desktop EN 1440](../../artifacts/visual-audit-20261102/popular-reviews-runtime/desktop-en-1440.png), [phone UK 393](../../artifacts/visual-audit-20261102/popular-reviews-runtime/mobile-uk-393.png). Обидва показують чотири API-shaped cards із локальними poster fallbacks, без переповнення viewport.
+
+Figma phone root `1480:9087` досі повертає1×1 source screenshot, тому цей доказ є runtime behavior/composition only, не matched-source visual acceptance. Fixture copy/data є ізольованим і не потрапляє у production. Backend/API не змінювалися.
+
 ### Figma READY source export request — 02.11.2026
 
 Fresh Figma MCP screenshot calls confirm Admin Movies `1260:4840` renders1×1 against original1440×3128; Search Journal phone `1480:8889` renders1×1 against393×1150; Review phone `1480:9249` renders1×1 against393×932. Fresh `figma_download_assets` calls for all three return a149-byte whole-node export. The current Figma browser file was opened from the requested link and Admin Movies reselected; a comment was posted asking the designer to unhide these READY nodes or provide full-size PNG exports. This is an external dependency, not an implementation defect. Existing Admin Movies and Search/Review runtime checks remain behavioral/geometry evidence only where separately documented; they do not establish matched-source acceptance for these unreadable frames. Follow up when the designer responds, fetch the updated images, and review only these frames against existing runtime captures.
