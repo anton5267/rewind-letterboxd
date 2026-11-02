@@ -59,6 +59,7 @@
 .pagination button:disabled { cursor: not-allowed; opacity: .4; }
 .pagination button[aria-current="page"] { color: #d4a85f; text-decoration: underline; text-underline-offset: 4px; }
 .visuallyHidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+.mobilePageControl { display: none; }
 
 @media (min-width: 1400px) {
   .shell { position: relative; display: flow-root; }
@@ -145,6 +146,25 @@
   .card h2 { display: none; }
   .card p { position: absolute; width: 1px; height: 1px; overflow: hidden; margin: -1px; padding: 0; clip: rect(0 0 0 0); white-space: nowrap; }
   .resultsBar { position: absolute; width: 1px; height: 1px; overflow: hidden; margin: -1px; padding: 0; border: 0; clip: rect(0 0 0 0); white-space: nowrap; }
+  .pagination { justify-content: space-between; gap: 8px; }
+  .pagination > .pageNumber,
+  .pagination > span:not(.visuallyHidden) { display: none; }
+  .pagination .mobilePageControl {
+    display: inline-flex;
+    min-height: 32px;
+    align-items: center;
+    gap: 5px;
+    border: 0;
+    border-radius: 18px;
+    padding: 0 12px;
+    background: #282828;
+    color: #fff;
+    font-size: 11px;
+    line-height: 1;
+    text-decoration: none;
+  }
+  .pagination .mobilePageControl:disabled { opacity: .55; }
+  .pagination .mobilePageControl:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 2px; }
 }
 
 @media (max-width: 340px) {

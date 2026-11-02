@@ -274,16 +274,31 @@ export default function Search() {
           })}
           </div>
           {results.totalPages > 1 && <nav className={styles.pagination} aria-label={t("pagination")} aria-busy={loading}>
+            <button
+              className={styles.mobilePageControl}
+              type="button"
+              disabled={loading || results.number === 0}
+              aria-label={t("previous")}
+              onClick={() => turnPage(results.number - 1)}
+            ><span aria-hidden="true">‹</span>{t("previous")}</button>
             {getVisiblePages(results.number, results.totalPages).map((item, index) => item.type === "ellipsis"
               ? <span key={`ellipsis-${index}`} aria-hidden="true">…</span>
               : <button
                 key={item.value}
+                className={styles.pageNumber}
                 type="button"
                 aria-label={`${t("page")} ${item.value + 1}`}
                 aria-current={item.value === results.number ? "page" : undefined}
                 disabled={loading}
                 onClick={() => turnPage(item.value)}
               >{item.value + 1}</button>)}
+            <button
+              className={styles.mobilePageControl}
+              type="button"
+              disabled={loading || results.number + 1 >= results.totalPages}
+              aria-label={t("next")}
+              onClick={() => turnPage(results.number + 1)}
+            >{t("next")}<span aria-hidden="true">›</span></button>
             <span className={styles.visuallyHidden} role="status">{t("page")} {results.number + 1} {t("of")} {results.totalPages}</span>
           </nav>}
         </section>
