@@ -1,5 +1,9 @@
 # Rewind — Figma references
 
+## Поточні статуси та історичні позначки
+
+У цьому файлі залишено датовані checkpoints, які пояснюють дизайн-рішення й перебіг перевірок. Старе формулювання `open`, `pending` або `full regression pending` не є актуальним саме по собі: звіряй його з найновішим рядком frame у [матриці кандидатів](FIGMA_SCREEN_CANDIDATES.md) і новішим записом у [release evidence](../operations/RELEASE_EVIDENCE.md). Там окремо вказано matched-source геометрію, runtime-поведінку, погоджені винятки, приховані/непридатні source screenshots та API/data gaps. Ця примітка не змінює історичний доказ і не перетворює build на візуальне погодження.
+
 ### Movie ActionSheet current READY parity follow-up — 02.11.2026
 
 For `736:1107` → authenticated `/films/:id` phone state, the source screenshot/context was fetched again. The mobile action card now starts at y373.7 (source y373), height368.3 (source369); the 56px “Add to lists” row is compact until opened, then displays the existing API-backed list picker. Live list addition, Review composer focus, Share payload, Done/Escape focus return and no-overflow checks passed. UK/EN widths320–1440 passed14/14. Desktop’s always-visible selector is unchanged. Dune is absent from the live API, so movie5 validates the actions and layout but not sample artwork/content. [Current Figma/runtime pair and evidence](../operations/RELEASE_EVIDENCE.md#movie-actionsheet-compact-list-entry-matches-ready-sheet--02112026).

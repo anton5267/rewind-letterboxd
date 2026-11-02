@@ -889,7 +889,8 @@
   .page:has(.memberHero) { padding-top: 0; }
   .page:has(.memberHero) .leadingSection { margin-top: 0; }
   .page:has(.memberHero) .leadingSection .sectionHeading { margin-bottom: 18px; }
-  .page:has(.memberHero) .leadingSection .sectionHeading h2 { font-size: 14px; }
+  .page:has(.memberHero) .leadingSection .sectionHeading h2 { font-size: 16px; line-height: 1.12; }
+  .page:has(.memberHero) .sectionHeading h2 { font-size: 16px; line-height: 1.12; }
   .page:has(.memberHero) .leadingSection .sectionHeading a { font-size: 12px; }
   .page:has(.memberHero) .leadingSection .movieRow { overflow: hidden; margin-inline: 0; padding: 0; }
   .page:has(.memberHero) .leadingSection .movieCard:nth-child(n + 5) { display: none; }
@@ -1321,7 +1322,7 @@
     border-top: 1px solid #3d3d3d;
   }
 
-  .page:has(.memberHero) .section:not(.leadingSection) { margin-top: 80px; }
+  .page:has(.memberHero) .section:not(.leadingSection) { margin-top: 61px; }
   .page:has(.memberHero) .sectionHeading {
     box-sizing: border-box;
     min-height: 44px;
@@ -1355,7 +1356,7 @@
   .page:has(.memberHero) .grid {
     grid-template-columns: 1fr;
     row-gap: 85px;
-    margin-top: 85px;
+    margin-top: 65px;
   }
 
   .page:has(.memberHero) .grid > :nth-child(n + 3),

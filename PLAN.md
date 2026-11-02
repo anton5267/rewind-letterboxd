@@ -1,5 +1,29 @@
 # Rewind — повний редизайн за актуальним Figma
 
+## Актуальний план завершення — 02.11.2026
+
+Це поточний порядок робіт; нижче збережені попередні checkpoints як історія. Останній спільний release checkpoint — commit `6efb619` у `master`, CI run `41402451191` зелений. Повний інвентар 268 кандидатів і повна регресія вже виконані; повторювати їх без зміни відповідного коду/джерела не потрібно. Member Home follow-up уже пройшов Docker web rebuild та цільовий Docker E2E 1/1; окремий логічний commit/push і CI ще належить виконати.
+
+### Черга за сімействами
+
+1. **Завершити Member Home follow-up.** Поточна пара READY `473:492`/`1327:3210` повторно отримана з Figma. Source-Vite та Docker перевірили UK/EN, 320/393/600/720/768/1024/1440 без overflow, живі Home API feeds, контрольований Journal 503 → Retry та повернення фокуса; E2E пройшов1/1 на обох origins. Desktop основні anchors1049/1487/1927/2300 відповідають джерелу; document5063px проти5020px. Phone document2465px проти2463px. API контент і порожній Journal відрізняються від Figma sample, нижні anchors не є повною pixel parity. Зміни: section heading14→16px на phone та desktop vertical rhythm. Докази: `home-member-current` у `RELEASE_EVIDENCE.md`. Наступне: diff review, scoped commit/push/CI.
+2. **Звести відкриті visual/runtime стани за сімействами, використовуючи поточні рядки матриці.** Порядок: Profile/Social → Home guest/populated/empty → Search/Films → Journal → підтримувані Admin content views → Lists/Person/інші. Для кожного рядка закрити одне з: matched-source geometry, runtime behavior без matched source, погоджений виняток, API/data gap, недоступний source/device. Не повторювати докази, які не стали застарілими.
+3. **Закрити source dependencies.** Попросити дизайнера unhide/export READY `1260:4840` Admin Movies, `1480:8889` Search Journal phone, `1480:9249` Review phone, якщо ці node IDs досі мають 1×1 raster після наступної звірки. До придатного скриншота не заявляти matched-source геометрію. Зараз доступного Figma коментаря/повідомлення інструмент немає; підготувати запит для передачі дизайнеру.
+4. **Фізичне приймання.** На Android/iOS перевірити системний Share success/cancel, клавіатуру й видимість полів/дій, та browser zoom 200%; записати модель/ОС/браузер, кроки й скриншоти/відео. Це зовнішня залежність, бо в локальному середовищі немає підключеного телефону/device farm.
+5. **Зберігати контрактні gaps.** Admin Moderation повністю лишається gap за рішенням користувача; звіти/edit, відсутні Admin/Profile поля й агрегати, curated/editorial feeds, Journal media та інше без чинного API не маскувати sample data і не реалізовувати endpoint/DTO/migration без окремого рішення.
+6. **Доставка кожного закритого блоку.** Targeted browser checks + `npm run verify:build`; backend/contract тести тільки якщо змінено backend/API. Перед фінальним push застосовна регресія, diff review, оновлення матриці/progress/evidence, лише належні файли в commit, push у `master`, зелений CI. Не включати дипломні артефакти, локальний `AGENTS.md`, secrets, references/backups; production/VPS окремо.
+
+### Що блокує повне завершення
+
+- Неотримані придатні source PNG для трьох прихованих READY frames вище.
+- Реальне device acceptance для OS Share, клавіатури та zoom 200%.
+- Частина READY прикладів використовує дані/операції, яких чинні API не підтримують; ці рядки завершуються документованими gaps, якщо не буде окремо погоджено контрактну роботу.
+- Динамічний контент API має пріоритет над Figma sample; тому для таких блоків фіксуємо геометрію/поведінку доступних областей і конкретні зсуви, а не вигадуємо заповнювачі.
+
+### Загальне правило статусу
+
+Найсвіжіший рядок `FIGMA_SCREEN_CANDIDATES.md` разом із новішим release evidence визначає поточний стан. Датовані `open`/`full regression pending` у handoff та старих планових нотатках є історичними, якщо пізніше evidence їх закрило; вони не означають, що весь маршрут досі не перевірений.
+
 Оновлено 02.11.2026. Цей план замінює попередній поетапний порядок. Основу визначають START HERE і167 READY frames/states; збережений інвентар268 кандидатів повторно не генерувати без виявленої розбіжності.
 
 **Фінальний regression checkpoint (02.11.2026):** Docker Playwright157 passed/0 failed/27 fixture-gated skips; окремий Admin wrapper пройшов Admin flow12/12 та Movies editor15/15, без skips. Сукупно всі184 suite cases пройшли. Backend isolated MySQL8.4 tmpfs:90 tests,0 failures/errors/skips. API/security/contracts/password reset/ER/cache/concurrency/backup-restore/production-config/Caddy passed. `npm run verify:build` пройшов (251 modules; технічна перевірка). Локальний Docker web перебудовано; API image залишився без змін, web/API200, health UP, DB/Redis healthy, `.env` hash та DB volume збережені. Owner List page-switch регресію виправлено й targeted Docker2/2. Деталі: [evidence](docs/operations/RELEASE_EVIDENCE.md#final-regression-after-owner-list-paging-and-actionsheet-follow-ups--02112026). Код і тести доставлені commit `8134fc7` у `master`; [CI / verify (push), run 41363110397](https://github.com/anton5267/rewind-letterboxd/actions/runs/41363110397) пройшов успішно за 1m42s. Після checkpoint виправлено хибний Share toast і race в desktop Search E2E; build та фінальний full Playwright/Admin reruns пройшли (157 + 12 + 15). Оновлений Docker web image `sha256:ca5c4aa6…`; API, `.env` і DB volume без змін. Admin Moderation `1399:3300` і решта contract/source gaps лишаються задокументованими, а не реалізованими.
