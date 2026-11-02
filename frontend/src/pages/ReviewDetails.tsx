@@ -171,7 +171,7 @@ export default function ReviewDetails() {
       <div className={styles.heroShade} aria-hidden="true" />
       <div className={styles.heroInner}>
         <Link className={styles.back} to={path(`/films/${review.movie.id}`)} aria-label={t("backToMovie")}>←</Link>
-        {isAuth && <button className={styles.more} type="button" aria-haspopup="dialog" aria-controls={ratingSheetOpen ? "rating-sheet-dialog" : undefined} aria-expanded={ratingSheetOpen} aria-label={t("moreOptions")} onClick={() => setRatingSheetOpen(true)}>⋯</button>}
+        {isAuth && <button className={styles.more} type="button" aria-haspopup="dialog" aria-controls={ratingSheetOpen ? "rating-sheet-dialog" : undefined} aria-expanded={ratingSheetOpen} aria-label={t("moreOptions")} onClick={event => { event.currentTarget.focus(); setRatingSheetOpen(true); }}>⋯</button>}
         <div className={styles.filmBlock}>
           <div className={styles.posterColumn}>
             <Link className={styles.poster} to={path(`/films/${review.movie.id}`)} aria-label={`${t("poster")} ${movieTitle}`}>
@@ -206,7 +206,7 @@ export default function ReviewDetails() {
             </div>
             <div className={styles.reviewMeta}>
               <span className={styles.rateLabel}>{t("rate")}</span>
-              {isAuth ? <button className={styles.rateTrigger} type="button" aria-label={`${t("rateFilm")} (${review.rating ?? 0}/5)`} aria-haspopup="dialog" aria-controls={ratingSheetOpen ? "rating-sheet-dialog" : undefined} aria-expanded={ratingSheetOpen} onClick={() => setRatingSheetOpen(true)}>
+              {isAuth ? <button className={styles.rateTrigger} type="button" aria-label={`${t("rateFilm")} (${review.rating ?? 0}/5)`} aria-haspopup="dialog" aria-controls={ratingSheetOpen ? "rating-sheet-dialog" : undefined} aria-expanded={ratingSheetOpen} onClick={event => { event.currentTarget.focus(); setRatingSheetOpen(true); }}>
                 <span className={styles.stars} aria-hidden="true">{[1, 2, 3, 4, 5].map(star => <img src={`/images/review-star-${review.rating != null && star <= review.rating ? "active" : "empty"}.svg`} alt="" key={star} />)}</span>
               </button> : <div className={styles.stars} role="img" aria-label={`${t("rating")}: ${review.rating ?? 0}/5`}>
                 {[1, 2, 3, 4, 5].map(star => <img src={`/images/review-star-${review.rating != null && star <= review.rating ? "active" : "empty"}.svg`} alt="" aria-hidden="true" key={star} />)}

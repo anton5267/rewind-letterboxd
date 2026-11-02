@@ -4,7 +4,9 @@ import { resolve } from "node:path";
 
 test("mobile touch flow for Movie ActionSheet in Android and iOS browser emulation", async ({ page }, testInfo) => {
   const mutations: string[] = [];
-  await page.route("**/api/**", async route => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", error => pageErrors.push(error.message));
+  await page.route(url => url.pathname.startsWith("/api/"), async route => {
     const request = route.request();
     const { pathname } = new URL(request.url());
     if (pathname === "/api/users/me") return route.fulfill({ json: { id: 99001, username: "mobile-reader", role: "USER" } });
@@ -72,12 +74,14 @@ test("mobile touch flow for Movie ActionSheet in Android and iOS browser emulati
   await expect.poll(() => page.evaluate(() => (window as Window & { __sharedUrl?: string }).__sharedUrl)).toBe(page.url());
   await dialog.getByRole("button", { name: "Готово", exact: true }).tap();
   await expect(dialog).toBeHidden();
+  await expect(trigger).toBeFocused();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(394);
+  expect(pageErrors).toEqual([]);
 });
 
 test("mobile touch flow for Review RatingSheet in Android and iOS browser emulation", async ({ page }, testInfo) => {
   const mutations: string[] = [];
-  await page.route("**/api/**", async route => {
+  await page.route(url => url.pathname.startsWith("/api/"), async route => {
     const request = route.request();
     const { pathname } = new URL(request.url());
     if (pathname === "/api/users/me") return route.fulfill({ json: { id: 99001, username: "mobile-reader", role: "USER" } });
@@ -123,6 +127,7 @@ test("mobile touch flow for Review RatingSheet in Android and iOS browser emulat
   expect(mutations).toEqual(["like-review", "rate-movie"]);
   await dialog.getByRole("button", { name: "Готово", exact: true }).tap();
   await expect(dialog).toBeHidden();
+  await expect(more).toBeFocused();
   await expect(more).toHaveAttribute("aria-expanded", "false");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(394);
 });

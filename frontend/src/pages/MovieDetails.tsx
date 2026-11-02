@@ -484,7 +484,7 @@ export default function MovieDetails() {
           <div className={styles.heroToolbar}>
             <Link className={styles.heroToolbarButton} to={path("/films")} aria-label={t("films")}><img src="/images/help-icon-back.png" width={25} height={25} alt="" aria-hidden="true" /></Link>
             <span aria-hidden="true">{movieTitle}</span>
-            {isAuth ? <button className={styles.heroToolbarButton} type="button" aria-haspopup="dialog" aria-controls={mobileActionOpen ? "movie-action-sheet" : undefined} aria-expanded={mobileActionOpen} onClick={() => setMobileActionOpen(true)} aria-label={t("myActions")}><img src="/images/movie-more.png" width={25} height={25} alt="" aria-hidden="true" /></button> : <Link className={styles.heroToolbarButton} to={path("/search")} aria-label={t("globalSearch")}>⌕</Link>}
+            {isAuth ? <button className={styles.heroToolbarButton} type="button" aria-haspopup="dialog" aria-controls={mobileActionOpen ? "movie-action-sheet" : undefined} aria-expanded={mobileActionOpen} onClick={event => { event.currentTarget.focus(); setMobileActionOpen(true); }} aria-label={t("myActions")}><img src="/images/movie-more.png" width={25} height={25} alt="" aria-hidden="true" /></button> : <Link className={styles.heroToolbarButton} to={path("/search")} aria-label={t("globalSearch")}>⌕</Link>}
           </div>
           <div className={styles.heroGrid}>
             <div className={styles.posterFrame}>
