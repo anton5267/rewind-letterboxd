@@ -1,5 +1,9 @@
 # Rewind — докази перевірок
 
+### Figma top-level inventory recheck — `1043:2322` — 02.11.2026
+
+Current MCP metadata confirms `1043:2322` is a separate top-level 393×802 frame named `Group 134`, not a nested component of adjacent READY Bio editor `1043:2303`. Its fresh screenshot contains only a dark rounded rectangle and a horizontal line, with no labels, controls, or product content ([local audit capture](../../artifacts/visual-audit-20261102/unclassified-1043-2322.png)). It remains unmarked, has no mapped route, and is retained as an unclassified source artifact rather than treated as a screen requirement. No code or API change; no runtime/build verification applies.
+
 ### Actor expanded READY state — matched starring grid — 02.11.2026
 
 Fresh MCP screenshot for READY/STATE `551:705` rendered at565×1600 from its1440×4082 natural frame; the 24px phone status-strip offset is not applicable to this desktop frame. At1440px the runtime hero ends at y907, the filmography section begins x120/y907 at1200px, and the first starring poster begins x120/y1092 at174.16×260.22. The downscaled Figma screenshot gives the same first-poster anchor (approximately x120/y1092, 174×260 after normalizing scale). Source and runtime: [Figma `551:705`](../../artifacts/visual-audit-20261102/actor-expanded/figma-551-705.png) / [Docker runtime, UK1440](../../artifacts/visual-audit-20261102/actor-expanded/runtime-551-705-1440-uk.png).
