@@ -2389,3 +2389,7 @@ The open mobile recheck for guest Home `1411:3473` / desktop `1413:6471` is now 
 ### Search Journal populated response behavior — 02.11.2026
 
 Desktop `1480:7549` and phone `1480:8889` remain the same Search Journal category route. A fresh desktop source screenshot and runtime comparison now align the first card at x116/y377 (runtime width386.66px vs source385.64px). Isolated test-only articles pass on UK393/EN1024/EN1440 with long title/excerpt, null cover fallback, localized slug link, no overflow and no page errors. The real API currently has0 published articles; fixture content is not product data. Phone source remains1×1, so matched-source phone geometry stays open. [Evidence](../operations/RELEASE_EVIDENCE.md#search-journal-populated-result-runtime--02112026).
+
+## Current Admin Comments contract correction — 02.11.2026
+
+Older canvas/source notes above that say the DELETE control was not exposed are historical and superseded by the existing Admin Comments implementation and disposable cancel/confirm/focus receipt. The current controller supports list, hide, unhide, and `DELETE /api/admin/comments/{id}`; the UI exposes the delete confirmation flow. Figma Edit Comment, reports/history/resolution, likes/replies, and Admin Block remain unsupported gaps. See the current [candidate matrix](FIGMA_SCREEN_CANDIDATES.md) and [runtime evidence](../operations/RELEASE_EVIDENCE.md#admin-comment-delete-cancelconfirm-focus-return-and-fixture-cleanup--27102026).
