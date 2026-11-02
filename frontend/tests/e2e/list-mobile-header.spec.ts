@@ -135,7 +135,7 @@ for (const locale of ["uk", "en"] as const) {
       await dialog.getByRole("link", { name: "#Science Fiction", exact: true }).click();
       await expect(page).toHaveURL(new RegExp(`/${locale}/lists/discover\\?feed=recent&tag=science-fiction$`));
       await expectUnlocked();
-      await assertOrdinaryHeader(page.getByRole("banner"), locale, 393);
+      await assertTaggedListsHeader(page.getByRole("banner"), page.getByRole("main"), locale);
       expect(statusRequests).toBe(2);
       expect(controlledMutations).toEqual(Array(2).fill(`POST /api/lists/${listId}/likes`));
       expect(api.mutations).toEqual([]);
@@ -170,6 +170,17 @@ async function assertOrdinaryHeader(header: Locator, locale: "uk" | "en", width:
   const menu = header.getByRole("button", { name: locale === "uk" ? "Меню" : "Menu", exact: true });
   if (width <= 767) await expect(menu).toBeVisible();
   else await expect(menu).toBeHidden();
+}
+
+async function assertTaggedListsHeader(header: Locator, main: Locator, locale: "uk" | "en") {
+  await expect(header.getByRole("link", { name: "REWIND", exact: true })).toBeHidden();
+  await expect(header.getByRole("button", { name: locale === "uk" ? "Меню" : "Menu", exact: true })).toBeHidden();
+  const toolbarLinks = main.locator('[class*="taggedToolbar"] a');
+  await expect(toolbarLinks).toHaveCount(3);
+  await expect(toolbarLinks.nth(0)).toHaveAttribute("href", `/${locale}/lists/discover?feed=recent`);
+  await expect(toolbarLinks.nth(1)).toHaveAttribute("href", `/${locale}/search`);
+  await expect(toolbarLinks.nth(2)).toHaveAttribute("href", `/${locale}/lists/discover?feed=recent`);
+  await assertBottomLinks(header, locale);
 }
 
 async function assertListFeedHeader(header: Locator, locale: "uk" | "en") {
