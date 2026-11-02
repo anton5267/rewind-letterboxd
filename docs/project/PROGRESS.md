@@ -1,6 +1,6 @@
 # Rewind — поточний прогрес
 
-Оновлено 02.11.2026. Основний редизайн, попередня регресія та delivery завершені; поточний `master` — `6efb619`, CI run `41402451191` зелений. Ведеться scoped follow-up для актуальної READY-пари Member Home; він ще не входить у попередній commit і потребує Docker web rebuild, цільового Docker браузерного прогону та окремої доставки. Пріоритети й зовнішні залежності зведено у [поточному плані](../../PLAN.md#актуальний-план-завершення--02112026). Детальні докази — у [release evidence](../operations/RELEASE_EVIDENCE.md), frame-рівневі статуси й відмінності — у [матриці Figma](../frontend/FIGMA_SCREEN_CANDIDATES.md).
+Оновлено 02.11.2026. Основний редизайн і scoped Member Home follow-up доставлені в `master`, поточний commit `7dd5cce`; CI run `41406214282` зелений. План далі — актуальні open READY рядки, придатні source exports і фізичне device acceptance; підтверджені API/data gaps лишаються окремо. Пріоритети й зовнішні залежності зведено у [поточному плані](../../PLAN.md#актуальний-план-завершення--02112026). Детальні докази — у [release evidence](../operations/RELEASE_EVIDENCE.md), frame-рівневі статуси й відмінності — у [матриці Figma](../frontend/FIGMA_SCREEN_CANDIDATES.md).
 
 ## Останній follow-up
 
