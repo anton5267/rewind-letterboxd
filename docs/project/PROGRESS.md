@@ -1,6 +1,6 @@
 # Rewind — поточний прогрес
 
-Оновлено 02.11.2026. Основний редизайн, Member Home і Search no-match follow-ups доставлені в `master`, поточний commit `24ea8d2`; CI run `41407982157` зелений. План далі — актуальні open READY рядки, придатні source exports і фізичне device acceptance; підтверджені API/data gaps лишаються окремо. Пріоритети й зовнішні залежності зведено у [поточному плані](../../PLAN.md#актуальний-план-завершення--02112026). Детальні докази — у [release evidence](../operations/RELEASE_EVIDENCE.md), frame-рівневі статуси й відмінності — у [матриці Figma](../frontend/FIGMA_SCREEN_CANDIDATES.md).
+Оновлено 02.11.2026. Основний редизайн, Member Home і Search no-match follow-ups доставлені в `master`, поточний commit `47b70a2`; CI run `41408245386` зелений. На поточному Docker runtime додатково повторно пройшли Profile/Social, Home guest, Search і Films targeted E2E (32/32). Цей прогін підтверджує поведінку й адаптивні стани, але не є новим matched-source pixel review. План далі — Journal і API-підтримані Admin UI, актуальні open READY рядки, придатні source exports і фізичне device acceptance; підтверджені API/data gaps лишаються окремо. Пріоритети й зовнішні залежності зведено у [поточному плані](../../PLAN.md#актуальний-план-завершення--02112026). Детальні докази — у [release evidence](../operations/RELEASE_EVIDENCE.md), frame-рівневі статуси й відмінності — у [матриці Figma](../frontend/FIGMA_SCREEN_CANDIDATES.md).
 
 ## Останній follow-up
 

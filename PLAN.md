@@ -2,7 +2,7 @@
 
 ## Актуальний план завершення — 02.11.2026
 
-Це поточний порядок робіт; нижче збережені попередні checkpoints як історія. Останній спільний checkpoint — commit `24ea8d2` у `master`, CI run `41407982157` зелений. Повний інвентар 268 кандидатів і попередня повна регресія вже виконані; повторювати їх без зміни відповідного коду/джерела не потрібно. Member Home follow-up і Search no-match follow-up пройшли цільову перевірку, Docker web rebuild, scoped commit/push та зелений CI. Далі — actual open UI states, source/device залежності й погоджені gaps.
+Це поточний порядок робіт; нижче збережені попередні checkpoints як історія. Поточний спільний checkpoint — commit `47b70a2` у `master`, CI run `41408245386` зелений. Повний інвентар 268 кандидатів і попередня повна регресія вже виконані; повторювати їх без зміни відповідного коду/джерела не потрібно. Member Home follow-up і Search no-match follow-up пройшли цільову перевірку, Docker web rebuild, scoped commit/push та зелений CI. Після цього на поточному Docker runtime повторно пройшли Profile/Social, Home guest, Search і Films targeted E2E (32 сценарії); це поведінкове підтвердження, не нове pixel acceptance. Далі — Journal і API-підтримані Admin UI, source/device залежності й погоджені gaps.
 
 ### Черга за сімействами
 
