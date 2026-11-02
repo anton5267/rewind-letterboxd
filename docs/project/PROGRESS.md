@@ -4,6 +4,8 @@
 
 02.11 ПК-емуляцію повторно запущено на актуальному Docker: Pixel 7/Chromium і iPhone 13/WebKit — 4/4 touch сценарії. Це підтверджує браузерну поведінку й фокус, але не native Share sheet, системну клавіатуру або справжній zoom 200%; ці перевірки чекають на фізичний пристрій.
 
+Додано populated Journal Search до mobile Playwright профілів: Android Chrome та iOS WebKit разом пройшли 10/10, зокрема UK393; EN1024/1440 перевірено в обох браузерних рушіях. API-відповідь ізольована тестовими статтями. Це runtime evidence, а не matched-source геометрія: Figma phone `1480:8889` досі повертає1×1.
+
 ## Останній follow-up
 
 - Member Home READY `473:492`/`1327:3210` повторно звірено з актуальними Figma зображеннями. Source Vite і Docker пройшли1/1: API-backed Home, контрольований Journal503→Retry і фокус, UK/EN, ширини320–1440 без overflow; desktop anchors1049/1487/1927/2300 збігаються, повна довжина та mobile content мають невеликі/API-зумовлені відмінності. Mobile section titles виправлено до16px; desktop vertical rhythm стиснено. `npm run verify:build` і Docker production build пройшли технічно. Новий Docker web `sha256:c9c9a24a…`; API, `.env` та DB volume без змін. [Evidence](../operations/RELEASE_EVIDENCE.md#member-home-current-ready-pair-runtime-and-recovery--02112026).
