@@ -1,4 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
+import { mkdirSync } from "node:fs";
+import path from "node:path";
 
 const movies = Array.from({ length: 12 }, (_, index) => ({
   id: 985100 + index,
@@ -27,7 +29,7 @@ async function mockList(page: Page) {
   });
 }
 
-test("public list detail follows the raw desktop poster grid", async ({ page }) => {
+test("public list detail follows the raw desktop poster grid", async ({ page }, testInfo) => {
   await mockList(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/en/lists/public/985000");
@@ -46,9 +48,14 @@ test("public list detail follows the raw desktop poster grid", async ({ page }) 
   expect(first?.y).toBeCloseTo(1038, 0);
   expect(first?.width).toBeCloseTo(174, 0);
   expect(first?.height).toBeCloseTo(260, 0);
+
+  const captureDir = path.resolve(process.cwd(), "../artifacts/visual-audit-20261102/public-list-detail-runtime");
+  mkdirSync(captureDir, { recursive: true });
+  const engine = testInfo.project.name.startsWith("iPhone") ? "ios-webkit" : "android-chromium";
+  await page.screenshot({ path: path.join(captureDir, `${engine}-en-1440.png`), fullPage: true });
 });
 
-test("public list detail follows the raw phone four-poster rows", async ({ page }) => {
+test("public list detail follows phone rows and its information sheet works with touch", async ({ page }, testInfo) => {
   await mockList(page);
   await page.setViewportSize({ width: 393, height: 844 });
   await page.goto("/uk/lists/public/985000");
@@ -65,4 +72,19 @@ test("public list detail follows the raw phone four-poster rows", async ({ page 
   expect(first?.width).toBeCloseTo(79, 0);
   expect(first?.height).toBeCloseTo(116, 0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(393);
+
+  const captureDir = path.resolve(process.cwd(), "../artifacts/visual-audit-20261102/public-list-detail-runtime");
+  mkdirSync(captureDir, { recursive: true });
+  const engine = testInfo.project.name.startsWith("iPhone") ? "ios-webkit" : "android-chromium";
+  await page.screenshot({ path: path.join(captureDir, `${engine}-uk-393.png`), fullPage: true });
+
+  const more = page.locator('button[aria-haspopup="dialog"]');
+  await more.tap();
+  const dialog = page.getByRole("dialog", { name: "Christopher Nolan Best Films" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText(/554/)).toBeVisible();
+  await expect(dialog.getByRole("link", { name: "Science Fiction" })).toBeVisible();
+  await dialog.getByRole("button", { name: "Готово" }).tap();
+  await expect(dialog).toBeHidden();
+  await expect(more).toBeFocused();
 });

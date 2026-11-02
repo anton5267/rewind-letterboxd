@@ -164,7 +164,7 @@ export default function PublicList() {
       <div className={styles.mobileToolbar}>
         <Link className={styles.mobileBack} to={path("/lists/discover")} aria-label={t("lists")}><img src="/images/help-icon-back.png" width={25} height={25} alt="" aria-hidden="true" /></Link>
         <span>{t("publicLists")}</span>
-        <button type="button" className={styles.mobileMore} aria-label={t("listInformation")} aria-haspopup="dialog" aria-expanded={infoOpen} aria-controls="public-list-information" onClick={() => setInfoOpen(true)}><img src="/images/movie-more.png" width={25} height={25} alt="" aria-hidden="true" /></button>
+        <button type="button" className={styles.mobileMore} aria-label={t("listInformation")} aria-haspopup="dialog" aria-expanded={infoOpen} aria-controls="public-list-information" onClick={event => { event.currentTarget.focus(); setInfoOpen(true); }}><img src="/images/movie-more.png" width={25} height={25} alt="" aria-hidden="true" /></button>
       </div>
       <div className={styles.heroInner}>
         <p className={styles.eyebrow}>{t("listEyebrow")}</p>
