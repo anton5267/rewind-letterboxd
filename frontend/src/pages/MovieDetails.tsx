@@ -430,10 +430,9 @@ export default function MovieDetails() {
     try {
       if (typeof navigator.share === "function") {
         await navigator.share({ title: editorialText(movie.title, t("untitledFilm")), url: window.location.href });
-        setMessage(t("saved"));
       } else if (navigator.clipboard) {
         await navigator.clipboard.writeText(window.location.href);
-        setMessage(t("saved"));
+        setMessage(t("linkCopied"));
       }
     } catch {
       // A cancelled native share is not an application error.

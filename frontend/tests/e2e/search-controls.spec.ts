@@ -87,11 +87,14 @@ for (const width of [393, 1440]) {
     expect(new URL(page.url()).searchParams.has("year")).toBe(false);
     await expect(year).toBeFocused();
 
-    await year.fill("2000");
     const validRequest = page.waitForRequest(request => {
       const url = new URL(request.url());
       return url.pathname === "/api/movies/search" && url.searchParams.get("year") === "2000";
     });
+    // On wide desktop the filter form applies valid changes immediately; on
+    // phone the query form submits them. Start observing before changing year
+    // so both paths are covered without racing the desktop request.
+    await year.fill("2000");
     await querySubmit.click();
     const requestUrl = new URL((await validRequest).url());
     expect(requestUrl.searchParams.get("q")).toBe("cross-form-year-check");

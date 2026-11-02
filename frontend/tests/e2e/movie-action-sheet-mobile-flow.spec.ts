@@ -153,6 +153,29 @@ test("mobile Movie ActionSheet real list, review, share and close actions at 393
     });
     await dialog.getByRole("button", { name: "Поділитися", exact: true }).click();
     await expect.poll(() => page.evaluate(() => (window as Window & { __actionSheetSharePayload?: ShareData }).__actionSheetSharePayload?.url)).toBe(page.url());
+    await expect(page.getByRole("status").filter({ hasText: "Збережено." })).toHaveCount(0);
+
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, "share", {
+        configurable: true,
+        value: async () => { throw new DOMException("Share canceled", "AbortError"); },
+      });
+    });
+    await dialog.getByRole("button", { name: "Поділитися", exact: true }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Збережено." })).toHaveCount(0);
+
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: { writeText: async (value: string) => {
+          (window as Window & { __copiedMovieUrl?: string }).__copiedMovieUrl = value;
+        } },
+      });
+    });
+    await dialog.getByRole("button", { name: "Поділитися", exact: true }).click();
+    await expect.poll(() => page.evaluate(() => (window as Window & { __copiedMovieUrl?: string }).__copiedMovieUrl)).toBe(page.url());
+    await expect(page.getByRole("status").filter({ hasText: "Посилання скопійовано." })).toBeVisible();
     await dialog.getByRole("button", { name: "Готово", exact: true }).click();
     await expect(dialog).toBeHidden();
     await expect(trigger).toBeFocused();

@@ -1,4 +1,13 @@
 # Rewind — докази перевірок
+### Residual browser review and Share feedback — 02.11.2026
+
+The Movie ActionSheet Share action incorrectly reused the generic “Saved” message after either native Share or clipboard fallback. It now leaves native Share success/cancellation without a false saved status and reports a localized “Link copied” message only after clipboard fallback succeeds. `movie-action-sheet-mobile-flow.spec.ts` checks the native-share payload, cancellation, clipboard URL and feedback in UK. The same flow retains real authenticated list-add, Review focus, Done/Escape, focus return and the UK/EN 320–1440 sweep. Targeted Docker run passed1/1; its disposable user/list cleanup completed.
+
+The full updated Docker Playwright suite passed **157, failed0, skipped27**. All27 fixture-gated Admin cases passed through `verify-admin-browser.ps1`: Admin flow12/12 and Movies editor15/15, each with exact disposable fixture cleanup. Across the standard and isolated runs, all184 scenarios passed. `release-responsive-matrix.spec.ts` passed1/1, `accessibility.spec.ts` 5/5 (including axe WCAG 2 A/AA), and `search-controls.spec.ts` 9/9. The first post-change full run exposed a test timing race at desktop1440: the year filter fires its API request on change before the test had begun waiting. The waiter now starts before `fill`; the targeted9/9 and final full run are green. `npm run verify:build` passes TypeScript and Vite (251 modules).
+
+Only the local web image was rebuilt: previous `sha256:d1bb405d…`, current `sha256:ca5c4aa6…`; API image remains `sha256:800f5b48…`. Compose DB/Redis healthy, web/API responding; `.env` SHA256 remains `90122BAAF73CC76047D7D3239CC5CD8B6E300CD8F816C355212051AA29969820`, DB volume retained. Source-Vite authenticated flow could not register because the API returned403 for that dev-server origin; the full interaction passed against the rebuilt Docker origin instead.
+
+Native operating-system Share, a real mobile software keyboard, and native browser zoom200% remain unverified. The Share test replaces `navigator.share`, while prior Admin/text-scale tests are simulated computed-font checks, not system zoom. The Windows UI helper failed to enumerate application windows after retry; no OS result is claimed. These require a reachable headed mobile/browser environment or physical device. API/data/source gaps remain tracked in the candidate matrix and are not resolved by this follow-up.
 
 ### Final regression after owner-list paging and ActionSheet follow-ups — 02.11.2026
 
