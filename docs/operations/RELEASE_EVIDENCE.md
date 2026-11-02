@@ -1,5 +1,13 @@
 # Rewind — докази перевірок
 
+### Figma READY source export request — 02.11.2026
+
+Fresh Figma MCP screenshot calls confirm Admin Movies `1260:4840` renders1×1 against original1440×3128; Search Journal phone `1480:8889` renders1×1 against393×1150; Review phone `1480:9249` renders1×1 against393×932. Fresh `figma_download_assets` calls for all three return a149-byte whole-node export. The current Figma browser file was opened from the requested link and Admin Movies reselected; a comment was posted asking the designer to unhide these READY nodes or provide full-size PNG exports. This is an external dependency, not an implementation defect. Existing Admin Movies and Search/Review runtime checks remain behavioral/geometry evidence only where separately documented; they do not establish matched-source acceptance for these unreadable frames. Follow up when the designer responds, fetch the updated images, and review only these frames against existing runtime captures.
+
+### Mobile device acceptance availability check — 02.11.2026
+
+On the current Windows workstation, neither `adb` nor `xcrun` is available on `PATH`; no connected phone or device-farm endpoint is exposed in the current browser/tool inventory. OS Share success/cancel, the real mobile soft keyboard, and native-browser zoom200% therefore remain unverified. This does not affect the separate desktop/browser behavior checks.
+
 ### Person mobile filter Escape and current Docker runtime — 02.11.2026
 
 Frames: Actor `545:676`/`721:1085`, expanded Actor state `551:705`, Director `547:904`/`731:1085`, and expanded-biography state `736:1339`; routes `/uk/people/actor/:id` and `/uk/people/director/:id`. A new E2E spec covers supported filmography routes at UK/EN and320/393/600/720/768/1024/1440: nullable poster fallbacks, long names/titles, more-than-12-film expansion, actor/director section labels, no horizontal overflow, mobile filter open/Escape/trigger-focus return, and keyboard Enter on a failed-load retry into the honest empty state. Both scenarios passed2/2 against source Vite and2/2 against the rebuilt Docker web. The first run against the old Docker image exposed the issue; moving Escape handling from the filter panel to the page lets it work while focus remains on the mobile trigger.
