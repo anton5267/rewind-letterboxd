@@ -116,7 +116,7 @@ export default function Person() {
   const personTypeLabel = type === "actor" ? t("actors") : type === "producer" ? t("producers") : t("directors");
   const filmSectionTitle = type === "actor" ? t("filmsStarring") : type === "director" ? t("filmsDirected") : t("filmography");
 
-  return <main className={`${styles.page} ${type === "director" ? styles.directorPage : ""}`} aria-labelledby="person-title" aria-busy={loading || genresLoading}>
+  return <main className={`${styles.page} ${type === "director" ? styles.directorPage : ""}`} aria-labelledby="person-title" aria-busy={loading || genresLoading} onKeyDown={event => { if (event.key === "Escape" && filtersOpen) { event.preventDefault(); setFiltersOpen(false); filterButton.current?.focus(); } }}>
     <section className={styles.hero}>
       <div className={styles.mobileToolbar}>
         <Link className={styles.mobileBack} to={path("/search")} aria-label={t("search")}><img src="/images/help-icon-back.png" alt="" /></Link>
@@ -138,7 +138,7 @@ export default function Person() {
       {genreError && <RetryNotice className={styles.error} message={t("loadGenresError")} retryLabel={t("retry")} onRetry={retryGenres} />}
       <div className={styles.filmographyHeader}>
       <div className={styles.sectionHeading}><h2 id="filmography-title" ref={filmographyHeadingRef} tabIndex={-1}>{filmSectionTitle}</h2></div>
-      <div id="person-filters" className={`${styles.controls} ${filtersOpen ? styles.controlsOpen : ""}`} onKeyDown={event => { if (event.key === "Escape" && filtersOpen) { event.preventDefault(); setFiltersOpen(false); filterButton.current?.focus(); } }}>
+      <div id="person-filters" className={`${styles.controls} ${filtersOpen ? styles.controlsOpen : ""}`}>
         <label className={styles.field}>{t("sortBy")} <select value={sort} onChange={event => setSort(event.target.value)}><option value="newest">{t("sortNewest")}</option><option value="oldest">{t("sortOldest")}</option><option value="rating">{t("sortBestRated")}</option><option value="title">{t("sortTitle")}</option></select></label>
         <label className={styles.field}>{t("genre")} <select value={genreId} disabled={genresLoading || genreError} onChange={event => setGenreId(event.target.value)}><option value="">{t("allGenres")}</option>{genres.map(genre => <option key={genre.id} value={genre.id}>{localizeGenreName(genre.name, lang)}</option>)}</select></label>
       </div>
