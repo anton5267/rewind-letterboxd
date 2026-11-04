@@ -77,11 +77,12 @@ const GENRES_PATH = "/api/genres";
 const MOVIES_SEARCH_PATH = "/api/movies/search";
 const MOVIE_DETAILS_PATTERN = /^\/api\/movies\/(\d+)\/details$/;
 const PERSON_FILMOGRAPHY_PATTERN = /^\/api\/(actors|directors)\/([^/]+)$/;
+const PUBLIC_CATALOG_CACHE = "public, max-age=300, stale-while-revalidate=600";
 
 function json(body: unknown, status: number, headers?: HeadersInit): Response {
   const responseHeaders = new Headers(headers);
   responseHeaders.set("Content-Type", "application/json; charset=utf-8");
-  responseHeaders.set("Cache-Control", "no-store");
+  if (!responseHeaders.has("Cache-Control")) responseHeaders.set("Cache-Control", "no-store");
   return new Response(JSON.stringify(body), { status, headers: responseHeaders });
 }
 
@@ -126,7 +127,9 @@ export function createRewindApiHandler(
       }
 
       try {
-        return json(await repository.listGenres(), 200, corsHeaders);
+        const genres = await repository.listGenres();
+        corsHeaders.set("Cache-Control", PUBLIC_CATALOG_CACHE);
+        return json(genres, 200, corsHeaders);
       } catch {
         return json({ message: "Internal server error" }, 500, corsHeaders);
       }
@@ -150,7 +153,7 @@ export function createRewindApiHandler(
       const size = Math.max(1, Math.min(optionalInteger(query.get("size"), 20), 50));
 
       try {
-        return json(await repository.searchMovies({
+        const result = await repository.searchMovies({
           q: query.get("q")?.trim() || null,
           genreId,
           year,
@@ -158,7 +161,9 @@ export function createRewindApiHandler(
           sort: query.get("sort") ?? "newest",
           page,
           size,
-        }), 200, corsHeaders);
+        });
+        corsHeaders.set("Cache-Control", PUBLIC_CATALOG_CACHE);
+        return json(result, 200, corsHeaders);
       } catch {
         return json({ message: "Internal server error" }, 500, corsHeaders);
       }
@@ -176,6 +181,7 @@ export function createRewindApiHandler(
       }
       try {
         const details = await repository.getMovieDetails(movieId);
+        if (details) corsHeaders.set("Cache-Control", PUBLIC_CATALOG_CACHE);
         return details ? json(details, 200, corsHeaders) : json({ message: "Not found" }, 404, corsHeaders);
       } catch {
         return json({ message: "Internal server error" }, 500, corsHeaders);
@@ -198,6 +204,7 @@ export function createRewindApiHandler(
       const type = personMatch[1] === "actors" ? "ACTOR" : "DIRECTOR";
       try {
         const person = await repository.getPersonFilmography(type, personId, genreId, query.get("sort") ?? "newest");
+        if (person) corsHeaders.set("Cache-Control", PUBLIC_CATALOG_CACHE);
         return person ? json(person, 200, corsHeaders) : json({ message: "Not found" }, 404, corsHeaders);
       } catch {
         return json({ message: "Internal server error" }, 500, corsHeaders);

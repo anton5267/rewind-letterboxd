@@ -30,6 +30,9 @@ Deno.test("GET /api/genres returns the existing array contract and accepts the P
   if (response.headers.get("Access-Control-Allow-Origin") !== pagesOrigin) {
     throw new Error("The GitHub Pages origin was not allowed");
   }
+  if (response.headers.get("Cache-Control") !== "public, max-age=300, stale-while-revalidate=600") {
+    throw new Error("Successful public catalogue responses should use the short shared cache policy");
+  }
   const body = await response.json();
   if (JSON.stringify(body) !== JSON.stringify([
     { id: 17, name: "Drama" },
@@ -92,6 +95,19 @@ Deno.test("unknown routes stay closed and unsupported methods return 405", async
 
   if (unknown.status !== 404) throw new Error(`Expected 404, got ${unknown.status}`);
   if (wrongMethod.status !== 405) throw new Error(`Expected 405, got ${wrongMethod.status}`);
+  if (unknown.headers.get("Cache-Control") !== "no-store" || wrongMethod.headers.get("Cache-Control") !== "no-store") {
+    throw new Error("Error responses must not be cached");
+  }
+});
+
+Deno.test("catalogue backend failures stay uncached", async () => {
+  const handler = handlerWith({ async listGenres() { throw new Error("database unavailable"); } });
+  const response = await handler(new Request("https://project.supabase.co/api/genres", {
+    headers: { Origin: pagesOrigin },
+  }));
+  if (response.status !== 500 || response.headers.get("Cache-Control") !== "no-store") {
+    throw new Error("A failed catalogue query must return an uncached 500 response");
+  }
 });
 
 Deno.test("movie search keeps the paginated API response and clamps page size", async () => {
