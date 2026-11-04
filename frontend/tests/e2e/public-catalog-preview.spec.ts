@@ -47,10 +47,10 @@ test("read-only catalogue works on GitHub Pages path on a phone-sized viewport",
   await expect(page.getByRole("heading", { name: "Rachel McAdams" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Фільми за участі" })).toBeVisible();
   await page.getByRole("link", { name: "REWIND" }).click();
-  await page.getByRole("link", { name: "EN" }).click();
+  await page.getByRole("link", { name: "EN", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Find your next film" })).toBeVisible();
   await expect(page.getByRole("option", { name: "Action" })).toBeAttached();
-  await page.getByRole("link", { name: "UK" }).click();
+  await page.getByRole("link", { name: "UK", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Відкрий своє наступне кіно" })).toBeVisible();
   await expect.poll(() => pageErrors).toEqual([]);
 });
