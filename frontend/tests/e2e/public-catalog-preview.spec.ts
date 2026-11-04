@@ -28,6 +28,7 @@ test("read-only catalogue works on GitHub Pages path on a phone-sized viewport",
   await expect(film).toBeVisible();
   const movieUrl = await film.getAttribute("href");
   expect(movieUrl).toBeTruthy();
+  expect(movieUrl).toMatch(/\/$/);
   const movieResponse = await page.request.get(movieUrl!);
   expect(movieResponse.status()).toBe(200);
   expect(await movieResponse.text()).toContain("<title>The Running Man (2025) | REWIND</title>");
@@ -43,6 +44,7 @@ test("read-only catalogue works on GitHub Pages path on a phone-sized viewport",
   const actorName = (await actorLink.textContent())?.trim();
   const actorUrl = await actorLink.getAttribute("href");
   expect(actorUrl).toBeTruthy();
+  expect(actorUrl).toMatch(/\/$/);
   const actorResponse = await page.request.get(actorUrl!);
   expect(actorResponse.status()).toBe(200);
   expect(await actorResponse.text()).toContain('rel="canonical"');
