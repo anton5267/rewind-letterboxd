@@ -7,6 +7,7 @@ function handlerWith(repository: Partial<RewindApiRepository>) {
     listGenres: async () => [],
     searchMovies: async (params) => ({ content: [], totalPages: 0, totalElements: 0, number: params.page }),
     getMovieDetails: async () => null,
+    getPersonFilmography: async () => null,
     ...repository,
   }, [pagesOrigin, "http://localhost:5173"]);
 }
@@ -135,5 +136,39 @@ Deno.test("movie detail returns the public fields and null user flags", async ()
   const body = await response.json();
   if (body.id !== 101 || body.title !== "Comedy Film" || body.myFlags !== null || body.genres[0].name !== "Comedy") {
     throw new Error(`Unexpected movie detail response: ${JSON.stringify(body)}`);
+  }
+});
+
+Deno.test("actor and director filmography routes return catalog-only data", async () => {
+  const handler = handlerWith({
+    async getPersonFilmography(type, id, genreId, sort) {
+      if (id !== 383 || genreId !== 17 || sort !== "title") throw new Error("Unexpected filters");
+      return {
+        id,
+        name: "Example Person",
+        photoUrl: null,
+        type,
+        films: [{ id: 33, title: "Send Help", releaseDate: "2026-01-30", rating: 4.8, photoUrl: null, characterName: type === "ACTOR" ? "Character" : null }],
+      };
+    },
+  });
+  for (const [path, type] of [["actors", "ACTOR"], ["directors", "DIRECTOR"]] as const) {
+    const response = await handler(new Request(`https://project.supabase.co/functions/v1/rewind-api/api/${path}/383?genreId=17&sort=title`));
+    const body = await response.json();
+    if (response.status !== 200 || body.type !== type || body.films[0].id !== 33) {
+      throw new Error(`Unexpected ${path} response: ${JSON.stringify(body)}`);
+    }
+  }
+});
+
+Deno.test("person filmography rejects invalid IDs/filters and does not expose producers", async () => {
+  const handler = handlerWith({});
+  for (const [url, expected] of [
+    ["http://localhost:8000/api/actors/nope", 400],
+    ["http://localhost:8000/api/directors/1?genreId=bad", 400],
+    ["http://localhost:8000/api/producers/1", 404],
+  ] as const) {
+    const response = await handler(new Request(url));
+    if (response.status !== expected) throw new Error(`Expected ${expected} for ${url}, got ${response.status}`);
   }
 });

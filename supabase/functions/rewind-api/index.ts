@@ -5,6 +5,7 @@ import {
   type GenreResponse,
   type MovieSearchParams,
   type MovieSearchResult,
+  type PersonFilmographyResponse,
 } from "./handler.ts";
 
 const databaseUrl = Deno.env.get("SUPABASE_DB_URL");
@@ -237,6 +238,77 @@ const handler = createRewindApiHandler({
         })),
         similarMovies: similarResult.rows.map(content),
         myFlags: null,
+      };
+    } finally {
+      connection.release();
+    }
+  },
+  async getPersonFilmography(type, id, genreId, sort): Promise<PersonFilmographyResponse | null> {
+    const personTable = type === "ACTOR" ? "actors" : "directors";
+    const relation = type === "ACTOR" ? "movie_actors" : "movie_directors";
+    const personColumn = type === "ACTOR" ? "actor_id" : "director_id";
+    const connection = await pool.connect();
+    try {
+      await connection.queryObject("SET ROLE rewind_edge_reader");
+      const personResult = await connection.queryObject<{
+        id: string;
+        name: string;
+        photo_url: string | null;
+      }>({
+        text: `SELECT id::text AS id, name, photo_url FROM rewind.${personTable} WHERE id = $1`,
+        args: [id],
+      });
+      const person = personResult.rows[0];
+      if (!person) return null;
+
+      const sortColumns: Record<string, string> = {
+        newest: "m.release_date DESC NULLS LAST",
+        oldest: "m.release_date ASC NULLS LAST",
+        rating: "m.rating DESC NULLS LAST",
+        title: "LOWER(m.title) ASC",
+      };
+      const ordering = sortColumns[sort] ?? sortColumns.newest;
+      const genreFilter = genreId === null
+        ? ""
+        : "AND EXISTS (SELECT 1 FROM rewind.movie_genres mg WHERE mg.movie_id = m.id AND mg.genre_id = $2)";
+      const relationAlias = type === "ACTOR" ? "ma" : "md";
+      const characterColumn = type === "ACTOR" ? "ma.character_name" : "NULL::text";
+      const args = genreId === null ? [id] : [id, genreId];
+      const filmResult = await connection.queryObject<{
+        id: string;
+        title: string;
+        release_date: string | null;
+        rating: string | null;
+        photo_url: string | null;
+        character_name: string | null;
+      }>({
+        text: `SELECT m.id::text AS id, m.title, m.release_date::text AS release_date,
+                      m.rating::text AS rating, m.photo_url,
+                      ${characterColumn} AS character_name
+               FROM rewind.${relation} ${relationAlias}
+               JOIN rewind.movies m ON m.id = ${relationAlias}.movie_id
+               WHERE ${relationAlias}.${personColumn} = $1 ${genreFilter}
+               ORDER BY ${ordering}, m.id ASC`,
+        args,
+      });
+      const safeId = (value: string, field: string): number => {
+        const numericId = Number(value);
+        if (!Number.isSafeInteger(numericId)) throw new Error(`${field} is outside the safe JSON integer range`);
+        return numericId;
+      };
+      return {
+        id: safeId(person.id, "Person ID"),
+        name: person.name,
+        photoUrl: person.photo_url,
+        type,
+        films: filmResult.rows.map((film) => ({
+          id: safeId(film.id, "Movie ID"),
+          title: film.title,
+          releaseDate: film.release_date,
+          rating: film.rating === null ? null : Number(film.rating),
+          photoUrl: film.photo_url,
+          characterName: film.character_name,
+        })),
       };
     } finally {
       connection.release();

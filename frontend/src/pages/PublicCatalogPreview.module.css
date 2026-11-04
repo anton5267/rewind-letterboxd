@@ -42,6 +42,8 @@
 .detailSection { margin-top: 30px; }
 .detailSection h2 { margin: 0 0 12px; color: #c6a96b; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
 .detailSection p { color: #c1bfc0; line-height: 1.6; }
+.personLink { color: #e5c783; text-decoration: none; }
+.personLink:hover, .personLink:focus-visible { text-decoration: underline; }
 .castList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; margin: 0; padding: 0; list-style: none; }
 .castList li { display: flex; min-width: 0; align-items: center; gap: 10px; color: #e4e1dc; font-size: 13px; }
 .castList img { width: 38px; height: 48px; flex: 0 0 auto; border-radius: 4px; background: #29292b; object-fit: cover; }

@@ -5,6 +5,7 @@ $baselinePath = Join-Path $repoRoot 'supabase/migrations/20261104040000_public_m
 $catalogSeedPath = Join-Path $repoRoot 'supabase/migrations/20261104041000_public_movie_catalog_seed.sql'
 $metadataPath = Join-Path $repoRoot 'supabase/migrations/20261104185117_public_movie_metadata.sql'
 $metadataSeedPath = Join-Path $repoRoot 'supabase/migrations/20261104185207_public_movie_metadata_seed.sql'
+$rlsPath = Join-Path $repoRoot 'supabase/migrations/20261104192859_rls_public_catalog_edge_reader.sql'
 $functionPath = Join-Path $repoRoot 'supabase/functions/rewind-api'
 $runId = [Guid]::NewGuid().ToString('N').Substring(0, 8)
 $networkName = "rewind-edge-test-$runId"
@@ -58,7 +59,8 @@ try {
     foreach ($migration in @(
         @{ Path = $catalogSeedPath; Name = 'catalog-seed' },
         @{ Path = $metadataPath; Name = 'public-movie-metadata' },
-        @{ Path = $metadataSeedPath; Name = 'public-movie-metadata-seed' }
+        @{ Path = $metadataSeedPath; Name = 'public-movie-metadata-seed' },
+        @{ Path = $rlsPath; Name = 'public-catalog-reader-rls' }
     )) {
         $containerPath = "/tmp/rewind-$($migration.Name).sql"
         docker cp $migration.Path "${postgresName}:$containerPath" | Out-Null
@@ -81,6 +83,12 @@ try {
     Assert-DockerSuccess 'restricted database role privilege check'
     if ($rolePrivileges.Trim() -ne 'true|true|false') {
         throw "Catalog reader does not have the expected minimum privileges: $($rolePrivileges.Trim())"
+    }
+    $rlsSql = "SELECT COUNT(*) FILTER (WHERE relrowsecurity)::text||'|'||(SELECT COUNT(*) FROM pg_policies WHERE schemaname='rewind' AND 'rewind_edge_reader'=ANY(roles) AND cmd='SELECT')::text FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='rewind' AND c.relkind='r';"
+    $rlsState = docker exec $postgresName psql -At -U postgres -d rewind_test -c $rlsSql
+    Assert-DockerSuccess 'catalog RLS and policy verification'
+    if ($rlsState.Trim() -ne '9|9') {
+        throw "Catalog RLS/policy coverage did not match the 9-table catalogue: $($rlsState.Trim())"
     }
 
     docker run --rm --mount "type=bind,source=$functionPath,target=/app" -w /app `
@@ -135,10 +143,24 @@ try {
         throw "PostgreSQL movie details returned unexpected result: $($details | ConvertTo-Json -Depth 5 -Compress)"
     }
 
-    Write-Output 'Edge Function handler tests: 8/8 passed.'
+    $actorUrl = $functionUrl -replace '/api/genres$', '/api/actors/286?sort=title'
+    $actor = Invoke-RestMethod -Uri $actorUrl -Headers @{ Origin = $pagesOrigin } -TimeoutSec 10
+    if ($actor.type -ne 'ACTOR' -or $actor.name -ne 'Rachel McAdams' -or @($actor.films).Count -ne 1 `
+        -or $actor.films[0].id -ne 33 -or $actor.films[0].characterName -ne 'Linda Liddle') {
+        throw "PostgreSQL actor filmography returned unexpected result: $($actor | ConvertTo-Json -Depth 5 -Compress)"
+    }
+    $directorUrl = $functionUrl -replace '/api/genres$', '/api/directors/44'
+    $director = Invoke-RestMethod -Uri $directorUrl -Headers @{ Origin = $pagesOrigin } -TimeoutSec 10
+    if ($director.type -ne 'DIRECTOR' -or $director.name -ne 'Sam Raimi' -or @($director.films).Count -ne 1 `
+        -or $director.films[0].id -ne 33 -or $director.films[0].characterName -ne $null) {
+        throw "PostgreSQL director filmography returned unexpected result: $($director | ConvertTo-Json -Depth 5 -Compress)"
+    }
+
+    Write-Output 'Edge Function handler tests: 10/10 passed.'
     Write-Output 'Edge Function type check: passed.'
     Write-Output 'PostgreSQL catalogue migrations/seeds: 50 movies, 17 genres, 153 genre links, 383 actors, 400 cast links, 52 directors, 54 director links, 50 ratings, 300 similar links.'
-    Write-Output 'PostgreSQL catalogue API integration: passed with the restricted read-only role; movie details include public metadata and null user flags.'
+    Write-Output 'PostgreSQL catalogue RLS: enabled on all 9 tables with SELECT policies for rewind_edge_reader only.'
+    Write-Output 'PostgreSQL catalogue API integration: passed with the restricted read-only role; movie details and actor/director filmography read only catalog data.'
 } finally {
     if ($startedFunction) {
         docker rm -f $functionName *> $null

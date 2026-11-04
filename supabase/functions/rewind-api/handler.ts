@@ -50,16 +50,33 @@ export interface MovieSearchParams {
   size: number;
 }
 
+export interface PersonFilmographyResponse {
+  id: number;
+  name: string;
+  photoUrl: string | null;
+  type: "ACTOR" | "DIRECTOR";
+  films: {
+    id: number;
+    title: string;
+    releaseDate: string | null;
+    rating: number | null;
+    photoUrl: string | null;
+    characterName: string | null;
+  }[];
+}
+
 export interface RewindApiRepository {
   listGenres(): Promise<GenreResponse[]>;
   searchMovies(params: MovieSearchParams): Promise<MovieSearchResult>;
   getMovieDetails(id: number): Promise<MovieDetailsResponse | null>;
+  getPersonFilmography(type: "ACTOR" | "DIRECTOR", id: number, genreId: number | null, sort: string): Promise<PersonFilmographyResponse | null>;
 }
 
 const FUNCTION_PREFIX = "/functions/v1/rewind-api";
 const GENRES_PATH = "/api/genres";
 const MOVIES_SEARCH_PATH = "/api/movies/search";
 const MOVIE_DETAILS_PATTERN = /^\/api\/movies\/(\d+)\/details$/;
+const PERSON_FILMOGRAPHY_PATTERN = /^\/api\/(actors|directors)\/([^/]+)$/;
 
 function json(body: unknown, status: number, headers?: HeadersInit): Response {
   const responseHeaders = new Headers(headers);
@@ -160,6 +177,28 @@ export function createRewindApiHandler(
       try {
         const details = await repository.getMovieDetails(movieId);
         return details ? json(details, 200, corsHeaders) : json({ message: "Not found" }, 404, corsHeaders);
+      } catch {
+        return json({ message: "Internal server error" }, 500, corsHeaders);
+      }
+    }
+
+    const personMatch = path.match(PERSON_FILMOGRAPHY_PATTERN);
+    if (personMatch) {
+      if (request.method !== "GET") {
+        corsHeaders.set("Allow", "GET, OPTIONS");
+        return json({ message: "Method not allowed" }, 405, corsHeaders);
+      }
+      if (!/^\d+$/.test(personMatch[2])) return json({ message: "Invalid person ID" }, 400, corsHeaders);
+      const personId = Number(personMatch[2]);
+      if (!Number.isSafeInteger(personId) || personId <= 0) return json({ message: "Invalid person ID" }, 400, corsHeaders);
+      const query = new URL(request.url).searchParams;
+      const rawGenreId = query.get("genreId");
+      const genreId = rawGenreId === null ? null : optionalPositiveInteger(rawGenreId);
+      if (rawGenreId !== null && genreId === null) return json({ message: "Invalid genre ID" }, 400, corsHeaders);
+      const type = personMatch[1] === "actors" ? "ACTOR" : "DIRECTOR";
+      try {
+        const person = await repository.getPersonFilmography(type, personId, genreId, query.get("sort") ?? "newest");
+        return person ? json(person, 200, corsHeaders) : json({ message: "Not found" }, 404, corsHeaders);
       } catch {
         return json({ message: "Internal server error" }, 500, corsHeaders);
       }

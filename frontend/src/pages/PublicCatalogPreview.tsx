@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, Navigate, Route, Routes, useParams, useSearchParams } from "react-router-dom";
 import { getMovieDetails, type MovieDetails } from "../api/movies.api";
 import { getGenres, searchMovies, type Genre, type MovieCard, type MoviePage } from "../api/search.api";
+import Person from "./Person";
 import styles from "./PublicCatalogPreview.module.css";
 
 type Language = "uk" | "en";
@@ -143,8 +144,8 @@ function MoviePageView({ lang }: { lang: Language }) {
         {movie.rating != null && <p className={styles.detailRating}>★ {movie.rating} <span>{copy.ratingLabel}</span></p>}
         {movie.genres.length > 0 && <ul className={styles.genreTags}>{movie.genres.map(genre => <li key={genre.id}>{genre.name}</li>)}</ul>}
         {movie.shortPlot && <p className={styles.plot}>{movie.shortPlot}</p>}
-        {movie.directors.length > 0 && <section className={styles.detailSection}><h2>{copy.director}</h2><p>{movie.directors.map(person => person.name).join(", ")}</p></section>}
-        {movie.actors.length > 0 && <section className={styles.detailSection}><h2>{copy.cast}</h2><ul className={styles.castList}>{movie.actors.map(actor => <li key={actor.id}>{actor.photoUrl && <img src={actor.photoUrl} alt="" loading="lazy" />}<span>{actor.name}{actor.characterName && <small>{actor.characterName}</small>}</span></li>)}</ul></section>}
+        {movie.directors.length > 0 && <section className={styles.detailSection}><h2>{copy.director}</h2><p>{movie.directors.map((person, index) => <span key={person.id}>{index > 0 && ", "}<Link className={styles.personLink} to={`/${lang}/people/director/${person.id}`}>{person.name}</Link></span>)}</p></section>}
+        {movie.actors.length > 0 && <section className={styles.detailSection}><h2>{copy.cast}</h2><ul className={styles.castList}>{movie.actors.map(actor => <li key={actor.id}>{actor.photoUrl && <img src={actor.photoUrl} alt="" loading="lazy" />}<span><Link className={styles.personLink} to={`/${lang}/people/actor/${actor.id}`}>{actor.name}</Link>{actor.characterName && <small>{actor.characterName}</small>}</span></li>)}</ul></section>}
         {movie.externalRatings.length > 0 && <section className={styles.detailSection}><h2>{copy.externalRating}</h2><p>{movie.externalRatings.map(rating => `${rating.source}: ${rating.rating}${rating.votesCount ? ` (${rating.votesCount.toLocaleString()})` : ""}`).join(" · ")}</p></section>}
         {movie.trailerUrl && <a className={styles.trailer} href={movie.trailerUrl} target="_blank" rel="noreferrer">{copy.trailer} ↗</a>}
         {movie.similarMovies.length > 0 && <section className={styles.detailSection}><h2>{copy.similar}</h2><div className={styles.similarGrid}>{movie.similarMovies.map(similar => <MovieTile key={similar.id} movie={similar} lang={lang} />)}</div></section>}
@@ -162,6 +163,7 @@ export default function PublicCatalogPreview() {
     <Route path="films" element={<CatalogPage lang={lang} />} />
     <Route path="films/discover" element={<CatalogPage lang={lang} />} />
     <Route path="films/:id" element={<MoviePageView lang={lang} />} />
+    <Route path="people/:type/:id" element={<Person />} />
     <Route path="*" element={<Navigate to={`/${lang}/home`} replace />} />
   </Routes></div>;
 }
