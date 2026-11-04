@@ -20,7 +20,7 @@ Accounts, sign-up, password recovery, profiles, reviews, lists, social features,
 
 ## Deployment
 
-Public URL: <https://anton5267.github.io/rewind-letterboxd/>. The root route returns HTTP 200. The Pages build prerenders 976 catalog routes (UK/EN home, film, actor, and director pages) as static `index.html` files with route-specific title, description, canonical URL, and social preview metadata, so known deep links return HTTP 200 without relying on the `404.html` fallback. Unknown routes still use the fallback. Edge Function v10 returns extended film metadata, bounded movie and actor/director search, and filmographies, with five-minute caching for successful public reads.
+Public URL: <https://anton5267.github.io/rewind-letterboxd/>. The root route returns HTTP 200. The Pages build prerenders 976 catalog routes (UK/EN home, film, actor, and director pages) as static `index.html` files with route-specific title, description, canonical URL, and social preview metadata, so known deep links return HTTP 200 without relying on the `404.html` fallback. Unknown routes still use the fallback. The SVG favicon uses the project base path; its live asset returns HTTP 200 and the page has no browser console errors. Edge Function v10 returns extended film metadata, bounded movie and actor/director search, and filmographies, with five-minute caching for successful public reads.
 
 After commit `5f21893`, GitHub Pages Actions run [41894765919](https://github.com/anton5267/rewind-letterboxd/actions/runs/41894765919) completed successfully. A live phone-sized Playwright flow passed **1/1**, covering genre filter, title search, deep-link detail, runtime, cast, and external rating with no browser page errors.
 
