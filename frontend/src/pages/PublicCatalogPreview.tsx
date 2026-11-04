@@ -23,15 +23,15 @@ function SiteHeader({ lang }: { lang: Language }) {
   const copy = text(lang);
   const otherLanguage = lang === "uk" ? "en" : "uk";
   return <header className={styles.header}>
-    <Link className={styles.brand} to={`/${lang}/home`} aria-label="REWIND">REWIND<span>®</span></Link>
+    <Link className={styles.brand} to={`/${lang}/home/`} aria-label="REWIND">REWIND<span>®</span></Link>
     <span className={styles.headerLabel}>{copy.readOnly}</span>
-    <Link className={styles.language} to={`/${otherLanguage}/home`}>{otherLanguage.toUpperCase()}</Link>
+    <Link className={styles.language} to={`/${otherLanguage}/home/`}>{otherLanguage.toUpperCase()}</Link>
   </header>;
 }
 
 function MovieTile({ movie, lang }: { movie: MovieCard; lang: Language }) {
   const copy = text(lang);
-  return <Link className={styles.movie} to={`/${lang}/films/${movie.id}`}>
+  return <Link className={styles.movie} to={`/${lang}/films/${movie.id}/`}>
     {movie.photoUrl ? <img className={styles.poster} src={movie.photoUrl} alt="" loading="lazy" /> : <div className={styles.posterFallback}>{movie.title}</div>}
     <span className={styles.movieTitle}>{movie.title}</span>
     <span className={styles.meta}>{movie.releaseDate?.slice(0, 4) ?? "—"}{movie.rating != null ? ` · ★ ${movie.rating}` : ""}</span>
@@ -157,7 +157,7 @@ function CatalogPage({ lang }: { lang: Language }) {
       {peopleError && <div className={styles.state}><p>{copy.searchError}</p><button onClick={() => setPeopleAttempt(value => value + 1)}>{copy.retry}</button></div>}
       {!peopleLoading && !peopleError && peopleData?.content.length === 0 && <p className={styles.state}>{copy.peopleEmpty}</p>}
       {!peopleLoading && !peopleError && peopleData && <>
-        <div className={styles.peopleGrid}>{peopleData.content.map(person => <Link className={styles.personCard} key={person.id} to={`/${lang}/people/${person.type.toLowerCase()}/${person.id}`}>
+        <div className={styles.peopleGrid}>{peopleData.content.map(person => <Link className={styles.personCard} key={person.id} to={`/${lang}/people/${person.type.toLowerCase()}/${person.id}/`}>
           {person.photoUrl ? <img src={person.photoUrl} alt="" loading="lazy" /> : <span className={styles.personFallback}>{person.name.slice(0, 1).toUpperCase()}</span>}
           <span><strong>{person.name}</strong><small>{person.type === "ACTOR" ? copy.actors : copy.directors} · {person.filmCount} · {copy.filmography}</small></span>
         </Link>)}</div>
@@ -185,7 +185,7 @@ function MoviePageView({ lang }: { lang: Language }) {
   }, [attempt, id]);
 
   return <main className={styles.detailMain}>
-    <Link className={styles.back} to={`/${lang}/home`}>{copy.back}</Link>
+    <Link className={styles.back} to={`/${lang}/home/`}>{copy.back}</Link>
     {error && <div className={styles.state}><p>{copy.detailError}</p><button onClick={() => setAttempt(value => value + 1)}>{copy.retry}</button></div>}
     {!error && !movie && <p className={styles.state}>{copy.loading}</p>}
     {movie && <article className={styles.detail}>
@@ -214,12 +214,12 @@ export default function PublicCatalogPreview() {
   const { lang: rawLang } = useParams();
   const lang = useMemo(() => language(rawLang), [rawLang]);
   return <div className={styles.app}><SiteHeader lang={lang} /><Routes>
-    <Route index element={<Navigate to={`/${lang}/home`} replace />} />
+    <Route index element={<Navigate to={`/${lang}/home/`} replace />} />
     <Route path="home" element={<CatalogPage lang={lang} />} />
     <Route path="films" element={<CatalogPage lang={lang} />} />
     <Route path="films/discover" element={<CatalogPage lang={lang} />} />
     <Route path="films/:id" element={<MoviePageView lang={lang} />} />
     <Route path="people/:type/:id" element={<Person />} />
-    <Route path="*" element={<Navigate to={`/${lang}/home`} replace />} />
+    <Route path="*" element={<Navigate to={`/${lang}/home/`} replace />} />
   </Routes></div>;
 }

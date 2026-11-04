@@ -5,7 +5,12 @@ test("read-only catalogue works on GitHub Pages path on a phone-sized viewport",
   const pageErrors: string[] = [];
   page.on("pageerror", error => pageErrors.push(error.message));
 
-  await page.goto("/rewind-letterboxd/uk/home");
+  const homeResponse = await page.request.get("/rewind-letterboxd/uk/home/");
+  expect(homeResponse.status()).toBe(200);
+  expect(homeResponse.headers()["content-type"]).toContain("text/html");
+  expect(await homeResponse.text()).toContain("<title>Каталог фільмів | REWIND</title>");
+
+  await page.goto("/rewind-letterboxd/uk/home/");
   await expect(page.locator('link[href*="font-awesome"]')).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Відкрий своє наступне кіно" })).toBeVisible();
   await expect(page.getByRole("link", { name: /The Wrecking Crew/ })).toBeVisible();
@@ -21,6 +26,11 @@ test("read-only catalogue works on GitHub Pages path on a phone-sized viewport",
   await page.getByRole("button", { name: "Знайти" }).click();
   const film = page.getByRole("link", { name: /The Running Man/ });
   await expect(film).toBeVisible();
+  const movieUrl = await film.getAttribute("href");
+  expect(movieUrl).toBeTruthy();
+  const movieResponse = await page.request.get(movieUrl!);
+  expect(movieResponse.status()).toBe(200);
+  expect(await movieResponse.text()).toContain("<title>The Running Man (2025) | REWIND</title>");
   await film.click();
   await expect(page.getByRole("heading", { name: "The Running Man" })).toBeVisible();
   await expect(page.getByText("Бойовик", { exact: true })).toBeVisible();
@@ -31,6 +41,11 @@ test("read-only catalogue works on GitHub Pages path on a phone-sized viewport",
   const actorLink = page.getByRole("heading", { name: "У ролях" }).locator("..")
     .getByRole("link").first();
   const actorName = (await actorLink.textContent())?.trim();
+  const actorUrl = await actorLink.getAttribute("href");
+  expect(actorUrl).toBeTruthy();
+  const actorResponse = await page.request.get(actorUrl!);
+  expect(actorResponse.status()).toBe(200);
+  expect(await actorResponse.text()).toContain('rel="canonical"');
   await actorLink.click();
   await expect(page.getByRole("heading", { name: actorName })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Фільми за участі" })).toBeVisible();
@@ -47,6 +62,9 @@ test("read-only catalogue works on GitHub Pages path on a phone-sized viewport",
   await expect(page.getByRole("heading", { name: "Rachel McAdams" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Фільми за участі" })).toBeVisible();
   await page.getByRole("link", { name: "REWIND" }).click();
+  const englishHomeResponse = await page.request.get("/rewind-letterboxd/en/home/");
+  expect(englishHomeResponse.status()).toBe(200);
+  expect(await englishHomeResponse.text()).toContain("<title>Film catalogue | REWIND</title>");
   await page.getByRole("link", { name: "EN", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Find your next film" })).toBeVisible();
   await expect(page.getByRole("option", { name: "Action" })).toBeAttached();

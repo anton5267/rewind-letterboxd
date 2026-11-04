@@ -9,6 +9,8 @@ import { editorialText, formatMovieYear, localizeGenreName, useLocale } from "..
 import styles from "./Person.module.css";
 import filterIcon from "../assets/figma/home-person/person-filter.png";
 
+const publicCatalogOnly = import.meta.env.VITE_PUBLIC_CATALOG_ONLY === "true";
+
 function PersonLoading({ identity = false }: { identity?: boolean }) {
   const { t } = useLocale();
   const posters = <div className={styles.grid} aria-hidden="true">{Array.from({ length: 12 }, (_, index) => <span className={`${styles.poster} ${styles.skeleton}`} key={index} />)}</div>;
@@ -18,6 +20,8 @@ function PersonLoading({ identity = false }: { identity?: boolean }) {
 export default function Person() {
   const { type, id } = useParams();
   const { path, t, lang } = useLocale();
+  const backPath = publicCatalogOnly ? `/${lang}/home/` : path("/search");
+  const filmPath = (filmId: number) => publicCatalogOnly ? `/${lang}/films/${filmId}/` : path(`/films/${filmId}`);
   const personId = Number(id);
   const validPersonId = Number.isSafeInteger(personId) && personId > 0;
   const validPersonType = type === "actor" || type === "director" || type === "producer";
@@ -51,7 +55,12 @@ export default function Person() {
     const frame = window.requestAnimationFrame(() => {
       if (focusPersonAfterRetry.current !== pending) return;
       focusPersonAfterRetry.current = null;
-      if (document.activeElement === document.body || document.activeElement === pending.origin) personHeadingRef.current?.focus();
+      if (document.activeElement !== document.body && document.activeElement !== pending.origin) return;
+      if (error) {
+        personHeadingRef.current?.closest("main")?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+        return;
+      }
+      personHeadingRef.current?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
   }, [loading, error, person]);
@@ -62,7 +71,12 @@ export default function Person() {
     const frame = window.requestAnimationFrame(() => {
       if (focusGenresAfterRetry.current !== pending) return;
       focusGenresAfterRetry.current = null;
-      if (document.activeElement === document.body || document.activeElement === pending.origin) filmographyHeadingRef.current?.focus();
+      if (document.activeElement !== document.body && document.activeElement !== pending.origin) return;
+      if (genreError) {
+        filmographyHeadingRef.current?.closest("section")?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+        return;
+      }
+      filmographyHeadingRef.current?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
   }, [genresLoading, genreError, genres]);
@@ -110,7 +124,7 @@ export default function Person() {
   const personMatchesRoute = person !== null
     && person.id === personId
     && person.type.toLowerCase() === type;
-  if (!person || !personMatchesRoute) return <main className={`${styles.page} ${error ? styles.statePage : ""} ${type === "director" ? styles.directorPage : ""}`} aria-labelledby="person-title" aria-busy={loading && !error}><div className={styles.stateBack}><Link className={styles.mobileBack} to={path("/search")} aria-label={t("search")}><img src="/images/help-icon-back.png" alt="" /></Link></div><h1 id="person-title" className={error ? styles.stateTitle : "srOnly"} ref={personHeadingRef} tabIndex={-1}>{t("filmography")}</h1>{error ? <p className={styles.error} role="alert">{!validPersonType || !validPersonId ? t("invalidPersonId") : t("loadPersonError")} {validPersonType && validPersonId && <RetryButton label={t("retry")} busy={loading} onClick={retryPerson} />}</p> : <PersonLoading identity />}</main>;
+  if (!person || !personMatchesRoute) return <main className={`${styles.page} ${error ? styles.statePage : ""} ${type === "director" ? styles.directorPage : ""}`} aria-labelledby="person-title" aria-busy={loading && !error}><div className={styles.stateBack}><Link className={styles.mobileBack} to={backPath} aria-label={t("search")}><img src="/images/help-icon-back.png" alt="" /></Link></div><h1 id="person-title" className={error ? styles.stateTitle : "srOnly"} ref={personHeadingRef} tabIndex={-1}>{t("filmography")}</h1>{error ? <p className={styles.error} role="alert">{!validPersonType || !validPersonId ? t("invalidPersonId") : t("loadPersonError")} {validPersonType && validPersonId && <RetryButton label={t("retry")} busy={loading} onClick={retryPerson} />}</p> : <PersonLoading identity />}</main>;
 
   const personName = editorialText(person.name, t("unknownPerson"));
   const personTypeLabel = type === "actor" ? t("actors") : type === "producer" ? t("producers") : t("directors");
@@ -119,7 +133,7 @@ export default function Person() {
   return <main className={`${styles.page} ${type === "director" ? styles.directorPage : ""}`} aria-labelledby="person-title" aria-busy={loading || genresLoading} onKeyDown={event => { if (event.key === "Escape" && filtersOpen) { event.preventDefault(); setFiltersOpen(false); filterButton.current?.focus(); } }}>
     <section className={styles.hero}>
       <div className={styles.mobileToolbar}>
-        <Link className={styles.mobileBack} to={path("/search")} aria-label={t("search")}><img src="/images/help-icon-back.png" alt="" /></Link>
+        <Link className={styles.mobileBack} to={backPath} aria-label={t("search")}><img src="/images/help-icon-back.png" alt="" /></Link>
         <span>{t("filmography")}</span>
         <button ref={filterButton} className={styles.mobileSearch} type="button" aria-label={t("filters")} aria-expanded={filtersOpen} aria-controls="person-filters" onClick={() => setFiltersOpen(value => !value)}><img src={filterIcon} alt="" /></button>
       </div>
@@ -146,7 +160,7 @@ export default function Person() {
       {loading ? <PersonLoading /> : !error && (person.films.length === 0 ? <div className={styles.empty}><p>{t("noFilms")}</p>{genreId && <button type="button" onClick={() => { setGenreId(""); filmographyHeadingRef.current?.focus(); }}>{t("allGenres")}</button>}</div> : <div id="person-films" className={styles.grid}>{(allFilms ? person.films : person.films.slice(0, 12)).map(film => {
         const filmTitle = editorialText(film.title, t("untitledFilm"));
         return <article className={styles.filmCard} key={film.id}>
-          <Link to={path(`/films/${film.id}`)} aria-label={`${filmTitle} — ${formatMovieYear(film.releaseDate, t("unknownYear"))}`}>
+          <Link to={filmPath(film.id)} aria-label={`${filmTitle} — ${formatMovieYear(film.releaseDate, t("unknownYear"))}`}>
             <ResilientImage className={styles.poster} src={film.photoUrl} alt={`${t("poster")} ${filmTitle}`} fallback={<div className={styles.posterFallback} aria-hidden="true">{filmTitle.slice(0, 1).toUpperCase()}</div>} />
             <div className={styles.filmInfo}>
               <h3 className={styles.filmTitle}>{filmTitle}</h3>

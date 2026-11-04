@@ -37,6 +37,13 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
           VITE_PUBLIC_CATALOG_ONLY: "true"
         run: npm run verify:build
+      - name: Generate static catalogue route pages
+        working-directory: frontend
+        env:
+          PUBLIC_CATALOG_API_BASE_URL: https://cuirmicbzspomijgkkwo.supabase.co/functions/v1/rewind-api/api
+          PUBLIC_SITE_URL: https://anton5267.github.io/rewind-letterboxd/
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+        run: node scripts/prerender-public-catalog-routes.mjs
       - name: Configure SPA fallback
         run: cp frontend/dist/index.html frontend/dist/404.html
       - uses: actions/upload-pages-artifact@v4
