@@ -1,9 +1,10 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Link, Navigate, Route, Routes, useParams, useSearchParams } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { getMovieDetails, type MovieDetails } from "../api/movies.api";
 import { searchPeople, type PersonSearchPage } from "../api/people.api";
 import { getGenres, searchMovies, type Genre, type MovieCard, type MoviePage } from "../api/search.api";
 import { localizeGenreName } from "../i18n";
+import { setPublicCatalogMetadata } from "../utils/publicCatalogSeo";
 import Person from "./Person";
 import styles from "./PublicCatalogPreview.module.css";
 
@@ -41,6 +42,7 @@ function MovieTile({ movie, lang }: { movie: MovieCard; lang: Language }) {
 
 function CatalogPage({ lang }: { lang: Language }) {
   const copy = text(lang);
+  const location = useLocation();
   const [params, setParams] = useSearchParams();
   const [genres, setGenres] = useState<Genre[]>([]);
   const [genreError, setGenreError] = useState(false);
@@ -61,6 +63,16 @@ function CatalogPage({ lang }: { lang: Language }) {
   const minRating = params.get("minRating") ?? "";
   const sort = params.get("sort") ?? "newest";
   const page = Math.max(0, Number(params.get("page") ?? 0) || 0);
+
+  useEffect(() => {
+    setPublicCatalogMetadata({
+      language: lang,
+      title: lang === "uk" ? "Каталог фільмів" : "Film catalogue",
+      description: lang === "uk"
+        ? "Переглядайте публічний каталог фільмів REWIND."
+        : "Browse the public REWIND film catalogue.",
+    });
+  }, [lang, location.pathname]);
 
   useEffect(() => {
     getGenres().then(({ data }) => { setGenres(data); setGenreError(false); }).catch(() => setGenreError(true));
@@ -173,10 +185,26 @@ function CatalogPage({ lang }: { lang: Language }) {
 
 function MoviePageView({ lang }: { lang: Language }) {
   const copy = text(lang);
+  const location = useLocation();
   const { id = "" } = useParams();
   const [movie, setMovie] = useState<MovieDetails | null>(null);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const currentMovie = movie?.id === Number(id) ? movie : null;
+  useEffect(() => {
+    const title = currentMovie
+      ? `${currentMovie.title}${currentMovie.releaseDate ? ` (${currentMovie.releaseDate.slice(0, 4)})` : ""}`
+      : lang === "uk" ? "Фільм" : "Film";
+    const plot = currentMovie?.shortPlot?.trim();
+    setPublicCatalogMetadata({
+      language: lang,
+      title,
+      description: plot || (lang === "uk"
+        ? `Інформація про фільм ${title} у публічному каталозі REWIND.`
+        : `Explore ${title} in the public REWIND film catalogue.`),
+      imageUrl: currentMovie?.photoUrl,
+    });
+  }, [currentMovie, lang, location.pathname]);
   useEffect(() => {
     let current = true;
     setMovie(null); setError(false);

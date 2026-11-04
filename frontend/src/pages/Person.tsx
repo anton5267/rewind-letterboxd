@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { getPersonFilmography, type PersonFilmography, type PersonType } from "../api/people.api";
 import ResilientImage from "../components/ResilientImage";
 import RetryButton from "../components/RetryButton";
@@ -8,6 +8,7 @@ import { getGenres, type Genre } from "../api/search.api";
 import { editorialText, formatMovieYear, localizeGenreName, useLocale } from "../i18n";
 import styles from "./Person.module.css";
 import filterIcon from "../assets/figma/home-person/person-filter.png";
+import { setPublicCatalogMetadata } from "../utils/publicCatalogSeo";
 
 const publicCatalogOnly = import.meta.env.VITE_PUBLIC_CATALOG_ONLY === "true";
 
@@ -19,6 +20,7 @@ function PersonLoading({ identity = false }: { identity?: boolean }) {
 
 export default function Person() {
   const { type, id } = useParams();
+  const location = useLocation();
   const { path, t, lang } = useLocale();
   const backPath = publicCatalogOnly ? `/${lang}/home/` : path("/search");
   const filmPath = (filmId: number) => publicCatalogOnly ? `/${lang}/films/${filmId}/` : path(`/films/${filmId}`);
@@ -124,9 +126,21 @@ export default function Person() {
   const personMatchesRoute = person !== null
     && person.id === personId
     && person.type.toLowerCase() === type;
+  const personName = person && personMatchesRoute ? editorialText(person.name, t("unknownPerson")) : t("filmography");
+  useEffect(() => {
+    if (!publicCatalogOnly) return;
+    const role = type === "director" ? (lang === "uk" ? "режисера" : "director") : (lang === "uk" ? "актора" : "actor");
+    setPublicCatalogMetadata({
+      language: lang,
+      title: personName,
+      description: lang === "uk"
+        ? `Фільмографія ${role} ${personName} у публічному каталозі REWIND.`
+        : `${personName}'s ${role} filmography in the public REWIND catalogue.`,
+      imageUrl: person && personMatchesRoute ? person.photoUrl : null,
+    });
+  }, [lang, location.pathname, person?.photoUrl, personMatchesRoute, personName, type]);
   if (!person || !personMatchesRoute) return <main className={`${styles.page} ${error ? styles.statePage : ""} ${type === "director" ? styles.directorPage : ""}`} aria-labelledby="person-title" aria-busy={loading && !error}><div className={styles.stateBack}><Link className={styles.mobileBack} to={backPath} aria-label={t("search")}><img src="/images/help-icon-back.png" alt="" /></Link></div><h1 id="person-title" className={error ? styles.stateTitle : "srOnly"} ref={personHeadingRef} tabIndex={-1}>{t("filmography")}</h1>{error ? <p className={styles.error} role="alert">{!validPersonType || !validPersonId ? t("invalidPersonId") : t("loadPersonError")} {validPersonType && validPersonId && <RetryButton label={t("retry")} busy={loading} onClick={retryPerson} />}</p> : <PersonLoading identity />}</main>;
 
-  const personName = editorialText(person.name, t("unknownPerson"));
   const personTypeLabel = type === "actor" ? t("actors") : type === "producer" ? t("producers") : t("directors");
   const filmSectionTitle = type === "actor" ? t("filmsStarring") : type === "director" ? t("filmsDirected") : t("filmography");
 
