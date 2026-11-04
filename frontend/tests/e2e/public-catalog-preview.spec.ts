@@ -8,6 +8,11 @@ test("read-only catalogue works on GitHub Pages path on a phone-sized viewport",
   await page.goto("/rewind-letterboxd/uk/home");
   await expect(page.getByRole("heading", { name: "Відкрий своє наступне кіно" })).toBeVisible();
   await expect(page.getByRole("link", { name: /The Wrecking Crew/ })).toBeVisible();
+  await page.getByLabel("Рік випуску").fill("2026");
+  await page.getByLabel("Мін. рейтинг").selectOption("4");
+  await expect(page.getByRole("link", { name: /Send Help/ })).toBeVisible();
+  await page.getByLabel("Мін. рейтинг").selectOption("");
+  await page.getByLabel("Рік випуску").fill("");
   await page.getByLabel("Усі жанри").selectOption({ label: "Action" });
   await expect(page.getByRole("link", { name: /The Running Man/ })).toBeVisible();
 

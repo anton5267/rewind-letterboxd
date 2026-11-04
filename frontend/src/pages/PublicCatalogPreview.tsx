@@ -13,8 +13,8 @@ function language(value: string | undefined): Language {
 
 function text(lang: Language) {
   return lang === "uk"
-    ? { title: "Відкрий своє наступне кіно", search: "Назва фільму", genre: "Усі жанри", newest: "Найновіші", rating: "За рейтингом", find: "Знайти", loading: "Завантаження каталогу…", empty: "Фільми не знайдено.", retry: "Спробувати ще раз", back: "← До каталогу", home: "Каталог", readOnly: "Публічний каталог фільмів", release: "Прем’єра", ratingLabel: "Рейтинг спільноти", searchError: "Не вдалося завантажити каталог.", detailError: "Не вдалося завантажити фільм.", runtime: "хв", age: "Віковий рейтинг", director: "Режисер", cast: "У ролях", externalRating: "Зовнішні рейтинги", similar: "Схожі фільми", trailer: "Дивитися трейлер", imdb: "IMDb" }
-    : { title: "Find your next film", search: "Film title", genre: "All genres", newest: "Newest", rating: "Top rated", find: "Search", loading: "Loading catalogue…", empty: "No films found.", retry: "Try again", back: "← Back to catalogue", home: "Catalogue", readOnly: "Public film catalogue", release: "Release date", ratingLabel: "Community rating", searchError: "Could not load the catalogue.", detailError: "Could not load this film.", runtime: "min", age: "Age rating", director: "Director", cast: "Cast", externalRating: "External ratings", similar: "Similar films", trailer: "Watch trailer", imdb: "IMDb" };
+    ? { title: "Відкрий своє наступне кіно", search: "Назва фільму", genre: "Усі жанри", year: "Рік випуску", anyYear: "Будь-який рік", minRating: "Мін. рейтинг", anyRating: "Будь-який рейтинг", newest: "Найновіші", rating: "За рейтингом", find: "Знайти", loading: "Завантаження каталогу…", empty: "Фільми не знайдено.", retry: "Спробувати ще раз", back: "← До каталогу", home: "Каталог", readOnly: "Публічний каталог фільмів", release: "Прем’єра", ratingLabel: "Рейтинг спільноти", searchError: "Не вдалося завантажити каталог.", detailError: "Не вдалося завантажити фільм.", runtime: "хв", age: "Віковий рейтинг", director: "Режисер", cast: "У ролях", externalRating: "Зовнішні рейтинги", similar: "Схожі фільми", trailer: "Дивитися трейлер", imdb: "IMDb" }
+    : { title: "Find your next film", search: "Film title", genre: "All genres", year: "Release year", anyYear: "Any year", minRating: "Min. rating", anyRating: "Any rating", newest: "Newest", rating: "Top rated", find: "Search", loading: "Loading catalogue…", empty: "No films found.", retry: "Try again", back: "← Back to catalogue", home: "Catalogue", readOnly: "Public film catalogue", release: "Release date", ratingLabel: "Community rating", searchError: "Could not load the catalogue.", detailError: "Could not load this film.", runtime: "min", age: "Age rating", director: "Director", cast: "Cast", externalRating: "External ratings", similar: "Similar films", trailer: "Watch trailer", imdb: "IMDb" };
 }
 
 function SiteHeader({ lang }: { lang: Language }) {
@@ -49,6 +49,8 @@ function CatalogPage({ lang }: { lang: Language }) {
   const [draftQuery, setDraftQuery] = useState(params.get("q") ?? "");
   const query = params.get("q") ?? "";
   const genreId = params.get("genreId") ?? "";
+  const year = params.get("year") ?? "";
+  const minRating = params.get("minRating") ?? "";
   const sort = params.get("sort") ?? "newest";
   const page = Math.max(0, Number(params.get("page") ?? 0) || 0);
 
@@ -60,12 +62,12 @@ function CatalogPage({ lang }: { lang: Language }) {
     let current = true;
     setLoading(true);
     setError(false);
-    searchMovies({ q: query || undefined, genreId: genreId || undefined, sort, page, size: 24 })
+    searchMovies({ q: query || undefined, genreId: genreId || undefined, year: year || undefined, minRating: minRating || undefined, sort, page, size: 24 })
       .then(({ data }) => { if (current) setPageData(data); })
       .catch(() => { if (current) setError(true); })
       .finally(() => { if (current) setLoading(false); });
     return () => { current = false; };
-  }, [genreId, page, query, searchAttempt, sort]);
+  }, [genreId, minRating, page, query, searchAttempt, sort, year]);
 
   const setFilter = (values: Record<string, string>) => {
     const next = new URLSearchParams(params);
@@ -85,11 +87,18 @@ function CatalogPage({ lang }: { lang: Language }) {
       <h1>{copy.title}</h1>
       <form className={styles.filters} onSubmit={submitSearch}>
         <label className={styles.srOnly} htmlFor="catalog-title">{copy.search}</label>
-        <input id="catalog-title" value={draftQuery} onChange={event => setDraftQuery(event.target.value)} placeholder={copy.search} />
+        <input id="catalog-title" type="search" value={draftQuery} onChange={event => setDraftQuery(event.target.value)} placeholder={copy.search} />
         <label className={styles.srOnly} htmlFor="catalog-genre">{copy.genre}</label>
         <select id="catalog-genre" value={genreId} onChange={event => setFilter({ genreId: event.target.value })}>
           <option value="">{copy.genre}</option>
           {genres.map(genre => <option key={genre.id} value={genre.id}>{genre.name}</option>)}
+        </select>
+        <label className={styles.srOnly} htmlFor="catalog-year">{copy.year}</label>
+        <input id="catalog-year" type="number" inputMode="numeric" min="1888" max="2100" value={year} onChange={event => setFilter({ year: event.target.value })} placeholder={copy.year} />
+        <label className={styles.srOnly} htmlFor="catalog-min-rating">{copy.minRating}</label>
+        <select id="catalog-min-rating" value={minRating} onChange={event => setFilter({ minRating: event.target.value })}>
+          <option value="">{copy.anyRating}</option>
+          {[1, 2, 3, 4, 5].map(value => <option key={value} value={value}>{value}+</option>)}
         </select>
         <label className={styles.srOnly} htmlFor="catalog-sort">{copy.newest}</label>
         <select id="catalog-sort" value={sort} onChange={event => setFilter({ sort: event.target.value })}>
