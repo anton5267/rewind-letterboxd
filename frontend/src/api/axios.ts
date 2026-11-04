@@ -1,7 +1,16 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
-const api = axios.create({ baseURL: "/api", withCredentials: true });
-const csrfClient = axios.create({ baseURL: "/api", withCredentials: true });
+const apiBaseURL = import.meta.env.VITE_API_BASE_URL || "/api";
+const apiOrigin = new URL(apiBaseURL, window.location.href).origin;
+const sameOriginApi = apiOrigin === window.location.origin;
+const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const sharedApiConfig = {
+  baseURL: apiBaseURL,
+  withCredentials: sameOriginApi,
+  ...(supabasePublishableKey ? { headers: { apikey: supabasePublishableKey } } : {}),
+};
+const api = axios.create(sharedApiConfig);
+const csrfClient = axios.create(sharedApiConfig);
 let csrfRequest: Promise<string> | null = null;
 let refreshRequest: Promise<void> | null = null;
 

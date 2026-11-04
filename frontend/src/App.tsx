@@ -32,6 +32,7 @@ const Journal = lazy(() => import("./pages/Journal"));
 const JournalArticle = lazy(() => import("./pages/JournalArticle"));
 const ServicePage = lazy(() => import("./pages/ServicePage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const PublicCatalogPreview = lazy(() => import("./pages/PublicCatalogPreview"));
 
 function LegacyRedirect() {
   const location = useLocation();
@@ -99,6 +100,12 @@ function LocalizedApp() {
 }
 
 export default function App() {
+  if (import.meta.env.VITE_PUBLIC_CATALOG_ONLY === "true") {
+    return <Suspense fallback={<p>REWIND</p>}><Routes>
+      <Route path="/:lang/*" element={<PublicCatalogPreview />} />
+      <Route path="*" element={<Navigate to="/uk/home" replace />} />
+    </Routes></Suspense>;
+  }
   return <><RouteTransition /><Routes>
     <Route path="/:lang/*" element={<LocalizedApp />} />
     <Route path="*" element={<LegacyRedirect />} />

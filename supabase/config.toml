@@ -1,0 +1,4 @@
+# The router currently exposes only a public genre lookup. Keep every future
+# protected route behind explicit in-function authentication and authorization.
+[functions.rewind-api]
+verify_jwt = false
