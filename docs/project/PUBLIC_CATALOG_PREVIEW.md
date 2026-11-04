@@ -18,6 +18,8 @@ Accounts, sign-up, password recovery, profiles, reviews, lists, social features,
 
 Public URL: <https://anton5267.github.io/rewind-letterboxd/>. The root route returns HTTP 200; GitHub Pages serves the app shell through `404.html` for direct deep links, verified by a phone-sized Playwright run. Edge Function v6 returns the extended public film metadata.
 
+After commit `5f21893`, GitHub Pages Actions run [41894765919](https://github.com/anton5267/rewind-letterboxd/actions/runs/41894765919) completed successfully. A live phone-sized Playwright flow passed **1/1**, covering genre filter, title search, deep-link detail, runtime, cast, and external rating with no browser page errors.
+
 `.github/workflows/deploy-pages.yml` builds the static frontend with the GitHub project base path, Supabase Function URL, and repository variable `SUPABASE_PUBLISHABLE_KEY`. The Supabase database URL is available only to the Edge Function and is never included in the frontend build. Pushes to `master` that touch frontend files or this workflow deploy through GitHub Pages Actions.
 
 Checks completed: Edge Function handler tests (8/8), Deno type check, isolated PostgreSQL schema/seeds/role/API integration, live Supabase API and grant checks, frontend production build, and a phone-sized browser flow (1/1).
