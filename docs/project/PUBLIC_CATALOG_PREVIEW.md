@@ -32,4 +32,6 @@ After commit `72a35d5`, GitHub Pages deployment [41898840285](https://github.com
 
 Edge Function v8 deployed the cache policy for successful public catalog reads. Four live API checks (genres, movie search, details, and actor filmography) returned HTTP 200 with `public, max-age=300, stale-while-revalidate=600`. Errors remain uncached; local Edge handler tests passed **11/11**, Deno typecheck and isolated PostgreSQL/RLS/API integration passed. No database schema or catalogue data changed.
 
+After commit `e053c40`, GitHub Pages deployment [41900787797](https://github.com/anton5267/rewind-letterboxd/actions/runs/41900787797) and CI [41900787476](https://github.com/anton5267/rewind-letterboxd/actions/runs/41900787476) succeeded. The live phone-sized Playwright flow passed **1/1** and confirmed the public catalog HTML no longer requests the unused Font Awesome CDN; the standard full-app build retains its existing stylesheet.
+
 This is a limited catalogue preview, not a production release of the full REWIND application.
