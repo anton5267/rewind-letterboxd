@@ -12,8 +12,8 @@ function language(value: string | undefined): Language {
 
 function text(lang: Language) {
   return lang === "uk"
-    ? { title: "Відкрий своє наступне кіно", search: "Назва фільму", genre: "Усі жанри", newest: "Найновіші", rating: "За рейтингом", find: "Знайти", loading: "Завантаження каталогу…", empty: "Фільми не знайдено.", retry: "Спробувати ще раз", back: "← До каталогу", home: "Каталог", readOnly: "Публічний каталог фільмів", release: "Прем’єра", ratingLabel: "Рейтинг спільноти", searchError: "Не вдалося завантажити каталог.", detailError: "Не вдалося завантажити фільм." }
-    : { title: "Find your next film", search: "Film title", genre: "All genres", newest: "Newest", rating: "Top rated", find: "Search", loading: "Loading catalogue…", empty: "No films found.", retry: "Try again", back: "← Back to catalogue", home: "Catalogue", readOnly: "Public film catalogue", release: "Release date", ratingLabel: "Community rating", searchError: "Could not load the catalogue.", detailError: "Could not load this film." };
+    ? { title: "Відкрий своє наступне кіно", search: "Назва фільму", genre: "Усі жанри", newest: "Найновіші", rating: "За рейтингом", find: "Знайти", loading: "Завантаження каталогу…", empty: "Фільми не знайдено.", retry: "Спробувати ще раз", back: "← До каталогу", home: "Каталог", readOnly: "Публічний каталог фільмів", release: "Прем’єра", ratingLabel: "Рейтинг спільноти", searchError: "Не вдалося завантажити каталог.", detailError: "Не вдалося завантажити фільм.", runtime: "хв", age: "Віковий рейтинг", director: "Режисер", cast: "У ролях", externalRating: "Зовнішні рейтинги", similar: "Схожі фільми", trailer: "Дивитися трейлер", imdb: "IMDb" }
+    : { title: "Find your next film", search: "Film title", genre: "All genres", newest: "Newest", rating: "Top rated", find: "Search", loading: "Loading catalogue…", empty: "No films found.", retry: "Try again", back: "← Back to catalogue", home: "Catalogue", readOnly: "Public film catalogue", release: "Release date", ratingLabel: "Community rating", searchError: "Could not load the catalogue.", detailError: "Could not load this film.", runtime: "min", age: "Age rating", director: "Director", cast: "Cast", externalRating: "External ratings", similar: "Similar films", trailer: "Watch trailer", imdb: "IMDb" };
 }
 
 function SiteHeader({ lang }: { lang: Language }) {
@@ -132,11 +132,22 @@ function MoviePageView({ lang }: { lang: Language }) {
     {error && <div className={styles.state}><p>{copy.detailError}</p><button onClick={() => setAttempt(value => value + 1)}>{copy.retry}</button></div>}
     {!error && !movie && <p className={styles.state}>{copy.loading}</p>}
     {movie && <article className={styles.detail}>
+      {movie.backdropUrl && <img className={styles.backdrop} src={movie.backdropUrl} alt="" />}
       {movie.photoUrl && <img className={styles.detailPoster} src={movie.photoUrl} alt="" />}
       <div><p className={styles.eyebrow}>{movie.releaseDate?.slice(0, 4) ?? ""}</p><h1>{movie.title}</h1>
+        <div className={styles.filmFacts}>
+          {movie.durationMinutes != null && <span>{movie.durationMinutes} {copy.runtime}</span>}
+          {movie.ageRating && <span>{copy.age}: {movie.ageRating}</span>}
+          {movie.imdbId && /^tt\d+$/.test(movie.imdbId) && <a href={`https://www.imdb.com/title/${movie.imdbId}/`} target="_blank" rel="noreferrer">{copy.imdb} ↗</a>}
+        </div>
         {movie.rating != null && <p className={styles.detailRating}>★ {movie.rating} <span>{copy.ratingLabel}</span></p>}
         {movie.genres.length > 0 && <ul className={styles.genreTags}>{movie.genres.map(genre => <li key={genre.id}>{genre.name}</li>)}</ul>}
         {movie.shortPlot && <p className={styles.plot}>{movie.shortPlot}</p>}
+        {movie.directors.length > 0 && <section className={styles.detailSection}><h2>{copy.director}</h2><p>{movie.directors.map(person => person.name).join(", ")}</p></section>}
+        {movie.actors.length > 0 && <section className={styles.detailSection}><h2>{copy.cast}</h2><ul className={styles.castList}>{movie.actors.map(actor => <li key={actor.id}>{actor.photoUrl && <img src={actor.photoUrl} alt="" loading="lazy" />}<span>{actor.name}{actor.characterName && <small>{actor.characterName}</small>}</span></li>)}</ul></section>}
+        {movie.externalRatings.length > 0 && <section className={styles.detailSection}><h2>{copy.externalRating}</h2><p>{movie.externalRatings.map(rating => `${rating.source}: ${rating.rating}${rating.votesCount ? ` (${rating.votesCount.toLocaleString()})` : ""}`).join(" · ")}</p></section>}
+        {movie.trailerUrl && <a className={styles.trailer} href={movie.trailerUrl} target="_blank" rel="noreferrer">{copy.trailer} ↗</a>}
+        {movie.similarMovies.length > 0 && <section className={styles.detailSection}><h2>{copy.similar}</h2><div className={styles.similarGrid}>{movie.similarMovies.map(similar => <MovieTile key={similar.id} movie={similar} lang={lang} />)}</div></section>}
       </div>
     </article>}
   </main>;

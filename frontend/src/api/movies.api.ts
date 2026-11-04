@@ -14,10 +14,10 @@ export interface MovieDetails {
   rating: number | null;
   trailerUrl: string | null;
   genres: { id: number; name: string }[];
-  actors: { id: number; name: string; characterName: string | null }[];
+  actors: { id: number; name: string; photoUrl?: string | null; characterName: string | null; castOrder?: number | null }[];
   directors: { id: number; name: string }[];
   producers: { id: number; name: string }[];
-  externalRatings: { source: string; rating: number }[];
+  externalRatings: { source: string; rating: number; votesCount?: number | null; lastUpdatedAt?: string | null }[];
   similarMovies: MovieCard[];
   myFlags: { watched: boolean; watchlist: boolean; favorites: boolean } | null;
 }

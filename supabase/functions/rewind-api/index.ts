@@ -119,50 +119,123 @@ const handler = createRewindApiHandler({
     const connection = await pool.connect();
     try {
       await connection.queryObject("SET ROLE rewind_edge_reader");
-      const result = await connection.queryObject<{
-        id: string;
-        title: string;
-        release_date: string | null;
-        rating: string | null;
-        photo_url: string | null;
-        genre_id: string | null;
-        genre_name: string | null;
-      }>({
-        text: `SELECT m.id::text AS id, m.title, m.release_date::text AS release_date,
-                      m.rating::text AS rating, m.photo_url,
-                      g.id::text AS genre_id, g.name AS genre_name
-               FROM rewind.movies m
-               LEFT JOIN rewind.movie_genres mg ON mg.movie_id = m.id
-               LEFT JOIN rewind.genres g ON g.id = mg.genre_id
-               WHERE m.id = $1
-               ORDER BY g.name ASC`,
-        args: [id],
-      });
-      const first = result.rows[0];
+      const [movieResult, genreResult, directorResult, actorResult, ratingResult, similarResult] = await Promise.all([
+        connection.queryObject<{
+          id: string;
+          imdb_id: string | null;
+          tmdb_id: string | null;
+          title: string;
+          duration_minutes: string | null;
+          release_date: string | null;
+          age_rating: string | null;
+          rating: string | null;
+          short_plot: string | null;
+          photo_url: string | null;
+          backdrop_url: string | null;
+          trailer_url: string | null;
+        }>({
+          text: `SELECT id::text AS id, imdb_id, tmdb_id::text AS tmdb_id, title,
+                        duration_minutes::text AS duration_minutes, release_date::text AS release_date,
+                        age_rating, rating::text AS rating, short_plot, photo_url, backdrop_url, trailer_url
+                 FROM rewind.movies WHERE id = $1`,
+          args: [id],
+        }),
+        connection.queryObject<{ id: string; name: string }>({
+          text: `SELECT g.id::text AS id, g.name
+                 FROM rewind.movie_genres mg JOIN rewind.genres g ON g.id = mg.genre_id
+                 WHERE mg.movie_id = $1 ORDER BY g.name ASC`,
+          args: [id],
+        }),
+        connection.queryObject<{ id: string; name: string; photo_url: string | null }>({
+          text: `SELECT d.id::text AS id, d.name, d.photo_url
+                 FROM rewind.movie_directors md JOIN rewind.directors d ON d.id = md.director_id
+                 WHERE md.movie_id = $1 ORDER BY d.name ASC`,
+          args: [id],
+        }),
+        connection.queryObject<{
+          id: string;
+          name: string;
+          photo_url: string | null;
+          character_name: string | null;
+          cast_order: string | null;
+        }>({
+          text: `SELECT a.id::text AS id, a.name, a.photo_url, ma.character_name,
+                        ma.cast_order::text AS cast_order
+                 FROM rewind.movie_actors ma JOIN rewind.actors a ON a.id = ma.actor_id
+                 WHERE ma.movie_id = $1 ORDER BY ma.cast_order NULLS LAST, a.name ASC`,
+          args: [id],
+        }),
+        connection.queryObject<{
+          source: string;
+          rating: string;
+          votes_count: string | null;
+          last_updated_at: string;
+        }>({
+          text: `SELECT source, rating::text AS rating, votes_count::text AS votes_count,
+                        to_char(last_updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS last_updated_at
+                 FROM rewind.external_ratings WHERE movie_id = $1 ORDER BY source ASC`,
+          args: [id],
+        }),
+        connection.queryObject<{
+          id: string;
+          title: string;
+          release_date: string | null;
+          rating: string | null;
+          photo_url: string | null;
+        }>({
+          text: `SELECT m.id::text AS id, m.title, m.release_date::text AS release_date,
+                        m.rating::text AS rating, m.photo_url
+                 FROM rewind.similar_movies sm JOIN rewind.movies m ON m.id = sm.similar_movie_id
+                 WHERE sm.movie_id = $1
+                 ORDER BY m.release_date DESC NULLS LAST, m.id DESC`,
+          args: [id],
+        }),
+      ]);
+      const first = movieResult.rows[0];
       if (!first) return null;
-      const movieId = Number(first.id);
-      if (!Number.isSafeInteger(movieId)) throw new Error("Movie ID is outside the safe JSON integer range");
+      const safeId = (value: string, field: string): number => {
+        const numericId = Number(value);
+        if (!Number.isSafeInteger(numericId)) throw new Error(`${field} is outside the safe JSON integer range`);
+        return numericId;
+      };
+      const nullableNumber = (value: string | null): number | null => value === null ? null : Number(value);
+      const content = (row: { id: string; title: string; release_date: string | null; rating: string | null; photo_url: string | null }) => ({
+        id: safeId(row.id, "Movie ID"),
+        title: row.title,
+        releaseDate: row.release_date,
+        rating: nullableNumber(row.rating),
+        photoUrl: row.photo_url,
+      });
       return {
-        id: movieId,
-        imdbId: null,
-        tmdbId: null,
+        id: safeId(first.id, "Movie ID"),
+        imdbId: first.imdb_id,
+        tmdbId: nullableNumber(first.tmdb_id),
         title: first.title,
-        durationMinutes: null,
+        durationMinutes: nullableNumber(first.duration_minutes),
         releaseDate: first.release_date,
-        ageRating: null,
-        rating: first.rating === null ? null : Number(first.rating),
-        shortPlot: null,
+        ageRating: first.age_rating,
+        rating: nullableNumber(first.rating),
+        shortPlot: first.short_plot,
         photoUrl: first.photo_url,
-        backdropUrl: null,
-        trailerUrl: null,
-        genres: result.rows.flatMap((row) => row.genre_id && row.genre_name
-          ? [{ id: Number(row.genre_id), name: row.genre_name }]
-          : []),
-        directors: [],
+        backdropUrl: first.backdrop_url,
+        trailerUrl: first.trailer_url,
+        genres: genreResult.rows.map(row => ({ id: safeId(row.id, "Genre ID"), name: row.name })),
+        directors: directorResult.rows.map(row => ({ id: safeId(row.id, "Director ID"), name: row.name, photoUrl: row.photo_url })),
         producers: [],
-        actors: [],
-        externalRatings: [],
-        similarMovies: [],
+        actors: actorResult.rows.map(row => ({
+          id: safeId(row.id, "Actor ID"),
+          name: row.name,
+          photoUrl: row.photo_url,
+          characterName: row.character_name,
+          castOrder: nullableNumber(row.cast_order),
+        })),
+        externalRatings: ratingResult.rows.map(row => ({
+          source: row.source,
+          rating: Number(row.rating),
+          votesCount: nullableNumber(row.votes_count),
+          lastUpdatedAt: row.last_updated_at,
+        })),
+        similarMovies: similarResult.rows.map(content),
         myFlags: null,
       };
     } finally {

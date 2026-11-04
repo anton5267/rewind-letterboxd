@@ -27,14 +27,27 @@
 .pager button { width: 40px; height: 40px; border: 1px solid #4d4b49; border-radius: 8px; color: inherit; background: transparent; font-size: 18px; cursor: pointer; }
 .pager button:disabled { opacity: .35; cursor: default; }
 .back { display: inline-block; margin-bottom: 28px; color: #d7bc82; text-decoration: none; }
-.detail { display: grid; grid-template-columns: minmax(220px, 320px) 1fr; align-items: start; gap: clamp(28px, 6vw, 72px); }
+.detail { position: relative; display: grid; grid-template-columns: minmax(220px, 320px) 1fr; align-items: start; gap: clamp(28px, 6vw, 72px); }
+.detail > div, .detailPoster { position: relative; z-index: 1; }
+.backdrop { position: absolute; z-index: 0; top: -70px; right: -100px; width: min(100%, 1000px); height: 440px; object-fit: cover; opacity: .18; pointer-events: none; mask-image: linear-gradient(to bottom, #000 0%, transparent 100%); }
 .detailPoster { width: 100%; border-radius: 10px; }
+.filmFacts { display: flex; flex-wrap: wrap; gap: 9px 16px; color: #b3b0ae; font-size: 13px; }
+.filmFacts a, .trailer { color: #d7bc82; text-decoration: none; }
 .detail h1 { margin-bottom: 16px; }
 .detailRating { color: #d7bc82; font-size: 20px; font-weight: 750; }
 .detailRating span { color: #a6a4a1; font-size: 13px; font-weight: 450; }
 .genreTags { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0; padding: 0; list-style: none; }
 .genreTags li { padding: 7px 11px; border: 1px solid #414044; border-radius: 999px; color: #c9c6c1; font-size: 12px; }
 .plot { max-width: 680px; color: #c1bfc0; font-size: 16px; line-height: 1.7; }
+.detailSection { margin-top: 30px; }
+.detailSection h2 { margin: 0 0 12px; color: #c6a96b; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+.detailSection p { color: #c1bfc0; line-height: 1.6; }
+.castList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; margin: 0; padding: 0; list-style: none; }
+.castList li { display: flex; min-width: 0; align-items: center; gap: 10px; color: #e4e1dc; font-size: 13px; }
+.castList img { width: 38px; height: 48px; flex: 0 0 auto; border-radius: 4px; background: #29292b; object-fit: cover; }
+.castList small { display: block; margin-top: 3px; color: #99979a; }
+.similarGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.similarGrid .movieTitle { font-size: 12px; }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
 
 @media (max-width: 900px) {
@@ -55,5 +68,8 @@
   .movieTitle { font-size: 13px; }
   .detail { grid-template-columns: 1fr; gap: 22px; }
   .detailPoster { width: min(68%, 300px); }
+  .backdrop { top: -20px; right: -17px; width: 100vw; height: 320px; }
+  .castList { grid-template-columns: 1fr; }
+  .similarGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .state { flex-direction: column; }
 }
