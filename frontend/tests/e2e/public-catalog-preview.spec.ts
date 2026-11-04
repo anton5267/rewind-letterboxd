@@ -6,6 +6,7 @@ test("read-only catalogue works on GitHub Pages path on a phone-sized viewport",
   page.on("pageerror", error => pageErrors.push(error.message));
 
   await page.goto("/rewind-letterboxd/uk/home");
+  await expect(page.locator('link[href*="font-awesome"]')).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Відкрий своє наступне кіно" })).toBeVisible();
   await expect(page.getByRole("link", { name: /The Wrecking Crew/ })).toBeVisible();
   await page.getByLabel("Рік випуску").fill("2026");

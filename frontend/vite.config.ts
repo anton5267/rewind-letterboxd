@@ -8,7 +8,13 @@ const publicBase = basePath.endsWith('/') ? basePath : `${basePath}/`
 export default defineConfig({
   base: basePath,
   plugins: [react(), {
-    name: 'github-pages-public-image-paths',
+    name: 'rewind-public-catalog-html',
+    transformIndexHtml(html) {
+      if (process.env.VITE_PUBLIC_CATALOG_ONLY === 'true') {
+        return html.replace(/\s*<link(?=[^>]*font-awesome[^>]*all\.min\.css)[^>]*>/i, '')
+      }
+      return html
+    },
     generateBundle(_options, bundle) {
       if (publicBase === '/') return
       for (const output of Object.values(bundle)) {
