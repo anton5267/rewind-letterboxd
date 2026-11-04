@@ -25,4 +25,6 @@ After commit `5f21893`, GitHub Pages Actions run [41894765919](https://github.co
 
 Checks completed: Edge Function handler tests (10/10), Deno type check, isolated PostgreSQL schema/seeds/RLS/read-only-role/API integration, live Supabase API and privilege checks, Supabase security advisor (no findings), frontend production build, and a phone-sized browser flow (1/1) that opens an actor's filmography from a movie page.
 
+After commit `35f3d8f`, GitHub Pages deployment [41897920751](https://github.com/anton5267/rewind-letterboxd/actions/runs/41897920751) and CI [41897920700](https://github.com/anton5267/rewind-letterboxd/actions/runs/41897920700) succeeded. The same phone-sized E2E passed **1/1** against the public site and live Supabase API. A direct actor deep link also rendered correctly through the Pages `404.html` SPA fallback with no browser errors; GitHub Pages returns HTTP 404 for that deep URL while serving the app shell.
+
 This is a limited catalogue preview, not a production release of the full REWIND application.
