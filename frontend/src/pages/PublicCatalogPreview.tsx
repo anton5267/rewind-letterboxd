@@ -30,6 +30,40 @@ function SiteHeader({ lang }: { lang: Language }) {
   </header>;
 }
 
+function UnavailablePage({ lang }: { lang: Language }) {
+  const location = useLocation();
+  const copy = lang === "uk"
+    ? {
+      title: "Ця сторінка ще не доступна",
+      metaDescription: "У публічному прев’ю REWIND зараз доступні лише каталог фільмів і сторінки людей.",
+      description: "У цьому публічному прев’ю REWIND працює як каталог: можна шукати фільми й людей та переглядати деталі. Профілі, списки, відгуки й повідомлення поки не підключені.",
+      back: "Перейти до каталогу",
+    }
+    : {
+      title: "This page is not available yet",
+      metaDescription: "The REWIND public preview currently includes the film catalogue and people pages.",
+      description: "This public REWIND preview is a catalogue: you can search films and people and browse film details. Profiles, lists, reviews, and messages are not connected yet.",
+      back: "Browse the catalogue",
+    };
+
+  useEffect(() => {
+    setPublicCatalogMetadata({
+      language: lang,
+      title: copy.title,
+      description: copy.metaDescription,
+    });
+  }, [copy.metaDescription, copy.title, lang, location.pathname]);
+
+  return <main className={styles.unavailableMain}>
+    <section className={styles.unavailableCard} aria-labelledby="preview-unavailable-title">
+      <p className={styles.eyebrow}>REWIND · {lang === "uk" ? "ПУБЛІЧНЕ ПРЕВ’Ю" : "PUBLIC PREVIEW"}</p>
+      <h1 id="preview-unavailable-title">{copy.title}</h1>
+      <p>{copy.description}</p>
+      <Link className={styles.unavailableLink} to={`/${lang}/home/`}>{copy.back}</Link>
+    </section>
+  </main>;
+}
+
 function MovieTile({ movie, lang }: { movie: MovieCard; lang: Language }) {
   const copy = text(lang);
   return <Link className={styles.movie} to={`/${lang}/films/${movie.id}/`}>
@@ -248,6 +282,6 @@ export default function PublicCatalogPreview() {
     <Route path="films/discover" element={<CatalogPage lang={lang} />} />
     <Route path="films/:id" element={<MoviePageView lang={lang} />} />
     <Route path="people/:type/:id" element={<Person />} />
-    <Route path="*" element={<Navigate to={`/${lang}/home/`} replace />} />
+    <Route path="*" element={<UnavailablePage lang={lang} />} />
   </Routes></div>;
 }

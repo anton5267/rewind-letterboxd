@@ -72,5 +72,15 @@ test("read-only catalogue works on GitHub Pages path on a phone-sized viewport",
   await expect(page.getByRole("option", { name: "Action" })).toBeAttached();
   await page.getByRole("link", { name: "UK", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Відкрий своє наступне кіно" })).toBeVisible();
+
+  await page.goto("/rewind-letterboxd/uk/profile/");
+  await expect(page.getByRole("heading", { name: "Ця сторінка ще не доступна" })).toBeVisible();
+  await expect(page.getByText(/Профілі, списки, відгуки й повідомлення/)).toBeVisible();
+  await page.getByRole("link", { name: "Перейти до каталогу" }).click();
+  await expect(page.getByRole("heading", { name: "Відкрий своє наступне кіно" })).toBeVisible();
+
+  await page.goto("/rewind-letterboxd/en/messages/");
+  await expect(page.getByRole("heading", { name: "This page is not available yet" })).toBeVisible();
+  await expect(page.getByText(/Profiles, lists, reviews, and messages are not connected yet/)).toBeVisible();
   await expect.poll(() => pageErrors).toEqual([]);
 });
