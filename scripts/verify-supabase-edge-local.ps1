@@ -6,6 +6,7 @@ $catalogSeedPath = Join-Path $repoRoot 'supabase/migrations/20261104041000_publi
 $metadataPath = Join-Path $repoRoot 'supabase/migrations/20261104185117_public_movie_metadata.sql'
 $metadataSeedPath = Join-Path $repoRoot 'supabase/migrations/20261104185207_public_movie_metadata_seed.sql'
 $rlsPath = Join-Path $repoRoot 'supabase/migrations/20261104192859_rls_public_catalog_edge_reader.sql'
+$directorIndexPath = Join-Path $repoRoot 'supabase/migrations/20261104203146_index_movie_directors_director_id.sql'
 $functionPath = Join-Path $repoRoot 'supabase/functions/rewind-api'
 $runId = [Guid]::NewGuid().ToString('N').Substring(0, 8)
 $networkName = "rewind-edge-test-$runId"
@@ -60,7 +61,8 @@ try {
         @{ Path = $catalogSeedPath; Name = 'catalog-seed' },
         @{ Path = $metadataPath; Name = 'public-movie-metadata' },
         @{ Path = $metadataSeedPath; Name = 'public-movie-metadata-seed' },
-        @{ Path = $rlsPath; Name = 'public-catalog-reader-rls' }
+        @{ Path = $rlsPath; Name = 'public-catalog-reader-rls' },
+        @{ Path = $directorIndexPath; Name = 'director-lookup-index' }
     )) {
         $containerPath = "/tmp/rewind-$($migration.Name).sql"
         docker cp $migration.Path "${postgresName}:$containerPath" | Out-Null
@@ -89,6 +91,11 @@ try {
     Assert-DockerSuccess 'catalog RLS and policy verification'
     if ($rlsState.Trim() -ne '9|9') {
         throw "Catalog RLS/policy coverage did not match the 9-table catalogue: $($rlsState.Trim())"
+    }
+    $directorIndex = docker exec $postgresName psql -At -U postgres -d rewind_test -c "SELECT indexdef FROM pg_indexes WHERE schemaname='rewind' AND tablename='movie_directors' AND indexname='movie_directors_director_id_idx';"
+    Assert-DockerSuccess 'director lookup index verification'
+    if ($directorIndex.Trim() -notmatch '\(director_id\)') {
+        throw 'The movie_directors director_id lookup index is missing.'
     }
 
     docker run --rm --mount "type=bind,source=$functionPath,target=/app" -w /app `
@@ -173,6 +180,7 @@ try {
     Write-Output 'Edge Function type check: passed.'
     Write-Output 'PostgreSQL catalogue migrations/seeds: 50 movies, 17 genres, 153 genre links, 383 actors, 400 cast links, 52 directors, 54 director links, 50 ratings, 300 similar links.'
     Write-Output 'PostgreSQL catalogue RLS: enabled on all 9 tables with SELECT policies for rewind_edge_reader only.'
+    Write-Output 'PostgreSQL catalogue indexes: director_id lookup index verified.'
     Write-Output 'PostgreSQL catalogue API integration: passed with the restricted read-only role; bounded movie/person search, movie details, and actor/director filmography read only catalog data.'
 } finally {
     if ($startedFunction) {

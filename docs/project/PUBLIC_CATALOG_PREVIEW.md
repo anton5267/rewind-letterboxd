@@ -39,6 +39,8 @@ After commit `c15b8ad`, GitHub Pages deployment [41905296846](https://github.com
 
 Edge Function v10 applies bounded public movie search: title queries are limited to 100 characters, pages to 0–100, years to 1888–2100, and minimum ratings to 0–5. Live checks confirmed a valid movie query returns HTTP 200 and over-limit query/page/filter values return HTTP 400. Local handler tests passed **13/13** and the isolated PostgreSQL/RLS/API verifier passed; no schema or catalogue data changed.
 
+The Supabase performance advisor found the director lookup foreign key lacked an index. Added `movie_directors_director_id_idx` through migration `20261104203146_index_movie_directors_director_id` and verified its definition in both isolated PostgreSQL and the live project. The security advisor remains clear. The performance advisor now labels this index unused while the current 54-link catalogue is small; the index supports reverse director-to-film lookups as the public catalogue grows.
+
 After commit `e053c40`, GitHub Pages deployment [41900787797](https://github.com/anton5267/rewind-letterboxd/actions/runs/41900787797) and CI [41900787476](https://github.com/anton5267/rewind-letterboxd/actions/runs/41900787476) succeeded. The live phone-sized Playwright flow passed **1/1** and confirmed the public catalog HTML no longer requests the unused Font Awesome CDN; the standard full-app build retains its existing stylesheet.
 
 This is a limited catalogue preview, not a production release of the full REWIND application.
