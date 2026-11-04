@@ -7,6 +7,7 @@ function handlerWith(repository: Partial<RewindApiRepository>) {
     listGenres: async () => [],
     searchMovies: async (params) => ({ content: [], totalPages: 0, totalElements: 0, number: params.page }),
     getMovieDetails: async () => null,
+    searchPeople: async (params) => ({ content: [], totalPages: 0, totalElements: 0, number: params.page }),
     getPersonFilmography: async () => null,
     ...repository,
   }, [pagesOrigin, "http://localhost:5173"]);
@@ -177,11 +178,36 @@ Deno.test("actor and director filmography routes return catalog-only data", asyn
   }
 });
 
+Deno.test("people search validates its catalog filters and returns paged results", async () => {
+  const handler = handlerWith({
+    async searchPeople(params) {
+      if (params.q !== "Rachel McAdams" || params.type !== "ACTOR" || params.page !== 1 || params.size !== 7) {
+        throw new Error("Unexpected people search filters");
+      }
+      return {
+        content: [{ id: 286, name: "Rachel McAdams", photoUrl: null, type: params.type, filmCount: 1 }],
+        totalPages: 2,
+        totalElements: 8,
+        number: params.page,
+      };
+    },
+  });
+  const response = await handler(new Request("https://project.supabase.co/functions/v1/rewind-api/api/people/search?type=actor&q=Rachel%20McAdams&page=1&size=7"));
+  const body = await response.json();
+  if (response.status !== 200 || body.content[0].name !== "Rachel McAdams" || body.number !== 1
+    || body.totalElements !== 8 || response.headers.get("Cache-Control") !== "public, max-age=300, stale-while-revalidate=600") {
+    throw new Error(`Unexpected people search response: ${JSON.stringify(body)}`);
+  }
+});
+
 Deno.test("person filmography rejects invalid IDs/filters and does not expose producers", async () => {
   const handler = handlerWith({});
   for (const [url, expected] of [
     ["http://localhost:8000/api/actors/nope", 400],
     ["http://localhost:8000/api/directors/1?genreId=bad", 400],
+    ["http://localhost:8000/api/people/search?type=producer", 400],
+    ["http://localhost:8000/api/people/search?page=101", 400],
+    [`http://localhost:8000/api/people/search?q=${"x".repeat(101)}`, 400],
     ["http://localhost:8000/api/producers/1", 404],
   ] as const) {
     const response = await handler(new Request(url));

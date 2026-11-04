@@ -156,11 +156,24 @@ try {
         throw "PostgreSQL director filmography returned unexpected result: $($director | ConvertTo-Json -Depth 5 -Compress)"
     }
 
-    Write-Output 'Edge Function handler tests: 11/11 passed.'
+    $actorSearchUrl = $functionUrl -replace '/api/genres$', '/api/people/search?type=actor&q=Rachel%20McAdams'
+    $actorSearch = Invoke-RestMethod -Uri $actorSearchUrl -Headers @{ Origin = $pagesOrigin } -TimeoutSec 10
+    if ($actorSearch.totalElements -ne 1 -or $actorSearch.content[0].id -ne 286 `
+        -or $actorSearch.content[0].filmCount -ne 1) {
+        throw "PostgreSQL actor search returned unexpected result: $($actorSearch | ConvertTo-Json -Depth 5 -Compress)"
+    }
+    $directorSearchUrl = $functionUrl -replace '/api/genres$', '/api/people/search?type=director&q=Sam%20Raimi'
+    $directorSearch = Invoke-RestMethod -Uri $directorSearchUrl -Headers @{ Origin = $pagesOrigin } -TimeoutSec 10
+    if ($directorSearch.totalElements -ne 1 -or $directorSearch.content[0].id -ne 44 `
+        -or $directorSearch.content[0].filmCount -ne 1) {
+        throw "PostgreSQL director search returned unexpected result: $($directorSearch | ConvertTo-Json -Depth 5 -Compress)"
+    }
+
+    Write-Output 'Edge Function handler tests: 12/12 passed.'
     Write-Output 'Edge Function type check: passed.'
     Write-Output 'PostgreSQL catalogue migrations/seeds: 50 movies, 17 genres, 153 genre links, 383 actors, 400 cast links, 52 directors, 54 director links, 50 ratings, 300 similar links.'
     Write-Output 'PostgreSQL catalogue RLS: enabled on all 9 tables with SELECT policies for rewind_edge_reader only.'
-    Write-Output 'PostgreSQL catalogue API integration: passed with the restricted read-only role; movie details and actor/director filmography read only catalog data.'
+    Write-Output 'PostgreSQL catalogue API integration: passed with the restricted read-only role; movie details, actor/director search, and filmography read only catalog data.'
 } finally {
     if ($startedFunction) {
         docker rm -f $functionName *> $null

@@ -6,6 +6,8 @@ import {
   type MovieSearchParams,
   type MovieSearchResult,
   type PersonFilmographyResponse,
+  type PersonSearchParams,
+  type PersonSearchResult,
 } from "./handler.ts";
 
 const databaseUrl = Deno.env.get("SUPABASE_DB_URL");
@@ -238,6 +240,66 @@ const handler = createRewindApiHandler({
         })),
         similarMovies: similarResult.rows.map(content),
         myFlags: null,
+      };
+    } finally {
+      connection.release();
+    }
+  },
+  async searchPeople(params: PersonSearchParams): Promise<PersonSearchResult> {
+    const actor = params.type === "ACTOR";
+    const peopleTable = actor ? "actors" : "directors";
+    const relationTable = actor ? "movie_actors" : "movie_directors";
+    const relationPersonColumn = actor ? "actor_id" : "director_id";
+    const personType = params.type;
+    const connection = await pool.connect();
+    try {
+      await connection.queryObject("SET ROLE rewind_edge_reader");
+      const filter = params.q === null ? "" : "WHERE LOWER(p.name) LIKE '%' || LOWER($1) || '%'";
+      const countArgs = params.q === null ? [] : [params.q];
+      const pageArgs = params.q === null
+        ? [params.size, params.page * params.size]
+        : [params.q, params.size, params.page * params.size];
+      const sizeArg = pageArgs.length - 1;
+      const offsetArg = pageArgs.length;
+      const [countResult, peopleResult] = await Promise.all([
+        connection.queryObject<{ total: string }>({
+          text: `SELECT COUNT(*)::text AS total FROM rewind.${peopleTable} p ${filter}`,
+          args: countArgs,
+        }),
+        connection.queryObject<{
+          id: string;
+          name: string;
+          photo_url: string | null;
+          film_count: string;
+        }>({
+          text: `SELECT p.id::text AS id, p.name, p.photo_url,
+                        COUNT(DISTINCT r.movie_id)::text AS film_count
+                 FROM rewind.${peopleTable} p
+                 LEFT JOIN rewind.${relationTable} r ON r.${relationPersonColumn} = p.id
+                 ${filter}
+                 GROUP BY p.id, p.name, p.photo_url
+                 ORDER BY LOWER(p.name), p.id
+                 LIMIT $${sizeArg} OFFSET $${offsetArg}`,
+          args: pageArgs,
+        }),
+      ]);
+      const totalElements = Number(countResult.rows[0]?.total ?? "0");
+      const content = peopleResult.rows.map((person) => {
+        const id = Number(person.id);
+        if (!Number.isSafeInteger(id)) throw new Error("Person ID is outside the safe JSON integer range");
+        return {
+          id,
+          name: person.name,
+          photoUrl: person.photo_url,
+          type: personType,
+          filmCount: Number(person.film_count),
+        };
+      });
+      return {
+        content,
+        totalElements,
+        totalPages: Math.ceil(totalElements / params.size),
+        number: params.page,
       };
     } finally {
       connection.release();

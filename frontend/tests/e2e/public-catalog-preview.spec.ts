@@ -35,5 +35,14 @@ test("read-only catalogue works on GitHub Pages path on a phone-sized viewport",
   await expect(page.getByRole("heading", { name: actorName })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Фільми за участі" })).toBeVisible();
   await expect(page.getByRole("link", { name: /The Running Man/ })).toBeVisible();
+  await page.getByRole("link", { name: "REWIND" }).click();
+  await page.getByRole("button", { name: "Люди" }).click();
+  await page.getByPlaceholder("Ім’я актора чи режисера").fill("Rachel McAdams");
+  await page.getByRole("button", { name: "Знайти" }).click();
+  const person = page.getByRole("link", { name: /Rachel McAdams/ });
+  await expect(person).toContainText("Актори");
+  await person.click();
+  await expect(page.getByRole("heading", { name: "Rachel McAdams" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Фільми за участі" })).toBeVisible();
   await expect.poll(() => pageErrors).toEqual([]);
 });

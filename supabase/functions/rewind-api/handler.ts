@@ -65,10 +65,31 @@ export interface PersonFilmographyResponse {
   }[];
 }
 
+export interface PersonSearchResult {
+  content: {
+    id: number;
+    name: string;
+    photoUrl: string | null;
+    type: "ACTOR" | "DIRECTOR";
+    filmCount: number;
+  }[];
+  totalPages: number;
+  totalElements: number;
+  number: number;
+}
+
+export interface PersonSearchParams {
+  q: string | null;
+  type: "ACTOR" | "DIRECTOR";
+  page: number;
+  size: number;
+}
+
 export interface RewindApiRepository {
   listGenres(): Promise<GenreResponse[]>;
   searchMovies(params: MovieSearchParams): Promise<MovieSearchResult>;
   getMovieDetails(id: number): Promise<MovieDetailsResponse | null>;
+  searchPeople(params: PersonSearchParams): Promise<PersonSearchResult>;
   getPersonFilmography(type: "ACTOR" | "DIRECTOR", id: number, genreId: number | null, sort: string): Promise<PersonFilmographyResponse | null>;
 }
 
@@ -76,6 +97,7 @@ const FUNCTION_PREFIX = "/functions/v1/rewind-api";
 const GENRES_PATH = "/api/genres";
 const MOVIES_SEARCH_PATH = "/api/movies/search";
 const MOVIE_DETAILS_PATTERN = /^\/api\/movies\/(\d+)\/details$/;
+const PEOPLE_SEARCH_PATH = "/api/people/search";
 const PERSON_FILMOGRAPHY_PATTERN = /^\/api\/(actors|directors)\/([^/]+)$/;
 const PUBLIC_CATALOG_CACHE = "public, max-age=300, stale-while-revalidate=600";
 
@@ -159,6 +181,37 @@ export function createRewindApiHandler(
           year,
           minRating,
           sort: query.get("sort") ?? "newest",
+          page,
+          size,
+        });
+        corsHeaders.set("Cache-Control", PUBLIC_CATALOG_CACHE);
+        return json(result, 200, corsHeaders);
+      } catch {
+        return json({ message: "Internal server error" }, 500, corsHeaders);
+      }
+    }
+
+    if (path === PEOPLE_SEARCH_PATH) {
+      if (request.method !== "GET") {
+        corsHeaders.set("Allow", "GET, OPTIONS");
+        return json({ message: "Method not allowed" }, 405, corsHeaders);
+      }
+      const query = new URL(request.url).searchParams;
+      const rawType = query.get("type") ?? "actor";
+      if (rawType !== "actor" && rawType !== "director") {
+        return json({ message: "Invalid person type" }, 400, corsHeaders);
+      }
+      const q = query.get("q")?.trim() || null;
+      if (q && q.length > 100) return json({ message: "Search query is too long" }, 400, corsHeaders);
+      const rawPage = query.get("page");
+      const parsedPage = rawPage === null ? 0 : optionalInteger(rawPage, -1);
+      if (parsedPage < 0 || parsedPage > 100) return json({ message: "Invalid page" }, 400, corsHeaders);
+      const page = parsedPage;
+      const size = Math.max(1, Math.min(optionalInteger(query.get("size"), 20), 50));
+      try {
+        const result = await repository.searchPeople({
+          q,
+          type: rawType === "actor" ? "ACTOR" : "DIRECTOR",
           page,
           size,
         });
