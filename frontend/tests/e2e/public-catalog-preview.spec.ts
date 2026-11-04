@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("read-only catalogue works on GitHub Pages path on a phone-sized viewport", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 320, height: 844 });
   const pageErrors: string[] = [];
   page.on("pageerror", error => pageErrors.push(error.message));
 
@@ -26,6 +26,8 @@ test("read-only catalogue works on GitHub Pages path on a phone-sized viewport",
   await page.goto("/rewind-letterboxd/uk/home/");
   await expect(page.locator('link[href*="font-awesome"]')).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Відкрий своє наступне кіно" })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
+  await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole("link", { name: /The Wrecking Crew/ })).toBeVisible();
   await page.getByLabel("Рік випуску").fill("2026");
   await page.getByLabel("Мін. рейтинг").selectOption("4");
