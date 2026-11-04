@@ -10,6 +10,19 @@ test("read-only catalogue works on GitHub Pages path on a phone-sized viewport",
   expect(homeResponse.headers()["content-type"]).toContain("text/html");
   expect(await homeResponse.text()).toContain("<title>Каталог фільмів | REWIND</title>");
 
+  const sitemapResponse = await page.request.get("/rewind-letterboxd/sitemap.xml");
+  expect(sitemapResponse.status()).toBe(200);
+  const sitemap = await sitemapResponse.text();
+  const sitemapUrls = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map(match => match[1]);
+  expect(sitemapUrls.length).toBeGreaterThan(6);
+  expect(new Set(sitemapUrls).size).toBe(sitemapUrls.length);
+  expect(sitemapUrls).toContain("https://anton5267.github.io/rewind-letterboxd/uk/films/33/");
+  expect(sitemapUrls).toContain("https://anton5267.github.io/rewind-letterboxd/en/people/actor/286/");
+
+  const robotsResponse = await page.request.get("/rewind-letterboxd/robots.txt");
+  expect(robotsResponse.status()).toBe(200);
+  expect(await robotsResponse.text()).toContain("Sitemap: https://anton5267.github.io/rewind-letterboxd/sitemap.xml");
+
   await page.goto("/rewind-letterboxd/uk/home/");
   await expect(page.locator('link[href*="font-awesome"]')).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Відкрий своє наступне кіно" })).toBeVisible();
