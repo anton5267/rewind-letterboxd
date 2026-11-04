@@ -111,7 +111,7 @@ function CatalogPage({ lang }: { lang: Language }) {
       </div>
       <form className={`${styles.filters} ${view === "people" ? styles.peopleFilters : ""}`} onSubmit={submitSearch}>
         <label className={styles.srOnly} htmlFor="catalog-title">{view === "films" ? copy.search : copy.peopleSearch}</label>
-        <input id="catalog-title" type="search" value={draftQuery} onChange={event => setDraftQuery(event.target.value)} placeholder={view === "films" ? copy.search : copy.peopleSearch} />
+        <input id="catalog-title" type="search" maxLength={100} value={draftQuery} onChange={event => setDraftQuery(event.target.value)} placeholder={view === "films" ? copy.search : copy.peopleSearch} />
         {view === "people" ? <>
           <label className={styles.srOnly} htmlFor="people-type">{copy.people}</label>
           <select id="people-type" value={personType} onChange={event => setFilter({ personType: event.target.value })}>
