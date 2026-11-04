@@ -15,6 +15,8 @@ Accounts, sign-up, password recovery, profiles, reviews, lists, social features,
 
 ## Deployment
 
+Public URL: <https://anton5267.github.io/rewind-letterboxd/>. The root route returns HTTP 200; GitHub Pages serves the app shell through `404.html` for direct deep links, which was verified by a phone-sized Playwright run against the live site.
+
 `.github/workflows/deploy-pages.yml` builds the static frontend with the GitHub project base path, Supabase Function URL, and repository variable `SUPABASE_PUBLISHABLE_KEY`. The Supabase database URL is available only to the Edge Function and is never included in the frontend build. Pushes to `master` that touch frontend files or this workflow deploy through GitHub Pages Actions.
 
 Local checks completed before publication: the Edge Function handler tests (8/8), Deno type check, isolated PostgreSQL schema/role/API integration, live read-only Supabase API smoke, frontend production build, and a phone-sized browser flow (1/1).
