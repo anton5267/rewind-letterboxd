@@ -5,6 +5,7 @@ The first public preview uses only the existing GitHub Pages repository and Supa
 ## Available
 
 - Browse and search 50 movies across 17 genres, with 153 movie-to-genre links. Filter by genre, release year, minimum community rating, and sort by newest or top rated.
+- Genre names in filters and movie details are localized for Ukrainian and English routes.
 - Search the existing 383 actors and 52 directors by name, view result counts, and open their catalog filmographies.
 - Open movie details with available poster/backdrop, release date, runtime, plot, age rating, IMDb ID, cast, directors, external ratings, and similar movies.
 - Open linked actor/director pages with catalog filmographies, title/year/rating filters, and actor character names.
@@ -42,5 +43,7 @@ Edge Function v10 applies bounded public movie search: title queries are limited
 The Supabase performance advisor found the director lookup foreign key lacked an index. Added `movie_directors_director_id_idx` through migration `20261104203146_index_movie_directors_director_id` and verified its definition in both isolated PostgreSQL and the live project. The security advisor remains clear. The performance advisor now labels this index unused while the current 54-link catalogue is small; the index supports reverse director-to-film lookups as the public catalogue grows.
 
 After commit `e053c40`, GitHub Pages deployment [41900787797](https://github.com/anton5267/rewind-letterboxd/actions/runs/41900787797) and CI [41900787476](https://github.com/anton5267/rewind-letterboxd/actions/runs/41900787476) succeeded. The live phone-sized Playwright flow passed **1/1** and confirmed the public catalog HTML no longer requests the unused Font Awesome CDN; the standard full-app build retains its existing stylesheet.
+
+After commit `d6ba683`, GitHub Pages deployment [41908861716](https://github.com/anton5267/rewind-letterboxd/actions/runs/41908861716) succeeded. Genre filters and movie detail tags now use the existing UK/EN genre translations. The phone-sized Playwright flow passed **1/1** against the public site, checking the Ukrainian genre label, the English label after switching language, actor search, film details, and filmography. Follow-up commit `6a424cc` tightened the language-link selectors; its CI [41909178265](https://github.com/anton5267/rewind-letterboxd/actions/runs/41909178265) and Pages deployment [41909178324](https://github.com/anton5267/rewind-letterboxd/actions/runs/41909178324) also succeeded.
 
 This is a limited catalogue preview, not a production release of the full REWIND application.
