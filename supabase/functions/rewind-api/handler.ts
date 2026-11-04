@@ -167,16 +167,22 @@ export function createRewindApiHandler(
       const genreId = optionalPositiveInteger(query.get("genreId"));
       const year = optionalPositiveInteger(query.get("year"));
       const minRating = optionalFiniteNumber(query.get("minRating"));
+      const q = query.get("q")?.trim() || null;
       if ((query.has("genreId") && genreId === null) || (query.has("year") && year === null)
-        || (query.has("minRating") && minRating === null)) {
+        || (query.has("minRating") && minRating === null)
+        || (year !== null && (year < 1888 || year > 2100))
+        || (minRating !== null && (minRating < 0 || minRating > 5))) {
         return json({ message: "Invalid search parameters" }, 400, corsHeaders);
       }
-      const page = Math.max(0, optionalInteger(query.get("page"), 0));
+      if (q && q.length > 100) return json({ message: "Search query is too long" }, 400, corsHeaders);
+      const rawPage = query.get("page");
+      const page = rawPage === null ? 0 : optionalInteger(rawPage, -1);
+      if (page < 0 || page > 100) return json({ message: "Invalid page" }, 400, corsHeaders);
       const size = Math.max(1, Math.min(optionalInteger(query.get("size"), 20), 50));
 
       try {
         const result = await repository.searchMovies({
-          q: query.get("q")?.trim() || null,
+          q,
           genreId,
           year,
           minRating,

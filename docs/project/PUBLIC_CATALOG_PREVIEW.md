@@ -19,13 +19,13 @@ Accounts, sign-up, password recovery, profiles, reviews, lists, social features,
 
 ## Deployment
 
-Public URL: <https://anton5267.github.io/rewind-letterboxd/>. The root route returns HTTP 200; GitHub Pages serves the app shell through `404.html` for direct deep links, verified by a phone-sized Playwright run. Edge Function v9 returns extended film metadata, actor/director search and filmographies, with five-minute caching for successful public reads.
+Public URL: <https://anton5267.github.io/rewind-letterboxd/>. The root route returns HTTP 200; GitHub Pages serves the app shell through `404.html` for direct deep links, verified by a phone-sized Playwright run. Edge Function v10 returns extended film metadata, bounded movie and actor/director search, and filmographies, with five-minute caching for successful public reads.
 
 After commit `5f21893`, GitHub Pages Actions run [41894765919](https://github.com/anton5267/rewind-letterboxd/actions/runs/41894765919) completed successfully. A live phone-sized Playwright flow passed **1/1**, covering genre filter, title search, deep-link detail, runtime, cast, and external rating with no browser page errors.
 
 `.github/workflows/deploy-pages.yml` builds the static frontend with the GitHub project base path, Supabase Function URL, and repository variable `SUPABASE_PUBLISHABLE_KEY`. The Supabase database URL is available only to the Edge Function and is never included in the frontend build. Pushes to `master` that touch frontend files or this workflow deploy through GitHub Pages Actions.
 
-Checks completed: Edge Function handler tests (12/12), Deno type check, isolated PostgreSQL schema/seeds/RLS/read-only-role/API integration, live Supabase API and privilege checks, Supabase security advisor (no findings), frontend production build, and phone-sized browser flows for movie browsing and people search.
+Checks completed: Edge Function handler tests (13/13), Deno type check, isolated PostgreSQL schema/seeds/RLS/read-only-role/API integration, live Supabase API and privilege checks, Supabase security advisor (no findings), frontend production build, and phone-sized browser flows for movie browsing and people search.
 
 After commit `35f3d8f`, GitHub Pages deployment [41897920751](https://github.com/anton5267/rewind-letterboxd/actions/runs/41897920751) and CI [41897920700](https://github.com/anton5267/rewind-letterboxd/actions/runs/41897920700) succeeded. The same phone-sized E2E passed **1/1** against the public site and live Supabase API. A direct actor deep link also rendered correctly through the Pages `404.html` SPA fallback with no browser errors; GitHub Pages returns HTTP 404 for that deep URL while serving the app shell.
 
@@ -36,6 +36,8 @@ Edge Function v8 deployed the cache policy for successful public catalog reads. 
 Edge Function v9 adds paginated actor/director name search using the existing private catalogue tables and restricted reader role. Live checks found Rachel McAdams (actor ID 286) and Sam Raimi (director ID 44), while rejecting the unsupported producer type with HTTP 400. The phone-sized Playwright flow passed **1/1** against the public site, including search for Rachel McAdams and opening her filmography. Local Edge handler tests passed **12/12** and the PostgreSQL/RLS/API verifier passed; no schema or catalogue data changed.
 
 After commit `c15b8ad`, GitHub Pages deployment [41905296846](https://github.com/anton5267/rewind-letterboxd/actions/runs/41905296846) and CI [41905296662](https://github.com/anton5267/rewind-letterboxd/actions/runs/41905296662) succeeded. The actor search UI and bounded 100-character query are live.
+
+Edge Function v10 applies bounded public movie search: title queries are limited to 100 characters, pages to 0–100, years to 1888–2100, and minimum ratings to 0–5. Live checks confirmed a valid movie query returns HTTP 200 and over-limit query/page/filter values return HTTP 400. Local handler tests passed **13/13** and the isolated PostgreSQL/RLS/API verifier passed; no schema or catalogue data changed.
 
 After commit `e053c40`, GitHub Pages deployment [41900787797](https://github.com/anton5267/rewind-letterboxd/actions/runs/41900787797) and CI [41900787476](https://github.com/anton5267/rewind-letterboxd/actions/runs/41900787476) succeeded. The live phone-sized Playwright flow passed **1/1** and confirmed the public catalog HTML no longer requests the unused Font Awesome CDN; the standard full-app build retains its existing stylesheet.
 

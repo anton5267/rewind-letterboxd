@@ -114,6 +114,7 @@ Deno.test("catalogue backend failures stay uncached", async () => {
 Deno.test("movie search keeps the paginated API response and clamps page size", async () => {
   const handler = handlerWith({
     async searchMovies(params) {
+      if (params.q !== "Example" || params.size !== 50) throw new Error("Unexpected search filters");
       return {
         content: [{ id: 12, title: params.q ?? "Example", releaseDate: "2024-01-01", rating: 4.5, photoUrl: null }],
         totalPages: 1,
@@ -132,8 +133,36 @@ Deno.test("movie search keeps the paginated API response and clamps page size", 
 
 Deno.test("movie search rejects malformed numeric filters", async () => {
   const handler = handlerWith({});
-  const response = await handler(new Request("https://project.supabase.co/api/movies/search?genreId=abc"));
-  if (response.status !== 400) throw new Error(`Expected 400, got ${response.status}`);
+  for (const url of [
+    "https://project.supabase.co/api/movies/search?genreId=abc",
+    "https://project.supabase.co/api/movies/search?year=1800",
+    "https://project.supabase.co/api/movies/search?year=2200",
+    "https://project.supabase.co/api/movies/search?minRating=6",
+    "https://project.supabase.co/api/movies/search?minRating=-1",
+  ]) {
+    const response = await handler(new Request(url));
+    if (response.status !== 400) throw new Error(`Expected 400 for ${url}, got ${response.status}`);
+  }
+});
+
+Deno.test("movie search bounds query length and page offsets before database access", async () => {
+  let calls = 0;
+  const handler = handlerWith({
+    async searchMovies() {
+      calls += 1;
+      return { content: [], totalPages: 0, totalElements: 0, number: 0 };
+    },
+  });
+  for (const url of [
+    `https://project.supabase.co/api/movies/search?q=${"x".repeat(101)}`,
+    "https://project.supabase.co/api/movies/search?page=101",
+    "https://project.supabase.co/api/movies/search?page=-1",
+    "https://project.supabase.co/api/movies/search?page=not-a-number",
+  ]) {
+    const response = await handler(new Request(url));
+    if (response.status !== 400) throw new Error(`Expected 400 for ${url}, got ${response.status}`);
+  }
+  if (calls !== 0) throw new Error("Invalid searches must not reach the repository");
 });
 
 Deno.test("movie detail returns the public fields and null user flags", async () => {
