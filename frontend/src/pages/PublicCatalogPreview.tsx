@@ -3,6 +3,7 @@ import { Link, Navigate, Route, Routes, useParams, useSearchParams } from "react
 import { getMovieDetails, type MovieDetails } from "../api/movies.api";
 import { searchPeople, type PersonSearchPage } from "../api/people.api";
 import { getGenres, searchMovies, type Genre, type MovieCard, type MoviePage } from "../api/search.api";
+import { localizeGenreName } from "../i18n";
 import Person from "./Person";
 import styles from "./PublicCatalogPreview.module.css";
 
@@ -121,7 +122,7 @@ function CatalogPage({ lang }: { lang: Language }) {
         <label className={styles.srOnly} htmlFor="catalog-genre">{copy.genre}</label>
         <select id="catalog-genre" value={genreId} onChange={event => setFilter({ genreId: event.target.value })}>
           <option value="">{copy.genre}</option>
-          {genres.map(genre => <option key={genre.id} value={genre.id}>{genre.name}</option>)}
+          {genres.map(genre => <option key={genre.id} value={genre.id}>{localizeGenreName(genre.name, lang)}</option>)}
         </select>
         <label className={styles.srOnly} htmlFor="catalog-year">{copy.year}</label>
         <input id="catalog-year" type="number" inputMode="numeric" min="1888" max="2100" value={year} onChange={event => setFilter({ year: event.target.value })} placeholder={copy.year} />
@@ -197,7 +198,7 @@ function MoviePageView({ lang }: { lang: Language }) {
           {movie.imdbId && /^tt\d+$/.test(movie.imdbId) && <a href={`https://www.imdb.com/title/${movie.imdbId}/`} target="_blank" rel="noreferrer">{copy.imdb} ↗</a>}
         </div>
         {movie.rating != null && <p className={styles.detailRating}>★ {movie.rating} <span>{copy.ratingLabel}</span></p>}
-        {movie.genres.length > 0 && <ul className={styles.genreTags}>{movie.genres.map(genre => <li key={genre.id}>{genre.name}</li>)}</ul>}
+        {movie.genres.length > 0 && <ul className={styles.genreTags}>{movie.genres.map(genre => <li key={genre.id}>{localizeGenreName(genre.name, lang)}</li>)}</ul>}
         {movie.shortPlot && <p className={styles.plot}>{movie.shortPlot}</p>}
         {movie.directors.length > 0 && <section className={styles.detailSection}><h2>{copy.director}</h2><p>{movie.directors.map((person, index) => <span key={person.id}>{index > 0 && ", "}<Link className={styles.personLink} to={`/${lang}/people/director/${person.id}`}>{person.name}</Link></span>)}</p></section>}
         {movie.actors.length > 0 && <section className={styles.detailSection}><h2>{copy.cast}</h2><ul className={styles.castList}>{movie.actors.map(actor => <li key={actor.id}>{actor.photoUrl && <img src={actor.photoUrl} alt="" loading="lazy" />}<span><Link className={styles.personLink} to={`/${lang}/people/actor/${actor.id}`}>{actor.name}</Link>{actor.characterName && <small>{actor.characterName}</small>}</span></li>)}</ul></section>}
