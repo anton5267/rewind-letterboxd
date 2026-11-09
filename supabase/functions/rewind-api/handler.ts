@@ -85,12 +85,31 @@ export interface PersonSearchParams {
   size: number;
 }
 
+export interface HostedAuthUser {
+  id: string;
+  email: string;
+  emailConfirmed: boolean;
+  username: string | null;
+}
+
+export interface CurrentUserResponse {
+  id: number;
+  username: string;
+  role: string;
+  avatarUrl: string | null;
+}
+
 export interface RewindApiRepository {
   listGenres(): Promise<GenreResponse[]>;
   searchMovies(params: MovieSearchParams): Promise<MovieSearchResult>;
   getMovieDetails(id: number): Promise<MovieDetailsResponse | null>;
   searchPeople(params: PersonSearchParams): Promise<PersonSearchResult>;
   getPersonFilmography(type: "ACTOR" | "DIRECTOR", id: number, genreId: number | null, sort: string): Promise<PersonFilmographyResponse | null>;
+  getOrCreateCurrentUser?(authUser: HostedAuthUser): Promise<CurrentUserResponse>;
+}
+
+export interface RewindAuthVerifier {
+  verifyAccessToken(token: string): Promise<HostedAuthUser | null>;
 }
 
 const FUNCTION_PREFIX = "/functions/v1/rewind-api";
@@ -120,6 +139,7 @@ function apiPath(pathname: string): string {
 export function createRewindApiHandler(
   repository: RewindApiRepository,
   allowedOrigins: readonly string[],
+  authVerifier?: RewindAuthVerifier,
 ): (request: Request) => Promise<Response> {
   const origins = new Set(allowedOrigins);
 
@@ -142,6 +162,24 @@ export function createRewindApiHandler(
     }
 
     const path = apiPath(new URL(request.url).pathname);
+    if (path === "/api/users/me") {
+      if (request.method !== "GET") {
+        corsHeaders.set("Allow", "GET, OPTIONS");
+        return json({ message: "Method not allowed" }, 405, corsHeaders);
+      }
+      const bearer = request.headers.get("Authorization")?.match(/^Bearer\s+(.+)$/i)?.[1];
+      if (!bearer || !authVerifier || !repository.getOrCreateCurrentUser) {
+        return json({ message: "Authentication required" }, 401, corsHeaders);
+      }
+      try {
+        const authUser = await authVerifier.verifyAccessToken(bearer);
+        if (!authUser || !authUser.emailConfirmed) return json({ message: "Authentication required" }, 401, corsHeaders);
+        const user = await repository.getOrCreateCurrentUser(authUser);
+        return json(user, 200, corsHeaders);
+      } catch {
+        return json({ message: "Unable to load account" }, 409, corsHeaders);
+      }
+    }
     if (path === GENRES_PATH) {
       if (request.method !== "GET") {
         corsHeaders.set("Allow", "GET, OPTIONS");

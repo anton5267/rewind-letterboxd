@@ -13,6 +13,57 @@ function handlerWith(repository: Partial<RewindApiRepository>) {
   }, [pagesOrigin, "http://localhost:5173"]);
 }
 
+function authHandler(overrides: Partial<RewindApiRepository> = {}, valid = true, confirmed = true) {
+  return createRewindApiHandler({
+    listGenres: async () => [],
+    searchMovies: async (params) => ({ content: [], totalPages: 0, totalElements: 0, number: params.page }),
+    getMovieDetails: async () => null,
+    searchPeople: async (params) => ({ content: [], totalPages: 0, totalElements: 0, number: params.page }),
+    getPersonFilmography: async () => null,
+    getOrCreateCurrentUser: async () => ({ id: 42, username: "cinephile", role: "USER", avatarUrl: null }),
+    ...overrides,
+  }, [pagesOrigin], {
+    async verifyAccessToken(token) {
+      if (!valid || token !== "valid-token") return null;
+      return { id: "supabase-uuid", email: "person@example.test", emailConfirmed: confirmed, username: "cinephile" };
+    },
+  });
+}
+
+Deno.test("GET /api/users/me verifies bearer token and returns REWIND profile shape", async () => {
+  const handler = authHandler();
+  const response = await handler(new Request("https://project.supabase.co/api/users/me", {
+    headers: { Origin: pagesOrigin, Authorization: "Bearer valid-token" },
+  }));
+  if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+  if (response.headers.get("Cache-Control") !== "no-store") throw new Error("Account responses must not be cached");
+  const body = await response.json();
+  if (JSON.stringify(body) !== JSON.stringify({ id: 42, username: "cinephile", role: "USER", avatarUrl: null })) {
+    throw new Error(`Unexpected account response: ${JSON.stringify(body)}`);
+  }
+});
+
+Deno.test("GET /api/users/me rejects missing and invalid tokens", async () => {
+  for (const [handler, headers] of [
+    [authHandler(), {}],
+    [authHandler({}, false), { Authorization: "Bearer invalid-token" }],
+  ] as const) {
+    const response = await handler(new Request("https://project.supabase.co/api/users/me", { headers }));
+    if (response.status !== 401) throw new Error(`Expected 401, got ${response.status}`);
+  }
+});
+
+Deno.test("GET /api/users/me requires confirmed email before creating a profile", async () => {
+  let provisioned = false;
+  const handler = authHandler({
+    async getOrCreateCurrentUser() { provisioned = true; return { id: 1, username: "x", role: "USER", avatarUrl: null }; },
+  }, true, false);
+  const response = await handler(new Request("https://project.supabase.co/api/users/me", {
+    headers: { Authorization: "Bearer valid-token" },
+  }));
+  if (response.status !== 401 || provisioned) throw new Error("Unconfirmed email must not provision a REWIND profile");
+});
+
 Deno.test("GET /api/genres returns the existing array contract and accepts the Pages origin", async () => {
   const handler = handlerWith({
     async listGenres() {

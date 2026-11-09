@@ -1,8 +1,13 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, Navigate, Route, Routes, useLocation, useParams, useSearchParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { getMovieDetails, type MovieDetails } from "../api/movies.api";
 import { searchPeople, type PersonSearchPage } from "../api/people.api";
 import { getGenres, searchMovies, type Genre, type MovieCard, type MoviePage } from "../api/search.api";
+import Login from "../auth/Login";
+import Register from "../auth/Register";
+import ForgotPassword from "../auth/ForgotPassword";
+import ResetPassword from "../auth/ResetPassword";
 import { localizeGenreName } from "../i18n";
 import { setPublicCatalogMetadata } from "../utils/publicCatalogSeo";
 import Person from "./Person";
@@ -22,10 +27,15 @@ function text(lang: Language) {
 
 function SiteHeader({ lang }: { lang: Language }) {
   const copy = text(lang);
+  const { isAuth, ready, user } = useAuth();
   const otherLanguage = lang === "uk" ? "en" : "uk";
+  const accountLabel = isAuth ? (user?.username ?? (lang === "uk" ? "Профіль" : "Profile")) : (lang === "uk" ? "Увійти" : "Sign in");
   return <header className={styles.header}>
     <Link className={styles.brand} to={`/${lang}/home/`} aria-label="REWIND">REWIND<span>®</span></Link>
     <span className={styles.headerLabel}>{copy.readOnly}</span>
+    <Link className={styles.language} to={isAuth ? `/${lang}/profile/` : `/${lang}/login/`} aria-label={accountLabel} aria-busy={!ready}>
+      {accountLabel}
+    </Link>
     <Link className={styles.language} to={`/${otherLanguage}/home/`}>{otherLanguage.toUpperCase()}</Link>
   </header>;
 }
@@ -36,13 +46,13 @@ function UnavailablePage({ lang }: { lang: Language }) {
     ? {
       title: "Ця сторінка ще не доступна",
       metaDescription: "У публічному прев’ю REWIND зараз доступні лише каталог фільмів і сторінки людей.",
-      description: "У цьому публічному прев’ю REWIND працює як каталог: можна шукати фільми й людей та переглядати деталі. Профілі, списки, відгуки й повідомлення поки не підключені.",
+      description: "У цьому прев’ю можна шукати фільми й людей, створити акаунт і ввійти. Особисті оцінки, списки, відгуки та повідомлення ще підключаються.",
       back: "Перейти до каталогу",
     }
     : {
       title: "This page is not available yet",
       metaDescription: "The REWIND public preview currently includes the film catalogue and people pages.",
-      description: "This public REWIND preview is a catalogue: you can search films and people and browse film details. Profiles, lists, reviews, and messages are not connected yet.",
+      description: "This REWIND preview lets you browse the catalogue, create an account, and sign in. Personal ratings, lists, reviews, and messages are still being connected.",
       back: "Browse the catalogue",
     };
 
@@ -60,6 +70,30 @@ function UnavailablePage({ lang }: { lang: Language }) {
       <h1 id="preview-unavailable-title">{copy.title}</h1>
       <p>{copy.description}</p>
       <Link className={styles.unavailableLink} to={`/${lang}/home/`}>{copy.back}</Link>
+    </section>
+  </main>;
+}
+
+function AccountPreview({ lang }: { lang: Language }) {
+  const { isAuth, ready, user, logout } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+  const title = lang === "uk" ? "Твій акаунт REWIND" : "Your REWIND account";
+  if (!ready) return <main className={styles.unavailableMain}><p role="status">{lang === "uk" ? "Завантаження…" : "Loading…"}</p></main>;
+  if (!isAuth || !user) return <Navigate to={`/${lang}/login/`} replace />;
+  const signOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    try { await logout(); } finally { setSigningOut(false); }
+  };
+  return <main className={styles.unavailableMain}>
+    <section className={styles.unavailableCard} aria-labelledby="preview-account-title">
+      <p className={styles.eyebrow}>REWIND · {lang === "uk" ? "АКАУНТ" : "ACCOUNT"}</p>
+      <h1 id="preview-account-title">{title}</h1>
+      <p>{lang === "uk" ? `Ти увійшов як ${user.username}. Профіль створений у Supabase.` : `You are signed in as ${user.username}. Your profile is stored in Supabase.`}</p>
+      <button className={styles.unavailableLink} type="button" onClick={() => void signOut()} disabled={signingOut}>
+        {signingOut ? (lang === "uk" ? "Вихід…" : "Signing out…") : (lang === "uk" ? "Вийти" : "Sign out")}
+      </button>
+      <Link className={styles.unavailableLink} to={`/${lang}/home/`}>{lang === "uk" ? "До каталогу" : "Back to catalogue"}</Link>
     </section>
   </main>;
 }
@@ -282,6 +316,11 @@ export default function PublicCatalogPreview() {
     <Route path="films/discover" element={<CatalogPage lang={lang} />} />
     <Route path="films/:id" element={<MoviePageView lang={lang} />} />
     <Route path="people/:type/:id" element={<Person />} />
+    <Route path="login" element={<Login />} />
+    <Route path="register" element={<Register />} />
+    <Route path="forgot-password" element={<ForgotPassword />} />
+    <Route path="reset-password" element={<ResetPassword />} />
+    <Route path="profile" element={<AccountPreview lang={lang} />} />
     <Route path="*" element={<UnavailablePage lang={lang} />} />
   </Routes></div>;
 }

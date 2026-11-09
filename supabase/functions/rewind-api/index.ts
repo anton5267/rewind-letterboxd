@@ -8,6 +8,7 @@ import {
   type PersonFilmographyResponse,
   type PersonSearchParams,
   type PersonSearchResult,
+  type HostedAuthUser,
 } from "./handler.ts";
 
 const databaseUrl = Deno.env.get("SUPABASE_DB_URL");
@@ -16,8 +17,10 @@ if (!databaseUrl) {
 }
 
 // The server-only connection URL never leaves this function. Each checkout
-// assumes the NOLOGIN role with SELECT on catalog tables only.
+// assumes a narrowly scoped NOLOGIN role for each operation.
 const pool = new Pool(databaseUrl, 1, true);
+const supabaseUrl = Deno.env.get("SUPABASE_URL");
+const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
 
 const allowedOrigins = (Deno.env.get("REWIND_ALLOWED_ORIGINS")
   ?? "https://anton5267.github.io,http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174")
@@ -376,6 +379,89 @@ const handler = createRewindApiHandler({
       connection.release();
     }
   },
-}, allowedOrigins);
+  async getOrCreateCurrentUser(authUser) {
+    const connection = await pool.connect();
+    try {
+      await connection.queryObject("BEGIN");
+      await connection.queryObject("SET LOCAL ROLE rewind_edge_app");
+      await connection.queryObject({
+        text: "SELECT set_config('rewind.supabase_user_id', $1, TRUE)",
+        args: [authUser.id],
+      });
+      const existing = await connection.queryObject<{
+        id: string; username: string; role: string; avatar_url: string | null;
+      }>({
+        text: `SELECT id::text AS id, username, role, avatar_url
+               FROM rewind.users WHERE supabase_user_id = $1`,
+        args: [authUser.id],
+      });
+      if (existing.rows[0]) {
+        const row = existing.rows[0];
+        await connection.queryObject("COMMIT");
+        return { id: Number(row.id), username: row.username, role: row.role, avatarUrl: row.avatar_url };
+      }
+
+      const unusablePassword = `supabase-auth:${crypto.randomUUID()}`;
+      const requested = authUser.username ?? `user_${authUser.id.slice(0, 8)}`;
+      let row: { id: string; username: string; role: string; avatar_url: string | null } | undefined;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const suffix = attempt === 0 ? "" : `_${crypto.randomUUID().slice(0, 6)}`;
+        const username = `${requested.slice(0, 50 - suffix.length)}${suffix}`;
+        try {
+          const inserted = await connection.queryObject<{
+            id: string; username: string; role: string; avatar_url: string | null;
+          }>({
+            text: `INSERT INTO rewind.users (username, email, password_hash, supabase_user_id)
+                   VALUES ($1, $2, $3, $4)
+                   ON CONFLICT DO NOTHING
+                   RETURNING id::text AS id, username, role, avatar_url`,
+            args: [username, authUser.email, unusablePassword, authUser.id],
+          });
+          row = inserted.rows[0];
+          break;
+        } catch (error) {
+          throw error;
+          const linked = await connection.queryObject<{
+            id: string; username: string; role: string; avatar_url: string | null;
+          }>({
+            text: `SELECT id::text AS id, username, role, avatar_url
+                   FROM rewind.users WHERE supabase_user_id = $1`,
+            args: [authUser.id],
+          });
+          if (linked.rows[0]) { row = linked.rows[0]; break; }
+        }
+      }
+      if (!row) throw new Error("Unable to allocate a unique username.");
+      await connection.queryObject("COMMIT");
+      return { id: Number(row.id), username: row.username, role: row.role, avatarUrl: row.avatar_url };
+    } catch (error) {
+      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+      throw error;
+    } finally {
+      connection.release();
+    }
+  },
+}, allowedOrigins, {
+  async verifyAccessToken(token: string): Promise<HostedAuthUser | null> {
+    if (!supabaseUrl || !supabaseAnonKey) return null;
+    const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) return null;
+    const user = await response.json();
+    if (typeof user?.id !== "string" || typeof user?.email !== "string") return null;
+    const metadataUsername = typeof user.user_metadata?.username === "string"
+      ? user.user_metadata.username.trim()
+      : "";
+    const candidate = metadataUsername.replace(/[^\p{L}\p{N}_.-]/gu, "").slice(0, 50);
+    const emailPrefix = user.email.split("@")[0].replace(/[^\p{L}\p{N}_.-]/gu, "").slice(0, 40);
+    return {
+      id: user.id,
+      email: user.email,
+      emailConfirmed: Boolean(user.email_confirmed_at),
+      username: candidate.length >= 3 ? candidate : (emailPrefix.length >= 3 ? emailPrefix : `user_${user.id.slice(0, 8)}`),
+    };
+  },
+});
 
 Deno.serve(handler);

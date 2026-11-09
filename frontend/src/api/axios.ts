@@ -1,4 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { getSupabaseClient, isSupabaseAuthConfigured, usesHostedSupabaseAuth } from "./supabaseClient";
 
 const apiBaseURL = import.meta.env.VITE_API_BASE_URL || "/api";
 const apiOrigin = new URL(apiBaseURL, window.location.href).origin;
@@ -39,6 +40,15 @@ async function ensureCsrf() {
 }
 
 api.interceptors.request.use(async config => {
+  if (usesHostedSupabaseAuth) {
+    if (isSupabaseAuthConfigured) {
+      const { data: { session }, error } = await getSupabaseClient().auth.getSession();
+      if (error) throw error;
+      if (session?.access_token) config.headers.set("Authorization", `Bearer ${session.access_token}`);
+      else config.headers.delete("Authorization");
+    }
+    return config;
+  }
   if (!["get", "head", "options"].includes(config.method?.toLowerCase() ?? "")) {
     const token = await ensureCsrf();
     if (token) config.headers.set("X-XSRF-TOKEN", token);
@@ -54,6 +64,12 @@ api.interceptors.response.use(response => response, async (error: AxiosError) =>
   }
   request.retried = true;
   try {
+    if (usesHostedSupabaseAuth) {
+      const { data, error: refreshError } = await getSupabaseClient().auth.refreshSession();
+      if (refreshError || !data.session) throw refreshError ?? error;
+      request.headers.set("Authorization", `Bearer ${data.session.access_token}`);
+      return api(request);
+    }
     if (!refreshRequest) {
       refreshRequest = api.post<void>("/auth/refresh").then(() => undefined).finally(() => { refreshRequest = null; });
     }

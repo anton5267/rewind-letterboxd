@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { isAxiosError } from "axios";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { resetPassword } from "../api/auth.api";
+import { usesHostedSupabaseAuth } from "../api/supabaseClient";
 import { useLocale } from "../i18n";
 import { useAuthFieldValidation } from "./useAuthFieldValidation";
 import styles from "./ResetPassword.module.css";
@@ -9,7 +10,15 @@ import { isPasswordWithinByteLimit, MAX_PASSWORD_BYTES } from "../utils/password
 
 export default function ResetPassword() {
   const [params] = useSearchParams();
-  const token = params.get("token") ?? "";
+  const [recoveryToken] = useState(() => {
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    if (hash.get("type") !== "recovery") return "";
+    return hash.get("access_token") ?? "";
+  });
+  useEffect(() => {
+    if (recoveryToken) window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+  }, [recoveryToken]);
+  const token = params.get("token") ?? recoveryToken;
   return <ResetPasswordForm key={token} token={token} />;
 }
 
@@ -85,8 +94,8 @@ function ResetPasswordForm({ token }: { token: string }) {
       <Link className={styles.back} to={path("/login")}>← {t("return")}</Link>
       <p className={styles.eyebrow}>{t("accountEyebrow")}</p>
       <h1 className={styles.title} id="reset-password-title">{t("resetTitle")}</h1>
-      {!token && <p className={styles.missing} role="alert">{t("resetMissing")}</p>}
-      {done ? <p ref={successMessage} className={styles.success} role="status" tabIndex={-1}>{t("resetSuccess")} <Link to={path("/login")}>{t("login")}</Link></p> : token && <form className={styles.form} onSubmit={submit} onInvalidCapture={validation.onInvalid} aria-busy={loading}>
+      {!token && !usesHostedSupabaseAuth && <p className={styles.missing} role="alert">{t("resetMissing")}</p>}
+      {done ? <p ref={successMessage} className={styles.success} role="status" tabIndex={-1}>{t("resetSuccess")} <Link to={path("/login")}>{t("login")}</Link></p> : (token || usesHostedSupabaseAuth) && <form className={styles.form} onSubmit={submit} onInvalidCapture={validation.onInvalid} aria-busy={loading}>
         <label className={styles.field} htmlFor="reset-password">
           {t("newPassword")}
           <input className={styles.input} id="reset-password" name="newPassword" type="password" required disabled={loading} minLength={8} maxLength={MAX_PASSWORD_BYTES} autoComplete="new-password" value={password} onChange={event => { setPassword(event.target.value); validation.onInput(event.currentTarget); }} aria-invalid={Boolean(error) || validation.invalid("reset-password")} aria-describedby={validation.describedBy("reset-password", `reset-password-hint${error ? " reset-password-error" : ""}`)} />
