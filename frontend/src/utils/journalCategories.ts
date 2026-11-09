@@ -3,3 +3,8 @@ export const journalCategories = ["News", "Awards", "Community", "Interviews", "
 export function isJournalCategory(value: string): boolean {
   return journalCategories.some(category => category === value);
 }
+
+export function isNewsletterCategory(value: string): boolean {
+  const category = value.trim().toLowerCase();
+  return category === "newsletter" || category === "бюлетень";
+}

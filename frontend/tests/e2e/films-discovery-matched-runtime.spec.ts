@@ -58,14 +58,13 @@ test("Films Discovery matches current desktop and phone READY anchors", async ({
     popular: page.getByRole("heading", { level: 2, name: "Популярні фільми" }),
     recent: page.getByRole("heading", { level: 2, name: "Щойно переглянули…" }),
     reviews: page.getByRole("heading", { level: 2, name: "Популярні огляди цього тижня" }),
-    crew: page.getByRole("heading", { level: 2, name: "Вибір команди" }),
   };
+  await expect(page.getByRole("heading", { level: 2, name: "Вибір команди" })).toHaveCount(0);
   await expect(page.locator('main header select[aria-label="Жанр"]')).toBeEnabled();
 
   const popularSection = headings.popular.locator("xpath=ancestor::section[1]");
   const recentSection = headings.recent.locator("xpath=ancestor::section[1]");
   const reviewsSection = headings.reviews.locator("xpath=ancestor::section[1]");
-  const crewSection = headings.crew.locator("xpath=ancestor::section[1]");
   near((await headings.popular.boundingBox())?.y, 432);
   near((await popularSection.locator("ol > li a").first().boundingBox())?.y, 514);
   near((await recentSection.boundingBox())?.y, 944);
@@ -74,8 +73,6 @@ test("Films Discovery matches current desktop and phone READY anchors", async ({
   near((await reviewsSection.boundingBox())?.y, 1309);
   near((await headings.reviews.boundingBox())?.y, 1327);
   near((await reviewsSection.locator("article").first().boundingBox())?.y, 1409);
-  near((await crewSection.boundingBox())?.y, 2017);
-  near((await headings.crew.boundingBox())?.y, 2035);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(1440);
 
   const captureDirectory = resolve(process.cwd(), "../artifacts/visual-audit-20261102/films-discovery-platform-emulation");
@@ -91,7 +88,6 @@ test("Films Discovery matches current desktop and phone READY anchors", async ({
   near((await reviewsSection.boundingBox())?.y, 587);
   near((await reviewsSection.locator("article").nth(0).boundingBox())?.y, 635);
   near((await reviewsSection.locator("article").nth(1).boundingBox())?.y, 784);
-  near((await crewSection.boundingBox())?.y, 944);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(393);
   await page.screenshot({ path: resolve(captureDirectory, `${platform}-uk-phone-393.png`), fullPage: true });
 

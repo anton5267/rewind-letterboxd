@@ -25,6 +25,7 @@ export default function AdminAuditLogs({ onOpenUserProfile }: { onOpenUserProfil
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   const pendingFocus = useRef<{ origin: HTMLElement | null; generation: number } | null>(null);
   const generation = useRef(0);
   const actorGeneration = useRef(0);
@@ -32,6 +33,7 @@ export default function AdminAuditLogs({ onOpenUserProfile }: { onOpenUserProfil
   const actorRequests = useRef(new Map<number, symbol>());
   const actor = `${user?.id ?? ""}:${user?.role ?? ""}`;
   const currentActor = useRef(actor);
+  const visibleActorRetryIds = actorRetryIds.filter(id => data?.content.some(log => log.adminId === id));
 
   useLayoutEffect(() => {
     generation.current += 1;
@@ -120,11 +122,13 @@ export default function AdminAuditLogs({ onOpenUserProfile }: { onOpenUserProfil
       pendingFocus.current = null;
       if (generation.current !== pending.generation) return;
       const active = document.activeElement;
-      if (active !== document.body && active !== pending.origin) return;
-      heading.current?.focus();
+      const expectedHeadingFocus = (error || visibleActorRetryIds.length > 0) && active === heading.current;
+      if (active !== document.body && active !== pending.origin && !expectedHeadingFocus) return;
+      if (error || visibleActorRetryIds.length > 0) sectionRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+      else heading.current?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [loading, actorsLoading, error, data, page, lang, actor]);
+  }, [loading, actorsLoading, error, data, visibleActorRetryIds.length, page, lang, actor]);
 
   useEffect(() => {
     let current = true;
@@ -147,9 +151,7 @@ export default function AdminAuditLogs({ onOpenUserProfile }: { onOpenUserProfil
     return () => { current = false; };
   }, [page, revision, actor]);
 
-  const visibleActorRetryIds = actorRetryIds.filter(id => data?.content.some(log => log.adminId === id));
-
-  return <section className={`${styles.section} ${styles.auditSection}`} aria-label={t("moderatorLogs")} aria-busy={loading || actorsLoading}>
+  return <section ref={sectionRef} className={`${styles.section} ${styles.auditSection}`} aria-label={t("moderatorLogs")} aria-busy={loading || actorsLoading}>
     <h2 className={styles.title} ref={heading} tabIndex={-1}>{t("moderatorLogs")}</h2>
     {loading && <AdminLoading label={t("loading")} layout="logs" />}
     {actorsLoading && <p className={styles.feedback} role="status">{t("loading")}</p>}

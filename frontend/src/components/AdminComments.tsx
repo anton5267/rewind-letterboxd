@@ -28,7 +28,9 @@ export default function AdminComments() {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const deleteDialog = useRef<HTMLDialogElement>(null);
   const deleteDialogCancel = useRef<HTMLButtonElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   const focusAfterReload = useRef(false);
+  const retryReload = useRef(false);
   const reloadFocusOrigin = useRef<HTMLElement | null>(null);
   const queryGeneration = useRef(0);
   const mounted = useRef(true);
@@ -49,6 +51,7 @@ export default function AdminComments() {
       setError(false);
       setActionError(false);
       focusAfterReload.current = false;
+      retryReload.current = false;
       reloadFocusOrigin.current = null;
     }
   }, [filter, page, lang, actor]);
@@ -64,7 +67,7 @@ export default function AdminComments() {
     return () => { mounted.current = false; };
   }, []);
 
-  useEffect(() => { focusAfterReload.current = false; reloadFocusOrigin.current = null; }, [lang]);
+  useEffect(() => { focusAfterReload.current = false; retryReload.current = false; reloadFocusOrigin.current = null; }, [lang]);
 
   useEffect(() => {
     if (!focusAfterReload.current || loading || busyId !== null) return;
@@ -73,11 +76,17 @@ export default function AdminComments() {
     const frame = window.requestAnimationFrame(() => {
       if (!focusAfterReload.current) return;
       const origin = reloadFocusOrigin.current;
+      const isRetry = retryReload.current;
       focusAfterReload.current = false;
+      retryReload.current = false;
       reloadFocusOrigin.current = null;
       if (!mounted.current || queryGeneration.current !== generation || !origin) return;
       const active = document.activeElement;
-      if (active !== document.body) return;
+      if (active !== document.body && active !== origin) return;
+      if (isRetry && error) {
+        sectionRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+        return;
+      }
       if (origin.isConnected && !origin.matches(":disabled")) origin.focus();
       else if (!origin.isConnected) headingRef.current?.focus();
     });
@@ -216,7 +225,7 @@ export default function AdminComments() {
     void deleteComment(comment, trigger);
   };
 
-  return <section className={`${styles.section} ${styles.commentsSection}`} aria-label={t("adminComments")} aria-busy={loading || busyId !== null}>
+  return <section ref={sectionRef} className={`${styles.section} ${styles.commentsSection}`} aria-label={t("adminComments")} aria-busy={loading || busyId !== null}>
     <h2 className={styles.title} ref={headingRef} tabIndex={-1}>{t("adminCommentsTitle")}</h2>
     {actionError && <p className={styles.error} role="alert">{t(actionError === "delete" ? "adminCommentDeleteError" : "adminCommentModerationError")}</p>}
     <label className={styles.filter}>{t("adminVisibilityFilter")}{" "}
@@ -227,7 +236,7 @@ export default function AdminComments() {
       </select>
     </label>
     {loading && <AdminLoading label={t("loading")} layout="comments" />}
-    {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => { reloadFocusOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; focusAfterReload.current = true; setRevision(value => value + 1); }} />}
+    {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => { reloadFocusOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; retryReload.current = true; focusAfterReload.current = true; setRevision(value => value + 1); }} />}
     {data && data.content.length === 0 && <p>{t("noAdminComments")}</p>}
     {data && <>
       <ul className={styles.list}>{data.content.map(comment => {

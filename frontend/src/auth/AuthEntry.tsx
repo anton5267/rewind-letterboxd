@@ -9,7 +9,7 @@ import styles from "./AuthEntry.module.css";
 export default function AuthEntry() {
   const { path, t } = useLocale();
   const location = useLocation();
-  const returnTo = getAuthReturnTo(location.state, [path("/profile"), path("/messages"), path("/notifications")]);
+  const returnTo = getAuthReturnTo(location.state, [path("/profile"), path("/messages"), path("/notifications"), path("/lists")]);
   const authState = returnTo ? { returnTo } : undefined;
 
   return <main className={styles.page} data-rewind-auth-page aria-labelledby="auth-entry-title">

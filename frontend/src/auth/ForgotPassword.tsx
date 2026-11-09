@@ -14,7 +14,7 @@ export default function ForgotPassword() {
   const { path, t, lang } = useLocale();
   const validation = useAuthFieldValidation();
   const location = useLocation();
-  const returnLocation = getAuthReturnTo(location.state, [path("/profile"), path("/messages"), path("/notifications")]);
+  const returnLocation = getAuthReturnTo(location.state, [path("/profile"), path("/messages"), path("/notifications"), path("/lists")]);
 
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState(false);
@@ -74,7 +74,7 @@ export default function ForgotPassword() {
     setError(false);
     setLoading(true);
     try {
-      await forgotPassword(email.trim());
+      await forgotPassword(email.trim(), lang);
       if (!isCurrent()) return;
       setMessage(true);
       requestFocus("success");

@@ -92,16 +92,25 @@ export default function PublicProfile() {
   const [followersError, setFollowersError] = useState(false);
   const [followersAttempt, setFollowersAttempt] = useState(0);
   const followersHeadingRef = useRef<HTMLHeadingElement>(null);
-  const focusFollowersHeadingAfterRetry = useRef(false);
   const [followingLoading, setFollowingLoading] = useState(false);
   const [followingError, setFollowingError] = useState(false);
   const [followingAttempt, setFollowingAttempt] = useState(0);
   const followingHeadingRef = useRef<HTMLHeadingElement>(null);
-  const focusFollowingHeadingAfterRetry = useRef(false);
+  const networkListRetryScope = JSON.stringify([location.key, lang, profileId, profileView, followingPage, followersPage]);
+  const pendingNetworkListRetryFocus = useRef<{ target: "following" | "followers"; scope: string; origin: HTMLElement | null } | null>(null);
   const [followStatus, setFollowStatus] = useState<FollowStatus | null>(null);
   const [followStatusLoading, setFollowStatusLoading] = useState(false);
   const [followStatusError, setFollowStatusError] = useState(false);
   const [followStatusAttempt, setFollowStatusAttempt] = useState(0);
+  const relationshipStatusRequests = useRef({ follow: 0, block: 0 });
+  const relationshipStatusScope = JSON.stringify([location.key, lang, isAuth, user?.id ?? null, profileId, validProfileId]);
+  const currentRelationshipStatusScope = useRef(relationshipStatusScope);
+  currentRelationshipStatusScope.current = relationshipStatusScope;
+  const pendingRelationshipStatusFocus = useRef<Partial<Record<"follow" | "block", { origin: HTMLElement | null; scope: string; request: number }>>>({});
+  useLayoutEffect(() => {
+    if (pendingRelationshipStatusFocus.current.follow?.scope !== relationshipStatusScope) delete pendingRelationshipStatusFocus.current.follow;
+    if (pendingRelationshipStatusFocus.current.block?.scope !== relationshipStatusScope) delete pendingRelationshipStatusFocus.current.block;
+  }, [relationshipStatusScope]);
   const [followBusy, setFollowBusy] = useState(false);
   const [followError, setFollowError] = useState(false);
   const [blockStatus, setBlockStatus] = useState<BlockStatus | null>(null);
@@ -110,6 +119,7 @@ export default function PublicProfile() {
   const [blockStatusAttempt, setBlockStatusAttempt] = useState(0);
   const [blockBusy, setBlockBusy] = useState(false);
   const [blockError, setBlockError] = useState(false);
+  const pendingRelationshipMutationFocus = useRef<{ target: "follow" | "block"; origin: HTMLElement | null; scope: string } | null>(null);
   const [activity, setActivity] = useState<ActivityPage | null>(null);
   const [activityPage, setActivityPage] = useState(0);
   const [activityLoading, setActivityLoading] = useState(false);
@@ -120,8 +130,6 @@ export default function PublicProfile() {
   const [publicListsError, setPublicListsError] = useState(false);
   const [publicListsPage, setPublicListsPage] = useState(0);
   const [publicListsAttempt, setPublicListsAttempt] = useState(0);
-  const publicListsHeadingRef = useRef<HTMLHeadingElement>(null);
-  const focusPublicListsHeadingAfterRetry = useRef(false);
   const [expandedProfileListTagsKey, setExpandedProfileListTagsKey] = useState<string | null>(null);
   const [likedReviews, setLikedReviews] = useState<PublicProfileReviewPage | null>(null);
   const [likedReviewsPage, setLikedReviewsPage] = useState(0);
@@ -129,6 +137,8 @@ export default function PublicProfile() {
   const [likedReviewsError, setLikedReviewsError] = useState(false);
   const [likedReviewsAttempt, setLikedReviewsAttempt] = useState(0);
   const currentProfileId = useRef(profileId);
+  const publicRetryFocusScope = JSON.stringify([location.key, lang, profileId, profileView, isAuth, user?.id ?? null]);
+  const pendingPublicRetryFocus = useRef<{ section: "favorites" | "activity" | "following-preview" | "public-lists" | "liked-reviews"; scope: string; origin: HTMLElement | null } | null>(null);
   const currentActorId = useRef<number | null>(null);
   const relationshipMutation = useRef(0);
   const networkFocusOrigin = useRef<HTMLElement | null>(null);
@@ -138,6 +148,47 @@ export default function PublicProfile() {
   currentNetworkFocusScope.current = networkFocusScope;
   currentProfileId.current = profileId;
   currentActorId.current = isAuth ? user?.id ?? null : null;
+
+  useEffect(() => {
+    if (pendingPublicRetryFocus.current?.scope !== publicRetryFocusScope) pendingPublicRetryFocus.current = null;
+  }, [publicRetryFocusScope]);
+
+  useEffect(() => {
+    const pending = pendingPublicRetryFocus.current;
+    if (!pending) return;
+    const state = pending.section === "favorites" ? { loading: favoritePreviewLoading, error: favoritePreviewError } :
+      pending.section === "activity" ? { loading: activityLoading, error: activityError } :
+      pending.section === "following-preview" ? { loading: followingLoading, error: followingError } :
+      pending.section === "public-lists" ? { loading: publicListsLoading, error: publicListsError } :
+      { loading: likedReviewsLoading, error: likedReviewsError };
+    if (state.loading) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (pendingPublicRetryFocus.current !== pending) return;
+      pendingPublicRetryFocus.current = null;
+      if (pending.scope !== publicRetryFocusScope) return;
+      const active = document.activeElement;
+      if (active !== document.body && active !== pending.origin) return;
+      const section = document.querySelector<HTMLElement>(`[data-retry-focus-section="${pending.section}"]`);
+      if (state.error) section?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+      else section?.querySelector<HTMLElement>("h2")?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activityError, activityLoading, favoritePreviewError, favoritePreviewLoading, followingError, followingLoading, likedReviewsError, likedReviewsLoading, publicListsError, publicListsLoading, publicRetryFocusScope]);
+
+  const retryPublicSection = (section: NonNullable<typeof pendingPublicRetryFocus.current>["section"]) => {
+    pendingPublicRetryFocus.current = { section, scope: publicRetryFocusScope, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
+    if (section === "favorites") {
+      setFavoritePreviewLoading(true); setFavoritePreviewError(false); setFavoritePreviewAttempt(value => value + 1);
+    } else if (section === "activity") {
+      setActivityLoading(true); setActivityError(false); setActivityAttempt(value => value + 1);
+    } else if (section === "following-preview") {
+      setFollowingLoading(true); setFollowingError(false); setFollowingAttempt(value => value + 1);
+    } else if (section === "public-lists") {
+      setPublicListsLoading(true); setPublicListsError(false); setPublicListsAttempt(value => value + 1);
+    } else {
+      setLikedReviewsLoading(true); setLikedReviewsError(false); setLikedReviewsAttempt(value => value + 1);
+    }
+  };
 
   useLayoutEffect(() => {
     collectionMounted.current = true;
@@ -170,10 +221,6 @@ export default function PublicProfile() {
     setCollectionLoading(true);
     setCollectionAttempt(value => value + 1);
   };
-
-  useEffect(() => {
-    focusFollowingHeadingAfterRetry.current = false;
-  }, [profileId, profileView, lang]);
 
   useEffect(() => {
     profileRetryOrigin.current = null;
@@ -213,7 +260,7 @@ export default function PublicProfile() {
       if (origin.isConnected || (document.activeElement !== document.body && document.activeElement !== null)) return;
       const mobileTitle = document.getElementById("public-profile-view-title");
       const profileTitle = document.getElementById("public-profile-title");
-      const target = error ? profileRetryAlertRef.current :
+      const target = error ? profileRetryAlertRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]") :
         mobileTitle?.getClientRects().length ? mobileTitle : profileTitle;
       target?.focus();
     });
@@ -316,7 +363,9 @@ export default function PublicProfile() {
       if (document.activeElement !== document.body && document.activeElement !== pending.origin) return;
       const mobileTitle = profileView === "collection" ? document.getElementById("public-profile-view-title") : null;
       const mobileBounds = mobileTitle?.getBoundingClientRect();
-      const target = mobileBounds && mobileBounds.width > 1 && mobileBounds.height > 1 ? mobileTitle : collectionHeadingRef.current;
+      const target = collectionError
+        ? document.getElementById("public-profile-collection-content")?.querySelector<HTMLButtonElement>("[data-retry-button]")
+        : mobileBounds && mobileBounds.width > 1 && mobileBounds.height > 1 ? mobileTitle : collectionHeadingRef.current;
       target?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
@@ -343,17 +392,6 @@ export default function PublicProfile() {
   }, [followersAttempt, followersPage, lang, profileId, validProfileId]);
 
   useEffect(() => {
-    if (!focusFollowersHeadingAfterRetry.current || followersLoading) return;
-    if (!followersError && followers === null) return;
-    focusFollowersHeadingAfterRetry.current = false;
-    requestAnimationFrame(() => {
-      const mobileTitle = document.getElementById("public-profile-view-title");
-      const target = window.matchMedia("(max-width: 767px)").matches ? mobileTitle : followersHeadingRef.current;
-      target?.focus({ preventScroll: true });
-    });
-  }, [followers, followersError, followersLoading]);
-
-  useEffect(() => {
     if (!validProfileId) return;
     let current = true;
     setFollowingLoading(true);
@@ -374,16 +412,51 @@ export default function PublicProfile() {
   }, [followingAttempt, followingPage, lang, profileId, validProfileId]);
 
   useEffect(() => {
-    if (!focusFollowingHeadingAfterRetry.current || followingLoading) return;
-    if (!followingError && following === null) return;
-    focusFollowingHeadingAfterRetry.current = false;
+    const pending = pendingNetworkListRetryFocus.current;
+    if (!pending) return;
+    if (pending.scope !== networkListRetryScope) {
+      pendingNetworkListRetryFocus.current = null;
+      return;
+    }
+    const state = pending.target === "following"
+      ? { loading: followingLoading, error: followingError, data: following }
+      : { loading: followersLoading, error: followersError, data: followers };
+    if (state.loading || (!state.error && state.data === null)) return;
     const frame = window.requestAnimationFrame(() => {
+      if (pendingNetworkListRetryFocus.current !== pending) return;
+      pendingNetworkListRetryFocus.current = null;
+      if (pending.scope !== networkListRetryScope) return;
+      const active = document.activeElement;
+      if (active !== document.body && active !== pending.origin) return;
+      const section = document.getElementById(`public-profile-${pending.target}`);
+      if (state.error) {
+        section?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+        return;
+      }
       const mobileTitle = document.getElementById("public-profile-view-title");
-      const target = window.matchMedia("(max-width: 767px)").matches && mobileTitle ? mobileTitle : followingHeadingRef.current;
+      const mobileBounds = mobileTitle?.getBoundingClientRect();
+      const target = mobileBounds && mobileBounds.width > 1 && mobileBounds.height > 1
+        ? mobileTitle : pending.target === "following" ? followingHeadingRef.current : followersHeadingRef.current;
       target?.focus({ preventScroll: true });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [following, followingError, followingLoading]);
+  }, [following, followingError, followingLoading, followers, followersError, followersLoading, networkListRetryScope]);
+
+  const retryNetworkList = (target: "following" | "followers") => {
+    pendingNetworkListRetryFocus.current = {
+      target, scope: networkListRetryScope,
+      origin: document.activeElement instanceof HTMLElement ? document.activeElement : null,
+    };
+    if (target === "following") {
+      setFollowingLoading(true);
+      setFollowingError(false);
+      setFollowingAttempt(value => value + 1);
+    } else {
+      setFollowersLoading(true);
+      setFollowersError(false);
+      setFollowersAttempt(value => value + 1);
+    }
+  };
 
   useEffect(() => {
     if (!validProfileId) return;
@@ -404,17 +477,6 @@ export default function PublicProfile() {
       .finally(() => { if (current) setPublicListsLoading(false); });
     return () => { current = false; };
   }, [lang, profileId, publicListsAttempt, publicListsPage, validProfileId]);
-
-  useEffect(() => {
-    if (!focusPublicListsHeadingAfterRetry.current || publicListsLoading) return;
-    if (!publicListsError && publicLists === null) return;
-    focusPublicListsHeadingAfterRetry.current = false;
-    requestAnimationFrame(() => {
-      const mobileTitle = document.getElementById("public-profile-view-title");
-      const target = window.matchMedia("(max-width: 767px)").matches ? mobileTitle : publicListsHeadingRef.current;
-      target?.focus({ preventScroll: true });
-    });
-  }, [publicLists, publicListsError, publicListsLoading]);
 
   useEffect(() => {
     if (!validProfileId) return;
@@ -445,12 +507,14 @@ export default function PublicProfile() {
       return;
     }
     let current = true;
+    const request = ++relationshipStatusRequests.current.follow;
+    const isCurrentRequest = () => current && relationshipStatusRequests.current.follow === request;
     setFollowStatus(null);
     setFollowStatusLoading(true);
     setFollowStatusError(false);
-    getFollowStatus(profileId).then(({ data }) => { if (current) setFollowStatus(data); })
-      .catch(() => { if (current) { setFollowStatus(null); setFollowStatusError(true); } })
-      .finally(() => { if (current) setFollowStatusLoading(false); });
+    getFollowStatus(profileId).then(({ data }) => { if (isCurrentRequest()) setFollowStatus(data); })
+      .catch(() => { if (isCurrentRequest()) { setFollowStatus(null); setFollowStatusError(true); } })
+      .finally(() => { if (isCurrentRequest()) setFollowStatusLoading(false); });
     return () => { current = false; };
   }, [followStatusAttempt, isAuth, profileId, user?.id, validProfileId]);
 
@@ -462,14 +526,52 @@ export default function PublicProfile() {
       return;
     }
     let current = true;
+    const request = ++relationshipStatusRequests.current.block;
+    const isCurrentRequest = () => current && relationshipStatusRequests.current.block === request;
     setBlockStatus(null);
     setBlockStatusLoading(true);
     setBlockStatusError(false);
-    getBlockStatus(profileId).then(({ data }) => { if (current) setBlockStatus(data); })
-      .catch(() => { if (current) { setBlockStatus(null); setBlockStatusError(true); } })
-      .finally(() => { if (current) setBlockStatusLoading(false); });
+    getBlockStatus(profileId).then(({ data }) => { if (isCurrentRequest()) setBlockStatus(data); })
+      .catch(() => { if (isCurrentRequest()) { setBlockStatus(null); setBlockStatusError(true); } })
+      .finally(() => { if (isCurrentRequest()) setBlockStatusLoading(false); });
     return () => { current = false; };
   }, [blockStatusAttempt, isAuth, profileId, user?.id, validProfileId]);
+
+  useEffect(() => {
+    for (const target of ["follow", "block"] as const) {
+      const pending = pendingRelationshipStatusFocus.current[target];
+      const loading = target === "follow" ? followStatusLoading : blockStatusLoading;
+      const error = target === "follow" ? followStatusError : blockStatusError;
+      if (!pending || pending.scope !== currentRelationshipStatusScope.current || pending.request !== relationshipStatusRequests.current[target] || loading) continue;
+      const frame = window.requestAnimationFrame(() => {
+        if (pendingRelationshipStatusFocus.current[target] !== pending) return;
+        delete pendingRelationshipStatusFocus.current[target];
+        if (pending.scope !== currentRelationshipStatusScope.current || pending.request !== relationshipStatusRequests.current[target]) return;
+        const active = document.activeElement;
+        if (active !== document.body && active !== pending.origin) return;
+        if (error) {
+          const message = t(target === "follow" ? "loadFollowStatusError" : "loadBlockStatusError");
+          [...document.querySelectorAll<HTMLElement>("[role=alert]")].find(alert => alert.textContent?.includes(message))?.querySelector<HTMLButtonElement>("[data-retry-button]:not(:disabled)")?.focus();
+        } else {
+          document.querySelector<HTMLButtonElement>(`[data-relationship-action="${target}"]:not(:disabled)`)?.focus();
+        }
+      });
+      return () => window.cancelAnimationFrame(frame);
+    }
+  }, [followStatusLoading, followStatusError, followStatus, followStatusAttempt, blockStatusLoading, blockStatusError, blockStatus, blockStatusAttempt, t, location.key, lang, isAuth, profileId, validProfileId, user?.id]);
+
+  const retryRelationshipStatus = (target: "follow" | "block") => {
+    pendingRelationshipStatusFocus.current[target] = { origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, scope: currentRelationshipStatusScope.current, request: relationshipStatusRequests.current[target] + 1 };
+    if (target === "follow") {
+      setFollowStatusLoading(true);
+      setFollowStatusError(false);
+      setFollowStatusAttempt(value => value + 1);
+    } else {
+      setBlockStatusLoading(true);
+      setBlockStatusError(false);
+      setBlockStatusAttempt(value => value + 1);
+    }
+  };
 
   const chooseCollection = (kind: PublicCollection) => {
     setCollectionPage(0);
@@ -544,14 +646,40 @@ export default function PublicProfile() {
 
   useEffect(() => {
     relationshipMutation.current += 1;
+    pendingRelationshipMutationFocus.current = null;
     setFollowBusy(false);
     setBlockBusy(false);
     setFollowError(false);
     setBlockError(false);
   }, [profileId, isAuth, user?.id]);
 
+  useEffect(() => {
+    if (pendingRelationshipMutationFocus.current?.scope !== relationshipStatusScope) pendingRelationshipMutationFocus.current = null;
+  }, [relationshipStatusScope]);
+
+  useEffect(() => {
+    const pending = pendingRelationshipMutationFocus.current;
+    if (!pending || followBusy || blockBusy) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (pendingRelationshipMutationFocus.current !== pending) return;
+      pendingRelationshipMutationFocus.current = null;
+      if (pending.scope !== relationshipStatusScope) return;
+      const active = document.activeElement;
+      if (active !== document.body && active !== pending.origin) return;
+      const failed = pending.target === "follow" ? followError : blockError;
+      if (failed) {
+        const message = t(pending.target === "follow" ? "followError" : "blockError");
+        [...document.querySelectorAll<HTMLElement>("[role=alert]")].find(alert => alert.textContent?.includes(message))?.querySelector<HTMLButtonElement>("[data-retry-button]:not(:disabled)")?.focus();
+      } else {
+        document.querySelector<HTMLButtonElement>(`[data-relationship-action="${pending.target}"]:not(:disabled)`)?.focus();
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [followBusy, blockBusy, followError, blockError, relationshipStatusScope, t]);
+
   const changeFollow = async () => {
     if (!isAuth || !user?.id || !validProfileId || !followStatus || blockStatus?.blocked || followBusy || blockBusy) return;
+    pendingRelationshipMutationFocus.current = { target: "follow", origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, scope: relationshipStatusScope };
     const requestId = ++relationshipMutation.current;
     const requestActorId = user.id;
     setFollowBusy(true);
@@ -582,6 +710,7 @@ export default function PublicProfile() {
 
   const changeBlock = async () => {
     if (!isAuth || !user?.id || !validProfileId || !blockStatus || blockBusy || followBusy) return;
+    pendingRelationshipMutationFocus.current = { target: "block", origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, scope: relationshipStatusScope };
     const requestId = ++relationshipMutation.current;
     const requestActorId = user.id;
     setBlockBusy(true);
@@ -651,8 +780,8 @@ export default function PublicProfile() {
           <div><dt>{t("followers")}</dt><dd><Link to={sectionTarget("public-profile-followers", null)} aria-label={t("followers")}>{followers?.totalElements ?? "—"}</Link></dd></div>
         </dl>
         {isAuth && user?.id !== profile.id && (followStatus || blockStatus) && <div className={styles.profileActions}>
-          {followStatus && !blockStatus?.blocked && <button className={styles.primaryButton} type="button" aria-busy={followBusy} disabled={followBusy || blockBusy} onClick={() => void changeFollow()}>{followBusy ? t("loading") : followStatus.following ? t("unfollow") : t("follow")}</button>}
-          {blockStatus && <button className={styles.secondaryButton} type="button" aria-busy={blockBusy} disabled={blockBusy || followBusy} onClick={() => void changeBlock()}>{blockBusy ? t("loading") : blockStatus.blocked ? t("unblockUser") : t("blockProfileUser")}</button>}
+          {followStatus && !blockStatus?.blocked && <button className={`${styles.primaryButton} ${styles.relationshipActionFocus}`} data-relationship-action="follow" type="button" aria-busy={followBusy} disabled={followBusy || blockBusy} onClick={() => void changeFollow()}>{followBusy ? t("loading") : followStatus.following ? t("unfollow") : t("follow")}</button>}
+          {blockStatus && <button className={`${styles.secondaryButton} ${styles.relationshipActionFocus}`} data-relationship-action="block" type="button" aria-busy={blockBusy} disabled={blockBusy || followBusy} onClick={() => void changeBlock()}>{blockBusy ? t("loading") : blockStatus.blocked ? t("unblockUser") : t("blockProfileUser")}</button>}
           {!blockStatus?.blocked && <Link className={styles.messageLink} to={path(`/messages?user=${profile.id}`)}>{t("sendMessage")}</Link>}
         </div>}
         {!isAuth && <div className={styles.profileActions}>
@@ -660,8 +789,8 @@ export default function PublicProfile() {
         </div>}
       </section>
       {isAuth && user?.id !== profile.id && (followStatusLoading || blockStatusLoading) && <p className={styles.actionStatus} role="status">{t("loading")}</p>}
-      {followStatusError && <RetryNotice className={styles.alert} message={t("loadFollowStatusError")} retryLabel={t("retry")} onRetry={() => setFollowStatusAttempt(value => value + 1)} />}
-      {blockStatusError && <RetryNotice className={styles.alert} message={t("loadBlockStatusError")} retryLabel={t("retry")} onRetry={() => setBlockStatusAttempt(value => value + 1)} />}
+      {followStatusError && <RetryNotice className={styles.alert} message={t("loadFollowStatusError")} retryLabel={t("retry")} onRetry={() => retryRelationshipStatus("follow")} />}
+      {blockStatusError && <RetryNotice className={styles.alert} message={t("loadBlockStatusError")} retryLabel={t("retry")} onRetry={() => retryRelationshipStatus("block")} />}
       {followError && <RetryNotice className={styles.alert} message={t("followError")} retryLabel={t("retry")} disabled={followBusy || blockBusy} busy={followBusy} onRetry={() => void changeFollow()} />}
       {blockError && <RetryNotice className={styles.alert} message={t("blockError")} retryLabel={t("retry")} disabled={blockBusy || followBusy} busy={blockBusy} onRetry={() => void changeBlock()} />}
     <nav className={styles.profileRail} aria-label={t("profile")}>
@@ -682,10 +811,10 @@ export default function PublicProfile() {
       })}
     </nav>
     {networkView && <Link className={styles.networkBack} to={sectionTarget("public-profile-overview", null)} aria-label={t("profile")}>←</Link>}
-    <section className={`${styles.section} ${styles.overviewSection}`} id="public-profile-overview" aria-labelledby="public-profile-favorites-title" aria-busy={favoritePreviewLoading}>
-      <h2 id="public-profile-favorites-title">{t("favoriteFilms")}</h2>
+    <section className={`${styles.section} ${styles.overviewSection}`} id="public-profile-overview" aria-labelledby="public-profile-favorites-title" aria-busy={favoritePreviewLoading} data-retry-focus-section="favorites">
+      <h2 id="public-profile-favorites-title" tabIndex={-1}>{t("favoriteFilms")}</h2>
       {favoritePreviewLoading && <ProfileLoading label={t("loading")} layout="films" />}
-      {favoritePreviewError && <RetryNotice className={styles.alert} message={t("loadCollectionError")} retryLabel={t("retry")} onRetry={() => setFavoritePreviewAttempt(value => value + 1)} />}
+      {favoritePreviewError && <RetryNotice className={styles.alert} message={t("loadCollectionError")} retryLabel={t("retry")} onRetry={() => retryPublicSection("favorites")} />}
       {!favoritePreviewLoading && !favoritePreviewError && favoritePreview && (favoritePreview.content.length === 0 ? <p>{t("noCollectionFilms")}</p> : <ul className={styles.previewGrid}>
         {favoritePreview.content.slice(0, 4).map(movie => {
           const title = editorialText(movie.title, t("untitledFilm"));
@@ -696,10 +825,10 @@ export default function PublicProfile() {
       </ul>)}
       {favoritePreview && favoritePreview.totalElements > 4 && <Link className={styles.overviewAction} to={{ search: `?${favoritesSearch}`, hash: "#public-profile-collections" }} onClick={event => { if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) setCollectionPage(0); }}>{t("viewAll")}<span className="srOnly">: {t("favoriteFilms")}</span></Link>}
     </section>
-    <section className={`${styles.section} ${styles.overviewSection} ${styles.activityOverview}`} aria-labelledby="public-profile-activity" aria-busy={activityLoading}>
-      <h2 id="public-profile-activity">{t("recentActivity")}</h2>
+    <section className={`${styles.section} ${styles.overviewSection} ${styles.activityOverview}`} aria-labelledby="public-profile-activity" aria-busy={activityLoading} data-retry-focus-section="activity">
+      <h2 id="public-profile-activity" tabIndex={-1}>{t("recentActivity")}</h2>
       {activityLoading && <ProfileLoading label={t("loading")} layout="films" />}
-      {activityError && <RetryNotice className={styles.alert} message={t("loadActivityError")} retryLabel={t("retry")} onRetry={() => setActivityAttempt(value => value + 1)} />}
+      {activityError && <RetryNotice className={styles.alert} message={t("loadActivityError")} retryLabel={t("retry")} onRetry={() => retryPublicSection("activity")} />}
       {!activityLoading && !activityError && activity && (activity.content.length === 0 ? <p>{t("noActivity")}</p> : <>
         <ul className={`${styles.previewGrid} ${styles.activityPreview}`} id="public-profile-activity-content">{(expandedActivity ? activity.content : activity.content.slice(0, 4)).map(item => {
           const movieTitle = item.movie ? editorialText(item.movie.title, t("untitledFilm")) : null;
@@ -721,10 +850,10 @@ export default function PublicProfile() {
         {profile.recentReviews.length > 2 && <button className={styles.overviewAction} type="button" aria-expanded={expandedReviews} aria-controls="public-profile-reviews-content" onClick={() => setExpandedReviews(value => !value)}>{expandedReviews ? t("close") : t("viewAll")}<span className="srOnly">: {t("recentReviews")}</span></button>}
       </>}
     </section>
-    <section className={`${styles.section} ${styles.overviewSection}`} aria-labelledby="public-profile-following-preview-title" aria-busy={followingLoading}>
-      <h2 id="public-profile-following-preview-title"><Link to={sectionTarget("public-profile-following", null)}>{t("following")}</Link></h2>
+    <section className={`${styles.section} ${styles.overviewSection}`} aria-labelledby="public-profile-following-preview-title" aria-busy={followingLoading} data-retry-focus-section="following-preview">
+      <h2 id="public-profile-following-preview-title" tabIndex={-1}><Link to={sectionTarget("public-profile-following", null)}>{t("following")}</Link></h2>
       {followingLoading && <ProfileLoading label={t("loading")} layout="rows" />}
-      {followingError && <RetryNotice className={styles.alert} message={t("loadNetworkError")} retryLabel={t("retry")} onRetry={() => setFollowingAttempt(value => value + 1)} />}
+      {followingError && <RetryNotice className={styles.alert} message={t("loadNetworkError")} retryLabel={t("retry")} onRetry={() => retryPublicSection("following-preview")} />}
       {!followingLoading && !followingError && following && (following.content.length === 0 ? <p>{t("noFollowing")}</p> : <>
         <ul className={styles.followingRail}>{following.content.map(networkUser => {
           const name = getUserName(networkUser, t("someone"));
@@ -734,10 +863,10 @@ export default function PublicProfile() {
         })}</ul>
       </>)}
     </section>
-    <section className={`${styles.section} ${styles.overviewSection} ${styles.listsOverview}`} id="public-profile-lists" aria-labelledby="public-profile-lists-title" aria-busy={publicListsLoading}>
-      <h2 id="public-profile-lists-title" ref={publicListsHeadingRef} tabIndex={profileView === "lists" ? -1 : undefined}>{profileView === "lists" ? t("publicLists") : <Link to={sectionTarget("public-profile-lists", null)}>{t("searchLists")}</Link>}</h2>
+    <section className={`${styles.section} ${styles.overviewSection} ${styles.listsOverview}`} id="public-profile-lists" aria-labelledby="public-profile-lists-title" aria-busy={publicListsLoading} data-retry-focus-section="public-lists">
+      <h2 id="public-profile-lists-title" tabIndex={-1}>{profileView === "lists" ? t("publicLists") : <Link to={sectionTarget("public-profile-lists", null)}>{t("searchLists")}</Link>}</h2>
       {publicListsLoading && <ProfileLoading label={t("loading")} layout="lists" />}
-      {publicListsError && <RetryNotice className={styles.alert} message={t("loadPublicListError")} retryLabel={t("retry")} onRetry={() => { focusPublicListsHeadingAfterRetry.current = true; setPublicListsAttempt(value => value + 1); }} />}
+      {publicListsError && <RetryNotice className={styles.alert} message={t("loadPublicListError")} retryLabel={t("retry")} onRetry={() => retryPublicSection("public-lists")} />}
       {!publicListsLoading && !publicListsError && publicLists && (publicLists.content.length === 0 ? <p>{t("noPublicLists")}</p> : <>
         <div className={styles.publicListGrid}>
           {(profileView === "lists" ? publicLists.content : publicLists.content.slice(0, 1)).map(list => {
@@ -834,18 +963,18 @@ export default function PublicProfile() {
     {(profileView === "following" || (!profileView && location.hash.startsWith("#public-profile-following"))) && <section className={`${styles.section} ${styles.networkSection}`} id="public-profile-following" aria-labelledby="public-profile-following-title" aria-busy={followingLoading}>
       <h2 id="public-profile-following-title" ref={followingHeadingRef} tabIndex={-1}>{t("following")}</h2>
       {followingLoading && <ProfileLoading label={t("loading")} layout="rows" />}
-      {followingError && <RetryNotice className={styles.alert} message={t("loadNetworkError")} retryLabel={t("retry")} onRetry={() => { focusFollowingHeadingAfterRetry.current = true; setFollowingAttempt(value => value + 1); }} />}
+      {followingError && <RetryNotice className={styles.alert} message={t("loadNetworkError")} retryLabel={t("retry")} onRetry={() => retryNetworkList("following")} />}
       {!followingLoading && !followingError && following && (following.content.length === 0 ? <p>{t("noFollowing")}</p> : <><ul className={styles.networkList}>{following.content.map(networkUser => <UserFollowRow key={networkUser.id} user={networkUser} href={path(`/users/${networkUser.id}`)} presentation="profileNetwork" hideMobileNetworkStats onFollowSettled={refreshNetwork} />)}</ul><Pagination className={styles.pagination} page={followingPage} totalPages={following.totalPages} label={t("networkPagination")} busy={followingLoading} onPageChange={setFollowingPage} /></>)}
     </section>}
     {(profileView === "followers" || (!profileView && location.hash.startsWith("#public-profile-followers"))) && <section className={`${styles.section} ${styles.networkSection}`} id="public-profile-followers" aria-labelledby="public-profile-followers-title" aria-busy={followersLoading}>
       <h2 id="public-profile-followers-title" ref={followersHeadingRef} tabIndex={-1}>{t("followers")}</h2>
       {followersLoading && <ProfileLoading label={t("loading")} layout="rows" />}
-      {followersError && <RetryNotice className={styles.alert} message={t("loadNetworkError")} retryLabel={t("retry")} onRetry={() => { focusFollowersHeadingAfterRetry.current = true; setFollowersAttempt(value => value + 1); }} />}
+      {followersError && <RetryNotice className={styles.alert} message={t("loadNetworkError")} retryLabel={t("retry")} onRetry={() => retryNetworkList("followers")} />}
       {!followersLoading && !followersError && followers && (followers.content.length === 0 ? <p>{t("noFollowers")}</p> : <><ul className={styles.networkList}>{followers.content.map(networkUser => <UserFollowRow key={networkUser.id} user={networkUser} href={path(`/users/${networkUser.id}`)} presentation="profileNetwork" hideMobileNetworkStats onFollowSettled={refreshNetwork} />)}</ul><Pagination className={styles.pagination} page={followersPage} totalPages={followers.totalPages} label={t("networkPagination")} busy={followersLoading} onPageChange={setFollowersPage} /></>)}
     </section>}
-    <section className={styles.section} id="public-profile-liked-reviews" aria-labelledby="public-profile-liked-reviews-title" aria-busy={likedReviewsLoading}><h2 id="public-profile-liked-reviews-title">{t("likedReviews")}</h2>
+    <section className={styles.section} id="public-profile-liked-reviews" aria-labelledby="public-profile-liked-reviews-title" aria-busy={likedReviewsLoading} data-retry-focus-section="liked-reviews"><h2 id="public-profile-liked-reviews-title" tabIndex={-1}>{t("likedReviews")}</h2>
       {likedReviewsLoading && <ProfileLoading label={t("loading")} layout="reviews" />}
-      {likedReviewsError && <RetryNotice className={styles.alert} message={t("loadLikedReviewsError")} retryLabel={t("retry")} onRetry={() => setLikedReviewsAttempt(value => value + 1)} />}
+      {likedReviewsError && <RetryNotice className={styles.alert} message={t("loadLikedReviewsError")} retryLabel={t("retry")} onRetry={() => retryPublicSection("liked-reviews")} />}
       {!likedReviewsLoading && !likedReviewsError && likedReviews && (likedReviews.content.length === 0 ? <p>{t("noLikedReviews")}</p> : <>
         <ul className={styles.reviewList}>{likedReviews.content.map(review => {
           const movieTitle = editorialText(review.movieTitle, t("untitledFilm"));

@@ -25,6 +25,7 @@ export interface ProfileResponse {
   email: string;
   role: string;
   avatarUrl: string | null;
+  supabaseLinked: boolean;
   stats: ProfileStats;
   lists: ProfileList[];
   recentRatings: ProfileRating[];

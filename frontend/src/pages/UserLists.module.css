@@ -34,6 +34,7 @@
 .section { margin-top: 28px; padding: 28px; border: 1px solid var(--rewind-line); border-radius: 3px; background: #292929; box-shadow: 0 14px 34px rgba(0, 0, 0, .12); }
 .form { display: grid; gap: 14px; }
 .form label { display: grid; gap: 6px; color: #c8c2bd; font-size: 13px; font-weight: 700; letter-spacing: .02em; }
+.nameError { color: #ffd2d2; font-size: 12px; font-weight: 400; letter-spacing: 0; }
 .form label.checkboxLabel { display: flex; align-items: center; gap: 10px; min-height: 46px; box-sizing: border-box; padding: 9px 12px; border: 1px solid rgba(255, 255, 255, .12); background: rgba(31, 31, 31, .72); cursor: pointer; }
 .checkboxLabel input { flex: 0 0 auto; width: 16px; height: 16px; margin: 0; }
 .checkboxLabel span { min-width: 0; }
@@ -317,6 +318,7 @@
 .ownerDetail .viewListButton { max-width: 100%; border-radius: 16px; overflow-wrap: anywhere; }
 .createPage > .content > .emptyPreview { display: none; }
 .createPage .listPicker { display: none; }
+.retryFocusHeading:focus { outline: 3px solid var(--rewind-cyan); outline-offset: 4px; border-radius: 4px; }
 .createPage :is(input, textarea, button, a):focus-visible { outline: 2px solid #fff; outline-offset: 3px; scroll-margin-block: 24px; }
 
 @media (min-width: 1024px) {

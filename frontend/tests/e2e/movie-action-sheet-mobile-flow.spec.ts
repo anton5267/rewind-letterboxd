@@ -26,7 +26,7 @@ test("mobile Movie ActionSheet real list, review, share and close actions at 393
     await expect(page).toHaveURL(/\/uk\/films$/);
 
     const list = await browserMutation(page, "/api/lists", "POST", {
-      name: listName, description: "Disposable ActionSheet test list", isPublic: false, tags: [],
+      name: listName, description: "Disposable ActionSheet test list", isPublic: false, tags: [], movieIds: [5],
     });
     expect(list.status).toBe(200);
     const listId = Number(list.data.id);

@@ -48,7 +48,7 @@ export const getAdminNewsletterStatus = (articleId: number) => api.get<Newslette
 export const getAdminReviews = (page = 0, hidden?: boolean) => api.get<Page<AdminReview>>("/admin/reviews", { params: { size: 50, page, ...(hidden === undefined ? {} : { hidden }) } });
 export const setAdminReviewHidden = (id: number, hidden: boolean, reason = "") => api.post<AdminReview>(`/admin/reviews/${id}/${hidden ? "hide" : "unhide"}`, { reason });
 export const deleteAdminReview = (id: number) => api.delete<void>(`/admin/reviews/${id}`);
-export const getAdminMovies = (page = 0, size = 50) => api.get<Page<AdminMovie>>("/admin/movies", { params: { size, page } });
+export const getAdminMovies = (page = 0, size = 50, query = "") => api.get<Page<AdminMovie>>("/admin/movies", { params: { size, page, ...(query ? { q: query } : {}) } });
 export const createAdminMovie = (movie: AdminMovieWrite) => api.post<AdminMovie>("/admin/movies", movie);
 export const updateAdminMovie = (id: number, movie: Partial<AdminMovieWrite>) => api.put<AdminMovie>(`/admin/movies/${id}`, movie);
 export const deleteAdminMovie = (id: number) => api.delete<void>(`/admin/movies/${id}`);

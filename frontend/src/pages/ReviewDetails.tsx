@@ -38,13 +38,56 @@ export default function ReviewDetails() {
   currentReviewId.current = reviewId;
   const reviewTitle = useRef<HTMLHeadingElement>(null);
   const stateTitle = useRef<HTMLHeadingElement>(null);
+  const likeActionButton = useRef<HTMLButtonElement>(null);
+  const pageLikeRetryFocus = useRef<{ kind: "like-status" | "like-mutation"; origin: HTMLElement | null; started: boolean } | null>(null);
   const retryFocus = useRef<{ reviewId: number; origin: Element | null } | null>(null);
+
+  useEffect(() => {
+    const pending = pageLikeRetryFocus.current;
+    if (!pending || ratingSheetOpen) return;
+    const busy = pending.kind === "like-status" ? likeStatusLoading : likeBusy;
+    if (busy) {
+      pending.started = true;
+      return;
+    }
+    if (!pending.started) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (pageLikeRetryFocus.current !== pending || ratingSheetOpen) return;
+      pageLikeRetryFocus.current = null;
+      const active = document.activeElement;
+      if (active !== document.body && active !== pending.origin) return;
+      const failed = pending.kind === "like-status" ? likeStatusError : likeError;
+      const target = failed
+        ? document.querySelector<HTMLButtonElement>(pending.kind === "like-status"
+          ? "[data-review-like-status-error] [data-retry-button]"
+          : "[data-review-like-mutation-error] [data-retry-button]")
+        : likeActionButton.current;
+      target?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [likeBusy, likeError, likeStatusError, likeStatusLoading, ratingSheetOpen]);
+
+  const retryPageLikeStatus = () => {
+    pageLikeRetryFocus.current = { kind: "like-status", origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, started: false };
+    setLikeStatusAttempt(value => value + 1);
+  };
+
+  const retryPageLikeMutation = () => {
+    pageLikeRetryFocus.current = { kind: "like-mutation", origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, started: false };
+    void toggleLike();
+  };
+
+  const startPageLikeMutation = (origin: HTMLElement) => {
+    pageLikeRetryFocus.current = { kind: "like-mutation", origin, started: false };
+    void toggleLike();
+  };
 
   useEffect(() => {
     mutationRequest.current += 1;
     setLikeBusy(false);
     setLikeError(false);
     setRatingSheetOpen(false);
+    pageLikeRetryFocus.current = null;
     retryFocus.current = null;
   }, [reviewId, isAuth]);
 
@@ -170,7 +213,7 @@ export default function ReviewDetails() {
       <ResilientImage className={styles.heroBackdrop} src={review.movie.backdropUrl} alt="" aria-hidden="true" loading="eager" fallback={null} />
       <div className={styles.heroShade} aria-hidden="true" />
       <div className={styles.heroInner}>
-        <Link className={styles.back} to={path(`/films/${review.movie.id}`)} aria-label={t("backToMovie")}>←</Link>
+        <Link className={styles.back} to={path(`/films/${review.movie.id}`)} aria-label={t("backToMovie")}><img className={styles.backIcon} src="/images/help-icon-back.png" alt="" aria-hidden="true" width={25} height={25} /></Link>
         {isAuth && <button className={styles.more} type="button" aria-haspopup="dialog" aria-controls={ratingSheetOpen ? "rating-sheet-dialog" : undefined} aria-expanded={ratingSheetOpen} aria-label={t("moreOptions")} onClick={event => { event.currentTarget.focus(); setRatingSheetOpen(true); }}>⋯</button>}
         <div className={styles.filmBlock}>
           <div className={styles.posterColumn}>
@@ -197,12 +240,12 @@ export default function ReviewDetails() {
           <aside className={styles.socialPanel}>
             <div className={styles.likeActions}>
               {isAuth && likeStatusLoading && <p className={styles.likeStatus} role="status">{t("loading")}</p>}
-              {isAuth && likeStatusError && <p className={styles.likeError} role="alert">{t("likeReviewError")} <RetryButton label={t("retry")} onClick={() => setLikeStatusAttempt(value => value + 1)} /></p>}
-              {isAuth && !likeStatusLoading && !likeStatusError && <button className={`${styles.likeButton} ${liked ? styles.likeButtonActive : ""}`} type="button" aria-label={`${liked ? t("unlike") : t("like")} (${review.likes})`} aria-busy={likeBusy} aria-pressed={liked} disabled={likeBusy} onClick={() => void toggleLike()}>
+              {isAuth && likeStatusError && <p className={styles.likeError} data-review-like-status-error role="alert">{t("likeReviewError")} <RetryButton label={t("retry")} onClick={retryPageLikeStatus} /></p>}
+              {isAuth && !likeStatusLoading && !likeStatusError && <button ref={likeActionButton} data-review-like-action className={`${styles.likeButton} ${liked ? styles.likeButtonActive : ""}`} type="button" aria-label={`${liked ? t("unlike") : t("like")} (${review.likes})`} aria-busy={likeBusy} aria-pressed={liked} disabled={likeBusy} onClick={event => startPageLikeMutation(event.currentTarget)}>
                 <img src="/images/review-like.png" width={36} height={36} alt="" aria-hidden="true" /><span className={styles.likeCount}>{likeBusy ? t("loading") : review.likes}</span>
               </button>}
               {!isAuth && <Link className={styles.likeButton} to={path("/login")} aria-label={`${t("loginToLikeReview")} (${review.likes})`}><img src="/images/review-like.png" width={36} height={36} alt="" aria-hidden="true" /><span className={styles.likeCount}>{review.likes}</span></Link>}
-              {likeError && <p className={styles.likeError} role="alert">{t("likeReviewError")} <RetryButton label={t("retry")} disabled={likeBusy} busy={likeBusy} onClick={() => void toggleLike()} /></p>}
+              {likeError && <p className={styles.likeError} data-review-like-mutation-error role="alert">{t("likeReviewError")} <RetryButton label={t("retry")} disabled={likeBusy} busy={likeBusy} onClick={retryPageLikeMutation} /></p>}
             </div>
             <div className={styles.reviewMeta}>
               <span className={styles.rateLabel}>{t("rate")}</span>
@@ -220,7 +263,6 @@ export default function ReviewDetails() {
     <section className={styles.likersSection} aria-labelledby="review-likers-title">
         <div className={styles.likeRow}>
           <div><p className={styles.eyebrow}>{t("community")}</p><h2 id="review-likers-title">{t("membersWhoLikedReview")}</h2></div>
-          <strong>{review.likes}</strong>
         </div>
         {review.likedBy.length > 0 ? <div className={styles.likers} onFocusCapture={event => {
           if (event.target instanceof HTMLElement) event.target.scrollIntoView({ block: "nearest", inline: "nearest" });
@@ -237,9 +279,11 @@ export default function ReviewDetails() {
       likes={review.likes}
       liked={liked}
       likeBusy={likeBusy}
+      likeError={likeError}
       likeStatusError={likeStatusError}
       likeStatusLoading={likeStatusLoading}
       onRetryLikeStatus={() => setLikeStatusAttempt(value => value + 1)}
+      onRetryLike={() => void toggleLike()}
       onToggleLike={() => void toggleLike()}
       onClose={closeRatingSheet}
         />, document.body)}

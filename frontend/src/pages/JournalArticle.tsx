@@ -4,7 +4,7 @@ import { getJournalArticle, type JournalArticle as Article } from "../api/journa
 import ResilientImage from "../components/ResilientImage";
 import RetryButton from "../components/RetryButton";
 import RetryNotice from "../components/RetryNotice";
-import { editorialText, formatDateTime, localizeJournalCategory, useLocale } from "../i18n";
+import { editorialText, formatJournalDate, localizeJournalCategory, useLocale } from "../i18n";
 import { safeHttpUrl } from "../utils/externalUrl";
 import styles from "./JournalArticle.module.css";
 
@@ -18,8 +18,10 @@ export default function JournalArticle() {
   const [audioLoading, setAudioLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const errorPanelRef = useRef<HTMLDivElement>(null);
   const focusAfterRetry = useRef(false);
   const retryOrigin = useRef<Element | null>(null);
+  const audioRetryFocus = useRef<{ origin: HTMLElement | null; started: boolean } | null>(null);
 
   useEffect(() => { focusAfterRetry.current = false; }, [lang, slug]);
 
@@ -27,10 +29,36 @@ export default function JournalArticle() {
     if (!focusAfterRetry.current || (!article && !error)) return;
     focusAfterRetry.current = false;
     const frame = window.requestAnimationFrame(() => {
-      if (document.activeElement === document.body || document.activeElement === retryOrigin.current) titleRef.current?.focus();
+      if (document.activeElement !== document.body && document.activeElement !== retryOrigin.current) return;
+      if (error) {
+        errorPanelRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+        return;
+      }
+      titleRef.current?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
   }, [article, error, lang, slug]);
+
+  useEffect(() => {
+    const pending = audioRetryFocus.current;
+    if (!pending) return;
+    if (audioLoading) {
+      pending.started = true;
+      return;
+    }
+    if (!pending.started) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (audioRetryFocus.current !== pending) return;
+      audioRetryFocus.current = null;
+      const active = document.activeElement;
+      if (active !== document.body && active !== pending.origin) return;
+      const target = audioError
+        ? audioRef.current?.parentElement?.querySelector<HTMLButtonElement>("[data-retry-button]")
+        : audioRef.current;
+      target?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [audioError, audioLoading]);
 
   const retryArticle = () => {
     retryOrigin.current = document.activeElement;
@@ -54,7 +82,7 @@ export default function JournalArticle() {
     return (
       <main className={`${styles.page} ${styles.statePage}`} aria-labelledby="journal-article-state-title" aria-busy={false}>
         <h1 id="journal-article-state-title" className={styles.stateTitle} ref={titleRef} tabIndex={-1}>{t("journal")}</h1>
-        <div className={styles.error} role="alert">
+        <div ref={errorPanelRef} className={styles.error} role="alert">
           {t("journalLoadError")} <RetryButton label={t("retry")} size="large" onClick={retryArticle} />
           <div><Link to={path("/journal")}>{t("journal")}</Link></div>
         </div>
@@ -80,9 +108,10 @@ export default function JournalArticle() {
   const title = editorialText(article.title, t("untitledArticle"));
   const articleLang = article.language === "uk" || article.language === "en" ? article.language : lang;
   const retryAudio = () => {
+    audioRetryFocus.current = { origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, started: false };
     setAudioError(false);
+    setAudioLoading(true);
     audioRef.current?.load();
-    audioRef.current?.focus();
   };
 
   return (
@@ -95,12 +124,12 @@ export default function JournalArticle() {
         <div className={styles.articleHeader}>
           <div className={styles.articleLead}>
             <Link className={styles.back} to={path("/journal")}>← {t("journal")}</Link>
-            <p className={styles.eyebrow}>{localizeJournalCategory(article.category, t)}</p>
+            <p className={styles.eyebrow}>
+              {localizeJournalCategory(article.category, t)}
+              {article.publishedAt && <><span aria-hidden="true"> · </span><time dateTime={article.publishedAt}>{formatJournalDate(article.publishedAt, lang)}</time></>}
+            </p>
             <h1 id="journal-article-title" ref={titleRef} tabIndex={-1} lang={article.title?.trim() ? articleLang : lang}>{title}</h1>
-            <div className={styles.meta}>
-              {article.publishedAt && <time dateTime={article.publishedAt}>{formatDateTime(article.publishedAt, lang)}</time>}
-              {audioUrl && <span>{t("podcastAudio")}</span>}
-            </div>
+            {(article.publishedAt || audioUrl) && <div className={styles.meta}>{audioUrl && <span>{t("podcastAudio")}</span>}</div>}
           </div>
           <div className={styles.coverHero}>
             <ResilientImage className={styles.coverImage} src={article.coverUrl} alt="" loading="eager" fallback={<span className={styles.coverFallback} aria-hidden="true">REWIND</span>} />

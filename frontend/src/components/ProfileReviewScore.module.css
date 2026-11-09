@@ -1,0 +1,5 @@
+.scoreFocus:focus {
+  border-radius: 3px;
+  outline: 3px solid var(--rewind-cyan);
+  outline-offset: 4px;
+}

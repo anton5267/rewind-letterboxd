@@ -99,7 +99,7 @@ export default function MovieActionSheet({
 
         <div className={styles.ratingBlock}>
           <span className={styles.blockLabel}>{t("rate")}</span>
-          <div className={styles.stars} role="group" aria-label={t("myRating")}>
+          <div className={styles.stars} role="group" aria-label={t("myRating")} data-movie-rating-focus="true" tabIndex={-1}>
             {[1, 2, 3, 4, 5].map(value => <button
               className={`${styles.star} ${rating === value ? styles.starActive : ""}`}
               key={value}
@@ -111,7 +111,7 @@ export default function MovieActionSheet({
             >★</button>)}
           </div>
           {ratingLoading && <span className={styles.inlineStatus} role="status">{t("loading")}</span>}
-          {ratingLoadError && <span className={styles.inlineError} role="alert">{t("loadRatingsError")} <RetryButton label={t("retry")} onClick={onRetryRating} /></span>}
+          {ratingLoadError && <span className={styles.inlineError} role="alert" data-rating-error="true">{t("loadRatingsError")} <RetryButton label={t("retry")} onClick={onRetryRating} /></span>}
           {rating > 0 && !ratingLoading && !busy && <button className={styles.removeRating} type="button" onClick={onDeleteRating}>{t("deleteRating")}</button>}
         </div>
 
@@ -120,6 +120,7 @@ export default function MovieActionSheet({
           <button
             className={styles.mobileListToggle}
             type="button"
+            data-movie-list-focus="true"
             aria-expanded={listPickerOpen}
             aria-controls="mobile-movie-list-picker"
             disabled={busy}

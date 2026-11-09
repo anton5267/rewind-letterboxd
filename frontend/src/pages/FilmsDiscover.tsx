@@ -32,6 +32,9 @@ export default function FilmsDiscover() {
   const [errors, setErrors] = useState<Partial<Record<FeedKey, boolean>>>({});
   const [retry, setRetry] = useState<Record<FeedKey, number>>({ popular: 0, recent: 0, reviews: 0 });
   const retryFocus = useRef<Partial<Record<FeedKey, { origin: HTMLElement; lang: string }>>>({});
+  const genreSelectRef = useRef<HTMLSelectElement>(null);
+  const genreFeedbackRef = useRef<HTMLDivElement>(null);
+  const genreRetryFocus = useRef<{ origin: Element | null; lang: string } | null>(null);
 
   useEffect(() => {
     let current = true;
@@ -60,6 +63,21 @@ export default function FilmsDiscover() {
       .finally(() => { if (current) setGenresLoading(false); });
     return () => { current = false; };
   }, [lang, genresRetry]);
+
+  useEffect(() => {
+    const pending = genreRetryFocus.current;
+    if (!pending || genresLoading) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (genreRetryFocus.current !== pending) return;
+      genreRetryFocus.current = null;
+      if (pending.lang !== lang) return;
+      if (document.activeElement === document.body || document.activeElement === pending.origin) {
+        if (genresError) genreFeedbackRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+        else genreSelectRef.current?.focus();
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [genresLoading, genresError, lang]);
 
   useEffect(() => {
     let current = true;
@@ -99,12 +117,16 @@ export default function FilmsDiscover() {
         if (pending.lang !== lang) return;
         const active = document.activeElement;
         if (pending.origin.isConnected || (active !== document.body && active !== null)) return;
-        const headingId = key === "popular" ? "popular-films-title" : key === "recent" ? "recent-films-title" : "popular-reviews-title";
-        document.getElementById(headingId)?.focus();
+        const section = document.querySelector<HTMLElement>(`[data-films-feed="${key}"]`);
+        if (errors[key]) section?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+        else {
+          const headingId = key === "popular" ? "popular-films-title" : key === "recent" ? "recent-films-title" : "popular-reviews-title";
+          document.getElementById(headingId)?.focus();
+        }
       });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [lang, loading]);
+  }, [lang, loading, errors]);
 
   const retryFeed = (key: FeedKey) => {
     const origin = document.activeElement;
@@ -134,7 +156,7 @@ export default function FilmsDiscover() {
         <div className={styles.filterControls} role="group" aria-label={t("filters")} aria-busy={genresLoading}>
           <label><select aria-label={t("year")} value={year} onChange={event => setYear(event.target.value)}><option value="">{t("year")}</option>{Array.from({ length: Math.max(0, new Date().getFullYear() - 1887) }, (_, index) => new Date().getFullYear() - index).map(value => <option key={value} value={value}>{value}</option>)}</select></label>
           <label><select aria-label={t("minRating")} value={minRating} onChange={event => setMinRating(event.target.value)}><option value="">{t("rating")}</option>{[1, 2, 3, 4, 5].map(value => <option key={value} value={value}>{value}+</option>)}</select></label>
-          <label><select aria-label={t("genre")} value={genreId} disabled={genresLoading || genresError} onChange={event => setGenreId(event.target.value)}><option value="">{t("genre")}</option>{genres.map(genre => <option key={genre.id} value={genre.id}>{localizeGenreName(genre.name, lang)}</option>)}</select></label>
+          <label><select ref={genreSelectRef} aria-label={t("genre")} value={genreId} disabled={genresLoading || genresError} onChange={event => setGenreId(event.target.value)}><option value="">{t("genre")}</option>{genres.map(genre => <option key={genre.id} value={genre.id}>{localizeGenreName(genre.name, lang)}</option>)}</select></label>
         </div>
         <form className={styles.movieSearch} onSubmit={submitFilmSearch}>
           <label className={styles.visuallyHidden} htmlFor="discover-film-query">{t("searchFilms")}</label>
@@ -142,11 +164,14 @@ export default function FilmsDiscover() {
           <button type="submit" aria-label={t("search")}><i className="fa-solid fa-magnifying-glass" aria-hidden="true" /></button>
         </form>
       </div>
-      {genresError && <RetryNotice className={styles.genreRetry} message={t("loadGenresError")} retryLabel={t("retry")} busy={genresLoading} onRetry={() => setGenresRetry(value => value + 1)} />}
+      {genresError && <div ref={genreFeedbackRef}><RetryNotice className={styles.genreRetry} message={t("loadGenresError")} retryLabel={t("retry")} busy={genresLoading} onRetry={() => {
+        genreRetryFocus.current = { origin: document.activeElement, lang };
+        setGenresRetry(value => value + 1);
+      }} /></div>}
     </header>
 
     <div className={styles.content}>
-      <section className={styles.section} aria-labelledby="popular-films-title" aria-busy={loading.popular}>
+      <section className={styles.section} data-films-feed="popular" aria-labelledby="popular-films-title" aria-busy={loading.popular}>
         <div className={`${styles.heading} ${styles.popularHeading}`}><h2 id="popular-films-title" tabIndex={-1}>{t("popularFilms")}</h2><Link to={path("/films?sort=rating_desc")}>{t("viewAll")}</Link></div>
         {loading.popular && <><p className="srOnly" role="status">{t("loading")}</p><ol className={styles.popularGrid} aria-hidden="true">{[0, 1, 2, 3, 4, 5].map(item => <li key={item}><div className={`${styles.poster} ${styles.skeleton}`} /></li>)}</ol></>}
         {errors.popular && <RetryNotice className={styles.status} message={filmErrorMessage} retryLabel={t("retry")} busy={loading.popular} onRetry={() => retryFeed("popular")} />}
@@ -157,7 +182,7 @@ export default function FilmsDiscover() {
             return <li key={movie.id}>
               <Link className={styles.poster} to={path(`/films/${movie.id}`)} aria-label={`${index + 1}. ${title}`} title={title} onFocus={revealFocusedPoster}>
                 <span className={styles.rank} aria-hidden="true">{index + 1}</span>
-                <ResilientImage src={movie.photoUrl} alt="" fallback={<span className={styles.fallback} aria-hidden="true">{title.slice(0, 1).toUpperCase()}</span>} />
+                <ResilientImage src={movie.photoUrl} alt="" fallback={<span className={styles.fallback} aria-hidden="true">{title}</span>} />
               </Link>
               <Link className={styles.addFilm} to={path(`/films/${movie.id}`)} aria-label={`${t("openFilmDetails")}: ${title}`}><span aria-hidden="true">+</span></Link>
               <h3><Link to={path(`/films/${movie.id}`)}>{title}</Link></h3>
@@ -167,7 +192,7 @@ export default function FilmsDiscover() {
         </ol>}
       </section>
 
-      <section className={styles.section} aria-labelledby="recent-films-title" aria-busy={loading.recent}>
+      <section className={styles.section} data-films-feed="recent" aria-labelledby="recent-films-title" aria-busy={loading.recent}>
         <div className={styles.heading}><h2 id="recent-films-title" tabIndex={-1}>{t("homeJustReviewed")}</h2><Link to={path("/reviews")}>{t("homeMore")}</Link></div>
         {loading.recent && <><p className="srOnly" role="status">{t("loading")}</p><div className={styles.posterRail} aria-hidden="true">{[0, 1, 2, 3, 4, 5, 6, 7].map(item => <div className={`${styles.railPoster} ${styles.skeleton}`} key={item} />)}</div></>}
         {errors.recent && <RetryNotice className={styles.status} message={reviewErrorMessage} retryLabel={t("retry")} busy={loading.recent} onRetry={() => retryFeed("recent")} />}
@@ -176,13 +201,13 @@ export default function FilmsDiscover() {
           {recent.map(review => {
             const title = editorialText(review.movieTitle, t("untitledFilm"));
             return <Link className={styles.railPoster} key={review.movieId} to={path(`/films/${review.movieId}`)} aria-label={title} title={title} onFocus={revealFocusedPoster}>
-              <ResilientImage src={review.moviePhotoUrl} alt="" loading="lazy" fallback={<span aria-hidden="true">{title.slice(0, 1).toUpperCase()}</span>} />
+              <ResilientImage src={review.moviePhotoUrl} alt="" loading="lazy" fallback={<span className={styles.railFallback} aria-hidden="true">{title}</span>} />
             </Link>;
           })}
         </div>}
       </section>
 
-      <section className={styles.section} aria-labelledby="popular-reviews-title" aria-busy={loading.reviews}>
+      <section className={styles.section} data-films-feed="reviews" aria-labelledby="popular-reviews-title" aria-busy={loading.reviews}>
         <div className={styles.heading}><h2 id="popular-reviews-title" tabIndex={-1}>{t("homePopularReviewsThisWeek")}</h2><Link to={path("/reviews")}>{t("viewAll")}</Link></div>
         {loading.reviews && <><p className="srOnly" role="status">{t("loading")}</p><div className={styles.reviewGrid} aria-hidden="true">{[0, 1, 2, 3].map(item => <div className={`${styles.reviewCard} ${styles.skeleton}`} key={item} />)}</div></>}
         {errors.reviews && <RetryNotice className={styles.status} message={reviewErrorMessage} retryLabel={t("retry")} busy={loading.reviews} onRetry={() => retryFeed("reviews")} />}
@@ -195,7 +220,7 @@ export default function FilmsDiscover() {
                 <ResilientImage src={review.userAvatarUrl} alt="" loading="lazy" fallback={<span aria-hidden="true">{getUserInitial({ username: review.username })}</span>} />
               </Link>
               <Link className={styles.reviewPoster} to={path(`/films/${review.movieId}`)} aria-label={`${t("poster")} ${title}`}>
-                <ResilientImage src={review.moviePhotoUrl} alt="" loading="lazy" fallback={<span aria-hidden="true">{title.slice(0, 1).toUpperCase()}</span>} />
+                <ResilientImage src={review.moviePhotoUrl} alt="" loading="lazy" fallback={<span className={styles.fallback} aria-hidden="true">{title}</span>} />
               </Link>
               <div className={styles.reviewCopy}>
                 <h3><Link to={path(`/films/${review.movieId}`)}>{title}</Link></h3>
@@ -208,10 +233,6 @@ export default function FilmsDiscover() {
         </div>}
       </section>
 
-      <section className={`${styles.section} ${styles.crewSection}`} aria-labelledby="crew-picks-title">
-        <div className={styles.heading}><h2 id="crew-picks-title">{t("crewPicks")}</h2></div>
-        <p className={styles.empty}>{t("crewPicksUnavailable")}</p>
-      </section>
     </div>
   </main>;
 }

@@ -53,7 +53,8 @@
 .addFilm { position: absolute; z-index: 2; right: 5px; bottom: 5px; display: grid; width: 38px; height: 38px; place-items: center; border-radius: 50%; background: #282828; color: #fff; font-size: 24px; line-height: 1; text-decoration: none; }
 .addFilm:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 2px; }
 .addFilm:hover { background: #3a3a3a; }
-.fallback { display: grid; width: 100%; height: 100%; place-items: center; padding: 12px; box-sizing: border-box; color: #ddd; font-size: 22px; font-weight: 700; text-align: center; }
+.fallback { display: grid; width: 100%; height: 100%; place-items: center; padding: 12px; box-sizing: border-box; color: #ddd; font-size: clamp(12px, 1.25vw, 22px); font-weight: 700; line-height: 1.2; text-align: center; overflow-wrap: anywhere; }
+.railFallback { display: grid; width: 100%; height: 100%; place-items: center; box-sizing: border-box; padding: 8px; color: #ddd; font-size: 12px; font-weight: 700; line-height: 1.2; text-align: center; overflow-wrap: anywhere; }
 .popularGrid h3 { overflow: hidden; margin: 10px 0 4px; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
 .popularGrid h3 a { color: inherit; text-decoration: none; }
 .popularGrid li > p { margin: 0; color: var(--rewind-muted); font-size: 12px; }
@@ -82,7 +83,7 @@
 .byline a:hover,
 .excerpt a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .byline { margin: 0 0 12px; padding-right: 70px; color: var(--rewind-muted); font-size: 12px; line-height: 1.4; }
-.excerpt { display: -webkit-box; overflow: hidden; margin: 0; color: #ddd; font-size: 14px; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
+.excerpt { display: -webkit-box; overflow: hidden; margin: 0; color: #ddd; font-size: 14px; line-height: 1.45; line-clamp: 4; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
 .status,
 .empty { margin: 0; padding: 20px; color: var(--rewind-muted); }
 .crewSection { margin-top: 85px; }
@@ -186,6 +187,6 @@
   .byline a { min-width: 0; overflow: hidden; font-weight: 700; text-overflow: ellipsis; }
   .byline > span { display: none; }
   .byline time { font-size: 12px; overflow-wrap: anywhere; }
-  .excerpt { font-size: 12px; line-height: 1.4; -webkit-line-clamp: 3; }
+  .excerpt { font-size: 12px; line-height: 1.4; line-clamp: 3; -webkit-line-clamp: 3; }
   .crewSection { border-top: 0; padding-top: 0; }
 }

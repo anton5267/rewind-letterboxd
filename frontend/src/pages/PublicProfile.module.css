@@ -52,6 +52,7 @@
   outline: 2px solid var(--rewind-gold);
   outline-offset: 3px;
 }
+.relationshipActionFocus:focus { outline: 2px solid var(--rewind-cyan); outline-offset: 3px; }
 
 .page .profileRailLink:focus-visible { outline-offset: -3px; }
 .page .section :is(a, button, input, select, textarea, [tabindex]):focus-visible { scroll-margin-block: 122px; }
@@ -60,6 +61,8 @@
 .page :global(#public-profile-collections-title):focus-visible,
 .page :global(#public-profile-lists-title):focus-visible,
 .page .collectionToolbar h1:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; border-radius: 2px; }
+
+.page [data-retry-focus-section] > h2:focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; border-radius: 2px; }
 
 .state .alert:focus,
 .page .identity h1:focus {

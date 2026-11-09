@@ -107,6 +107,8 @@ test("Admin Movies can create, save edits to, and delete one disposable film", a
 
   const title = `Admin editor fixture ${Date.now()}`;
   const updatedTitle = `${title} updated`;
+  const createdReleaseDate = "2018-03-09";
+  const updatedReleaseDate = "2021-12-17";
   let movieId: number | null = null;
   let deleted = false;
 
@@ -121,7 +123,14 @@ test("Admin Movies can create, save edits to, and delete one disposable film", a
     const section = page.getByRole("region", { name: locales.uk.database });
     await expect(section).toHaveAttribute("aria-busy", "false");
     await section.locator("summary").filter({ hasText: "Додати фільм" }).click();
-    await section.getByLabel(locales.uk.title).fill(title);
+    const createTitle = section.getByLabel(locales.uk.title);
+    const createButton = section.getByRole("button", { name: "Створити", exact: true });
+    await expect(createButton).toBeDisabled();
+    await createTitle.fill("   ");
+    await expect(createButton).toBeDisabled();
+    await createTitle.fill(title);
+    await expect(createButton).toBeEnabled();
+    await section.getByLabel(locales.uk.releaseDate).fill(createdReleaseDate);
     const createResponse = page.waitForResponse(response =>
       response.url().endsWith("/api/admin/movies") && response.request().method() === "POST"
     );
@@ -137,7 +146,9 @@ test("Admin Movies can create, save edits to, and delete one disposable film", a
     const form = section.locator("form").first();
     const titleInput = form.getByLabel(locales.uk.title);
     await expect(titleInput).toBeFocused();
+    await expect(form.getByLabel(locales.uk.releaseDate)).toHaveValue(createdReleaseDate);
     await titleInput.fill(updatedTitle);
+    await form.getByLabel(locales.uk.releaseDate).fill(updatedReleaseDate);
     await form.getByLabel("Рейтинг", { exact: true }).fill("7.3");
     const updateResponse = page.waitForResponse(response =>
       response.url().endsWith(`/api/admin/movies/${movieId}`) && response.request().method() === "PUT"
@@ -150,9 +161,9 @@ test("Admin Movies can create, save edits to, and delete one disposable film", a
     const stored = await page.evaluate(async (id) => {
       const response = await fetch("/api/admin/movies?size=50", { credentials: "include" });
       const result = await response.json();
-      return result.content.find((movie: { id: number; title: string; rating?: number }) => movie.id === id);
+      return result.content.find((movie: { id: number; title: string; rating?: number; releaseDate?: string }) => movie.id === id);
     }, movieId);
-    expect(stored).toMatchObject({ id: movieId, title: updatedTitle, rating: 7.3 });
+    expect(stored).toMatchObject({ id: movieId, title: updatedTitle, rating: 7.3, releaseDate: updatedReleaseDate });
 
     await row.getByRole("button", { name: locales.uk.edit, exact: true }).click();
     const editingForm = section.locator("form").first();

@@ -79,7 +79,8 @@ export default function AdminDashboard() {
   const settingsScope = useRef(0);
   const settingsMounted = useRef(false);
   const settingSaveToken = useRef<object | null>(null);
-  const settingsFocus = useRef<{ scope: number; origin: HTMLElement | null; target: "title" | "error" | "save"; key?: string } | null>(null);
+  const settingsFocus = useRef<{ scope: number; origin: HTMLElement | null; target: "title" | "error" | "save" | "retry"; key?: string } | null>(null);
+  const retrySettingSaveFocus = useRef(false);
   const adminNavigation = useRef<HTMLElement>(null);
 
   useLayoutEffect(() => {
@@ -126,7 +127,8 @@ export default function AdminDashboard() {
       if (!dashboardMounted.current || dashboardFocusScope.current !== pending.scope) return;
       const active = document.activeElement;
       if (active !== document.body && active !== pending.origin) return;
-      (dashboardError ? dashboardAlert.current : dashboardTitle.current)?.focus();
+      if (dashboardError) dashboardAlert.current?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+      else dashboardTitle.current?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
   }, [activeView, lang, dashboardLoading, dashboardError, dashboardSettled]);
@@ -144,6 +146,7 @@ export default function AdminDashboard() {
   useLayoutEffect(() => {
     settingsScope.current += 1;
     settingsFocus.current = null;
+    retrySettingSaveFocus.current = false;
     settingSaveToken.current = null;
     setSaveBusyKey(null);
     setSaveError(false);
@@ -159,9 +162,15 @@ export default function AdminDashboard() {
       if (!settingsMounted.current || settingsScope.current !== pending.scope) return;
       const active = document.activeElement;
       if (active !== document.body && active !== pending.origin) return;
-      const target = pending.target === "error" ? settingsSaveAlert.current
-        : pending.target === "save" && pending.key ? settingButtons.current.get(pending.key)
-        : settingsTitle.current;
+      const retryFailedSave = pending.target === "error" && saveError && retrySettingSaveFocus.current;
+      retrySettingSaveFocus.current = false;
+      const target = retryFailedSave
+        ? settingsSaveAlert.current?.querySelector<HTMLButtonElement>("[data-retry-button]")
+        : pending.target === "error" ? settingsSaveAlert.current
+          : pending.target === "save" && pending.key ? settingButtons.current.get(pending.key)
+            : pending.target === "retry" && settingsError
+              ? document.querySelector<HTMLButtonElement>('[aria-labelledby="admin-settings-title"] [data-retry-button]')
+              : settingsTitle.current;
       target?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
@@ -237,7 +246,10 @@ export default function AdminDashboard() {
   const retrySettingSave = () => {
     if (!failedSettingKey) return;
     const setting = settings.find(item => item.key === failedSettingKey);
-    if (setting) void saveSetting(setting, document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    if (setting) {
+      retrySettingSaveFocus.current = true;
+      void saveSetting(setting, document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    }
   };
   const settingLabel = (key: string) => {
     switch (key) {
@@ -255,7 +267,7 @@ export default function AdminDashboard() {
       <div className={styles.settingsWorkspace}>
       {settingsLoading && settings.length === 0 ? <AdminLoading label={t("loading")} layout="settings" />
         : settingsError ? <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={settingsLoading} busy={settingsLoading} onRetry={() => {
-          settingsFocus.current = { scope: settingsScope.current, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, target: "title" };
+          settingsFocus.current = { scope: settingsScope.current, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, target: "retry" };
           setSettingsLoading(true);
           setSettingsAttempt(value => value + 1);
         }} />

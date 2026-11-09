@@ -18,14 +18,52 @@ export default function AdminConversations() {
   const [actionError, setActionError] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{ conversation: AdminConversation; trigger: HTMLButtonElement } | null>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const retryFocusScope = JSON.stringify([lang, page]);
+  const retryFocus = useRef<{ scope: string; origin: HTMLElement | null } | null>(null);
+  const failedTrigger = useRef<HTMLButtonElement | null>(null);
   const deleteDialog = useRef<HTMLDialogElement>(null);
   const deleteDialogCancel = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (retryFocus.current?.scope !== retryFocusScope) retryFocus.current = null;
+  }, [retryFocusScope]);
+
+  useEffect(() => {
+    const pending = retryFocus.current;
+    if (!pending || loading) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (retryFocus.current !== pending) return;
+      retryFocus.current = null;
+      if (pending.scope !== retryFocusScope) return;
+      const active = document.activeElement;
+      if (active !== document.body && active !== pending.origin) return;
+      if (error) sectionRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+      else headingRef.current?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [error, loading, retryFocusScope]);
+
+  const retryLoad = () => {
+    retryFocus.current = { scope: retryFocusScope, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
+    setLoading(true);
+    setError(false);
+    setRevision(value => value + 1);
+  };
 
   useEffect(() => {
     if (!pendingDelete || !deleteDialog.current) return;
     if (!deleteDialog.current.open) deleteDialog.current.showModal();
     deleteDialogCancel.current?.focus();
   }, [pendingDelete]);
+
+  useEffect(() => {
+    if (deletingId !== null || !actionError || !failedTrigger.current) return;
+    const trigger = failedTrigger.current;
+    failedTrigger.current = null;
+    if (trigger.isConnected) trigger.focus();
+  }, [deletingId, actionError]);
 
   useEffect(() => {
     let current = true;
@@ -47,15 +85,18 @@ export default function AdminConversations() {
     return () => { current = false; };
   }, [page, revision]);
 
-  const removeConversation = async (conversation: AdminConversation) => {
+  const removeConversation = async (conversation: AdminConversation, trigger: HTMLButtonElement) => {
     if (deletingId !== null) return;
     setDeletingId(conversation.id);
     setActionError("");
+    failedTrigger.current = null;
     try {
       await deleteAdminConversation(conversation.id);
       if (data?.content.length === 1 && page > 0) setPage(value => value - 1);
       else setRevision(value => value + 1);
+      headingRef.current?.focus();
     } catch {
+      failedTrigger.current = trigger;
       setActionError(t("adminConversationDeleteError"));
     } finally {
       setDeletingId(null);
@@ -76,17 +117,17 @@ export default function AdminConversations() {
 
   const confirmDelete = () => {
     if (!pendingDelete || deletingId !== null) return;
-    const { conversation } = pendingDelete;
+    const { conversation, trigger } = pendingDelete;
     if (deleteDialog.current?.open) deleteDialog.current.close();
     setPendingDelete(null);
-    void removeConversation(conversation);
+    void removeConversation(conversation, trigger);
   };
 
-  return <section className={styles.section} aria-label={t("adminConversations")} aria-busy={loading || deletingId !== null}>
-    <h2 className={styles.title}>{t("adminConversations")}</h2>
+  return <section ref={sectionRef} className={styles.section} aria-label={t("adminConversations")} aria-busy={loading || deletingId !== null}>
+    <h2 className={styles.title} ref={headingRef} tabIndex={-1}>{t("adminConversations")}</h2>
     {actionError && <p className={styles.error} role="alert">{actionError}</p>}
     {loading && <AdminLoading label={t("loading")} layout="logs" />}
-    {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => setRevision(value => value + 1)} />}
+    {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={retryLoad} />}
     {data && data.content.length === 0 && <p>{t("noAdminConversations")}</p>}
     {data && <>
       <ul className={styles.list}>{data.content.map(conversation => <li className={styles.row} key={conversation.id}>

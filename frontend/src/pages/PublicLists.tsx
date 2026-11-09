@@ -103,11 +103,15 @@ export default function PublicLists() {
       retryFocus.current = null;
       if (pending.route !== location.pathname + location.search) return;
       if (document.activeElement === document.body || document.activeElement === pending.origin) {
-        document.getElementById(pending.target)?.focus();
+        const failed = pending.key === "tags" ? tagsError : pending.key === "feed" ? error : landingErrors[pending.key];
+        const target = document.getElementById(pending.target);
+        if (failed) target?.closest("section")?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+        else if (target?.isConnected) target.focus();
+        else document.getElementById("public-lists-title")?.focus();
       }
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [loading, tagsLoading, landingLoading, location.pathname, location.search]);
+  }, [loading, error, tagsLoading, tagsError, landingLoading, landingErrors, location.pathname, location.search]);
 
   useEffect(() => {
     if (!tag || !feedParam || feedParam === "recent") return;
@@ -260,7 +264,7 @@ export default function PublicLists() {
     </article>;
   };
 
-  const tagsSection = <section className={styles.tagsSection} aria-labelledby="popular-tags-heading" aria-busy={tagsLoading}>
+  const tagsSection = (tagsLoading || tagsError || tags.length > 0) ? <section className={styles.tagsSection} aria-labelledby="popular-tags-heading" aria-busy={tagsLoading}>
     <div className={styles.sectionHeading}>
       <h2 id="popular-tags-heading" tabIndex={-1}>{t("popularTags")}</h2>
       <Link to={path("/lists/discover?feed=recent")}>{t("viewAll")}</Link>
@@ -274,9 +278,12 @@ export default function PublicLists() {
     {!tagsLoading && !tagsError && tags.length > 0 && <div className={styles.tagRail}>
       {tags.map(item => <Link className={tag === item.slug ? styles.selectedTag : undefined} aria-current={tag === item.slug ? "page" : undefined} key={item.id} to={path(`/lists/discover?feed=recent&tag=${encodeURIComponent(item.slug)}`)}>#{item.name}</Link>)}
     </div>}
-  </section>;
+  </section> : null;
 
   const anyLandingLoading = Object.values(landingLoading).some(Boolean);
+  const anyLandingContent = landingSections.some(section => landingLists[section.key].length > 0);
+  const anyLandingError = Object.values(landingErrors).some(Boolean);
+  const showLandingEmpty = !anyLandingLoading && !anyLandingContent && !anyLandingError;
 
   return <main className={`${styles.page} ${isLanding ? styles.landingPage : ""} ${isTagged ? styles.taggedPage : ""} ${isFeedView ? styles.feedPage : ""} ${feed === "team" ? styles.teamFeed : ""}`} aria-labelledby={isTagged ? "lists-grid-heading" : "public-lists-title"} aria-busy={loading || tagsLoading || anyLandingLoading}>
     <div className={styles.shell}>
@@ -305,7 +312,7 @@ export default function PublicLists() {
             <Link to={path("/lists/discover?feed=recent")} aria-label={t("listFeedRecent")}><img src="/images/search-filter.png" width={20} height={20} alt="" aria-hidden="true" /></Link>
           </nav>
           <p className={styles.eyebrow}>{t("collectionsEyebrow")}</p>
-          <h1 id="public-lists-title">{t("discoverLists")}</h1>
+          <h1 id="public-lists-title" tabIndex={-1}>{t("discoverLists")}</h1>
           <p className={styles.landingIntro}>{t("listsLandingIntro")}</p>
           <div className={styles.heroActions}>
             <Link className={styles.heroAction} to={path("/lists")}>{t("startOwnLists")}</Link>
@@ -328,6 +335,8 @@ export default function PublicLists() {
       {isLanding ? <section className={styles.landingSections} aria-label={t("listFeeds")}>
         {landingSections.map(section => {
           const sectionLoading = landingLoading[section.key];
+          const sectionLists = landingLists[section.key];
+          if (!sectionLoading && !landingErrors[section.key] && sectionLists.length === 0) return null;
           return (
             <section className={`${styles.landingSection}${section.key === "recentlyLiked" ? ` ${styles.likedLandingSection}` : ""}`} key={section.key} aria-labelledby={`landing-${section.key}-heading`} aria-busy={sectionLoading}>
               <div className={styles.sectionHeading}>
@@ -341,13 +350,13 @@ export default function PublicLists() {
                 rememberRetryFocus(`landing-${section.key}-heading`, section.key);
                 loadLandingFeed(section.key);
               }} />}
-              {!sectionLoading && !landingErrors[section.key] && landingLists[section.key].length === 0 && <p className={styles.muted}>{t("noPublicLists")}</p>}
-              {!sectionLoading && !landingErrors[section.key] && landingLists[section.key].length > 0 && <div className={styles.landingRail}>
-                {landingLists[section.key].map(list => renderListCard(list, section.key === "recentlyLiked" ? "liked" : "rail"))}
+              {!sectionLoading && !landingErrors[section.key] && sectionLists.length > 0 && <div className={styles.landingRail}>
+                {sectionLists.map(list => renderListCard(list, section.key === "recentlyLiked" ? "liked" : "rail"))}
               </div>}
             </section>
           );
         })}
+        {showLandingEmpty && <div className={styles.landingEmpty}><p>{t("noPublicLists")}</p></div>}
       </section> : <>
         <section aria-labelledby="lists-grid-heading" aria-busy={loading}>
           <div className={styles.sectionHeading}>

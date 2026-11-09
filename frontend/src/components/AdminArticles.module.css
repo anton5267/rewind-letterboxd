@@ -7,6 +7,12 @@
   color: var(--rewind-paper);
 }
 
+.title:focus {
+  outline: 2px solid var(--rewind-cyan);
+  outline-offset: 4px;
+  scroll-margin-block: 120px;
+}
+
 .form {
   display: grid;
   gap: 10px;
@@ -43,6 +49,12 @@
 
 .error {
   color: #ff9a9a;
+}
+
+.newsletterStatus:focus {
+  outline: 2px solid var(--rewind-cyan);
+  outline-offset: 4px;
+  scroll-margin-block: 120px;
 }
 
 .articleList {

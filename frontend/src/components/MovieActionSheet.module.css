@@ -232,6 +232,7 @@
 .secondaryActions button { padding: 8px 12px; }
 
 .doneButton:focus-visible,
+.stars[data-movie-rating-focus="true"]:focus,
 .flagButton:focus-visible,
 .star:focus-visible,
 .removeRating:focus-visible,

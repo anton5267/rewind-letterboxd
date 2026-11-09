@@ -645,9 +645,16 @@ test("admin can open the dashboard, manage a notification and manage a movie", a
     return response.json();
   }, username);
   const recipientId = adminUsers.content[0].id as number;
+  const actorId = await page.evaluate(async (excludeId) => {
+    const response = await fetch("/api/admin/users?size=50");
+    const data = await response.json();
+    return data.content.find((user: { id: number }) => user.id !== excludeId)?.id as number | undefined;
+  }, recipientId);
+  expect(actorId, "A real second account is needed for a distinct notification actor").toBeTruthy();
   await page.goto("/uk/admin?view=notifications");
   const notificationSection = page.locator("section").filter({ has: page.getByRole("heading", { name: "Сповіщення" }) });
   await notificationSection.getByLabel("ID отримувача", { exact: true }).fill(String(recipientId));
+  await notificationSection.getByLabel("ID ініціатора", { exact: true }).fill(String(actorId));
   await notificationSection.getByRole("button", { name: "Створити сповіщення" }).click();
   await expect(notificationSection.getByText(`отримувач #${recipientId}`, { exact: false }).first()).toBeVisible();
 

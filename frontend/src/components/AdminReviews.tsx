@@ -31,7 +31,9 @@ export default function AdminReviews() {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const deleteDialog = useRef<HTMLDialogElement>(null);
   const deleteDialogCancel = useRef<HTMLButtonElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   const focusAfterReload = useRef(false);
+  const retryReload = useRef(false);
   const reloadFocusOrigin = useRef<HTMLElement | null>(null);
   const queryGeneration = useRef(0);
   const mounted = useRef(true);
@@ -59,6 +61,7 @@ export default function AdminReviews() {
       setError(false);
       setActionError(false);
       focusAfterReload.current = false;
+      retryReload.current = false;
       reloadFocusOrigin.current = null;
     }
   }, [filter, page, lang, actor]);
@@ -74,7 +77,7 @@ export default function AdminReviews() {
     return () => { mounted.current = false; };
   }, []);
 
-  useEffect(() => { focusAfterReload.current = false; reloadFocusOrigin.current = null; }, [lang]);
+  useEffect(() => { focusAfterReload.current = false; retryReload.current = false; reloadFocusOrigin.current = null; }, [lang]);
 
   useEffect(() => {
     if (!focusAfterReload.current || loading || busyId !== null) return;
@@ -83,11 +86,17 @@ export default function AdminReviews() {
     const frame = window.requestAnimationFrame(() => {
       if (!focusAfterReload.current) return;
       const origin = reloadFocusOrigin.current;
+      const isRetry = retryReload.current;
       focusAfterReload.current = false;
+      retryReload.current = false;
       reloadFocusOrigin.current = null;
       if (!mounted.current || queryGeneration.current !== generation || !origin) return;
       const active = document.activeElement;
-      if (active !== document.body) return;
+      if (active !== document.body && active !== origin) return;
+      if (isRetry && error) {
+        sectionRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+        return;
+      }
       if (origin.isConnected && !origin.matches(":disabled")) origin.focus();
       else if (!origin.isConnected) headingRef.current?.focus();
     });
@@ -240,7 +249,7 @@ export default function AdminReviews() {
     }}>{t("adminReturnToReviews")}</button>
   </section>;
 
-  return <section className={`${styles.section} ${styles.reviewsSection}`} aria-label={t("adminReviews")} aria-busy={loading || busyId !== null}>
+  return <section ref={sectionRef} className={`${styles.section} ${styles.reviewsSection}`} aria-label={t("adminReviews")} aria-busy={loading || busyId !== null}>
     <h2 className={styles.title} ref={headingRef} tabIndex={-1}>{t("adminReviewsTitle")}</h2>
     {actionError && <p className={styles.error} role="alert">{t(actionError === "delete" ? "adminReviewDeleteError" : "adminReviewModerationError")}</p>}
     <label className={styles.filter}>{t("adminVisibilityFilter")}{" "}
@@ -251,7 +260,7 @@ export default function AdminReviews() {
       </select>
     </label>
     {loading && <AdminLoading label={t("loading")} layout="reviews" />}
-    {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => { reloadFocusOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; focusAfterReload.current = true; setRevision(value => value + 1); }} />}
+    {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => { reloadFocusOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; retryReload.current = true; focusAfterReload.current = true; setRevision(value => value + 1); }} />}
     {data && data.content.length === 0 && <p>{t("noAdminReviews")}</p>}
     {data && <>
       <ul className={styles.list}>{data.content.map(review => {

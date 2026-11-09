@@ -7,6 +7,11 @@
   color: var(--rewind-paper);
 }
 
+.title:focus {
+  outline: 3px solid var(--rewind-cyan);
+  outline-offset: 4px;
+}
+
 .createForm {
   display: grid;
   gap: 10px;

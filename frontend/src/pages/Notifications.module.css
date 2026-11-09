@@ -64,6 +64,7 @@
 
 .primaryButton:hover { background: rgba(255, 255, 255, .2); }
 .primaryButton:focus-visible,
+.hero h1:focus-visible,
 .error button:not([class]):focus-visible,
 .markButton:focus-visible,
 .pagination button:focus-visible,
@@ -81,6 +82,7 @@
 }
 
 .card h2 { margin: 0 0 18px; font-size: 22px; }
+.card h2:focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; }
 
 .preferences {
   display: grid;

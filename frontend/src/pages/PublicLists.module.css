@@ -139,6 +139,7 @@
 .sectionHeading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .sectionHeading h2 { margin: 0; font-size: 24px; letter-spacing: -.02em; }
 .sectionHeading h2:focus { outline: 3px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
+.landingPage h1:focus { outline: 2px solid var(--rewind-gold); outline-offset: 4px; }
 .sectionHeading > a { color: #d4a85f; font-size: 13px; }
 .popularSortLabel { display: none; }
 .feedCount { display: none; }
@@ -192,6 +193,8 @@
 .featuredSkeleton { min-height: 212px; }
 @keyframes shimmer { to { background-position: -150% 0; } }
 .empty { padding: 60px 20px; border: 1px dashed var(--rewind-line); color: var(--rewind-muted); text-align: center; }
+.landingEmpty { margin: 20px 0 0; border: 0; padding: 14px 0; }
+.landingEmpty p { margin: 0; }
 .alert { padding: 14px 16px; border: 1px solid #8e4c55; background: #401f26; color: #ffd9dd; }
 .alert button:not([class]) { margin-left: 8px; }
 .pagination { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 34px; }

@@ -72,18 +72,84 @@ test("Home list feed keeps retry and honest empty states", async ({ page }) => {
   let attempts = 0;
   await page.route("**/api/lists/public/popular?**", route => {
     attempts += 1;
-    return attempts === 1 ? route.fulfill({ status: 503, json: {} })
+    return attempts < 3 ? route.fulfill({ status: 503, json: {} })
       : route.fulfill({ json: { content: [], totalElements: 0, totalPages: 0, number: 0, size: 4 } });
   });
   await page.goto("/en/home");
   const panel = page.getByRole("region", { name: "Popular Lists", exact: true });
   await expect(panel.locator("p").filter({ hasText: "Could not load the home page." })).toBeVisible();
-  await panel.getByRole("button", { name: "Retry", exact: true }).click();
+  const retry = panel.getByRole("button", { name: "Retry", exact: true });
+  await retry.focus();
+  await retry.press("Enter");
+  await expect(panel).toHaveAttribute("aria-busy", "false");
+  const repeatedRetry = panel.getByRole("button", { name: "Retry", exact: true });
+  await expect(repeatedRetry).toBeFocused();
+  await repeatedRetry.press("Enter");
   await expect(panel).toHaveAttribute("aria-busy", "false");
   await expect(panel.locator("article")).toHaveCount(0);
   await expect(panel.locator("p").filter({ hasText: "Could not load the home page." })).toHaveCount(0);
   await expect(panel.getByText("No public lists yet.", { exact: true })).toBeVisible();
-  expect(attempts).toBe(2);
+  expect(attempts).toBe(3);
+});
+
+test("Home does not keep empty feeds as blank modules", async ({ page }) => {
+  const emptyPage = { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 };
+  for (const route of [
+    "**/api/movies/search?**",
+    "**/api/reviews/popular?**",
+    "**/api/reviews/recent?**",
+    "**/api/lists/public/popular?**",
+    "**/api/journal/articles?**",
+    "**/api/activity/recent-watched?**",
+  ]) {
+    await page.route(route, handler => handler.fulfill({ json: emptyPage }));
+  }
+  for (const route of ["**/api/users/popular-reviewers?**", "**/api/tags/popular?**"]) {
+    await page.route(route, handler => handler.fulfill({ json: [] }));
+  }
+
+  await page.goto("/en/home");
+  await expect(page.locator("main")).toHaveAttribute("aria-busy", "false");
+  for (const id of [
+    "home-newest",
+    "home-guest-reviews",
+    "home-popular",
+    "home-journal",
+    "home-reviews",
+    "home-lists",
+    "home-reviewers",
+    "home-tags",
+    "home-recent-watched",
+  ]) {
+    await expect(page.locator(`#${id}`), `Empty Home module #${id} should be omitted`).toHaveCount(0);
+  }
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+});
+
+test("Guest Home keeps a short review card content-sized beside taller feed columns", async ({ page }) => {
+  const review = {
+    id: 970_001, movieId: 970_002, movieTitle: "A short review", userId: 970_003,
+    username: "film-fan", content: "Worth watching.", rating: 4,
+    createdAt: "2026-11-01T12:00:00Z", moviePhotoUrl: null, userAvatarUrl: null,
+  };
+  await page.route("**/api/reviews/popular?**", route => route.fulfill({
+    json: { content: [review], totalElements: 1, totalPages: 1, number: 0, size: 4 },
+  }));
+  await page.route("**/api/lists/public/popular?**", route => route.fulfill({
+    json: { content: lists, totalElements: lists.length, totalPages: 1, number: 0, size: 3 },
+  }));
+  await page.route("**/api/users/popular-reviewers?**", route => route.fulfill({ json: [
+    { id: 970_004, username: "reviewer", displayName: "Reviewer", avatarUrl: null, likes: 12, reviewCount: 4 },
+  ] }));
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/en/home");
+  const panel = page.locator("#home-reviews");
+  await expect(panel).toHaveAttribute("aria-busy", "false");
+  const card = panel.locator('[class*="reviewCard"]');
+  await expect(card).toBeVisible();
+  await expect(card).toContainText("Worth watching.");
+  expect((await card.boundingBox())!.height).toBeLessThan(220);
 });
 
 test("Member Home keeps the dedicated desktop and mobile hero", async ({ page }) => {

@@ -32,6 +32,7 @@
   letter-spacing: -.04em;
   line-height: 1;
 }
+.intro h1:focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; }
 
 .intro p:last-child {
   position: absolute;
@@ -528,4 +529,95 @@
 @media (min-width: 901px) and (max-width: 1199px) {
   .feature.wideFeature { min-height: 699px; box-sizing: border-box; }
   .feature.wideFeature .cover { height: auto; min-height: 0; aspect-ratio: 514 / 296; align-self: start; }
+}
+
+/* With no articles and no archive, keep an actionable compact empty page. */
+.emptyPage {
+  min-height: auto;
+  padding: 24px 0 64px;
+}
+
+.emptyPage .intro {
+  position: static;
+  width: auto;
+  max-width: 1200px;
+  min-height: auto;
+  margin: 0 auto;
+  padding: 24px 0 0;
+  border: 0;
+  background: transparent;
+}
+
+.emptyPage .intro h1 {
+  position: static;
+  display: inline-flex;
+  min-height: 42px;
+  margin: 0;
+  padding: 0 22px;
+  font-size: 28px;
+}
+
+.emptyPage .layout {
+  position: static;
+  display: block;
+  max-width: 1200px;
+  margin: 20px auto 0;
+  padding: 0;
+}
+
+.emptyPage .toolbar,
+.emptyPage .archive { display: none; }
+
+.emptyState {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid var(--rewind-line);
+  border-radius: var(--rewind-radius);
+  background: var(--rewind-surface);
+}
+
+.emptyState p {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.emptyAction {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border-radius: var(--rewind-radius);
+  background: var(--rewind-cyan);
+  color: #111;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.emptyAction:hover { filter: brightness(1.08); }
+.emptyAction:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+@media (max-width: 900px) {
+  .emptyPage .intro,
+  .emptyPage .layout { margin-inline: 24px; }
+}
+
+@media (max-width: 767px) {
+  .emptyPage { padding: 64px 0 40px; }
+  .emptyPage .intro,
+  .emptyPage .layout { margin-inline: 16px; }
+  .emptyPage .intro { padding-top: 20px; }
+  .emptyPage .intro h1 { min-height: 38px; padding-inline: 18px; font-size: 24px; }
+  .emptyPage .layout { margin-top: 16px; }
+  .emptyState { padding: 18px; }
+}
+
+@media (max-width: 380px) {
+  .emptyPage { padding-inline: 10px; }
+  .emptyPage .intro { margin-inline: 14px; }
+  .emptyPage .layout { margin-inline: 0; }
 }

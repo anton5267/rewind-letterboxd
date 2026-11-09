@@ -62,6 +62,9 @@
   background: #242426;
 }
 
+.reviewerSection:focus,
+.reviewsSection:focus { outline: 3px solid #64dbe2; outline-offset: 4px; }
+
 .reviewerSection { padding: 22px 24px 20px; }
 .reviewsSection { margin-top: 18px; padding: 24px; }
 

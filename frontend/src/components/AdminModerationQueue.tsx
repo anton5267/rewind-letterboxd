@@ -43,7 +43,7 @@ export default function AdminModerationQueue() {
   const bulkDialogCancel = useRef<HTMLButtonElement>(null);
   const actor = `${user?.id ?? ""}:${user?.role ?? ""}`;
   const currentActor = useRef(actor);
-  const pendingFocus = useRef<{ scope: number; origin: HTMLElement | null; target: "heading" | "error" } | null>(null);
+  const pendingFocus = useRef<{ scope: number; origin: HTMLElement | null; target: "heading" | "error" | "retry" } | null>(null);
   const transitionFocus = useRef<{ filters: AdminModerationFilters; page: number; lang: string; actor: string; focus: NonNullable<typeof pendingFocus.current> } | null>(null);
 
   useEffect(() => {
@@ -85,7 +85,9 @@ export default function AdminModerationQueue() {
       pendingFocus.current = null;
       if (!mounted.current || scopeGeneration.current !== pending.scope || catalogRequest.current !== request) return;
       if (document.activeElement !== document.body && document.activeElement !== pending.origin) return;
-      (pending.target === "error" ? mutationAlert.current : heading.current)?.focus();
+      if (pending.target === "error") mutationAlert.current?.focus();
+      else if (pending.target === "retry" && error) document.querySelector<HTMLElement>("[aria-labelledby='moderation-heading'] [data-retry-button]")?.focus();
+      else heading.current?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
   }, [loading, mutating, error, data, mutationError, filters, page, lang, actor]);
@@ -119,7 +121,7 @@ export default function AdminModerationQueue() {
     return focus;
   };
   const refresh = () => {
-    captureHeadingFocus();
+    pendingFocus.current = { scope: scopeGeneration.current, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, target: "retry" };
     setLoading(true);
     setRevision(value => value + 1);
   };

@@ -49,7 +49,7 @@ function MovieRow({ movies }: { movies: MovieCard[] }) {
       const movieTitle = editorialText(movie.title, t("untitledFilm"));
       return <article className={styles.movieCard} key={movie.id}>
         <Link to={path(`/films/${movie.id}`)} aria-label={movieTitle} title={movieTitle}>
-          <ResilientImage src={movie.photoUrl} alt="" fallback={<div className={styles.posterFallback} aria-hidden="true"><span>{movieTitle.slice(0, 1).toUpperCase()}</span></div>} />
+          <ResilientImage src={movie.photoUrl} alt="" fallback={<div className={styles.posterFallback} aria-hidden="true"><span>{movieTitle}</span></div>} />
           <h3>{movieTitle}</h3>
         </Link>
         <p>{formatMovieYear(movie.releaseDate, t("unknownYear"))}{movie.rating !== null ? ` · ★ ${movie.rating}` : ""}</p>
@@ -122,7 +122,8 @@ export default function Home() {
     };
 
     switch (section) {
-      case "popular": setPopular([]); run(searchMovies({ sort: "rating_desc", page: 0, size: 6 }), data => setPopular(data.content)); break;
+      // Keep unrated catalogue films out of a community-popularity rail.
+      case "popular": setPopular([]); run(searchMovies({ minRating: "1", sort: "rating_desc", page: 0, size: 6 }), data => setPopular(data.content)); break;
       case "newest": setNewest([]); run(searchMovies({ sort: "newest", page: 0, size: 6 }), data => setNewest(data.content)); break;
       case "reviews": setReviews([]); run(getPopularReviews(0, 4), data => setReviews(data.content)); break;
       case "recentReviews": setRecentReviews([]); run(getRecentReviews(0, 10), data => setRecentReviews(data.content)); break;
@@ -139,6 +140,11 @@ export default function Home() {
     retryFocus.current = origin instanceof HTMLElement ? { origin, section, targetId, scope: focusScope } : null;
     (section ? [section] : HOME_SECTIONS.filter(item => item !== "recentReviews" || !isAuth)).forEach(loadSection);
   };
+
+  // Keep a section visible while it loads or when retry is available. Once an
+  // empty feed loads successfully, omit it so Home contains only useful content.
+  const showHomeSection = (section: HomeSection, itemCount: number) =>
+    sectionLoading[section] || Boolean(sectionErrors[section]) || itemCount > 0;
 
   const keepGuestHeroVisibleOnFocus = (event: ReactFocusEvent<HTMLAnchorElement>) => {
     if (!event.currentTarget.matches(":focus-visible")) return;
@@ -159,6 +165,11 @@ export default function Home() {
       retryFocus.current = null;
       if (pending.origin.isConnected || (document.activeElement !== document.body && document.activeElement !== null)) return;
       const container = document.getElementById(pending.section ? pending.targetId : Object.keys(sectionErrors).length ? "home-retry-summary" : "home-title");
+      const failed = pending.section ? Boolean(sectionErrors[pending.section]) : Object.keys(sectionErrors).length > 0;
+      if (failed) {
+        container?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+        return;
+      }
       const heading = pending.section ? container?.querySelector<HTMLElement>("h2") : null;
       const target = heading?.getClientRects().length ? heading : container;
       if (target?.getClientRects().length) target.focus();
@@ -171,7 +182,7 @@ export default function Home() {
     return () => { HOME_SECTIONS.forEach(section => { sectionAttempts.current[section] += 1; }); };
   }, [isAuth, loadSection]);
 
-  const journalSection = <section id="home-journal" tabIndex={-1} className={`${styles.section} ${styles.journalSection}`} aria-busy={sectionLoading.journal}>
+  const journalSection = showHomeSection("journal", journal.length) && <section id="home-journal" tabIndex={-1} className={`${styles.section} ${styles.journalSection}`} aria-busy={sectionLoading.journal}>
     <div className={styles.sectionHeading}><h2 tabIndex={-1}>{t(isAuth ? "homeLatestNews" : "homeRecentNews")}</h2><Link to={path("/journal")}>{t(isAuth ? "viewAll" : "homeMore")}</Link></div>
     {sectionLoading.journal ? <HomeLoading kind="journal" /> : sectionErrors.journal ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} role={null} onRetry={() => retrySection("journal", "home-journal")} /> : journal.length === 0 ? <p className={styles.journalEmptyStatus}>{t("noLatestJournal")}</p> : <div className={styles.stack}>{journal.map(article => {
       const title = editorialText(article.title, t("untitledArticle"));
@@ -205,10 +216,10 @@ export default function Home() {
     {allSectionsLoading && <p className="srOnly" role="status">{t("loadingHome")}</p>}
     {Object.keys(sectionErrors).length > 0 && <p id="home-retry-summary" className={styles.status} role="alert" tabIndex={-1}>{t("loadHomeError")} <RetryButton label={t("retry")} onClick={() => retrySection(null)} /></p>}
     <>
-      <section id="home-newest" tabIndex={-1} aria-labelledby="home-newest-heading" className={`${styles.section} ${styles.leadingSection}`} aria-busy={sectionLoading.newest}>
+      {showHomeSection("newest", newest.length) && <section id="home-newest" tabIndex={-1} aria-labelledby="home-newest-heading" className={`${styles.section} ${styles.leadingSection}`} aria-busy={sectionLoading.newest}>
         <div className={styles.sectionHeading}><h2 id="home-newest-heading" tabIndex={-1}>{t(isAuth ? "homeNewOnRewind" : "homeGuestReleases")}</h2><Link to={path("/films")}>{t(isAuth ? "homeYourActivity" : "viewAll")}</Link></div>
         {sectionLoading.newest ? <HomeLoading kind="newest" /> : sectionErrors.newest ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} role={null} onRetry={() => retrySection("newest", "home-newest")} /> : newest.length === 0 ? <p>{t("noFilms")}</p> : <MovieRow movies={newest} />}
-      </section>
+      </section>}
       {!isAuth && <section className={styles.guestExplainer} aria-label={t("homeGuestExplainerTitle")}>
         <h2>{t("homeGuestExplainerHeading")}</h2>
         <div className={styles.guestExplainerCard}>
@@ -219,7 +230,7 @@ export default function Home() {
           {HOME_GUEST_FEATURES.map(([key, icon]) => <li key={key}><img src={icon} alt="" aria-hidden="true" /><span>{t(key)}</span></li>)}
         </ul>
       </section>}
-      {!isAuth && <section id="home-guest-reviews" tabIndex={-1} className={styles.guestRecentReviews} aria-busy={sectionLoading.recentReviews}>
+      {!isAuth && showHomeSection("recentReviews", recentReviews.length) && <section id="home-guest-reviews" tabIndex={-1} className={styles.guestRecentReviews} aria-busy={sectionLoading.recentReviews}>
         <div className={styles.sectionHeading}><h2 tabIndex={-1}>{t("homeJustReviewed")}</h2><Link to={path("/reviews")}>{t("homeMore")}</Link></div>
         {sectionLoading.recentReviews ? <HomeLoading kind="recentReviews" /> : sectionErrors.recentReviews ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} role={null} onRetry={() => retrySection("recentReviews", "home-guest-reviews")} /> : recentReviews.length === 0 ? <p>{t("noRecentReviews")}</p> : <div className={styles.guestReviewPosters} role="group" aria-label={t("homeJustReviewed")}>{recentReviews.map(review => {
           const movieTitle = editorialText(review.movieTitle, t("untitledFilm"));
@@ -235,13 +246,12 @@ export default function Home() {
           <p>{t("homeGuestPitchPrompt")} <Link to={path("/register")}>{t("getStarted")}</Link></p>
         </div>
       </div>}
-      <section id="home-popular" tabIndex={-1} className={`${styles.section} ${styles.popularSection}`} aria-busy={sectionLoading.popular}>
+      {showHomeSection("popular", popular.length) && <section id="home-popular" tabIndex={-1} className={`${styles.section} ${styles.popularSection}`} aria-busy={sectionLoading.popular}>
         <div className={styles.sectionHeading}><h2 tabIndex={-1}>{t(isAuth ? "homePopularOnRewind" : "popularThisWeek")}</h2><Link to={path("/films?sort=rating_desc")}>{t("viewAll")}</Link></div>
         {sectionLoading.popular ? <HomeLoading kind="popular" /> : sectionErrors.popular ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} role={null} onRetry={() => retrySection("popular", "home-popular")} /> : popular.length === 0 ? <p>{t("noFilms")}</p> : <MovieRow movies={popular} />}
-      </section>
-      {isAuth && journalSection}
+      </section>}
       <section className={styles.grid}>
-        <div id="home-reviews" tabIndex={-1} className={`${styles.panel} ${styles.reviewsPanel}`} aria-busy={sectionLoading.reviews}>
+        {showHomeSection("reviews", reviews.length) && <div id="home-reviews" tabIndex={-1} className={`${styles.panel} ${styles.reviewsPanel}`} aria-busy={sectionLoading.reviews}>
           <div className={styles.sectionHeading}><h2 tabIndex={-1}>{t("homePopularReviewsThisWeek")}</h2><Link to={path("/reviews")}>{t(isAuth ? "viewAll" : "homeMore")}</Link></div>
           {sectionLoading.reviews ? <HomeLoading kind="reviews" /> : sectionErrors.reviews ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} role={null} onRetry={() => retrySection("reviews", "home-reviews")} /> : reviews.length === 0 ? <p>{t("noRecentReviews")}</p> : <div className={styles.stack}>{reviews.map(review => {
             const movieTitle = editorialText(review.movieTitle, t("untitledFilm"));
@@ -265,8 +275,8 @@ export default function Home() {
               </div>
             </article>;
           })}</div>}
-        </div>
-        <section id="home-lists" tabIndex={-1} className={`${styles.panel} ${styles.listsPanel}`} aria-labelledby="home-public-lists-heading" aria-busy={sectionLoading.lists}>
+        </div>}
+        {showHomeSection("lists", lists.length) && <section id="home-lists" tabIndex={-1} className={`${styles.panel} ${styles.listsPanel}`} aria-labelledby="home-public-lists-heading" aria-busy={sectionLoading.lists}>
           <div className={styles.sectionHeading}><h2 id="home-public-lists-heading" tabIndex={-1}>{t("homePopularLists")}</h2><Link to={path("/lists/discover?feed=popular")}>{t(isAuth ? "viewAll" : "homeMore")}</Link></div>
           {sectionLoading.lists ? <HomeLoading kind="lists" /> : sectionErrors.lists ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} role={null} onRetry={() => retrySection("lists", "home-lists")} /> : lists.length === 0 ? <p>{t("noPublicLists")}</p> : <div className={styles.listCards} role="group" aria-label={t("popularLists")} tabIndex={0}>{lists.map(list => {
             const listName = editorialText(list.name, t("lists"));
@@ -282,8 +292,8 @@ export default function Home() {
               </Link></small>
             </article>;
           })}</div>}
-        </section>
-        <div id="home-reviewers" tabIndex={-1} className={styles.panel} aria-busy={sectionLoading.reviewers}>
+        </section>}
+        {showHomeSection("reviewers", reviewers.length) && <div id="home-reviewers" tabIndex={-1} className={styles.panel} aria-busy={sectionLoading.reviewers}>
           <div className={styles.sectionHeading}><h2 tabIndex={-1}>{t("popularReviewers")}</h2>{!isAuth && <Link to={path("/community/reviewers")}>{t("homeMore")}</Link>}</div>
           {sectionLoading.reviewers ? <HomeLoading kind="reviewers" /> : sectionErrors.reviewers ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} role={null} onRetry={() => retrySection("reviewers", "home-reviewers")} /> : reviewers.length === 0 ? <p>{t("noPopularReviewers")}</p> : <div className={styles.stack}>{reviewers.slice(0, isAuth ? reviewers.length : 3).map(reviewer => <article className={styles.list} key={reviewer.id}>
             <Link className={styles.homeReviewer} to={path(`/users/${reviewer.id}`)}>
@@ -292,14 +302,14 @@ export default function Home() {
             </Link>
             <small className={styles.homeReviewerLikes}>{t("likes")}: {reviewer.likes}</small>
           </article>)}</div>}
-        </div>
-        <div id="home-tags" tabIndex={-1} className={styles.panel} aria-busy={sectionLoading.tags}>
+        </div>}
+        {showHomeSection("tags", tags.length) && <div id="home-tags" tabIndex={-1} className={styles.panel} aria-busy={sectionLoading.tags}>
           <div className={styles.sectionHeading}><h2 tabIndex={-1}>{t("popularTags")}</h2><Link to={path("/lists/discover")}>{t("viewAll")}</Link></div>
           {sectionLoading.tags ? <HomeLoading kind="tags" /> : sectionErrors.tags ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} role={null} onRetry={() => retrySection("tags", "home-tags")} /> : tags.length === 0 ? <p>{t("noTags")}</p> : <p className={styles.tagCloud}>{tags.map(tag => <Link key={tag.id} to={path(`/lists/discover?tag=${encodeURIComponent(tag.slug)}`)}>#{tag.name}</Link>)}</p>}
-        </div>
+        </div>}
       </section>
       {!isAuth && journalSection}
-      {isAuth && <section id="home-recent-news" tabIndex={-1} className={`${styles.section} ${styles.memberRecentNewsSection}`} aria-busy={sectionLoading.journal}>
+      {isAuth && showHomeSection("journal", journal.length) && <section id="home-recent-news" tabIndex={-1} className={`${styles.section} ${styles.memberRecentNewsSection}`} aria-busy={sectionLoading.journal}>
         <div className={styles.sectionHeading}><h2 tabIndex={-1}>{t("homeRecentNews")}</h2><Link to={path("/journal")}>{t("homeMore")}</Link></div>
         {sectionLoading.journal ? <HomeLoading kind="recentNews" /> : sectionErrors.journal ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} role={null} onRetry={() => retrySection("journal", "home-recent-news")} /> : journal.length === 0 ? <p className={styles.memberRecentNewsEmpty}>{t("noLatestJournal")}</p> : <div className={styles.memberRecentNewsGrid}>
           {journal.slice(0, 3).map(article => {
@@ -316,7 +326,7 @@ export default function Home() {
           })}
         </div>}
       </section>}
-      <section id="home-recent-watched" tabIndex={-1} className={`${styles.section} ${styles.recentWatchedSection}`} aria-busy={sectionLoading.recentWatched}>
+      {showHomeSection("recentWatched", recentWatched.length) && <section id="home-recent-watched" tabIndex={-1} className={`${styles.section} ${styles.recentWatchedSection}`} aria-busy={sectionLoading.recentWatched}>
         <div className={styles.sectionHeading}><h2 tabIndex={-1}>{t("recentWatched")}</h2></div>
         {sectionLoading.recentWatched ? <HomeLoading kind="recentWatched" /> : sectionErrors.recentWatched ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} role={null} onRetry={() => retrySection("recentWatched", "home-recent-watched")} /> : recentWatched.length === 0 ? <p>{t("noRecentWatched")}</p> : <div className={styles.stack}>{recentWatched.map(item => {
           if (!item.movie) return null;
@@ -326,7 +336,7 @@ export default function Home() {
             {item.actor && <small><Link to={path(`/users/${item.actor.id}`)}>{getUserName(item.actor, t("someone"))}</Link> {t("activityWatched")}</small>}
           </article>;
         })}</div>}
-      </section>
+      </section>}
     </>
   </main>;
 }

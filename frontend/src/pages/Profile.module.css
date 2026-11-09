@@ -34,7 +34,8 @@
   .page[data-profile-view="reviews"] .mobileReviewsHeading { display: none; }
   .page[data-profile-view="reviews"] .desktopReviewsHeading { display: inline; }
   .page[data-profile-view="reviews"] .heroProfileEdit,
-  .page[data-network-view="true"] .heroProfileEdit {
+  .page[data-network-view="true"] .heroProfileEdit,
+  .page:not([data-profile-view]) .heroProfileEdit {
     position: absolute;
     z-index: 2;
     bottom: 65px;
@@ -56,7 +57,9 @@
     transform: translateX(-50%);
   }
   .page[data-profile-view="reviews"] .heroProfileEdit:focus-visible,
-  .page[data-network-view="true"] .heroProfileEdit:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 4px; }
+  .page[data-network-view="true"] .heroProfileEdit:focus-visible,
+  .page:not([data-profile-view]) .heroProfileEdit:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 4px; }
+  .page:not([data-profile-view]) .heroProfileEdit { bottom: 84px; }
   .page[data-profile-view="reviews"] .reviewsMobileBack { display: none; }
   .page[data-profile-view="reviews"] .reviewsBack {
     order: 3;
@@ -1645,6 +1648,7 @@
 .reviewActions button:hover:not(:disabled)::before { border-color: var(--rewind-cyan); }
 .reviewActions button:hover:not(:disabled) { color: var(--rewind-cyan); }
 .reviewActions button:focus-visible, .reviewEditor button:focus-visible, .reviewEditor textarea:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 3px; }
+.retryFocusHeading:focus { outline: 3px solid var(--rewind-cyan); outline-offset: 4px; border-radius: 4px; }
 .reviewActions button:disabled, .reviewEditor button:disabled { cursor: not-allowed; opacity: .55; }
 .reviewEditor { display: grid; gap: 12px; margin-top: 12px; }
 .reviewEditor textarea { width: 100%; min-height: 180px; box-sizing: border-box; padding: 12px; border: 1px solid #555; border-radius: 8px; background: #1c1c1c; color: #f4f4f4; font: inherit; font-size: 14px; line-height: 1.55; resize: vertical; }
@@ -1723,6 +1727,11 @@
 .page .reviewFeedbackFocus:focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
 
 .collectionToolbar h2:focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
+.page :global(#profile-activity-title):focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
+.page :global(#profile-favorite-preview-title):focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
+.page :global(#profile-lists-title):focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
+.page :global(#profile-following-title):focus,
+.page :global(#profile-followers-title):focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
 
 /* Statistics remain readable when localized labels or text zoom grow. */
 .stat :is(a, span, strong) { min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
@@ -1742,6 +1751,10 @@
   .page[data-review-detail] .reviewCard { background: transparent; }
   .page[data-review-detail] .reviewCopy { min-height: 395px; box-sizing: border-box; border-radius: 20px; padding: 40px; background: #282828; }
   .page[data-review-detail] .reviewCopy .reviewContent { margin-top: 40px; }
+}
+
+@media (max-width: 767px) {
+  .page:not([data-profile-view]) .heroProfileEdit { display: none; }
 }
 
 @media (max-width: 767px) {

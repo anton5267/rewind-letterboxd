@@ -29,6 +29,9 @@ test("owner creates and deletes a custom list", async ({ page, baseURL }) => {
     await page.getByLabel("Опис").first().fill("Browser to API to MySQL deletion fixture");
     await page.getByLabel("Теги").first().fill("playwright, owner-delete");
     await page.getByLabel("Публічний список").first().check();
+    await page.getByRole("button", { name: "Додати фільм" }).click();
+    await page.getByLabel("Пошук фільмів").fill("The Wrecking Crew");
+    await page.getByRole("button", { name: /The Wrecking Crew/ }).click();
     await page.getByRole("button", { name: "Зберегти", exact: true }).click();
     await expect(page).toHaveURL(/\/uk\/lists\?list=\d+&mode=view$/);
     const createdId = Number(new URL(page.url()).searchParams.get("list"));
@@ -41,8 +44,36 @@ test("owner creates and deletes a custom list", async ({ page, baseURL }) => {
     await page.locator("#edit-list-name").fill(updatedListName);
     await page.getByRole("button", { name: "Зберегти", exact: true }).click();
     await expect(page.locator("#edit-list-name")).toHaveValue(updatedListName);
+    let listNameUpdates = 0;
+    page.on("request", request => {
+      if (new URL(request.url()).pathname === `/api/lists/${createdId}` && request.method() === "PATCH") listNameUpdates += 1;
+    });
+    const saveList = page.getByRole("button", { name: "Зберегти", exact: true });
+    await page.locator("#edit-list-name").fill("   ");
+    await expect(page.locator("#edit-list-name")).toHaveAttribute("aria-invalid", "true");
+    await expect(page.locator("#edit-list-name")).toHaveAttribute("aria-describedby", "edit-list-name-error");
+    await expect(page.getByRole("alert")).toContainText("Введіть назву списку.");
+    await expect(saveList).toBeDisabled();
+    await saveList.click({ force: true });
+    expect(listNameUpdates, "Blank list names must not reach the API").toBe(0);
+    await page.locator("#edit-list-name").fill(updatedListName);
+    await expect(saveList).toBeEnabled();
     const addFilmLink = page.getByRole("link", { name: "Додати фільм", exact: true }).first();
     await expect(addFilmLink).toHaveAttribute("href", "/uk/films");
+
+    // Verify the public-list like against the live API, including its persisted
+    // status/count after a reload, before deleting the disposable list.
+    await page.goto(`/uk/lists/public/${createdId}`);
+    const likeList = page.getByRole("button", { name: "Вподобати список", exact: true }).first();
+    await expect(likeList).toBeVisible();
+    await likeList.click();
+    const unlikeList = page.getByRole("button", { name: "Прибрати вподобання", exact: true }).first();
+    await expect(unlikeList).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole("button", { name: "Прибрати вподобання", exact: true }).first()).toBeVisible();
+    await page.getByRole("button", { name: "Прибрати вподобання", exact: true }).first().click();
+    await expect(page.getByRole("button", { name: "Вподобати список", exact: true }).first()).toBeVisible();
+    await page.goto(`/uk/lists?list=${createdId}&mode=edit`);
     await page.getByRole("button", { name: "Видалити список" }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "Видалити список" }).click();
     await expect(page.getByText("Список видалено.", { exact: true })).toBeVisible();
@@ -92,7 +123,7 @@ test("owner retries failed list items and returns from an emptied last page", as
 
   try {
     const createdList = await browserMutation(page, "/api/lists", "POST", {
-      name: `Retry owner ${suffix}`, description: "Disposable list for the paginated editor flow", isPublic: false, tags: [],
+      name: `Retry owner ${suffix}`, description: "Disposable list for the paginated editor flow", isPublic: false, tags: [], movieIds: [5],
     });
     expect(createdList.status).toBe(200);
     linkedListId = Number((createdList.data as { id: number }).id);

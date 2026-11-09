@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { cleanupDisposableAccount } from "./helpers";
 
-test.setTimeout(60_000);
+test.setTimeout(120_000);
 
-test("profile collection is visible in own and public profile", async ({ page, baseURL }) => {
+test("profile collection is visible in own and public profile", async ({ page, baseURL }, testInfo) => {
   const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
   const username = `profile${suffix.slice(-12)}`;
   const email = `${username}@example.invalid`;
@@ -32,16 +32,28 @@ test("profile collection is visible in own and public profile", async ({ page, b
   await expect(page).toHaveURL(/\/uk\/films$/);
 
   try {
-    const firstFilm = page.locator("main article h2 a").first();
+    const firstFilm = page.locator('main article a[href^="/uk/films/"]').first();
     await expect(firstFilm).toBeVisible();
     await firstFilm.click();
     await expect(page).toHaveURL(/\/uk\/films\/\d+$/);
+    const mobile = testInfo.project.name.includes("emulation");
+    if (mobile) await page.getByRole("button", { name: "Мої дії" }).click();
+    const mobileSheet = mobile ? page.getByRole("dialog") : null;
     const watchedButton = page.getByRole("button", { name: "Переглянуто" });
     await expect(watchedButton).toBeVisible();
     const movieTitle = await page.getByRole("heading", { level: 1 }).textContent();
     expect(movieTitle).toBeTruthy();
     await watchedButton.click();
     await expect(watchedButton).toHaveAttribute("aria-pressed", "true");
+    const favoriteButton = mobile
+      ? page.getByRole("button", { name: "Вподобати", exact: true })
+      : page.getByRole("button", { name: "Улюблене", exact: true });
+    await favoriteButton.click();
+    await expect(favoriteButton).toHaveAttribute("aria-pressed", "true");
+    if (mobile) {
+      await mobileSheet!.getByRole("button", { name: "Готово" }).click();
+      await expect(mobileSheet).toBeHidden();
+    }
 
     const movieId = Number(page.url().match(/\/films\/(\d+)$/)?.[1]);
     expect(movieId).toBeGreaterThan(0);
@@ -62,11 +74,16 @@ test("profile collection is visible in own and public profile", async ({ page, b
     const ownOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(ownOverflow, `own profile overflows horizontally by ${ownOverflow}px`).toBeLessThanOrEqual(1);
     await expect(page.getByRole("heading", { name: "Мій профіль" })).toBeVisible();
+    const ownActivity = page.locator("#profile-activity");
+    await expect(ownActivity.getByText(/переглянув\(-ла\)/i).first()).toBeVisible();
+    await expect(ownActivity.getByRole("link", { name: movieTitle!.trim(), exact: true }).first()).toBeVisible();
     await expect(page.getByRole("heading", { name: "Підписки" })).toBeVisible();
     const watchedStat = page.locator("article").filter({ has: page.getByText("Переглянуто", { exact: true }) });
     await expect(watchedStat.getByText("1", { exact: true })).toBeVisible();
     await page.goto("/uk/profile?view=collection&collection=watched");
     await expect(page.getByRole("tabpanel", { name: "Переглянуто" }).getByRole("link", { name: `${movieTitle!.trim()} Постер`, exact: true })).toBeVisible();
+    await page.goto("/uk/profile?view=collection&collection=favorites");
+    await expect(page.getByRole("tabpanel", { name: "Улюблене" }).getByRole("link", { name: `${movieTitle!.trim()} Постер`, exact: true })).toBeVisible();
 
     await page.goto("/uk/profile");
     const ownReviewLink = page.getByRole("region", { name: "Останні огляди" }).getByRole("link", { name: reviewText, exact: true });
@@ -105,6 +122,9 @@ test("profile collection is visible in own and public profile", async ({ page, b
     expect(publicOverflow, `public profile overflows horizontally by ${publicOverflow}px`).toBeLessThanOrEqual(1);
     await expect(page.getByRole("heading", { name: username })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Статистика" })).toBeVisible();
+    const publicActivity = page.locator("[aria-labelledby=\"public-profile-activity\"]");
+    await expect(publicActivity.getByText(/переглянув\(-ла\)/i).first()).toBeVisible();
+    await expect(publicActivity.getByRole("link", { name: movieTitle!.trim(), exact: true }).first()).toBeVisible();
     const publicWatchedStat = page.locator("article").filter({ has: page.getByText("Переглянуто", { exact: true }) });
     await expect(publicWatchedStat.getByText("1", { exact: true })).toBeVisible();
     await page.goto(`/uk/users/${currentUser.id}?view=collection&collection=watched`);

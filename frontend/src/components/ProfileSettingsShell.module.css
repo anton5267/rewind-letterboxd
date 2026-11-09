@@ -1,4 +1,5 @@
 .page { position: relative; min-height: 100vh; padding: 0 0 160px; background: #1f1f1f; color: #fff; }
+.retryFocusHeading:focus { outline: 3px solid var(--rewind-cyan); outline-offset: 4px; border-radius: 4px; }
 .mobileSettingLink { display: none !important; }
 .hero {
   display: grid;
@@ -40,7 +41,7 @@
 .message { background: #1d4728; color: #d8ffd8; }
 .settingsSection :is(.error, .message):focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
 .page :is(a, button, input):focus-visible { outline: 2px solid #d4a85f; outline-offset: 4px; scroll-margin-block: 120px; }
-.hero h1:focus { outline: none; }
+.hero h1:focus:not(.retryFocusHeading) { outline: none; }
 .settingsSection output { display: block; overflow-wrap: anywhere; }
 .settingsSection > form[data-settings-form="avatar"] { width: 100%; }
 .settingsSection > form[data-settings-form="avatar"] > button, .settingsSection .avatarField { width: min(588px, 100%); }

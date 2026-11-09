@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Link } from "react-router-dom";
 import type { PublicProfileReview, PublicProfileResponse } from "../api/profile.api";
 import { editorialText, formatDateTime, useLocale } from "../i18n";
@@ -12,10 +13,12 @@ interface Props { review: PublicProfileReview; profile: PublicProfileResponse }
 export default function PublicProfileReviewCard({ review, profile }: Props) {
   const { path, t, lang } = useLocale();
   const title = editorialText(review.movieTitle, t("untitledFilm"));
-  const poster = usePublicProfilePoster(review.movieId, review.id);
+  const posterWrapRef = useRef<HTMLDivElement>(null);
+  const posterLinkRef = useRef<HTMLAnchorElement>(null);
+  const poster = usePublicProfilePoster(review.movieId, review.id, { retryContainerRef: posterWrapRef, successRef: posterLinkRef });
   return <li className={styles.card}>
-    <div className={styles.posterWrap} aria-busy={poster.loading}>
-      <Link className={styles.posterLink} to={path(`/films/${review.movieId}`)} aria-label={title}>
+    <div ref={posterWrapRef} className={styles.posterWrap} aria-busy={poster.loading}>
+      <Link ref={posterLinkRef} className={styles.posterLink} to={path(`/films/${review.movieId}`)} aria-label={title}>
         <ResilientImage className={styles.poster} src={poster.photoUrl} alt="" loading="lazy" fallback={<span className={styles.fallback} aria-hidden="true">{title.slice(0, 1).toUpperCase()}</span>} />
       </Link>
       {poster.error && <div className={styles.retry} role="group" aria-label={`${title}: ${t("loadReviewError")}`}><RetryButton label={t("retry")} onClick={poster.retry} /></div>}

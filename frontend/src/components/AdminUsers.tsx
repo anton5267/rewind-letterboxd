@@ -119,9 +119,13 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
       if (!mounted.current || scopeGeneration.current !== pending.scope) return;
       const latestRequest = pending.kind === "catalog" ? catalogRequest.current : pending.kind === "identity" ? detailRequest.current : detailOverviewRequest.current;
       if (latestRequest !== pending.request || (document.activeElement !== document.body && document.activeElement !== pending.origin)) return;
-      const target = pending.kind === "catalog" ? usersHeading.current
-        : pending.kind === "identity" ? detailError ? identityError.current : detailHeading.current
-        : detailOverviewError ? overviewError.current : overviewHeading.current;
+      const failed = pending.kind === "catalog" ? error : pending.kind === "identity" ? detailError : detailOverviewError;
+      const retryScope = pending.kind === "catalog" ? usersSection.current
+        : pending.kind === "identity" ? identityError.current : overviewError.current;
+      const target = failed
+        ? retryScope?.querySelector<HTMLButtonElement>("[data-retry-button]")
+        : pending.kind === "catalog" ? usersHeading.current
+          : pending.kind === "identity" ? detailHeading.current : overviewHeading.current;
       target?.focus();
     });
     return () => window.cancelAnimationFrame(frame);

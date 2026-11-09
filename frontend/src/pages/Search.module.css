@@ -37,6 +37,12 @@
 .filterSubmit:hover { background: #d4a85f; color: #1f1f1f; }
 .feedback,
 .empty { padding: 34px 20px; color: var(--rewind-muted); text-align: center; }
+.emptyState { display: flex; flex-direction: column; align-items: center; padding-bottom: 30px; }
+.emptyState .empty { margin: 0; }
+.clearSearch { min-height: 44px; border: 1px solid var(--rewind-line); border-radius: 999px; padding: 0 20px; background: var(--rewind-surface-raised); color: #fff; font: inherit; cursor: pointer; }
+.clearSearch:hover { border-color: #d4a85f; color: #f4d28c; }
+.clearSearch:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 3px; }
+.page [data-search-results-focus]:focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; border-radius: 4px; }
 .alert { padding: 13px 15px; border: 1px solid #8e4c55; background: #401f26; color: #ffd9dd; }
 .alert button:not([class]) { margin-left: 8px; }
 .resultsBar { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 34px 0 16px; border-bottom: 1px solid var(--rewind-line); padding-bottom: 12px; color: #d4cec8; }

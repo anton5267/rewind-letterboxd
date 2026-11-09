@@ -48,9 +48,15 @@ export default function Community() {
       if (retryFocus.current !== pending || scope !== retryFocusScope.current) return;
       retryFocus.current = null;
       if (pending.origin.isConnected || (document.activeElement !== document.body && document.activeElement !== null)) return;
-      const target = pending.section ? document.getElementById(`community-${pending.section}`) :
-        globalErrorRef.current ?? document.getElementById("community-hq");
-      target?.focus();
+      if (pending.section) {
+        const section = document.querySelector<HTMLElement>(`[data-community-section="${pending.section}"]`);
+        if (sectionErrors[pending.section]) section?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+        else document.getElementById(`community-${pending.section}`)?.focus();
+      } else if (Object.keys(sectionErrors).length > 0) {
+        globalErrorRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+      } else {
+        document.getElementById("community-hq")?.focus();
+      }
     });
     return () => window.cancelAnimationFrame(frame);
   }, [sectionLoading, sectionErrors, hqUsers, directory, lang]);
@@ -128,15 +134,15 @@ export default function Community() {
       {allSectionsLoading && <p className={styles.loading} role="status">{t("loading")}</p>}
       {Object.keys(sectionErrors).length > 0 && <p className={styles.alert} ref={globalErrorRef} tabIndex={-1} role="alert">{t("loadCommunityError")} <RetryButton label={t("retry")} onClick={retryAllSections} /></p>}
       <div className={styles.grid}>
-        <section className={styles.card} aria-labelledby="community-hq" aria-busy={sectionLoading.hq}>
+        <section className={styles.card} data-community-section="hq" aria-labelledby="community-hq" aria-busy={sectionLoading.hq}>
           <div className={styles.cardHeading}><h2 id="community-hq" tabIndex={-1}>{t("featuredMembers")}</h2></div>
           {sectionLoading.hq ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.hq ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("hq")} /> : !hqUsers || hqUsers.content.length === 0 ? <p className={styles.empty}>{t("noFeaturedMembers")}</p> : <ul className={`${styles.list} ${styles.showcaseList}`}>{hqUsers.content.slice(0, 5).map(member => <UserFollowRow key={member.id} presentation="communityShowcase" user={member} href={path(`/users/${member.id}`)} meta={t("hq")} />)}</ul>}
         </section>
-        <section className={styles.card} aria-labelledby="community-reviewers" aria-busy={sectionLoading.reviewers}>
+        <section className={styles.card} data-community-section="reviewers" aria-labelledby="community-reviewers" aria-busy={sectionLoading.reviewers}>
           <div className={styles.cardHeading}><div className={styles.headingRow}><h2 id="community-reviewers" tabIndex={-1}>{t("popularThisWeek")}</h2><Link to={path("/community/reviewers")}>{t("viewAll")}</Link></div></div>
           {sectionLoading.reviewers ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.reviewers ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("reviewers")} /> : reviewers.length === 0 ? <p className={styles.empty}>{t("noPopularReviewers")}</p> : <ul className={`${styles.list} ${styles.showcaseList}`}>{reviewers.slice(0, 5).map(reviewer => <UserFollowRow key={reviewer.id} presentation="communityShowcase" user={reviewer} href={path(`/users/${reviewer.id}`)} meta={`${reviewer.likes} ${t("likes")}`} />)}</ul>}
         </section>
-        <section className={`${styles.card} ${styles.directoryCard}`} aria-labelledby="community-directory" aria-busy={sectionLoading.directory}>
+        <section className={`${styles.card} ${styles.directoryCard}`} data-community-section="directory" aria-labelledby="community-directory" aria-busy={sectionLoading.directory}>
           <div className={styles.cardHeading}><h2 id="community-directory" tabIndex={-1}>{t("allUsers")}</h2></div>
           <form className={styles.searchForm} onSubmit={submitDirectorySearch}>
             <label htmlFor="community-user-search">{t("searchUsers")}</label>

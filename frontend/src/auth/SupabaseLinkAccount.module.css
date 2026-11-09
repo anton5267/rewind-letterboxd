@@ -1,0 +1,9 @@
+.page { composes: page from "./AuthShared.module.css"; }
+.card { composes: card from "./AuthShared.module.css"; }
+.title { composes: title from "./AuthShared.module.css"; }
+.form { composes: form from "./AuthShared.module.css"; }
+.fieldLabel { composes: fieldLabel from "./AuthShared.module.css"; }
+.input { composes: input from "./AuthShared.module.css"; }
+.button { composes: button from "./AuthShared.module.css"; }
+.error { composes: error from "./AuthShared.module.css"; }
+.success { composes: success from "./AuthShared.module.css"; }

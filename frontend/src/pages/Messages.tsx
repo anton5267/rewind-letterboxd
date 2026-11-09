@@ -42,9 +42,58 @@ export default function Messages() {
   const activeConversationId = useRef<number | null>(null);
   const sendRequest = useRef(0);
   const readRequest = useRef(0);
+  const sendFocus = useRef<{ conversationId: number; origin: HTMLElement | null; composerOrigin: boolean } | null>(null);
+  const retryFocus = useRef<{ target: "conversations" | "target-conversation" | "messages" | "read"; origin: HTMLElement | null } | null>(null);
+  const conversationsPanel = useRef<HTMLElement | null>(null);
+  const messagePanel = useRef<HTMLElement | null>(null);
 
   activeUserId.current = user?.id ?? null;
   activeConversationId.current = selected?.id ?? null;
+
+  const focusRetryCompletion = (target: "conversations" | "target-conversation" | "messages" | "read", loading: boolean, failed: boolean, panel: HTMLElement | null) => {
+    const pending = retryFocus.current;
+    if (!pending || pending.target !== target || loading) return;
+    retryFocus.current = null;
+    const active = document.activeElement;
+    if (active !== pending.origin && active !== document.body) return;
+    if (failed) panel?.querySelector<HTMLButtonElement>("[data-retry-button]:not(:disabled)")?.focus();
+    else panel?.querySelector<HTMLElement>("h2")?.focus();
+  };
+
+  useEffect(() => {
+    focusRetryCompletion("conversations", conversationsLoading, conversationsError, conversationsPanel.current);
+  }, [conversationsLoading, conversationsError]);
+
+  useEffect(() => {
+    focusRetryCompletion("target-conversation", targetConversationLoading, targetConversationError, messagePanel.current);
+  }, [targetConversationLoading, targetConversationError]);
+
+  useEffect(() => {
+    focusRetryCompletion("messages", messagesLoading, messagesError, messagePanel.current);
+  }, [messagesLoading, messagesError]);
+
+  useEffect(() => {
+    focusRetryCompletion("read", readRetrying, readError, messagePanel.current);
+  }, [readRetrying, readError]);
+
+  useEffect(() => {
+    if (sending) return;
+    const pending = sendFocus.current;
+    if (!pending) return;
+    sendFocus.current = null;
+    if (selected?.id !== pending.conversationId) return;
+    const active = document.activeElement;
+    if (active !== pending.origin && active !== document.body) return;
+    if (sendError) {
+      if (pending.composerOrigin) {
+        messagePanel.current?.querySelector<HTMLInputElement>("form input")?.focus();
+      } else {
+        messagePanel.current?.querySelector<HTMLButtonElement>("[data-retry-button]:not(:disabled)")?.focus();
+      }
+      return;
+    }
+    messagePanel.current?.querySelector<HTMLInputElement>("form input")?.focus();
+  }, [sending, sendError, selected?.id]);
 
   useEffect(() => {
     sendRequest.current += 1;
@@ -57,6 +106,7 @@ export default function Messages() {
     setBody("");
     setSendError(false);
     setReadError(false);
+    sendFocus.current = null;
   }, [isAuth, user?.id]);
 
   useEffect(() => {
@@ -160,6 +210,7 @@ export default function Messages() {
     setSending(false);
     setReadRetrying(false);
     setSendError(false);
+    sendFocus.current = null;
     setReadError(false);
     setTargetConversationLoading(false);
     setTargetConversationError(false);
@@ -175,6 +226,8 @@ export default function Messages() {
 
   const sendCurrentMessage = async () => {
     if (!selected || !body.trim() || sending) return;
+    const origin = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    sendFocus.current = { conversationId: selected.id, origin, composerOrigin: origin instanceof HTMLInputElement };
     const requestId = ++sendRequest.current;
     const requestUserId = activeUserId.current;
     const conversationId = selected.id;
@@ -230,10 +283,10 @@ export default function Messages() {
         <p>{t("messagesIntro")}</p>
       </section>
       <div className={styles.layout}>
-        <aside className={styles.panel} aria-label={t("conversations")} aria-busy={conversationsLoading}>
-          <h2>{t("conversations")}</h2>
+        <aside ref={conversationsPanel} className={styles.panel} aria-label={t("conversations")} aria-busy={conversationsLoading}>
+          <h2 tabIndex={-1}>{t("conversations")}</h2>
           {conversationsLoading && <p className={styles.notice} role="status">{t("loading")}</p>}
-          {conversationsError && <RetryNotice className={styles.error} message={t("loadConversationsError")} retryLabel={t("retry")} onRetry={() => setConversationRevision(value => value + 1)} />}
+          {conversationsError && <RetryNotice className={styles.error} message={t("loadConversationsError")} retryLabel={t("retry")} onRetry={() => { retryFocus.current = { target: "conversations", origin: document.activeElement instanceof HTMLElement ? document.activeElement : null }; setConversationsLoading(true); setConversationsError(false); setConversationRevision(value => value + 1); }} />}
           {!conversationsLoading && !conversationsError && conversations?.content.length === 0 && <p className={styles.empty}>{t("noConversations")}</p>}
           {!conversationsLoading && !conversationsError && conversations && conversations.content.length > 0 && <ul className={styles.conversationList}>
             {conversations.content.map(item => {
@@ -243,15 +296,15 @@ export default function Messages() {
           </ul>}
           {conversations && <Pagination className={styles.pagination} page={conversationPage} totalPages={conversations.totalPages} label={t("conversationsPagination")} busy={conversationsLoading || sending} onPageChange={setConversationPage} />}
         </aside>
-        <section className={styles.panel} aria-labelledby={selected ? "conversation-title" : undefined} aria-label={selected ? undefined : t("messages")} aria-busy={messagesLoading || targetConversationLoading || sending}>
+        <section ref={messagePanel} className={styles.panel} aria-labelledby={selected ? "conversation-title" : undefined} aria-label={selected ? undefined : t("messages")} aria-busy={messagesLoading || targetConversationLoading || sending}>
           {!selected && targetConversationLoading && <div className={styles.panelState}><p className={styles.notice} role="status">{t("loading")}</p></div>}
-          {!selected && targetConversationError && <div className={styles.panelState}><RetryNotice className={styles.error} message={t("startConversationError")} retryLabel={t("retry")} onRetry={() => setTargetConversationAttempt(value => value + 1)} /></div>}
+          {!selected && targetConversationError && <div className={styles.panelState}><RetryNotice className={styles.error} message={t("startConversationError")} retryLabel={t("retry")} onRetry={() => { retryFocus.current = { target: "target-conversation", origin: document.activeElement instanceof HTMLElement ? document.activeElement : null }; setTargetConversationLoading(true); setTargetConversationError(false); setTargetConversationAttempt(value => value + 1); }} /></div>}
           {!selected && !targetConversationLoading && !targetConversationError && <div className={styles.panelState}><p className={styles.empty}>{t("chooseConversation")}</p></div>}
           {selected && <>
-            <h2 className={styles.conversationTitle} id="conversation-title"><Link to={path(`/users/${selected.otherUser.id}`)}>{getUserIdentity(selected.otherUser, t("someone"))}</Link></h2>
+            <h2 className={styles.conversationTitle} id="conversation-title" tabIndex={-1}><Link to={path(`/users/${selected.otherUser.id}`)}>{getUserIdentity(selected.otherUser, t("someone"))}</Link></h2>
             {messagesLoading && <p className={styles.notice} role="status">{t("loading")}</p>}
-            {messagesError && <RetryNotice className={styles.error} message={t("loadMessagesError")} retryLabel={t("retry")} onRetry={() => setMessageRevision(value => value + 1)} />}
-            {readError && <RetryNotice className={styles.error} message={t("markMessagesReadError")} retryLabel={readRetrying ? t("loading") : t("retry")} disabled={readRetrying} busy={readRetrying} onRetry={() => void retryMarkRead()} />}
+            {messagesError && <RetryNotice className={styles.error} message={t("loadMessagesError")} retryLabel={t("retry")} onRetry={() => { retryFocus.current = { target: "messages", origin: document.activeElement instanceof HTMLElement ? document.activeElement : null }; setMessagesLoading(true); setMessagesError(false); setMessageRevision(value => value + 1); }} />}
+            {readError && <RetryNotice className={styles.error} message={t("markMessagesReadError")} retryLabel={readRetrying ? t("loading") : t("retry")} disabled={readRetrying} busy={readRetrying} onRetry={() => { retryFocus.current = { target: "read", origin: document.activeElement instanceof HTMLElement ? document.activeElement : null }; void retryMarkRead(); }} />}
             {!messagesLoading && !messagesError && messages?.content.length === 0 && <p className={styles.empty}>{t("noMessages")}</p>}
             {!messagesLoading && !messagesError && messages && messages.content.length > 0 && <ul className={styles.messageList}>
               {[...messages.content].reverse().map(item => <li className={`${styles.messageBubble} ${item.senderId === user?.id ? styles.messageBubbleOwn : ""}`} key={item.id}><div>{editorialText(item.body, t("emptyMessageBody"))}</div><small>{formatDateTime(item.createdAt, lang)}</small></li>)}
@@ -259,7 +312,7 @@ export default function Messages() {
             {messages && <Pagination className={styles.pagination} page={messagePage} totalPages={messages.totalPages} label={t("messagesPagination")} busy={messagesLoading || sending} previousLabel={t("newerMessages")} nextLabel={t("olderMessages")} onPageChange={setMessagePage} />}
             <form className={styles.composer} onSubmit={submit} aria-busy={sending}>
               {sendError && <RetryNotice className={styles.error} message={t("sendMessageError")} retryLabel={t("retry")} disabled={sending || !body.trim()} busy={sending} onRetry={() => void sendCurrentMessage()} />}
-              <input aria-label={t("messageText")} value={body} maxLength={2000} disabled={sending} onChange={event => { setBody(event.target.value); setSendError(false); }} placeholder={t("messageText")} />
+              <input aria-label={t("messageText")} value={body} maxLength={2000} readOnly={sending} onChange={event => { setBody(event.target.value); setSendError(false); }} placeholder={t("messageText")} />
               <button type="submit" aria-busy={sending} disabled={!body.trim() || sending}>{sending ? t("loading") : t("sendMessage")}</button>
             </form>
           </>}

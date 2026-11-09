@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { getPopularReviews, type RecentReview } from "../api/reviews.api";
 import { getPopularReviewers, type PopularReviewer } from "../api/social.api";
@@ -39,6 +39,56 @@ export default function PopularReviews() {
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [reviewsError, setReviewsError] = useState(false);
   const [reviewsRetry, setReviewsRetry] = useState(0);
+  const reviewersSectionRef = useRef<HTMLElement>(null);
+  const reviewsSectionRef = useRef<HTMLElement>(null);
+  const retryFocus = useRef<Partial<Record<"reviewers" | "reviews", { origin: HTMLElement; lang: string }>>>({});
+
+  useEffect(() => {
+    retryFocus.current = {};
+  }, [lang]);
+
+  useEffect(() => {
+    const pending = retryFocus.current.reviewers;
+    if (!pending || reviewersLoading) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (retryFocus.current.reviewers !== pending) return;
+      delete retryFocus.current.reviewers;
+      if (pending.lang !== lang) return;
+      const active = document.activeElement;
+      if (active !== document.body && active !== pending.origin) return;
+      if (reviewersError) reviewersSectionRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+      else reviewersSectionRef.current?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [lang, reviewersLoading, reviewersError, reviewers]);
+
+  useEffect(() => {
+    const pending = retryFocus.current.reviews;
+    if (!pending || reviewsLoading) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (retryFocus.current.reviews !== pending) return;
+      delete retryFocus.current.reviews;
+      if (pending.lang !== lang) return;
+      const active = document.activeElement;
+      if (active !== document.body && active !== pending.origin) return;
+      if (reviewsError) reviewsSectionRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+      else reviewsSectionRef.current?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [lang, reviewsLoading, reviewsError, reviews]);
+
+  const retrySection = (section: "reviewers" | "reviews") => {
+    if (document.activeElement instanceof HTMLElement) retryFocus.current[section] = { origin: document.activeElement, lang };
+    if (section === "reviewers") {
+      setReviewersLoading(true);
+      setReviewersError(false);
+      setReviewersRetry(value => value + 1);
+    } else {
+      setReviewsLoading(true);
+      setReviewsError(false);
+      setReviewsRetry(value => value + 1);
+    }
+  };
 
   useEffect(() => {
     let current = true;
@@ -92,26 +142,26 @@ export default function PopularReviews() {
     </section>
 
     <div className={styles.shell}>
-      <section className={styles.reviewerSection} aria-labelledby="popular-reviewers-title" aria-busy={reviewersLoading}>
+      <section ref={reviewersSectionRef} className={styles.reviewerSection} aria-labelledby="popular-reviewers-title" aria-busy={reviewersLoading} tabIndex={-1}>
         <div className={styles.sectionHeading}>
           <h2 id="popular-reviewers-title">{t("popularReviewers")}</h2>
           <Link className={styles.reviewerMore} to={path("/community/reviewers")} aria-label={`${t("homeMore")} ${t("popularReviewers")}`}>{t("homeMore")}</Link>
         </div>
         {reviewersLoading && <><p className="srOnly" role="status">{t("loading")}</p><div className={styles.reviewerRail} aria-hidden="true">{[0, 1, 2, 3, 4, 5, 6, 7].map(item => <div className={`${styles.reviewerAvatar} ${styles.skeleton}`} key={item} />)}</div></>}
-        {reviewersError && <RetryNotice className={styles.status} message={t("loadCommunityError")} retryLabel={t("retry")} busy={reviewersLoading} onRetry={() => setReviewersRetry(value => value + 1)} />}
+        {reviewersError && <RetryNotice className={styles.status} message={t("loadCommunityError")} retryLabel={t("retry")} busy={reviewersLoading} onRetry={() => retrySection("reviewers")} />}
         {!reviewersLoading && !reviewersError && reviewers.length === 0 && <p className={styles.empty}>{t("noPopularReviewers")}</p>}
         {!reviewersLoading && !reviewersError && reviewers.length > 0 && <div className={styles.reviewerRail} role="group" aria-label={t("popularReviewers")}>
           {reviewers.map(reviewer => <ReviewerAvatar key={reviewer.id} reviewer={reviewer} label={getUserName(reviewer, t("someone"))} />)}
         </div>}
       </section>
 
-      <section className={styles.reviewsSection} aria-labelledby="reviews-title" aria-busy={reviewsLoading}>
+      <section ref={reviewsSectionRef} className={styles.reviewsSection} aria-labelledby="reviews-title" aria-busy={reviewsLoading} tabIndex={-1}>
         <div className={styles.sectionHeading}>
           <h2 id="reviews-title">{t("homePopularReviews")}</h2>
           <span className={styles.sortLabel}>{t("sortBy")}: {t("sortPopularReviews")}</span>
         </div>
         {reviewsLoading && <><p className="srOnly" role="status">{t("loading")}</p><div className={styles.reviewList} aria-hidden="true">{[0, 1, 2, 3].map(item => <div className={styles.reviewCard} key={item}><div className={`${styles.poster} ${styles.skeleton}`} /><div className={styles.reviewCopy}><div className={styles.skeletonLine} /><div className={styles.skeletonLine} /><div className={styles.skeletonLine} /></div></div>)}</div></>}
-        {reviewsError && <RetryNotice className={styles.status} message={t("loadReviewsError")} retryLabel={t("retry")} busy={reviewsLoading} onRetry={() => setReviewsRetry(value => value + 1)} />}
+        {reviewsError && <RetryNotice className={styles.status} message={t("loadReviewsError")} retryLabel={t("retry")} busy={reviewsLoading} onRetry={() => retrySection("reviews")} />}
         {!reviewsLoading && !reviewsError && reviews.length === 0 && <p className={styles.empty}>{t("noRecentReviews")}</p>}
         {!reviewsLoading && !reviewsError && reviews.length > 0 && <div className={styles.reviewList}>
           {reviews.map(review => {

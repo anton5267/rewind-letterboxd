@@ -13,7 +13,7 @@ import type { Page } from "../api/types";
 import Pagination from "./Pagination";
 import RetryNotice from "./RetryNotice";
 import { editorialText, localizeJournalCategory, useLocale, type Language } from "../i18n";
-import { isJournalCategory, journalCategories } from "../utils/journalCategories";
+import { isJournalCategory, isNewsletterCategory, journalCategories } from "../utils/journalCategories";
 import styles from "./AdminArticles.module.css";
 
 const emptyArticle: { slug: string; language: Language; category: string; title: string; excerpt: string; content: string; coverUrl: string; audioUrl: string; published: boolean } = { slug: "", language: "uk", category: "", title: "", excerpt: "", content: "", coverUrl: "", audioUrl: "", published: false };
@@ -30,10 +30,66 @@ export default function AdminArticles() {
   const editingTrigger = useRef<HTMLButtonElement | null>(null);
   const [newsletterStatuses, setNewsletterStatuses] = useState<Record<number, NewsletterDeliveryStatus>>({});
   const [newsletterBusyId, setNewsletterBusyId] = useState<number | null>(null);
+  const [newsletterStatusErrorId, setNewsletterStatusErrorId] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [actionError, setActionError] = useState("");
+  const sectionRef = useRef<HTMLElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const retryFocusScope = JSON.stringify([lang, page]);
+  const retryFocus = useRef<{ scope: string; origin: HTMLElement | null } | null>(null);
+  const newsletterRetryFocus = useRef<{ articleId: number; scope: string; origin: HTMLElement | null } | null>(null);
+  const currentNewsletterScope = useRef(retryFocusScope);
+  currentNewsletterScope.current = retryFocusScope;
+
+  useEffect(() => {
+    newsletterRetryFocus.current = null;
+  }, [lang, page]);
+
+  useEffect(() => {
+    const pending = newsletterRetryFocus.current;
+    if (!pending || newsletterBusyId !== null) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (newsletterRetryFocus.current !== pending) return;
+      newsletterRetryFocus.current = null;
+      if (pending.scope !== currentNewsletterScope.current) return;
+      const active = document.activeElement;
+      if (active !== document.body && active !== pending.origin) return;
+      if (newsletterStatusErrorId === pending.articleId) {
+        sectionRef.current?.querySelector<HTMLButtonElement>(`[data-newsletter-retry="${pending.articleId}"] [data-retry-button]`)?.focus();
+      } else {
+        sectionRef.current?.querySelector<HTMLElement>(`[data-newsletter-status="${pending.articleId}"]`)?.focus();
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [newsletterBusyId, newsletterStatusErrorId]);
+
+  useEffect(() => {
+    if (retryFocus.current?.scope !== retryFocusScope) retryFocus.current = null;
+  }, [retryFocusScope]);
+
+  useEffect(() => {
+    const pending = retryFocus.current;
+    if (!pending || loading) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (retryFocus.current !== pending) return;
+      retryFocus.current = null;
+      if (pending.scope !== retryFocusScope) return;
+      const active = document.activeElement;
+      if (active !== document.body && active !== pending.origin) return;
+      if (error) sectionRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+      else headingRef.current?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [error, loading, retryFocusScope]);
+
+  const retryLoad = () => {
+    retryFocus.current = { scope: retryFocusScope, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
+    setLoading(true);
+    setError(false);
+    setRevision(value => value + 1);
+  };
 
   useEffect(() => {
     let current = true;
@@ -90,7 +146,7 @@ export default function AdminArticles() {
 
   const saveArticle = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (creating) return;
+    if (creating || !article.slug.trim() || !article.category.trim() || !article.title.trim() || !article.content.trim()) return;
     setCreating(true);
     setActionError("");
     try {
@@ -115,23 +171,43 @@ export default function AdminArticles() {
     }
   };
 
-  const sendNewsletter = async (item: AdminArticle) => {
-    if (!item.publishedAt || newsletterBusyId !== null) return;
+  const sendNewsletter = async (item: AdminArticle, origin: HTMLButtonElement) => {
+    if (!item.publishedAt || !isNewsletterCategory(item.category) || newsletterBusyId !== null) return;
+    const scope = currentNewsletterScope.current;
     setNewsletterBusyId(item.id);
     setActionError("");
+    setNewsletterStatusErrorId(null);
     try {
       await queueAdminNewsletter(item.id);
+    } catch {
+      setActionError(t("adminNewsletterError"));
+      setNewsletterBusyId(null);
+      return;
+    }
+    if (currentNewsletterScope.current === scope) newsletterRetryFocus.current = { articleId: item.id, scope, origin };
+    try {
       const { data: status } = await getAdminNewsletterStatus(item.id);
       setNewsletterStatuses(current => ({ ...current, [item.id]: status }));
     } catch {
-      setActionError(t("adminNewsletterError"));
-    } finally {
-      setNewsletterBusyId(null);
-    }
+      setNewsletterStatusErrorId(item.id);
+    } finally { setNewsletterBusyId(null); }
   };
 
-  return <section className={styles.section} aria-label={t("journalEditor")} aria-busy={loading || creating || newsletterBusyId !== null}>
-    <h2 className={styles.title}>{t("journalEditor")}</h2>
+  const retryNewsletterStatus = async (articleId: number) => {
+    if (newsletterBusyId !== null) return;
+    newsletterRetryFocus.current = { articleId, scope: currentNewsletterScope.current, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
+    setNewsletterBusyId(articleId);
+    setNewsletterStatusErrorId(null);
+    try {
+      const { data: status } = await getAdminNewsletterStatus(articleId);
+      setNewsletterStatuses(current => ({ ...current, [articleId]: status }));
+    } catch {
+      setNewsletterStatusErrorId(articleId);
+    } finally { setNewsletterBusyId(null); }
+  };
+
+  return <section ref={sectionRef} className={styles.section} aria-label={t("journalEditor")} aria-busy={loading || creating || newsletterBusyId !== null}>
+    <h2 ref={headingRef} className={styles.title} tabIndex={-1}>{t("journalEditor")}</h2>
     {actionError && <p className={styles.error} role="alert">{actionError}</p>}
     <form className={styles.form} onSubmit={saveArticle} aria-busy={creating}>
       {editingId !== null && <p className={styles.feedback}>{t("editArticle")} · {article.title}</p>}
@@ -148,14 +224,14 @@ export default function AdminArticles() {
       <input className={styles.input} type="url" maxLength={500} aria-label={t("audioUrl")} placeholder={t("audioUrl")} value={article.audioUrl} onChange={event => setArticle({ ...article, audioUrl: event.target.value })} />
       <textarea className={styles.textarea} required aria-label={t("articleContent")} placeholder={t("articleContent")} value={article.content} onChange={event => setArticle({ ...article, content: event.target.value })} rows={8} />
       <label className={styles.publishToggle}><input type="checkbox" checked={article.published} onChange={event => setArticle({ ...article, published: event.target.checked })} /> {t("publishArticle")}</label>
-      <button type="submit" aria-busy={creating} disabled={creating}>{creating ? t("loading") : t(editingId === null ? "create" : "save")}</button>
+      <button type="submit" aria-busy={creating} disabled={creating || !article.slug.trim() || !article.category.trim() || !article.title.trim() || !article.content.trim()}>{creating ? t("loading") : t(editingId === null ? "create" : "save")}</button>
       {editingId !== null && <button type="button" disabled={creating} onClick={cancelEditing}>{t("cancel")}</button>}
     </form>
     {loading && <AdminLoading label={t("loading")} layout="logs" />}
-    {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => setRevision(value => value + 1)} />}
+    {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={retryLoad} />}
     {data && data.content.length === 0 && <p>{t("noAdminArticles")}</p>}
     {data && <>
-      <ul className={styles.articleList}>{data.content.map(item => { const status = newsletterStatuses[item.id]; const articleTitle = editorialText(item.title, t("untitledArticle")); return <li className={styles.articleRow} key={item.id}>{item.language === "uk" ? t("articleLanguageUk") : t("articleLanguageEn")} · {articleTitle} · {t(item.publishedAt ? "articlePublished" : "articleDraft")}{item.audioUrl && ` · ${t("podcastAudio")}`}<button type="button" disabled={creating} aria-label={`${t("editArticle")}: ${articleTitle}`} onClick={event => editArticle(item, event.currentTarget)}>{t("editArticle")}</button>{item.publishedAt && <><button type="button" aria-busy={newsletterBusyId === item.id} disabled={newsletterBusyId !== null} onClick={() => void sendNewsletter(item)}>{newsletterBusyId === item.id ? t("loading") : t("sendNewsletter")}</button>{status && ` · ${t("newsletterQueueStatus")}: ${status.pending}/${status.sent}/${status.failed}`}</>}</li>; })}</ul>
+      <ul className={styles.articleList}>{data.content.map(item => { const status = newsletterStatuses[item.id]; const articleTitle = editorialText(item.title, t("untitledArticle")); return <li className={styles.articleRow} key={item.id}>{item.language === "uk" ? t("articleLanguageUk") : t("articleLanguageEn")} · {articleTitle} · {t(item.publishedAt ? "articlePublished" : "articleDraft")}{item.audioUrl && ` · ${t("podcastAudio")}`}<button type="button" disabled={creating} aria-label={`${t("editArticle")}: ${articleTitle}`} onClick={event => editArticle(item, event.currentTarget)}>{t("editArticle")}</button>{item.publishedAt && isNewsletterCategory(item.category) && <><button type="button" aria-busy={newsletterBusyId === item.id} disabled={newsletterBusyId !== null} onClick={event => void sendNewsletter(item, event.currentTarget)}>{newsletterBusyId === item.id ? t("loading") : t("sendNewsletter")}</button>{status && <span className={styles.newsletterStatus} role="status" tabIndex={-1} data-newsletter-status={item.id}>{t("newsletterQueueStatus")}: {status.pending}/{status.sent}/{status.failed}</span>}{newsletterStatusErrorId === item.id && <div data-newsletter-retry={item.id}><RetryNotice className={styles.error} message={t("adminNewsletterStatusError")} retryLabel={t("retry")} disabled={newsletterBusyId !== null} busy={newsletterBusyId === item.id} onRetry={() => void retryNewsletterStatus(item.id)} /></div>}</>}</li>; })}</ul>
       <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminArticlesPagination")} busy={loading} statusSuffix={data.totalElements} onPageChange={setPage} />
     </>}
   </section>;

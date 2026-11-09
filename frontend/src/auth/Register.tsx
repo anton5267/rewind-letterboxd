@@ -12,17 +12,20 @@ export default function Register() {
   const { path, t, lang } = useLocale();
   const validation = useAuthFieldValidation();
   const location = useLocation();
-  const returnLocation = getAuthReturnTo(location.state, [path("/profile"), path("/messages"), path("/notifications")]);
+  const returnLocation = getAuthReturnTo(location.state, [path("/profile"), path("/messages"), path("/notifications"), path("/lists")]);
 
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
+  const [nicknameTooShort, setNicknameTooShort] = useState(false);
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [error, setError] = useState<"passwordByteLimitError" | "registrationError" | null>(null);
   const [success, setSuccess] = useState(false);
+  const [confirmationRequired, setConfirmationRequired] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submission, setSubmission] = useState(0);
   const successHeading = useRef<HTMLHeadingElement>(null);
+  const nicknameInput = useRef<HTMLInputElement>(null);
   const errorMessage = useRef<HTMLParagraphElement>(null);
   const mounted = useRef(false);
   const activeRequest = useRef<object | null>(null);
@@ -60,6 +63,11 @@ export default function Register() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (activeRequest.current !== null) return;
+    if (nickname.trim().length < 3) {
+      setNicknameTooShort(true);
+      nicknameInput.current?.focus();
+      return;
+    }
     const request = {};
     activeRequest.current = request;
     const scope = focusGeneration.current;
@@ -80,8 +88,9 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      await register(email.trim(), password, nickname.trim());
+      const { data } = await register(email.trim(), password, nickname.trim(), lang);
       if (!isCurrent()) return;
+      setConfirmationRequired(Boolean(data?.confirmationRequired));
       setSuccess(true);
       requestFocus("success");
     } catch {
@@ -99,6 +108,7 @@ export default function Register() {
         <div className={styles.card}>
           <p className={styles.eyebrow}>{t("accountEyebrow")}</p>
           <h1 ref={successHeading} tabIndex={-1} className={styles.title} id="register-success-title" aria-live="polite">{t("accountCreated")}</h1>
+          {confirmationRequired && <p className={styles.footer} role="status">{t("confirmEmailBeforeLogin")}</p>}
 
           <button
             type="button"
@@ -122,21 +132,23 @@ export default function Register() {
         <form className={styles.form} onSubmit={submit} onInvalidCapture={validation.onInvalid} aria-busy={loading}>
           <label className={styles.fieldLabel} htmlFor="register-username">{t("username")}</label>
           <input
+            ref={nicknameInput}
             id="register-username"
             name="username"
             className={styles.input}
             placeholder={t("username")}
             value={nickname}
             disabled={loading}
-            onChange={(e) => { setNickname(e.target.value); validation.onInput(e.currentTarget); }}
+            onChange={(e) => { setNickname(e.target.value); setNicknameTooShort(false); validation.onInput(e.currentTarget); }}
             autoComplete="username"
             minLength={3}
             maxLength={50}
-            aria-invalid={Boolean(error) || validation.invalid("register-username")}
-            aria-describedby={validation.describedBy("register-username", error ? "register-error" : undefined)}
+            aria-invalid={nicknameTooShort || Boolean(error) || validation.invalid("register-username")}
+            aria-describedby={[validation.describedBy("register-username", error ? "register-error" : undefined), nicknameTooShort ? "register-username-trim-validation" : undefined].filter(Boolean).join(" ") || undefined}
             required
           />
           {validation.message("register-username") && <p className={styles.validation} id="register-username-validation">{validation.message("register-username")}</p>}
+          {nicknameTooShort && <p className={styles.validation} id="register-username-trim-validation" role="alert">{t("authFieldMinLength").replace("{min}", "3")}</p>}
 
           <label className={styles.fieldLabel} htmlFor="register-email">{t("email")}</label>
           <input

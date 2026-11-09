@@ -29,14 +29,15 @@ jobs:
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
-      - name: Build static site
+      - name: Build full application for GitHub Pages
         working-directory: frontend
         env:
           VITE_BASE_PATH: /rewind-letterboxd/
           VITE_API_BASE_URL: https://cuirmicbzspomijgkkwo.supabase.co/functions/v1/rewind-api/api
           VITE_SUPABASE_URL: https://cuirmicbzspomijgkkwo.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
-          VITE_PUBLIC_CATALOG_ONLY: "true"
+          VITE_SUPABASE_AUTH_ENABLED: "true"
+          VITE_PUBLIC_CATALOG_ONLY: "false"
         run: npm run verify:build
       - name: Generate static catalogue route pages
         working-directory: frontend

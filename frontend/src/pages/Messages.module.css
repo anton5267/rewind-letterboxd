@@ -68,6 +68,7 @@
 }
 
 .panel h2 { margin: 0 0 18px; font-size: 22px; }
+.panel h2:focus { outline: 2px solid var(--rewind-gold); outline-offset: 4px; }
 
 .conversationList,
 .messageList {

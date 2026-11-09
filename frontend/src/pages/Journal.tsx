@@ -27,6 +27,8 @@ export default function Journal() {
   const [archiveError, setArchiveError] = useState(false);
   const [archiveAttempt, setArchiveAttempt] = useState(0);
   const contentRef = useRef<HTMLElement>(null);
+  const archiveRef = useRef<HTMLElement>(null);
+  const pageTitleRef = useRef<HTMLHeadingElement>(null);
   const archiveTitleRef = useRef<HTMLHeadingElement>(null);
   const categoryRef = useRef<HTMLSelectElement>(null);
   const focusFeedAfterRetry = useRef(false);
@@ -34,6 +36,8 @@ export default function Journal() {
   const retryOrigin = useRef<{ feed: Element | null; archive: Element | null }>({ feed: null, archive: null });
   const feedResultReady = useRef(false);
   const [featureCover, setFeatureCover] = useState<{ key: string; wide: boolean } | null>(null);
+  const entirelyEmpty = !loading && !error && !archiveLoading && !archiveError
+    && articles.length === 0 && archive.length === 0 && !category && !archiveMonth;
   const featureCoverKey = JSON.stringify([lang, page, category, archiveMonth?.year, archiveMonth?.month, articles[0]?.id, articles[0]?.coverUrl]);
   const currentFeatureCoverKey = useRef(featureCoverKey);
   currentFeatureCoverKey.current = featureCoverKey;
@@ -48,7 +52,12 @@ export default function Journal() {
     if (!focusFeedAfterRetry.current || loading || !feedResultReady.current) return;
     focusFeedAfterRetry.current = false;
     const frame = window.requestAnimationFrame(() => {
-      if (document.activeElement === document.body || document.activeElement === retryOrigin.current.feed) contentRef.current?.focus();
+      if (document.activeElement !== document.body && document.activeElement !== retryOrigin.current.feed) return;
+      if (error) {
+        contentRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+        return;
+      }
+      contentRef.current?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
   }, [loading, error, articles, lang]);
@@ -57,7 +66,13 @@ export default function Journal() {
     if (!focusArchiveAfterRetry.current || archiveLoading) return;
     focusArchiveAfterRetry.current = false;
     const frame = window.requestAnimationFrame(() => {
-      if (document.activeElement === document.body || document.activeElement === retryOrigin.current.archive) archiveTitleRef.current?.focus();
+      if (document.activeElement !== document.body && document.activeElement !== retryOrigin.current.archive) return;
+      if (archiveError) {
+        archiveRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+        return;
+      }
+      const archiveTitle = archiveTitleRef.current;
+      (archiveTitle?.isConnected ? archiveTitle : pageTitleRef.current)?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
   }, [archiveLoading, archiveError, archive, lang]);
@@ -108,16 +123,16 @@ export default function Journal() {
   }, [lang, category, archiveMonth, page, attempt]);
 
   return (
-    <main className={styles.page} aria-labelledby="journal-page-title" aria-busy={loading || archiveLoading}>
+    <main className={`${styles.page} ${entirelyEmpty ? styles.emptyPage : ""}`} aria-labelledby="journal-page-title" aria-busy={loading || archiveLoading}>
       <section className={styles.intro}>
         <p className={styles.eyebrow}>{t("journalEyebrow")}</p>
-        <h1 id="journal-page-title">{t("journal")}</h1>
+        <h1 id="journal-page-title" ref={pageTitleRef} tabIndex={-1}>{t("journal")}</h1>
         <p>{t("journalIntro")}</p>
       </section>
 
       <div className={styles.layout}>
         <section className={styles.content} ref={contentRef} tabIndex={-1} aria-labelledby="journal-content-title" aria-busy={loading}>
-          <div className={styles.toolbar}>
+          {!entirelyEmpty && <div className={styles.toolbar}>
             <label className={styles.field}>
               {t("journalCategory")}
               <select ref={categoryRef} value={category} onChange={event => { focusFeedAfterRetry.current = false; setCategory(event.target.value); setPage(0); }}>
@@ -126,7 +141,7 @@ export default function Journal() {
               </select>
             </label>
             {archiveMonth && <button className={styles.clearButton} type="button" onClick={() => { focusFeedAfterRetry.current = false; setArchiveMonth(undefined); setPage(0); categoryRef.current?.focus(); }}>{t("clearArchive")}</button>}
-          </div>
+          </div>}
 
           <h2 id="journal-content-title" className="srOnly">{t("journal")}</h2>
           {loading && <>
@@ -140,7 +155,9 @@ export default function Journal() {
             </div>
           </>}
           {error && <RetryNotice className={styles.error} message={t("journalLoadError")} retryLabel={t("retry")} onRetry={() => { retryOrigin.current.feed = document.activeElement; focusFeedAfterRetry.current = true; setAttempt(value => value + 1); }} />}
-          {!loading && !error && articles.length === 0 && <p className={styles.empty}>{t("noJournalArticles")}</p>}
+          {!loading && !error && articles.length === 0 && (entirelyEmpty
+            ? <div className={styles.emptyState}><p>{t("noJournalArticles")}</p><Link className={styles.emptyAction} to={path("/films/discover")}>{t("browseFilms")}</Link></div>
+            : <p className={styles.empty}>{t("noJournalArticles")}</p>)}
 
           {!loading && !error && articles.length > 0 && <div className={styles.grid}>
             {articles.map((article, index) => {
@@ -185,7 +202,7 @@ export default function Journal() {
           {!loading && !error && <Pagination className={styles.pagination} page={page} totalPages={totalPages} label={t("journalPagination")} busy={loading} onPageChange={nextPage => { focusFeedAfterRetry.current = false; setPage(nextPage); }} />}
         </section>
 
-        <aside className={styles.archive} aria-labelledby="journal-archive-title" aria-busy={archiveLoading}>
+        {!entirelyEmpty && <aside ref={archiveRef} className={styles.archive} aria-labelledby="journal-archive-title" aria-busy={archiveLoading}>
           <h2 id="journal-archive-title" ref={archiveTitleRef} tabIndex={-1}>{t("journalArchive")}</h2>
           {archiveLoading ? <p className={styles.status} role="status">{t("loading")}</p> : archiveError ? (
             <RetryNotice className={styles.error} message={t("journalArchiveError")} retryLabel={t("retry")} onRetry={() => { retryOrigin.current.archive = document.activeElement; focusArchiveAfterRetry.current = true; setArchiveAttempt(value => value + 1); }} />
@@ -200,7 +217,7 @@ export default function Journal() {
               ))}
             </ul>
           )}
-        </aside>
+        </aside>}
       </div>
     </main>
   );

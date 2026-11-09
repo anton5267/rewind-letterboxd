@@ -68,8 +68,8 @@ export const getPublicListLikeStatus = (listId: string | number) => api.get<Publ
 export const likePublicList = (listId: string | number) => api.post<void>(`/lists/${listId}/likes`);
 export const unlikePublicList = (listId: string | number) => api.delete<void>(`/lists/${listId}/likes`);
 
-export const createList = (name: string, description: string, isPublic: boolean, tags: string[]) =>
-  api.post<UserList>("/lists", { name, description: description || null, isPublic, tags });
+export const createList = (name: string, description: string, isPublic: boolean, tags: string[], movieIds: number[]) =>
+  api.post<UserList>("/lists", { name, description: description || null, isPublic, tags, movieIds });
 
 export const updateList = (listId: number, name: string, description: string, isPublic: boolean, tags: string[]) =>
   api.patch<UserList>(`/lists/${listId}`, { name, description: description || null, isPublic, tags });

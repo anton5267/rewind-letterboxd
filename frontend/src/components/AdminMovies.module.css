@@ -10,6 +10,50 @@
   margin-bottom: 24px;
 }
 
+.catalogSearch {
+  display: flex;
+  width: min(100%, 680px);
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 20px;
+}
+
+.catalogSearchField {
+  display: grid;
+  min-width: min(100%, 240px);
+  flex: 1 1 320px;
+  gap: 6px;
+  color: var(--rewind-muted);
+}
+
+.catalogSearchField input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: 1px solid var(--rewind-line);
+  border-radius: var(--rewind-radius);
+  background: var(--rewind-surface-raised);
+  color: var(--rewind-paper);
+}
+
+.catalogSearch button {
+  min-height: 44px;
+  padding: 8px 18px;
+  border: 1px solid var(--rewind-line);
+  border-radius: 999px;
+  background: var(--rewind-surface-raised);
+  color: var(--rewind-paper);
+}
+
+.catalogSearch button:focus-visible,
+.catalogSearchField input:focus-visible {
+  outline: 2px solid var(--rewind-cyan);
+  outline-offset: 3px;
+}
+
 .title {
   margin: 0;
   color: var(--rewind-paper);
@@ -21,6 +65,12 @@
   outline: 2px solid var(--rewind-cyan);
   outline-offset: 4px;
   scroll-margin-top: 120px;
+}
+
+.tmdbTitle:focus {
+  outline: 2px solid var(--rewind-cyan);
+  outline-offset: 4px;
+  scroll-margin-block: 120px;
 }
 
 .editor {

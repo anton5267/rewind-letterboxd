@@ -72,6 +72,7 @@ test("public list catalog paginates server-side", async ({ page }) => {
           description: null,
           isPublic: true,
           tags: [],
+          movieIds: [5],
         },
       });
       expect(response.ok(), `list ${index} create failed`).toBeTruthy();
@@ -131,16 +132,10 @@ test("public list discovery reaches tag, detail, author and movie in both locale
 
     const createResponse = await page.request.post("/api/lists", {
       headers: await csrfHeaders(),
-      data: { name: listName, description: "Discovery journey", isPublic: true, tags: [tagName] },
+      data: { name: listName, description: "Discovery journey", isPublic: true, tags: [tagName], movieIds: [movie.id] },
     });
     expect(createResponse.ok()).toBeTruthy();
     listId = (await createResponse.json() as { id: number }).id;
-    const addMovieResponse = await page.request.post(`/api/lists/${listId}/movies`, {
-      headers: await csrfHeaders(),
-      data: { movieId: movie.id, position: 1 },
-    });
-    expect(addMovieResponse.ok()).toBeTruthy();
-
     await page.goto("/uk/lists/discover?feed=recent");
     await expect(page.getByRole("heading", { name: listName })).toBeVisible();
     await page.getByRole("main").getByRole("link", { name: "Добірки", exact: true }).click();

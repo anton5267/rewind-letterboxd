@@ -16,6 +16,7 @@
 .status, .empty { margin: 35px 0 0; padding: 24px; border-radius: 20px; background: #282828; color: #bdb7b0; }
 .status { color: #ffb8bd; }
 .toolbarButton:focus-visible { outline: 3px solid #64dbe2; outline-offset: 3px; }
+.shell:focus { outline: 3px solid #64dbe2; outline-offset: 4px; }
 @media (max-width: 900px) and (min-width: 768px) {
   .heroCopy h1 { font-size: 48px; }
   .heroCopy p { font-size: 20px; }

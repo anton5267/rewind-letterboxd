@@ -90,6 +90,11 @@ test("journal article keeps its cover and content in the editorial frame", async
   await page.goto("/en/journal/editorial-frame-fixture");
 
   await expect(page.getByRole("heading", { level: 1, name: 'Movies "Christmas Adventures"' })).toBeVisible();
+  const metadata = page.locator('[class*="eyebrow"]');
+  await expect(metadata).toContainText("Cinemascope");
+  await expect(metadata.locator("time")).toHaveText("Dec 22, 2025");
+  await expect(page.locator('[class*="meta"] time')).toHaveCount(0);
+  expect(await metadata.evaluate(element => Boolean(element.compareDocumentPosition(document.querySelector("h1")!) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
   const frame = page.locator('[class*="articleHeader"]');
   const frameBox = await frame.boundingBox();
   expect(frameBox?.x).toBeCloseTo(120, 0);
@@ -100,6 +105,7 @@ test("journal article keeps its cover and content in the editorial frame", async
   const hero = page.locator('[class*="coverHero"]');
   const heroBox = await hero.boundingBox();
   expect(heroBox?.x).toBeCloseTo(120, 0);
+  expect(heroBox?.y).toBeCloseTo(433, 0);
   expect(heroBox?.width).toBe(1126);
   expect(heroBox?.height).toBe(642);
   expect(heroBox?.y).toBeGreaterThan(400);
@@ -107,4 +113,30 @@ test("journal article keeps its cover and content in the editorial frame", async
   const content = await page.locator('[class*="articleContent"]').boundingBox();
   expect(content!.y).toBeGreaterThanOrEqual(heroBox!.y + heroBox!.height - 1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+});
+
+test("empty Journal skips unusable filters and archive and offers a useful next step", async ({ page }) => {
+  await page.route("**/api/journal/articles?*", route => route.fulfill({ json: {
+    content: [], totalPages: 0, totalElements: 0, number: 0, size: 20,
+  } }));
+  await page.route("**/api/journal/articles/archive?*", route => route.fulfill({ json: [] }));
+
+  for (const [locale, width, expectedTitle, expectedEmpty, expectedAction] of [
+    ["uk", 393, "Журнал", "Опублікованих статей поки немає.", "Переглянути фільми"],
+    ["en", 393, "Journal", "No published articles yet.", "Browse films"],
+    ["uk", 1440, "Журнал", "Опублікованих статей поки немає.", "Переглянути фільми"],
+    ["en", 1440, "Journal", "No published articles yet.", "Browse films"],
+  ] as const) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(`/${locale}/journal`);
+    const main = page.locator("main");
+    await expect(main).toHaveAttribute("aria-busy", "false");
+    await expect(main.getByRole("heading", { level: 1, name: expectedTitle })).toBeVisible();
+    await expect(main.getByText(expectedEmpty, { exact: true })).toBeVisible();
+    await expect(main.getByRole("link", { name: expectedAction })).toHaveAttribute("href", `/${locale}/films/discover`);
+    await expect(main.getByRole("combobox")).toHaveCount(0);
+    await expect(main.getByRole("heading", { name: /Архів|Archive/ })).toHaveCount(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    expect((await main.boundingBox())?.height).toBeLessThan(600);
+  }
 });

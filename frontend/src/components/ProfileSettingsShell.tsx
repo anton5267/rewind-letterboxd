@@ -116,11 +116,11 @@ export default function ProfileSettingsShell({ activeTab, children, loading, loa
 
   return <main ref={mainRef} className={styles.page} aria-labelledby="account-settings-title" aria-busy={loading || busy}>
     <header className={styles.hero}>
-      <h1 ref={titleRef} id="account-settings-title" tabIndex={-1}>{t("accountSettings")}</h1>
+      <h1 ref={titleRef} id="account-settings-title" tabIndex={-1} className={styles.retryFocusHeading}>{t("accountSettings")}</h1>
       <p>{t("accountSettingsIntro")}</p>
       <div className={styles.mobileToolbar}>
         <Link to={path("/profile")} aria-label={t("cancel")}>{t("cancel")}</Link>
-        <h2 ref={mobileTitleRef} tabIndex={-1}>{t("settings")}</h2>
+        <h2 ref={mobileTitleRef} id="account-settings-mobile-title" tabIndex={-1} className={styles.retryFocusHeading}>{t("settings")}</h2>
         <button type="submit" form={saveFormId} disabled={busy || loading || loadError}>{t("save")}</button>
       </div>
     </header>

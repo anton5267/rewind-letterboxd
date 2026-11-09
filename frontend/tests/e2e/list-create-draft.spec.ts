@@ -39,13 +39,11 @@ async function mockListDraft(page: Page, failCreate = false) {
       mutations.push("create");
       if (failCreate) return route.fulfill({ status: 503, json: { message: "Temporary failure" } });
       const body = request.postDataJSON() as Record<string, unknown>;
+      if (Array.isArray(body.movieIds) && body.movieIds.includes(film.id)) {
+        items.push({ id: 98031, position: 1, movie: film });
+      }
       created = { id: 98021, description: null, listType: "CUSTOM", isPublic: false, tags: [], ...body };
       return route.fulfill({ json: created });
-    }
-    if (pathname === "/api/lists/98021/movies" && request.method() === "POST") {
-      mutations.push("add-film");
-      items.push({ id: 98031, position: items.length, movie: film });
-      return route.fulfill({ status: 200, json: {} });
     }
     if (pathname === "/api/lists/98021/items") return route.fulfill({ json: items });
     return route.fulfill({ json: [] });
@@ -81,7 +79,22 @@ test("Create List keeps film selection local until Save, then opens the returned
   await expect(page.getByRole("status").filter({ hasText: "List created." })).toBeVisible();
   await expect(page.getByRole("heading", { level: 1, name: "Films to revisit" })).toBeVisible();
   await expect(page.getByRole("link", { name: "List settings" })).toHaveAttribute("href", "/en/lists?list=98021&mode=edit");
-  expect(mutations).toEqual(["create", "add-film"]);
+  expect(mutations).toEqual(["create"]);
+  expect((await page.evaluate(() => fetch("/api/lists/98021/items").then(response => response.json()))).length).toBe(1);
+});
+
+test("Create List cannot be saved without a selected film", async ({ page }) => {
+  const { mutations } = await mockListDraft(page);
+  await page.goto("/en/lists");
+  await expect(page.locator('main[data-list-editor="create"]')).toHaveAttribute("aria-busy", "false");
+  const save = page.getByRole("button", { name: "Save", exact: true });
+  await expect(save).toBeDisabled();
+  await page.locator("#new-list-name").fill("   ");
+  await expect(save).toBeDisabled();
+  await page.locator("#new-list-name").fill("Films to revisit");
+  await expect(save).toBeDisabled();
+  await expect(page.getByText("Add your first film to start building this list.")).toBeVisible();
+  expect(mutations).toEqual([]);
 });
 
 test("Create List keeps the form and film draft after Save fails on a phone viewport", async ({ page }, testInfo) => {

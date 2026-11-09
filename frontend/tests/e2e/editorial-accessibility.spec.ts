@@ -38,7 +38,7 @@ for (const fixture of fallbackCases) {
     let audioRequests = 0;
     await page.route(audioUrl, route => {
       audioRequests += 1;
-      return audioRequests === 1
+      return audioRequests < 3
         ? route.fulfill({ status: 503, body: "Media temporarily unavailable" })
         : route.fulfill({ contentType: "audio/wav", body: silentWav() });
     });
@@ -58,12 +58,19 @@ for (const fixture of fallbackCases) {
     const audio = page.locator("audio");
     await expect(audio).toHaveAttribute("src", audioUrl);
     await expect(page.getByRole("alert")).toContainText(fixture.audioError);
-    await page.getByRole("button", { name: fixture.retry, exact: true }).click();
+    const retry = page.getByRole("button", { name: fixture.retry, exact: true });
+    await retry.focus();
+    await retry.press("Enter");
+    await expect.poll(() => audioRequests).toBe(2);
+    const repeatedRetry = page.getByRole("button", { name: fixture.retry, exact: true });
+    await expect(repeatedRetry).toBeFocused();
+    await repeatedRetry.press("Enter");
+    await expect.poll(() => audioRequests).toBe(3);
     await expect(audio).toBeFocused();
     await expect.poll(() => audio.evaluate(element => (element as HTMLAudioElement).readyState)).toBeGreaterThanOrEqual(1);
     await expect(page.getByRole("alert")).toHaveCount(0);
     await expect(audio).toHaveAttribute("src", audioUrl);
-    expect(audioRequests).toBe(2);
+    expect(audioRequests).toBe(3);
   });
 }
 

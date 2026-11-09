@@ -355,6 +355,8 @@
   outline-offset: 4px;
 }
 
+#movie-title:focus { outline: 3px solid var(--rewind-cyan); outline-offset: 4px; }
+
 .actionButtons,
 .ratingButtons,
 .reviewActions,
@@ -458,6 +460,18 @@
   color: #d7d7d7;
 }
 
+.listPicker[data-movie-list-focus="true"]:focus {
+  outline: 3px solid var(--rewind-cyan);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+.ratingButtons[data-movie-rating-focus="true"]:focus {
+  outline: 3px solid var(--rewind-cyan);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
 .listPicker select,
 .reviewForm select {
   min-height: 44px;
@@ -496,6 +510,8 @@
 .reviewsSection {
   background: var(--rewind-surface);
 }
+
+.reviewsSection:focus { outline: 3px solid var(--rewind-cyan); outline-offset: 4px; }
 
 .mobileReviewTitle,
 .mobileReviewHeading,

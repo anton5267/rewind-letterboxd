@@ -2,6 +2,7 @@
 .posterWrap, .copy { min-width: 0; }
 .posterLink, .poster, .fallback { display: block; width: 100%; aspect-ratio: 175 / 262; border-radius: 20px; }
 .posterLink { overflow: hidden; text-decoration: none; background: #303030; }
+.posterLink:focus { outline: 3px solid var(--rewind-cyan); outline-offset: 4px; }
 .poster { object-fit: cover; }
 .fallback { display: grid; place-items: center; box-sizing: border-box; background: linear-gradient(145deg, #35234a, #242424); color: #d8a5ff; font-size: 32px; font-weight: 800; }
 .copy { padding-top: 20px; }

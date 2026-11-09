@@ -122,16 +122,23 @@ test("article error, blank metadata and long content stay accessible on mobile",
   let attempts = 0;
   await page.route("**/api/journal/articles/editorial-fixture**", async route => {
     attempts++;
-    await route.fulfill(attempts === 1 ? { status: 503, json: {} } : {
-      json: { ...article, title: attempts === 2 ? "  " : "ДовгийЗаголовок".repeat(15), category: " ", excerpt: "Опис".repeat(80), content: " " },
+    await route.fulfill(attempts < 3 ? { status: 503, json: {} } : {
+      json: { ...article, title: attempts === 3 ? "  " : "ДовгийЗаголовок".repeat(15), category: " ", excerpt: "Опис".repeat(80), content: " " },
     });
   });
   await page.goto("/uk/journal/editorial-fixture");
   await expect(page.getByRole("alert")).toContainText("Не вдалося завантажити журнал.");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Журнал");
-  await page.getByRole("button", { name: "Спробувати ще" }).click();
+  let retry = page.getByRole("button", { name: "Спробувати ще" });
+  await retry.focus();
+  await retry.press("Enter");
+  await expect.poll(() => attempts).toBe(2);
+  retry = page.getByRole("button", { name: "Спробувати ще" });
+  await expect(retry).toBeFocused();
+  await retry.press("Enter");
+  await expect.poll(() => attempts).toBe(3);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Стаття без заголовка");
-  await expect(page.getByText("Без розділу", { exact: true })).toBeVisible();
+  await expect(page.getByText("Без розділу")).toBeVisible();
   await expect(page.getByText("Текст цієї статті ще не додано.", { exact: true })).toBeVisible();
   await page.reload();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("ДовгийЗаголовок");

@@ -26,7 +26,7 @@ test("tag conflicts use the real recent feed and preserve browser history", asyn
     })).ok()).toBe(true);
     for (const [name, tags] of [[listName, [tag]], [otherListName, []]] as const) {
       expect((await page.request.post("/api/lists", {
-        headers: await csrfHeaders(), data: { name, description: "Disposable tag filter check", isPublic: true, tags },
+        headers: await csrfHeaders(), data: { name, description: "Disposable tag filter check", isPublic: true, tags, movieIds: [5] },
       })).ok()).toBe(true);
     }
 
@@ -102,6 +102,27 @@ test("unfiltered public list feed selection keeps its real API endpoint", async 
 });
 
 test("public lists landing follows the Figma section layout without a duplicate feed rail", async ({ page }) => {
+  const lists = ["Featured", "Popular", "Liked", "Recent"].map((name, index) => ({
+    id: 986000 + index,
+    name: `${name} list`,
+    description: "A curated film collection.",
+    ownerId: 986100 + index,
+    ownerUsername: `reader-${index}`,
+    tags: [],
+    likeCount: 2,
+    itemCount: 2,
+    previewMovies: [],
+  }));
+  await page.route(/^https?:\/\/[^/]+\/api\//, route => {
+    const url = new URL(route.request().url());
+    if (url.pathname === "/api/users/me") return route.fulfill({ status: 401, json: {} });
+    if (url.pathname === "/api/tags/popular") return route.fulfill({ json: [{ id: 986200, name: "Drama", slug: "drama" }] });
+    if (["/api/lists/public/team", "/api/lists/public/popular", "/api/lists/public/recently-liked", "/api/lists/public"].includes(url.pathname)) {
+      const index = url.pathname.endsWith("/team") ? 0 : url.pathname.endsWith("/popular") ? 1 : url.pathname.endsWith("/recently-liked") ? 2 : 3;
+      return route.fulfill({ json: { content: [lists[index]], totalPages: 1, totalElements: 1, number: 0, size: 6 } });
+    }
+    return route.fulfill({ json: [] });
+  });
   for (const width of [393, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/en/lists/discover");

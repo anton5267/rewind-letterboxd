@@ -1,10 +1,9 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const isPublicCatalogBuild = import.meta.env.VITE_PUBLIC_CATALOG_ONLY === "true";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://cuirmicbzspomijgkkwo.supabase.co";
 const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-export const usesHostedSupabaseAuth = isPublicCatalogBuild;
+export const usesHostedSupabaseAuth = import.meta.env.VITE_SUPABASE_AUTH_ENABLED === "true";
 export const isSupabaseAuthConfigured = Boolean(publishableKey);
 
 let client: SupabaseClient | null = null;

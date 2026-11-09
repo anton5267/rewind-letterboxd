@@ -79,6 +79,27 @@ async function checkWritingBoundary(
 }
 
 for (const lang of ["uk", "en"] as const) {
+  test(`registration blocks whitespace-only and too-short trimmed usernames in ${lang}`, async ({ page }) => {
+    const mutations = await isolateFormApi(page);
+    await page.goto(`/${lang}/register`);
+    await waitForPageContent(page);
+    await page.locator("#register-username").fill("   ");
+    await page.locator("#register-email").fill("formreader@example.invalid");
+    await page.locator("#register-password").fill("legacy-password");
+    await page.locator('main button[type="submit"]').click();
+
+    const nickname = page.locator("#register-username");
+    await expect(nickname).toBeFocused();
+    await expect(nickname).toHaveAttribute("aria-invalid", "true");
+    await expect(page.locator("#register-username-trim-validation")).toHaveText(lang === "uk" ? "Введіть щонайменше 3 символів." : "Enter at least 3 characters.");
+    expect(mutations, "Invalid normalized usernames must not reach the API").toHaveLength(0);
+
+    await nickname.fill(" a ");
+    await page.locator('main button[type="submit"]').click();
+    await expect(nickname).toBeFocused();
+    expect(mutations, "A username shorter than 3 trimmed characters must not reach the API").toHaveLength(0);
+  });
+
   test(`registration validates UTF-8 password boundaries in ${lang}`, async ({ page }) => {
     const mutations = await isolateFormApi(page);
     await page.setViewportSize({ width: 320, height: 900 });

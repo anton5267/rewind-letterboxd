@@ -57,13 +57,83 @@ test("global search error and retry remain in the category panel", async ({ page
   expect(attempts).toBe(2);
 });
 
+test("global search keeps retry focus after a repeated error and returns to the panel on recovery", async ({ page }) => {
+  let attempts = 0;
+  let releaseRetry = () => {};
+  const retryResponseReady = new Promise<void>(resolve => { releaseRetry = resolve; });
+  await page.route("**/api/search/global?**", async route => {
+    attempts += 1;
+    if (attempts === 2) await retryResponseReady;
+    return attempts < 3
+      ? route.fulfill({ status: 503, json: {} })
+      : route.fulfill({ json: emptyGlobalResults });
+  });
+
+  try {
+    await page.goto("/en/search?q=retry-focus&tab=journal");
+    const panel = page.getByRole("tabpanel", { name: "Journal", exact: true });
+    const retry = panel.getByRole("button", { name: "Retry", exact: true });
+    await expect(retry).toBeVisible();
+    await retry.click();
+    await expect(panel).toHaveAttribute("aria-busy", "true");
+    await expect(panel.getByRole("alert")).toHaveCount(0);
+    releaseRetry();
+    const retryAfterFailure = panel.getByRole("button", { name: "Retry", exact: true });
+    await expect(retryAfterFailure).toBeFocused();
+    await retryAfterFailure.press("Enter");
+    await expect(panel).toBeFocused();
+    await expect(panel.getByRole("heading", { name: "There were no matches for your search term" })).toBeVisible();
+    expect(attempts).toBe(3);
+  } finally {
+    releaseRetry();
+  }
+});
+
+test("global search Retry preserves a manual Tab move during delayed recovery", async ({ page }) => {
+  let attempts = 0;
+  await page.route("**/api/search/global?**", async route => {
+    attempts += 1;
+    if (attempts === 1) return route.fulfill({ status: 503, json: {} });
+    await new Promise(resolve => setTimeout(resolve, 350));
+    return route.fulfill({ json: emptyGlobalResults });
+  });
+  await page.goto("/uk/search?q=delayed-retry&tab=journal");
+  const panel = page.getByRole("tabpanel", { name: "Журнал", exact: true });
+  const retry = panel.getByRole("button", { name: "Спробувати ще" });
+  await expect(retry).toBeVisible();
+  await retry.focus();
+  await retry.press("Enter");
+  await expect.poll(() => attempts).toBe(2);
+  await page.keyboard.press("Tab");
+  await page.evaluate(() => {
+    if (document.activeElement instanceof HTMLElement && document.activeElement !== document.body) document.activeElement.dataset.manualTabTarget = "true";
+  });
+  const manualTarget = page.locator('[data-manual-tab-target="true"]');
+  await expect(manualTarget).toBeFocused();
+  await expect(panel.getByRole("heading", { name: "За вашим запитом нічого не знайдено" })).toBeVisible();
+  await expect(manualTarget).toBeFocused();
+  await expect(panel).not.toBeFocused();
+});
+
 test("empty film search shows zero results without an impossible page counter", async ({ page }) => {
-  await page.route("**/api/movies/search?**", route => route.fulfill({ json: emptyMoviePage }));
+  const matchingMovie = { id: 980_001, title: "A Film to Browse", photoUrl: null, releaseDate: "2024-01-01", rating: 7.5 };
+  await page.route("**/api/movies/search?**", route => {
+    const query = new URL(route.request().url()).searchParams.get("q");
+    return route.fulfill({ json: query
+      ? emptyMoviePage
+      : { content: [matchingMovie], totalElements: 1, totalPages: 1, number: 0, size: 12 } });
+  });
   await page.goto("/uk/films?q=empty-result");
   await expect(page.getByText("Фільмів не знайдено.", { exact: true })).toBeVisible();
   await expect(page.getByRole("status").filter({ hasText: "Знайдено фільмів: 0" })).toBeVisible();
   await expect(page.getByText("1 / 0", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("navigation", { name: "Сторінки фільмів" })).toHaveCount(0);
+  const clearSearch = page.getByRole("button", { name: "Очистити пошук", exact: true });
+  await expect(clearSearch).toBeVisible();
+  await clearSearch.click();
+  await expect(page).toHaveURL("/uk/films");
+  await expect(page.getByRole("heading", { level: 2, name: matchingMovie.title })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Очистити пошук", exact: true })).toHaveCount(0);
 });
 
 for (const width of [393, 1440]) {

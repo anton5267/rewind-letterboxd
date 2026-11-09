@@ -100,7 +100,11 @@ export default function GlobalSearch() {
       retryFocus.current = null;
       if (pending.query !== query || pending.lang !== lang) return;
       if (document.activeElement === document.body || document.activeElement === pending.origin) {
-        resultsPanelRef.current?.focus();
+        if (error) {
+          resultsPanelRef.current?.querySelector<HTMLElement>("[data-retry-button]")?.focus();
+        } else {
+          resultsPanelRef.current?.focus();
+        }
       }
     });
     return () => window.cancelAnimationFrame(frame);
@@ -241,6 +245,8 @@ export default function GlobalSearch() {
       </>}
       {error && <RetryNotice className={styles.alert} message={t("searchError")} retryLabel={t("retry")} busy={loading} onRetry={() => {
         retryFocus.current = { query, lang, origin: document.activeElement };
+        setLoading(true);
+        setError(false);
         setRetry(value => value + 1);
       }} />}
       {!loading && !error && query && !hasVisibleResults && <section className={styles.noMatches}>

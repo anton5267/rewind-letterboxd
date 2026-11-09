@@ -35,8 +35,11 @@ export default function AdminPersonalMetrics({ userId }: { userId: number }) {
     const origin = retryOrigin.current;
     if (loading || !origin) return;
     retryOrigin.current = null;
-    if (document.activeElement === document.body || document.activeElement === origin) title.current?.focus();
-  }, [loading]);
+    const expectedHeadingFocus = error && document.activeElement === title.current;
+    if (document.activeElement !== document.body && document.activeElement !== origin && !expectedHeadingFocus) return;
+    if (error) title.current?.closest("section")?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+    else title.current?.focus();
+  }, [loading, error]);
 
   const number = (value: number | undefined) => value === undefined ? t("adminMetricUnavailable") : new Intl.NumberFormat(lang).format(value);
   const metrics = [

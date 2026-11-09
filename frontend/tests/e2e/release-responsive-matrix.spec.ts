@@ -21,7 +21,9 @@ const routes = [
 test("release routes keep landmarks and no horizontal overflow across the viewport matrix", async ({ page }) => {
   test.setTimeout(120_000);
 
-  for (const width of [320, 393, 768, 1440]) {
+  // 720 CSS px approximates the reflow width at 200% browser zoom on a
+  // 1440 CSS-pixel desktop; this still does not simulate native device zoom.
+  for (const width of [320, 393, 720, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     for (const route of routes) {
       const pageErrors: string[] = [];

@@ -34,14 +34,43 @@ export default function PublicList() {
   const [infoOpen, setInfoOpen] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
+  const heroActionsRef = useRef<HTMLDivElement>(null);
+  const likeActionRef = useRef<HTMLButtonElement>(null);
+  const informationLikeRef = useRef<HTMLButtonElement>(null);
+  const likeRetryFocus = useRef<{ kind: "status" | "mutation"; dialog: boolean; origin: HTMLElement | null; started: boolean } | null>(null);
   const retryFocus = useRef<{ listId: number; lang: string; origin: Element | null } | null>(null);
   const restoreHeadingFocus = useRef(false);
   const closeInformation = useCallback(() => {
+    likeRetryFocus.current = null;
     restoreHeadingFocus.current = window.matchMedia("(min-width: 768px)").matches;
     setInfoOpen(false);
   }, []);
   const doneRef = useRef<HTMLButtonElement>(null);
   const informationRef = useDialogFocusTrap<HTMLElement>(infoOpen && !!list && !loading && !error, closeInformation, { initialFocusRef: doneRef });
+  useEffect(() => {
+    const pending = likeRetryFocus.current;
+    if (!pending) return;
+    const busy = pending.kind === "status" ? likeStatusLoading : likeBusy;
+    if (busy) {
+      pending.started = true;
+      return;
+    }
+    if (!pending.started) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (likeRetryFocus.current !== pending) return;
+      likeRetryFocus.current = null;
+      if (pending.dialog !== infoOpen) return;
+      const active = document.activeElement;
+      if (active !== document.body && active !== pending.origin) return;
+      const scope = pending.dialog ? informationRef.current : heroActionsRef.current;
+      const failed = pending.kind === "status" ? likeStatusLoadError : likeError;
+      const retry = scope?.querySelector<HTMLButtonElement>(pending.kind === "status"
+        ? "[data-list-like-status-error] [data-retry-button]"
+        : "[data-list-like-mutation-error] [data-retry-button]");
+      (failed ? retry : pending.dialog ? informationLikeRef.current : likeActionRef.current)?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [infoOpen, likeBusy, likeError, likeStatusLoadError, likeStatusLoading]);
   useEffect(() => {
     if (!infoOpen && restoreHeadingFocus.current) {
       restoreHeadingFocus.current = false;
@@ -62,7 +91,11 @@ export default function PublicList() {
       retryFocus.current = null;
       if (pending.listId !== listId || pending.lang !== lang) return;
       if (document.activeElement === document.body || document.activeElement === pending.origin) {
-        (error ? errorRef.current : headingRef.current)?.focus();
+        if (error) {
+          errorRef.current?.querySelector<HTMLElement>("[data-retry-button]")?.focus();
+        } else {
+          headingRef.current?.focus();
+        }
       }
     });
     return () => window.cancelAnimationFrame(frame);
@@ -72,6 +105,7 @@ export default function PublicList() {
     mutationRequest.current += 1;
     setLikeBusy(false);
     setLikeError(false);
+    likeRetryFocus.current = null;
   }, [listId, isAuth]);
 
   useEffect(() => {
@@ -136,6 +170,21 @@ export default function PublicList() {
     }
   };
 
+  const retryLikeStatus = (dialog: boolean) => {
+    likeRetryFocus.current = { kind: "status", dialog, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, started: false };
+    setLikeStatusAttempt(value => value + 1);
+  };
+
+  const startLikeMutation = (dialog: boolean, origin: HTMLElement) => {
+    likeRetryFocus.current = { kind: "mutation", dialog, origin, started: false };
+    void toggleLike();
+  };
+
+  const retryLikeMutation = (dialog: boolean) => {
+    likeRetryFocus.current = { kind: "mutation", dialog, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, started: false };
+    void toggleLike();
+  };
+
   if (error) return <main className={styles.statePage} aria-labelledby="public-list-state-title" aria-busy={false}><h1 id="public-list-state-title" className="srOnly">{t("lists")}</h1><p ref={errorRef} tabIndex={-1} className={styles.stateError} role="alert">{!validListId ? t("invalidListId") : t("loadPublicListError")} {validListId && <RetryButton label={t("retry")} onClick={() => {
     retryFocus.current = { listId, lang, origin: document.activeElement };
     setAttempt(value => value + 1);
@@ -152,9 +201,9 @@ export default function PublicList() {
   const ownerName = getUserName({ username: list.ownerUsername }, t("someone"));
   const likeControls = <>
     {isAuth && likeStatusLoading && <span className={styles.inlineStatus} role="status">{t("loading")}</span>}
-    {isAuth && likeStatusLoadError && <span className={styles.inlineError} role="alert">{t("listLikeError")} <RetryButton label={t("retry")} onClick={() => setLikeStatusAttempt(value => value + 1)} /></span>}
-    {isAuth && likeStatus && <button type="button" disabled={likeBusy} aria-busy={likeBusy} aria-pressed={likeStatus.liked} onClick={() => void toggleLike()}>{likeBusy ? t("loading") : likeStatus.liked ? t("unlikeList") : t("likeList")}</button>}
-    {likeError && <span className={styles.inlineError} role="alert">{t("listLikeError")} <RetryButton label={t("retry")} disabled={likeBusy || likeStatusLoading} busy={likeBusy} onClick={() => void toggleLike()} /></span>}
+    {isAuth && likeStatusLoadError && <span className={styles.inlineError} data-list-like-status-error role="alert">{t("listLikeError")} <RetryButton label={t("retry")} onClick={() => retryLikeStatus(false)} /></span>}
+    {isAuth && likeStatus && <button ref={likeActionRef} data-list-like-action type="button" disabled={likeBusy} aria-busy={likeBusy} aria-pressed={likeStatus.liked} onClick={event => startLikeMutation(false, event.currentTarget)}>{likeBusy ? t("loading") : likeStatus.liked ? t("unlikeList") : t("likeList")}</button>}
+    {likeError && <span className={styles.inlineError} data-list-like-mutation-error role="alert">{t("listLikeError")} <RetryButton label={t("retry")} disabled={likeBusy || likeStatusLoading} busy={likeBusy} onClick={() => retryLikeMutation(false)} /></span>}
   </>;
 
   return <main className={styles.page} aria-labelledby="public-list-heading" aria-busy={likeStatusLoading || likeBusy}>
@@ -174,7 +223,7 @@ export default function PublicList() {
         {list.tags.length > 0 && <div className={styles.tags} role="group" aria-label={t("tags")}>
           {list.tags.map(tag => <Link key={tag} to={path(`/lists/discover?feed=recent&tag=${encodeURIComponent(toTagSlug(tag))}`)}>#{tag}</Link>)}
         </div>}
-        <div className={styles.heroActions}>
+        <div ref={heroActionsRef} data-public-list-actions className={styles.heroActions}>
           <span className={styles.likeCount}>{list.likeCount ?? 0} {t("likes").toLocaleLowerCase(lang)}</span>
           {likeControls}
         </div>
@@ -210,18 +259,20 @@ export default function PublicList() {
         <div className={styles.informationCard}>
           <div className={styles.informationLikes}>
             {isAuth ? <button
+              ref={informationLikeRef}
+              data-list-like-action
               type="button"
               className={styles.informationHeart}
               aria-label={likeStatus?.liked ? t("unlikeList") : t("likeList")}
               aria-pressed={likeStatus?.liked ?? false}
               aria-busy={likeBusy || likeStatusLoading}
               disabled={likeBusy || likeStatusLoading || !likeStatus}
-              onClick={() => void toggleLike()}
+              onClick={event => startLikeMutation(true, event.currentTarget)}
             ><img src="/images/movie-action-favorite.png" width={51} height={51} alt="" aria-hidden="true" /></button> : <span className={styles.informationHeart} aria-hidden="true"><img src="/images/movie-action-favorite.png" width={51} height={51} alt="" /></span>}
             <span>{likeStatus?.likes ?? list.likeCount ?? 0} {t("likes").toLocaleLowerCase(lang)}</span>
             {isAuth && likeStatusLoading && <span className={styles.inlineStatus} role="status">{t("loading")}</span>}
-            {isAuth && likeStatusLoadError && <span className={styles.inlineError} role="alert">{t("listLikeError")} <RetryButton label={t("retry")} onClick={() => setLikeStatusAttempt(value => value + 1)} /></span>}
-            {likeError && <span className={styles.inlineError} role="alert">{t("listLikeError")} <RetryButton label={t("retry")} disabled={likeBusy || likeStatusLoading} busy={likeBusy} onClick={() => void toggleLike()} /></span>}
+            {isAuth && likeStatusLoadError && <span className={styles.inlineError} data-list-like-status-error role="alert">{t("listLikeError")} <RetryButton label={t("retry")} onClick={() => retryLikeStatus(true)} /></span>}
+            {likeError && <span className={styles.inlineError} data-list-like-mutation-error role="alert">{t("listLikeError")} <RetryButton label={t("retry")} disabled={likeBusy || likeStatusLoading} busy={likeBusy} onClick={() => retryLikeMutation(true)} /></span>}
           </div>
           <div className={styles.informationTags}>
             <p>{t("tags")}</p>

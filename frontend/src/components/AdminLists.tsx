@@ -24,6 +24,7 @@ export default function AdminLists() {
   const deleteDialog = useRef<HTMLDialogElement>(null);
   const deleteDialogCancel = useRef<HTMLButtonElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
   const mutationAlert = useRef<HTMLParagraphElement>(null);
   const visibilityButtons = useRef(new Map<number, HTMLButtonElement>());
   const mounted = useRef(false);
@@ -32,7 +33,7 @@ export default function AdminLists() {
   const currentActor = useRef(actor);
   const catalogRequest = useRef(0);
   const mutationToken = useRef<object | null>(null);
-  const pendingFocus = useRef<{ scope: number; origin: HTMLElement | null; target: "heading" | "error" | "visibility"; id?: number } | null>(null);
+  const pendingFocus = useRef<{ scope: number; origin: HTMLElement | null; target: "heading" | "error" | "retry" | "visibility"; id?: number } | null>(null);
   const internalClamp = useRef<{ page: number; lang: string; actor: string; focus: NonNullable<typeof pendingFocus.current> } | null>(null);
 
   useLayoutEffect(() => {
@@ -75,8 +76,10 @@ export default function AdminLists() {
       if (pendingFocus.current !== pending) return;
       pendingFocus.current = null;
       if (!mounted.current || scopeGeneration.current !== pending.scope || catalogRequest.current !== request) return;
-      if (document.activeElement !== document.body && document.activeElement !== pending.origin) return;
+      const expectedHeadingFocus = pending.target === "retry" && error && document.activeElement === heading.current;
+      if (document.activeElement !== document.body && document.activeElement !== pending.origin && !expectedHeadingFocus) return;
       if (pending.target === "error") mutationAlert.current?.focus();
+      else if (pending.target === "retry" && error) sectionRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
       else if (pending.target === "visibility" && pending.id !== undefined) {
         const button = visibilityButtons.current.get(pending.id);
         if (button && !button.disabled) button.focus();
@@ -185,12 +188,12 @@ export default function AdminLists() {
     void remove(list, trigger);
   };
 
-  return <section className={`${styles.section} ${styles.listsSection}`} aria-label={t("adminAllLists")} aria-busy={loading || busyId !== null}>
+  return <section ref={sectionRef} className={`${styles.section} ${styles.listsSection}`} aria-label={t("adminAllLists")} aria-busy={loading || busyId !== null}>
     <h2 className={styles.title} ref={heading} tabIndex={-1}>{t("adminAllLists")}</h2>
     {actionError && <p className={`${styles.error} ${styles.listActionFocus}`} ref={mutationAlert} tabIndex={-1} role="alert">{t(actionError === "visibility" ? "adminListVisibilityError" : "adminListDeleteError")}</p>}
     {loading && <AdminLoading label={t("loading")} layout="lists" />}
     {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => {
-      pendingFocus.current = { scope: scopeGeneration.current, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, target: "heading" };
+      pendingFocus.current = { scope: scopeGeneration.current, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, target: "retry" };
       setLoading(true);
       setRevision(value => value + 1);
     }} />}

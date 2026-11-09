@@ -44,6 +44,11 @@ export default function RouteTransition() {
       hasReadyScreen.current = true;
       observer.disconnect();
       if (!focusNewScreen) return;
+      // The route is ready, but the user may already have started working in
+      // it while the two-frame focus/scroll reset was waiting. In that case,
+      // preserve the newly focused destination control and its scroll.
+      const activeElement = document.activeElement;
+      if (activeElement instanceof HTMLElement && activeElement !== document.body && main.contains(activeElement)) return;
       // Error/empty routes may intentionally use a visually hidden h1 to name main.
       const target = visible(heading) ? heading : main;
       if (!target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");

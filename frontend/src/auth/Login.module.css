@@ -47,3 +47,9 @@
 }
 
 .forgot:hover { color: var(--rewind-cyan); }
+
+/* Resolve image URLs here: composed CSS skips Vite URL rebasing. */
+.page { background-image: url("../assets/figma/auth-desktop.png"); }
+@media (max-width: 767px) {
+  .page { background-image: url("../assets/figma/auth-mobile.png"); }
+}

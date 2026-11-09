@@ -44,6 +44,12 @@
   margin-top: 10px;
 }
 
+.panel:focus {
+  outline: 2px solid var(--rewind-cyan);
+  outline-offset: 4px;
+  scroll-margin-block: 120px;
+}
+
 .list {
   display: grid;
   gap: 10px;

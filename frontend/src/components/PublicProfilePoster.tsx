@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { Link } from "react-router-dom";
 import { getMovieDetails } from "../api/movies.api";
 import { getReviewDetails } from "../api/reviews.api";
@@ -8,7 +8,8 @@ import RetryButton from "./RetryButton";
 import styles from "./PublicProfilePoster.module.css";
 
 interface PosterData { movieId: number; photoUrl: string | null }
-interface PosterState { key: string; photoUrl: string | null; loading: boolean; error: boolean; unavailable: boolean }
+interface PosterState { key: string; attempt: number; photoUrl: string | null; loading: boolean; error: boolean; unavailable: boolean }
+interface PosterFocusTargets { retryContainerRef: RefObject<HTMLElement | null>; successRef: RefObject<HTMLElement | null> }
 const moviePhotos = new Map<number, string | null>();
 const pendingPhotos = new Map<string, Promise<PosterData>>();
 
@@ -33,33 +34,59 @@ function requestPoster(movieId: number, reviewId?: number): Promise<PosterData> 
   return request;
 }
 
-export function usePublicProfilePoster(movieId: number, reviewId?: number) {
+export function usePublicProfilePoster(movieId: number, reviewId?: number, focusTargets?: PosterFocusTargets) {
   const key = `${movieId}:${reviewId ?? "movie"}`;
   const [attempt, setAttempt] = useState(0);
-  const [state, setState] = useState<PosterState>({ key, photoUrl: null, loading: true, error: false, unavailable: false });
+  const [state, setState] = useState<PosterState>({ key, attempt: 0, photoUrl: null, loading: true, error: false, unavailable: false });
+  const retryFocus = useRef<{ key: string; attempt: number; origin: Element | null } | null>(null);
+  const retryContainerRef = focusTargets?.retryContainerRef;
+  const successRef = focusTargets?.successRef;
   useEffect(() => {
     let current = true;
-    setState({ key, photoUrl: null, loading: true, error: false, unavailable: false });
+    setState({ key, attempt, photoUrl: null, loading: true, error: false, unavailable: false });
     requestPoster(movieId, reviewId)
-      .then(data => { if (current) setState({ key, photoUrl: data.photoUrl, loading: false, error: false, unavailable: false }); })
+      .then(data => { if (current) setState({ key, attempt, photoUrl: data.photoUrl, loading: false, error: false, unavailable: false }); })
       .catch((error: unknown) => {
         if (!current) return;
         const status = (error as { response?: { status?: number } } | null)?.response?.status;
         const unavailable = reviewId !== undefined && (status === 403 || status === 404);
-        setState({ key, photoUrl: null, loading: false, error: !unavailable, unavailable });
+        setState({ key, attempt, photoUrl: null, loading: false, error: !unavailable, unavailable });
       });
     return () => { current = false; };
   }, [attempt, key, movieId, reviewId]);
-  return { ...(state.key === key ? state : { key, photoUrl: null, loading: true, error: false, unavailable: false }), retry: () => setAttempt(value => value + 1) };
+  useEffect(() => {
+    const pending = retryFocus.current;
+    if (!pending) return;
+    if (pending.key !== key) { retryFocus.current = null; return; }
+    if (pending.attempt !== attempt || state.key !== key || state.attempt !== attempt || state.loading) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (retryFocus.current !== pending) return;
+      retryFocus.current = null;
+      if (document.activeElement !== document.body && document.activeElement !== pending.origin) return;
+      if (state.error) retryContainerRef?.current?.querySelector<HTMLElement>("[data-retry-button]")?.focus();
+      else successRef?.current?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [key, attempt, state, retryContainerRef, successRef]);
+  return {
+    ...(state.key === key ? state : { key, attempt, photoUrl: null, loading: true, error: false, unavailable: false }),
+    retry: () => {
+      const nextAttempt = attempt + 1;
+      retryFocus.current = { key, attempt: nextAttempt, origin: document.activeElement };
+      setAttempt(nextAttempt);
+    },
+  };
 }
 
 interface Props { movieId: number; title: string }
 
 export default function PublicProfilePoster({ movieId, title }: Props) {
   const { path, t } = useLocale();
-  const poster = usePublicProfilePoster(movieId);
-  return <div className={styles.wrap} aria-busy={poster.loading}>
-    <Link className={styles.link} to={path(`/films/${movieId}`)} aria-label={title} title={title}>
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const linkRef = useRef<HTMLAnchorElement>(null);
+  const poster = usePublicProfilePoster(movieId, undefined, { retryContainerRef: wrapperRef, successRef: linkRef });
+  return <div ref={wrapperRef} className={styles.wrap} aria-busy={poster.loading}>
+    <Link ref={linkRef} className={styles.link} to={path(`/films/${movieId}`)} aria-label={title} title={title}>
       <ResilientImage className={styles.image} src={poster.photoUrl} alt="" loading="lazy" fallback={<span className={styles.fallback} aria-hidden="true">{title.slice(0, 1).toUpperCase()}</span>} />
     </Link>
     {poster.error && <div className={styles.retry} role="group" aria-label={`${title}: ${t("loadMovieError")}`}><RetryButton label={t("retry")} onClick={poster.retry} /></div>}

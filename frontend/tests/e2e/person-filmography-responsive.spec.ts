@@ -60,11 +60,11 @@ test("Person filmography adapts across locales and widths with nullable poster f
   }
 });
 
-test("Person filmography retries an API failure and focuses its heading", async ({ page }) => {
+test("Person filmography Retry stays available after repeated failure and focuses its heading after recovery", async ({ page }) => {
   let attempts = 0;
   await page.route("**/api/actors/85?**", async route => {
     attempts += 1;
-    if (attempts === 1) return route.fulfill({ status: 503, json: {} });
+    if (attempts < 3) return route.fulfill({ status: 503, json: {} });
     return route.fulfill({ json: { id: 85, name: "Brad Pitt", photoUrl: null, type: "ACTOR", films: [] } });
   });
   await page.route("**/api/genres", route => route.fulfill({ json: [] }));
@@ -75,9 +75,37 @@ test("Person filmography retries an API failure and focuses its heading", async 
   const retry = page.getByRole("button", { name: "Спробувати ще" });
   await retry.focus();
   await page.keyboard.press("Enter");
+  await expect.poll(() => attempts).toBe(2);
+  const repeated = page.getByRole("button", { name: "Спробувати ще" });
+  await expect(repeated).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect.poll(() => attempts).toBe(3);
   await expect(page.getByText("Фільмів не знайдено.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Brad Pitt", level: 1 })).toBeFocused();
-  expect(attempts).toBe(2);
+});
+
+test("Person filmography genre Retry returns focus after repeat failure and recovery", async ({ page }) => {
+  let attempts = 0;
+  await page.route("**/api/actors/85?**", route => route.fulfill({ json: { id: 85, name: "Brad Pitt", photoUrl: null, type: "ACTOR", films: [] } }));
+  await page.route("**/api/genres", async route => {
+    attempts++;
+    if (attempts < 3) return route.fulfill({ status: 503, json: {} });
+    return route.fulfill({ json: [] });
+  });
+  await page.route("**/api/users/me", route => route.fulfill({ status: 401, json: {} }));
+  await page.setViewportSize({ width: 393, height: 900 });
+  await page.goto("/uk/people/actor/85");
+  const section = page.locator('section[aria-labelledby="filmography-title"]');
+  const retry = section.getByRole("button", { name: "Спробувати ще" });
+  await expect(retry).toBeVisible();
+  await retry.focus();
+  await retry.press("Enter");
+  await expect.poll(() => attempts).toBe(2);
+  const repeated = section.getByRole("button", { name: "Спробувати ще" });
+  await expect(repeated).toBeFocused();
+  await repeated.press("Enter");
+  await expect.poll(() => attempts).toBe(3);
+  await expect(section.getByRole("heading", { name: "Фільми за участі", exact: true })).toBeFocused();
 });
 
 test("expanded Actor READY state keeps the matched desktop starring grid and keyboard controls", async ({ page }) => {

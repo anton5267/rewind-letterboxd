@@ -50,6 +50,46 @@ export default function Search() {
   const filterToggleRef = useRef<HTMLButtonElement>(null);
   const queryInputRef = useRef<HTMLInputElement>(null);
   const filterWasOpen = useRef(false);
+  const searchRetryScope = JSON.stringify([lang, searchKey, pageSize]);
+  const pendingSearchRetryFocus = useRef<{ target: "genres" | "results"; scope: string; origin: HTMLElement | null } | null>(null);
+
+  useEffect(() => {
+    if (pendingSearchRetryFocus.current?.scope !== searchRetryScope) pendingSearchRetryFocus.current = null;
+  }, [searchRetryScope]);
+
+  useEffect(() => {
+    const pending = pendingSearchRetryFocus.current;
+    if (!pending) return;
+    const isLoading = pending.target === "genres" ? genresLoading : loading;
+    if (isLoading) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (pendingSearchRetryFocus.current !== pending) return;
+      pendingSearchRetryFocus.current = null;
+      if (pending.scope !== searchRetryScope) return;
+      const active = document.activeElement;
+      if (active !== document.body && active !== pending.origin) return;
+      const failed = pending.target === "genres" ? genreError : Boolean(error);
+      if (failed) {
+        document.querySelector<HTMLButtonElement>(`[data-search-retry="${pending.target}"] [data-retry-button]`)?.focus();
+      } else if (pending.target === "genres") {
+        const genre = document.getElementById("film-search-genre");
+        if (genre?.getClientRects().length) genre.focus();
+        else filterToggleRef.current?.focus();
+      } else {
+        document.querySelector<HTMLElement>("[data-search-results-focus]")?.focus();
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [error, genreError, genres, genresLoading, loading, results, searchRetryScope]);
+
+  const retrySearchRequest = (target: "genres" | "results") => {
+    pendingSearchRetryFocus.current = { target, scope: searchRetryScope, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
+    if (target === "genres") {
+      setGenresLoading(true); setGenreError(false); setGenreRetry(value => value + 1);
+    } else {
+      setLoading(true); setError(""); setRetry(value => value + 1);
+    }
+  };
 
   useEffect(() => {
     const updatePageSize = () => {
@@ -191,6 +231,14 @@ export default function Search() {
     setSearchParams(next);
   };
 
+  const clearFilmQuery = () => {
+    setQuery("");
+    const next = new URLSearchParams(searchKey);
+    next.delete("q");
+    next.delete("page");
+    setSearchParams(next);
+  };
+
   return <main className={styles.page} aria-labelledby="films-page-title" aria-busy={loading || genresLoading}>
     <div className={styles.shell}>
       <section className={`${styles.hero} ${mobileFiltersOpen ? styles.heroFiltersOpen : ""}`}>
@@ -254,12 +302,15 @@ export default function Search() {
         <button className={styles.filterSubmit} type="submit">{t("applyFilters")}</button>
       </form>
 
-      {genreError && <RetryNotice className={styles.alert} message={t("loadGenresError")} retryLabel={t("retry")} busy={genresLoading} onRetry={() => setGenreRetry(value => value + 1)} />}
+      {genreError && <div data-search-retry="genres"><RetryNotice className={styles.alert} message={t("loadGenresError")} retryLabel={t("retry")} busy={genresLoading} onRetry={() => retrySearchRequest("genres")} /></div>}
       {loading && <><p className="srOnly" role="status">{t("loadingFilms")}</p><div className={styles.grid} aria-hidden="true">{Array.from({ length: 12 }, (_, item) => <div className={styles.card} key={item}><div className={`${styles.posterLink} ${styles.skeleton}`} /></div>)}</div></>}
-      {error && <RetryNotice className={styles.alert} message={error} retryLabel={t("retry")} busy={loading} onRetry={() => setRetry(value => value + 1)} />}
-      {!loading && !error && results?.content.length === 0 && <p className={styles.empty}>{t("noFilms")}</p>}
+      {error && <div data-search-retry="results"><RetryNotice className={styles.alert} message={error} retryLabel={t("retry")} busy={loading} onRetry={() => retrySearchRequest("results")} /></div>}
+      {!loading && !error && results?.content.length === 0 && <div className={styles.emptyState}>
+        <p className={styles.empty}>{t("noFilms")}</p>
+        {searchParams.get("q")?.trim() && <button className={styles.clearSearch} type="button" onClick={clearFilmQuery}>{t("clearSearch")}</button>}
+      </div>}
       {!loading && !error && results && <>
-        <section className={styles.results} aria-label={t("films")}>
+        <section className={styles.results} aria-label={t("films")} tabIndex={-1} data-search-results-focus="true">
           <div className={styles.resultsBar}><p role="status">{t("resultsCount")}: {results.totalElements}</p>{results.totalPages > 0 && <span>{results.number + 1} / {results.totalPages}</span>}</div>
           <div className={styles.grid}>
           {results.content.map(movie => {

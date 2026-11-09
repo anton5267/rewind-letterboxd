@@ -85,6 +85,7 @@
   text-decoration: none;
   backdrop-filter: blur(12px);
 }
+.backIcon { display: block; width: 25px; height: 25px; object-fit: contain; }
 
 .more { display: none; }
 
@@ -177,6 +178,7 @@
 
 @media (min-width: 1263px) {
   .page { padding: 0; }
+  .back { visibility: hidden; }
   .hero { min-height: 1215px; background: #000; }
   .heroBackdrop { height: 818px; }
   .heroShade { background: linear-gradient(180deg, rgba(0, 0, 0, .05) 0%, rgba(0, 0, 0, .08) 32%, rgba(0, 0, 0, .8) 52%, #000 67.3%); }
@@ -283,8 +285,10 @@
   .socialPanel { display: contents; }
   .heroBackdrop { z-index: -2; top: 0; height: 309px; }
   .heroShade { z-index: -1; top: 0; height: 310px; background: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, .62) 44%, rgba(0, 0, 0, .2) 100%); }
-  .back { grid-column: 1 / -1; width: 44px; height: 44px; margin-bottom: 152px; border: 0; background: #1f1f1f; }
-  .more { position: absolute; top: 45.5px; right: 11.5px; display: grid; width: 44px; height: 44px; place-items: center; border: 0; border-radius: 50%; background: radial-gradient(circle 17.5px, #1f1f1f 99%, transparent 100%); color: #fff; cursor: pointer; font: inherit; font-size: 22px; line-height: 1; }
+  .back { grid-column: 1 / -1; width: 44px; height: 44px; margin-bottom: 143px; place-items: start; border: 0; background: radial-gradient(circle 17.5px at 17.5px 17.5px, #1f1f1f 99%, transparent 100%); }
+  .back:focus-visible { outline-offset: 2px; }
+  .backIcon { transform: translate(5px, 5px); }
+  .more { position: absolute; top: 45.5px; right: 11.5px; display: grid; width: 44px; height: 44px; place-items: center; border: 0; border-radius: 50%; background: radial-gradient(circle 17.5px at 50% 50%, #1f1f1f 99%, transparent 100%); color: #fff; cursor: pointer; font: inherit; font-size: 22px; line-height: 1; }
   .more:focus-visible { outline: 3px solid #64dbe2; outline-offset: 3px; }
   .posterColumn { grid-column: 1; grid-row: 2 / 4; align-self: start; }
   .poster { border-radius: 8px; box-shadow: none; }
@@ -297,26 +301,26 @@
   .meta .ageRating { margin-left: 8px; padding: 1px 5px; border: 1px solid currentColor; border-radius: 6px; font-size: 10px; }
   .meta .ageRating::before { display: none; }
   .author { gap: 2px; font-size: 12px; line-height: 1.12; }
-  .authorMeta { gap: 4px 8px; }
-  .published { font-size: 10px; }
+  .authorMeta { gap: 4px 8px; margin-top: 3px; }
+  .published { display: none; }
   .author > img,
   .author > span:first-child { width: 20px; height: 20px; flex-basis: 20px; border: 0; }
   .author > span:last-child { display: block; }
   .author small { color: inherit; font-size: inherit; letter-spacing: 0; text-transform: none; }
   .author strong { font-weight: 500; }
-  .reviewBody { display: block; margin-top: 8px; padding: 0; }
+  .reviewBody { display: block; margin: 11px 0 10px; padding: 0; }
   .reviewMeta { display: none; }
   .reviewMetaPrimary { flex-wrap: wrap; gap: 8px; }
   .stars { gap: 2px; font-size: 17px; }
   .reviewMeta time { font-size: 11px; }
   .rateTrigger { min-height: 44px; padding-inline: 8px; font-size: 11px; }
-  .reviewText { margin: 0; color: #7e7e7e; font-size: 12px; font-weight: 500; line-height: 1.2; }
+  .reviewText { margin: 0; color: #7e7e7e; font-size: 11.5px; font-weight: 500; line-height: 1.2; }
   .trailer { min-height: 44px; gap: 4px; margin-top: 9px; padding: 5px; font-size: 10px; font-weight: 500; }
   .trailer span { display: none; }
   .likeActions { display: none; }
   .likeActions > .likeButton { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; white-space: normal; }
   .likeActions > p { margin: 0; }
-  .likersSection { grid-column: 1 / -1; min-width: 0; margin: 9px -16px 0; padding: 34px 16px 28px; border: 0; border-radius: 0; background: var(--rewind-surface); }
+  .likersSection { grid-column: 1 / -1; min-width: 0; margin: 12px -16px 0; padding: 34px 16px 28px; border: 0; border-radius: 0; background: var(--rewind-surface); }
   .likeRow { min-width: 0; gap: 12px; padding-top: 8px; border-top: 1px solid #4d4d4d; }
   .likeRow .eyebrow { display: none; }
   .likeRow > div { min-width: 0; overflow-wrap: anywhere; }

@@ -7,7 +7,10 @@
   place-items: center;
   padding: 316px 16px 160px;
   overflow: hidden;
-  background: #1f1f1f url("../assets/figma/auth-desktop.png") top center / 100% 501px no-repeat;
+  background: #1f1f1f;
+  background-position: top center;
+  background-size: 100% 501px;
+  background-repeat: no-repeat;
   color: #fff;
 }
 
@@ -254,7 +257,8 @@
     min-height: 852px;
     display: block;
     padding: 0 0 env(safe-area-inset-bottom);
-    background: var(--rewind-surface) url("../assets/figma/auth-mobile.png") top center / 100% 378px no-repeat;
+    background-color: var(--rewind-surface);
+    background-size: 100% 378px;
   }
 
   .mobileBack {

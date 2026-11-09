@@ -85,7 +85,7 @@ export default function MovieDetails() {
   const { id } = useParams();
   const movieId = Number(id);
   const validMovieId = Number.isSafeInteger(movieId) && movieId > 0;
-  const { isAuth } = useAuth();
+  const { isAuth, user } = useAuth();
   const { lang, path, t } = useLocale();
   const [movie, setMovie] = useState<MovieDetailsResponse | null>(null);
   const [reviews, setReviews] = useState<MovieReview[]>([]);
@@ -122,9 +122,136 @@ export default function MovieDetails() {
   const loadRequest = useRef(0);
   const reviewsRequest = useRef(0);
   const myReviewRequest = useRef(0);
+  const listsRequest = useRef(0);
+  const ratingRequest = useRef(0);
   const mutationRequest = useRef(0);
   const currentMovieId = useRef(movieId);
   currentMovieId.current = movieId;
+  const movieStateRef = useRef<HTMLElement>(null);
+  const movieTitleRef = useRef<HTMLHeadingElement>(null);
+  const reviewsSectionRef = useRef<HTMLElement>(null);
+  const movieRetryFocus = useRef<{ movieId: number; lang: string; origin: HTMLElement } | null>(null);
+  const reviewsRetryFocus = useRef<{ movieId: number; lang: string; origin: HTMLElement } | null>(null);
+  const myReviewRetryFocus = useRef<{ movieId: number; lang: string; origin: HTMLElement | null; request: number; isAuth: boolean } | null>(null);
+  const listsRetryFocus = useRef<{ movieId: number; lang: string; origin: HTMLElement | null; userId: number | null } | null>(null);
+  const ratingRetryFocus = useRef<{ movieId: number; lang: string; origin: HTMLElement | null; userId: number | null } | null>(null);
+
+  useEffect(() => {
+    movieRetryFocus.current = null;
+    reviewsRetryFocus.current = null;
+    myReviewRetryFocus.current = null;
+    listsRetryFocus.current = null;
+    ratingRetryFocus.current = null;
+  }, [movieId, lang]);
+
+  useEffect(() => {
+    const pending = ratingRetryFocus.current;
+    if (!pending || ratingLoading) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (ratingRetryFocus.current !== pending) return;
+      ratingRetryFocus.current = null;
+      if (pending.movieId !== currentMovieId.current || pending.lang !== lang || pending.userId !== (user?.id ?? null)) return;
+      const active = document.activeElement;
+      if (active !== document.body && active !== pending.origin) return;
+      if (ratingLoadError) {
+        [...document.querySelectorAll<HTMLButtonElement>("[data-rating-error] [data-retry-button]")]
+          .find(button => button.getClientRects().length > 0)?.focus();
+        return;
+      }
+      [...document.querySelectorAll<HTMLElement>("[data-movie-rating-focus]")]
+        .find(element => element.getClientRects().length > 0)?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [lang, movieId, ratingLoadError, ratingLoading, user?.id]);
+
+  useEffect(() => {
+    const pending = listsRetryFocus.current;
+    if (!pending || listsLoading) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (listsRetryFocus.current !== pending) return;
+      listsRetryFocus.current = null;
+      if (pending.movieId !== currentMovieId.current || pending.lang !== lang || pending.userId !== (user?.id ?? null)) return;
+      const active = document.activeElement;
+      if (active !== document.body && active !== pending.origin) return;
+      if (listsLoadError) {
+        [...document.querySelectorAll<HTMLButtonElement>("[data-retry-button]")]
+          .find(button => button.getClientRects().length > 0)?.focus();
+        return;
+      }
+      const target = [...document.querySelectorAll<HTMLElement>("[data-movie-list-focus]")]
+        .find(element => element.getClientRects().length > 0);
+      target?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [lang, lists, listsLoadError, listsLoading, movieId, user?.id]);
+
+  useEffect(() => {
+    const pending = movieRetryFocus.current;
+    if (!pending || loading) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (movieRetryFocus.current !== pending) return;
+      movieRetryFocus.current = null;
+      if (pending.movieId !== currentMovieId.current || pending.lang !== lang) return;
+      const active = document.activeElement;
+      if (active !== document.body && active !== pending.origin) return;
+      if (loadError) movieStateRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+      else if (movie) movieTitleRef.current?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [lang, loading, loadError, movie, movieId]);
+
+  useEffect(() => {
+    const pending = reviewsRetryFocus.current;
+    if (!pending || reviewsLoading) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (reviewsRetryFocus.current !== pending) return;
+      reviewsRetryFocus.current = null;
+      if (pending.movieId !== currentMovieId.current || pending.lang !== lang) return;
+      const active = document.activeElement;
+      if (active !== document.body && active !== pending.origin) return;
+      if (reviewsLoadError) reviewsSectionRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
+      else reviewsSectionRef.current?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [lang, movieId, reviews, reviewsLoadError, reviewsLoading]);
+
+  const retryMovieLoad = () => {
+    if (document.activeElement instanceof HTMLElement) movieRetryFocus.current = { movieId, lang, origin: document.activeElement };
+    setLoading(true);
+    setLoadError("");
+    setLoadAttempt(value => value + 1);
+  };
+
+  const retryMovieReviews = () => {
+    if (document.activeElement instanceof HTMLElement) reviewsRetryFocus.current = { movieId, lang, origin: document.activeElement };
+    setReviewsLoading(true);
+    setReviewsLoadError(false);
+    setReviewsAttempt(value => value + 1);
+  };
+
+  const retryMovieLists = () => {
+    listsRetryFocus.current = {
+      movieId,
+      lang,
+      origin: document.activeElement instanceof HTMLElement ? document.activeElement : null,
+      userId: user?.id ?? null,
+    };
+    setListsLoading(true);
+    setListsLoadError(false);
+    setListsAttempt(value => value + 1);
+  };
+
+  const retryMovieRating = () => {
+    ratingRetryFocus.current = {
+      movieId,
+      lang,
+      origin: document.activeElement instanceof HTMLElement ? document.activeElement : null,
+      userId: user?.id ?? null,
+    };
+    setRatingLoading(true);
+    setRatingLoadError(false);
+    setRatingAttempt(value => value + 1);
+  };
 
   useEffect(() => {
     mutationRequest.current += 1;
@@ -214,6 +341,7 @@ export default function MovieDetails() {
 
   useEffect(() => {
     let current = true;
+    const requestId = ++listsRequest.current;
     if (!isAuth || !validMovieId) {
       setLists([]);
       setListsLoading(false);
@@ -224,19 +352,20 @@ export default function MovieDetails() {
     setListsLoading(true);
     setListsLoadError(false);
     getUserLists()
-      .then(({ data }) => { if (current) setLists(data); })
+      .then(({ data }) => { if (current && requestId === listsRequest.current) setLists(data); })
       .catch(() => {
-        if (!current) return;
+        if (!current || requestId !== listsRequest.current) return;
         setLists([]);
         setListsLoadError(true);
       })
-      .finally(() => { if (current) setListsLoading(false); });
+      .finally(() => { if (current && requestId === listsRequest.current) setListsLoading(false); });
 
     return () => { current = false; };
-  }, [isAuth, listsAttempt, validMovieId]);
+  }, [isAuth, listsAttempt, user?.id, validMovieId]);
 
   useEffect(() => {
     let current = true;
+    const requestId = ++ratingRequest.current;
     if (!isAuth || !validMovieId) {
       setRating(0);
       setRatingLoading(false);
@@ -247,16 +376,16 @@ export default function MovieDetails() {
     setRatingLoading(true);
     setRatingLoadError(false);
     getUserRating(movieId)
-      .then(({ data }) => { if (current) setRating(data?.rating ?? 0); })
+      .then(({ data }) => { if (current && requestId === ratingRequest.current) setRating(data?.rating ?? 0); })
       .catch(() => {
-        if (!current) return;
+        if (!current || requestId !== ratingRequest.current) return;
         setRating(0);
         setRatingLoadError(true);
       })
-      .finally(() => { if (current) setRatingLoading(false); });
+      .finally(() => { if (current && requestId === ratingRequest.current) setRatingLoading(false); });
 
     return () => { current = false; };
-  }, [isAuth, movieId, ratingAttempt, validMovieId]);
+  }, [isAuth, movieId, ratingAttempt, user?.id, validMovieId]);
 
   useEffect(() => {
     if (validMovieId) void loadMovie();
@@ -269,6 +398,23 @@ export default function MovieDetails() {
       setMyReview(null);
     }
   }, [isAuth, loadMovie, loadMyReview, movieId, myReviewAttempt, validMovieId]);
+
+  useEffect(() => {
+    const pending = myReviewRetryFocus.current;
+    if (!pending || !myReviewReady || pending.movieId !== movieId || pending.lang !== lang || pending.isAuth !== isAuth || pending.request !== myReviewRequest.current) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (myReviewRetryFocus.current !== pending) return;
+      myReviewRetryFocus.current = null;
+      if (pending.movieId !== currentMovieId.current || pending.lang !== lang || pending.isAuth !== isAuth || pending.request !== myReviewRequest.current) return;
+      const active = document.activeElement;
+      if (active !== document.body && active !== pending.origin) return;
+      if (myReviewError) {
+        const message = t("loadMyReviewError");
+        [...document.querySelectorAll<HTMLElement>("[role=alert]")].find(alert => alert.textContent?.includes(message))?.querySelector<HTMLButtonElement>("[data-retry-button]:not(:disabled)")?.focus();
+      } else reviewsSectionRef.current?.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [isAuth, lang, movieId, myReviewAttempt, myReviewError, myReviewReady, myReview]);
 
   useEffect(() => {
     setShowAllReviews(false);
@@ -332,6 +478,8 @@ export default function MovieDetails() {
   const createReview = async (event: React.FormEvent) => {
     event.preventDefault();
     if (mutationBusy || currentMovieId.current !== movieId) return;
+    const content = reviewText.trim();
+    if (!content) return;
     const chosenRating = editingReview ? reviewRating : rating;
     if (!chosenRating) { setError(t("rateFirst")); return; }
     const wasEditing = editingReview;
@@ -339,9 +487,9 @@ export default function MovieDetails() {
     if (requestId === null) return;
     try {
       if (wasEditing && myReview) {
-        await updateReview(myReview.id, { content: reviewText.trim(), rating: chosenRating });
+        await updateReview(myReview.id, { content, rating: chosenRating });
       } else {
-        await createMovieReview(movieId, reviewText.trim(), chosenRating);
+        await createMovieReview(movieId, content, chosenRating);
       }
       if (!isCurrentMutation(requestId)) return;
       setRating(chosenRating);
@@ -466,10 +614,10 @@ export default function MovieDetails() {
   const pageBusy = loading || reviewsLoading || listsLoading || ratingLoading || (isAuth && !myReviewReady) || mutationBusy !== null;
 
   if (!validMovieId) return <main className={styles.state} aria-labelledby="movie-state-title" aria-busy={false}><h1 id="movie-state-title" className="srOnly">{t("films")}</h1><p role="alert">{t("invalidMovieId")}</p></main>;
-  return <main className={styles.page} aria-labelledby={movie ? "movie-title" : "movie-state-title"} aria-busy={pageBusy}>
+  return <main ref={movieStateRef} className={styles.page} aria-labelledby={movie ? "movie-title" : "movie-state-title"} aria-busy={pageBusy}>
     <div className={styles.shell}>
       {!movie && <h1 id="movie-state-title" className="srOnly">{t("films")}</h1>}
-      {loadError && <RetryNotice className={styles.alert} message={loadError} retryLabel={t("retry")} onRetry={() => setLoadAttempt(value => value + 1)} />}
+      {loadError && <RetryNotice className={styles.alert} message={loadError} retryLabel={t("retry")} onRetry={retryMovieLoad} />}
       {error && <div className={styles.alert} role="alert">{error}</div>}
       {message && <div className={styles.status} role="status">{message}</div>}
       {loading && !movie && <><p className="srOnly" role="status">{t("loading")}</p>
@@ -496,7 +644,7 @@ export default function MovieDetails() {
                 {movie.ageRating && <span className={styles.mobileAgeRating}>{movie.ageRating}</span>}
                 {trailerUrl ? <a href={trailerUrl} target="_blank" rel="noopener noreferrer">{t("watchTrailer")}</a> : <span className={styles.mobileTrailerUnavailable}>{t("trailerUnavailable")}</span>}
               </div>
-              <h1 id="movie-title">{movieTitle}</h1>
+              <h1 id="movie-title" ref={movieTitleRef} tabIndex={-1}>{movieTitle}</h1>
               <ul className={styles.meta} aria-label={t("filmData")}>
                 <li>{formatMovieYear(movie.releaseDate, t("unknownYear"))}</li>
                 {movie.durationMinutes ? <li>{movie.durationMinutes} {t("minutes")}</li> : null}
@@ -529,15 +677,15 @@ export default function MovieDetails() {
               </div>
               <div className={styles.ratingRow}>
                 {ratingLoading ? <span className={styles.inlineStatus} role="status">{t("loading")}</span> : <span className={styles.ratingLabel}>{t("rate")}</span>}
-                {ratingLoadError && <span className={styles.inlineError} role="alert">{t("loadRatingsError")} <RetryButton label={t("retry")} onClick={() => setRatingAttempt(value => value + 1)} /></span>}
-                <div className={styles.ratingButtons} role="group" aria-label={t("myRating")}>
+                {ratingLoadError && <span className={styles.inlineError} role="alert" data-rating-error="true">{t("loadRatingsError")} <RetryButton label={t("retry")} onClick={retryMovieRating} /></span>}
+                <div className={styles.ratingButtons} role="group" aria-label={t("myRating")} data-movie-rating-focus="true" tabIndex={-1}>
                   {[1, 2, 3, 4, 5].map(value => <button className={rating === value ? styles.ratingActive : ""} key={value} type="button" disabled={mutationBusy !== null || ratingLoading} onClick={() => void saveRating(value)} aria-label={`${t("rateAs")} ${value}`} aria-pressed={rating === value}>★</button>)}
                 </div>
                 {rating > 0 && !myReview && <button className={styles.textButton} type="button" disabled={mutationBusy !== null || ratingLoading} onClick={() => void deleteRating()}>{mutationBusy === "delete-rating" ? t("deleting") : t("deleteRating")}</button>}
               </div>
-              <div className={styles.listPicker}>
+              <div className={styles.listPicker} data-movie-list-focus="true" tabIndex={-1} aria-label={t("addToList")}>
                 {listsLoading && <><p className="srOnly" role="status">{t("loading")}</p><div className={styles.skeletonControl} aria-hidden="true" /></>}
-                {listsLoadError && <RetryNotice className={styles.alert} message={t("loadListsError")} retryLabel={t("retry")} onRetry={() => setListsAttempt(value => value + 1)} />}
+                {listsLoadError && <RetryNotice className={styles.alert} message={t("loadListsError")} retryLabel={t("retry")} onRetry={retryMovieLists} />}
                 {!listsLoading && !listsLoadError && lists.length === 0 && <p className={styles.empty}>{t("noLists")}</p>}
                 {!listsLoading && !listsLoadError && lists.length > 0 && <>
                   <label htmlFor="movie-list">{t("addToList")}</label>
@@ -579,19 +727,19 @@ export default function MovieDetails() {
           selectedList={selectedList}
           onToggle={(kind, enabled) => void toggle(kind, enabled)}
           onSaveRating={value => void saveRating(value)}
-          onRetryRating={() => setRatingAttempt(value => value + 1)}
+          onRetryRating={retryMovieRating}
           onDeleteRating={() => void deleteRating()}
           onSelectedListChange={setSelectedList}
           onAddToList={() => void addToList()}
-          onRetryLists={() => setListsAttempt(value => value + 1)}
+          onRetryLists={retryMovieLists}
           onReview={focusReview}
           onShare={() => void shareMovie()}
           onClose={closeMobileActions}
         />}
-        <section className={`${styles.section} ${styles.reviewsSection}`} data-reviews-expanded={showAllReviews} aria-labelledby="reviews-title" aria-busy={reviewsLoading || (isAuth && !myReviewReady)}>
+        <section ref={reviewsSectionRef} className={`${styles.section} ${styles.reviewsSection}`} data-reviews-expanded={showAllReviews} aria-labelledby="reviews-title" aria-busy={reviewsLoading || (isAuth && !myReviewReady)} tabIndex={-1}>
           <div className={styles.sectionHeading}><p className={styles.eyebrow}>{t("reviews")}</p><h2 id="reviews-title" tabIndex={-1}><span className={styles.desktopReviewTitle}>{t("reviews")}</span><span className={styles.mobileReviewTitle}>{t("recentReviews")}</span></h2></div>
           {reviewsLoading && <><p className="srOnly" role="status">{t("loading")}</p>{[0, 1].map(item => <div className={`${styles.review} ${styles.skeletonReview}`} aria-hidden="true" key={item}><div className={styles.skeletonLine} /><div className={styles.skeletonLine} /><div className={styles.skeletonLine} /></div>)}</>}
-          {reviewsLoadError && <RetryNotice className={styles.alert} message={t("loadReviewsError")} retryLabel={t("retry")} onRetry={() => setReviewsAttempt(value => value + 1)} />}
+          {reviewsLoadError && <RetryNotice className={styles.alert} message={t("loadReviewsError")} retryLabel={t("retry")} onRetry={retryMovieReviews} />}
           {isAuth && myReview && <article className={`${styles.review} ${styles.myReview}`}>
             <h3>{t("yourReview")} · {myReview.rating ?? "—"}/5</h3>
             {!editingReview && <><p><Link to={path(`/reviews/${myReview.id}`)}>{myReview.content}</Link></p>
@@ -609,13 +757,13 @@ export default function MovieDetails() {
           </>}
           {!reviewsLoadError && <Pagination className={styles.pagination} page={reviewsPage} totalPages={reviewsTotalPages} label={t("reviewsPagination")} busy={reviewsLoading} onPageChange={page => { setShowAllReviews(false); setReviewsPage(page); }} />}
           {isAuth && !myReviewReady && <p className={styles.loading} role="status">{t("loading")}</p>}
-          {isAuth && myReviewError && <RetryNotice className={styles.alert} message={t("loadMyReviewError")} retryLabel={t("retry")} onRetry={() => setMyReviewAttempt(value => value + 1)} />}
+          {isAuth && myReviewError && <RetryNotice className={styles.alert} message={t("loadMyReviewError")} retryLabel={t("retry")} onRetry={() => { myReviewRetryFocus.current = { movieId, lang, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, request: myReviewRequest.current + 1, isAuth }; setMyReviewReady(false); setMyReviewError(false); setMyReviewAttempt(value => value + 1); }} />}
           {isAuth && myReviewReady && !myReviewError && (!myReview || editingReview) && <form className={styles.reviewForm} onSubmit={createReview}>
             <label htmlFor="review-content">{t("yourReview")}</label>
             <textarea id="review-content" required maxLength={5000} disabled={mutationBusy !== null} value={reviewText} onChange={event => setReviewText(event.target.value)} />
             {editingReview && <label htmlFor="review-rating">{t("myRating")}</label>}
             {editingReview && <select id="review-rating" disabled={mutationBusy !== null} value={reviewRating} onChange={event => setReviewRating(Number(event.target.value))}>{[1, 2, 3, 4, 5].map(value => <option key={value} value={value}>{value}/5</option>)}</select>}
-             <div className={styles.reviewFormActions}><button className={styles.primaryButton} type="submit" disabled={mutationBusy !== null} aria-busy={mutationBusy === "review"}>{mutationBusy === "review" ? t("saving") : t(editingReview ? "saveReview" : "publishReview")}</button>
+             <div className={styles.reviewFormActions}><button className={styles.primaryButton} type="submit" disabled={mutationBusy !== null || !reviewText.trim()} aria-busy={mutationBusy === "review"}>{mutationBusy === "review" ? t("saving") : t(editingReview ? "saveReview" : "publishReview")}</button>
               {editingReview && <button type="button" disabled={mutationBusy !== null} onClick={() => { setEditingReview(false); setReviewText(""); }}>{t("cancel")}</button>}</div>
           </form>}
           {!isAuth && <p className={styles.signIn}><Link to={path("/login")}>{t("login")}</Link> {t("signInToReview")}</p>}

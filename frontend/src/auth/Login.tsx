@@ -13,11 +13,12 @@ export default function Login() {
   const { login } = useAuth();
   const { path, t, lang } = useLocale();
   const validation = useAuthFieldValidation();
-  const returnLocation = getAuthReturnTo(location.state, [path("/profile"), path("/messages"), path("/notifications")]);
+  const returnLocation = getAuthReturnTo(location.state, [path("/profile"), path("/messages"), path("/notifications"), path("/lists")]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [error, setError] = useState(false);
+  const [emailConfirmed, setEmailConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
   const errorMessage = useRef<HTMLParagraphElement>(null);
   const mounted = useRef(false);
@@ -33,6 +34,13 @@ export default function Login() {
   }, []);
 
   useLayoutEffect(() => { focusScope.current += 1; errorFocus.current = null; }, [lang, location.key]);
+
+  useEffect(() => {
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    if (hash.get("type") !== "signup" || !hash.has("access_token")) return;
+    window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+    setEmailConfirmed(true);
+  }, []);
 
   useEffect(() => {
     const intent = errorFocus.current;
@@ -70,6 +78,7 @@ export default function Login() {
         <p className={styles.eyebrow}>{t("accountEyebrow")}</p>
         <h1 className={styles.title} id="login-page-title">{t("welcome")}</h1>
         {searchParams.get("passwordChanged") === "1" && <p className={styles.success} role="status">{t("passwordChangedSignIn")}</p>}
+        {emailConfirmed && <p className={styles.success} role="status">{t("emailConfirmedSignIn")}</p>}
         <form className={styles.form} onSubmit={submit} onInvalidCapture={validation.onInvalid} aria-busy={loading}>
           <label className={styles.fieldLabel} htmlFor="login-email">{t("email")}</label>
           <input

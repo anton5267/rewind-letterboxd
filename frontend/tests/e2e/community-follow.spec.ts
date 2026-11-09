@@ -127,6 +127,9 @@ for (const failedKind of ["follow-status", "block-status"] as const) {
         await gate.promise;
         return { status: 503, json: { message: "Controlled status failure" } };
       }
+      if (call.targetId === ada.id && call.kind === failedKind && call.attempt === 2) {
+        return { status: 503, json: { message: "Repeated status failure" } };
+      }
     };
     try {
       await page.setViewportSize({ width: 393, height: 900 });
@@ -138,14 +141,49 @@ for (const failedKind of ["follow-status", "block-status"] as const) {
       const retry = await expectControls(page, "Retry: Ada Finch", 3);
       const error = failedKind === "block-status" ? "Could not load the block status." : "Could not load the follow status.";
       await expect(page.getByRole("alert").filter({ hasText: error }).first()).toBeVisible();
-      await retry.first().click();
-      await expectControls(page, "Follow: Ada Finch", 3);
-      expect(state.statusCalls.filter(call => call.targetId === ada.id)).toHaveLength(4);
+      await retry.first().focus();
+      await retry.first().press("Enter");
+      await expectControls(page, "Retry: Ada Finch", 3);
+      await expect.poll(() => state.statusCalls.filter(call => call.targetId === ada.id && call.kind === failedKind).length).toBe(2);
+      await expect(retry.first()).toBeFocused();
+      await retry.first().press("Enter");
+      const recoveredFollow = await expectControls(page, "Follow: Ada Finch", 3);
+      await expect.poll(() => state.statusCalls.filter(call => call.targetId === ada.id && call.kind === failedKind).length).toBe(3);
+      await expect(recoveredFollow.first()).toBeFocused();
+      expect(state.statusCalls.filter(call => call.targetId === ada.id)).toHaveLength(6);
       expect(state.mutations).toHaveLength(0);
       expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
     } finally { gate.resolve(); }
   });
 }
+
+test("community block-status retry preserves a manual Tab move while the status request is pending", async ({ page }) => {
+  const state = await communityFixture(page);
+  const gate = deferred();
+  state.statusReply = async call => {
+    if (call.targetId !== ada.id || call.kind !== "block-status") return;
+    if (call.attempt === 1) return { status: 503, json: { message: "Initial block-status failure" } };
+    if (call.attempt === 2) {
+      await gate.promise;
+      return { status: 503, json: { message: "Delayed block-status failure" } };
+    }
+  };
+  try {
+    await page.setViewportSize({ width: 393, height: 900 });
+    await page.goto("/en/community");
+    await waitForPageContent(page);
+    const retry = await expectControls(page, "Retry: Ada Finch", 3);
+    await retry.first().focus();
+    await retry.first().press("Enter");
+    await expect.poll(() => state.statusCalls.filter(call => call.targetId === ada.id && call.kind === "block-status").length).toBe(2);
+    await page.keyboard.press("Tab");
+    await page.evaluate(() => { (window as Window & { __communityTabTarget?: Element | null }).__communityTabTarget = document.activeElement; });
+    gate.resolve();
+    await expectControls(page, "Retry: Ada Finch", 3);
+    await expect.poll(() => page.evaluate(() => document.activeElement === (window as Window & { __communityTabTarget?: Element | null }).__communityTabTarget)).toBe(true);
+    expect(state.mutations).toHaveLength(0);
+  } finally { gate.resolve(); }
+});
 
 test("community duplicate rows share keyboard follow state and prevent a second pending mutation", async ({ page }) => {
   const state = await communityFixture(page);
