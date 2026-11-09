@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("read-only catalogue works on GitHub Pages path on a phone-sized viewport", async ({ page }) => {
+test("full app home, public catalogue, and private account routing work on GitHub Pages", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 844 });
   const pageErrors: string[] = [];
   page.on("pageerror", error => pageErrors.push(error.message));
@@ -8,7 +8,7 @@ test("read-only catalogue works on GitHub Pages path on a phone-sized viewport",
   const homeResponse = await page.request.get("/rewind-letterboxd/uk/home/");
   expect(homeResponse.status()).toBe(200);
   expect(homeResponse.headers()["content-type"]).toContain("text/html");
-  expect(await homeResponse.text()).toContain("<title>Каталог фільмів | REWIND</title>");
+  expect(await homeResponse.text()).toContain("<title>Ваш кіножурнал | REWIND</title>");
 
   const sitemapResponse = await page.request.get("/rewind-letterboxd/sitemap.xml");
   expect(sitemapResponse.status()).toBe(200);
@@ -24,10 +24,11 @@ test("read-only catalogue works on GitHub Pages path on a phone-sized viewport",
   expect(await robotsResponse.text()).toContain("Sitemap: https://anton5267.github.io/rewind-letterboxd/sitemap.xml");
 
   await page.goto("/rewind-letterboxd/uk/home/");
-  await expect(page.locator('link[href*="font-awesome"]')).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Відкрий своє наступне кіно" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Позначайте переглянуті фільми. Зберігайте ті, що хочете подивитися. Діліться враженнями з друзями." })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/rewind-letterboxd/uk/films/");
+  await expect(page.getByRole("heading", { name: "Фільми", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: /The Wrecking Crew/ })).toBeVisible();
   await page.getByLabel("Рік випуску").fill("2026");
   await page.getByLabel("Мін. рейтинг").selectOption("4");
@@ -81,21 +82,26 @@ test("read-only catalogue works on GitHub Pages path on a phone-sized viewport",
   await page.getByRole("link", { name: "REWIND" }).click();
   const englishHomeResponse = await page.request.get("/rewind-letterboxd/en/home/");
   expect(englishHomeResponse.status()).toBe(200);
-  expect(await englishHomeResponse.text()).toContain("<title>Film catalogue | REWIND</title>");
-  await page.getByRole("link", { name: "EN", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Find your next film" })).toBeVisible();
+  expect(await englishHomeResponse.text()).toContain("<title>Your film diary | REWIND</title>");
+  await page.goto("/rewind-letterboxd/en/home/");
+  await expect(page.getByRole("heading", { name: "Track films you’ve watched. Save those you want to see. Tell your friends what’s good." })).toBeVisible();
+  await page.goto("/rewind-letterboxd/en/films/");
+  await expect(page.getByRole("heading", { name: "Films", exact: true })).toBeVisible();
   await expect(page.getByRole("option", { name: "Action" })).toBeAttached();
-  await page.getByRole("link", { name: "UK", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Відкрий своє наступне кіно" })).toBeVisible();
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto("/rewind-letterboxd/uk/home/");
+  await expect(page.getByRole("heading", { name: "Позначайте переглянуті фільми. Зберігайте ті, що хочете подивитися. Діліться враженнями з друзями." })).toBeVisible();
 
   await page.goto("/rewind-letterboxd/uk/profile/");
-  await expect(page.getByRole("heading", { name: "Ця сторінка ще не доступна" })).toBeVisible();
-  await expect(page.getByText(/Профілі, списки, відгуки й повідомлення/)).toBeVisible();
-  await page.getByRole("link", { name: "Перейти до каталогу" }).click();
-  await expect(page.getByRole("heading", { name: "Відкрий своє наступне кіно" })).toBeVisible();
+  await expect(page).toHaveURL(/\/rewind-letterboxd\/uk\/login\/?$/);
+  await expect(page.getByRole("heading", { name: "З поверненням" })).toBeVisible();
+  await expect(page.getByLabel("Електронна пошта")).toBeVisible();
+  await page.goto("/rewind-letterboxd/uk/home/");
+  await expect(page.getByRole("heading", { name: "Позначайте переглянуті фільми. Зберігайте ті, що хочете подивитися. Діліться враженнями з друзями." })).toBeVisible();
 
   await page.goto("/rewind-letterboxd/en/messages/");
-  await expect(page.getByRole("heading", { name: "This page is not available yet" })).toBeVisible();
-  await expect(page.getByText(/Profiles, lists, reviews, and messages are not connected yet/)).toBeVisible();
+  await expect(page).toHaveURL(/\/rewind-letterboxd\/en\/login\/?$/);
+  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+  await expect(page.getByLabel("Email")).toBeVisible();
   await expect.poll(() => pageErrors).toEqual([]);
 });

@@ -120,10 +120,10 @@ async function writeRoute(page, { includeInSitemap = true } = {}) {
 }
 
 const defaultPages = [
-  { route: "uk/home", language: "uk", title: "Каталог фільмів", description: "Переглядайте публічний каталог фільмів REWIND." },
+  { route: "uk/home", language: "uk", title: "Ваш кіножурнал", description: "Позначайте переглянуті фільми, зберігайте список бажаного й діліться враженнями з REWIND." },
   { route: "uk/films", language: "uk", title: "Фільми", description: "Шукайте фільми та відкривайте їхні сторінки в каталозі REWIND." },
   { route: "uk/films/discover", language: "uk", title: "Знайти фільм", description: "Знайдіть фільм за назвою, жанром, роком або рейтингом." },
-  { route: "en/home", language: "en", title: "Film catalogue", description: "Browse the public REWIND film catalogue." },
+  { route: "en/home", language: "en", title: "Your film diary", description: "Track films you have watched, save your watchlist, and share your thoughts with REWIND." },
   { route: "en/films", language: "en", title: "Films", description: "Search films and open their pages in the REWIND catalogue." },
   { route: "en/films/discover", language: "en", title: "Discover films", description: "Find films by title, genre, release year, or rating." },
 ];

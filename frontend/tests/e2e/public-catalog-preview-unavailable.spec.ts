@@ -1,20 +1,25 @@
 import { expect, test } from "@playwright/test";
 
-test("unsupported preview routes explain the limit in Ukrainian and English", async ({ page }) => {
+test("public discovery stays open while private pages redirect to localized sign-in", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
 
-  await page.goto("/rewind-letterboxd/uk/profile/");
-  await expect(page.getByRole("heading", { name: "Ця сторінка ще не доступна" })).toBeVisible();
-  await expect(page.getByText(/Профілі, списки, відгуки й повідомлення поки не підключені/)).toBeVisible();
+  await page.goto("/rewind-letterboxd/uk/search/");
+  await expect(page.getByRole("heading", { name: "Глобальний пошук" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
-  await page.getByRole("link", { name: "Перейти до каталогу" }).click();
-  await expect(page.getByRole("heading", { name: "Відкрий своє наступне кіно" })).toBeVisible();
+
+  await page.goto("/rewind-letterboxd/uk/lists/discover/");
+  await expect(page.getByRole("heading", { name: "Добірки", exact: true })).toBeVisible();
+
+  await page.goto("/rewind-letterboxd/uk/profile/");
+  await expect(page).toHaveURL(/\/rewind-letterboxd\/uk\/login\/?$/);
+  await expect(page.getByRole("heading", { name: "З поверненням" })).toBeVisible();
+  await expect(page.getByLabel("Електронна пошта")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
 
   await page.setViewportSize({ width: 320, height: 844 });
   await page.goto("/rewind-letterboxd/en/messages/");
-  await expect(page.getByRole("heading", { name: "This page is not available yet" })).toBeVisible();
-  await expect(page.getByText(/Profiles, lists, reviews, and messages are not connected yet/)).toBeVisible();
+  await expect(page).toHaveURL(/\/rewind-letterboxd\/en\/login\/?$/);
+  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+  await expect(page.getByLabel("Email")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
-  await expect(page.getByRole("link", { name: "Browse the catalogue" })).toHaveAttribute("href", "/rewind-letterboxd/en/home/");
-  await expect(page).toHaveTitle("This page is not available yet | REWIND");
 });
