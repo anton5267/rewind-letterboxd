@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { isAxiosError } from "axios";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { usesHostedSupabaseAuth } from "../api/supabaseClient";
 import styles from "./Login.module.css";
 import { useLocale } from "../i18n";
 import { useAuthFieldValidation } from "./useAuthFieldValidation";
@@ -17,7 +19,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<"login" | "confirmation" | "profile" | null>(null);
   const [emailConfirmed, setEmailConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
   const errorMessage = useRef<HTMLParagraphElement>(null);
@@ -59,13 +61,19 @@ export default function Login() {
     busy.current = true;
     const intent = { scope: focusScope.current, origin: document.activeElement };
     errorFocus.current = null;
-    setError(false);
+    setError(null);
     setLoading(true);
     try {
       await login(email.trim(), password);
       if (mounted.current) navigate(destination.current.to, { replace: destination.current.replace });
-    } catch {
-      if (mounted.current) { errorFocus.current = intent; setError(true); }
+    } catch (cause) {
+      if (mounted.current) {
+        errorFocus.current = intent;
+        const code = typeof cause === "object" && cause !== null && "code" in cause ? cause.code : undefined;
+        setError(code === "email_not_confirmed"
+          ? "confirmation"
+          : usesHostedSupabaseAuth && isAxiosError(cause) ? "profile" : "login");
+      }
     } finally {
       if (mounted.current) { busy.current = false; setLoading(false); }
     }
@@ -136,7 +144,7 @@ export default function Login() {
               {t("forgotPassword")}
             </Link>
           </div>
-          {error && <p ref={errorMessage} tabIndex={-1} className={styles.error} id="login-error" role="alert">{t("loginError")}</p>}
+          {error && <p ref={errorMessage} tabIndex={-1} className={styles.error} id="login-error" role="alert">{t(error === "confirmation" ? "emailNotConfirmed" : error === "profile" ? "accountLoadError" : "loginError")}</p>}
           <button type="submit" className={styles.button} aria-busy={loading} disabled={loading}>
             {loading ? t("loggingIn") : t("login")}
           </button>

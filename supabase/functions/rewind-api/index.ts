@@ -373,9 +373,9 @@ async function ensureSystemLists(connection: Awaited<ReturnType<typeof pool.conn
   for (const [type, name] of [["WATCHLIST", "Watchlist"], ["WATCHED", "Watched"], ["FAVORITES", "Favorites"]] as const) {
     await connection.queryObject({
       text: `INSERT INTO rewind.lists (user_id, name, list_type, is_public)
-             SELECT $1, $2, $3, FALSE
+             SELECT $1::BIGINT, $2::VARCHAR, $3::VARCHAR, FALSE
              WHERE NOT EXISTS (
-               SELECT 1 FROM rewind.lists WHERE user_id = $1 AND list_type = $3
+               SELECT 1 FROM rewind.lists WHERE user_id = $1::BIGINT AND list_type = $3::VARCHAR
              )`,
       args: [userId, name, type],
     });
