@@ -12,6 +12,19 @@
 - Live Pages-origin smoke returned HTTP 200 for 16 public API GET routes covering genres, movie/person search, global search, review feeds, journal, four public-list feeds, tags, community directories, popular reviewers, and recent activity. Profile and admin GET routes returned 401 without a session. CORS returned exactly `https://anton5267.github.io`.
 - Latest local React production build and TypeScript check passed with `npm run verify:build` (299 modules).
 - REWIND data lives in the private `rewind` schema. Browser `anon`/`authenticated` roles have no direct access; Edge routes enforce access through the server-side database role and RLS. Existing local MySQL data and accounts were not migrated or changed.
+- A live read-only count on 2026-11-09 found **0** hosted Auth users, REWIND profiles, admins, ratings, reviews, lists, and messages. The first public account defaults to `USER`; admin operations remain unavailable until the site owner is confirmed and an `ADMIN` role is assigned to that exact Supabase UUID.
+
+For the one-time owner bootstrap, first complete and confirm the owner's signup, then obtain that authenticated account's Supabase UUID. In Supabase SQL Editor, update by UUID only and confirm exactly one returned row:
+
+```sql
+UPDATE rewind.users
+SET role = 'ADMIN'
+WHERE supabase_user_id = '<verified-owner-supabase-uuid>'::uuid
+  AND role = 'USER'
+RETURNING id, supabase_user_id, role;
+```
+
+Do not choose a profile by email or expose a public admin-bootstrap endpoint. This query is a prepared runbook only; it has not been executed because no Auth profile exists.
 
 ## Auth readiness: still open
 
@@ -32,10 +45,11 @@ The deployed UI and Edge API are ready to exercise, but public signup, recovery,
 After the Auth URL/callback and SMTP configuration is available, test using a disposable account and clean it up:
 
 1. Signup and confirmation email from both UK and EN routes.
-2. Login, logout, token refresh, and access to private profile routes.
-3. Password recovery email, reset callback in both locales, and login with the new password.
-4. Owner isolation and REWIND role enforcement on ratings, lists, reviews, messages, notifications, and admin APIs.
-5. Password-confirmed account deletion and hosted identity outbox cleanup.
+2. Owner signs in with the intended account; verify the Supabase UUID, then promote that profile to `ADMIN`. Never grant `ADMIN` from `user_metadata` or match a legacy profile only by email.
+3. Login, logout, token refresh, and access to private profile routes.
+4. Password recovery email, reset callback in both locales, and login with the new password.
+5. Owner isolation and REWIND role enforcement on ratings, lists, reviews, messages, notifications, and admin APIs.
+6. Password-confirmed account deletion and hosted identity outbox cleanup.
 
 Until this passes, describe the site as publicly browsable with the account UI deployed, not as a fully accepted public account service. Local legacy profiles remain in MySQL and are intentionally not matched to Supabase users by email.
 
