@@ -191,7 +191,7 @@ export default function Header() {
       {/* LOGO */}
       <Link to={path("/home")} className={styles.logo}>
         <img
-          src="/logo.png"
+          src={`${import.meta.env.BASE_URL}logo.png`}
           alt="REWIND"
           className={styles.logoImage}
         />

@@ -18,7 +18,7 @@ export default function Footer() {
 
         {/* LOGO */}
         <div className={styles.logo}>
-          <img src="/logo.png" alt="REWIND" />
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="REWIND" />
         </div>
 
         {/* NAV */}
