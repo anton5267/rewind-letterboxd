@@ -104,6 +104,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
   const [tmdbImportMessage, setTmdbImportMessage] = useState<string | null>(null);
   const [tmdbImportError, setTmdbImportError] = useState(false);
   const [tmdbSyncPairs, setTmdbSyncPairs] = useState("");
+  const [tmdbSyncPairPreview, setTmdbSyncPairPreview] = useState<Array<{ movieId: number; tmdbId: number; movie?: AdminMovie }> | null>(null);
   const [tmdbSyncPairLoadBusy, setTmdbSyncPairLoadBusy] = useState(false);
   const [tmdbSyncBatchBusy, setTmdbSyncBatchBusy] = useState(false);
   const [tmdbSyncBatchMessage, setTmdbSyncBatchMessage] = useState<string | null>(null);
@@ -691,7 +692,10 @@ export default function AdminMovies({ onTotalChange }: Props) {
       const csv = await response.text();
       const pairs = parseTmdbSyncPairs(csv);
       if (!pairs) throw new Error("Crosswalk is invalid");
+      const { data: catalog } = await getAdminMovies(0, 50);
       if (!isCurrent()) return;
+      const moviesById = new Map(catalog.content.map(movie => [movie.id, movie]));
+      setTmdbSyncPairPreview(pairs.map(pair => ({ ...pair, movie: moviesById.get(pair.movieId) })));
       setTmdbSyncPairs(pairs.map(pair => `${pair.movieId},${pair.tmdbId}`).join("\n"));
       setTmdbSyncBatchMessage(`${pairs.length} ${t("tmdbBatchSyncCsvLoaded")}`);
     } catch {
@@ -772,7 +776,19 @@ export default function AdminMovies({ onTotalChange }: Props) {
                   <button type="button" disabled={tmdbSyncPairLoadBusy || tmdbSyncBatchBusy || tmdbSyncPairs.trim().length > 0} onClick={loadVerifiedTmdbPairs}>{tmdbSyncPairLoadBusy ? t("loading") : t("tmdbBatchSyncLoadCsv")}</button>
                   <a className={styles.batchSyncDownload} href={verifiedTmdbCrosswalkUrl} target="_blank" rel="noreferrer">{t("tmdbBatchSyncCsv")}</a>
                 </div>
-                <label className={styles.batchSyncField}>{t("tmdbBatchSyncPairs")}<textarea aria-label={t("tmdbBatchSyncPairs")} placeholder={t("tmdbBatchSyncPlaceholder")} rows={6} value={tmdbSyncPairs} disabled={tmdbSyncPairLoadBusy} onChange={event => setTmdbSyncPairs(event.target.value)} /></label>
+                <label className={styles.batchSyncField}>{t("tmdbBatchSyncPairs")}<textarea aria-label={t("tmdbBatchSyncPairs")} placeholder={t("tmdbBatchSyncPlaceholder")} rows={6} value={tmdbSyncPairs} disabled={tmdbSyncPairLoadBusy} onChange={event => { setTmdbSyncPairs(event.target.value); setTmdbSyncPairPreview(null); }} /></label>
+                {tmdbSyncPairPreview && <div className={styles.batchSyncPreview}>
+                  <h5>{t("tmdbBatchSyncPreview")}</h5>
+                  <div className={styles.batchSyncPreviewScroll}>
+                    <table aria-label={t("tmdbBatchSyncPreview")}>
+                      <thead><tr><th scope="col">{t("tmdbBatchSyncRewindMovie")}</th><th scope="col">{t("tmdbId")}</th></tr></thead>
+                      <tbody>{tmdbSyncPairPreview.map(pair => <tr key={`${pair.movieId}-${pair.tmdbId}`}>
+                        <td>{pair.movie ? `${editorialText(pair.movie.title, t("untitledFilm"))}${pair.movie.releaseDate ? ` (${pair.movie.releaseDate.slice(0, 4)})` : ""}` : `${t("tmdbBatchSyncMovieMissing")} (${pair.movieId})`}</td>
+                        <td><a href={`https://www.themoviedb.org/movie/${pair.tmdbId}`} target="_blank" rel="noreferrer">{pair.tmdbId}</a></td>
+                      </tr>)}</tbody>
+                    </table>
+                  </div>
+                </div>}
                 <button type="submit" disabled={tmdbSyncBatchBusy || tmdbImportBusy || mutationBusy || syncingMovieId !== null}>{tmdbSyncBatchBusy ? t("loading") : t("tmdbBatchSyncButton")}</button>
                 {tmdbSyncBatchMessage && <p className={tmdbSyncBatchError ? styles.error : styles.status} role={tmdbSyncBatchError ? "alert" : "status"}>{tmdbSyncBatchMessage}</p>}
                 {tmdbSyncBatchFailures.length > 0 && <ul className={styles.batchSyncFailures}>{tmdbSyncBatchFailures.map(item => <li key={`${item.movieId}-${item.tmdbId}`}>{item.movieId ?? "—"} → {item.tmdbId}</li>)}</ul>}

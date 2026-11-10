@@ -143,6 +143,13 @@ test("verified TMDB crosswalk loads into the form without submitting a mutation"
   await load.click();
   await expect(field).toHaveValue("940001,1084242\n940002,840464");
   await expect(form.getByRole("status")).toHaveText("2 verified pairs loaded. Review them before syncing.");
+  const preview = form.getByRole("table", { name: "TMDB pair review" });
+  await expect(preview.getByRole("row").filter({ hasText: "Strict ID film (2026)" })).toContainText("1084242");
+  await expect(preview.getByRole("link", { name: "1084242" })).toHaveAttribute("href", "https://www.themoviedb.org/movie/1084242");
+  await expect(preview.getByRole("row").filter({ hasText: "Film not found (940002)" })).toContainText("840464");
+  expect(writes).toEqual([]);
+  await field.fill("940001,1084242");
+  await expect(preview).toHaveCount(0);
   expect(writes).toEqual([]);
 });
 
@@ -152,7 +159,7 @@ test("failed verified crosswalk load leaves the form unchanged", async ({ page }
   const form = movies.getByRole("form", { name: "Bulk catalog sync" });
   await page.route("https://raw.githubusercontent.com/anton5267/rewind-letterboxd/master/docs/project/TMDB_VERIFIED_CROSSWALK.csv", route => route.fulfill({ status: 503, body: "unavailable" }));
   await form.getByRole("button", { name: "Load verified pairs", exact: true }).click();
-  await expect(form.getByRole("alert")).toHaveText("Could not load the verified pairs CSV. The list was not changed.");
+  await expect(form.getByRole("alert")).toHaveText("Could not prepare the verified pair review. The list was not changed.");
   await expect(form.getByRole("textbox", { name: "Film ID pairs" })).toHaveValue("");
   expect(writes).toEqual([]);
 });

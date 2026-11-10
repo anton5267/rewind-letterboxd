@@ -292,6 +292,15 @@
 .batchSyncField { display: grid; gap: 6px; color: var(--rewind-muted); }
 .batchSyncField textarea { width: 100%; min-height: 132px; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--rewind-line); border-radius: var(--rewind-radius); background: var(--rewind-surface-raised); color: var(--rewind-paper); font: inherit; resize: vertical; }
 .batchSyncField textarea:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: 3px; }
+.batchSyncPreview { display: grid; gap: 8px; }
+.batchSyncPreview h5 { margin: 0; color: var(--rewind-paper); font-size: 1rem; }
+.batchSyncPreviewScroll { max-height: 360px; overflow: auto; border: 1px solid var(--rewind-line); border-radius: var(--rewind-radius); }
+.batchSyncPreview table { width: 100%; border-collapse: collapse; text-align: left; }
+.batchSyncPreview th, .batchSyncPreview td { padding: 8px 10px; border-bottom: 1px solid var(--rewind-line); }
+.batchSyncPreview th { position: sticky; top: 0; background: var(--rewind-surface-raised); color: var(--rewind-paper); }
+.batchSyncPreview td { color: var(--rewind-muted); }
+.batchSyncPreview td a { color: var(--rewind-cyan); text-underline-offset: 3px; }
+.batchSyncPreview a:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: 2px; }
 .batchSyncForm > button { justify-self: start; min-height: 44px; padding: 8px 18px; border: 1px solid var(--rewind-line); border-radius: 999px; background: var(--rewind-surface-raised); color: var(--rewind-paper); }
 .batchSyncForm > button:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: 3px; }
 .batchSyncFailures { margin: 0; padding-left: 20px; color: #ff9a9a; }
