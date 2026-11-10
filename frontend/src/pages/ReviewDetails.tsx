@@ -286,6 +286,7 @@ export default function ReviewDetails() {
       onRetryLike={() => void toggleLike()}
       onToggleLike={() => void toggleLike()}
       onClose={closeRatingSheet}
+      reportReviewId={user && user.id !== review.author.id ? review.id : undefined}
         />, document.body)}
   </main>;
 }

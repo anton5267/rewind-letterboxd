@@ -115,6 +115,34 @@
 .reviewCardError .reviewRatingArea { margin-top: 16px; }
 .reviewSheet .doneButton { min-height: 56px; margin-top: 19px; border-radius: 37px; background: #282828; font-size: 14px; font-weight: 500; }
 
+.reportBlock {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: #282828;
+}
+
+.reportBlock .ratingLabel { margin: 0; color: var(--rewind-muted); font-size: 14px; }
+.reportLabel { color: #ddd6e3; font-size: 13px; }
+.reportSelect,
+.reportButton {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid rgba(255, 255, 255, .2);
+  border-radius: 10px;
+  background: #211f23;
+  color: #fff;
+  font: inherit;
+}
+.reportSelect { padding: 8px 12px; }
+.reportButton { padding: 9px 14px; cursor: pointer; font-weight: 700; }
+.reportButton:hover:not(:disabled) { background: #38343d; }
+.reportButton:disabled { cursor: wait; opacity: .62; }
+.reportSelect:focus-visible,
+.reportButton:focus-visible { outline: 3px solid #64dbe2; outline-offset: 3px; }
+
 .likeButton {
   display: inline-flex;
   align-items: center;

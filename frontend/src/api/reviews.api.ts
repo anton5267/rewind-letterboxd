@@ -47,7 +47,13 @@ export interface ReviewDetails {
   likedBy: { id: number; username: string; displayName: string | null; avatarUrl: string | null }[];
 }
 
+export type ReviewReportReason = "SPAM" | "INAPPROPRIATE_CONTENT" | "BULLYING";
+export interface ReviewReport { id: number; reason: ReviewReportReason; createdAt: string }
+export interface ReviewReportStatus { reported: boolean; report: ReviewReport | null }
+
 export const getReviewDetails = (id: number) => api.get<ReviewDetails>(`/reviews/${id}`);
+export const getMyReviewReport = (id: number) => api.get<ReviewReportStatus>(`/reviews/${id}/report`);
+export const reportReview = (id: number, reason: ReviewReportReason) => api.post<ReviewReport>(`/reviews/${id}/report`, { reason });
 export const getRecentReviews = (page = 0, size = 20) => api.get<ReviewFeedPage>("/reviews/recent", { params: { page, size } });
 export const getPopularReviews = (page = 0, size = 6) => api.get<ReviewFeedPage>("/reviews/popular", { params: { page, size } });
 export const getReviewLikeStatus = (id: number) => api.get<{ liked: boolean; likes: number }>(`/reviews/${id}/like-status`);

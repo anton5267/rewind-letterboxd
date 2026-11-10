@@ -1,6 +1,6 @@
 import AdminLoading from "./AdminLoading";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { deleteAdminReview, getAdminReviews, setAdminReviewHidden, type AdminReview } from "../api/admin.api";
+import { deleteAdminReview, getAdminReportedReviews, getAdminReviews, setAdminReviewHidden, type AdminReportedReview, type AdminReview } from "../api/admin.api";
 import type { Page } from "../api/types";
 import { useAuth } from "../context/AuthContext";
 import Pagination from "./Pagination";
@@ -10,7 +10,7 @@ import { getUserName } from "../utils/userIdentity";
 import styles from "./AdminShared.module.css";
 import dialogStyles from "./AdminConfirmDialog.module.css";
 
-type VisibilityFilter = "all" | "visible" | "hidden";
+type VisibilityFilter = "all" | "visible" | "hidden" | "reported";
 
 const hiddenValue = (filter: VisibilityFilter) => filter === "all" ? undefined : filter === "hidden";
 export default function AdminReviews() {
@@ -108,7 +108,7 @@ export default function AdminReviews() {
     setLoading(true);
     setError(false);
     setData(null);
-    getAdminReviews(page, hiddenValue(filter))
+    (filter === "reported" ? getAdminReportedReviews(page) : getAdminReviews(page, hiddenValue(filter)))
       .then(({ data: response }) => {
         if (!current) return;
         const lastPage = Math.max(0, response.totalPages - 1);
@@ -152,7 +152,7 @@ export default function AdminReviews() {
       }
       reloadFocusOrigin.current = origin;
       focusAfterReload.current = true;
-      const leavesFilter = filter !== "all" && updated.isHidden !== hiddenValue(filter);
+      const leavesFilter = filter === "reported" || (filter !== "all" && updated.isHidden !== hiddenValue(filter));
       if (leavesFilter) {
         if (data?.content.length === 1 && page > 0) setPage(value => value - 1);
         else setRevision(value => value + 1);
@@ -257,6 +257,7 @@ export default function AdminReviews() {
         <option value="all">{t("allVisibilityStates")}</option>
         <option value="visible">{t("visibleOnly")}</option>
         <option value="hidden">{t("hiddenOnly")}</option>
+        <option value="reported">{t("reportedReviewsOnly")}</option>
       </select>
     </label>
     {loading && <AdminLoading label={t("loading")} layout="reviews" />}
@@ -265,13 +266,18 @@ export default function AdminReviews() {
     {data && <>
       <ul className={styles.list}>{data.content.map(review => {
         const movieTitle = editorialText(review.movieTitle, t("untitledFilm"));
-        return <li className={styles.row} key={review.id}>
+        const report = filter === "reported" ? review as AdminReportedReview : null;
+        const reportReasonKey = report?.reportReason === "SPAM" ? "reviewReportReason_SPAM"
+          : report?.reportReason === "INAPPROPRIATE_CONTENT" ? "reviewReportReason_INAPPROPRIATE_CONTENT"
+            : report?.reportReason === "BULLYING" ? "reviewReportReason_BULLYING" : null;
+        return <li className={styles.row} key={report?.reportId ?? review.id}>
           <div className={styles.reviewMain}>
             <div className={styles.reviewIdentity}>
               <strong>{movieTitle}</strong>
               <span>{getUserName({ username: review.username }, t("someone"))}</span>
             </div>
             <p className={styles.reviewText}>{review.content}</p>
+            {report && <p className={styles.reviewStatus}>{t("reportedReason")}: {reportReasonKey ? t(reportReasonKey) : report.reportReason}</p>}
           </div>
           <div className={styles.reviewSide}>
             <div className={styles.reviewRating}>
@@ -279,10 +285,11 @@ export default function AdminReviews() {
               <strong>{review.rating !== null && <img src="/images/admin-review-star.svg" alt="" />} {review.rating ?? "—"}</strong>
             </div>
             <div className={styles.reviewDate}>
-              <span>{t("year")}</span>
-              <time dateTime={review.createdAt}>{formatReviewDate(review.createdAt, lang)}</time>
+              <span>{report ? t("reportedOn") : t("year")}</span>
+              <time dateTime={report?.reportCreatedAt ?? review.createdAt}>{formatReviewDate(report?.reportCreatedAt ?? review.createdAt, lang)}</time>
             </div>
             <p className={styles.reviewStatus}>{review.isHidden ? t("hiddenReview") : t("visibleReview")}</p>
+            {report && <p className={styles.reviewStatus}>{t("likes")}: {report.likesCount} · {t("reportCommentsCount")}: {report.commentsCount}</p>}
             <div className={styles.rowActions}>
               <button type="button" aria-busy={busyId === review.id} disabled={busyId !== null} onClick={event => void toggleHidden(review, event.currentTarget)}>{busyId === review.id ? t("loading") : review.isHidden ? t("unhideReview") : t("hideReview")}</button>
               <button type="button" aria-busy={busyId === review.id} disabled={busyId !== null} onClick={event => requestDelete(review, event.currentTarget)}>{busyId === review.id ? t("loading") : t("deleteReview")}</button>

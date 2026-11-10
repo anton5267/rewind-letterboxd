@@ -39,6 +39,10 @@ import {
   type JournalArchiveEntry,
   type AdminJournalArticleRequest,
   type AdminReviewResponse,
+  type AdminReportedReviewResponse,
+  type ReviewReportReason,
+  type ReviewReportResponse,
+  type ReviewReportStatusResponse,
   type AdminCommentResponse,
   type AdminModerationQueueItem,
   type AdminModerationTarget,
@@ -1622,6 +1626,43 @@ const handler = createRewindApiHandler({
       ]);
       await connection.queryObject("COMMIT");
       return pageResult(rows.rows.map(toAdminReview), count.rows[0]?.total ?? "0", page, size);
+    } catch (error) {
+      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+      throw error;
+    } finally { connection.release(); }
+  },
+  async getAdminReportedReviews(authUser, page, size): Promise<{ content: AdminReportedReviewResponse[]; totalPages: number; totalElements: number; number: number }> {
+    const { connection } = await beginAdminTransaction(authUser);
+    try {
+      const [count, rows] = await Promise.all([
+        connection.queryObject<{ total: string }>({ text: "SELECT COUNT(*)::text AS total FROM rewind.review_reports" }),
+        connection.queryObject<{
+          report_id: string; report_reason: string; report_created_at: string;
+          id: string; movie_id: string; movie_title: string; user_id: string; username: string; content: string;
+          rating: number | null; is_hidden: boolean; moderated_reason: string | null; moderated_at: string | null; created_at: string;
+          likes_count: string; comments_count: string;
+        }>({
+          text: `SELECT rr.id::text AS report_id, rr.reason AS report_reason, rr.created_at::text AS report_created_at,
+                       r.id::text AS id, r.movie_id::text AS movie_id, m.title AS movie_title,
+                       r.user_id::text AS user_id, u.username, r.content, r.rating::int AS rating, r.is_hidden,
+                       r.moderated_reason, r.moderated_at::text AS moderated_at, r.created_at::text AS created_at,
+                       (SELECT COUNT(*)::text FROM rewind.review_likes rl WHERE rl.review_id=r.id) AS likes_count,
+                       (SELECT COUNT(*)::text FROM rewind.comments c WHERE c.review_id=r.id AND c.is_hidden=FALSE) AS comments_count
+                FROM rewind.review_reports rr
+                JOIN rewind.reviews r ON r.id=rr.review_id
+                JOIN rewind.movies m ON m.id=r.movie_id
+                JOIN rewind.users u ON u.id=r.user_id
+                ORDER BY rr.created_at DESC, rr.id DESC
+                LIMIT $1 OFFSET $2`, args: [size, page * size],
+        }),
+      ]);
+      const content = rows.rows.map(row => ({
+        ...toAdminReview(row), reportId: safeId(row.report_id, "Report ID"),
+        reportReason: row.report_reason as ReviewReportReason, reportCreatedAt: row.report_created_at,
+        likesCount: Number(row.likes_count), commentsCount: Number(row.comments_count),
+      }));
+      await connection.queryObject("COMMIT");
+      return pageResult(content, count.rows[0]?.total ?? "0", page, size);
     } catch (error) {
       try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
       throw error;
@@ -3399,6 +3440,66 @@ const handler = createRewindApiHandler({
       await connection.queryObject("COMMIT");
       if (result.rows.length === 0) throw new RewindApiError(400, "Review not found");
       return true;
+    } catch (error) {
+      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+      throw error;
+    } finally { connection.release(); }
+  },
+  async getMyReviewReport(authUser, reviewId): Promise<ReviewReportStatusResponse | null> {
+    const { connection, userId } = await beginUserTransaction(authUser);
+    try {
+      const visible = await connection.queryObject<{ id: string; user_id: string }>(
+        { text: `SELECT r.id::text AS id, r.user_id::text AS user_id
+                 FROM rewind.reviews r JOIN rewind.users author ON author.id=r.user_id
+                 WHERE r.id=$1 AND r.is_hidden=FALSE AND author.is_active=TRUE`, args: [reviewId] },
+      );
+      if (!visible.rows[0]) { await connection.queryObject("COMMIT"); return null; }
+      if (safeId(visible.rows[0].user_id, "Review author ID") === userId) {
+        await connection.queryObject("COMMIT");
+        return { reported: false, report: null };
+      }
+      const result = await connection.queryObject<{ id: string; reason: ReviewReportReason; created_at: string }>({
+        text: `SELECT id::text AS id, reason, created_at::text AS created_at
+               FROM rewind.review_reports WHERE review_id=$1 AND reporter_id=$2`, args: [reviewId, userId],
+      });
+      await connection.queryObject("COMMIT");
+      const row = result.rows[0];
+      return row ? { reported: true, report: { id: safeId(row.id, "Report ID"), reason: row.reason, createdAt: row.created_at } }
+        : { reported: false, report: null };
+    } catch (error) {
+      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+      throw error;
+    } finally { connection.release(); }
+  },
+  async reportReview(authUser, reviewId, reason): Promise<ReviewReportResponse | null> {
+    const { connection, userId } = await beginUserTransaction(authUser);
+    try {
+      const findExisting = async () => connection.queryObject<{ id: string; reason: ReviewReportReason; created_at: string }>({
+        text: `SELECT rr.id::text AS id, rr.reason, rr.created_at::text AS created_at
+               FROM rewind.review_reports rr
+               JOIN rewind.reviews r ON r.id=rr.review_id
+               JOIN rewind.users author ON author.id=r.user_id
+               WHERE rr.review_id=$1 AND rr.reporter_id=$2 AND r.is_hidden=FALSE AND author.is_active=TRUE`,
+        args: [reviewId, userId],
+      });
+      const existing = await findExisting();
+      if (existing.rows[0]) {
+        const row = existing.rows[0];
+        await connection.queryObject("COMMIT");
+        return { id: safeId(row.id, "Report ID"), reason: row.reason, createdAt: row.created_at };
+      }
+      const inserted = await connection.queryObject<{ id: string; reason: ReviewReportReason; created_at: string }>({
+        text: `INSERT INTO rewind.review_reports (review_id, reporter_id, reason)
+               SELECT r.id, $2, $3
+               FROM rewind.reviews r JOIN rewind.users author ON author.id=r.user_id
+               WHERE r.id=$1 AND r.user_id<>$2 AND r.is_hidden=FALSE AND author.is_active=TRUE
+               ON CONFLICT (review_id, reporter_id) DO NOTHING
+               RETURNING id::text AS id, reason, created_at::text AS created_at`,
+        args: [reviewId, userId, reason],
+      });
+      const row = inserted.rows[0] ?? (await findExisting()).rows[0];
+      await connection.queryObject("COMMIT");
+      return row ? { id: safeId(row.id, "Report ID"), reason: row.reason, createdAt: row.created_at } : null;
     } catch (error) {
       try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
       throw error;

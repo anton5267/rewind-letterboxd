@@ -12,6 +12,7 @@ export interface AdminComment { id: number; reviewId: number; userId: number; us
 export interface AdminArticle { id: number; slug: string; language: string; category: string; title: string; excerpt: string | null; content: string; coverUrl: string | null; audioUrl: string | null; publishedAt: string | null }
 export interface NewsletterDeliveryStatus { articleId: number; pending: number; sending: number; sent: number; failed: number; cancelled: number }
 export interface AdminReview { id: number; movieId: number; movieTitle: string; userId: number; username: string; content: string; rating: number | null; isHidden: boolean; moderatedReason: string | null; moderatedAt: string | null; createdAt: string }
+export interface AdminReportedReview extends AdminReview { reportId: number; reportReason: "SPAM" | "INAPPROPRIATE_CONTENT" | "BULLYING"; reportCreatedAt: string; likesCount: number; commentsCount: number }
 export interface AdminMovie { id: number; tmdbId: number | null; title: string; releaseDate: string | null; rating: number | null; photoUrl: string | null }
 export interface AdminMovieWrite { title: string; imdbId?: string | null; durationMinutes?: number | null; releaseDate?: string | null; ageRating?: string | null; rating?: number | null; shortPlot?: string | null; photoUrl?: string | null; backdropUrl?: string | null; trailerUrl?: string | null }
 export interface TmdbSyncResponse { movieId: number; tmdbId: number; title: string; genresUpdated: number; actorsUpdated: number; directorsUpdated: number; producersUpdated: number; similarMoviesLinked: number; trailerUpdated: boolean }
@@ -46,6 +47,7 @@ export const updateAdminArticle = (id: number, article: AdminArticleWrite) => ap
 export const queueAdminNewsletter = (articleId: number) => api.post<{ articleId: number; recipients: number }>(`/admin/journal/articles/${articleId}/newsletter`);
 export const getAdminNewsletterStatus = (articleId: number) => api.get<NewsletterDeliveryStatus>(`/admin/journal/articles/${articleId}/newsletter`);
 export const getAdminReviews = (page = 0, hidden?: boolean) => api.get<Page<AdminReview>>("/admin/reviews", { params: { size: 50, page, ...(hidden === undefined ? {} : { hidden }) } });
+export const getAdminReportedReviews = (page = 0) => api.get<Page<AdminReportedReview>>("/admin/reported-reviews", { params: { size: 50, page } });
 export const setAdminReviewHidden = (id: number, hidden: boolean, reason = "") => api.post<AdminReview>(`/admin/reviews/${id}/${hidden ? "hide" : "unhide"}`, { reason });
 export const deleteAdminReview = (id: number) => api.delete<void>(`/admin/reviews/${id}`);
 export const getAdminMovies = (page = 0, size = 50, query = "") => api.get<Page<AdminMovie>>("/admin/movies", { params: { size, page, ...(query ? { q: query } : {}) } });

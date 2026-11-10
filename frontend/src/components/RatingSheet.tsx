@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { getUserRating, setRating as setMovieRating } from "../api/ratings.api";
+import { getMyReviewReport, reportReview, type ReviewReportReason } from "../api/reviews.api";
 import RetryButton from "./RetryButton";
 import { useLocale } from "../i18n";
 import { useDialogFocusTrap } from "../hooks/useDialogFocusTrap";
@@ -19,6 +20,7 @@ interface RatingSheetProps {
   onRetryLike: () => void;
   onToggleLike: () => void;
   onClose: () => void;
+  reportReviewId?: number;
 }
 
 export default function RatingSheet({
@@ -35,6 +37,7 @@ export default function RatingSheet({
   onRetryLike,
   onToggleLike,
   onClose,
+  reportReviewId,
 }: RatingSheetProps) {
   const { t } = useLocale();
   const [rating, setRating] = useState(0);
@@ -43,6 +46,12 @@ export default function RatingSheet({
   const [ratingSaveError, setRatingSaveError] = useState(false);
   const [ratingAttempt, setRatingAttempt] = useState(0);
   const [ratingBusy, setRatingBusy] = useState(false);
+  const [reportReason, setReportReason] = useState<ReviewReportReason>("SPAM");
+  const [reportStatus, setReportStatus] = useState<{ reported: boolean; reason: ReviewReportReason | null } | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportAttempt, setReportAttempt] = useState(0);
+  const [reportBusy, setReportBusy] = useState(false);
+  const [reportError, setReportError] = useState(false);
   const requestIdentity = useRef(0);
   const doneButtonRef = useRef<HTMLButtonElement>(null);
   const likeButtonRef = useRef<HTMLButtonElement>(null);
@@ -121,6 +130,18 @@ export default function RatingSheet({
     };
   }, [movieId, ratingAttempt]);
 
+  useEffect(() => {
+    if (!reportReviewId) return;
+    let current = true;
+    setReportLoading(true);
+    setReportError(false);
+    getMyReviewReport(reportReviewId)
+      .then(({ data }) => { if (current) setReportStatus({ reported: data.reported, reason: data.report?.reason ?? null }); })
+      .catch(() => { if (current) setReportError(true); })
+      .finally(() => { if (current) setReportLoading(false); });
+    return () => { current = false; };
+  }, [reportReviewId, reportAttempt]);
+
   const saveRating = async (value: number) => {
     if (ratingBusy || ratingLoading) return;
     const requestId = ++requestIdentity.current;
@@ -134,6 +155,20 @@ export default function RatingSheet({
       if (requestId === requestIdentity.current) setRatingSaveError(true);
     } finally {
       if (requestId === requestIdentity.current) setRatingBusy(false);
+    }
+  };
+
+  const submitReport = async () => {
+    if (!reportReviewId || reportBusy || reportLoading || reportError || reportStatus?.reported) return;
+    setReportBusy(true);
+    setReportError(false);
+    try {
+      const { data } = await reportReview(reportReviewId, reportReason);
+      setReportStatus({ reported: true, reason: data.reason });
+    } catch {
+      setReportError(true);
+    } finally {
+      setReportBusy(false);
     }
   };
 
@@ -204,6 +239,22 @@ export default function RatingSheet({
       </div>}
 
       {likeStatusError && !subtitle && <p className={styles.error} data-like-status-error role="alert">{t("likeReviewError")} <RetryButton label={t("retry")} size="large" onClick={retryLikeStatus} /></p>}
+
+      {subtitle && reportReviewId !== undefined && <div className={styles.reportBlock}>
+        <p className={styles.ratingLabel}>{t("reportReview")}</p>
+        {reportLoading && <p className={styles.status} role="status">{t("loading")}</p>}
+        {reportError && <p className={styles.error} role="alert">{t("reportReviewError")} <button type="button" onClick={() => setReportAttempt(value => value + 1)}>{t("retry")}</button></p>}
+        {!reportLoading && !reportError && reportStatus?.reported && <p className={styles.status} role="status">{t("reviewReported")}{reportStatus.reason ? ` · ${t(`reviewReportReason_${reportStatus.reason}`)}` : ""}</p>}
+        {!reportLoading && !reportError && !reportStatus?.reported && <>
+          <label className={styles.reportLabel} htmlFor="review-report-reason">{t("reportedReason")}</label>
+          <select id="review-report-reason" className={styles.reportSelect} value={reportReason} onChange={event => setReportReason(event.target.value as ReviewReportReason)}>
+            <option value="SPAM">{t("reviewReportReason_SPAM")}</option>
+            <option value="INAPPROPRIATE_CONTENT">{t("reviewReportReason_INAPPROPRIATE_CONTENT")}</option>
+            <option value="BULLYING">{t("reviewReportReason_BULLYING")}</option>
+          </select>
+          <button className={styles.reportButton} type="button" disabled={reportBusy} aria-busy={reportBusy} onClick={() => void submitReport()}>{reportBusy ? t("loading") : t("submitReport")}</button>
+        </>}
+      </div>}
 
       {!subtitle && <div className={styles.ratingBlock}>
         <p className={styles.ratingLabel}>{t("myRating")}</p>

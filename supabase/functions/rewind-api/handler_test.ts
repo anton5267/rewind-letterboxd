@@ -81,6 +81,43 @@ Deno.test("GET /api/users/me rejects an inactive REWIND account", async () => {
   if (response.status !== 403) throw new Error(`Expected inactive account to return 403, got ${response.status}`);
 });
 
+Deno.test("review reports require authentication, validate reasons, preserve own report status, and populate the admin queue", async () => {
+  const calls: unknown[] = [];
+  const handler = authHandler({
+    async getMyReviewReport(_user, reviewId) {
+      calls.push(["status", reviewId]);
+      return { reported: true, report: { id: 9, reason: "SPAM", createdAt: "2026-11-10T12:00:00Z" } };
+    },
+    async reportReview(_user, reviewId, reason) {
+      calls.push(["report", reviewId, reason]);
+      return { id: 9, reason, createdAt: "2026-11-10T12:00:00Z" };
+    },
+    async getAdminReportedReviews(_user, page, size) {
+      calls.push(["admin-reports", page, size]);
+      return { content: [{ id: 4, movieId: 7, movieTitle: "Film", userId: 3, username: "member", content: "Review",
+        rating: 4, isHidden: false, moderatedReason: null, moderatedAt: null, createdAt: "2026-11-08T12:00:00Z",
+        reportId: 9, reportReason: "SPAM", reportCreatedAt: "2026-11-10T12:00:00Z", likesCount: 2, commentsCount: 1 }],
+        totalPages: 1, totalElements: 1, number: page };
+    },
+  });
+  const headers = { Authorization: "Bearer valid-token", "Content-Type": "application/json" };
+  const unauthorized = await authHandler({})(new Request("https://project.supabase.co/api/reviews/4/report", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason: "SPAM" }) }));
+  const status = await handler(new Request("https://project.supabase.co/api/reviews/4/report", { headers }));
+  const invalid = await handler(new Request("https://project.supabase.co/api/reviews/4/report", { method: "POST", headers, body: JSON.stringify({ reason: "OTHER" }) }));
+  const submitted = await handler(new Request("https://project.supabase.co/api/reviews/4/report", { method: "POST", headers, body: JSON.stringify({ reason: "BULLYING" }) }));
+  const queue = await handler(new Request("https://project.supabase.co/api/admin/reported-reviews?page=2&size=100", { headers }));
+  const deniedQueue = await authHandler({ async getAdminReportedReviews() { throw new RewindApiError(403, "Administrator access required"); } })(
+    new Request("https://project.supabase.co/api/admin/reported-reviews", { headers }));
+  if (unauthorized.status !== 401 || status.status !== 200 || !(await status.json()).reported
+    || invalid.status !== 400 || submitted.status !== 200 || (await submitted.json()).reason !== "BULLYING"
+    || queue.status !== 200 || (await queue.json()).content[0].commentsCount !== 1
+    || deniedQueue.status !== 403 || JSON.stringify(calls) !== JSON.stringify([
+      ["status", 4], ["report", 4, "BULLYING"], ["admin-reports", 2, 50],
+    ])) {
+    throw new Error(`Review report contract changed: ${JSON.stringify({ calls, statuses: [status.status, invalid.status, submitted.status, queue.status, deniedQueue.status] })}`);
+  }
+});
+
 Deno.test("DELETE /api/profile/me verifies the current password before deleting", async () => {
   let verifiedUserId = "";
   let verifiedPassword = "";

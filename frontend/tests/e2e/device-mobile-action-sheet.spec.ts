@@ -86,6 +86,8 @@ test("mobile touch flow for Movie ActionSheet in Android and iOS browser emulati
 
 test("mobile touch flow for Review RatingSheet in Android and iOS browser emulation", async ({ page }, testInfo) => {
   const mutations: string[] = [];
+  let reported = false;
+  let submittedReason: string | null = null;
   await page.route(url => url.pathname.startsWith("/api/"), async route => {
     const request = route.request();
     const { pathname } = new URL(request.url());
@@ -99,6 +101,15 @@ test("mobile touch flow for Review RatingSheet in Android and iOS browser emulat
       likes: 3, likedBy: [],
     } });
     if (pathname === "/api/reviews/99001/like-status") return route.fulfill({ json: { liked: false, likes: 3 } });
+    if (pathname === "/api/reviews/99001/report" && request.method() === "GET") {
+      return route.fulfill({ json: { reported, report: reported ? { id: 17, reason: submittedReason, createdAt: "2026-11-10T12:00:00Z" } : null } });
+    }
+    if (pathname === "/api/reviews/99001/report" && request.method() === "POST") {
+      submittedReason = (request.postDataJSON() as { reason: string }).reason;
+      reported = true;
+      mutations.push("report-review");
+      return route.fulfill({ json: { id: 17, reason: submittedReason, createdAt: "2026-11-10T12:00:00Z" } });
+    }
     if (pathname === "/api/movies/35/rating/me") return route.fulfill({ json: { rating: 0 } });
     if (request.method() === "POST" && pathname === "/api/reviews/99001/likes") {
       mutations.push("like-review");
@@ -119,6 +130,11 @@ test("mobile touch flow for Review RatingSheet in Android and iOS browser emulat
   const dialog = page.getByRole("dialog", { name: "Dune" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Готово", exact: true })).toBeFocused();
+  await expect(dialog.getByLabel("Причина скарги")).toBeVisible();
+  await dialog.getByLabel("Причина скарги").selectOption("BULLYING");
+  await activate(dialog.getByRole("button", { name: "Надіслати скаргу", exact: true }), testInfo.project.name);
+  await expect(dialog.getByRole("status").filter({ hasText: "Скаргу надіслано." })).toBeVisible();
+  expect(submittedReason).toBe("BULLYING");
 
   const captureDirectory = resolve(process.cwd(), "../artifacts/visual-audit-20261102/device-emulation");
   await mkdir(captureDirectory, { recursive: true });
@@ -129,7 +145,7 @@ test("mobile touch flow for Review RatingSheet in Android and iOS browser emulat
   await expect.poll(() => mutations.includes("like-review")).toBe(true);
   await activate(dialog.getByRole("button", { name: "Оцінити на 5", exact: true }), testInfo.project.name);
   await expect.poll(() => mutations.includes("rate-movie")).toBe(true);
-  expect(mutations).toEqual(["like-review", "rate-movie"]);
+  expect(mutations).toEqual(["report-review", "like-review", "rate-movie"]);
   await activate(dialog.getByRole("button", { name: "Готово", exact: true }), testInfo.project.name);
   await expect(dialog).toBeHidden();
   await expect(more).toBeFocused();
