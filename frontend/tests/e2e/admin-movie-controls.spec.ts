@@ -6,6 +6,8 @@ async function adminMovieFixture(page: Page) {
   const emptyPage = { content: [], totalPages: 0, totalElements: 0 };
   const writes: { path: string; data: unknown }[] = [];
   const candidateSearches: string[] = [];
+  let batchSyncRequestCount = 0;
+  let failedBatchSyncRequest: number | null = null;
   await page.route(/^https?:\/\/[^/]+\/api\//, route => {
     const request = route.request();
     const url = new URL(request.url());
@@ -13,6 +15,12 @@ async function adminMovieFixture(page: Page) {
       writes.push({ path: url.pathname, data: request.postDataJSON() });
       if (url.pathname === `/api/admin/movies/${movie.id}/tmdb-sync`) return route.fulfill({ json: { movieId: movie.id, tmdbId: request.postDataJSON().tmdbId, title: movie.title, genresUpdated: 0, actorsUpdated: 0, directorsUpdated: 0, producersUpdated: 0, similarMoviesLinked: 0, trailerUpdated: false } });
       if (url.pathname === "/api/admin/movies/tmdb-import") return route.fulfill({ json: { requested: request.postDataJSON().tmdbIds.length, succeeded: 0, failed: 0, items: [] } });
+      if (url.pathname === "/api/admin/movies/tmdb-sync/batch") {
+        batchSyncRequestCount += 1;
+        if (batchSyncRequestCount === failedBatchSyncRequest) return route.abort();
+        const body = request.postDataJSON();
+        return route.fulfill({ json: { requested: body.movies.length, succeeded: body.movies.length, failed: 0, items: body.movies.map((pair: { movieId: number; tmdbId: number }) => ({ ...pair, status: "SYNCED", title: movie.title, message: "Movie metadata synchronized" })) } });
+      }
       return route.abort();
     }
     if (url.pathname === "/api/users/me") return route.fulfill({ json: { id: 940100, username: "movie-controls-admin", role: "ADMIN" } });
@@ -35,7 +43,7 @@ async function adminMovieFixture(page: Page) {
   await page.goto("/en/admin?view=movies");
   const movies = page.getByRole("region", { name: "Film database", exact: true });
   await expect(movies).toHaveAttribute("aria-busy", "false");
-  return { movie, movies, writes, candidateSearches };
+  return { movie, movies, writes, candidateSearches, failBatchSyncRequest: (number: number) => { failedBatchSyncRequest = number; } };
 }
 
 test("single TMDB sync rejects malformed IDs and submits the exact valid ID", async ({ page }) => {
@@ -90,6 +98,47 @@ test("batch TMDB import rejects the whole invalid input and deduplicates valid I
   await submit.click();
   await expect(movies.getByRole("status").filter({ hasText: "Import completed" })).toBeVisible();
   expect(writes).toEqual([{ path: "/api/admin/movies/tmdb-import", data: { tmdbIds: [550, 603], syncSimilar: true } }]);
+});
+
+test("bulk TMDB sync validates unique ID pairs and submits them through the sync route", async ({ page }) => {
+  const { movies, writes } = await adminMovieFixture(page);
+  await movies.locator("summary").filter({ hasText: "Add film" }).click();
+  const form = movies.getByRole("form", { name: "Bulk catalog sync" });
+  const field = form.getByRole("textbox", { name: "Film ID pairs" });
+  const submit = form.getByRole("button", { name: "Sync pairs" });
+  const invalidInputs = ["", "1,abc", "0,550", "1,550\n1,603", "1,550\n2,550", Array.from({ length: 51 }, (_, index) => `${index + 1},${index + 1000}`).join("\n")];
+  for (const invalid of invalidInputs) {
+    await field.fill(invalid);
+    await submit.click();
+    await expect(form.getByRole("alert")).toHaveText("Enter 1–50 pairs with unique positive REWIND and TMDB IDs.");
+    expect(writes).toEqual([]);
+  }
+  await field.fill("940001,550");
+  page.once("dialog", dialog => dialog.dismiss());
+  await submit.click();
+  expect(writes).toEqual([]);
+  await field.fill("movie_id,tmdb_id\n000940001,000550\n940002,603");
+  page.once("dialog", dialog => dialog.accept());
+  await submit.click();
+  await expect(form.getByRole("status")).toHaveText("Bulk sync finished: 2/2");
+  expect(writes).toEqual([{ path: "/api/admin/movies/tmdb-sync/batch", data: { movies: [{ movieId: 940001, tmdbId: 550 }, { movieId: 940002, tmdbId: 603 }], syncSimilar: false } }]);
+});
+
+test("bulk TMDB sync chunks requests and reports unknown outcomes without auto-retrying", async ({ page }) => {
+  const { movies, writes, failBatchSyncRequest } = await adminMovieFixture(page);
+  failBatchSyncRequest(2);
+  await movies.locator("summary").filter({ hasText: "Add film" }).click();
+  const form = movies.getByRole("form", { name: "Bulk catalog sync" });
+  const pairs = Array.from({ length: 21 }, (_, index) => `${index + 1},${index + 1000}`).join("\n");
+  await form.getByRole("textbox", { name: "Film ID pairs" }).fill(pairs);
+  page.once("dialog", dialog => dialog.accept());
+  await form.getByRole("button", { name: "Sync pairs" }).click();
+  await expect(form.getByRole("alert")).toHaveText("A batch did not return a response. Check movie data before retrying unconfirmed pairs.: 20/21");
+  await expect(form.getByText("The outcome for these pairs is unknown; check them in the catalog first:")).toBeVisible();
+  await expect(form.getByText("21 → 1020")).toBeVisible();
+  expect(writes).toHaveLength(2);
+  expect(writes[0]?.data).toMatchObject({ movies: expect.arrayContaining([{ movieId: 1, tmdbId: 1000 }, { movieId: 20, tmdbId: 1019 }]), syncSimilar: false });
+  expect(writes[1]?.data).toEqual({ movies: [{ movieId: 21, tmdbId: 1020 }], syncSimilar: false });
 });
 
 for (const width of [320, 1440]) {

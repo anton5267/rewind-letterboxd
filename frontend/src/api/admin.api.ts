@@ -19,6 +19,8 @@ export interface AdminMovieWrite { title: string; imdbId?: string | null; durati
 export interface TmdbSyncResponse { movieId: number; tmdbId: number; title: string; genresUpdated: number; actorsUpdated: number; directorsUpdated: number; producersUpdated: number; similarMoviesLinked: number; trailerUpdated: boolean }
 export interface TmdbImportItem { movieId: number | null; tmdbId: number; status: "IMPORTED" | "FAILED"; title: string | null; message: string }
 export interface TmdbBatchSyncResponse { requested: number; succeeded: number; failed: number; items: TmdbImportItem[] }
+export interface TmdbSyncBatchItem { movieId: number | null; tmdbId: number; status: "SYNCED" | "FAILED"; title: string | null; message: string }
+export interface TmdbSyncBatchResponse { requested: number; succeeded: number; failed: number; items: TmdbSyncBatchItem[] }
 export interface TmdbDiscoveryRequest { page: number; year?: number; genreId?: number; minRating?: number; limit: number; syncSimilar?: boolean }
 export interface TmdbDiscoveryImportResponse { page: number; totalPages: number; totalResults: number; discovered: number; imports: TmdbBatchSyncResponse }
 export interface TmdbQualityReport { totalMovies: number; tmdbLinkedMovies: number; completeTmdbMovies: number; missingPoster: number; missingBackdrop: number; missingPlot: number; missingRuntime: number; missingTrailer: number; missingTmdbRating: number; linkedCoveragePercent: number; metadataCompletenessPercent: number }
@@ -57,6 +59,7 @@ export const createAdminMovie = (movie: AdminMovieWrite) => api.post<AdminMovie>
 export const updateAdminMovie = (id: number, movie: Partial<AdminMovieWrite>) => api.put<AdminMovie>(`/admin/movies/${id}`, movie);
 export const deleteAdminMovie = (id: number) => api.delete<void>(`/admin/movies/${id}`);
 export const syncAdminMovieTmdb = (id: number, tmdbId: number, syncSimilar = true) => api.post<TmdbSyncResponse>(`/admin/movies/${id}/tmdb-sync`, { tmdbId, syncSimilar });
+export const syncAdminMoviesTmdb = (movies: Array<{ movieId: number; tmdbId: number }>) => api.post<TmdbSyncBatchResponse>("/admin/movies/tmdb-sync/batch", { movies, syncSimilar: false });
 export const getAdminMovieTmdbCandidates = (id: number) => api.get<AdminTmdbMovieCandidate[]>(`/admin/movies/${id}/tmdb-candidates`);
 export const importAdminTmdb = (tmdbIds: number[], syncSimilar = true) => api.post<TmdbBatchSyncResponse>("/admin/movies/tmdb-import", { tmdbIds, syncSimilar });
 export const discoverAndImportAdminTmdb = (request: TmdbDiscoveryRequest) => api.post<TmdbDiscoveryImportResponse>("/admin/movies/tmdb-import/discover", { ...request, syncSimilar: request.syncSimilar ?? true });

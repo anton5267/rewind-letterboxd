@@ -9,12 +9,14 @@ import {
   getAdminTmdbQuality,
   importAdminTmdb,
   syncAdminMovieTmdb,
+  syncAdminMoviesTmdb,
   updateAdminMovie,
   type AdminMovie,
   type AdminMovieWrite,
   type AdminTmdbMovieCandidate,
   type TmdbDiscoveryRequest,
   type TmdbQualityReport,
+  type TmdbSyncBatchItem,
 } from "../api/admin.api";
 import type { Page } from "../api/types";
 import { getMovieDetails } from "../api/movies.api";
@@ -43,6 +45,23 @@ const parseTmdbIds = (value: string): number[] | null => {
   const ids = value.trim().split(/[\s,]+/).filter(Boolean).map(parseTmdbId);
   if (ids.some(id => id === null)) return null;
   return [...new Set(ids.filter((id): id is number => id !== null))];
+};
+
+const parseTmdbSyncPairs = (value: string): Array<{ movieId: number; tmdbId: number }> | null => {
+  const lines = value.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+  if (lines[0]?.toLowerCase() === "movie_id,tmdb_id") lines.shift();
+  if (lines.length < 1 || lines.length > 50) return null;
+  const pairs: Array<{ movieId: number; tmdbId: number }> = [];
+  for (const line of lines) {
+    const columns = line.split(/[\t,;]/).map(column => column.trim());
+    if (columns.length !== 2) return null;
+    const movieId = parseTmdbId(columns[0] ?? ""), tmdbId = parseTmdbId(columns[1] ?? "");
+    if (movieId === null || tmdbId === null) return null;
+    pairs.push({ movieId, tmdbId });
+  }
+  if (new Set(pairs.map(pair => pair.movieId)).size !== pairs.length
+    || new Set(pairs.map(pair => pair.tmdbId)).size !== pairs.length) return null;
+  return pairs;
 };
 
 const tmdbSearchHref = (movie: AdminMovie) => {
@@ -83,6 +102,12 @@ export default function AdminMovies({ onTotalChange }: Props) {
   const [tmdbImportBusy, setTmdbImportBusy] = useState(false);
   const [tmdbImportMessage, setTmdbImportMessage] = useState<string | null>(null);
   const [tmdbImportError, setTmdbImportError] = useState(false);
+  const [tmdbSyncPairs, setTmdbSyncPairs] = useState("");
+  const [tmdbSyncBatchBusy, setTmdbSyncBatchBusy] = useState(false);
+  const [tmdbSyncBatchMessage, setTmdbSyncBatchMessage] = useState<string | null>(null);
+  const [tmdbSyncBatchError, setTmdbSyncBatchError] = useState(false);
+  const [tmdbSyncBatchFailures, setTmdbSyncBatchFailures] = useState<TmdbSyncBatchItem[]>([]);
+  const [tmdbSyncBatchUnconfirmed, setTmdbSyncBatchUnconfirmed] = useState<Array<{ movieId: number; tmdbId: number }>>([]);
   const [syncError, setSyncError] = useState(false);
   const [tmdbQuality, setTmdbQuality] = useState<TmdbQualityReport | null>(null);
   const [qualityLoading, setQualityLoading] = useState(true);
@@ -597,6 +622,58 @@ export default function AdminMovies({ onTotalChange }: Props) {
     }
   };
 
+  const syncTmdbPairs = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const actionScope = actionScopeGeneration.current;
+    const isCurrent = () => mounted.current && actionScopeGeneration.current === actionScope;
+    const pairs = parseTmdbSyncPairs(tmdbSyncPairs);
+    setTmdbSyncBatchError(false);
+    setTmdbSyncBatchFailures([]);
+    setTmdbSyncBatchUnconfirmed([]);
+    if (!pairs) {
+      setTmdbSyncBatchError(true);
+      setTmdbSyncBatchMessage(t("tmdbBatchSyncInvalid"));
+      return;
+    }
+    if (!window.confirm(`${t("tmdbBatchSyncConfirm")} (${pairs.length})`)) return;
+    setTmdbSyncBatchBusy(true);
+    setTmdbSyncBatchMessage(null);
+    setActionError("");
+    const completed: TmdbSyncBatchItem[] = [];
+    const unconfirmed: Array<{ movieId: number; tmdbId: number }> = [];
+    let interrupted = false;
+    try {
+      for (let offset = 0; offset < pairs.length; offset += 20) {
+        if (!isCurrent()) return;
+        try {
+          const { data: response } = await syncAdminMoviesTmdb(pairs.slice(offset, offset + 20));
+          if (!isCurrent()) return;
+          completed.push(...response.items);
+        } catch {
+          interrupted = true;
+          unconfirmed.push(...pairs.slice(offset));
+          break;
+        }
+      }
+      if (!isCurrent()) return;
+      const failed = completed.filter(item => item.status === "FAILED");
+      const succeeded = completed.filter(item => item.status === "SYNCED").length;
+      setTmdbSyncBatchFailures(failed);
+      setTmdbSyncBatchUnconfirmed(unconfirmed);
+      setTmdbSyncBatchError(interrupted || failed.length > 0);
+      setTmdbSyncBatchMessage(interrupted
+        ? `${t("tmdbBatchSyncPartial")}: ${succeeded}/${pairs.length}`
+        : `${t("tmdbBatchSyncDone")}: ${succeeded}/${pairs.length}`);
+      if (succeeded > 0) {
+        setRevision(value => value + 1);
+        setQualityRevision(value => value + 1);
+        setError(false);
+      }
+    } finally {
+      if (isCurrent()) setTmdbSyncBatchBusy(false);
+    }
+  };
+
   const retry = () => {
     catalogFocus.current = { page, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
     setLoading(true);
@@ -614,7 +691,8 @@ export default function AdminMovies({ onTotalChange }: Props) {
   const editingMovie = editingMovieId === null ? null : data?.content.find(movie => movie.id === editingMovieId) ?? null;
 
   return (
-      <section ref={catalogSection} className={`${styles.section} ${editingMovieId !== null ? styles.editing : ""}`} aria-label={t("adminMovieDatabase")} aria-busy={loading || qualityLoading || mutationBusy || tmdbImportBusy || syncingMovieId !== null}>
+      <section ref={catalogSection} className={`${styles.section} ${editingMovieId !== null ? styles.editing : ""}`} aria-label={t("adminMovieDatabase")} aria-busy={loading || qualityLoading || mutationBusy || tmdbImportBusy || tmdbSyncBatchBusy || syncingMovieId !== null}>
+
       <div className={styles.sectionHeader}>
         <h2 className={styles.title} ref={catalogTitle} tabIndex={-1}>{editingMovieId !== null ? t("adminMovieEditor") : t("adminMovieDatabase")}</h2>
         <details className={styles.editor} ref={movieEditor} aria-busy={editorLoading}>
@@ -658,6 +736,15 @@ export default function AdminMovies({ onTotalChange }: Props) {
               {qualityLoading && !tmdbQuality && <p className={styles.feedback} role="status">{t("loading")}</p>}
               {qualityError && <div ref={qualitySection} className={styles.qualityRetryFocus}><RetryNotice className={styles.error} message={t("tmdbQualityError")} retryLabel={t("retry")} disabled={qualityLoading} busy={qualityLoading} onRetry={retryQuality} /></div>}
               {tmdbQuality && <div className={styles.quality}><strong>{t("tmdbQualityTitle")}</strong><p>{t("tmdbQualitySummary")}: {tmdbQuality.tmdbLinkedMovies}/{tmdbQuality.totalMovies} · {t("tmdbCoverage")}: {tmdbQuality.linkedCoveragePercent.toFixed(1)}% · {t("tmdbCompleteness")}: {tmdbQuality.metadataCompletenessPercent.toFixed(1)}%</p><ul className={styles.qualityList}><li>{t("tmdbMissingPoster")}: {tmdbQuality.missingPoster}</li><li>{t("tmdbMissingBackdrop")}: {tmdbQuality.missingBackdrop}</li><li>{t("tmdbMissingPlot")}: {tmdbQuality.missingPlot}</li><li>{t("tmdbMissingRuntime")}: {tmdbQuality.missingRuntime}</li><li>{t("tmdbMissingTrailer")}: {tmdbQuality.missingTrailer}</li><li>{t("tmdbMissingRating")}: {tmdbQuality.missingTmdbRating}</li></ul></div>}
+              <form className={styles.batchSyncForm} aria-label={t("tmdbBatchSyncTitle")} onSubmit={syncTmdbPairs} aria-busy={tmdbSyncBatchBusy}>
+                <h4>{t("tmdbBatchSyncTitle")}</h4>
+                <p>{t("tmdbBatchSyncHint")}</p>
+                <label className={styles.batchSyncField}>{t("tmdbBatchSyncPairs")}<textarea aria-label={t("tmdbBatchSyncPairs")} placeholder={t("tmdbBatchSyncPlaceholder")} rows={6} value={tmdbSyncPairs} onChange={event => setTmdbSyncPairs(event.target.value)} /></label>
+                <button type="submit" disabled={tmdbSyncBatchBusy || tmdbImportBusy || mutationBusy || syncingMovieId !== null}>{tmdbSyncBatchBusy ? t("loading") : t("tmdbBatchSyncButton")}</button>
+                {tmdbSyncBatchMessage && <p className={tmdbSyncBatchError ? styles.error : styles.status} role={tmdbSyncBatchError ? "alert" : "status"}>{tmdbSyncBatchMessage}</p>}
+                {tmdbSyncBatchFailures.length > 0 && <ul className={styles.batchSyncFailures}>{tmdbSyncBatchFailures.map(item => <li key={`${item.movieId}-${item.tmdbId}`}>{item.movieId ?? "—"} → {item.tmdbId}</li>)}</ul>}
+                {tmdbSyncBatchUnconfirmed.length > 0 && <div className={styles.batchSyncUnconfirmed}><strong>{t("tmdbBatchSyncUnconfirmed")}</strong><ul>{tmdbSyncBatchUnconfirmed.map(pair => <li key={`${pair.movieId}-${pair.tmdbId}`}>{pair.movieId} → {pair.tmdbId}</li>)}</ul></div>}
+              </form>
               <form className={styles.importForm} onSubmit={importTmdbIds}><label className={styles.inlineField}>{t("tmdbIds")}<input aria-label={t("tmdbIds")} placeholder={t("tmdbIdsHint")} value={tmdbImportIds} onChange={event => setTmdbImportIds(event.target.value)} /></label><button type="submit" disabled={tmdbImportBusy}>{tmdbImportBusy ? t("loading") : t("tmdbImport")}</button></form>
               <form className={`${styles.importForm} ${styles.discoveryForm}`} onSubmit={discoverAndImportTmdb}><label className={styles.inlineField}>{t("page")}<input type="number" min="1" max="500" value={tmdbDiscoveryDraft.page} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, page: event.target.value })} /></label><label className={styles.inlineField}>{t("year")}<input type="number" min="1888" max="2100" value={tmdbDiscoveryDraft.year} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, year: event.target.value })} /></label><label className={styles.inlineField}>{t("genre")}<input type="number" min="1" value={tmdbDiscoveryDraft.genreId} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, genreId: event.target.value })} /></label><label className={styles.inlineField}>{t("minRating")}<input type="number" min="0" max="10" step="0.1" value={tmdbDiscoveryDraft.minRating} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, minRating: event.target.value })} /></label><label className={styles.inlineField}>{t("limit")}<input type="number" min="1" max="20" value={tmdbDiscoveryDraft.limit} onChange={event => setTmdbDiscoveryDraft({ ...tmdbDiscoveryDraft, limit: event.target.value })} /></label><button type="submit" disabled={tmdbImportBusy}>{tmdbImportBusy ? t("loading") : t("tmdbDiscoveryImport")}</button></form>
               {tmdbImportMessage && <p className={tmdbImportError ? styles.error : styles.status} role={tmdbImportError ? "alert" : "status"}>{tmdbImportMessage}</p>}
