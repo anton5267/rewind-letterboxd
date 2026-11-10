@@ -160,6 +160,7 @@ const appShellRoutes = [
   { path: "register", uk: ["Створити акаунт", "Створіть акаунт REWIND."], en: ["Create account", "Create a REWIND account."] },
   { path: "forgot-password", uk: ["Відновлення пароля", "Відновіть доступ до акаунта REWIND."], en: ["Reset password", "Restore access to your REWIND account."] },
   { path: "reset-password", uk: ["Новий пароль", "Змініть пароль акаунта REWIND."], en: ["New password", "Change your REWIND account password."] },
+  { path: "email-action", uk: ["Підтвердження пошти", "Підтвердьте дію для акаунта REWIND."], en: ["Email confirmation", "Confirm an action for your REWIND account."] },
 ];
 
 let appShellRouteCount = 0;
