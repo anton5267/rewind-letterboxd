@@ -118,6 +118,25 @@ Deno.test("review reports require authentication, validate reasons, preserve own
   }
 });
 
+Deno.test("admin report dismissal requires an administrator and records the selected report", async () => {
+  const dismissedIds: number[] = [];
+  const handler = authHandler({
+    async dismissAdminReviewReport(_user, reportId) { dismissedIds.push(reportId); return reportId === 23; },
+  });
+  const headers = { Authorization: "Bearer valid-token" };
+  const dismissed = await handler(new Request("https://project.supabase.co/api/admin/reported-reviews/23/dismiss", { method: "POST", headers }));
+  const missing = await handler(new Request("https://project.supabase.co/api/admin/reported-reviews/24/dismiss", { method: "POST", headers }));
+  const denied = await authHandler({ async dismissAdminReviewReport() { throw new RewindApiError(403, "Administrator access required"); } })(
+    new Request("https://project.supabase.co/api/admin/reported-reviews/23/dismiss", { method: "POST", headers }));
+  const unauthorized = await authHandler({})(
+    new Request("https://project.supabase.co/api/admin/reported-reviews/23/dismiss", { method: "POST" }));
+  const wrongMethod = await handler(new Request("https://project.supabase.co/api/admin/reported-reviews/23/dismiss", { method: "DELETE", headers }));
+  if (dismissed.status !== 204 || JSON.stringify(dismissedIds) !== JSON.stringify([23, 24]) || missing.status !== 404 || denied.status !== 403
+    || unauthorized.status !== 401 || wrongMethod.status !== 405) {
+    throw new Error(`Unexpected report dismissal contract: ${JSON.stringify({ statuses: [dismissed.status, missing.status, denied.status, unauthorized.status, wrongMethod.status], dismissedIds })}`);
+  }
+});
+
 Deno.test("DELETE /api/profile/me verifies the current password before deleting", async () => {
   let verifiedUserId = "";
   let verifiedPassword = "";

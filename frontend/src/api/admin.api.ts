@@ -49,6 +49,7 @@ export const queueAdminNewsletter = (articleId: number) => api.post<{ articleId:
 export const getAdminNewsletterStatus = (articleId: number) => api.get<NewsletterDeliveryStatus>(`/admin/journal/articles/${articleId}/newsletter`);
 export const getAdminReviews = (page = 0, hidden?: boolean) => api.get<Page<AdminReview>>("/admin/reviews", { params: { size: 50, page, ...(hidden === undefined ? {} : { hidden }) } });
 export const getAdminReportedReviews = (page = 0) => api.get<Page<AdminReportedReview>>("/admin/reported-reviews", { params: { size: 50, page } });
+export const dismissAdminReviewReport = (reportId: number) => api.post<void>(`/admin/reported-reviews/${reportId}/dismiss`);
 export const setAdminReviewHidden = (id: number, hidden: boolean, reason = "") => api.post<AdminReview>(`/admin/reviews/${id}/${hidden ? "hide" : "unhide"}`, { reason });
 export const deleteAdminReview = (id: number) => api.delete<void>(`/admin/reviews/${id}`);
 export const getAdminMovies = (page = 0, size = 50, query = "") => api.get<Page<AdminMovie>>("/admin/movies", { params: { size, page, ...(query ? { q: query } : {}) } });

@@ -492,6 +492,7 @@ export interface RewindApiRepository {
   updateNewsletterSubscription?(authUser: HostedAuthUser, subscribed: boolean): Promise<NewsletterSubscriptionResponse>;
   getAdminReviews?(authUser: HostedAuthUser, filters: { movieId: number | null; userId: number | null; hidden: boolean | null }, page: number, size: number): Promise<{ content: AdminReviewResponse[]; totalPages: number; totalElements: number; number: number }>;
   getAdminReportedReviews?(authUser: HostedAuthUser, page: number, size: number): Promise<{ content: AdminReportedReviewResponse[]; totalPages: number; totalElements: number; number: number }>;
+  dismissAdminReviewReport?(authUser: HostedAuthUser, reportId: number): Promise<boolean>;
   setAdminReviewHidden?(authUser: HostedAuthUser, id: number, hidden: boolean, reason: string | null): Promise<AdminReviewResponse | null>;
   deleteAdminReview?(authUser: HostedAuthUser, id: number): Promise<boolean>;
   getAdminComments?(authUser: HostedAuthUser, hidden: boolean | null, page: number, size: number): Promise<{ content: AdminCommentResponse[]; totalPages: number; totalElements: number; number: number }>;
@@ -596,6 +597,7 @@ const ADMIN_JOURNAL_PATH = "/api/admin/journal/articles";
 const ADMIN_JOURNAL_ARTICLE_PATTERN = /^\/api\/admin\/journal\/articles\/(\d+)(?:\/(newsletter))?$/;
 const REVIEW_REPORT_PATTERN = /^\/api\/reviews\/(\d+)\/report$/;
 const ADMIN_REPORTED_REVIEWS_PATH = "/api/admin/reported-reviews";
+const ADMIN_REPORTED_REVIEW_DISMISS_PATTERN = /^\/api\/admin\/reported-reviews\/(\d+)\/dismiss$/;
 const ADMIN_REVIEW_PATTERN = /^\/api\/admin\/reviews(?:\/(\d+)(?:\/(hide|unhide))?)?$/;
 const ADMIN_COMMENT_PATTERN = /^\/api\/admin\/comments(?:\/(\d+)(?:\/(hide|unhide))?)?$/;
 const ADMIN_MODERATION_HIDE_PATTERN = /^\/api\/admin\/moderation\/([^/]+)\/(\d+)\/hide$/;
@@ -694,6 +696,24 @@ export function createRewindApiHandler(
     };
     const adminReviewMatch = path.match(ADMIN_REVIEW_PATTERN);
     const adminCommentMatch = path.match(ADMIN_COMMENT_PATTERN);
+    const dismissReviewReportMatch = path.match(ADMIN_REPORTED_REVIEW_DISMISS_PATTERN);
+    if (dismissReviewReportMatch) {
+      if (request.method !== "POST") {
+        corsHeaders.set("Allow", "POST, OPTIONS");
+        return json({ message: "Method not allowed" }, 405, corsHeaders);
+      }
+      const authUser = await confirmedAuthUser(request, authVerifier);
+      if (!authUser) return json({ message: "Authentication required" }, 401, corsHeaders);
+      const reportId = parseRouteId(dismissReviewReportMatch[1]);
+      if (reportId === null) return json({ message: "Invalid report ID" }, 400, corsHeaders);
+      if (!repository.dismissAdminReviewReport) return json({ message: "Not found" }, 404, corsHeaders);
+      try {
+        if (!await repository.dismissAdminReviewReport(authUser, reportId)) return json({ message: "Report not found" }, 404, corsHeaders);
+        return new Response(null, { status: 204, headers: corsHeaders });
+      } catch (error) {
+        return repositoryFailure(error, "Unable to dismiss review report", corsHeaders);
+      }
+    }
     if (path === ADMIN_REPORTED_REVIEWS_PATH) {
       if (request.method !== "GET") {
         corsHeaders.set("Allow", "GET, OPTIONS");

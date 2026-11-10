@@ -1,6 +1,6 @@
 import AdminLoading from "./AdminLoading";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { deleteAdminReview, getAdminReportedReviews, getAdminReviews, setAdminReviewHidden, type AdminReportedReview, type AdminReview } from "../api/admin.api";
+import { deleteAdminReview, dismissAdminReviewReport, getAdminReportedReviews, getAdminReviews, setAdminReviewHidden, type AdminReportedReview, type AdminReview } from "../api/admin.api";
 import type { Page } from "../api/types";
 import { useAuth } from "../context/AuthContext";
 import Pagination from "./Pagination";
@@ -22,7 +22,8 @@ export default function AdminReviews() {
   const [revision, setRevision] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [actionError, setActionError] = useState<"moderate" | "delete" | false>(false);
+  const [actionError, setActionError] = useState<"moderate" | "delete" | "report" | false>(false);
+  const [dismissedReports, setDismissedReports] = useState(0);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{ review: AdminReview; trigger: HTMLButtonElement } | null>(null);
   const [receipt, setReceipt] = useState<"deleted" | "hidden" | null>(null);
@@ -128,6 +129,7 @@ export default function AdminReviews() {
     reloadFocusOrigin.current = null;
     setFilter(next);
     setPage(0);
+    setDismissedReports(0);
   };
 
   const toggleHidden = async (review: AdminReview, origin: HTMLButtonElement) => {
@@ -219,6 +221,44 @@ export default function AdminReviews() {
     }
   };
 
+  const dismissReport = async (review: AdminReview, report: AdminReportedReview, origin: HTMLButtonElement) => {
+    if (busyId !== null || currentActor.current !== actor) return;
+    const token = {};
+    mutationToken.current = token;
+    const isCurrentActor = () => mounted.current && currentActor.current === actor && mutationToken.current === token;
+    const generation = queryGeneration.current;
+    setBusyId(review.id);
+    setActionError(false);
+    focusAfterReload.current = false;
+    reloadFocusOrigin.current = null;
+    try {
+      await dismissAdminReviewReport(report.reportId);
+      if (!isCurrentActor()) return;
+      if (queryGeneration.current !== generation) {
+        focusAfterReload.current = false;
+        setRevision(value => value + 1);
+        return;
+      }
+      reloadFocusOrigin.current = origin;
+      focusAfterReload.current = true;
+      setDismissedReports(value => value + 1);
+      if (data?.content.length === 1 && page > 0) setPage(value => value - 1);
+      else setRevision(value => value + 1);
+    } catch {
+      if (!isCurrentActor()) return;
+      setActionError("report");
+      if (queryGeneration.current !== generation) {
+        focusAfterReload.current = false;
+        setRevision(value => value + 1);
+      } else {
+        reloadFocusOrigin.current = origin;
+        focusAfterReload.current = true;
+      }
+    } finally {
+      if (isCurrentActor()) { mutationToken.current = null; setBusyId(null); }
+    }
+  };
+
   const requestDelete = (review: AdminReview, trigger: HTMLButtonElement) => {
     if (busyId !== null || currentActor.current !== actor) return;
     focusAfterReload.current = false;
@@ -251,7 +291,8 @@ export default function AdminReviews() {
 
   return <section ref={sectionRef} className={`${styles.section} ${styles.reviewsSection}`} aria-label={t("adminReviews")} aria-busy={loading || busyId !== null}>
     <h2 className={styles.title} ref={headingRef} tabIndex={-1}>{t("adminReviewsTitle")}</h2>
-    {actionError && <p className={styles.error} role="alert">{t(actionError === "delete" ? "adminReviewDeleteError" : "adminReviewModerationError")}</p>}
+    {dismissedReports > 0 && <p className={styles.reviewStatus} role="status">{t("adminReviewReportDismissedSuccess")} ({dismissedReports})</p>}
+    {actionError && <p className={styles.error} role="alert">{t(actionError === "delete" ? "adminReviewDeleteError" : actionError === "report" ? "adminReviewReportDismissError" : "adminReviewModerationError")}</p>}
     <label className={styles.filter}>{t("adminVisibilityFilter")}{" "}
       <select className={styles.control} value={filter} onChange={event => changeFilter(event.target.value as VisibilityFilter)}>
         <option value="all">{t("allVisibilityStates")}</option>
@@ -291,6 +332,7 @@ export default function AdminReviews() {
             <p className={styles.reviewStatus}>{review.isHidden ? t("hiddenReview") : t("visibleReview")}</p>
             {report && <p className={styles.reviewStatus}>{t("likes")}: {report.likesCount} · {t("reportCommentsCount")}: {report.commentsCount}</p>}
             <div className={styles.rowActions}>
+              {report && <button type="button" aria-busy={busyId === review.id} disabled={busyId !== null} onClick={event => void dismissReport(review, report, event.currentTarget)}>{busyId === review.id ? t("loading") : t("dismissReport")}</button>}
               <button type="button" aria-busy={busyId === review.id} disabled={busyId !== null} onClick={event => void toggleHidden(review, event.currentTarget)}>{busyId === review.id ? t("loading") : review.isHidden ? t("unhideReview") : t("hideReview")}</button>
               <button type="button" aria-busy={busyId === review.id} disabled={busyId !== null} onClick={event => requestDelete(review, event.currentTarget)}>{busyId === review.id ? t("loading") : t("deleteReview")}</button>
             </div>

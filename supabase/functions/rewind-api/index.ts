@@ -359,6 +359,13 @@ async function setReviewModeration(connection: PgConnection, userId: number, id:
            WHERE id=$1 RETURNING id`, args: [id, hidden, hidden ? reason : null, userId],
   });
   if (result.rows.length === 0) throw new RewindApiError(404, "Review not found");
+  if (hidden) {
+    await connection.queryObject({
+      text: `UPDATE rewind.review_reports
+             SET status='ACTION_TAKEN', reviewed_at=CURRENT_TIMESTAMP, reviewed_by=$2
+             WHERE review_id=$1 AND status='OPEN'`, args: [id, userId],
+    });
+  }
   await recordAdminAudit(connection, userId, hidden ? "REVIEW_HIDDEN" : "REVIEW_UNHIDDEN", "REVIEW", id, hidden ? reason : null);
 }
 
@@ -1656,7 +1663,7 @@ const handler = createRewindApiHandler({
     const { connection } = await beginAdminTransaction(authUser);
     try {
       const [count, rows] = await Promise.all([
-        connection.queryObject<{ total: string }>({ text: "SELECT COUNT(*)::text AS total FROM rewind.review_reports" }),
+        connection.queryObject<{ total: string }>({ text: "SELECT COUNT(*)::text AS total FROM rewind.review_reports WHERE status='OPEN'" }),
         connection.queryObject<{
           report_id: string; report_reason: string; report_created_at: string;
           id: string; movie_id: string; movie_title: string; user_id: string; username: string; content: string;
@@ -1673,6 +1680,7 @@ const handler = createRewindApiHandler({
                 JOIN rewind.reviews r ON r.id=rr.review_id
                 JOIN rewind.movies m ON m.id=r.movie_id
                 JOIN rewind.users u ON u.id=r.user_id
+                WHERE rr.status='OPEN'
                 ORDER BY rr.created_at DESC, rr.id DESC
                 LIMIT $1 OFFSET $2`, args: [size, page * size],
         }),
@@ -1684,6 +1692,25 @@ const handler = createRewindApiHandler({
       }));
       await connection.queryObject("COMMIT");
       return pageResult(content, count.rows[0]?.total ?? "0", page, size);
+    } catch (error) {
+      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+      throw error;
+    } finally { connection.release(); }
+  },
+  async dismissAdminReviewReport(authUser, reportId): Promise<boolean> {
+    const { connection, userId } = await beginAdminTransaction(authUser);
+    try {
+      const updated = await connection.queryObject<{ id: string }>({
+        text: `UPDATE rewind.review_reports
+               SET status='DISMISSED', reviewed_at=CURRENT_TIMESTAMP, reviewed_by=$2
+               WHERE id=$1 AND status='OPEN'
+               RETURNING id::text AS id`, args: [reportId, userId],
+      });
+      if (updated.rows.length) {
+        await recordAdminAudit(connection, userId, "REVIEW_REPORT_DISMISSED", "REVIEW_REPORT", reportId, null);
+      }
+      await connection.queryObject("COMMIT");
+      return updated.rows.length > 0;
     } catch (error) {
       try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
       throw error;
@@ -3486,7 +3513,7 @@ const handler = createRewindApiHandler({
       }
       const result = await connection.queryObject<{ id: string; reason: ReviewReportReason; created_at: string }>({
         text: `SELECT id::text AS id, reason, created_at::text AS created_at
-               FROM rewind.review_reports WHERE review_id=$1 AND reporter_id=$2`, args: [reviewId, userId],
+               FROM rewind.review_reports WHERE review_id=$1 AND reporter_id=$2 AND status='OPEN'`, args: [reviewId, userId],
       });
       await connection.queryObject("COMMIT");
       const row = result.rows[0];
@@ -3505,7 +3532,7 @@ const handler = createRewindApiHandler({
                FROM rewind.review_reports rr
                JOIN rewind.reviews r ON r.id=rr.review_id
                JOIN rewind.users author ON author.id=r.user_id
-               WHERE rr.review_id=$1 AND rr.reporter_id=$2 AND r.is_hidden=FALSE AND author.is_active=TRUE`,
+               WHERE rr.review_id=$1 AND rr.reporter_id=$2 AND rr.status='OPEN' AND r.is_hidden=FALSE AND author.is_active=TRUE`,
         args: [reviewId, userId],
       });
       const existing = await findExisting();
@@ -3519,7 +3546,7 @@ const handler = createRewindApiHandler({
                SELECT r.id, $2, $3
                FROM rewind.reviews r JOIN rewind.users author ON author.id=r.user_id
                WHERE r.id=$1 AND r.user_id<>$2 AND r.is_hidden=FALSE AND author.is_active=TRUE
-               ON CONFLICT (review_id, reporter_id) DO NOTHING
+               ON CONFLICT (review_id, reporter_id) WHERE status='OPEN' DO NOTHING
                RETURNING id::text AS id, reason, created_at::text AS created_at`,
         args: [reviewId, userId, reason],
       });
