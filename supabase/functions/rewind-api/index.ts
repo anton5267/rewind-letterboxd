@@ -69,7 +69,7 @@ import {
   type AdminTmdbDiscoveryInput,
   RewindApiError,
 } from "./handler.ts";
-import { discoverTmdbMovies, fetchTmdbMovie, searchTmdbMovies, TmdbError, type TmdbMovie, type TmdbPerson } from "./tmdb.ts";
+import { discoverTmdbMovies, fetchTmdbMovie, searchTmdbMovieCandidates, TmdbError, type TmdbMovie, type TmdbPerson } from "./tmdb.ts";
 import {
   createHostedIdentityDeleter,
   createHostedPasswordChanger,
@@ -1339,10 +1339,10 @@ const handler = createRewindApiHandler({
   },
   async searchAdminMovieTmdbCandidates(authUser, movieId) {
     const { connection } = await beginAdminTransaction(authUser);
-    let movie: { title: string; release_date: string | null } | undefined;
+    let movie: { title: string; release_date: string | null; imdb_id: string | null } | undefined;
     try {
-      const result = await connection.queryObject<{ title: string; release_date: string | null }>({
-        text: "SELECT title, release_date::text AS release_date FROM rewind.movies WHERE id=$1",
+      const result = await connection.queryObject<{ title: string; release_date: string | null; imdb_id: string | null }>({
+        text: "SELECT title, release_date::text AS release_date, imdb_id FROM rewind.movies WHERE id=$1",
         args: [movieId],
       });
       movie = result.rows[0];
@@ -1354,7 +1354,7 @@ const handler = createRewindApiHandler({
     if (!movie) throw new RewindApiError(404, "Movie not found");
     const yearMatch = movie.release_date?.match(/^(\d{4})/);
     try {
-      return await searchTmdbMovies(movie.title, yearMatch ? Number(yearMatch[1]) : null, tmdbApiKey, fetch, tmdbApiBaseUrl) as AdminTmdbMovieCandidate[];
+      return await searchTmdbMovieCandidates({ imdbId: movie.imdb_id, title: movie.title, year: yearMatch ? Number(yearMatch[1]) : null }, tmdbApiKey, fetch, tmdbApiBaseUrl) as AdminTmdbMovieCandidate[];
     } catch (error) { return tmdbApiFailure(error); }
   },
   async syncAdminTmdbBatch(authUser, inputs, syncSimilar) {

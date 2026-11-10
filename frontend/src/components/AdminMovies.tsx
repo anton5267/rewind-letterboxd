@@ -705,6 +705,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
                     <div className={styles.syncControls}><label className={styles.inlineField}>{t("tmdbId")}<input className={styles.tmdbIdInput} inputMode="numeric" pattern="[0-9]*" aria-label={`${t("tmdbId")} ${movieTitle}`} value={tmdbIds[movie.id] ?? ""} onChange={event => setTmdbIds(current => ({ ...current, [movie.id]: event.target.value }))} /></label><button type="button" disabled={tmdbCandidatesBusy || syncingMovieId !== null} onClick={() => void searchMovieTmdbCandidates(movie)}>{tmdbCandidatesBusy && tmdbCandidateMovieId === movie.id ? t("loading") : t("findTmdbCandidates")}</button><a className={styles.tmdbSearchLink} href={tmdbSearchHref(movie)} target="_blank" rel="noopener noreferrer">{t("searchTmdb")}</a><button type="button" disabled={syncingMovieId !== null} onClick={() => void syncMovie(movie)}>{syncingMovieId === movie.id ? t("loading") : t("syncTmdb")}</button></div>
                     {tmdbCandidateMovieId === movie.id && <section className={styles.tmdbCandidates} aria-label={t("tmdbCandidates") }>
                       <h4>{t("tmdbCandidates")}</h4>
+                      <p>{t("tmdbCandidateSearchHint")}</p>
                       {tmdbCandidatesBusy && <p role="status">{t("loading")}</p>}
                       {tmdbCandidatesError && <p className={styles.error} role="alert">{t("tmdbCandidatesError")}</p>}
                       {!tmdbCandidatesBusy && !tmdbCandidatesError && tmdbCandidates.length === 0 && <p>{t("tmdbCandidatesEmpty")}</p>}

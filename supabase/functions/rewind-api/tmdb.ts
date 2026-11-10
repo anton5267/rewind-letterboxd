@@ -105,6 +105,26 @@ export async function searchTmdbMovies(query: string, year: number | null, apiKe
     return [{ tmdbId, title, releaseDate: text(entry.release_date), overview: text(entry.overview), posterUrl: image(entry.poster_path, "w185") }];
   }).slice(0, 8);
 }
+export async function findTmdbMoviesByImdbId(imdbId: string, apiKey: string | undefined, fetcher: typeof fetch = fetch, baseUrl = API_URL): Promise<TmdbMovieCandidate[]> {
+  const normalized = imdbId.trim();
+  if (!/^tt\d{5,12}$/.test(normalized)) throw new TmdbError(400, "Invalid IMDb ID");
+  if (!apiKey?.trim()) throw new TmdbError(503, "TMDB integration is disabled");
+  const body = await apiGet(`/find/${normalized}`, { external_source: "imdb_id", language: "en-US" }, apiKey, fetcher, baseUrl);
+  if (!Array.isArray(body.movie_results)) throw new TmdbError(502, "TMDB returned invalid find results");
+  return records(body.movie_results).flatMap((entry) => {
+    const tmdbId = number(entry.id), title = text(entry.title)?.trim();
+    if (!tmdbId || !title) return [];
+    return [{ tmdbId, title, releaseDate: text(entry.release_date), overview: text(entry.overview), posterUrl: image(entry.poster_path, "w185") }];
+  }).slice(0, 8);
+}
+export async function searchTmdbMovieCandidates(input: { imdbId: string | null; title: string; year: number | null }, apiKey: string | undefined, fetcher: typeof fetch = fetch, baseUrl = API_URL): Promise<TmdbMovieCandidate[]> {
+  const imdbId = input.imdbId?.trim() ?? "";
+  if (/^tt\d{5,12}$/.test(imdbId)) {
+    const exactMatches = await findTmdbMoviesByImdbId(imdbId, apiKey, fetcher, baseUrl);
+    if (exactMatches.length > 0) return exactMatches;
+  }
+  return await searchTmdbMovies(input.title, input.year, apiKey, fetcher, baseUrl);
+}
 export interface TmdbDiscovery { page: number; totalPages: number; totalResults: number; tmdbIds: number[] }
 export async function discoverTmdbMovies(input: { page: number; year: number | null; genreId: number | null; minRating: number | null; limit: number }, apiKey: string | undefined, fetcher: typeof fetch = fetch, baseUrl = API_URL): Promise<TmdbDiscovery> {
   if (!apiKey?.trim()) throw new TmdbError(503, "TMDB integration is disabled");
