@@ -129,7 +129,11 @@ export default function Person() {
   const personName = person && personMatchesRoute ? editorialText(person.name, t("unknownPerson")) : t("filmography");
   useEffect(() => {
     if (!publicCatalogOnly) return;
-    const role = type === "director" ? (lang === "uk" ? "режисера" : "director") : (lang === "uk" ? "актора" : "actor");
+    const role = type === "director"
+      ? (lang === "uk" ? "режисера" : "director")
+      : type === "producer"
+      ? (lang === "uk" ? "продюсера" : "producer")
+      : (lang === "uk" ? "актора" : "actor");
     setPublicCatalogMetadata({
       language: lang,
       title: personName,

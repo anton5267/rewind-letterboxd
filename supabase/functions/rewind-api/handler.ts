@@ -54,7 +54,7 @@ export interface PersonFilmographyResponse {
   id: number;
   name: string;
   photoUrl: string | null;
-  type: "ACTOR" | "DIRECTOR";
+  type: "ACTOR" | "DIRECTOR" | "PRODUCER";
   films: {
     id: number;
     title: string;
@@ -70,7 +70,7 @@ export interface PersonSearchResult {
     id: number;
     name: string;
     photoUrl: string | null;
-    type: "ACTOR" | "DIRECTOR";
+    type: "ACTOR" | "DIRECTOR" | "PRODUCER";
     filmCount: number;
   }[];
   totalPages: number;
@@ -80,7 +80,7 @@ export interface PersonSearchResult {
 
 export interface PersonSearchParams {
   q: string | null;
-  type: "ACTOR" | "DIRECTOR";
+  type: "ACTOR" | "DIRECTOR" | "PRODUCER";
   page: number;
   size: number;
 }
@@ -409,7 +409,7 @@ export interface RewindApiRepository {
   getMovieDetails(id: number): Promise<MovieDetailsResponse | null>;
   searchPeople(params: PersonSearchParams): Promise<PersonSearchResult>;
   searchGlobal?(query: string, language: string, size: number): Promise<GlobalSearchResponse>;
-  getPersonFilmography(type: "ACTOR" | "DIRECTOR", id: number, genreId: number | null, sort: string): Promise<PersonFilmographyResponse | null>;
+  getPersonFilmography(type: "ACTOR" | "DIRECTOR" | "PRODUCER", id: number, genreId: number | null, sort: string): Promise<PersonFilmographyResponse | null>;
   getPublicReviewFeed?(feed: "recent" | "popular", page: number, size: number): Promise<ReviewFeedResponse>;
   getMovieReviews?(movieId: number, page: number, size: number): Promise<ReviewPageResponse>;
   getMyMovieReview?(authUser: HostedAuthUser, movieId: number): Promise<ReviewResponse | null>;
@@ -573,7 +573,7 @@ const LIST_REORDER_PATTERN = /^\/api\/lists\/(\d+)\/items\/reorder$/;
 const LIST_ADD_MOVIE_PATTERN = /^\/api\/lists\/(\d+)\/(?:items|movies)$/;
 const LIST_REMOVE_MOVIE_PATTERN = /^\/api\/lists\/(\d+)\/(?:items|movies)\/(\d+)$/;
 const PEOPLE_SEARCH_PATH = "/api/people/search";
-const PERSON_FILMOGRAPHY_PATTERN = /^\/api\/(actors|directors)\/([^/]+)$/;
+const PERSON_FILMOGRAPHY_PATTERN = /^\/api\/(actors|directors|producers)\/([^/]+)$/;
 const PUBLIC_PROFILE_PATTERN = /^\/api\/users\/(\d+)\/(profile|followers|following|follow-status|follow|block-status|block|activity|collections\/(watched|watchlist|favorites)|lists|liked-reviews)$/;
 const FOLLOWING_ACTIVITY_PATH = "/api/activity/following";
 const RECENT_WATCHED_PATH = "/api/activity/recent-watched";
@@ -2201,7 +2201,7 @@ export function createRewindApiHandler(
       }
       const query = new URL(request.url).searchParams;
       const rawType = query.get("type") ?? "actor";
-      if (rawType !== "actor" && rawType !== "director") {
+      if (rawType !== "actor" && rawType !== "director" && rawType !== "producer") {
         return json({ message: "Invalid person type" }, 400, corsHeaders);
       }
       const q = query.get("q")?.trim() || null;
@@ -2214,7 +2214,7 @@ export function createRewindApiHandler(
       try {
         const result = await repository.searchPeople({
           q,
-          type: rawType === "actor" ? "ACTOR" : "DIRECTOR",
+          type: rawType === "actor" ? "ACTOR" : rawType === "director" ? "DIRECTOR" : "PRODUCER",
           page,
           size,
         });
@@ -2269,7 +2269,7 @@ export function createRewindApiHandler(
       const rawGenreId = query.get("genreId");
       const genreId = rawGenreId === null ? null : optionalPositiveInteger(rawGenreId);
       if (rawGenreId !== null && genreId === null) return json({ message: "Invalid genre ID" }, 400, corsHeaders);
-      const type = personMatch[1] === "actors" ? "ACTOR" : "DIRECTOR";
+      const type = personMatch[1] === "actors" ? "ACTOR" : personMatch[1] === "directors" ? "DIRECTOR" : "PRODUCER";
       try {
         const person = await repository.getPersonFilmography(type, personId, genreId, query.get("sort") ?? "newest");
         if (person) corsHeaders.set("Cache-Control", PUBLIC_CATALOG_CACHE);

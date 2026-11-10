@@ -27,5 +27,5 @@ export interface PersonSearchPage {
 export const getPersonFilmography = (type: PersonType, id: string | number, sort: string, genreId: string) =>
   api.get<PersonFilmography>(`/${type}s/${id}`, { params: { sort, genreId: genreId || undefined } });
 
-export const searchPeople = (type: "actor" | "director", q: string | undefined, page: number, size: number) =>
+export const searchPeople = (type: PersonType, q: string | undefined, page: number, size: number) =>
   api.get<PersonSearchPage>("/people/search", { params: { type, q, page, size } });

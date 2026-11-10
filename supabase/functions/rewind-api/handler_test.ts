@@ -825,7 +825,7 @@ Deno.test("movie detail returns the public fields and null user flags", async ()
         id, imdbId: null, tmdbId: null, title: "Comedy Film", durationMinutes: null,
         releaseDate: "2024-01-10", ageRating: null, rating: 4.5, shortPlot: null,
         photoUrl: "https://example.invalid/poster.jpg", backdropUrl: null, trailerUrl: null,
-        genres: [{ id: 4, name: "Comedy" }], directors: [], producers: [], actors: [],
+        genres: [{ id: 4, name: "Comedy" }], directors: [], producers: [{ id: 8, name: "Producer One", photoUrl: null }], actors: [],
         externalRatings: [], similarMovies: [], myFlags: null,
       };
     },
@@ -833,12 +833,13 @@ Deno.test("movie detail returns the public fields and null user flags", async ()
   const response = await handler(new Request("https://project.supabase.co/functions/v1/rewind-api/api/movies/101/details"));
   if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
   const body = await response.json();
-  if (body.id !== 101 || body.title !== "Comedy Film" || body.myFlags !== null || body.genres[0].name !== "Comedy") {
+  if (body.id !== 101 || body.title !== "Comedy Film" || body.myFlags !== null || body.genres[0].name !== "Comedy"
+    || body.producers[0]?.id !== 8 || body.producers[0]?.name !== "Producer One") {
     throw new Error(`Unexpected movie detail response: ${JSON.stringify(body)}`);
   }
 });
 
-Deno.test("actor and director filmography routes return catalog-only data", async () => {
+Deno.test("actor, director, and producer filmography routes return catalog-only data", async () => {
   const handler = handlerWith({
     async getPersonFilmography(type, id, genreId, sort) {
       if (id !== 383 || genreId !== 17 || sort !== "title") throw new Error("Unexpected filters");
@@ -851,7 +852,7 @@ Deno.test("actor and director filmography routes return catalog-only data", asyn
       };
     },
   });
-  for (const [path, type] of [["actors", "ACTOR"], ["directors", "DIRECTOR"]] as const) {
+  for (const [path, type] of [["actors", "ACTOR"], ["directors", "DIRECTOR"], ["producers", "PRODUCER"]] as const) {
     const response = await handler(new Request(`https://project.supabase.co/functions/v1/rewind-api/api/${path}/383?genreId=17&sort=title`));
     const body = await response.json();
     if (response.status !== 200 || body.type !== type || body.films[0].id !== 33) {
@@ -860,10 +861,10 @@ Deno.test("actor and director filmography routes return catalog-only data", asyn
   }
 });
 
-Deno.test("people search validates its catalog filters and returns paged results", async () => {
+Deno.test("people search supports actor and producer filters and returns paged results", async () => {
   const handler = handlerWith({
     async searchPeople(params) {
-      if (params.q !== "Rachel McAdams" || params.type !== "ACTOR" || params.page !== 1 || params.size !== 7) {
+      if (params.q !== "Rachel McAdams" || (params.type !== "ACTOR" && params.type !== "PRODUCER") || params.page !== 1 || params.size !== 7) {
         throw new Error("Unexpected people search filters");
       }
       return {
@@ -874,23 +875,25 @@ Deno.test("people search validates its catalog filters and returns paged results
       };
     },
   });
-  const response = await handler(new Request("https://project.supabase.co/functions/v1/rewind-api/api/people/search?type=actor&q=Rachel%20McAdams&page=1&size=7"));
-  const body = await response.json();
-  if (response.status !== 200 || body.content[0].name !== "Rachel McAdams" || body.number !== 1
-    || body.totalElements !== 8 || response.headers.get("Cache-Control") !== "public, max-age=300, stale-while-revalidate=600") {
-    throw new Error(`Unexpected people search response: ${JSON.stringify(body)}`);
+  for (const [queryType, responseType] of [["actor", "ACTOR"], ["producer", "PRODUCER"]] as const) {
+    const response = await handler(new Request(`https://project.supabase.co/functions/v1/rewind-api/api/people/search?type=${queryType}&q=Rachel%20McAdams&page=1&size=7`));
+    const body = await response.json();
+    if (response.status !== 200 || body.content[0].name !== "Rachel McAdams" || body.content[0].type !== responseType || body.number !== 1
+      || body.totalElements !== 8 || response.headers.get("Cache-Control") !== "public, max-age=300, stale-while-revalidate=600") {
+      throw new Error(`Unexpected ${queryType} search response: ${JSON.stringify(body)}`);
+    }
   }
 });
 
-Deno.test("person filmography rejects invalid IDs/filters and does not expose producers", async () => {
+Deno.test("person filmography rejects unknown types and invalid IDs/filters", async () => {
   const handler = handlerWith({});
   for (const [url, expected] of [
     ["http://localhost:8000/api/actors/nope", 400],
     ["http://localhost:8000/api/directors/1?genreId=bad", 400],
-    ["http://localhost:8000/api/people/search?type=producer", 400],
+    ["http://localhost:8000/api/people/search?type=crew", 400],
     ["http://localhost:8000/api/people/search?page=101", 400],
     [`http://localhost:8000/api/people/search?q=${"x".repeat(101)}`, 400],
-    ["http://localhost:8000/api/producers/1", 404],
+    ["http://localhost:8000/api/producers/nope", 400],
   ] as const) {
     const response = await handler(new Request(url));
     if (response.status !== expected) throw new Error(`Expected ${expected} for ${url}, got ${response.status}`);

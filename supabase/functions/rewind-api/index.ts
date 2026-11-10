@@ -3018,7 +3018,7 @@ const handler = createRewindApiHandler({
     const connection = await pool.connect();
     try {
       await connection.queryObject("SET ROLE rewind_edge_reader");
-      const [movieResult, genreResult, directorResult, actorResult, ratingResult, similarResult] = await Promise.all([
+      const [movieResult, genreResult, directorResult, producerResult, actorResult, ratingResult, similarResult] = await Promise.all([
         connection.queryObject<{
           id: string;
           imdb_id: string | null;
@@ -3049,6 +3049,12 @@ const handler = createRewindApiHandler({
           text: `SELECT d.id::text AS id, d.name, d.photo_url
                  FROM rewind.movie_directors md JOIN rewind.directors d ON d.id = md.director_id
                  WHERE md.movie_id = $1 ORDER BY d.name ASC`,
+          args: [id],
+        }),
+        connection.queryObject<{ id: string; name: string; photo_url: string | null }>({
+          text: `SELECT p.id::text AS id, p.name, p.photo_url
+                 FROM rewind.movie_producers mp JOIN rewind.producers p ON p.id = mp.producer_id
+                 WHERE mp.movie_id = $1 ORDER BY p.name ASC, p.id ASC`,
           args: [id],
         }),
         connection.queryObject<{
@@ -3120,7 +3126,7 @@ const handler = createRewindApiHandler({
         trailerUrl: first.trailer_url,
         genres: genreResult.rows.map(row => ({ id: safeId(row.id, "Genre ID"), name: row.name })),
         directors: directorResult.rows.map(row => ({ id: safeId(row.id, "Director ID"), name: row.name, photoUrl: row.photo_url })),
-        producers: [],
+        producers: producerResult.rows.map(row => ({ id: safeId(row.id, "Producer ID"), name: row.name, photoUrl: row.photo_url })),
         actors: actorResult.rows.map(row => ({
           id: safeId(row.id, "Actor ID"),
           name: row.name,
@@ -3142,10 +3148,9 @@ const handler = createRewindApiHandler({
     }
   },
   async searchPeople(params: PersonSearchParams): Promise<PersonSearchResult> {
-    const actor = params.type === "ACTOR";
-    const peopleTable = actor ? "actors" : "directors";
-    const relationTable = actor ? "movie_actors" : "movie_directors";
-    const relationPersonColumn = actor ? "actor_id" : "director_id";
+    const peopleTable = params.type === "ACTOR" ? "actors" : params.type === "DIRECTOR" ? "directors" : "producers";
+    const relationTable = params.type === "ACTOR" ? "movie_actors" : params.type === "DIRECTOR" ? "movie_directors" : "movie_producers";
+    const relationPersonColumn = params.type === "ACTOR" ? "actor_id" : params.type === "DIRECTOR" ? "director_id" : "producer_id";
     const personType = params.type;
     const connection = await pool.connect();
     try {
@@ -3927,9 +3932,9 @@ const handler = createRewindApiHandler({
     } finally { connection.release(); }
   },
   async getPersonFilmography(type, id, genreId, sort): Promise<PersonFilmographyResponse | null> {
-    const personTable = type === "ACTOR" ? "actors" : "directors";
-    const relation = type === "ACTOR" ? "movie_actors" : "movie_directors";
-    const personColumn = type === "ACTOR" ? "actor_id" : "director_id";
+    const personTable = type === "ACTOR" ? "actors" : type === "DIRECTOR" ? "directors" : "producers";
+    const relation = type === "ACTOR" ? "movie_actors" : type === "DIRECTOR" ? "movie_directors" : "movie_producers";
+    const personColumn = type === "ACTOR" ? "actor_id" : type === "DIRECTOR" ? "director_id" : "producer_id";
     const connection = await pool.connect();
     try {
       await connection.queryObject("SET ROLE rewind_edge_reader");
@@ -3954,7 +3959,7 @@ const handler = createRewindApiHandler({
       const genreFilter = genreId === null
         ? ""
         : "AND EXISTS (SELECT 1 FROM rewind.movie_genres mg WHERE mg.movie_id = m.id AND mg.genre_id = $2)";
-      const relationAlias = type === "ACTOR" ? "ma" : "md";
+      const relationAlias = type === "ACTOR" ? "ma" : type === "DIRECTOR" ? "md" : "mp";
       const characterColumn = type === "ACTOR" ? "ma.character_name" : "NULL::text";
       const args = genreId === null ? [id] : [id, genreId];
       const filmResult = await connection.queryObject<{
