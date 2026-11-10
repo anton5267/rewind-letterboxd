@@ -31,7 +31,7 @@ export const register = (
       password,
       options: {
         emailRedirectTo: authRedirectUrl(language, "login"),
-        data: { username: username.trim(), language },
+        data: { username: username.trim(), language, rewind_auth_flow: "signup" },
       },
     }).then(({ data, error }) => {
       if (error) throw error;
@@ -62,6 +62,14 @@ export const resetPassword = async (token: string, newPassword: string) => {
     return { data: undefined };
   }
   return api.post<void>("/auth/reset-password", { token, newPassword });
+};
+
+export const verifySupabaseEmailAction = async (tokenHash: string, type: "email" | "recovery") => {
+  if (!usesHostedSupabaseAuth) throw new Error("Hosted email verification is not enabled.");
+  const { data, error } = await getSupabaseClient().auth.verifyOtp({ token_hash: tokenHash, type });
+  if (error) throw error;
+  if (!data.session) throw new Error("The email action did not create a session.");
+  return data.session;
 };
 
 export const logout = async () => {

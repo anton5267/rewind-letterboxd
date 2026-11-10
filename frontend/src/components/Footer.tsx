@@ -5,7 +5,7 @@ import { useLocale } from "../i18n";
 export default function Footer() {
   const { path, t } = useLocale();
   const location = useLocation();
-  const mobileAuthFooter = /^\/(uk|en)\/(auth|login|register|forgot-password|reset-password)\/?$/.test(location.pathname);
+  const mobileAuthFooter = /^\/(uk|en)\/(auth|login|register|forgot-password|reset-password|email-action)\/?$/.test(location.pathname);
   const mobileDetailFooter = /^\/(uk|en)\/(films|reviews)\/\d+\/?$/.test(location.pathname);
   const mobileSearchFooter = /^\/(uk|en)\/search\/?$/.test(location.pathname);
   const mobileHomeFooter = /^\/(uk|en)\/home\/?$/.test(location.pathname);

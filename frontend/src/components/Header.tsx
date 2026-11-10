@@ -172,7 +172,7 @@ export default function Header() {
   const mobileUserListsHeader = /^\/(uk|en)\/lists\/?$/.test(location.pathname);
   const settingsView = new URLSearchParams(location.search).get("settings");
   const mobileProfileSettingsHeader = mobileProfileHeader && ["profile", "authentication", "avatar", "connections"].includes(settingsView ?? "");
-  const mobileAuthHeader = /^\/(uk|en)\/(auth|login|register|forgot-password|reset-password)\/?$/.test(location.pathname);
+  const mobileAuthHeader = /^\/(uk|en)\/(auth|login|register|forgot-password|reset-password|email-action)\/?$/.test(location.pathname);
   const listParams = new URLSearchParams(location.search);
   const listsLandingHeader = /^\/(uk|en)\/lists\/discover\/?$/.test(location.pathname)
     && !toTagSlug(listParams.get("tag") ?? "");

@@ -10,6 +10,7 @@ const ForgotPassword = lazy(() => import("./auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./auth/ResetPassword"));
 const AuthEntry = lazy(() => import("./auth/AuthEntry"));
 const SupabaseLinkAccount = lazy(() => import("./auth/SupabaseLinkAccount"));
+const EmailAction = lazy(() => import("./auth/EmailAction"));
 const Search = lazy(() => import("./pages/Search"));
 const FilmsDiscover = lazy(() => import("./pages/FilmsDiscover"));
 const GlobalSearch = lazy(() => import("./pages/GlobalSearch"));
@@ -37,6 +38,17 @@ const PublicCatalogPreview = lazy(() => import("./pages/PublicCatalogPreview"));
 
 function LegacyRedirect() {
   const location = useLocation();
+  const actionParams = new URLSearchParams(location.search);
+  const action = actionParams.get("rewind_action");
+  const tokenHash = actionParams.get("token_hash");
+  const type = actionParams.get("type");
+  const emailActionIsValid = location.pathname === "/"
+    && ((action === "signup" && type === "email") || (action === "recovery" && type === "recovery"))
+    && Boolean(tokenHash);
+  if (emailActionIsValid) {
+    const lang = actionParams.get("lang") === "en" ? "en" : "uk";
+    return <Navigate to={`/${lang}/email-action${location.search}`} replace />;
+  }
   const target = location.pathname === "/" ? "/uk/home" : `/uk${location.pathname}`;
   return <Navigate to={`${target}${location.search}${location.hash}`} replace />;
 }
@@ -95,6 +107,7 @@ function LocalizedApp() {
     <Route path="forgot-password" element={<Layout><ForgotPassword /></Layout>} />
     <Route path="reset-password" element={<Layout><ResetPassword /></Layout>} />
     <Route path="link-account" element={<Layout><SupabaseLinkAccount /></Layout>} />
+    <Route path="email-action" element={<Layout><EmailAction /></Layout>} />
     {/* Keep unknown localized paths inside the language namespace so the
         Figma-inspired error state can offer the correct localized home link. */}
     <Route path="*" element={<Layout><NotFound /></Layout>} />
