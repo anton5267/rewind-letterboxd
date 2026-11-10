@@ -106,6 +106,7 @@ test("bulk TMDB sync validates unique ID pairs and submits them through the sync
   const form = movies.getByRole("form", { name: "Bulk catalog sync" });
   const field = form.getByRole("textbox", { name: "Film ID pairs" });
   const submit = form.getByRole("button", { name: "Sync pairs" });
+  await expect(form.getByRole("link", { name: "Open CSV with 49 verified pairs" })).toHaveAttribute("href", "https://raw.githubusercontent.com/anton5267/rewind-letterboxd/master/docs/project/TMDB_VERIFIED_CROSSWALK.csv");
   const invalidInputs = ["", "1,abc", "0,550", "1,550\n1,603", "1,550\n2,550", Array.from({ length: 51 }, (_, index) => `${index + 1},${index + 1000}`).join("\n")];
   for (const invalid of invalidInputs) {
     await field.fill(invalid);

@@ -739,6 +739,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
               <form className={styles.batchSyncForm} aria-label={t("tmdbBatchSyncTitle")} onSubmit={syncTmdbPairs} aria-busy={tmdbSyncBatchBusy}>
                 <h4>{t("tmdbBatchSyncTitle")}</h4>
                 <p>{t("tmdbBatchSyncHint")}</p>
+                <a className={styles.batchSyncDownload} href="https://raw.githubusercontent.com/anton5267/rewind-letterboxd/master/docs/project/TMDB_VERIFIED_CROSSWALK.csv" target="_blank" rel="noreferrer">{t("tmdbBatchSyncCsv")}</a>
                 <label className={styles.batchSyncField}>{t("tmdbBatchSyncPairs")}<textarea aria-label={t("tmdbBatchSyncPairs")} placeholder={t("tmdbBatchSyncPlaceholder")} rows={6} value={tmdbSyncPairs} onChange={event => setTmdbSyncPairs(event.target.value)} /></label>
                 <button type="submit" disabled={tmdbSyncBatchBusy || tmdbImportBusy || mutationBusy || syncingMovieId !== null}>{tmdbSyncBatchBusy ? t("loading") : t("tmdbBatchSyncButton")}</button>
                 {tmdbSyncBatchMessage && <p className={tmdbSyncBatchError ? styles.error : styles.status} role={tmdbSyncBatchError ? "alert" : "status"}>{tmdbSyncBatchMessage}</p>}
