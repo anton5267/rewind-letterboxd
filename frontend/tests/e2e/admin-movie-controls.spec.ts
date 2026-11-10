@@ -125,6 +125,38 @@ test("bulk TMDB sync validates unique ID pairs and submits them through the sync
   expect(writes).toEqual([{ path: "/api/admin/movies/tmdb-sync/batch", data: { movies: [{ movieId: 940001, tmdbId: 550 }, { movieId: 940002, tmdbId: 603 }], syncSimilar: false } }]);
 });
 
+test("verified TMDB crosswalk loads into the form without submitting a mutation", async ({ page }) => {
+  const { movies, writes } = await adminMovieFixture(page);
+  await movies.locator("summary").filter({ hasText: "Add film" }).click();
+  const form = movies.getByRole("form", { name: "Bulk catalog sync" });
+  const csvUrl = "https://raw.githubusercontent.com/anton5267/rewind-letterboxd/master/docs/project/TMDB_VERIFIED_CROSSWALK.csv";
+  const field = form.getByRole("textbox", { name: "Film ID pairs" });
+  const load = form.getByRole("button", { name: "Load verified pairs", exact: true });
+  await field.fill("940003,123");
+  await expect(load).toBeDisabled();
+  await field.fill("");
+  await page.route(csvUrl, route => route.fulfill({
+    status: 200,
+    headers: { "access-control-allow-origin": "*", "content-type": "text/csv; charset=utf-8" },
+    body: "movie_id,tmdb_id\n940001,1084242\n940002,840464\n",
+  }));
+  await load.click();
+  await expect(field).toHaveValue("940001,1084242\n940002,840464");
+  await expect(form.getByRole("status")).toHaveText("2 verified pairs loaded. Review them before syncing.");
+  expect(writes).toEqual([]);
+});
+
+test("failed verified crosswalk load leaves the form unchanged", async ({ page }) => {
+  const { movies, writes } = await adminMovieFixture(page);
+  await movies.locator("summary").filter({ hasText: "Add film" }).click();
+  const form = movies.getByRole("form", { name: "Bulk catalog sync" });
+  await page.route("https://raw.githubusercontent.com/anton5267/rewind-letterboxd/master/docs/project/TMDB_VERIFIED_CROSSWALK.csv", route => route.fulfill({ status: 503, body: "unavailable" }));
+  await form.getByRole("button", { name: "Load verified pairs", exact: true }).click();
+  await expect(form.getByRole("alert")).toHaveText("Could not load the verified pairs CSV. The list was not changed.");
+  await expect(form.getByRole("textbox", { name: "Film ID pairs" })).toHaveValue("");
+  expect(writes).toEqual([]);
+});
+
 test("bulk TMDB sync chunks requests and reports unknown outcomes without auto-retrying", async ({ page }) => {
   const { movies, writes, failBatchSyncRequest } = await adminMovieFixture(page);
   failBatchSyncRequest(2);

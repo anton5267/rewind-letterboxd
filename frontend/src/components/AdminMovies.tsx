@@ -33,6 +33,7 @@ interface Props {
 
 const emptyMovie: AdminMovieWrite = { title: "", imdbId: "", releaseDate: "", ageRating: "", rating: null, photoUrl: "", backdropUrl: "", trailerUrl: "", durationMinutes: null, shortPlot: "" };
 const emptyMovieCredits = { genres: [] as string[], directors: [] as string[], actors: [] as string[] };
+const verifiedTmdbCrosswalkUrl = "https://raw.githubusercontent.com/anton5267/rewind-letterboxd/master/docs/project/TMDB_VERIFIED_CROSSWALK.csv";
 
 const parseTmdbId = (value: string): number | null => {
   const normalized = value.trim();
@@ -49,7 +50,7 @@ const parseTmdbIds = (value: string): number[] | null => {
 
 const parseTmdbSyncPairs = (value: string): Array<{ movieId: number; tmdbId: number }> | null => {
   const lines = value.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
-  if (lines[0]?.toLowerCase() === "movie_id,tmdb_id") lines.shift();
+  if (lines[0]?.replace(/^\uFEFF/, "").toLowerCase() === "movie_id,tmdb_id") lines.shift();
   if (lines.length < 1 || lines.length > 50) return null;
   const pairs: Array<{ movieId: number; tmdbId: number }> = [];
   for (const line of lines) {
@@ -103,6 +104,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
   const [tmdbImportMessage, setTmdbImportMessage] = useState<string | null>(null);
   const [tmdbImportError, setTmdbImportError] = useState(false);
   const [tmdbSyncPairs, setTmdbSyncPairs] = useState("");
+  const [tmdbSyncPairLoadBusy, setTmdbSyncPairLoadBusy] = useState(false);
   const [tmdbSyncBatchBusy, setTmdbSyncBatchBusy] = useState(false);
   const [tmdbSyncBatchMessage, setTmdbSyncBatchMessage] = useState<string | null>(null);
   const [tmdbSyncBatchError, setTmdbSyncBatchError] = useState(false);
@@ -674,6 +676,33 @@ export default function AdminMovies({ onTotalChange }: Props) {
     }
   };
 
+  const loadVerifiedTmdbPairs = async () => {
+    if (tmdbSyncPairs.trim()) return;
+    const actionScope = actionScopeGeneration.current;
+    const isCurrent = () => mounted.current && actionScopeGeneration.current === actionScope;
+    setTmdbSyncPairLoadBusy(true);
+    setTmdbSyncBatchError(false);
+    setTmdbSyncBatchMessage(null);
+    setTmdbSyncBatchFailures([]);
+    setTmdbSyncBatchUnconfirmed([]);
+    try {
+      const response = await fetch(verifiedTmdbCrosswalkUrl, { headers: { Accept: "text/csv" }, cache: "no-store" });
+      if (!response.ok) throw new Error("Crosswalk request failed");
+      const csv = await response.text();
+      const pairs = parseTmdbSyncPairs(csv);
+      if (!pairs) throw new Error("Crosswalk is invalid");
+      if (!isCurrent()) return;
+      setTmdbSyncPairs(pairs.map(pair => `${pair.movieId},${pair.tmdbId}`).join("\n"));
+      setTmdbSyncBatchMessage(`${pairs.length} ${t("tmdbBatchSyncCsvLoaded")}`);
+    } catch {
+      if (!isCurrent()) return;
+      setTmdbSyncBatchError(true);
+      setTmdbSyncBatchMessage(t("tmdbBatchSyncCsvLoadError"));
+    } finally {
+      if (isCurrent()) setTmdbSyncPairLoadBusy(false);
+    }
+  };
+
   const retry = () => {
     catalogFocus.current = { page, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
     setLoading(true);
@@ -691,7 +720,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
   const editingMovie = editingMovieId === null ? null : data?.content.find(movie => movie.id === editingMovieId) ?? null;
 
   return (
-      <section ref={catalogSection} className={`${styles.section} ${editingMovieId !== null ? styles.editing : ""}`} aria-label={t("adminMovieDatabase")} aria-busy={loading || qualityLoading || mutationBusy || tmdbImportBusy || tmdbSyncBatchBusy || syncingMovieId !== null}>
+      <section ref={catalogSection} className={`${styles.section} ${editingMovieId !== null ? styles.editing : ""}`} aria-label={t("adminMovieDatabase")} aria-busy={loading || qualityLoading || mutationBusy || tmdbImportBusy || tmdbSyncPairLoadBusy || tmdbSyncBatchBusy || syncingMovieId !== null}>
 
       <div className={styles.sectionHeader}>
         <h2 className={styles.title} ref={catalogTitle} tabIndex={-1}>{editingMovieId !== null ? t("adminMovieEditor") : t("adminMovieDatabase")}</h2>
@@ -739,8 +768,11 @@ export default function AdminMovies({ onTotalChange }: Props) {
               <form className={styles.batchSyncForm} aria-label={t("tmdbBatchSyncTitle")} onSubmit={syncTmdbPairs} aria-busy={tmdbSyncBatchBusy}>
                 <h4>{t("tmdbBatchSyncTitle")}</h4>
                 <p>{t("tmdbBatchSyncHint")}</p>
-                <a className={styles.batchSyncDownload} href="https://raw.githubusercontent.com/anton5267/rewind-letterboxd/master/docs/project/TMDB_VERIFIED_CROSSWALK.csv" target="_blank" rel="noreferrer">{t("tmdbBatchSyncCsv")}</a>
-                <label className={styles.batchSyncField}>{t("tmdbBatchSyncPairs")}<textarea aria-label={t("tmdbBatchSyncPairs")} placeholder={t("tmdbBatchSyncPlaceholder")} rows={6} value={tmdbSyncPairs} onChange={event => setTmdbSyncPairs(event.target.value)} /></label>
+                <div className={styles.batchSyncActions}>
+                  <button type="button" disabled={tmdbSyncPairLoadBusy || tmdbSyncBatchBusy || tmdbSyncPairs.trim().length > 0} onClick={loadVerifiedTmdbPairs}>{tmdbSyncPairLoadBusy ? t("loading") : t("tmdbBatchSyncLoadCsv")}</button>
+                  <a className={styles.batchSyncDownload} href={verifiedTmdbCrosswalkUrl} target="_blank" rel="noreferrer">{t("tmdbBatchSyncCsv")}</a>
+                </div>
+                <label className={styles.batchSyncField}>{t("tmdbBatchSyncPairs")}<textarea aria-label={t("tmdbBatchSyncPairs")} placeholder={t("tmdbBatchSyncPlaceholder")} rows={6} value={tmdbSyncPairs} disabled={tmdbSyncPairLoadBusy} onChange={event => setTmdbSyncPairs(event.target.value)} /></label>
                 <button type="submit" disabled={tmdbSyncBatchBusy || tmdbImportBusy || mutationBusy || syncingMovieId !== null}>{tmdbSyncBatchBusy ? t("loading") : t("tmdbBatchSyncButton")}</button>
                 {tmdbSyncBatchMessage && <p className={tmdbSyncBatchError ? styles.error : styles.status} role={tmdbSyncBatchError ? "alert" : "status"}>{tmdbSyncBatchMessage}</p>}
                 {tmdbSyncBatchFailures.length > 0 && <ul className={styles.batchSyncFailures}>{tmdbSyncBatchFailures.map(item => <li key={`${item.movieId}-${item.tmdbId}`}>{item.movieId ?? "—"} → {item.tmdbId}</li>)}</ul>}

@@ -286,6 +286,7 @@
 .batchSyncForm { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--rewind-line); }
 .batchSyncForm h4, .batchSyncForm p { margin: 0; }
 .batchSyncForm p { color: var(--rewind-muted); line-height: 1.5; }
+.batchSyncActions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .batchSyncDownload { justify-self: start; color: var(--rewind-cyan); text-underline-offset: 3px; }
 .batchSyncDownload:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: 3px; }
 .batchSyncField { display: grid; gap: 6px; color: var(--rewind-muted); }
