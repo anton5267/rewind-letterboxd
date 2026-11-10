@@ -33,7 +33,7 @@ test("an administrator can dismiss an open review report in Ukrainian and Englis
     const labels = locale === "uk"
       ? { section: "Огляди", filter: "Видимість", reported: "Лише зі скаргами", dismiss: "Відхилити скаргу", success: "Скаргу відхилено" }
       : { section: "Reviews", filter: "Visibility", reported: "Reported only", dismiss: "Dismiss report", success: "The report was dismissed" };
-    await page.goto(`/${locale}/admin?view=reviews`);
+    await page.goto(`${locale}/admin?view=reviews`);
     const section = page.getByRole("region", { name: labels.section });
     await section.getByRole("combobox", { name: labels.filter }).selectOption("reported");
     const row = section.getByRole("listitem");
