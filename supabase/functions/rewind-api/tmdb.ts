@@ -1,6 +1,9 @@
 export interface TmdbPerson { tmdbId: number; name: string; photoUrl: string | null }
 export interface TmdbCast extends TmdbPerson { characterName: string | null; castOrder: number | null }
 export interface TmdbGenre { tmdbId: number; name: string }
+export interface TmdbMovieCandidate {
+  tmdbId: number; title: string; releaseDate: string | null; overview: string | null; posterUrl: string | null;
+}
 export interface TmdbMovie {
   tmdbId: number; imdbId: string | null; title: string; runtime: number | null; releaseDate: string | null;
   overview: string | null; posterUrl: string | null; backdropUrl: string | null; trailerUrl: string | null;
@@ -87,6 +90,20 @@ export async function fetchTmdbMovie(id: number, apiKey: string | undefined, fet
   if (!apiKey?.trim()) throw new TmdbError(503, "TMDB integration is disabled");
   const body = await apiGet(`/movie/${id}`, { language: "en-US", append_to_response: "credits,videos,similar,external_ids" }, apiKey, fetcher, baseUrl);
   return mapTmdbMovie(body, id);
+}
+export async function searchTmdbMovies(query: string, year: number | null, apiKey: string | undefined, fetcher: typeof fetch = fetch, baseUrl = API_URL): Promise<TmdbMovieCandidate[]> {
+  const normalized = query.trim();
+  if (normalized.length < 2 || normalized.length > 120) throw new TmdbError(400, "Invalid movie search");
+  if (!apiKey?.trim()) throw new TmdbError(503, "TMDB integration is disabled");
+  const params: Record<string, string> = { language: "en-US", query: normalized, include_adult: "false", page: "1" };
+  if (year !== null) params.primary_release_year = String(year);
+  const body = await apiGet("/search/movie", params, apiKey, fetcher, baseUrl);
+  if (!Array.isArray(body.results)) throw new TmdbError(502, "TMDB returned invalid search results");
+  return records(body.results).flatMap((entry) => {
+    const tmdbId = number(entry.id), title = text(entry.title)?.trim();
+    if (!tmdbId || !title) return [];
+    return [{ tmdbId, title, releaseDate: text(entry.release_date), overview: text(entry.overview), posterUrl: image(entry.poster_path, "w185") }];
+  }).slice(0, 8);
 }
 export interface TmdbDiscovery { page: number; totalPages: number; totalResults: number; tmdbIds: number[] }
 export async function discoverTmdbMovies(input: { page: number; year: number | null; genreId: number | null; minRating: number | null; limit: number }, apiKey: string | undefined, fetcher: typeof fetch = fetch, baseUrl = API_URL): Promise<TmdbDiscovery> {

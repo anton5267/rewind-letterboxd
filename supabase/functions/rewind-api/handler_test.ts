@@ -1543,6 +1543,7 @@ Deno.test("admin TMDB routes validate imports and preserve sync and discovery re
   const response = { movieId: 12, tmdbId: 120, title: "Synced", genresUpdated: 2, actorsUpdated: 3,
     directorsUpdated: 1, producersUpdated: 1, similarMoviesLinked: 4, trailerUpdated: true };
   const handler = authHandler({
+    async searchAdminMovieTmdbCandidates(_user, movieId) { calls.push(["candidates", movieId]); return [{ tmdbId: 120, title: "Test Film", releaseDate: "2024-01-01", overview: null, posterUrl: null }]; },
     async syncAdminTmdbMovie(_user, input) { calls.push(["sync", input]); return response; },
     async syncAdminTmdbBatch(_user, inputs, syncSimilar) { calls.push(["batch", inputs, syncSimilar]); return { requested: inputs.length, succeeded: inputs.length, failed: 0, items: [] }; },
     async importAdminTmdb(_user, ids, syncSimilar) { calls.push(["import", ids, syncSimilar]); return { requested: ids.length, succeeded: ids.length, failed: 0, items: [] }; },
@@ -1550,15 +1551,18 @@ Deno.test("admin TMDB routes validate imports and preserve sync and discovery re
   });
   const headers = { Authorization: "Bearer valid-token", "Content-Type": "application/json" };
   const unauth = await authHandler({})(new Request("https://project.supabase.co/api/admin/movies/12/tmdb-sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tmdbId: 120 }) }));
+  const unauthCandidates = await authHandler({})(new Request("https://project.supabase.co/api/admin/movies/12/tmdb-candidates"));
+  const candidates = await handler(new Request("https://project.supabase.co/api/admin/movies/12/tmdb-candidates", { headers }));
+  const invalidCandidates = await handler(new Request("https://project.supabase.co/api/admin/movies/0/tmdb-candidates", { headers }));
   const invalid = await handler(new Request("https://project.supabase.co/api/admin/movies/tmdb-import", { method: "POST", headers, body: JSON.stringify({ tmdbIds: [1, 1] }) }));
   const sync = await handler(new Request("https://project.supabase.co/api/admin/movies/12/tmdb-sync", { method: "POST", headers, body: JSON.stringify({ tmdbId: 120 }) }));
   const batch = await handler(new Request("https://project.supabase.co/api/admin/movies/tmdb-sync/batch", { method: "POST", headers, body: JSON.stringify({ movies: [{ movieId: 12, tmdbId: 120 }], syncSimilar: false }) }));
   const imported = await handler(new Request("https://project.supabase.co/api/admin/movies/tmdb-import", { method: "POST", headers, body: JSON.stringify({ tmdbIds: [120] }) }));
   const discovered = await handler(new Request("https://project.supabase.co/api/admin/movies/tmdb-import/discover", { method: "POST", headers, body: JSON.stringify({ page: 2, year: 2020, genreId: 18, minRating: 7, limit: 5 }) }));
-  if (unauth.status !== 401 || invalid.status !== 400 || sync.status !== 200 || JSON.stringify(await sync.json()) !== JSON.stringify(response)
+  if (unauth.status !== 401 || unauthCandidates.status !== 401 || candidates.status !== 200 || (await candidates.json())[0]?.tmdbId !== 120 || invalidCandidates.status !== 400 || invalid.status !== 400 || sync.status !== 200 || JSON.stringify(await sync.json()) !== JSON.stringify(response)
     || batch.status !== 200 || imported.status !== 200 || discovered.status !== 200
     || JSON.stringify(calls) !== JSON.stringify([
-      ["sync", { movieId: 12, tmdbId: 120, syncSimilar: true }], ["batch", [{ movieId: 12, tmdbId: 120, syncSimilar: false }], false],
+      ["candidates", 12], ["sync", { movieId: 12, tmdbId: 120, syncSimilar: true }], ["batch", [{ movieId: 12, tmdbId: 120, syncSimilar: false }], false],
       ["import", [120], true], ["discover", { page: 2, year: 2020, genreId: 18, minRating: 7, limit: 5, syncSimilar: true }],
-    ])) throw new Error(`TMDB route contract failed: ${JSON.stringify({ statuses: [unauth.status, invalid.status, sync.status, batch.status, imported.status, discovered.status], calls })}`);
+    ])) throw new Error(`TMDB route contract failed: ${JSON.stringify({ statuses: [unauth.status, unauthCandidates.status, candidates.status, invalidCandidates.status, invalid.status, sync.status, batch.status, imported.status, discovered.status], calls })}`);
 });

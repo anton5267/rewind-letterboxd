@@ -1,4 +1,4 @@
-import { discoverTmdbMovies, fetchTmdbMovie, mapTmdbMovie, TmdbError } from "./tmdb.ts";
+import { discoverTmdbMovies, fetchTmdbMovie, mapTmdbMovie, searchTmdbMovies, TmdbError } from "./tmdb.ts";
 function assertEquals(actual: unknown, expected: unknown) {
   if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error(`Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
 }
@@ -57,4 +57,28 @@ Deno.test("TMDB discovery preserves supported filters and caps unique IDs", asyn
     return Response.json({ page: 2, total_pages: 8, total_results: 4, results: [{ id: 3 }, { id: 3 }, { id: 4 }, { id: 5 }] });
   });
   assertEquals(discovery, { page: 2, totalPages: 8, totalResults: 4, tmdbIds: [3, 4] });
+});
+
+Deno.test("TMDB title search returns bounded explicit candidates and applies year", async () => {
+  const candidates = await searchTmdbMovies("Alien", 1979, "fixture", async (input) => {
+    const url = new URL(String(input));
+    assertEquals(url.pathname, "/3/search/movie");
+    assertEquals(url.searchParams.get("query"), "Alien");
+    assertEquals(url.searchParams.get("primary_release_year"), "1979");
+    assertEquals(url.searchParams.get("include_adult"), "false");
+    assertEquals(url.searchParams.get("api_key"), "fixture");
+    return Response.json({ results: [
+      { id: 1, title: "Alien", release_date: "1979-05-25", overview: "Sci-fi", poster_path: "/alien.jpg" },
+      { id: 2, title: "Alien 3", release_date: "1992-05-22" },
+      ...Array.from({ length: 10 }, (_, index) => ({ id: index + 3, title: `Candidate ${index}` })),
+      { title: "Invalid result" },
+    ] });
+  });
+  assertEquals(candidates.length, 8);
+  assertEquals(candidates[0], { tmdbId: 1, title: "Alien", releaseDate: "1979-05-25", overview: "Sci-fi", posterUrl: "https://image.tmdb.org/t/p/w185/alien.jpg" });
+});
+
+Deno.test("TMDB title search rejects short queries and requires the server key", async () => {
+  await assertTmdbError(() => searchTmdbMovies("x", null, "fixture"), "Invalid movie search");
+  await assertTmdbError(() => searchTmdbMovies("Alien", null, undefined), "disabled");
 });

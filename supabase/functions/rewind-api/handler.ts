@@ -209,6 +209,7 @@ export interface AdminSettingResponse { key: string; value: string; updatedBy: n
 export interface NewsletterQueueResponse { articleId: number; recipients: number }
 export interface NewsletterDeliveryStatusResponse { articleId: number; pending: number; sending: number; sent: number; failed: number; cancelled: number }
 export interface AdminMovieResponse { id: number; tmdbId: number | null; title: string; releaseDate: string | null; rating: number | null; photoUrl: string | null }
+export interface AdminTmdbMovieCandidate { tmdbId: number; title: string; releaseDate: string | null; overview: string | null; posterUrl: string | null }
 export interface AdminMovieWriteRequest {
   title?: string; imdbId?: string | null; durationMinutes?: number | null; releaseDate?: string | null;
   ageRating?: string | null; rating?: number | null; shortPlot?: string | null;
@@ -527,6 +528,7 @@ export interface RewindApiRepository {
   updateAdminMovie?(authUser: HostedAuthUser, id: number, body: AdminMovieWriteRequest): Promise<AdminMovieResponse | null>;
   deleteAdminMovie?(authUser: HostedAuthUser, id: number): Promise<boolean>;
   getAdminTmdbQuality?(authUser: HostedAuthUser): Promise<AdminTmdbQualityReport>;
+  searchAdminMovieTmdbCandidates?(authUser: HostedAuthUser, movieId: number): Promise<AdminTmdbMovieCandidate[]>;
   syncAdminTmdbMovie?(authUser: HostedAuthUser, input: AdminTmdbSyncInput): Promise<AdminTmdbSyncResponse>;
   syncAdminTmdbBatch?(authUser: HostedAuthUser, inputs: AdminTmdbSyncInput[], syncSimilar: boolean): Promise<AdminTmdbBatchResponse>;
   importAdminTmdb?(authUser: HostedAuthUser, tmdbIds: number[], syncSimilar: boolean): Promise<AdminTmdbBatchResponse>;
@@ -614,6 +616,7 @@ const ADMIN_SETTINGS_PATH = "/api/admin/settings";
 const ADMIN_SETTING_PATTERN = /^\/api\/admin\/settings\/([^/]+)$/;
 const ADMIN_MOVIES_PATH = "/api/admin/movies";
 const ADMIN_TMDB_QUALITY_PATH = "/api/admin/movies/tmdb-quality";
+const ADMIN_TMDB_CANDIDATES_PATTERN = /^\/api\/admin\/movies\/(\d+)\/tmdb-candidates$/;
 const ADMIN_TMDB_SYNC_PATTERN = /^\/api\/admin\/movies\/(\d+)\/tmdb-sync$/;
 const ADMIN_TMDB_BATCH_PATH = "/api/admin/movies/tmdb-sync/batch";
 const ADMIN_TMDB_IMPORT_PATH = "/api/admin/movies/tmdb-import";
@@ -798,6 +801,23 @@ export function createRewindApiHandler(
         return new Response(null, { status: 204, headers: corsHeaders });
       } catch (error) {
         return repositoryFailure(error, "Unable to manage list", corsHeaders);
+      }
+    }
+    const tmdbCandidatesMatch = path.match(ADMIN_TMDB_CANDIDATES_PATTERN);
+    if (tmdbCandidatesMatch) {
+      if (request.method !== "GET") {
+        corsHeaders.set("Allow", "GET, OPTIONS");
+        return json({ message: "Method not allowed" }, 405, corsHeaders);
+      }
+      const authUser = await confirmedAuthUser(request, authVerifier);
+      if (!authUser) return json({ message: "Authentication required" }, 401, corsHeaders);
+      const movieId = parseRouteId(tmdbCandidatesMatch[1]);
+      if (movieId === null) return json({ message: "Invalid movie ID" }, 400, corsHeaders);
+      try {
+        if (!repository.searchAdminMovieTmdbCandidates) return json({ message: "Not found" }, 404, corsHeaders);
+        return json(await repository.searchAdminMovieTmdbCandidates(authUser, movieId), 200, corsHeaders);
+      } catch (error) {
+        return repositoryFailure(error, "Unable to search TMDB candidates", corsHeaders);
       }
     }
     const tmdbSyncMatch = path.match(ADMIN_TMDB_SYNC_PATTERN);

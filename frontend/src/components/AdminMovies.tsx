@@ -5,12 +5,14 @@ import {
   deleteAdminMovie,
   discoverAndImportAdminTmdb,
   getAdminMovies,
+  getAdminMovieTmdbCandidates,
   getAdminTmdbQuality,
   importAdminTmdb,
   syncAdminMovieTmdb,
   updateAdminMovie,
   type AdminMovie,
   type AdminMovieWrite,
+  type AdminTmdbMovieCandidate,
   type TmdbDiscoveryRequest,
   type TmdbQualityReport,
 } from "../api/admin.api";
@@ -71,6 +73,10 @@ export default function AdminMovies({ onTotalChange }: Props) {
   const [editorDetailsFailed, setEditorDetailsFailed] = useState(false);
   const [tmdbIds, setTmdbIds] = useState<Record<number, string>>({});
   const [syncingMovieId, setSyncingMovieId] = useState<number | null>(null);
+  const [tmdbCandidateMovieId, setTmdbCandidateMovieId] = useState<number | null>(null);
+  const [tmdbCandidates, setTmdbCandidates] = useState<AdminTmdbMovieCandidate[]>([]);
+  const [tmdbCandidatesBusy, setTmdbCandidatesBusy] = useState(false);
+  const [tmdbCandidatesError, setTmdbCandidatesError] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [tmdbImportIds, setTmdbImportIds] = useState("");
   const [tmdbDiscoveryDraft, setTmdbDiscoveryDraft] = useState({ page: "1", year: "", genreId: "", minRating: "", limit: "20" });
@@ -130,6 +136,10 @@ export default function AdminMovies({ onTotalChange }: Props) {
   useLayoutEffect(() => {
     actionScopeGeneration.current += 1;
     setSyncingMovieId(null);
+    setTmdbCandidateMovieId(null);
+    setTmdbCandidates([]);
+    setTmdbCandidatesBusy(false);
+    setTmdbCandidatesError(false);
     setTmdbImportBusy(false);
     setSyncMessage(null);
     setSyncError(false);
@@ -499,6 +509,23 @@ export default function AdminMovies({ onTotalChange }: Props) {
     }
   };
 
+  const searchMovieTmdbCandidates = async (movie: AdminMovie) => {
+    const actionScope = actionScopeGeneration.current;
+    const isCurrent = () => mounted.current && actionScopeGeneration.current === actionScope;
+    setTmdbCandidateMovieId(movie.id);
+    setTmdbCandidates([]);
+    setTmdbCandidatesError(false);
+    setTmdbCandidatesBusy(true);
+    try {
+      const { data: candidates } = await getAdminMovieTmdbCandidates(movie.id);
+      if (isCurrent()) setTmdbCandidates(candidates);
+    } catch {
+      if (isCurrent()) setTmdbCandidatesError(true);
+    } finally {
+      if (isCurrent()) setTmdbCandidatesBusy(false);
+    }
+  };
+
   const importTmdbIds = async (event: React.FormEvent) => {
     event.preventDefault();
     const actionScope = actionScopeGeneration.current;
@@ -675,7 +702,20 @@ export default function AdminMovies({ onTotalChange }: Props) {
                   <summary aria-label={`${t("moreActions")} · ${movieTitle}`}>{t("moreActions")}</summary>
                   <div className={styles.movieActionsPanel}>
                     <button type="button" disabled={mutationBusy} onClick={event => requestMovieDelete(movie, event.currentTarget)}>{t("deleteMovie")}</button>
-                    <div className={styles.syncControls}><label className={styles.inlineField}>{t("tmdbId")}<input className={styles.tmdbIdInput} inputMode="numeric" pattern="[0-9]*" aria-label={`${t("tmdbId")} ${movieTitle}`} value={tmdbIds[movie.id] ?? ""} onChange={event => setTmdbIds(current => ({ ...current, [movie.id]: event.target.value }))} /></label><a className={styles.tmdbSearchLink} href={tmdbSearchHref(movie)} target="_blank" rel="noopener noreferrer">{t("searchTmdb")}</a><button type="button" disabled={syncingMovieId !== null} onClick={() => void syncMovie(movie)}>{syncingMovieId === movie.id ? t("loading") : t("syncTmdb")}</button></div>
+                    <div className={styles.syncControls}><label className={styles.inlineField}>{t("tmdbId")}<input className={styles.tmdbIdInput} inputMode="numeric" pattern="[0-9]*" aria-label={`${t("tmdbId")} ${movieTitle}`} value={tmdbIds[movie.id] ?? ""} onChange={event => setTmdbIds(current => ({ ...current, [movie.id]: event.target.value }))} /></label><button type="button" disabled={tmdbCandidatesBusy || syncingMovieId !== null} onClick={() => void searchMovieTmdbCandidates(movie)}>{tmdbCandidatesBusy && tmdbCandidateMovieId === movie.id ? t("loading") : t("findTmdbCandidates")}</button><a className={styles.tmdbSearchLink} href={tmdbSearchHref(movie)} target="_blank" rel="noopener noreferrer">{t("searchTmdb")}</a><button type="button" disabled={syncingMovieId !== null} onClick={() => void syncMovie(movie)}>{syncingMovieId === movie.id ? t("loading") : t("syncTmdb")}</button></div>
+                    {tmdbCandidateMovieId === movie.id && <section className={styles.tmdbCandidates} aria-label={t("tmdbCandidates") }>
+                      <h4>{t("tmdbCandidates")}</h4>
+                      {tmdbCandidatesBusy && <p role="status">{t("loading")}</p>}
+                      {tmdbCandidatesError && <p className={styles.error} role="alert">{t("tmdbCandidatesError")}</p>}
+                      {!tmdbCandidatesBusy && !tmdbCandidatesError && tmdbCandidates.length === 0 && <p>{t("tmdbCandidatesEmpty")}</p>}
+                      {tmdbCandidates.length > 0 && <ul>{tmdbCandidates.map(candidate => <li key={candidate.tmdbId}>
+                        <button type="button" className={styles.tmdbCandidate} aria-label={`${t("selectTmdbCandidate")}: ${candidate.title} · ${candidate.releaseDate?.slice(0, 4) ?? "—"} · ${candidate.tmdbId}`} onClick={() => setTmdbIds(current => ({ ...current, [movie.id]: String(candidate.tmdbId) }))}>
+                          <strong>{candidate.title}</strong><span>{candidate.releaseDate?.slice(0, 4) ?? "—"} · TMDB {candidate.tmdbId}</span>
+                          {candidate.overview && <small>{candidate.overview}</small>}
+                        </button>
+                      </li>)}</ul>}
+                      <p>{t("tmdbCandidateSyncHint")}</p>
+                    </section>}
                   </div>
                 </details>
               </div>

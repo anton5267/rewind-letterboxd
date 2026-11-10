@@ -461,6 +461,57 @@
   color: var(--rewind-accent);
 }
 
+.tmdbCandidates {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 8px;
+  max-width: 560px;
+  margin: 4px 0 0 8px;
+}
+
+.tmdbCandidates h4,
+.tmdbCandidates p {
+  margin: 0;
+}
+
+.tmdbCandidates ul {
+  display: grid;
+  gap: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tmdbCandidate {
+  display: grid;
+  width: 100%;
+  gap: 3px;
+  padding: 9px 11px;
+  border: 1px solid var(--rewind-line);
+  border-radius: var(--rewind-radius-md);
+  color: var(--rewind-text);
+  text-align: left;
+}
+
+.tmdbCandidate:hover,
+.tmdbCandidate:focus-visible {
+  border-color: var(--rewind-accent);
+}
+
+.tmdbCandidate span,
+.tmdbCandidate small {
+  color: var(--rewind-muted);
+}
+
+.tmdbCandidate small {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
 .tmdbIdInput {
   width: 90px;
   min-height: 44px;

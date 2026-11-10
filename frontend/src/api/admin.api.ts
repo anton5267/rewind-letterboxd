@@ -14,6 +14,7 @@ export interface NewsletterDeliveryStatus { articleId: number; pending: number; 
 export interface AdminReview { id: number; movieId: number; movieTitle: string; userId: number; username: string; content: string; rating: number | null; isHidden: boolean; moderatedReason: string | null; moderatedAt: string | null; createdAt: string }
 export interface AdminReportedReview extends AdminReview { reportId: number; reportReason: "SPAM" | "INAPPROPRIATE_CONTENT" | "BULLYING"; reportCreatedAt: string; likesCount: number; commentsCount: number }
 export interface AdminMovie { id: number; tmdbId: number | null; title: string; releaseDate: string | null; rating: number | null; photoUrl: string | null }
+export interface AdminTmdbMovieCandidate { tmdbId: number; title: string; releaseDate: string | null; overview: string | null; posterUrl: string | null }
 export interface AdminMovieWrite { title: string; imdbId?: string | null; durationMinutes?: number | null; releaseDate?: string | null; ageRating?: string | null; rating?: number | null; shortPlot?: string | null; photoUrl?: string | null; backdropUrl?: string | null; trailerUrl?: string | null }
 export interface TmdbSyncResponse { movieId: number; tmdbId: number; title: string; genresUpdated: number; actorsUpdated: number; directorsUpdated: number; producersUpdated: number; similarMoviesLinked: number; trailerUpdated: boolean }
 export interface TmdbImportItem { movieId: number | null; tmdbId: number; status: "IMPORTED" | "FAILED"; title: string | null; message: string }
@@ -55,6 +56,7 @@ export const createAdminMovie = (movie: AdminMovieWrite) => api.post<AdminMovie>
 export const updateAdminMovie = (id: number, movie: Partial<AdminMovieWrite>) => api.put<AdminMovie>(`/admin/movies/${id}`, movie);
 export const deleteAdminMovie = (id: number) => api.delete<void>(`/admin/movies/${id}`);
 export const syncAdminMovieTmdb = (id: number, tmdbId: number, syncSimilar = true) => api.post<TmdbSyncResponse>(`/admin/movies/${id}/tmdb-sync`, { tmdbId, syncSimilar });
+export const getAdminMovieTmdbCandidates = (id: number) => api.get<AdminTmdbMovieCandidate[]>(`/admin/movies/${id}/tmdb-candidates`);
 export const importAdminTmdb = (tmdbIds: number[], syncSimilar = true) => api.post<TmdbBatchSyncResponse>("/admin/movies/tmdb-import", { tmdbIds, syncSimilar });
 export const discoverAndImportAdminTmdb = (request: TmdbDiscoveryRequest) => api.post<TmdbDiscoveryImportResponse>("/admin/movies/tmdb-import/discover", { ...request, syncSimilar: request.syncSimilar ?? true });
 export const getAdminTmdbQuality = () => api.get<TmdbQualityReport>("/admin/movies/tmdb-quality");

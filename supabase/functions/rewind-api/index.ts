@@ -59,6 +59,7 @@ import {
   type NewsletterQueueResponse,
   type NewsletterDeliveryStatusResponse,
   type AdminMovieResponse,
+  type AdminTmdbMovieCandidate,
   type AdminMovieWriteRequest,
   type AdminTmdbQualityReport,
   type AdminTmdbSyncResponse,
@@ -68,7 +69,7 @@ import {
   type AdminTmdbDiscoveryInput,
   RewindApiError,
 } from "./handler.ts";
-import { discoverTmdbMovies, fetchTmdbMovie, TmdbError, type TmdbMovie, type TmdbPerson } from "./tmdb.ts";
+import { discoverTmdbMovies, fetchTmdbMovie, searchTmdbMovies, TmdbError, type TmdbMovie, type TmdbPerson } from "./tmdb.ts";
 import {
   createHostedIdentityDeleter,
   createHostedPasswordChanger,
@@ -1328,6 +1329,26 @@ const handler = createRewindApiHandler({
   },
   async syncAdminTmdbMovie(authUser, input) {
     return await syncOneTmdb(authUser, input.movieId, input.tmdbId, input.syncSimilar);
+  },
+  async searchAdminMovieTmdbCandidates(authUser, movieId) {
+    const { connection } = await beginAdminTransaction(authUser);
+    let movie: { title: string; release_date: string | null } | undefined;
+    try {
+      const result = await connection.queryObject<{ title: string; release_date: string | null }>({
+        text: "SELECT title, release_date::text AS release_date FROM rewind.movies WHERE id=$1",
+        args: [movieId],
+      });
+      movie = result.rows[0];
+      await connection.queryObject("COMMIT");
+    } catch (error) {
+      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+      throw error;
+    } finally { connection.release(); }
+    if (!movie) throw new RewindApiError(404, "Movie not found");
+    const yearMatch = movie.release_date?.match(/^(\d{4})/);
+    try {
+      return await searchTmdbMovies(movie.title, yearMatch ? Number(yearMatch[1]) : null, tmdbApiKey, fetch, tmdbApiBaseUrl) as AdminTmdbMovieCandidate[];
+    } catch (error) { return tmdbApiFailure(error); }
   },
   async syncAdminTmdbBatch(authUser, inputs, syncSimilar) {
     const items: AdminTmdbBatchResponse["items"] = [];
