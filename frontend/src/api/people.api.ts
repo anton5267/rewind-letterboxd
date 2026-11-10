@@ -18,7 +18,7 @@ export interface PersonFilmography {
 }
 
 export interface PersonSearchPage {
-  content: { id: number; name: string; photoUrl: string | null; type: "ACTOR" | "DIRECTOR"; filmCount: number }[];
+  content: { id: number; name: string; photoUrl: string | null; type: "ACTOR" | "DIRECTOR" | "PRODUCER"; filmCount: number }[];
   totalPages: number;
   totalElements: number;
   number: number;
