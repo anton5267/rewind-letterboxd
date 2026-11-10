@@ -443,6 +443,24 @@
   vertical-align: middle;
 }
 
+.tmdbSearchLink {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border: 1px solid var(--rewind-line);
+  border-radius: var(--rewind-radius-md);
+  color: var(--rewind-text);
+  text-decoration: none;
+}
+
+.tmdbSearchLink:hover,
+.tmdbSearchLink:focus-visible {
+  border-color: var(--rewind-accent);
+  color: var(--rewind-accent);
+}
+
 .tmdbIdInput {
   width: 90px;
   min-height: 44px;

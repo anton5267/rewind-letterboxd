@@ -43,6 +43,13 @@ const parseTmdbIds = (value: string): number[] | null => {
   return [...new Set(ids.filter((id): id is number => id !== null))];
 };
 
+const tmdbSearchHref = (movie: AdminMovie) => {
+  const title = editorialText(movie.title, "").trim();
+  const year = movie.releaseDate?.slice(0, 4);
+  const query = year && /^\d{4}$/.test(year) ? `${title} y:${year}` : title;
+  return `https://www.themoviedb.org/search/movie?query=${encodeURIComponent(query)}`;
+};
+
 export default function AdminMovies({ onTotalChange }: Props) {
   const { lang, t } = useLocale();
   const { user } = useAuth();
@@ -668,7 +675,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
                   <summary aria-label={`${t("moreActions")} · ${movieTitle}`}>{t("moreActions")}</summary>
                   <div className={styles.movieActionsPanel}>
                     <button type="button" disabled={mutationBusy} onClick={event => requestMovieDelete(movie, event.currentTarget)}>{t("deleteMovie")}</button>
-                    <div className={styles.syncControls}><label className={styles.inlineField}>{t("tmdbId")}<input className={styles.tmdbIdInput} inputMode="numeric" pattern="[0-9]*" aria-label={`${t("tmdbId")} ${movieTitle}`} value={tmdbIds[movie.id] ?? ""} onChange={event => setTmdbIds(current => ({ ...current, [movie.id]: event.target.value }))} /></label><button type="button" disabled={syncingMovieId !== null} onClick={() => void syncMovie(movie)}>{syncingMovieId === movie.id ? t("loading") : t("syncTmdb")}</button></div>
+                    <div className={styles.syncControls}><label className={styles.inlineField}>{t("tmdbId")}<input className={styles.tmdbIdInput} inputMode="numeric" pattern="[0-9]*" aria-label={`${t("tmdbId")} ${movieTitle}`} value={tmdbIds[movie.id] ?? ""} onChange={event => setTmdbIds(current => ({ ...current, [movie.id]: event.target.value }))} /></label><a className={styles.tmdbSearchLink} href={tmdbSearchHref(movie)} target="_blank" rel="noopener noreferrer">{t("searchTmdb")}</a><button type="button" disabled={syncingMovieId !== null} onClick={() => void syncMovie(movie)}>{syncingMovieId === movie.id ? t("loading") : t("syncTmdb")}</button></div>
                   </div>
                 </details>
               </div>
