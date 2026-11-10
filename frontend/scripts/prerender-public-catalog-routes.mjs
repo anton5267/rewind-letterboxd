@@ -200,15 +200,15 @@ for (const movie of movies) {
   }
 }
 
-for (const type of ["actor", "director"]) {
+for (const type of ["actor", "director", "producer"]) {
   const people = await fetchAllPages(`/people/search?type=${type}`, type);
   for (const person of people) {
     if (!Number.isSafeInteger(person.id) || person.id <= 0 || typeof person.name !== "string" || !person.name.trim()) {
       throw new Error(`Public ${type} search returned an invalid person for static route generation.`);
     }
     for (const language of ["uk", "en"]) {
-      const roleUk = type === "actor" ? "актора" : "режисера";
-      const roleEn = type === "actor" ? "actor" : "director";
+      const roleUk = type === "actor" ? "актора" : type === "director" ? "режисера" : "продюсера";
+      const roleEn = type === "actor" ? "actor" : type === "director" ? "director" : "producer";
       const description = language === "uk"
         ? `Фільмографія ${roleUk} ${person.name} у публічному каталозі REWIND.`
         : `${person.name}'s ${roleEn} filmography in the public REWIND catalogue.`;
