@@ -31,7 +31,7 @@ export const register = (
       password,
       options: {
         emailRedirectTo: authRedirectUrl(language, "login"),
-        data: { username: username.trim() },
+        data: { username: username.trim(), language },
       },
     }).then(({ data, error }) => {
       if (error) throw error;

@@ -1,3 +1,13 @@
+# Auth templates are the version-controlled source of truth. Apply the same
+# subject/body in the hosted project's Authentication → Emails dashboard.
+[auth.email.template.confirmation]
+subject = "REWIND — підтвердьте email / Confirm your email"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "REWIND — відновлення пароля / Password reset"
+content_path = "./supabase/templates/recovery.html"
+
 # The router currently exposes only a public genre lookup. Keep every future
 # protected route behind explicit in-function authentication and authorization.
 [functions.rewind-api]

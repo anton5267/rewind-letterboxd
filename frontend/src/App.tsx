@@ -9,6 +9,7 @@ const Register = lazy(() => import("./auth/Register"));
 const ForgotPassword = lazy(() => import("./auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./auth/ResetPassword"));
 const AuthEntry = lazy(() => import("./auth/AuthEntry"));
+const SupabaseLinkAccount = lazy(() => import("./auth/SupabaseLinkAccount"));
 const Search = lazy(() => import("./pages/Search"));
 const FilmsDiscover = lazy(() => import("./pages/FilmsDiscover"));
 const GlobalSearch = lazy(() => import("./pages/GlobalSearch"));
@@ -93,6 +94,7 @@ function LocalizedApp() {
     <Route path="register" element={<Layout><Register /></Layout>} />
     <Route path="forgot-password" element={<Layout><ForgotPassword /></Layout>} />
     <Route path="reset-password" element={<Layout><ResetPassword /></Layout>} />
+    <Route path="link-account" element={<Layout><SupabaseLinkAccount /></Layout>} />
     {/* Keep unknown localized paths inside the language namespace so the
         Figma-inspired error state can offer the correct localized home link. */}
     <Route path="*" element={<Layout><NotFound /></Layout>} />

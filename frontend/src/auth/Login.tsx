@@ -20,12 +20,20 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [error, setError] = useState<"login" | "confirmation" | "profile" | "callback" | null>(null);
+  const [error, setError] = useState<"login" | "confirmation" | "profile" | "callback" | "callbackExpired" | null>(null);
   const [emailConfirmed, setEmailConfirmed] = useState(false);
-  const [pkceConfirmationCallback] = useState(() =>
+  const [providerCallbackError] = useState<"callback" | "callbackExpired" | null>(() => {
+    const query = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const errorCode = query.get("error_code") ?? hash.get("error_code");
+    const description = `${query.get("error_description") ?? ""} ${hash.get("error_description") ?? ""}`.toLowerCase();
+    if (errorCode === "otp_expired" || description.includes("expired") || description.includes("not found")) return "callbackExpired";
+    return query.has("error") || hash.has("error") ? "callback" : null;
+  });
+  const [pkceConfirmationCallback] = useState(() => !providerCallbackError && (
     new URLSearchParams(window.location.search).has("code")
     || window.sessionStorage.getItem(PENDING_PKCE_SIGNUP_CALLBACK) === "1"
-  );
+  ));
   const [loading, setLoading] = useState(false);
   const errorMessage = useRef<HTMLParagraphElement>(null);
   const mounted = useRef(false);
@@ -41,6 +49,16 @@ export default function Login() {
   }, []);
 
   useLayoutEffect(() => { focusScope.current += 1; errorFocus.current = null; }, [lang, location.key]);
+
+  useEffect(() => {
+    if (!providerCallbackError) return;
+    window.sessionStorage.removeItem(PENDING_PKCE_SIGNUP_CALLBACK);
+    const params = new URLSearchParams(window.location.search);
+    ["error", "error_code", "error_description"].forEach((key) => params.delete(key));
+    const query = params.toString();
+    window.history.replaceState(window.history.state, "", window.location.pathname + (query ? "?" + query : ""));
+    setError(providerCallbackError);
+  }, [providerCallbackError]);
 
   useEffect(() => {
     const hash = new URLSearchParams(window.location.hash.slice(1));
@@ -164,7 +182,7 @@ export default function Login() {
               {t("forgotPassword")}
             </Link>
           </div>
-          {error && <p ref={errorMessage} tabIndex={-1} className={styles.error} id="login-error" role="alert">{t(error === "confirmation" ? "emailNotConfirmed" : error === "profile" ? "accountLoadError" : error === "callback" ? "confirmationCallbackError" : "loginError")}</p>}
+          {error && <p ref={errorMessage} tabIndex={-1} className={styles.error} id="login-error" role="alert">{t(error === "confirmation" ? "emailNotConfirmed" : error === "profile" ? "accountLoadError" : error === "callbackExpired" ? "confirmationLinkExpired" : error === "callback" ? "confirmationCallbackError" : "loginError")}</p>}
           <button type="submit" className={styles.button} aria-busy={loading} disabled={loading}>
             {loading ? t("loggingIn") : t("login")}
           </button>

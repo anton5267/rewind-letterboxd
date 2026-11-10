@@ -109,3 +109,16 @@ test("a failed PKCE confirmation clears its one-time code and explains the next 
   await expect(page.getByRole("alert")).toContainText("Не вдалося завершити підтвердження email");
   await expect(page).toHaveURL(/\/uk\/login\/?$/);
 });
+
+test("an expired or replayed confirmation link gives Ukrainian guidance and is removed from the URL", async ({ page }) => {
+  await page.goto("/uk/login/?error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired");
+  await expect(page.getByRole("alert")).toContainText(/одноразове посилання вже використано або його термін дії минув/i);
+  await expect(page).toHaveURL(/\/uk\/login\/?$/);
+  await expect(page.locator("#login-password")).toBeVisible();
+});
+
+test("an expired or replayed confirmation link gives English guidance", async ({ page }) => {
+  await page.goto("/en/login/#error=access_denied&error_code=otp_expired&error_description=Email+link+expired");
+  await expect(page.getByRole("alert")).toContainText(/one-time link has already been used or has expired/i);
+  await expect(page).toHaveURL(/\/en\/login\/?$/);
+});
