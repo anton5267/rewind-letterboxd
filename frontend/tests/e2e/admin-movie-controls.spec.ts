@@ -5,6 +5,7 @@ async function adminMovieFixture(page: Page) {
   const movie = { id: 940001, tmdbId: null, title: "Strict ID film", releaseDate: "2026-10-01", rating: 4, photoUrl: null };
   const emptyPage = { content: [], totalPages: 0, totalElements: 0 };
   const writes: { path: string; data: unknown }[] = [];
+  const candidateSearches: string[] = [];
   await page.route(/^https?:\/\/[^/]+\/api\//, route => {
     const request = route.request();
     const url = new URL(request.url());
@@ -20,6 +21,13 @@ async function adminMovieFixture(page: Page) {
     if (url.pathname === "/api/admin/dashboard") return route.fulfill({ json: { users: 0, activeUsers: 0, hqUsers: 0, movies: 1, reviews: 0, hiddenReviews: 0 } });
     if (url.pathname === "/api/admin/settings") return route.fulfill({ json: [] });
     if (url.pathname === "/api/admin/movies/tmdb-quality") return route.fulfill({ json: { totalMovies: 1, tmdbLinkedMovies: 0, completeTmdbMovies: 0, missingPoster: 1, missingBackdrop: 1, missingPlot: 1, missingRuntime: 1, missingTrailer: 1, missingTmdbRating: 1, linkedCoveragePercent: 0, metadataCompletenessPercent: 0 } });
+    if (url.pathname === `/api/admin/movies/${movie.id}/tmdb-candidates`) {
+      candidateSearches.push(url.pathname);
+      return route.fulfill({ json: [
+        { tmdbId: 672, title: "Strict ID film", releaseDate: "2026-10-01", overview: "Exact title and year match", posterUrl: null },
+        { tmdbId: 673, title: "Strict ID Film: Revisited", releaseDate: "2025-10-01", overview: null, posterUrl: null },
+      ] });
+    }
     if (url.pathname === "/api/admin/movies") return route.fulfill({ json: { content: [movie], totalPages: 1, totalElements: 1 } });
     if (url.pathname === `/api/movies/${movie.id}/details`) return route.fulfill({ json: { ...movie, genres: [], directors: [], actors: [], producers: [], shortPlot: null, backdropUrl: null, trailerUrl: null, durationMinutes: null, ageRating: null } });
     return route.fulfill({ json: emptyPage });
@@ -27,7 +35,7 @@ async function adminMovieFixture(page: Page) {
   await page.goto("/en/admin?view=movies");
   const movies = page.getByRole("region", { name: "Film database", exact: true });
   await expect(movies).toHaveAttribute("aria-busy", "false");
-  return { movie, movies, writes };
+  return { movie, movies, writes, candidateSearches };
 }
 
 test("single TMDB sync rejects malformed IDs and submits the exact valid ID", async ({ page }) => {
@@ -45,6 +53,26 @@ test("single TMDB sync rejects malformed IDs and submits the exact valid ID", as
   await sync.click();
   await expect(movies.getByRole("status").filter({ hasText: "TMDB updated" })).toBeVisible();
   expect(writes).toEqual([{ path: `/api/admin/movies/${movie.id}/tmdb-sync`, data: { tmdbId: 550, syncSimilar: true } }]);
+});
+
+test("TMDB candidate selection only fills the ID until the admin explicitly syncs", async ({ page }) => {
+  const { movie, movies, writes, candidateSearches } = await adminMovieFixture(page);
+  const row = movies.getByRole("listitem").filter({ hasText: movie.title });
+  await row.locator("summary").click();
+  await row.getByRole("button", { name: "Find TMDB matches", exact: true }).click();
+  const candidate = row.getByRole("button", { name: /Strict ID film · 2026 · 672/ });
+  await expect(candidate).toBeVisible();
+  expect(candidateSearches).toEqual([`/api/admin/movies/${movie.id}/tmdb-candidates`]);
+  expect(writes).toEqual([]);
+
+  await candidate.click();
+  const field = row.getByRole("textbox", { name: `TMDB ID ${movie.title}`, exact: true });
+  await expect(field).toHaveValue("672");
+  expect(writes).toEqual([]);
+
+  await row.getByRole("button", { name: "Sync TMDB", exact: true }).click();
+  await expect(movies.getByRole("status").filter({ hasText: "TMDB updated" })).toBeVisible();
+  expect(writes).toEqual([{ path: `/api/admin/movies/${movie.id}/tmdb-sync`, data: { tmdbId: 672, syncSimilar: true } }]);
 });
 
 test("batch TMDB import rejects the whole invalid input and deduplicates valid IDs", async ({ page }) => {
