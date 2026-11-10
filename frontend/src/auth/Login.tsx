@@ -7,20 +7,25 @@ import styles from "./Login.module.css";
 import { useLocale } from "../i18n";
 import { useAuthFieldValidation } from "./useAuthFieldValidation";
 import { getAuthReturnTo } from "./authReturnTo";
+import { PENDING_PKCE_SIGNUP_CALLBACK } from "./authCallbackState";
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const { login } = useAuth();
+  const { login, isAuth, ready } = useAuth();
   const { path, t, lang } = useLocale();
   const validation = useAuthFieldValidation();
   const returnLocation = getAuthReturnTo(location.state, [path("/profile"), path("/messages"), path("/notifications"), path("/lists")]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [error, setError] = useState<"login" | "confirmation" | "profile" | null>(null);
+  const [error, setError] = useState<"login" | "confirmation" | "profile" | "callback" | null>(null);
   const [emailConfirmed, setEmailConfirmed] = useState(false);
+  const [pkceConfirmationCallback] = useState(() =>
+    new URLSearchParams(window.location.search).has("code")
+    || window.sessionStorage.getItem(PENDING_PKCE_SIGNUP_CALLBACK) === "1"
+  );
   const [loading, setLoading] = useState(false);
   const errorMessage = useRef<HTMLParagraphElement>(null);
   const mounted = useRef(false);
@@ -43,6 +48,21 @@ export default function Login() {
     window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
     setEmailConfirmed(true);
   }, []);
+
+  useEffect(() => {
+    if (!pkceConfirmationCallback || !ready) return;
+    if (isAuth) {
+      window.sessionStorage.removeItem(PENDING_PKCE_SIGNUP_CALLBACK);
+      navigate(destination.current.to, { replace: true });
+      return;
+    }
+    window.sessionStorage.removeItem(PENDING_PKCE_SIGNUP_CALLBACK);
+    const params = new URLSearchParams(window.location.search);
+    params.delete("code");
+    const query = params.toString();
+    window.history.replaceState(window.history.state, "", window.location.pathname + (query ? "?" + query : "") + window.location.hash);
+    setError("callback");
+  }, [pkceConfirmationCallback, ready, isAuth, navigate]);
 
   useEffect(() => {
     const intent = errorFocus.current;
@@ -144,7 +164,7 @@ export default function Login() {
               {t("forgotPassword")}
             </Link>
           </div>
-          {error && <p ref={errorMessage} tabIndex={-1} className={styles.error} id="login-error" role="alert">{t(error === "confirmation" ? "emailNotConfirmed" : error === "profile" ? "accountLoadError" : "loginError")}</p>}
+          {error && <p ref={errorMessage} tabIndex={-1} className={styles.error} id="login-error" role="alert">{t(error === "confirmation" ? "emailNotConfirmed" : error === "profile" ? "accountLoadError" : error === "callback" ? "confirmationCallbackError" : "loginError")}</p>}
           <button type="submit" className={styles.button} aria-busy={loading} disabled={loading}>
             {loading ? t("loggingIn") : t("login")}
           </button>

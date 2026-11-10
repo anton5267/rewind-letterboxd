@@ -94,3 +94,18 @@ test("account linking reports a missing confirmation token without exposing one 
   await expect(page).toHaveURL(/\/uk\/link-account$/);
   await expect(page.getByRole("alert")).toContainText(/прострочене|недійсне/i);
 });
+
+test("a completed PKCE email confirmation continues into the app", async ({ page }) => {
+  await page.route("**/api/users/me", route => route.fulfill({
+    status: 200,
+    json: { id: 7, username: "confirmed-member", role: "USER" },
+  }));
+  await page.goto("/en/login/?code=fixture-auth-code");
+  await expect(page).toHaveURL(/\/en\/films\/?$/);
+});
+
+test("a failed PKCE confirmation clears its one-time code and explains the next step", async ({ page }) => {
+  await page.goto("/uk/login/?code=expired-fixture-code");
+  await expect(page.getByRole("alert")).toContainText("Не вдалося завершити підтвердження email");
+  await expect(page).toHaveURL(/\/uk\/login\/?$/);
+});
