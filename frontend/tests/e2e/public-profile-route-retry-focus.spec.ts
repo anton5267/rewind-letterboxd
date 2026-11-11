@@ -60,6 +60,30 @@ for (const { target, lang, width, route, section, destination } of [
   });
 }
 
+test("public profile 404 is final and does not request profile sections", async ({ page }) => {
+  const profileRequests: string[] = [];
+  await page.route(/^https?:\/\/[^/]+\/api\//, async route => {
+    const { pathname } = new URL(route.request().url());
+    if (!pathname.startsWith("/api/")) return route.continue();
+    if (pathname.startsWith("/api/users/95162/") || pathname.startsWith("/api/users/95163/")) profileRequests.push(pathname);
+    if (pathname === "/api/users/95162/profile") return route.fulfill({ status: 404, json: {} });
+    if (pathname === "/api/users/95163/profile") return route.fulfill({ status: 503, json: {} });
+    return route.fulfill({ status: 404, json: {} });
+  });
+
+  await page.goto("/uk/users/95162");
+  const unavailable = page.getByRole("alert");
+  await expect(unavailable).toContainText("Цей профіль не існує або недоступний.");
+  await expect(unavailable.getByRole("button", { name: "Спробувати ще" })).toHaveCount(0);
+  await expect.poll(() => profileRequests).toEqual(["/api/users/95162/profile"]);
+
+  await page.goto("/en/users/95163");
+  const transientFailure = page.getByRole("alert");
+  await expect(transientFailure).toContainText("Could not load this user profile.");
+  await expect(transientFailure.getByRole("button", { name: "Retry" })).toBeVisible();
+  await expect.poll(() => profileRequests).toEqual(["/api/users/95162/profile", "/api/users/95163/profile"]);
+});
+
 test("public profile Following Retry leaves a manually moved focus in place", async ({ page }) => {
   const getAttempts = await installFixture(page, "following", true);
   await page.setViewportSize({ width: 393, height: 900 });

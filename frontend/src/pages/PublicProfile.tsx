@@ -1,4 +1,5 @@
 import ProfileLoading from "../components/ProfileLoading";
+import { isAxiosError } from "axios";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { getPublicProfile, getPublicProfileCollection, getPublicProfileLikedReviews, getPublicProfileLists, type PublicCollection, type PublicProfileListPage, type PublicProfileResponse, type PublicProfileReviewPage } from "../api/profile.api";
@@ -62,6 +63,7 @@ export default function PublicProfile() {
   const [profile, setProfile] = useState<PublicProfileResponse | null>(null);
   const [activeProfileSection, setActiveProfileSection] = useActiveSection(publicProfileSectionIds, "public-profile-overview", { enabled: profile !== null, rootMargin: "-76px 0px -55% 0px", scopeKey: `${profile?.id ?? "loading"}:${profileView ?? "overview"}:${location.hash}` });
   const [error, setError] = useState(false);
+  const [notFound, setNotFound] = useState(false);
   const [profileAttempt, setProfileAttempt] = useState(0);
   const profileRetryAlertRef = useRef<HTMLParagraphElement>(null);
   const profileRetryOrigin = useRef<HTMLElement | null>(null);
@@ -260,29 +262,34 @@ export default function PublicProfile() {
       if (origin.isConnected || (document.activeElement !== document.body && document.activeElement !== null)) return;
       const mobileTitle = document.getElementById("public-profile-view-title");
       const profileTitle = document.getElementById("public-profile-title");
-      const target = error ? profileRetryAlertRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]") :
+      const target = error ? profileRetryAlertRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]") ?? (notFound ? profileRetryAlertRef.current : null) :
         mobileTitle?.getClientRects().length ? mobileTitle : profileTitle;
       target?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [error, profile, location.key, lang]);
+  }, [error, notFound, profile, location.key, lang]);
 
   useEffect(() => {
     let current = true;
     setProfile(null);
     setError(false);
+    setNotFound(false);
     if (!validProfileId) {
       setError(true);
       return;
     }
     getPublicProfile(profileId)
       .then(({ data }) => { if (current) setProfile(data); })
-      .catch(() => { if (current) setError(true); });
+      .catch(cause => {
+        if (!current) return;
+        setNotFound(isAxiosError(cause) && cause.response?.status === 404);
+        setError(true);
+      });
     return () => { current = false; };
   }, [lang, profileAttempt, profileId, validProfileId]);
 
   useEffect(() => {
-    if (!validProfileId) return;
+    if (!validProfileId || profile?.id !== profileId) return;
     let current = true;
     setFavoritePreview(null);
     setFavoritePreviewLoading(true);
@@ -292,7 +299,7 @@ export default function PublicProfile() {
       .catch(() => { if (current) setFavoritePreviewError(true); })
       .finally(() => { if (current) setFavoritePreviewLoading(false); });
     return () => { current = false; };
-  }, [favoritePreviewAttempt, lang, profileId, validProfileId]);
+  }, [favoritePreviewAttempt, lang, profile?.id, profileId, validProfileId]);
 
   useEffect(() => {
     setExpandedActivity(false);
@@ -305,7 +312,7 @@ export default function PublicProfile() {
   }, [profileId, isAuth, user?.id]);
 
   useEffect(() => {
-    if (!validProfileId) return;
+    if (!validProfileId || profile?.id !== profileId) return;
     let current = true;
     setActivityLoading(true);
     setActivity(null);
@@ -321,10 +328,10 @@ export default function PublicProfile() {
       .catch(() => { if (current) setActivityError(true); })
       .finally(() => { if (current) setActivityLoading(false); });
     return () => { current = false; };
-  }, [activityAttempt, activityPage, lang, profileId, validProfileId]);
+  }, [activityAttempt, activityPage, lang, profile?.id, profileId, validProfileId]);
 
   useEffect(() => {
-    if (!validProfileId) return;
+    if (!validProfileId || profile?.id !== profileId) return;
     let current = true;
     const scope = collectionScopeGeneration.current;
     const request = ++collectionRequest.current;
@@ -351,7 +358,7 @@ export default function PublicProfile() {
       .catch(() => { if (isCurrent()) setCollectionError(true); })
       .finally(() => { if (isCurrent()) setCollectionLoading(false); });
     return () => { current = false; };
-  }, [collectionAttempt, collectionPage, collectionScopeKey, validProfileId]);
+  }, [collectionAttempt, collectionPage, collectionScopeKey, profile?.id, profileId, validProfileId]);
 
   useEffect(() => {
     const pending = pendingCollectionFocus.current;
@@ -372,7 +379,7 @@ export default function PublicProfile() {
   }, [collection, collectionError, collectionLoading, collectionPage, collectionScopeKey]);
 
   useEffect(() => {
-    if (!validProfileId) return;
+    if (!validProfileId || profile?.id !== profileId) return;
     let current = true;
     setFollowersLoading(true);
     setFollowers(null);
@@ -389,10 +396,10 @@ export default function PublicProfile() {
       .catch(() => { if (current) setFollowersError(true); })
       .finally(() => { if (current) setFollowersLoading(false); });
     return () => { current = false; };
-  }, [followersAttempt, followersPage, lang, profileId, validProfileId]);
+  }, [followersAttempt, followersPage, lang, profile?.id, profileId, validProfileId]);
 
   useEffect(() => {
-    if (!validProfileId) return;
+    if (!validProfileId || profile?.id !== profileId) return;
     let current = true;
     setFollowingLoading(true);
     setFollowing(null);
@@ -409,7 +416,7 @@ export default function PublicProfile() {
       .catch(() => { if (current) setFollowingError(true); })
       .finally(() => { if (current) setFollowingLoading(false); });
     return () => { current = false; };
-  }, [followingAttempt, followingPage, lang, profileId, validProfileId]);
+  }, [followingAttempt, followingPage, lang, profile?.id, profileId, validProfileId]);
 
   useEffect(() => {
     const pending = pendingNetworkListRetryFocus.current;
@@ -459,7 +466,7 @@ export default function PublicProfile() {
   };
 
   useEffect(() => {
-    if (!validProfileId) return;
+    if (!validProfileId || profile?.id !== profileId) return;
     let current = true;
     setPublicListsLoading(true);
     setPublicLists(null);
@@ -476,10 +483,10 @@ export default function PublicProfile() {
       .catch(() => { if (current) setPublicListsError(true); })
       .finally(() => { if (current) setPublicListsLoading(false); });
     return () => { current = false; };
-  }, [lang, profileId, publicListsAttempt, publicListsPage, validProfileId]);
+  }, [lang, profile?.id, profileId, publicListsAttempt, publicListsPage, validProfileId]);
 
   useEffect(() => {
-    if (!validProfileId) return;
+    if (!validProfileId || profile?.id !== profileId) return;
     let current = true;
     setLikedReviewsLoading(true);
     setLikedReviews(null);
@@ -496,10 +503,10 @@ export default function PublicProfile() {
       .catch(() => { if (current) setLikedReviewsError(true); })
       .finally(() => { if (current) setLikedReviewsLoading(false); });
     return () => { current = false; };
-  }, [lang, likedReviewsAttempt, likedReviewsPage, profileId, validProfileId]);
+  }, [lang, likedReviewsAttempt, likedReviewsPage, profile?.id, profileId, validProfileId]);
 
   useEffect(() => {
-    if (!validProfileId || !isAuth || user?.id === profileId) {
+    if (!validProfileId || profile?.id !== profileId || !isAuth || user?.id === profileId) {
       setFollowStatus(null);
       setFollowStatusLoading(false);
       setFollowStatusError(false);
@@ -516,10 +523,10 @@ export default function PublicProfile() {
       .catch(() => { if (isCurrentRequest()) { setFollowStatus(null); setFollowStatusError(true); } })
       .finally(() => { if (isCurrentRequest()) setFollowStatusLoading(false); });
     return () => { current = false; };
-  }, [followStatusAttempt, isAuth, profileId, user?.id, validProfileId]);
+  }, [followStatusAttempt, isAuth, profile?.id, profileId, user?.id, validProfileId]);
 
   useEffect(() => {
-    if (!validProfileId || !isAuth || user?.id === profileId) {
+    if (!validProfileId || profile?.id !== profileId || !isAuth || user?.id === profileId) {
       setBlockStatus(null);
       setBlockStatusLoading(false);
       setBlockStatusError(false);
@@ -535,7 +542,7 @@ export default function PublicProfile() {
       .catch(() => { if (isCurrentRequest()) { setBlockStatus(null); setBlockStatusError(true); } })
       .finally(() => { if (isCurrentRequest()) setBlockStatusLoading(false); });
     return () => { current = false; };
-  }, [blockStatusAttempt, isAuth, profileId, user?.id, validProfileId]);
+  }, [blockStatusAttempt, isAuth, profile?.id, profileId, user?.id, validProfileId]);
 
   useEffect(() => {
     for (const target of ["follow", "block"] as const) {
@@ -737,8 +744,8 @@ export default function PublicProfile() {
   const profileListTagsKey = `${String(profileId)}:${publicListsPage}`;
   const profileListTagsExpanded = expandedProfileListTagsKey === profileListTagsKey;
 
-  if (error) return <main className={styles.state} aria-labelledby="public-profile-state-title" aria-busy={false}><div className={styles.shell}><h1 id="public-profile-state-title" className="srOnly">{t("profile")}</h1><p className={styles.alert} ref={profileRetryAlertRef} tabIndex={-1} role="alert">{!validProfileId ? t("invalidProfileId") : t("loadPublicProfileError")} {validProfileId && <RetryButton label={t("retry")} onClick={() => { profileRetryOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; setProfileAttempt(value => value + 1); }} />}</p></div></main>;
-  if (!profile) return <main className={styles.state} aria-labelledby="public-profile-state-title" aria-busy={true}><div className={styles.shell}><h1 id="public-profile-state-title" className="srOnly">{t("profile")}</h1><ProfileLoading label={t("loading")} layout="identity" /></div></main>;
+  if (error) return <main className={styles.state} aria-labelledby="public-profile-state-title" aria-busy={false}><div className={styles.shell}><h1 id="public-profile-state-title" className="srOnly">{t("profile")}</h1><p className={styles.alert} ref={profileRetryAlertRef} tabIndex={-1} role="alert">{!validProfileId ? t("invalidProfileId") : notFound ? t("profileNotFound") : t("loadPublicProfileError")} {validProfileId && !notFound && <RetryButton label={t("retry")} onClick={() => { profileRetryOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; setProfileAttempt(value => value + 1); }} />}</p></div></main>;
+  if (!profile || profile.id !== profileId) return <main className={styles.state} aria-labelledby="public-profile-state-title" aria-busy={true}><div className={styles.shell}><h1 id="public-profile-state-title" className="srOnly">{t("profile")}</h1><ProfileLoading label={t("loading")} layout="identity" /></div></main>;
   const identityName = getUserName(profile, t("someone"));
   const socialLinks = profile.socialLinks.flatMap(link => {
     const url = safeHttpUrl(link.url);
