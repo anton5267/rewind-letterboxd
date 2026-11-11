@@ -110,6 +110,9 @@ for (const lang of ["uk", "en"] as const) {
     const password = page.locator("#register-password");
     const submit = page.locator('main button[type="submit"]');
     await expect(password).toHaveAttribute("minlength", "8");
+    await expect(page.locator("#register-password-hint")).toHaveText(lang === "uk"
+      ? "Щонайменше 8 символів і до 72 байтів UTF-8. Українські літери та emoji можуть займати кілька байтів."
+      : "At least 8 characters and up to 72 UTF-8 bytes. Ukrainian letters and emoji may use multiple bytes.");
     await password.fill("seven77");
     await submit.click();
     expect(mutations, "Registration passwords shorter than eight characters must not reach the API").toHaveLength(0);
