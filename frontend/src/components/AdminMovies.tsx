@@ -1,5 +1,6 @@
 import AdminLoading from "./AdminLoading";
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
+import { isAxiosError } from "axios";
 import {
   createAdminMovie,
   deleteAdminMovie,
@@ -96,7 +97,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
   const [tmdbCandidateMovieId, setTmdbCandidateMovieId] = useState<number | null>(null);
   const [tmdbCandidates, setTmdbCandidates] = useState<AdminTmdbMovieCandidate[]>([]);
   const [tmdbCandidatesBusy, setTmdbCandidatesBusy] = useState(false);
-  const [tmdbCandidatesError, setTmdbCandidatesError] = useState(false);
+  const [tmdbCandidatesError, setTmdbCandidatesError] = useState<"unavailable" | "error" | null>(null);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [tmdbImportIds, setTmdbImportIds] = useState("");
   const [tmdbDiscoveryDraft, setTmdbDiscoveryDraft] = useState({ page: "1", year: "", genreId: "", minRating: "", limit: "20" });
@@ -167,7 +168,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
     setTmdbCandidateMovieId(null);
     setTmdbCandidates([]);
     setTmdbCandidatesBusy(false);
-    setTmdbCandidatesError(false);
+    setTmdbCandidatesError(null);
     setTmdbImportBusy(false);
     setSyncMessage(null);
     setSyncError(false);
@@ -542,13 +543,13 @@ export default function AdminMovies({ onTotalChange }: Props) {
     const isCurrent = () => mounted.current && actionScopeGeneration.current === actionScope;
     setTmdbCandidateMovieId(movie.id);
     setTmdbCandidates([]);
-    setTmdbCandidatesError(false);
+    setTmdbCandidatesError(null);
     setTmdbCandidatesBusy(true);
     try {
       const { data: candidates } = await getAdminMovieTmdbCandidates(movie.id);
       if (isCurrent()) setTmdbCandidates(candidates);
-    } catch {
-      if (isCurrent()) setTmdbCandidatesError(true);
+    } catch (cause) {
+      if (isCurrent()) setTmdbCandidatesError(isAxiosError(cause) && cause.response?.status === 503 ? "unavailable" : "error");
     } finally {
       if (isCurrent()) setTmdbCandidatesBusy(false);
     }
@@ -843,7 +844,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
                       <h4>{t("tmdbCandidates")}</h4>
                       <p>{t("tmdbCandidateSearchHint")}</p>
                       {tmdbCandidatesBusy && <p role="status">{t("loading")}</p>}
-                      {tmdbCandidatesError && <p className={styles.error} role="alert">{t("tmdbCandidatesError")}</p>}
+                      {tmdbCandidatesError && <p className={styles.error} role="alert">{t(tmdbCandidatesError === "unavailable" ? "tmdbIntegrationUnavailable" : "tmdbCandidatesError")}</p>}
                       {!tmdbCandidatesBusy && !tmdbCandidatesError && tmdbCandidates.length === 0 && <p>{t("tmdbCandidatesEmpty")}</p>}
                       {tmdbCandidates.length > 0 && <ul>{tmdbCandidates.map(candidate => <li key={candidate.tmdbId}>
                         <button type="button" className={styles.tmdbCandidate} aria-label={`${t("selectTmdbCandidate")}: ${candidate.title} · ${candidate.releaseDate?.slice(0, 4) ?? "—"} · ${candidate.tmdbId}`} onClick={() => setTmdbIds(current => ({ ...current, [movie.id]: String(candidate.tmdbId) }))}>

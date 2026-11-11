@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 // These controlled API responses test UI validation and focus, never TMDB or a database.
-async function adminMovieFixture(page: Page) {
+async function adminMovieFixture(page: Page, options: { candidateStatus?: number } = {}) {
   const movie = { id: 940001, tmdbId: null, title: "Strict ID film", releaseDate: "2026-10-01", rating: 4, photoUrl: null };
   const emptyPage = { content: [], totalPages: 0, totalElements: 0 };
   const writes: { path: string; data: unknown }[] = [];
@@ -31,6 +31,7 @@ async function adminMovieFixture(page: Page) {
     if (url.pathname === "/api/admin/movies/tmdb-quality") return route.fulfill({ json: { totalMovies: 1, tmdbLinkedMovies: 0, completeTmdbMovies: 0, missingPoster: 1, missingBackdrop: 1, missingPlot: 1, missingRuntime: 1, missingTrailer: 1, missingTmdbRating: 1, linkedCoveragePercent: 0, metadataCompletenessPercent: 0 } });
     if (url.pathname === `/api/admin/movies/${movie.id}/tmdb-candidates`) {
       candidateSearches.push(url.pathname);
+      if (options.candidateStatus) return route.fulfill({ status: options.candidateStatus, json: { message: "TMDB integration is disabled" } });
       return route.fulfill({ json: [
         { tmdbId: 672, title: "Strict ID film", releaseDate: "2026-10-01", overview: "Exact title and year match", posterUrl: null },
         { tmdbId: 673, title: "Strict ID Film: Revisited", releaseDate: "2025-10-01", overview: null, posterUrl: null },
@@ -81,6 +82,15 @@ test("TMDB candidate selection only fills the ID until the admin explicitly sync
   await row.getByRole("button", { name: "Sync TMDB", exact: true }).click();
   await expect(movies.getByRole("status").filter({ hasText: "TMDB updated" })).toBeVisible();
   expect(writes).toEqual([{ path: `/api/admin/movies/${movie.id}/tmdb-sync`, data: { tmdbId: 672, syncSimilar: true } }]);
+});
+
+test("TMDB candidate search explains when the server integration is not configured", async ({ page }) => {
+  const { movie, movies, writes } = await adminMovieFixture(page, { candidateStatus: 503 });
+  const row = movies.getByRole("listitem").filter({ hasText: movie.title });
+  await row.locator("summary").click();
+  await row.getByRole("button", { name: "Find TMDB matches", exact: true }).click();
+  await expect(row.getByRole("alert")).toHaveText("TMDB integration is not configured. Add TMDB_API_KEY to the Edge Function secrets.");
+  expect(writes).toEqual([]);
 });
 
 test("batch TMDB import rejects the whole invalid input and deduplicates valid IDs", async ({ page }) => {
