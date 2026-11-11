@@ -21,6 +21,7 @@ public record AdminUserOverviewResponse(
             long favorites,
             long comments,
             long likesReceived,
+            long followers,
             long customLists
     ) {}
 }

@@ -444,6 +444,7 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
             <div className={styles.detailStat}><strong>{detailOverview.stats.watched}</strong><span>{t("adminWatchedMovies")}</span></div>
             <div className={styles.detailStat}><strong>{detailOverview.stats.reviews}</strong><span>{t("adminUserReviewsCount")}</span></div>
             <div className={styles.detailStat}><strong>{detailOverview.stats.likesReceived} / {detailOverview.stats.comments}</strong><span>{t("adminUserLikesComments")}</span></div>
+            <div className={styles.detailStat}><strong>{detailOverview.stats.followers}</strong><span>{t("adminUserFollowers")}</span></div>
             <div className={styles.detailStat}><strong>{detailOverview.stats.customLists}</strong><span>{t("adminUserListsCount")}</span></div>
           </div>
         </section>

@@ -1386,7 +1386,7 @@ Deno.test("admin user routes preserve paging, fields, validation, active/HQ acti
     async getAdminUser(_auth, id) { calls.push(["get", id]); return id === 8 ? user : null; },
     async getAdminUserOverview(_auth, id) {
       calls.push(["overview", id]);
-      return id === 8 ? { stats: { watched: 3, reviews: 2, ratings: 4, watchlist: 5, favorites: 6, comments: 7, likesReceived: 8, customLists: 1 }, adminHistory: [] } : null;
+      return id === 8 ? { stats: { watched: 3, reviews: 2, ratings: 4, watchlist: 5, favorites: 6, comments: 7, likesReceived: 8, followers: 9, customLists: 1 }, adminHistory: [] } : null;
     },
     async updateAdminUser(_auth, id, update) { calls.push(["update", id, update]); return id === 8 ? { ...user, ...update } : null; },
     async setAdminUserActive(_auth, id, active) { calls.push(["active", id, active]); return id === 8; },
@@ -1409,9 +1409,10 @@ Deno.test("admin user routes preserve paging, fields, validation, active/HQ acti
   const forbidden = await authHandler({ async getAdminUsers() { throw new RewindApiError(403, "Administrator access required"); } })(
     new Request("https://project.supabase.co/api/admin/users", { headers }),
   );
+  const overviewBody = await overview.json();
   if (unauthenticated.status !== 401 || list.status !== 200 || (await list.json()).number !== 0
     || get.status !== 200 || (await get.json()).email !== user.email || missing.status !== 404
-    || overview.status !== 200 || (await overview.json()).stats.likesReceived !== 8
+    || overview.status !== 200 || overviewBody.stats.likesReceived !== 8 || overviewBody.stats.followers !== 9
     || updated.status !== 200 || (await updated.json()).role !== "ADMIN" || invalidUpdate.status !== 400 || invalidName.status !== 400
     || deactivated.status !== 200 || activated.status !== 200 || invalidHq.status !== 400 || hq.status !== 200
     || forbidden.status !== 403

@@ -993,7 +993,7 @@ const handler = createRewindApiHandler({
       const [stats, history] = await Promise.all([
         connection.queryObject<{
           watched: string; reviews: string; ratings: string; watchlist: string; favorites: string;
-          comments: string; likes_received: string; custom_lists: string;
+          comments: string; likes_received: string; followers: string; custom_lists: string;
         }>({
           text: `SELECT
             (SELECT COUNT(*)::text FROM rewind.list_items li JOIN rewind.lists l ON l.id=li.list_id WHERE l.user_id=$1 AND l.list_type='WATCHED') AS watched,
@@ -1005,6 +1005,8 @@ const handler = createRewindApiHandler({
             (SELECT COUNT(*)::text FROM rewind.review_likes rl JOIN rewind.reviews r ON r.id=rl.review_id
                JOIN rewind.users liker ON liker.id=rl.user_id AND liker.is_active
              WHERE r.user_id=$1 AND r.is_hidden=FALSE) AS likes_received,
+            (SELECT COUNT(*)::text FROM rewind.follows f JOIN rewind.users follower ON follower.id=f.follower_id AND follower.is_active
+             WHERE f.following_id=$1) AS followers,
             (SELECT COUNT(*)::text FROM rewind.lists l WHERE l.user_id=$1 AND l.list_type='CUSTOM') AS custom_lists`,
           args: [id],
         }),
@@ -1024,7 +1026,8 @@ const handler = createRewindApiHandler({
         stats: {
           watched: Number(row?.watched ?? 0), reviews: Number(row?.reviews ?? 0), ratings: Number(row?.ratings ?? 0),
           watchlist: Number(row?.watchlist ?? 0), favorites: Number(row?.favorites ?? 0), comments: Number(row?.comments ?? 0),
-          likesReceived: Number(row?.likes_received ?? 0), customLists: Number(row?.custom_lists ?? 0),
+          likesReceived: Number(row?.likes_received ?? 0), followers: Number(row?.followers ?? 0),
+          customLists: Number(row?.custom_lists ?? 0),
         },
         adminHistory: history.rows.map((item) => ({
           id: safeId(item.id, "Audit ID"), adminId: safeId(item.admin_id, "User ID"), action: item.action,

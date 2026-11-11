@@ -193,7 +193,7 @@ export interface AdminUserUpdateRequest {
   username?: string; displayName?: string; avatarUrl?: string; role?: "USER" | "ADMIN"; isActive?: boolean;
 }
 export interface AdminUserOverviewResponse {
-  stats: { watched: number; reviews: number; ratings: number; watchlist: number; favorites: number; comments: number; likesReceived: number; customLists: number };
+  stats: { watched: number; reviews: number; ratings: number; watchlist: number; favorites: number; comments: number; likesReceived: number; followers: number; customLists: number };
   adminHistory: { id: number; adminId: number; action: string; targetType: string; targetId: number | null; metadata: string | null; createdAt: string }[];
 }
 export interface AdminListResponse {

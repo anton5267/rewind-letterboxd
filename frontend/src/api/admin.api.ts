@@ -4,7 +4,7 @@ import type { Page } from "./types";
 export interface AdminDashboard { users: number; activeUsers: number; hqUsers: number; movies: number; reviews: number; hiddenReviews: number }
 export interface AdminUser { id: number; username: string; displayName: string | null; email: string; role: string; avatarUrl: string | null; isActive: boolean; isHq: boolean; createdAt: string | null }
 export interface AdminUserOverview {
-  stats: { watched: number; reviews: number; ratings: number; watchlist: number; favorites: number; comments: number; likesReceived: number; customLists: number };
+  stats: { watched: number; reviews: number; ratings: number; watchlist: number; favorites: number; comments: number; likesReceived: number; followers: number; customLists: number };
   adminHistory: AuditLog[];
 }
 export interface AuditLog { id: number; adminId: number; action: string; targetType: string; targetId: number | null; metadata: string | null; createdAt: string }

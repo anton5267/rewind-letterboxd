@@ -11,6 +11,7 @@ import com.rewind.rewind.list.repo.MovieListRepository;
 import com.rewind.rewind.rating.repo.RatingRepository;
 import com.rewind.rewind.review.repo.ReviewRepository;
 import com.rewind.rewind.social.repo.ReviewLikeRepository;
+import com.rewind.rewind.social.repo.FollowRepository;
 import com.rewind.rewind.user.entity.User;
 import com.rewind.rewind.user.entity.UserRole;
 import com.rewind.rewind.user.repo.UserRepository;
@@ -33,10 +34,11 @@ public class AdminUserService {
     private final ReviewRepository reviews;
     private final ReviewCommentRepository comments;
     private final ReviewLikeRepository reviewLikes;
+    private final FollowRepository follows;
 
     public AdminUserService(UserRepository users, AdminAuditLogService audit, MovieListRepository lists,
                             ListItemRepository listItems, RatingRepository ratings, ReviewRepository reviews,
-                            ReviewCommentRepository comments, ReviewLikeRepository reviewLikes) {
+                            ReviewCommentRepository comments, ReviewLikeRepository reviewLikes, FollowRepository follows) {
         this.users = users;
         this.audit = audit;
         this.lists = lists;
@@ -45,6 +47,7 @@ public class AdminUserService {
         this.reviews = reviews;
         this.comments = comments;
         this.reviewLikes = reviewLikes;
+        this.follows = follows;
     }
 
     @Transactional(readOnly = true)
@@ -81,6 +84,7 @@ public class AdminUserService {
                 collectionCount(allLists, ListType.FAVORITES),
                 comments.countByUserId(id),
                 reviewLikes.countActiveReceivedByReviewAuthorId(id),
+                follows.countActiveFollowers(id),
                 allLists.stream().filter(list -> list.getListType() == ListType.CUSTOM).count());
         return new AdminUserOverviewResponse(stats, audit.recentForTarget("USER", id, 12));
     }
