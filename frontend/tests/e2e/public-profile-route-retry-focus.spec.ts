@@ -62,22 +62,24 @@ for (const { target, lang, width, route, section, destination } of [
 
 test("public profile 404 is final and does not request profile sections", async ({ page }) => {
   const profileRequests: string[] = [];
-  await page.route(/^https?:\/\/[^/]+\/api\//, async route => {
+  const baseUrl = new URL(String(test.info().project.use.baseURL ?? "http://127.0.0.1:3000"));
+  const appRoot = new URL(baseUrl.pathname.endsWith("/") ? baseUrl.pathname : `${baseUrl.pathname}/`, baseUrl.origin);
+  await page.route("**/api/users/**", async route => {
     const { pathname } = new URL(route.request().url());
-    if (!pathname.startsWith("/api/")) return route.continue();
-    if (pathname.startsWith("/api/users/95162/") || pathname.startsWith("/api/users/95163/")) profileRequests.push(pathname);
-    if (pathname === "/api/users/95162/profile") return route.fulfill({ status: 404, json: {} });
-    if (pathname === "/api/users/95163/profile") return route.fulfill({ status: 503, json: {} });
+    const apiPath = pathname.slice(pathname.indexOf("/api/users/"));
+    if (apiPath.startsWith("/api/users/95162/") || apiPath.startsWith("/api/users/95163/")) profileRequests.push(apiPath);
+    if (apiPath === "/api/users/95162/profile") return route.fulfill({ status: 404, json: {} });
+    if (apiPath === "/api/users/95163/profile") return route.fulfill({ status: 503, json: {} });
     return route.fulfill({ status: 404, json: {} });
   });
 
-  await page.goto("/uk/users/95162");
+  await page.goto(new URL("uk/users/95162", appRoot).toString());
   const unavailable = page.getByRole("alert");
   await expect(unavailable).toContainText("Цей профіль не існує або недоступний.");
   await expect(unavailable.getByRole("button", { name: "Спробувати ще" })).toHaveCount(0);
   await expect.poll(() => profileRequests).toEqual(["/api/users/95162/profile"]);
 
-  await page.goto("/en/users/95163");
+  await page.goto(new URL("en/users/95163", appRoot).toString());
   const transientFailure = page.getByRole("alert");
   await expect(transientFailure).toContainText("Could not load this user profile.");
   await expect(transientFailure.getByRole("button", { name: "Retry" })).toBeVisible();
