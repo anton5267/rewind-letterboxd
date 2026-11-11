@@ -159,6 +159,21 @@ test("login keeps its six-character legacy password contract", async ({ page }) 
   expect(mutations).toEqual([{ path: "/api/auth/login", body: { email: "formreader@example.invalid", password: "legacy" } }]);
 });
 
+test("login offers recovery guidance for a weak_password error", async ({ page }) => {
+  await isolateFormApi(page);
+  await page.route("**/api/auth/login", route => route.fulfill({
+    status: 400,
+    json: { code: "weak_password", message: "Password does not meet current security requirements" },
+  }));
+  await page.goto("/uk/login");
+  await waitForPageContent(page);
+  await page.locator("#login-email").fill("legacy@example.invalid");
+  await page.locator("#login-password").fill("legacy");
+  await page.locator('main button[type="submit"]').click();
+  await expect(page.getByRole("alert")).toHaveText("Цей пароль не відповідає оновленим вимогам безпеки. Скористайтеся відновленням пароля й задайте пароль щонайменше з 8 символів.");
+  await expect(page.getByRole("link", { name: "Забули пароль?" })).toBeVisible();
+});
+
 test("registration success moves keyboard focus to its heading", async ({ page }) => {
   await isolateFormApi(page);
   await page.route("**/api/auth/register", route => route.fulfill({ status: 200, json: {} }));

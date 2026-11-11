@@ -20,7 +20,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [error, setError] = useState<"login" | "confirmation" | "profile" | "callback" | "callbackExpired" | null>(null);
+  const [error, setError] = useState<"login" | "confirmation" | "weakPassword" | "profile" | "callback" | "callbackExpired" | null>(null);
   const [emailConfirmed, setEmailConfirmed] = useState(false);
   const [providerCallbackError] = useState<"callback" | "callbackExpired" | null>(() => {
     const query = new URLSearchParams(window.location.search);
@@ -107,9 +107,13 @@ export default function Login() {
     } catch (cause) {
       if (mounted.current) {
         errorFocus.current = intent;
-        const code = typeof cause === "object" && cause !== null && "code" in cause ? cause.code : undefined;
+        const directCode = typeof cause === "object" && cause !== null && "code" in cause ? cause.code : undefined;
+        const responseCode = isAxiosError(cause) && typeof cause.response?.data === "object" && cause.response.data !== null
+          && "code" in cause.response.data ? cause.response.data.code : undefined;
+        const code = responseCode ?? directCode;
         setError(code === "email_not_confirmed"
           ? "confirmation"
+          : code === "weak_password" ? "weakPassword"
           : usesHostedSupabaseAuth && isAxiosError(cause) ? "profile" : "login");
       }
     } finally {
@@ -182,7 +186,7 @@ export default function Login() {
               {t("forgotPassword")}
             </Link>
           </div>
-          {error && <p ref={errorMessage} tabIndex={-1} className={styles.error} id="login-error" role="alert">{t(error === "confirmation" ? "emailNotConfirmed" : error === "profile" ? "accountLoadError" : error === "callbackExpired" ? "confirmationLinkExpired" : error === "callback" ? "confirmationCallbackError" : "loginError")}</p>}
+          {error && <p ref={errorMessage} tabIndex={-1} className={styles.error} id="login-error" role="alert">{t(error === "confirmation" ? "emailNotConfirmed" : error === "weakPassword" ? "weakPasswordSignIn" : error === "profile" ? "accountLoadError" : error === "callbackExpired" ? "confirmationLinkExpired" : error === "callback" ? "confirmationCallbackError" : "loginError")}</p>}
           <button type="submit" className={styles.button} aria-busy={loading} disabled={loading}>
             {loading ? t("loggingIn") : t("login")}
           </button>
