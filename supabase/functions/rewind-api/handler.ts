@@ -115,6 +115,7 @@ export interface ProfileResponse {
   email: string;
   role: string;
   avatarUrl: string | null;
+  bio?: string | null;
   supabaseLinked: boolean;
   stats: { ratings: number; reviews: number; watched: number; watchlist: number; favorites: number };
   lists: { id: number; name: string; listType: string; isPublic: boolean }[];
@@ -132,6 +133,7 @@ export interface ProfileCollectionResult {
 export interface ProfileUpdateRequest {
   displayName?: string;
   avatarUrl?: string;
+  bio?: string;
 }
 
 export interface PublicSocialUser { id: number; username: string; displayName: string | null; avatarUrl: string | null }
@@ -239,7 +241,7 @@ export interface ConversationResponse {
   lastMessage: { id: number; senderId: number; body: string; createdAt: string; readAt: string | null } | null;
 }
 export interface PublicProfileResponse {
-  id: number; username: string; displayName: string; avatarUrl: string | null; hq: boolean;
+  id: number; username: string; displayName: string; avatarUrl: string | null; bio?: string | null; hq: boolean;
   stats: { ratings: number; reviews: number; watched: number; watchlist: number; favorites: number };
   ratingDistribution: { rating: number; count: number }[];
   socialLinks: { platform: string; url: string }[];
@@ -2492,6 +2494,12 @@ function parseProfileUpdate(value: unknown): ProfileUpdateRequest | null {
     const avatar = body.avatarUrl;
     if (avatar.length > 255 || (avatar !== "" && !/^https?:\/\/\S+$/.test(avatar))) return null;
     update.avatarUrl = avatar;
+  }
+  if (Object.hasOwn(body, "bio")) {
+    if (body.bio !== null && typeof body.bio !== "string") return null;
+    const bio = body.bio ?? "";
+    if (bio.length > 500) return null;
+    update.bio = bio;
   }
   return update;
 }

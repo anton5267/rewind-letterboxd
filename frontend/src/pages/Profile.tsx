@@ -82,6 +82,7 @@ export default function Profile() {
   }, [profileLoadFocusScope]);
   const [displayName, setDisplayName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [bio, setBio] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
@@ -497,6 +498,7 @@ export default function Profile() {
       setProfile(data);
       setDisplayName(data.displayName ?? "");
       setAvatarUrl(data.avatarUrl ?? "");
+      setBio(data.bio ?? "");
     }).catch(() => { if (isCurrentRequest()) setProfileLoadError(true); })
       .finally(() => { if (isCurrentRequest()) setProfileLoading(false); });
     return () => { current = false; };
@@ -979,11 +981,13 @@ export default function Profile() {
       const { data } = await updateProfile({
         ...(fields !== "avatar" ? { displayName: displayName.trim() } : {}),
         ...(fields !== "name" ? { avatarUrl: normalizedAvatarUrl ?? "" } : {}),
+        ...(fields !== "avatar" ? { bio: bio.trim() } : {}),
       });
       if (!isCurrentRequest()) return;
       setProfile(data);
       if (fields !== "avatar") setDisplayName(data.displayName ?? "");
       if (fields !== "name") setAvatarUrl(data.avatarUrl ?? "");
+      if (fields !== "avatar") setBio(data.bio ?? "");
       report("success", fields === "avatar" ? (lang === "uk" ? "Аватар оновлено." : "Avatar updated.") : t("nameSaved"));
     } catch { report("error", t(fields === "avatar" ? "saveAvatarError" : "saveNameError")); }
     finally { if (isCurrentRequest()) setNameBusy(false); }
@@ -1215,6 +1219,7 @@ export default function Profile() {
         <h2 id="profile-identity-form-title">{t("profileIdentity")}</h2>
         <div><label htmlFor="settings-username">{t("username")}</label><output id="settings-username">{profile.username}</output></div>
         <div><label htmlFor="profile-display-name">{t("displayName")}</label><input id="profile-display-name" value={displayName} disabled={nameBusy} minLength={displayName.trim() ? 2 : undefined} maxLength={60} autoComplete="nickname" onChange={event => setDisplayName(event.target.value)} /></div>
+        <div><label htmlFor="settings-profile-bio">{t("bio")}</label><textarea id="settings-profile-bio" value={bio} disabled={nameBusy} maxLength={500} aria-describedby="settings-profile-bio-hint" onChange={event => setBio(event.target.value)} /><p id="settings-profile-bio-hint">{t("bioHint")} {bio.length}/500</p></div>
         <div><label htmlFor="settings-email">{t("email")}</label><output id="settings-email">{profile.email}</output></div>
         <button type="submit" disabled={nameBusy}>{nameBusy ? t("saving") : t("save")}</button>
       </form>
@@ -1612,6 +1617,9 @@ export default function Profile() {
         <h2 id="profile-identity-form-title">{t("profileIdentity")}</h2>
         <label htmlFor="profile-display-name">{t("displayName")}</label>
         <input id="profile-display-name" value={displayName} disabled={nameBusy} minLength={displayName.trim() ? 2 : undefined} maxLength={60} onChange={e => setDisplayName(e.target.value)} />
+        <label htmlFor="profile-bio">{t("bio")}</label>
+        <textarea id="profile-bio" value={bio} disabled={nameBusy} maxLength={500} aria-describedby="profile-bio-hint" onChange={e => setBio(e.target.value)} />
+        <p id="profile-bio-hint">{t("bioHint")} {bio.length}/500</p>
         <label htmlFor="profile-avatar-url">{t("avatarUrl")}</label>
         <input id="profile-avatar-url" type="url" disabled={nameBusy} value={avatarUrl} maxLength={255} placeholder="https://…" onChange={e => setAvatarUrl(e.target.value)} />
         <button className={styles.primaryButton} type="submit" disabled={nameBusy}>{nameBusy ? t("saving") : t("save")}</button>

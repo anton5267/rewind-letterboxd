@@ -779,6 +779,7 @@ export default function PublicProfile() {
             <p className={styles.eyebrow}>{t("profile")}</p>
             <h1 id="public-profile-title" tabIndex={-1}>{identityName}{profile.hq && <span className={styles.hq} aria-label={t("hq")} title={t("hq")}>{t("hq")}</span>}</h1>
             <p className={styles.username}>{getUserHandle(profile, t("someone"))}</p>
+            {profile.bio?.trim() && <p className={styles.bio}>{profile.bio}</p>}
           </div>
         </div>
         <dl className={styles.heroMetrics}>

@@ -25,6 +25,7 @@ export interface ProfileResponse {
   email: string;
   role: string;
   avatarUrl: string | null;
+  bio?: string | null;
   supabaseLinked: boolean;
   stats: ProfileStats;
   lists: ProfileList[];
@@ -34,7 +35,7 @@ export interface ProfileResponse {
 
 export const getProfile = () => api.get<ProfileResponse>("/profile/me");
 
-export const updateProfile = (data: { displayName?: string; avatarUrl?: string }) =>
+export const updateProfile = (data: { displayName?: string; avatarUrl?: string; bio?: string }) =>
   api.patch<ProfileResponse>("/profile/me", data);
 
 export interface SocialLink { platform: string; url: string; }
@@ -93,6 +94,7 @@ export interface PublicProfileResponse {
   username: string;
   displayName: string;
   avatarUrl: string | null;
+  bio?: string | null;
   hq: boolean;
   stats: { ratings: number; reviews: number; watched: number; watchlist: number; favorites: number };
   ratingDistribution: { rating: number; count: number }[];

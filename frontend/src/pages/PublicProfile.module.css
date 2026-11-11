@@ -158,6 +158,16 @@
   font-size: 17px;
 }
 
+.bio {
+  max-width: 62ch;
+  margin: 12px 0 0;
+  color: #eee8f2;
+  font-size: 15px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 .hq {
   display: inline-flex;
   margin-left: 10px;

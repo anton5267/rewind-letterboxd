@@ -2008,9 +2008,9 @@ const handler = createRewindApiHandler({
     try {
       await connection.queryObject("SET ROLE rewind_edge_app");
       const userResult = await connection.queryObject<{
-        id: string; username: string; display_name: string | null; avatar_url: string | null; is_hq: boolean;
+        id: string; username: string; display_name: string | null; avatar_url: string | null; bio: string | null; is_hq: boolean;
       }>({
-        text: "SELECT id::text AS id, username, display_name, avatar_url, is_hq FROM rewind.users WHERE id = $1 AND is_active",
+        text: "SELECT id::text AS id, username, display_name, avatar_url, bio, is_hq FROM rewind.users WHERE id = $1 AND is_active",
         args: [userId],
       });
       const user = userResult.rows[0];
@@ -2047,7 +2047,7 @@ const handler = createRewindApiHandler({
       const stats = counts.rows[0];
       return {
         id: safeId(user.id, "User ID"), username: user.username,
-        displayName: user.display_name?.trim() || user.username, avatarUrl: user.avatar_url, hq: user.is_hq,
+        displayName: user.display_name?.trim() || user.username, avatarUrl: user.avatar_url, bio: user.bio, hq: user.is_hq,
         stats: {
           ratings: Number(stats?.ratings ?? 0), reviews: Number(stats?.reviews ?? 0),
           watched: Number(stats?.watched ?? 0), watchlist: Number(stats?.watchlist ?? 0), favorites: Number(stats?.favorites ?? 0),
@@ -4141,9 +4141,9 @@ const handler = createRewindApiHandler({
     const { connection, userId } = await beginUserTransaction(authUser);
     try {
       const userResult = await connection.queryObject<{
-        id: string; username: string; display_name: string | null; role: string; avatar_url: string | null;
+        id: string; username: string; display_name: string | null; role: string; avatar_url: string | null; bio: string | null;
       }>({
-        text: `SELECT id::text AS id, username, display_name, role, avatar_url
+        text: `SELECT id::text AS id, username, display_name, role, avatar_url, bio
                FROM rewind.users WHERE id = $1`,
         args: [userId],
       });
@@ -4199,6 +4199,7 @@ const handler = createRewindApiHandler({
         email: authUser.email,
         role: user.role,
         avatarUrl: user.avatar_url,
+        bio: user.bio,
         supabaseLinked: true,
         stats: {
           ratings: Number(stats?.ratings ?? 0),
@@ -4234,12 +4235,14 @@ const handler = createRewindApiHandler({
       await connection.queryObject({
         text: `UPDATE rewind.users
                SET display_name = CASE WHEN $2 THEN NULLIF(BTRIM($3), '') ELSE display_name END,
-                   avatar_url = CASE WHEN $4 THEN NULLIF(BTRIM($5), '') ELSE avatar_url END
+                   avatar_url = CASE WHEN $4 THEN NULLIF(BTRIM($5), '') ELSE avatar_url END,
+                   bio = CASE WHEN $6 THEN NULLIF(BTRIM($7), '') ELSE bio END
                WHERE id = $1`,
         args: [
           userId,
           Object.hasOwn(update, "displayName"), update.displayName ?? null,
           Object.hasOwn(update, "avatarUrl"), update.avatarUrl ?? null,
+          Object.hasOwn(update, "bio"), update.bio ?? null,
         ],
       });
       await connection.queryObject("COMMIT");
