@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { getUnreadMessageCount } from "../api/messages.api";
 import { getUnreadNotificationCount } from "../api/notifications.api";
 import { UNREAD_COUNTS_CHANGED_EVENT } from "../utils/unreadEvents";
+import { isDocumentVisible } from "../utils/documentVisibility";
 import { toTagSlug } from "../utils/tagSlug";
 
 type MobileNavIconName = "home" | "search" | "add" | "journal" | "profile";
@@ -58,6 +59,7 @@ export default function Header() {
     }
     let active = true;
     const refreshUnread = () => {
+      if (!isDocumentVisible()) return;
       void getUnreadMessageCount()
         .then(({ data }) => { if (active) setUnreadMessages(data.count); })
         .catch(() => {

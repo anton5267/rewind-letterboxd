@@ -10,6 +10,7 @@ import { getLastPageIndex, isPageOutOfRange } from "../utils/pagination";
 import { getUserIdentity } from "../utils/userIdentity";
 import { notifyUnreadCountsChanged } from "../utils/unreadEvents";
 import { usesHostedSupabaseAuth } from "../api/supabaseClient";
+import { isDocumentVisible } from "../utils/documentVisibility";
 import styles from "./Notifications.module.css";
 
 function label(item: NotificationItem, t: Translator) {
@@ -156,6 +157,7 @@ export default function Notifications() {
       let current = true;
       let previousCount: number | null = null;
       const poll = () => {
+        if (!current || !isDocumentVisible()) return;
         getUnreadNotificationCount().then(({ data: result }) => {
           if (!current) return;
           if (previousCount !== null && previousCount !== result.count) {
