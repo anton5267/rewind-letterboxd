@@ -1,3 +1,4 @@
+import { isAxiosError } from "axios";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useParams } from "react-router-dom";
@@ -24,6 +25,7 @@ export default function ReviewDetails() {
   const [review, setReview] = useState<ReviewDetailsModel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [notFound, setNotFound] = useState(false);
   const [retry, setRetry] = useState(0);
   const [liked, setLiked] = useState(false);
   const [likeStatusLoading, setLikeStatusLoading] = useState(false);
@@ -110,18 +112,21 @@ export default function ReviewDetails() {
     if (!validReviewId) {
       setReview(null);
       setError(true);
+      setNotFound(false);
       setLoading(false);
       return;
     }
     setLoading(true);
     setError(false);
+    setNotFound(false);
     try {
       const { data } = await getReviewDetails(reviewId);
       if (requestId !== loadRequest.current) return;
       setReview(data);
-    } catch {
+    } catch (cause) {
       if (requestId === loadRequest.current) {
         setReview(null);
+        setNotFound(isAxiosError(cause) && cause.response?.status === 404);
         setError(true);
       }
     } finally {
@@ -197,7 +202,7 @@ export default function ReviewDetails() {
       <div className={styles.filmCopy}><div className={styles.skeletonTitle} /><div className={styles.skeletonLine} /><div className={styles.authorMeta}><div className={styles.skeletonLine} /></div><div className={styles.reviewBody}>{[0, 1, 2, 3, 4].map(item => <div className={styles.skeletonLine} key={item} />)}</div></div>
     </div></div></div>
   </main>;
-  if (error || !review) return <main className={styles.state} aria-labelledby="review-state-title" aria-busy={false}><div className={styles.stateError} role="alert"><h1 id="review-state-title" ref={stateTitle} tabIndex={-1}>{t("reviewUnavailable")}</h1><p>{!validReviewId ? t("invalidReviewId") : t("loadReviewError")}</p>{validReviewId && <RetryButton label={t("retry")} onClick={() => {
+  if (error || !review) return <main className={styles.state} aria-labelledby="review-state-title" aria-busy={false}><div className={styles.stateError} role="alert"><h1 id="review-state-title" ref={stateTitle} tabIndex={-1}>{t("reviewUnavailable")}</h1><p>{!validReviewId ? t("invalidReviewId") : notFound ? t("reviewNotFound") : t("loadReviewError")}</p>{validReviewId && !notFound && <RetryButton label={t("retry")} onClick={() => {
     retryFocus.current = { reviewId, origin: document.activeElement };
     setRetry(value => value + 1);
   }} />}</div></main>;

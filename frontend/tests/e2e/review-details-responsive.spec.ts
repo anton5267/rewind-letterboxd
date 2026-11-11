@@ -74,3 +74,24 @@ test("review keeps complete text, controls and every liked member reachable on p
     }
   }
 });
+
+test("review detail distinguishes unavailable records from retryable load failures", async ({ page }) => {
+  await page.route("**/api/**", route => {
+    const pathname = new URL(route.request().url()).pathname;
+    if (!pathname.startsWith("/api/")) return route.continue();
+    if (pathname === "/api/reviews/99001") return route.fulfill({ status: 404, json: {} });
+    if (pathname === "/api/reviews/99002") return route.fulfill({ status: 503, json: {} });
+    if (pathname === "/api/users/me") return route.fulfill({ status: 401, json: {} });
+    return route.fulfill({ status: 404, json: {} });
+  });
+
+  await page.goto("/uk/reviews/99001");
+  await expect(page.getByRole("heading", { name: "Огляд недоступний" })).toBeVisible();
+  await expect(page.getByText("Цей огляд не існує або недоступний.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Спробувати ще" })).toHaveCount(0);
+
+  await page.goto("/en/reviews/99002");
+  await expect(page.getByRole("heading", { name: "Review unavailable" })).toBeVisible();
+  await expect(page.getByText("Could not load this review.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
+});
