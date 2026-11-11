@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit",
     "build": "vite build",
     "verify:build": "npm run typecheck && npm run build",
+    "verify:tmdb-crosswalk": "node scripts/verify-tmdb-crosswalk.mjs",
     "preview": "vite preview",
     "figma:sync": "powershell -NoProfile -ExecutionPolicy Bypass -File \"../../figma-codex-complete-export/run-sync.ps1\"",
     "figma:verify": "powershell -NoProfile -ExecutionPolicy Bypass -File \"../../figma-codex-complete-export/run-verify.ps1\"",
