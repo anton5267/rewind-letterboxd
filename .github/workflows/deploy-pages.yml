@@ -46,6 +46,9 @@ jobs:
           PUBLIC_SITE_URL: https://anton5267.github.io/rewind-letterboxd/
           SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
         run: node scripts/prerender-public-catalog-routes.mjs
+      - name: Verify localized root route shells
+        working-directory: frontend
+        run: node scripts/verify-language-root-routes.mjs
       - name: Configure SPA fallback
         run: cp frontend/dist/index.html frontend/dist/404.html
       - uses: actions/upload-pages-artifact@v4
