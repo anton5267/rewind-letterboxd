@@ -130,6 +130,13 @@ const defaultPages = [
 
 for (const page of defaultPages) await writeRoute(page);
 
+// Match the localized index routes handled by the React router. GitHub Pages
+// serves these files with HTTP 200 instead of its 404.html SPA fallback.
+for (const language of ["uk", "en"]) {
+  const homeHtml = await readFile(path.join(distDir, language, "home", "index.html"), "utf8");
+  await writeFile(path.join(distDir, language, "index.html"), homeHtml, "utf8");
+}
+
 const appShellRoutes = [
   { path: "search", uk: ["Глобальний пошук", "Шукайте фільми, людей, списки, теги та матеріали журналу."], en: ["Global search", "Search films, people, lists, tags, and journal articles."] },
   { path: "reviews", uk: ["Відгуки", "Відкривайте публічні відгуки спільноти REWIND."], en: ["Reviews", "Browse public reviews from the REWIND community."] },
