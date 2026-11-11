@@ -110,8 +110,16 @@ class PasswordResetIntegrationTests {
         assertTrue(users.findByEmail("invalid-" + suffix + "@example.invalid").isEmpty());
 
         jsonRequest(post("/api/auth/register"), """
-                {"username":"password_%s","email":"%s","password":"legacy"}
+                {"username":"short_%s","email":"short-%s@example.invalid","password":"legacy"}
+                """.formatted(suffix, suffix)).andExpect(status().isBadRequest());
+        assertTrue(users.findByEmail("short-" + suffix + "@example.invalid").isEmpty());
+
+        jsonRequest(post("/api/auth/register"), """
+                {"username":"password_%s","email":"%s","password":"eight888"}
                 """.formatted(suffix, email)).andExpect(status().isOk());
+        User existingUser = users.findByEmail(email).orElseThrow();
+        existingUser.setPasswordHash(passwords.encode("legacy"));
+        users.saveAndFlush(existingUser);
         MvcResult legacyLogin = jsonRequest(post("/api/auth/login"), """
                 {"email":"%s","password":"legacy"}
                 """.formatted(email)).andExpect(status().isOk()).andReturn();
