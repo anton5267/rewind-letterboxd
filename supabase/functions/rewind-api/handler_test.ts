@@ -1585,3 +1585,16 @@ Deno.test("admin TMDB routes validate imports and preserve sync and discovery re
       ["import", [120], true], ["discover", { page: 2, year: 2020, genreId: 18, minRating: 7, limit: 5, syncSimilar: true }],
     ])) throw new Error(`TMDB route contract failed: ${JSON.stringify({ statuses: [unauth.status, unauthCandidates.status, candidates.status, invalidCandidates.status, invalid.status, sync.status, batch.status, imported.status, discovered.status], calls })}`);
 });
+
+Deno.test("admin TMDB candidate lookup preserves provider unavailable status", async () => {
+  const handler = authHandler({
+    async searchAdminMovieTmdbCandidates() { throw new RewindApiError(503, "TMDB integration is disabled"); },
+  });
+  const response = await handler(new Request("https://project.supabase.co/api/admin/movies/50/tmdb-candidates", {
+    headers: { Authorization: "Bearer valid-token" },
+  }));
+  const body = await response.json();
+  if (response.status !== 503 || body.message !== "TMDB integration is disabled") {
+    throw new Error(`TMDB unavailable status was not preserved: ${JSON.stringify({ status: response.status, body })}`);
+  }
+});

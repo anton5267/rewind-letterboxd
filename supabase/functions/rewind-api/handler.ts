@@ -657,6 +657,9 @@ function repositoryFailure(error: unknown, fallback: string, headers: HeadersIni
   if (error instanceof RewindApiError && error.status >= 400 && error.status < 500) {
     return json({ message: error.message }, error.status, headers);
   }
+  if (error instanceof RewindApiError && (error.status === 502 || error.status === 503)) {
+    return json({ message: error.message }, error.status, headers);
+  }
   return json({ message: fallback }, 500, headers);
 }
 
