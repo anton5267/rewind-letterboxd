@@ -17,7 +17,7 @@ public class UserRegisterRequest {
     private String email;
 
     @NotBlank
-    @Size(min = 6, max = 72)
+    @Size(min = 8, max = 72)
     @MaxUtf8Bytes(72)
     private String password;
 

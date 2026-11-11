@@ -107,6 +107,19 @@ for (const lang of ["uk", "en"] as const) {
     await waitForPageContent(page);
     await page.locator("#register-username").fill("formreader");
     await page.locator("#register-email").fill("formreader@example.invalid");
+    const password = page.locator("#register-password");
+    const submit = page.locator('main button[type="submit"]');
+    await expect(password).toHaveAttribute("minlength", "8");
+    await password.fill("seven77");
+    await submit.click();
+    expect(mutations, "Registration passwords shorter than eight characters must not reach the API").toHaveLength(0);
+    await password.fill("eight888");
+    const response = page.waitForResponse(result => new URL(result.url()).pathname === "/api/auth/register" && result.request().method() === "POST");
+    await submit.click();
+    expect((await response).status()).toBe(400);
+    expect(mutations).toHaveLength(1);
+    expect(mutations[0]).toEqual({ path: "/api/auth/register", body: expect.objectContaining({ password: "eight888" }) });
+    mutations.length = 0;
     await checkWritingBoundary(page, page.locator("#register-password"), page.locator('main button[type="submit"]'), messages[lang], mutations, "/api/auth/register", "password");
   });
 
@@ -150,7 +163,7 @@ test("registration success moves keyboard focus to its heading", async ({ page }
   await waitForPageContent(page);
   await page.locator("#register-username").fill("formreader");
   await page.locator("#register-email").fill("formreader@example.invalid");
-  await page.locator("#register-password").fill("legacy");
+  await page.locator("#register-password").fill("eight888");
   await page.locator('main button[type="submit"]').click();
   const heading = page.locator("#register-success-title");
   await expect(heading).toBeVisible();

@@ -180,7 +180,7 @@ export default function Register() {
               disabled={loading}
               onChange={(e) => { setPassword(e.target.value); validation.onInput(e.currentTarget); }}
               autoComplete="new-password"
-              minLength={6}
+              minLength={8}
               maxLength={MAX_PASSWORD_BYTES}
               aria-invalid={Boolean(error) || validation.invalid("register-password")}
               aria-describedby={validation.describedBy("register-password", `register-password-hint${error ? " register-error" : ""}`)}

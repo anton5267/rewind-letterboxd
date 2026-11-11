@@ -51,9 +51,9 @@ class PasswordValidationTests {
     }
 
     @Test
-    void existingMinimumsAndSixCharacterLoginRemainSupported() {
+    void registrationRequiresEightCharactersWhileSixCharacterLoginRemainsSupported() {
         String legacyPassword = "legacy";
-        assertTrue(valid(UserRegisterRequest.class, "password", legacyPassword));
+        assertFalse(valid(UserRegisterRequest.class, "password", legacyPassword));
         assertTrue(valid(UserLoginRequest.class, "password", legacyPassword));
         assertTrue(encoder.matches(legacyPassword, encoder.encode(legacyPassword)));
         assertFalse(valid(UserRegisterRequest.class, "password", "short"));
@@ -61,6 +61,7 @@ class PasswordValidationTests {
         assertFalse(valid(ChangePasswordRequest.class, "newPassword", "short77"));
         assertTrue(valid(ResetPasswordRequest.class, "newPassword", "eight888"));
         assertTrue(valid(ChangePasswordRequest.class, "newPassword", "eight888"));
+        assertTrue(valid(UserRegisterRequest.class, "password", "eight888"));
     }
 
     @Test
