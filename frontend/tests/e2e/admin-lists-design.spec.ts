@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 
-test("admin list cards retain contract-backed metadata across languages and responsive widths", async ({ page }) => {
+test("admin list cards expose controls only for custom lists across languages and responsive widths", async ({ page }) => {
   let featuredPosition: number | null = null;
   await page.route("**/api/users/me", route => route.fulfill({ json: {
     id: 900010, username: "admin-fixture", role: "ADMIN", displayName: "Admin Fixture",
@@ -28,8 +28,13 @@ test("admin list cards retain contract-backed metadata across languages and resp
       listType: "CUSTOM", isPublic: true, itemCount: 6,
       createdAt: "2025-12-02T10:30:00Z", updatedAt: "2025-12-02T10:30:00Z",
       featuredPosition,
+    }, {
+      id: 900024, userId: 900011, username: "fixture-owner", name: "System watchlist",
+      description: null, listType: "WATCHLIST", isPublic: false, itemCount: 2,
+      createdAt: "2025-12-03T10:30:00Z", updatedAt: "2025-12-03T10:30:00Z",
+      featuredPosition: null,
     }],
-    totalPages: 1, totalElements: 1, number: 0, size: 50,
+    totalPages: 1, totalElements: 2, number: 0, size: 50,
     } });
   });
 
@@ -41,13 +46,16 @@ test("admin list cards retain contract-backed metadata across languages and resp
       await page.setViewportSize({ width, height: 900 });
       await page.goto(`/${locale}/admin?view=lists`);
       const lists = page.getByRole("region", { name: locale === "uk" ? "Усі списки" : "All Lists" });
-      const card = lists.getByRole("listitem");
+      const card = lists.getByRole("listitem").first();
+      const systemCard = lists.getByRole("listitem").nth(1);
       await expect(card.getByText("A real API backed list")).toBeVisible();
       await expect(card.getByText("fixture-owner")).toBeVisible();
       await expect(card.getByText(label, { exact: true })).toBeVisible();
       await expect(card.locator("time")).toHaveAttribute("dateTime", "2025-12-02T10:30:00Z");
       await expect(card.getByRole("button", { name: locale === "uk" ? "Приховати" : "Hide" })).toBeVisible();
       await expect(card.getByRole("button", { name: locale === "uk" ? "Додати до вибраних" : "Feature list" })).toBeVisible();
+      await expect(systemCard.getByText("System watchlist")).toBeVisible();
+      await expect(systemCard.getByRole("button")).toHaveCount(0);
       if (width === 320) {
         const featureButton = card.getByRole("button", { name: locale === "uk" ? "Додати до вибраних" : "Feature list" });
         await featureButton.click();
