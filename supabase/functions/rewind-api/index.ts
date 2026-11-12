@@ -1301,6 +1301,7 @@ const handler = createRewindApiHandler({
   async setAdminListVisibility(authUser, id, visible) {
     const { connection, userId } = await beginAdminTransaction(authUser);
     try {
+      await connection.queryObject("SELECT pg_advisory_xact_lock(1480, 1)");
       const updated = await connection.queryObject({
         text: "UPDATE rewind.lists SET is_public=$2, featured_position=CASE WHEN $2 THEN featured_position ELSE NULL END, updated_at=CURRENT_TIMESTAMP WHERE id=$1 AND list_type='CUSTOM' RETURNING id",
         args: [id, visible],
@@ -1370,9 +1371,55 @@ const handler = createRewindApiHandler({
       throw error;
     } finally { connection.release(); }
   },
+  async moveAdminListFeatured(authUser, id, direction) {
+    const { connection, userId } = await beginAdminTransaction(authUser);
+    try {
+      // Serialize all curation order changes with feature/unfeature operations.
+      await connection.queryObject("SELECT pg_advisory_xact_lock(1480, 1)");
+      const current = await connection.queryObject<{ id: string; list_type: string; is_public: boolean; is_active: boolean; featured_position: number | null }>({
+        text: `SELECT l.id::text AS id, l.list_type, l.is_public, u.is_active, l.featured_position
+               FROM rewind.lists l JOIN rewind.users u ON u.id=l.user_id WHERE l.id=$1 FOR UPDATE OF l`, args: [id],
+      });
+      const row = current.rows[0];
+      if (!row) { await connection.queryObject("COMMIT"); return "NOT_FOUND" as const; }
+      if (row.list_type !== "CUSTOM" || !row.is_public || !row.is_active || row.featured_position === null) {
+        await connection.queryObject("COMMIT");
+        return "NOT_ELIGIBLE" as const;
+      }
+      const featured = await connection.queryObject<{ id: string; featured_position: number }>(
+        `SELECT l.id::text AS id, l.featured_position
+         FROM rewind.lists l JOIN rewind.users u ON u.id=l.user_id
+         WHERE l.featured_position IS NOT NULL AND l.list_type='CUSTOM' AND l.is_public=true AND u.is_active=true
+         ORDER BY l.featured_position ASC FOR UPDATE OF l`,
+      );
+      const index = featured.rows.findIndex(item => Number(item.id) === id);
+      const neighborIndex = index + (direction === "up" ? -1 : 1);
+      const neighbor = featured.rows[neighborIndex];
+      if (index < 0) {
+        await connection.queryObject("COMMIT");
+        return "NOT_ELIGIBLE" as const;
+      }
+      if (!neighbor) {
+        await connection.queryObject("COMMIT");
+        return "BOUNDARY" as const;
+      }
+      const oldPosition = row.featured_position;
+      const newPosition = neighbor.featured_position;
+      await connection.queryObject({ text: "UPDATE rewind.lists SET featured_position=NULL WHERE id=$1", args: [id] });
+      await connection.queryObject({ text: "UPDATE rewind.lists SET featured_position=$2 WHERE id=$1", args: [Number(neighbor.id), oldPosition] });
+      await connection.queryObject({ text: "UPDATE rewind.lists SET featured_position=$2 WHERE id=$1", args: [id, newPosition] });
+      await recordAdminAudit(connection, userId, "LIST_FEATURED_REORDERED", "LIST", id, `position=${oldPosition}->${newPosition};neighbor=${neighbor.id}`);
+      await connection.queryObject("COMMIT");
+      return "OK" as const;
+    } catch (error) {
+      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+      throw error;
+    } finally { connection.release(); }
+  },
   async deleteAdminList(authUser, id) {
     const { connection, userId } = await beginAdminTransaction(authUser);
     try {
+      await connection.queryObject("SELECT pg_advisory_xact_lock(1480, 1)");
       const existing = await connection.queryObject<{ list_type: string }>({
         text: "SELECT list_type FROM rewind.lists WHERE id=$1 FOR UPDATE", args: [id],
       });

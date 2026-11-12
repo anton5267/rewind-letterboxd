@@ -1494,6 +1494,7 @@ Deno.test("admin list routes preserve paging, visibility updates, deletion guard
     async getAdminLists(_auth, page, size) { calls.push(["list", page, size]); return { content: [list], totalPages: 1, totalElements: 1, number: page }; },
     async setAdminListVisibility(_auth, id, visible) { calls.push(["visibility", id, visible]); return id === 19 ? { ...list, isPublic: visible } : null; },
     async setAdminListFeatured(_auth, id, featured) { calls.push(["featured", id, featured]); return id === 19 ? { ...list, featuredPosition: featured ? 0 : null } : id === 21 ? "NOT_ELIGIBLE" : null; },
+    async moveAdminListFeatured(_auth, id, direction) { calls.push(["featured-position", id, direction]); return id === 19 ? "OK" : id === 20 ? "BOUNDARY" : id === 21 ? "NOT_ELIGIBLE" : "NOT_FOUND"; },
     async deleteAdminList(_auth, id) { calls.push(["delete", id]); return id === 19 ? "OK" : id === 20 ? "SYSTEM_LIST" : "NOT_FOUND"; },
   });
   const headers = { Authorization: "Bearer valid-token" };
@@ -1508,14 +1509,20 @@ Deno.test("admin list routes preserve paging, visibility updates, deletion guard
   const unfeature = await handler(new Request("https://project.supabase.co/api/admin/lists/19/featured?featured=false", { method: "PUT", headers }));
   const invalidFeatured = await handler(new Request("https://project.supabase.co/api/admin/lists/19/featured?featured=yes", { method: "PUT", headers }));
   const ineligible = await handler(new Request("https://project.supabase.co/api/admin/lists/21/featured?featured=true", { method: "PUT", headers }));
+  const moveUp = await handler(new Request("https://project.supabase.co/api/admin/lists/19/featured-position?direction=up", { method: "PUT", headers }));
+  const invalidMove = await handler(new Request("https://project.supabase.co/api/admin/lists/19/featured-position?direction=sideways", { method: "PUT", headers }));
+  const boundaryMove = await handler(new Request("https://project.supabase.co/api/admin/lists/20/featured-position?direction=down", { method: "PUT", headers }));
+  const ineligibleMove = await handler(new Request("https://project.supabase.co/api/admin/lists/21/featured-position?direction=up", { method: "PUT", headers }));
+  const missingMove = await handler(new Request("https://project.supabase.co/api/admin/lists/99/featured-position?direction=up", { method: "PUT", headers }));
   const deleted = await handler(new Request("https://project.supabase.co/api/admin/lists/19", { method: "DELETE", headers }));
   const systemDelete = await handler(new Request("https://project.supabase.co/api/admin/lists/20", { method: "DELETE", headers }));
   if (unauthenticated.status !== 401 || page.status !== 200 || (await page.json()).content[0].itemCount !== 3
     || invalidPage.status !== 400 || hide.status !== 200 || (await hide.json()).isPublic !== false
     || invalidVisibility.status !== 400 || missing.status !== 404 || systemVisibility.status !== 404 || feature.status !== 200 || (await feature.json()).featuredPosition !== 0
-    || unfeature.status !== 200 || (await unfeature.json()).featuredPosition !== null || invalidFeatured.status !== 400 || ineligible.status !== 409 || deleted.status !== 204
-    || systemDelete.status !== 400 || JSON.stringify(calls) !== JSON.stringify([["list", 0, 100], ["visibility", 19, false], ["visibility", 99, true], ["visibility", 20, true], ["featured", 19, true], ["featured", 19, false], ["featured", 21, true], ["delete", 19], ["delete", 20]])) {
-    throw new Error(`Admin list contract changed: ${JSON.stringify({ calls, statuses: [unauthenticated.status, page.status, invalidPage.status, hide.status, invalidVisibility.status, missing.status, systemVisibility.status, feature.status, unfeature.status, invalidFeatured.status, ineligible.status, deleted.status, systemDelete.status] })}`);
+    || unfeature.status !== 200 || (await unfeature.json()).featuredPosition !== null || invalidFeatured.status !== 400 || ineligible.status !== 409 || moveUp.status !== 204
+    || invalidMove.status !== 400 || boundaryMove.status !== 409 || ineligibleMove.status !== 409 || missingMove.status !== 404 || deleted.status !== 204
+    || systemDelete.status !== 400 || JSON.stringify(calls) !== JSON.stringify([["list", 0, 100], ["visibility", 19, false], ["visibility", 99, true], ["visibility", 20, true], ["featured", 19, true], ["featured", 19, false], ["featured", 21, true], ["featured-position", 19, "up"], ["featured-position", 20, "down"], ["featured-position", 21, "up"], ["featured-position", 99, "up"], ["delete", 19], ["delete", 20]])) {
+    throw new Error(`Admin list contract changed: ${JSON.stringify({ calls, statuses: [unauthenticated.status, page.status, invalidPage.status, hide.status, invalidVisibility.status, missing.status, systemVisibility.status, feature.status, unfeature.status, invalidFeatured.status, ineligible.status, moveUp.status, invalidMove.status, boundaryMove.status, ineligibleMove.status, missingMove.status, deleted.status, systemDelete.status] })}`);
   }
 });
 

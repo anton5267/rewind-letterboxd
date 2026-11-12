@@ -74,6 +74,8 @@ export const getAdminTmdbQuality = () => api.get<TmdbQualityReport>("/admin/movi
 export const getAdminLists = (page = 0) => api.get<Page<AdminList>>("/admin/lists", { params: { size: 50, page } });
 export const setAdminListVisibility = (id: number, visible: boolean) => api.put<AdminList>(`/admin/lists/${id}/visibility`, null, { params: { visible } });
 export const setAdminListFeatured = (id: number, featured: boolean) => api.put<AdminList>(`/admin/lists/${id}/featured`, null, { params: { featured } });
+export const moveAdminListFeatured = (id: number, direction: "up" | "down") =>
+  api.put<void>(`/admin/lists/${id}/featured-position`, null, { params: { direction } });
 export const deleteAdminList = (id: number) => api.delete<void>(`/admin/lists/${id}`);
 export const getAdminConversations = (page = 0) => api.get<Page<AdminConversation>>("/admin/conversations", { params: { size: 50, page } });
 export const getAdminNotifications = (filters: AdminNotificationFilters = {}, page = 0) => api.get<Page<AdminNotification>>("/admin/notifications", { params: { size: 50, page, ...filters } });

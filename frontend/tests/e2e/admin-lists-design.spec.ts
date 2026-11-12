@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 
 test("admin list cards expose controls only for custom lists across languages and responsive widths", async ({ page }) => {
   let featuredPosition: number | null = null;
+  let secondFeaturedPosition: number | null = 0;
   await page.route("**/api/users/me", route => route.fulfill({ json: {
     id: 900010, username: "admin-fixture", role: "ADMIN", displayName: "Admin Fixture",
     email: "admin@example.invalid", avatarUrl: null, isActive: true, isHq: false,
@@ -12,8 +13,22 @@ test("admin list cards expose controls only for custom lists across languages an
   await page.route("**/api/*/unread-count", route => route.fulfill({ json: { count: 0 } }));
   await page.route("**/api/admin/lists**", route => {
     const url = new URL(route.request().url());
+    if (route.request().method() === "PUT" && /\/featured-position$/.test(url.pathname)) {
+      const direction = url.searchParams.get("direction");
+      if (direction === "down" && featuredPosition !== null && secondFeaturedPosition !== null && featuredPosition > secondFeaturedPosition) {
+        return route.fulfill({ status: 409, json: { message: "List is already at that end of the featured order" } });
+      }
+      if (featuredPosition !== null && secondFeaturedPosition !== null) {
+        [featuredPosition, secondFeaturedPosition] = [secondFeaturedPosition, featuredPosition];
+      }
+      return route.fulfill({ status: 204, body: "" });
+    }
     if (route.request().method() === "PUT" && /\/featured$/.test(url.pathname)) {
-      featuredPosition = url.searchParams.get("featured") === "true" ? 0 : null;
+      if (url.searchParams.get("featured") === "true") {
+        featuredPosition = Math.max(-1, secondFeaturedPosition ?? -1) + 1;
+      } else {
+        featuredPosition = null;
+      }
       return route.fulfill({ json: {
         id: 900023, userId: 900011, username: "fixture-owner", name: "A real API backed list",
         description: "This description stays readable and grows naturally with its content.",
@@ -33,6 +48,11 @@ test("admin list cards expose controls only for custom lists across languages an
       description: null, listType: "WATCHLIST", isPublic: false, itemCount: 2,
       createdAt: "2025-12-03T10:30:00Z", updatedAt: "2025-12-03T10:30:00Z",
       featuredPosition: null,
+    }, {
+      id: 900025, userId: 900012, username: "another-owner", name: "Another featured list",
+      description: null, listType: "CUSTOM", isPublic: true, itemCount: 4,
+      createdAt: "2025-12-04T10:30:00Z", updatedAt: "2025-12-04T10:30:00Z",
+      featuredPosition: secondFeaturedPosition,
     }],
     totalPages: 1, totalElements: 2, number: 0, size: 50,
     } });
@@ -43,6 +63,8 @@ test("admin list cards expose controls only for custom lists across languages an
   for (const locale of ["uk", "en"] as const) {
     const label = locale === "uk" ? "Створено" : "Created";
     for (const width of [320, 393, 600, 720, 768, 1024, 1440]) {
+      featuredPosition = null;
+      secondFeaturedPosition = 0;
       await page.setViewportSize({ width, height: 900 });
       await page.goto(`/${locale}/admin?view=lists`);
       const lists = page.getByRole("region", { name: locale === "uk" ? "Усі списки" : "All Lists" });
@@ -59,7 +81,13 @@ test("admin list cards expose controls only for custom lists across languages an
       if (width === 320) {
         const featureButton = card.getByRole("button", { name: locale === "uk" ? "Додати до вибраних" : "Feature list" });
         await featureButton.click();
+        await expect(card.getByText(locale === "uk" ? "Позиція у вибраних: 2" : "Featured position: 2")).toBeVisible();
+        await card.getByRole("button", { name: new RegExp(locale === "uk" ? "Перемістити вище" : "Move up") }).click();
         await expect(card.getByText(locale === "uk" ? "Позиція у вибраних: 1" : "Featured position: 1")).toBeVisible();
+        await card.getByRole("button", { name: new RegExp(locale === "uk" ? "Перемістити нижче" : "Move down") }).click();
+        await expect(card.getByText(locale === "uk" ? "Позиція у вибраних: 2" : "Featured position: 2")).toBeVisible();
+        await card.getByRole("button", { name: new RegExp(locale === "uk" ? "Перемістити нижче" : "Move down") }).click();
+        await expect(lists.getByRole("alert")).toHaveText(locale === "uk" ? "Список уже на цьому краї добірки." : "This list is already at that end of the featured order.");
         await card.getByRole("button", { name: locale === "uk" ? "Прибрати з вибраних" : "Remove from featured" }).click();
         await expect(featureButton).toBeVisible();
       }

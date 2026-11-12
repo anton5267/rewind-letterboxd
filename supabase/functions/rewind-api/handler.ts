@@ -532,6 +532,7 @@ export interface RewindApiRepository {
   getAdminLists?(authUser: HostedAuthUser, page: number, size: number): Promise<{ content: AdminListResponse[]; totalPages: number; totalElements: number; number: number }>;
   setAdminListVisibility?(authUser: HostedAuthUser, id: number, visible: boolean): Promise<AdminListResponse | null>;
   setAdminListFeatured?(authUser: HostedAuthUser, id: number, featured: boolean): Promise<AdminListResponse | null | "NOT_ELIGIBLE">;
+  moveAdminListFeatured?(authUser: HostedAuthUser, id: number, direction: "up" | "down"): Promise<"OK" | "NOT_FOUND" | "NOT_ELIGIBLE" | "BOUNDARY">;
   deleteAdminList?(authUser: HostedAuthUser, id: number): Promise<"OK" | "NOT_FOUND" | "SYSTEM_LIST">;
   getAdminDashboard?(authUser: HostedAuthUser): Promise<AdminDashboardResponse>;
   getAdminAuditLogs?(authUser: HostedAuthUser, page: number, size: number): Promise<{ content: AdminAuditLogResponse[]; totalPages: number; totalElements: number; number: number }>;
@@ -628,7 +629,7 @@ const ADMIN_NOTIFICATION_READ_ALL_PATH = "/api/admin/notifications/read-all";
 const ADMIN_USERS_PATH = "/api/admin/users";
 const ADMIN_USER_PATTERN = /^\/api\/admin\/users\/(\d+)(?:\/(overview|activate|deactivate|hq))?$/;
 const ADMIN_LISTS_PATH = "/api/admin/lists";
-const ADMIN_LIST_PATTERN = /^\/api\/admin\/lists\/(\d+)(?:\/(visibility|featured))?$/;
+const ADMIN_LIST_PATTERN = /^\/api\/admin\/lists\/(\d+)(?:\/(visibility|featured|featured-position))?$/;
 const ADMIN_DASHBOARD_PATH = "/api/admin/dashboard";
 const ADMIN_AUDIT_LOGS_PATH = "/api/admin/audit-logs";
 const ADMIN_SETTINGS_PATH = "/api/admin/settings";
@@ -822,7 +823,8 @@ export function createRewindApiHandler(
     if (path === ADMIN_LISTS_PATH || adminListMatch) {
       const isVisibilityRoute = adminListMatch?.[2] === "visibility";
       const isFeaturedRoute = adminListMatch?.[2] === "featured";
-      const allowed = adminListMatch ? (isVisibilityRoute || isFeaturedRoute ? ["PUT"] : ["DELETE"]) : ["GET"];
+      const isFeaturedPositionRoute = adminListMatch?.[2] === "featured-position";
+      const allowed = adminListMatch ? (isVisibilityRoute || isFeaturedRoute || isFeaturedPositionRoute ? ["PUT"] : ["DELETE"]) : ["GET"];
       if (!allowed.includes(request.method)) {
         corsHeaders.set("Allow", `${allowed.join(", ")}, OPTIONS`);
         return json({ message: "Method not allowed" }, 405, corsHeaders);
@@ -838,6 +840,16 @@ export function createRewindApiHandler(
         }
         const id = parseRouteId(adminListMatch[1]);
         if (id === null) return json({ message: "Invalid list ID" }, 400, corsHeaders);
+        if (isFeaturedPositionRoute) {
+          const direction = query.get("direction");
+          if (direction !== "up" && direction !== "down") return json({ message: "Invalid featured direction" }, 400, corsHeaders);
+          if (!repository.moveAdminListFeatured) return json({ message: "Not found" }, 404, corsHeaders);
+          const result = await repository.moveAdminListFeatured(authUser, id, direction);
+          if (result === "NOT_FOUND") return json({ message: "List not found" }, 404, corsHeaders);
+          if (result === "NOT_ELIGIBLE") return json({ message: "Only active public custom lists can be reordered" }, 409, corsHeaders);
+          if (result === "BOUNDARY") return json({ message: "List is already at that end of the featured order" }, 409, corsHeaders);
+          return new Response(null, { status: 204, headers: corsHeaders });
+        }
         if (isVisibilityRoute || isFeaturedRoute) {
           const visible = parseOptionalBoolean(query.get("visible"));
           const value = isFeaturedRoute ? parseOptionalBoolean(query.get("featured")) : visible;
