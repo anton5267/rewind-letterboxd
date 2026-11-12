@@ -4,7 +4,7 @@
 
 - У відокремленій гілці `feature/list-discovery-curation` реалізовано Featured/Crew добірку. Міграцію `20261112050323_list_featured_curation` застосовано до приватної `rewind` schema; `rewind-api` розгорнуто як **v32 ACTIVE**. RLS увімкнено, curation column доступна на UPDATE лише `rewind_edge_app`, не `anon`.
 - Перевірки: Deno handler **73/73**, `deno check`, frontend `verify:build` (305 модулів), Playwright цільові **7/7**; PostgreSQL 16 перевірив міграцію, grants та унікальність порядку. Featured і Crew GET у production повернули **200** з порожніми списками; це очікувано, бо наразі немає публічних CUSTOM списків. Genres **17**, movie search fixture page `total=50`.
-- До релізу: GitHub Pages ще не оновлений кодом Featured/Crew/Admin; живі дані користувачів не змінювалися й фіктивні списки не створювалися. Звичайний MySQL Compose/data не змінювалися. Далі — опублікувати перевірені зміни на GitHub Pages та пройти production smoke.
+- GitHub Pages deployment для commit `e9f2d1a` успішний: [run 43164114001](https://github.com/anton5267/rewind-letterboxd/actions/runs/43164114001). Головна, UK/EN Home, Lists Discovery та Admin routes відповіли HTTP 200. Далі — browser/UI acceptance live сторінки; feed лишатиметься порожнім до появи справжнього публічного CUSTOM списку. Живі дані користувачів, локальний MySQL Compose/data не змінювалися.
 
 ## Новий пріоритет: GitHub Pages + Supabase Free без інших хостів
 

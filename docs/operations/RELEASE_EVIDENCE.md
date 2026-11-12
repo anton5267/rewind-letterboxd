@@ -7,7 +7,9 @@
 - Розгорнуто `rewind-api` **v32 ACTIVE** (`verify_jwt=false` як і раніше). Live source read-back підтвердив збереження чинних TMDB refresh, movie publication та review reports шляхів.
 - Перевірки коду: Deno handler **73/73**, `deno check`, `npm run verify:build` (305 modules), targeted Playwright **7/7**. PostgreSQL 16 disposable migration check підтвердив unique position і grant boundary; контейнер видалено.
 - Production GET smoke: `/api/lists/public/featured?page=0&size=12` — **200, 0 items**; `/api/lists/public/team?page=0&size=12` — **200, 0 items**; `/api/genres` — **200, 17**; `/api/movies/search?page=0&size=2` — **200, total 50**. Порожні Featured/Crew feeds відповідають поточним даним (публічних CUSTOM/team lists немає).
-- На цьому етапі GitHub Pages frontend ще не оновлений цією функцією. Не змінювали Auth users, profile/list contents, локальний MySQL Compose/data; не створювали тестові публічні списки.
+- Commit `e9f2d1a217ae57d134a64e11a504cf7d1d1d6fd7` pushed fast-forward у `master`. Pages workflow [43164114001](https://github.com/anton5267/rewind-letterboxd/actions/runs/43164114001) completed success: production Vite build, public-route prerender, localized root-route verification та deploy jobs усі пройшли.
+- Після deploy прямі GET сторінок `https://anton5267.github.io/rewind-letterboxd/`, `/uk/home/?page=0`, `/en/home/?page=0`, `/uk/lists/discover/`, `/en/lists/discover/`, `/uk/admin?view=lists`, `/en/admin?view=lists` — **7/7 HTTP 200**. Один повторний fetch HTML/assets був скинутий транспортом, тож browser interaction/bundle assertion не заявляється як перевірена.
+- Не змінювали Auth users, profile/list contents, локальний MySQL Compose/data; не створювали тестові публічні списки.
 
 ### Featured/Crew list curation — локальна реалізація — 12.11.2026
 
