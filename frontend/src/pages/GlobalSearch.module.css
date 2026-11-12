@@ -22,7 +22,8 @@
 .searchForm { position: relative; width: min(100%, 400px); margin: 0 auto; }
 .searchForm label { display: block; min-width: 0; }
 .searchForm input { display: block; width: 100%; min-height: 44px; height: 44px; border: 0; border-radius: 999px; padding: 10px 48px 10px 18px; background: rgba(229, 229, 229, .15); color: #fff; font: inherit; font-size: 16px; }
-.searchForm input:focus { border-color: #f2cc7c; outline: 2px solid rgba(242, 204, 124, .28); outline-offset: 2px; }
+.searchForm input:focus { border-color: #f2cc7c; }
+.searchForm input:focus-visible { outline: var(--rewind-focus-width) solid var(--rewind-cyan); outline-offset: 3px; }
 .searchForm button { position: absolute; inset: 0 0 auto auto; width: 44px; min-height: 44px; height: 44px; border: 0; border-radius: 999px; padding: 0; background: transparent; color: #ccc; cursor: pointer; }
 .submitIcon { font-size: 24px; }
 .resultNav { display: flex; gap: 8px; overflow-x: auto; margin: 0 0 8px; border-bottom: 1px solid var(--rewind-line); padding: 0 0 6px; scrollbar-width: thin; scrollbar-color: var(--rewind-muted) transparent; }
