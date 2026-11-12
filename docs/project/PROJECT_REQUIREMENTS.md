@@ -106,21 +106,21 @@
 
 <a id="implementation-status"></a>
 
-## 11. Відповідність реалізації — 20.10.2026
+## 11. Відповідність реалізації — оновлено 12.11.2026
 
 Цей датований розділ описує реалізацію, а не змінює надане вище ТЗ. Наявна функція не означає production-готовності. Поточний короткий стан — у [PROGRESS](PROGRESS.md), конкретні перевірки та їх межі — у [RELEASE_EVIDENCE](../operations/RELEASE_EVIDENCE.md), наступна робота — у [PLAN](../../PLAN.md).
 
 | Вимоги | Реалізація | Відкрите завершення |
 | --- | --- | --- |
-| Акаунт і профілі | Auth/reset, cookie/CSRF/refresh, private/public profiles, collections/stats/settings/social links | Production SMTP; наступний Profile/Community UI-прохід |
-| Каталог, фільм, персоналії | Home/catalog/search/filter/pagination, Details/credits/trailer/external rating за наявності даних, people/filmography | Інші visual variants, точні fonts/tokens; production TMDB/scheduler |
+| Акаунт і профілі | Hosted Supabase signup confirmation, password recovery/reset і повторний вхід власника пройдені; 2/2 identities confirmed і профілі linked, 1 ADMIN | UK/EN callback acceptance та disposable account deletion/outbox cleanup; наступний Profile/Community UI-прохід |
+| Каталог, фільм, персоналії | Home/catalog/search/filter/pagination, Details/credits/trailer/external rating за наявності даних, people/filmography; Admin Movies і TMDB refresh у live Edge v33 | 29/49 linked films ще без original language; 1 запис без підтвердженого TMDB ID; інші visual variants/fonts/tokens |
 | Особисті дії, огляди й коментарі | Watched/watchlist/favorites, ratings, review/comment CRUD, pagination, visibility/moderation | Збереження поведінки в нових UI-блоках; production перевірки |
-| Списки | Private CRUD/reorder, public feeds/detail/tags/likes; Featured/Crew feeds та Admin curation є у live Edge v32 і Pages (`e9f2d1a`); UK/EN Lists та API 10/10 прийняті live | Авторизований Admin mutation acceptance; публічних CUSTOM списків поки немає, тому порожній Featured feed очікуваний; ручне drag/reorder curation та інші feed/detail variants лишаються відкритими |
+| Списки | Private CRUD/reorder, public feeds/detail/tags/likes; Featured/Crew та Admin curation доступні у live Edge v33; UK/EN Lists та API 10/10 прийняті live | Авторизований Admin mutation acceptance; публічних CUSTOM списків поки немає, тому порожній Featured feed очікуваний; ручне drag/reorder curation та інші feed/detail variants лишаються відкритими |
 | Social/Community | Follow/block, network/activity, messages, notifications/SSE/unread; guards/retry | Подальший UI-прохід; delivery/reconnect у production |
 | Journal і службові сторінки | List/article/archive/audio/newsletter/editor; help/contact/legal/account-deletion surfaces | Погоджений UK/EN контент, covers/audio/dates; реальний контактний канал |
-| Admin | Users/HQ, movies, reviews/comments/lists, communications, moderation/audit/settings із server pagination | Наступний UI-прохід і production sign-off |
+| Admin | Users/HQ, Movies API/UI, reviews/comments/lists, report queue, communications, moderation/audit/settings із server pagination | Авторизований live Admin UI acceptance; report queue порожня, тому live dismiss не приймався |
 | Адаптивність, UK/EN, дизайн | Адаптивні поверхні, localized states, keyboard/focus; Movie/Review/auth Profile, Home/Search і Lists мають локальні alignment докази | Решта variants, fonts/variables/overrides; повна Figma parity не підтверджена |
 | Безпека, продуктивність і дані | Access guards/validation, rate limits/cache, Flyway/ER; локальні contract/load/restore інструменти | Production capacity/monitoring і перевірки цільового середовища |
-| Розгортання й передача | Compose/Caddy/runbooks і дипломні матеріали; відео користувач уже має | Secrets, VPS/domain/HTTPS, mail/scheduler/backup-restore; нове відео не потрібне |
+| Розгортання й передача | GitHub Pages + Supabase Free публічно працюють; Gmail SMTP налаштований для Auth; відео користувач уже має | Підтримуваний безплатний mail delivery/ліміти, backup/restore й моніторинг; VPS/domain не входять у поточний безплатний запуск |
 
 Попередній повний regression передує останнім Home/Search і Lists змінам; вони перевірені окремими локальними build/targeted/Chrome доказами. Остаточні результати не дублюються в цій таблиці.
