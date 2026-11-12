@@ -1,5 +1,5 @@
 import { Pool } from "@db/postgres";
-import { buildAdminMovieUpdateQuery } from "./admin_movie_update.ts";
+import { buildAdminMovieAuditMetadata, buildAdminMovieUpdateQuery } from "./admin_movie_update.ts";
 import { replaceAdminMovieGenres } from "./admin_movie_genres.ts";
 import { replaceAdminMovieCredits } from "./admin_movie_credits.ts";
 import {
@@ -1598,7 +1598,7 @@ const handler = createRewindApiHandler({
     } finally { connection.release(); }
   },
   async createAdminMovie(authUser, body: AdminMovieWriteRequest) {
-    const { connection } = await beginAdminTransaction(authUser);
+    const { connection, userId } = await beginAdminTransaction(authUser);
     try {
       const result = await connection.queryObject<{
         id: string; tmdb_id: string | null; title: string; release_date: string | null;
@@ -1610,10 +1610,12 @@ const handler = createRewindApiHandler({
         args: [body.imdbId ?? null, body.originalLanguage ?? null, body.title, body.durationMinutes ?? null, body.releaseDate ?? null, body.ageRating ?? null,
           body.rating ?? null, body.shortPlot ?? null, body.photoUrl ?? null, body.backdropUrl ?? null, body.trailerUrl ?? null],
       });
-      if (body.genreIds !== undefined) await replaceAdminMovieGenres(connection, parseSafeCount(result.rows[0]!.id), body.genreIds);
+      const movieId = parseSafeCount(result.rows[0]!.id);
+      if (body.genreIds !== undefined) await replaceAdminMovieGenres(connection, movieId, body.genreIds);
       if (body.actorCredits !== undefined || body.directorIds !== undefined || body.producerIds !== undefined) {
-        await replaceAdminMovieCredits(connection, parseSafeCount(result.rows[0]!.id), body);
+        await replaceAdminMovieCredits(connection, movieId, body);
       }
+      await recordAdminAudit(connection, userId, "MOVIE_CREATED", "MOVIE", movieId, buildAdminMovieAuditMetadata(body));
       await connection.queryObject("COMMIT");
       return toAdminMovie(result.rows[0]!);
     } catch (error) {
@@ -1622,7 +1624,7 @@ const handler = createRewindApiHandler({
     } finally { connection.release(); }
   },
   async updateAdminMovie(authUser, id, body: AdminMovieWriteRequest) {
-    const { connection } = await beginAdminTransaction(authUser);
+    const { connection, userId } = await beginAdminTransaction(authUser);
     try {
       const updateQuery = buildAdminMovieUpdateQuery(id, body);
       let result;
@@ -1647,6 +1649,10 @@ const handler = createRewindApiHandler({
       if (result.rows[0] && (body.actorCredits !== undefined || body.directorIds !== undefined || body.producerIds !== undefined)) {
         await replaceAdminMovieCredits(connection, id, body);
       }
+      if (result.rows[0]) {
+        const metadata = buildAdminMovieAuditMetadata(body);
+        if (metadata) await recordAdminAudit(connection, userId, "MOVIE_UPDATED", "MOVIE", id, metadata);
+      }
       await connection.queryObject("COMMIT");
       return result.rows[0] ? toAdminMovie(result.rows[0]) : null;
     } catch (error) {
@@ -1655,9 +1661,10 @@ const handler = createRewindApiHandler({
     } finally { connection.release(); }
   },
   async deleteAdminMovie(authUser, id) {
-    const { connection } = await beginAdminTransaction(authUser);
+    const { connection, userId } = await beginAdminTransaction(authUser);
     try {
       const result = await connection.queryObject({ text: "DELETE FROM rewind.movies WHERE id=$1 RETURNING id", args: [id] });
+      if (result.rows.length > 0) await recordAdminAudit(connection, userId, "MOVIE_DELETED", "MOVIE", id, null);
       await connection.queryObject("COMMIT");
       return result.rows.length > 0;
     } catch (error) {

@@ -12,6 +12,17 @@ export interface AdminMovieUpdateQuery {
   args: unknown[];
 }
 
+const movieAuditFieldOrder = [
+  "title", "imdbId", "originalLanguage", "durationMinutes", "releaseDate", "ageRating", "rating",
+  "shortPlot", "photoUrl", "backdropUrl", "trailerUrl", "published", "genreIds", "actorCredits",
+  "directorIds", "producerIds",
+] as const satisfies readonly (keyof AdminMovieWriteRequest)[];
+
+export function buildAdminMovieAuditMetadata(body: AdminMovieWriteRequest): string | null {
+  const fields = movieAuditFieldOrder.filter((field) => body[field] !== undefined);
+  return fields.length ? `fields=${fields.join(",")}` : null;
+}
+
 export function buildAdminMovieUpdateQuery(
   id: number,
   body: AdminMovieWriteRequest,
