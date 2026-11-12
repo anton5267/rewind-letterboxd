@@ -1,5 +1,11 @@
 # Rewind — докази перевірок
 
+### TMDB catalog refresh read-back and cooldown — 12.11.2026
+
+- Read-only Supabase query at 17:27 UTC counted 50 movies: 49 with `tmdb_id`, 29 linked movies with `original_language`, 20 linked movies without it, and one movie without a TMDB ID. No catalog rows were changed.
+- `cron.job` reports `rewind-tmdb-refresh-daily` scheduled at `0 3 * * *`; latest `cron.job_run_details` row is `succeeded` at 03:00 UTC on 12.11. The latest successful `tmdb_refresh_state` attempt among the 20 movies still missing a language is also 03:00 UTC on 12.11. This means the scheduled sync completed but did not provide those language values. Earliest eligible scheduled retry is 16.11.2026 03:00 UTC for up to 10 oldest attempts; remaining eligible rows follow later daily batches.
+- TMDB candidate `1147411` for the unlinked movie remains unconfirmed through the official TMDB API. No ID or other data was written. Direct official-site retrieval returned HTTP 403, and Chrome page control stopped because the Windows browser bridge could not determine the current URL with sufficient confidence. Search-engine/third-party listings are not treated as authoritative confirmation.
+
 ### Admin Featured list ordering release — 12.11.2026
 
 - Додано локалізовані доступні Move up/Move down дії для CUSTOM списків, які вже є featured. Edge endpoint перевіряє сесію, ADMIN роль, напрямок і допустимість списку; перестановка позиції з сусіднім eligible списком виконується атомарно під advisory lock, із audit записом. Публічні API-контракти не змінені; міграцій немає.
