@@ -19,9 +19,9 @@
 3. Після чотириденного cooldown перевірити повторне TMDB-заповнення 20 пропусків. Для єдиного фільму без TMDB ID знайдений кандидат `1147411`, але його ще потрібно підтвердити через офіційний TMDB/API та штатний Admin sync; у базу ID не записаний.
 4. Продовжити перевірені продуктні/UI gaps із матриці вимог; не трактувати локальні fixtures як live acceptance.
 
-## Наступне локальне Pages оновлення
+## Home activity feed — опубліковано 12.11
 
-- Home має UK/EN стрічку активності людей, на яких підписаний авторизований користувач. Персональний endpoint не викликається гостем. Pages-base build і цільові fixture E2E — 2/2 пройшли; опублікований Home ще не оновлено, тож потрібні push/deploy і read-only перевірка. [Evidence](../operations/RELEASE_EVIDENCE.md#authenticated-home-following-activity--12112026-1229-utc).
+- Авторизовані користувачі мають UK/EN стрічку активності людей, на яких підписані. Гості не викликають персональний endpoint. Pages deploy і CI успішні; live UK Home показав новий текст, стрічку та empty state. Локальні fixture E2E — 2/2. [Evidence](../operations/RELEASE_EVIDENCE.md#authenticated-home-following-activity-pages-readback--12112026-1232-utc).
 
 ## Межі цього оновлення
 
