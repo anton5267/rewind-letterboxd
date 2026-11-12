@@ -6749,3 +6749,10 @@ Added a local Supabase Edge Function router with the existing public `GET /api/g
 - A grouped `rewind.users` query returned **2 active ADMIN profiles**. It did not return account identifiers or email addresses.
 - Aggregate catalogue check returned **6 total lists, 0 CUSTOM, 0 public CUSTOM**. Report status aggregation returned **0 rows** in `rewind.review_reports`.
 - No database write, account/role change, email, Edge deployment, Pages deployment, or MySQL/Compose change occurred. The empty CUSTOM/report counts are real-data preconditions; no fixture content was created in production.
+
+<a id="uk-en-email-action-source-matrix--12112026-1603-utc"></a>
+### UK/EN email-action source matrix — 12.11.2026 16:03 UTC
+
+- Expanded the focused Playwright suite to cover signup confirmation and password recovery in both Ukrainian and English. All four cases verify the localized prompt, stripping the token fragment from the URL, waiting for an explicit click, sending the correct `token_hash`/verification type, and routing to the existing app destination.
+- `npx playwright test tests/e2e/supabase-email-action.spec.ts` passed **4/4** against an isolated Vite server on port 3001. Supabase verify requests and REWIND API calls were mocked by the test fixture; no email was sent and no live identity/session/data was changed. The temporary dev server was stopped after the run.
+- This closes a missing local locale-combination test only. Actual hosted UK/EN token callbacks and disposable identity deletion/outbox cleanup remain open.

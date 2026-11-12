@@ -38,31 +38,58 @@ async function mockSupabaseVerification(page: Page) {
   return verificationBodies;
 }
 
-test("signup email action waits for an explicit click and removes its fragment before verification", async ({ page }) => {
-  const verificationBodies = await mockSupabaseVerification(page);
-  await page.goto(`/uk/email-action/#rewind_action=signup&token_hash=${tokenHash}&type=email`);
+const emailActionFlows = [
+  {
+    name: "UK signup confirmation",
+    language: "uk",
+    action: "signup",
+    type: "email",
+    heading: "Підтвердьте свою пошту",
+    button: "Підтвердити пошту",
+    destination: /\/uk\/films\/?$/,
+  },
+  {
+    name: "EN signup confirmation",
+    language: "en",
+    action: "signup",
+    type: "email",
+    heading: "Confirm your email",
+    button: "Confirm email",
+    destination: /\/en\/films\/?$/,
+  },
+  {
+    name: "UK password recovery",
+    language: "uk",
+    action: "recovery",
+    type: "recovery",
+    heading: "Підтвердіть зміну пароля",
+    button: "Продовжити до зміни пароля",
+    destination: /\/uk\/reset-password\/?$/,
+  },
+  {
+    name: "EN password recovery",
+    language: "en",
+    action: "recovery",
+    type: "recovery",
+    heading: "Confirm your password change",
+    button: "Continue to password change",
+    destination: /\/en\/reset-password\/?$/,
+  },
+] as const;
 
-  await expect(page.getByRole("heading", { name: "Підтвердьте свою пошту" })).toBeVisible();
-  await expect(page).toHaveURL(/\/uk\/email-action\/?$/);
-  expect(verificationBodies).toHaveLength(0);
+for (const flow of emailActionFlows) {
+  test(`${flow.name} waits for an explicit click and removes its fragment before verification`, async ({ page }) => {
+    const verificationBodies = await mockSupabaseVerification(page);
+    await page.goto(`/${flow.language}/email-action/#rewind_action=${flow.action}&token_hash=${tokenHash}&type=${flow.type}`);
 
-  await page.getByRole("button", { name: "Підтвердити пошту" }).click();
-  await expect(page).toHaveURL(/\/uk\/films\/?$/);
-  expect(verificationBodies).toHaveLength(1);
-  expect(verificationBodies[0]).toMatchObject({ token_hash: tokenHash, type: "email" });
-});
+    await expect(page.getByRole("heading", { name: flow.heading })).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`/${flow.language}/email-action/?$`));
+    expect(verificationBodies).toHaveLength(0);
 
-test("recovery email action waits for an explicit click and opens the existing password form", async ({ page }) => {
-  const verificationBodies = await mockSupabaseVerification(page);
-  await page.goto(`/en/email-action/#rewind_action=recovery&token_hash=${tokenHash}&type=recovery`);
-
-  await expect(page.getByRole("heading", { name: "Confirm your password change" })).toBeVisible();
-  await expect(page).toHaveURL(/\/en\/email-action\/?$/);
-  expect(verificationBodies).toHaveLength(0);
-
-  await page.getByRole("button", { name: "Continue to password change" }).click();
-  await expect(page).toHaveURL(/\/en\/reset-password\/?$/);
-  await expect(page.locator("#reset-password")).toBeVisible();
-  expect(verificationBodies).toHaveLength(1);
-  expect(verificationBodies[0]).toMatchObject({ token_hash: tokenHash, type: "recovery" });
-});
+    await page.getByRole("button", { name: flow.button }).click();
+    await expect(page).toHaveURL(flow.destination);
+    if (flow.action === "recovery") await expect(page.locator("#reset-password")).toBeVisible();
+    expect(verificationBodies).toHaveLength(1);
+    expect(verificationBodies[0]).toMatchObject({ token_hash: tokenHash, type: flow.type });
+  });
+}
