@@ -6771,10 +6771,12 @@ Added a local Supabase Edge Function router with the existing public `GET /api/g
 - Inspected the route and its controls only. No visibility, Featured/Crew, delete, role, list, or user-data mutation was submitted. The empty `CUSTOM` inventory means a live Featured/Crew mutation cannot be validated without creating user content; report dismissal likewise remains untested because the report queue is empty.
 - This confirms only Admin Lists route access and live rendering, not the other Admin routes or list mutation behavior. Session identity and role were not changed.
 
-<a id="custom-list-visibility-guard-local-validation--12112026-1628-utc"></a>
-### CUSTOM list visibility guard — local validation — 12.11.2026 16:28 UTC
+<a id="custom-list-visibility-guard-release--12112026"></a>
+### CUSTOM list visibility guard release — 12.11.2026
 
 - Admin UI now renders Publish/Hide only for `CUSTOM` lists. Edge repository SQL updates visibility only when `list_type='CUSTOM'`; system lists yield no updated row and the API returns 404. This aligns the admin control with the public list endpoints, which expose only public `CUSTOM` lists.
 - Verification: `npx --yes deno test supabase/functions/rewind-api` — **107 passed, 0 failed**; `npm run verify:build` — typecheck and Vite build passed; `git diff --check` passed.
-- The focused Playwright scenario in `frontend/tests/e2e/admin-flow.spec.ts` was skipped because `E2E_ADMIN_EMAIL` and `E2E_ADMIN_PASSWORD` were not configured. Existing authenticated live Admin Lists route was inspected read-only; no production list was changed.
-- This source change is local and not yet deployed: production Edge remains v34. The live table has no CUSTOM lists, so a production mutation test is unavailable without creating content.
+- The focused Playwright scenario in `frontend/tests/e2e/admin-flow.spec.ts` was skipped locally because `E2E_ADMIN_EMAIL` and `E2E_ADMIN_PASSWORD` were not configured. Existing authenticated live Admin Lists route was inspected read-only; no production list was changed.
+- Pushed commit [`c0ea150`](https://github.com/anton5267/rewind-letterboxd/commit/c0ea1500af987f7e5408967ed4e8677f2628c2d4). GitHub CI [43259773350](https://github.com/anton5267/rewind-letterboxd/actions/runs/43259773350) and Pages deployment [43259773346](https://github.com/anton5267/rewind-letterboxd/actions/runs/43259773346) both succeeded.
+- Deployed Supabase Edge `rewind-api` **v35 ACTIVE**, preserving `verify_jwt=false` and the handler's own authorization checks. Read-only smoke from Pages origin returned `/api/genres` **200**, 17 rows, and `Access-Control-Allow-Origin: https://anton5267.github.io`; Pages root returned **200**.
+- No live list was mutated. The production database currently has no CUSTOM lists, so successful visibility/Featured behavior on a real custom list remains unverified without user-created content.
