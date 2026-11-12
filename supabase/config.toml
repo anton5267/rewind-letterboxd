@@ -5,7 +5,7 @@ subject = "{{ if eq .Data.language \"en\" }}Confirm your REWIND email{{ else }}�
 content_path = "./supabase/templates/confirmation.html"
 
 [auth.email.template.recovery]
-subject = "{{ if eq .Data.language \"en\" }}Reset your REWIND password{{ else }}Відновіть пароль REWIND{{ end }}"
+subject = "{{ $uk := eq .RedirectTo (printf \"%suk/reset-password/\" .SiteURL) }}{{ if or (eq .RedirectTo (printf \"%sen/reset-password/\" .SiteURL)) (and (not $uk) (eq .Data.language \"en\")) }}Reset your REWIND password{{ else }}Відновіть пароль REWIND{{ end }}"
 content_path = "./supabase/templates/recovery.html"
 
 # The router currently exposes only a public genre lookup. Keep every future

@@ -6685,3 +6685,10 @@ Added a local Supabase Edge Function router with the existing public `GET /api/g
 - The saved Site URL is `https://anton5267.github.io/rewind-letterboxd/`. The four saved redirect URLs are `/uk/login/`, `/en/login/`, `/uk/reset-password/`, and `/en/reset-password/` under that same Pages origin. Dashboard showed **Save changes disabled**, consistent with no pending edits.
 - This is a read-back of saved configuration only. It does not prove all four live email-token callbacks were exercised. Signup confirmation, recovery/reset and sign-in for the disposable identity were separately reported/completed earlier; UK/EN callback acceptance and disposable-account deletion/outbox cleanup remain open.
 - The Chrome extension browser route worked without the Windows browser bridge. No Auth identities, roles, app data, SMTP settings, Supabase schema, GitHub Pages, or local MySQL/Compose state were changed.
+
+### Supabase Auth recovery-template drift reconciled locally — 12.11.2026
+
+- Read the live Confirm sign up and Reset password templates from the authenticated Dashboard without editing or saving either template. Both are custom REWIND HTML templates; the confirmation template matches the checked-in source structure.
+- The live recovery subject/body select language from `.RedirectTo` when it exactly matches the configured EN or UK reset route, with `.Data.language` as fallback. The checked-in `recovery.html`, `config.toml`, and Management API helper used only `.Data.language`, so an EN recovery route could get a Ukrainian subject/body when the user's stored metadata was UK.
+- Updated those three local sources to match the observed live language-selection behavior. This aligns the version-controlled source of truth and future helper payload with the already-live template; no hosted template, email, account, role, schema, Pages runtime, or MySQL/Compose data was changed.
+- Supabase docs confirm `RedirectTo` is the redirect URL passed by the auth method. Source/diff verification is relevant to this template/config-only reconciliation; no live callback or email was initiated.

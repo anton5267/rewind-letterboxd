@@ -24,7 +24,7 @@ if ([string]::IsNullOrWhiteSpace($confirmationHtml) -or [string]::IsNullOrWhiteS
 $payload = @{
     mailer_subjects_confirmation = '{{ if eq .Data.language "en" }}Confirm your REWIND email{{ else }}Підтвердьте пошту REWIND{{ end }}'
     mailer_templates_confirmation_content = $confirmationHtml
-    mailer_subjects_recovery = '{{ if eq .Data.language "en" }}Reset your REWIND password{{ else }}Відновіть пароль REWIND{{ end }}'
+    mailer_subjects_recovery = '{{ $uk := eq .RedirectTo (printf "%suk/reset-password/" .SiteURL) }}{{ if or (eq .RedirectTo (printf "%sen/reset-password/" .SiteURL)) (and (not $uk) (eq .Data.language "en")) }}Reset your REWIND password{{ else }}Відновіть пароль REWIND{{ end }}'
     mailer_templates_recovery_content = $recoveryHtml
 } | ConvertTo-Json -Depth 4 -Compress
 
