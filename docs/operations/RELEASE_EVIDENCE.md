@@ -3,7 +3,7 @@
 ### Featured/Crew curation — live Edge rollout — 12.11.2026
 
 - До застосування: Supabase `rewind-api` v31, migration history до `20261112042014`; 2 REWIND profiles, 6 private system lists, 0 public CUSTOM lists. Користувацькі записи для цієї функції не створювалися.
-- Застосовано `20261112050323_list_featured_curation` у приватній `rewind` schema. Read-back підтвердив RLS enabled, колонку/check/partial unique index, UPDATE grant для `rewind_edge_app`, відсутність такого grant у `anon` та 0 featured lists.
+- Застосовано `20261112054215_list_featured_curation` у приватній `rewind` schema. Read-back підтвердив RLS enabled, колонку/check/partial unique index, UPDATE grant для `rewind_edge_app`, відсутність такого grant у `anon` та 0 featured lists.
 - Розгорнуто `rewind-api` **v32 ACTIVE** (`verify_jwt=false` як і раніше). Live source read-back підтвердив збереження чинних TMDB refresh, movie publication та review reports шляхів.
 - Перевірки коду: Deno handler **73/73**, `deno check`, `npm run verify:build` (305 modules), targeted Playwright **7/7**. PostgreSQL 16 disposable migration check підтвердив unique position і grant boundary; контейнер видалено.
 - Production GET smoke: `/api/lists/public/featured?page=0&size=12` — **200, 0 items**; `/api/lists/public/team?page=0&size=12` — **200, 0 items**; `/api/genres` — **200, 17**; `/api/movies/search?page=0&size=2` — **200, total 50**. Порожні Featured/Crew feeds відповідають поточним даним (публічних CUSTOM/team lists немає).
