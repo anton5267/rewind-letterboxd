@@ -6656,6 +6656,14 @@ Added a local Supabase Edge Function router with the existing public `GET /api/g
 - User profiles, Auth identities, lists, reviews, messages, and the normal local MySQL Compose/data were not changed by these metadata refresh batches. The nightly worker remains active for the remaining cooldown-eligible linked movies; live authenticated Admin UI acceptance is still outstanding.
 - Security advisor after migration: 3 INFO findings for private RLS tables without policies; WARN for `pg_net` installed in `public`; WARN for disabled leaked-password protection. Performance advisor: 16 INFO unused-index findings; Health advisor: no findings. `pg_net` was not moved because a live cron job calls `net.http_post`; changing its schema without replacing that dependency could disrupt the scheduled refresh. No Auth settings, secrets, Edge deployment, Pages deployment, or ordinary MySQL Compose/data were changed.
 
+
+### TMDB refresh of remaining linked movies — 12.11.2026
+
+- This later checkpoint supersedes the earlier same-day 40-attempt counts above. A read-only candidate/count query found 9 linked movies eligible under the worker's four-day cooldown, with 40 previous attempts all successful.
+- Invoked the existing private `rewind-tmdb-refresh-daily` worker once through `net.http_post` and its Vault-stored header secret; no secret value was selected or exposed. The response read-back for request 6 returned HTTP **200**, `timed_out=false`, and **9 attempted / 9 succeeded / 0 failed**.
+- Read-only post-check: 50 movies total; 49 linked to TMDB; **29/49** linked rows have `original_language`, 20 remain NULL, 0 are empty; one movie has no TMDB ID. Refresh state now has **49 attempts / 49 succeeded / 0 failed**. No new candidate remains eligible until the four-day cooldown expires.
+- This worker refreshes standard public movie metadata as well as original language. It does not touch REWIND users, roles, reviews, lists, messages, or the local MySQL/Compose database. No Auth setting, migration, Edge deployment, Pages deployment, or GitHub content changed in this live operation.
+
 ### Hosted Auth confirmation, recovery and sign-in read-back — 12.11.2026
 
 - The owner reported completing the disposable signup email confirmation, password recovery/reset, and a subsequent sign-in. A screenshot of the recovery email showed the branded REWIND sender and the EN GitHub Pages recovery route; the owner reported the reset completed successfully.
