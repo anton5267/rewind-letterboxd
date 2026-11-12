@@ -6741,3 +6741,11 @@ Added a local Supabase Edge Function router with the existing public `GET /api/g
 - A source scan of frontend, Spring backend, and Supabase Edge found no payment/advertising provider integration. This is code evidence only; it cannot prove the owner's actual business plans or TMDB's approval of this application.
 - REWIND is a public multi-user website, so the previously selected “personal use only” label and “Desktop Application” application type should be checked for accuracy with TMDB. Public access alone does not establish commercial use. The site currently has no revenue feature identified in source; no commercial license is claimed.
 - No TMDB account, API key, database, or catalog record was changed. Existing attribution remains in About/Film Data; before adding monetization or changing the product's primary purpose, obtain TMDB's written guidance/license.
+
+<a id="live-admin-catalog-and-report-queue-preconditions--12112026-1556-utc"></a>
+### Live Admin, catalog and report-queue preconditions — 12.11.2026 15:56 UTC
+
+- Read-only Supabase project details returned `ACTIVE_HEALTHY`, PostgreSQL 17.11.0.011; `rewind-api` is v34 ACTIVE with `verify_jwt=false` and app-level session/role checks.
+- A grouped `rewind.users` query returned **2 active ADMIN profiles**. It did not return account identifiers or email addresses.
+- Aggregate catalogue check returned **6 total lists, 0 CUSTOM, 0 public CUSTOM**. Report status aggregation returned **0 rows** in `rewind.review_reports`.
+- No database write, account/role change, email, Edge deployment, Pages deployment, or MySQL/Compose change occurred. The empty CUSTOM/report counts are real-data preconditions; no fixture content was created in production.
