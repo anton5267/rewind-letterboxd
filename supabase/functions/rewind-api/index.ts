@@ -1287,7 +1287,7 @@ const handler = createRewindApiHandler({
                         l.created_at::text AS created_at, l.updated_at::text AS updated_at, l.featured_position
                  FROM rewind.lists l JOIN rewind.users u ON u.id=l.user_id
                  LEFT JOIN rewind.list_items li ON li.list_id=l.id
-                 GROUP BY l.id, u.username ORDER BY l.updated_at DESC LIMIT $1 OFFSET $2`,
+                 GROUP BY l.id, u.username ORDER BY l.updated_at DESC, l.id DESC LIMIT $1 OFFSET $2`,
           args: [size, page * size],
         }),
       ]);

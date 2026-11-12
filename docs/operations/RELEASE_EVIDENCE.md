@@ -1,5 +1,11 @@
 # Rewind — докази перевірок
 
+### Admin Lists stable pagination ordering — 12.11.2026
+
+- Admin Lists query now sorts equal `updated_at` values by descending list ID as a deterministic tie-breaker. This prevents equal timestamps from shifting records across offset-paginated pages. No endpoint or response shape changed.
+- Deno suite passed **107/107** and `deno check index.ts` passed in an isolated Deno Docker container. Supabase Edge `rewind-api` deployed as **v37 ACTIVE** with `verify_jwt=false` and `deno.json` import map; authenticated source read-back confirmed the live SQL includes the `id DESC` tie-breaker.
+- Read-only live smoke after deployment: `/api/genres` returned **200** and anonymous `/api/admin/lists` returned **401**. The identity-deletion outbox had **0 ready / 0 total** jobs before smoke; no user or catalog data changed. No Admin mutation or Pages deployment was performed.
+
 ### TMDB catalog refresh read-back and cooldown — 12.11.2026
 
 - Read-only Supabase query at 17:27 UTC counted 50 movies: 49 with `tmdb_id`, 29 linked movies with `original_language`, 20 linked movies without it, and one movie without a TMDB ID. No catalog rows were changed.
