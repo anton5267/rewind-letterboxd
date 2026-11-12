@@ -301,6 +301,26 @@ export default function AdminMovies({ onTotalChange }: Props) {
     void getAdminMovies(0, 1).then(({ data: response }) => onTotalChange(response.totalElements)).catch(() => {});
   };
 
+  const toggleMoviePublication = async (movie: AdminMovieCatalog) => {
+    if (mutationBusy) return;
+    setMutationBusy(true);
+    setActionError("");
+    try {
+      const { data: updated } = await updateAdminMovie(movie.id, {
+        title: movie.title,
+        published: !movie.published,
+      });
+      setData(current => current ? {
+        ...current,
+        content: current.content.map(item => item.id === updated.id ? { ...item, ...updated } : item),
+      } : current);
+    } catch {
+      setActionError(t("adminMoviePublicationError"));
+    } finally {
+      setMutationBusy(false);
+    }
+  };
+
   const submitCatalogSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (loading || mutationBusy) return;
@@ -835,12 +855,14 @@ export default function AdminMovies({ onTotalChange }: Props) {
                 <span className={styles.movieRating} aria-label={`${t("rating")}: ${movie.rating ?? "—"}`}>★ {movie.rating ?? "—"}</span>
               </div>
               <div className={styles.movieMetadata} aria-label={t("adminMovieMetadata")}>
+                <span>{t(movie.published ? "moviePublished" : "movieUnpublished")}</span>
                 {movie.ageRating && <span>{t("ageRating")}: {movie.ageRating}</span>}
                 {movie.durationMinutes !== null && <span>{t("movieDurationMinutes")}: {movie.durationMinutes}</span>}
                 <span>{t("adminMovieVisibleReviews")}: {movie.reviewCount}</span>
               </div>
               <div className={styles.movieCardActions}>
                 <button type="button" data-admin-movie-edit-id={movie.id} disabled={mutationBusy} onClick={event => editMovie(movie, event.currentTarget)}>{t("editMovie")}</button>
+                <button type="button" data-admin-movie-publication-id={movie.id} disabled={mutationBusy} onClick={() => void toggleMoviePublication(movie)}>{t("changeMoviePublication")}</button>
                 <details className={styles.movieActions}>
                   <summary aria-label={`${t("moreActions")} · ${movieTitle}`}>{t("moreActions")}</summary>
                   <div className={styles.movieActionsPanel}>

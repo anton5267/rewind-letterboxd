@@ -701,23 +701,23 @@ function toAdminList(row: {
 
 function toAdminMovie(row: {
   id: string; tmdb_id: string | null; title: string; release_date: string | null;
-  rating: string | number | null; photo_url: string | null;
+  rating: string | number | null; photo_url: string | null; is_published: boolean;
 }): AdminMovieResponse {
   return {
     id: safeId(row.id, "Movie ID"), tmdbId: row.tmdb_id === null ? null : safeId(row.tmdb_id, "TMDB ID"),
     title: row.title, releaseDate: row.release_date,
-    rating: row.rating === null ? null : Number(row.rating), photoUrl: row.photo_url,
+    rating: row.rating === null ? null : Number(row.rating), photoUrl: row.photo_url, published: row.is_published,
   };
 }
 
 function toAdminMovieCatalog(row: {
   id: string; tmdb_id: string | null; title: string; release_date: string | null;
   rating: string | number | null; photo_url: string | null; duration_minutes: number | null;
-  age_rating: string | null; review_count: string | number;
+  age_rating: string | null; review_count: string | number; is_published: boolean;
 }): AdminMovieCatalogResponse {
   return {
     ...toAdminMovie(row), durationMinutes: row.duration_minutes, ageRating: row.age_rating,
-    reviewCount: parseSafeCount(String(row.review_count)),
+    reviewCount: parseSafeCount(String(row.review_count)), published: row.is_published,
   };
 }
 
@@ -1526,10 +1526,10 @@ const handler = createRewindApiHandler({
         connection.queryObject<{
           id: string; tmdb_id: string | null; title: string; release_date: string | null;
           rating: string | number | null; photo_url: string | null; duration_minutes: number | null;
-          age_rating: string | null; review_count: string;
+          age_rating: string | null; review_count: string; is_published: boolean;
         }>({
           text: `SELECT m.id::text AS id, m.tmdb_id::text AS tmdb_id, m.title, m.release_date::text AS release_date,
-                        m.rating::text AS rating, m.photo_url, m.duration_minutes, m.age_rating,
+                        m.rating::text AS rating, m.photo_url, m.duration_minutes, m.age_rating, m.is_published,
                         (SELECT COUNT(*)::text FROM rewind.reviews r
                          JOIN rewind.users author ON author.id = r.user_id AND author.is_active = TRUE
                          WHERE r.movie_id = m.id AND r.is_hidden = FALSE) AS review_count
@@ -1550,11 +1550,11 @@ const handler = createRewindApiHandler({
     try {
       const result = await connection.queryObject<{
         id: string; tmdb_id: string | null; title: string; release_date: string | null;
-        rating: string | number | null; photo_url: string | null;
+        rating: string | number | null; photo_url: string | null; is_published: boolean;
       }>({
         text: `INSERT INTO rewind.movies (imdb_id,title,duration_minutes,release_date,age_rating,rating,short_plot,photo_url,backdrop_url,trailer_url)
                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-               RETURNING id::text AS id, tmdb_id::text AS tmdb_id, title, release_date::text AS release_date, rating::text AS rating, photo_url`,
+               RETURNING id::text AS id, tmdb_id::text AS tmdb_id, title, release_date::text AS release_date, rating::text AS rating, photo_url, is_published`,
         args: [body.imdbId ?? null, body.title, body.durationMinutes ?? null, body.releaseDate ?? null, body.ageRating ?? null,
           body.rating ?? null, body.shortPlot ?? null, body.photoUrl ?? null, body.backdropUrl ?? null, body.trailerUrl ?? null],
       });
@@ -1574,6 +1574,7 @@ const handler = createRewindApiHandler({
         ["title", "title"], ["imdbId", "imdb_id"], ["durationMinutes", "duration_minutes"],
         ["releaseDate", "release_date"], ["ageRating", "age_rating"], ["rating", "rating"],
         ["shortPlot", "short_plot"], ["photoUrl", "photo_url"], ["backdropUrl", "backdrop_url"], ["trailerUrl", "trailer_url"],
+        ["published", "is_published"],
       ] as const;
       for (const [property, column] of mappings) {
         const value = body[property];
@@ -1585,19 +1586,19 @@ const handler = createRewindApiHandler({
       if (fields.length) {
         result = await connection.queryObject<{
           id: string; tmdb_id: string | null; title: string; release_date: string | null;
-          rating: string | number | null; photo_url: string | null;
+          rating: string | number | null; photo_url: string | null; is_published: boolean;
         }>({
           text: `UPDATE rewind.movies SET ${fields.join(",")}, updated_at=CURRENT_TIMESTAMP WHERE id=$1
-                 RETURNING id::text AS id, tmdb_id::text AS tmdb_id, title, release_date::text AS release_date, rating::text AS rating, photo_url`,
+                 RETURNING id::text AS id, tmdb_id::text AS tmdb_id, title, release_date::text AS release_date, rating::text AS rating, photo_url, is_published`,
           args,
         });
       } else {
         result = await connection.queryObject<{
           id: string; tmdb_id: string | null; title: string; release_date: string | null;
-          rating: string | number | null; photo_url: string | null;
+          rating: string | number | null; photo_url: string | null; is_published: boolean;
         }>({
           text: `SELECT id::text AS id, tmdb_id::text AS tmdb_id, title, release_date::text AS release_date,
-                        rating::text AS rating, photo_url FROM rewind.movies WHERE id=$1`, args: [id],
+                        rating::text AS rating, photo_url, is_published FROM rewind.movies WHERE id=$1`, args: [id],
         });
       }
       await connection.queryObject("COMMIT");

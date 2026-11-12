@@ -1539,12 +1539,12 @@ Deno.test("admin dashboard, audit, and site settings preserve authorization and 
 Deno.test("admin movie catalog routes preserve paging, validation, edits, deletes, and authorization", async () => {
   const calls: unknown[] = [];
   const movie = { id: 10, tmdbId: null, title: "Test Film", releaseDate: "2024-02-29", rating: 8.2, photoUrl: null,
-    durationMinutes: 123, ageRating: "PG-13", reviewCount: 7 };
+    durationMinutes: 123, ageRating: "PG-13", reviewCount: 7, published: true };
   const handler = authHandler({
     async getAdminTmdbQuality() { calls.push(["quality"]); return { totalMovies: 50, tmdbLinkedMovies: 40, completeTmdbMovies: 20, missingPoster: 3, missingBackdrop: 4, missingPlot: 5, missingRuntime: 6, missingTrailer: 7, missingTmdbRating: 8, linkedCoveragePercent: 80, metadataCompletenessPercent: 50 }; },
     async getAdminMovies(_user, query, page, size) { calls.push(["list", query, page, size]); return { content: [movie], totalPages: 1, totalElements: 1, number: page }; },
     async createAdminMovie(_user, body) { calls.push(["create", body]); return { ...movie, title: body.title! }; },
-    async updateAdminMovie(_user, id, body) { calls.push(["update", id, body]); return id === 10 ? { ...movie, ...body } : null; },
+    async updateAdminMovie(_user, id, body) { calls.push(["update", id, body]); return id === 10 ? { ...movie, ...body, published: body.published ?? movie.published } : null; },
     async deleteAdminMovie(_user, id) { calls.push(["delete", id]); return id === 10; },
   });
   const headers = { Authorization: "Bearer valid-token", "Content-Type": "application/json" };

@@ -210,7 +210,7 @@ export interface AdminDashboardResponse { users: number; activeUsers: number; hq
 export interface AdminSettingResponse { key: string; value: string; updatedBy: number | null; updatedAt: string }
 export interface NewsletterQueueResponse { articleId: number; recipients: number }
 export interface NewsletterDeliveryStatusResponse { articleId: number; pending: number; sending: number; sent: number; failed: number; cancelled: number }
-export interface AdminMovieResponse { id: number; tmdbId: number | null; title: string; releaseDate: string | null; rating: number | null; photoUrl: string | null }
+export interface AdminMovieResponse { id: number; tmdbId: number | null; title: string; releaseDate: string | null; rating: number | null; photoUrl: string | null; published: boolean }
 export interface AdminMovieCatalogResponse extends AdminMovieResponse {
   durationMinutes: number | null; ageRating: string | null; reviewCount: number;
 }
@@ -224,7 +224,7 @@ export interface AdminTmdbMovieCandidate { tmdbId: number; title: string; releas
 export interface AdminMovieWriteRequest {
   title?: string; imdbId?: string | null; durationMinutes?: number | null; releaseDate?: string | null;
   ageRating?: string | null; rating?: number | null; shortPlot?: string | null;
-  photoUrl?: string | null; backdropUrl?: string | null; trailerUrl?: string | null;
+  photoUrl?: string | null; backdropUrl?: string | null; trailerUrl?: string | null; published?: boolean;
 }
 export interface AdminTmdbQualityReport {
   totalMovies: number; tmdbLinkedMovies: number; completeTmdbMovies: number; missingPoster: number;
@@ -2433,6 +2433,10 @@ function parseAdminMovieWrite(value: unknown, create: boolean): AdminMovieWriteR
     if (raw !== null && (typeof raw !== "string" || raw.length > maximum)) return null;
     if (key === "trailerUrl" && typeof raw === "string" && raw !== "" && !/^https?:\/\/\S+$/i.test(raw)) return null;
     (result as Record<string, unknown>)[key] = raw;
+  }
+  if (body.published !== undefined) {
+    if (typeof body.published !== "boolean") return null;
+    result.published = body.published;
   }
   if (body.durationMinutes !== undefined) {
     if (body.durationMinutes !== null && (!Number.isSafeInteger(body.durationMinutes) || (body.durationMinutes as number) <= 0)) return null;
