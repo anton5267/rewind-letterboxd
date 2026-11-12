@@ -6572,3 +6572,10 @@ Added a local Supabase Edge Function router with the existing public `GET /api/g
 - Focused Deno suite passed **76/76**; full function folder suite passed **94/94**; `deno check` passed for all runtime and test modules. The 94-test run was repeated from a clean worktree containing only this release scope.
 - Deployed `rewind-api` v30 with the corrected source and existing six runtime files; post-deploy read-back confirmed v30 ACTIVE with `verify_jwt=false` and exact local/live matches for `index.ts`, `handler.ts`, and `tmdb_refresh.ts`. Read-only HTTP smoke returned 200 for `/api/genres` and 401 for anonymous `/api/admin/movies`; admin access remains protected.
 - No schema or application-data write, Auth change, secret read, Pages deployment, or local MySQL/Compose change occurred. Source and the nine already-applied migrations are synchronized to GitHub in this release commit.
+
+### TMDB attribution logo under the GitHub Pages project path — 12.11.2026
+
+- `About.tsx` now builds the TMDB logo URL from Vite `BASE_URL`, so the public site requests `/rewind-letterboxd/tmdb-logo.svg` instead of the missing domain-root `/tmdb-logo.svg`.
+- Added an About-page browser regression that checks the logo is visible and its image decoded. `npm run verify:build` passed with `VITE_BASE_PATH=/rewind-letterboxd/`; the focused `about-figma.spec.ts` passed **1/1**.
+- Release commit `923b95e` is on `master`. GitHub Pages deploy [run 43155221030](https://github.com/anton5267/rewind-letterboxd/actions/runs/43155221030) completed successfully. A read-only production HEAD request to the project-path SVG returned **200** (`image/svg+xml`).
+- No Supabase settings or data, Auth accounts, or local MySQL/Compose state changed.
