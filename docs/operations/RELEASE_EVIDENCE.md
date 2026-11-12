@@ -6578,4 +6578,5 @@ Added a local Supabase Edge Function router with the existing public `GET /api/g
 - `About.tsx` now builds the TMDB logo URL from Vite `BASE_URL`, so the public site requests `/rewind-letterboxd/tmdb-logo.svg` instead of the missing domain-root `/tmdb-logo.svg`.
 - Added an About-page browser regression that checks the logo is visible and its image decoded. `npm run verify:build` passed with `VITE_BASE_PATH=/rewind-letterboxd/`; the focused `about-figma.spec.ts` passed **1/1**.
 - Release commit `923b95e` is on `master`. GitHub Pages deploy [run 43155221030](https://github.com/anton5267/rewind-letterboxd/actions/runs/43155221030) completed successfully. A read-only production HEAD request to the project-path SVG returned **200** (`image/svg+xml`).
+- A follow-up check extracted all **10 unique image URLs** referenced by production CSS and fetched them from Pages; **10/10 returned HTTP 200** under the `/rewind-letterboxd/images/` base path.
 - No Supabase settings or data, Auth accounts, or local MySQL/Compose state changed.
