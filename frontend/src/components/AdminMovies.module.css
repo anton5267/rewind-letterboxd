@@ -67,6 +67,8 @@
   scroll-margin-top: 120px;
 }
 
+.editorWideField input { scroll-margin-top: 122px; }
+
 .tmdbTitle:focus {
   outline: 2px solid var(--rewind-cyan);
   outline-offset: 4px;
@@ -169,6 +171,7 @@
 .editorMetadata > div { min-width: 0; }
 .editorMetadata dt { margin-bottom: 4px; color: var(--rewind-muted); }
 .editorMetadata dd { margin: 0; overflow-wrap: anywhere; }
+
 
 .field,
 .inlineField {

@@ -12,7 +12,7 @@ test("canceling the article editor restores its exact row or the editor when tha
     if (url.pathname.endsWith("/unread-count")) return route.fulfill({ json: { count: 0 } });
     if (url.pathname === "/api/admin/dashboard") return route.fulfill({ json: { users: 0, activeUsers: 0, hqUsers: 0, movies: 0, reviews: 0, hiddenReviews: 0 } });
     if (url.pathname === "/api/admin/settings") return route.fulfill({ json: [] });
-    if (url.pathname === "/api/admin/movies/tmdb-quality") return route.fulfill({ json: { totalMovies: 0, tmdbLinkedMovies: 0, completeTmdbMovies: 0, missingPoster: 0, missingBackdrop: 0, missingPlot: 0, missingRuntime: 0, missingTrailer: 0, missingTmdbRating: 0, linkedCoveragePercent: 0, metadataCompletenessPercent: 0 } });
+    if (url.pathname === "/api/admin/movies/tmdb-quality") return route.fulfill({ json: { totalMovies: 0, tmdbLinkedMovies: 0, completeTmdbMovies: 0, missingPoster: 0, missingBackdrop: 0, missingPlot: 0, missingRuntime: 0, missingTrailer: 0, missingTmdbRating: 0, missingOriginalLanguage: 0, linkedCoveragePercent: 0, metadataCompletenessPercent: 0 } });
     if (url.pathname === "/api/admin/journal/articles") return route.fulfill({ json: { content: url.searchParams.get("page") === "1" ? [articles[2]] : articles.slice(0, 2), totalPages: 2, totalElements: 3 } });
     return route.fulfill({ json: emptyPage });
   });

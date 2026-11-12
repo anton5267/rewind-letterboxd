@@ -20,6 +20,9 @@ public class Movie {
     @Column(name = "imdb_id", unique = true, length = 20)
     private String imdbId;
 
+    @Column(name = "original_language", length = 10)
+    private String originalLanguage;
+
     @Column(name = "tmdb_id", unique = true)
     private Long tmdbId;
 
@@ -84,6 +87,9 @@ public class Movie {
 
     public String getImdbId() { return imdbId; }
     public void setImdbId(String imdbId) { this.imdbId = imdbId; }
+
+    public String getOriginalLanguage() { return originalLanguage; }
+    public void setOriginalLanguage(String originalLanguage) { this.originalLanguage = originalLanguage; }
 
     public Long getTmdbId() { return tmdbId; }
     public void setTmdbId(Long tmdbId) { this.tmdbId = tmdbId; }

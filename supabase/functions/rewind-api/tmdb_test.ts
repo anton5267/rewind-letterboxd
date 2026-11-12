@@ -12,7 +12,7 @@ async function assertTmdbError(run: () => Promise<unknown>, message: string) {
 
 Deno.test("TMDB mapper keeps image, credit, trailer, rating, and similar contracts", () => {
   const movie = mapTmdbMovie({
-    id: 20, title: "Film", release_date: "2024-01-02", runtime: 123, overview: "Plot",
+    id: 20, title: "Film", original_language: "JA", release_date: "2024-01-02", runtime: 123, overview: "Plot",
     poster_path: "/poster.jpg", backdrop_path: "/backdrop.jpg", vote_average: 8.2, vote_count: 240,
     external_ids: { imdb_id: "tt20" }, genres: [{ id: 7, name: "Drama" }],
     credits: {
@@ -26,6 +26,7 @@ Deno.test("TMDB mapper keeps image, credit, trailer, rating, and similar contrac
     similar: { results: [{ id: 21 }, { id: 20 }, { id: 21 }] },
   });
   assertEquals(movie.tmdbId, 20);
+  assertEquals(movie.originalLanguage, "ja");
   assertEquals(movie.posterUrl, "https://image.tmdb.org/t/p/w500/poster.jpg");
   assertEquals(movie.backdropUrl, "https://image.tmdb.org/t/p/original/backdrop.jpg");
   assertEquals(movie.cast[0]?.characterName, "Lead");

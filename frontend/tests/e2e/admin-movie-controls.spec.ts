@@ -33,7 +33,15 @@ async function adminMovieFixture(page: Page, options: { candidateStatus?: number
     if (url.pathname.endsWith("/unread-count")) return route.fulfill({ json: { count: 0 } });
     if (url.pathname === "/api/admin/dashboard") return route.fulfill({ json: { users: 0, activeUsers: 0, hqUsers: 0, movies: 1, reviews: 0, hiddenReviews: 0 } });
     if (url.pathname === "/api/admin/settings") return route.fulfill({ json: [] });
-    if (url.pathname === "/api/admin/movies/tmdb-quality") return route.fulfill({ json: { totalMovies: 1, tmdbLinkedMovies: 0, completeTmdbMovies: 0, missingPoster: 1, missingBackdrop: 1, missingPlot: 1, missingRuntime: 1, missingTrailer: 1, missingTmdbRating: 1, linkedCoveragePercent: 0, metadataCompletenessPercent: 0 } });
+    if (url.pathname === "/api/admin/movies/tmdb-quality") return route.fulfill({ json: { totalMovies: 1, tmdbLinkedMovies: 0, completeTmdbMovies: 0, missingPoster: 1, missingBackdrop: 1, missingPlot: 1, missingRuntime: 1, missingTrailer: 1, missingTmdbRating: 1, missingOriginalLanguage: 1, linkedCoveragePercent: 0, metadataCompletenessPercent: 0 } });
+    if (url.pathname === "/api/genres") return route.fulfill({ json: [{ id: 7, name: "Drama" }, { id: 8, name: "Comedy" }] });
+    if (url.pathname === "/api/people/search") {
+      const type = url.searchParams.get("type");
+      const person = type === "actor" ? { id: 31, name: "Test Actor", type: "ACTOR" }
+        : type === "director" ? { id: 32, name: "Test Director", type: "DIRECTOR" }
+        : { id: 33, name: "Test Producer", type: "PRODUCER" };
+      return route.fulfill({ json: { content: [{ ...person, photoUrl: null, filmCount: 0 }], totalPages: 1, totalElements: 1, number: 0 } });
+    }
     if (url.pathname === `/api/admin/movies/${movie.id}/tmdb-candidates`) {
       candidateSearches.push(url.pathname);
       if (options.candidateStatus) return route.fulfill({ status: options.candidateStatus, json: { message: "TMDB integration is disabled" } });
@@ -43,7 +51,7 @@ async function adminMovieFixture(page: Page, options: { candidateStatus?: number
       ] });
     }
     if (url.pathname === "/api/admin/movies") return route.fulfill({ json: { content: [movie], totalPages: 1, totalElements: 1 } });
-    if (url.pathname === `/api/movies/${movie.id}/details`) return route.fulfill({ json: { ...movie, genres: [], directors: [], actors: [], producers: [], shortPlot: null, backdropUrl: null, trailerUrl: null, durationMinutes: null, ageRating: null } });
+    if (url.pathname === `/api/movies/${movie.id}/details`) return route.fulfill({ json: { ...movie, originalLanguage: "ja", genres: [{ id: 7, name: "Drama" }], directors: [], actors: [], producers: [], shortPlot: null, backdropUrl: null, trailerUrl: null, durationMinutes: null, ageRating: null } });
     return route.fulfill({ json: emptyPage });
   });
   await page.goto("/en/admin?view=movies");
@@ -63,6 +71,54 @@ test("Admin can change a film publication status", async ({ page }) => {
   await card.getByRole("button", { name: "Change status" }).click();
   await expect(card).toContainText("Unpublished");
   expect(writes.find(write => write.path === `/api/admin/movies/${movie.id}`)?.data).toEqual({ title: movie.title, published: false });
+});
+
+test("Admin can replace the genre selection when editing a film", async ({ page }) => {
+  const { movie, movies, writes } = await adminMovieFixture(page);
+  const row = movies.getByRole("listitem").filter({ hasText: movie.title });
+  await row.getByRole("button", { name: "Edit", exact: true }).click();
+
+  const drama = movies.getByRole("checkbox", { name: "Drama", exact: true });
+  const comedy = movies.getByRole("checkbox", { name: "Comedy", exact: true });
+  await expect(drama).toBeChecked();
+  await expect(comedy).not.toBeChecked();
+  await drama.uncheck();
+  await comedy.check();
+  await movies.getByRole("button", { name: "Save", exact: true }).click();
+
+  await expect(row.getByRole("button", { name: "Edit", exact: true })).toBeFocused();
+  expect(writes.find(write => write.path === `/api/admin/movies/${movie.id}`)?.data).toMatchObject({ genreIds: [8] });
+});
+
+test("Admin can edit actor, director, and producer credits", async ({ page }) => {
+  const { movie, movies, writes } = await adminMovieFixture(page);
+  await movies.locator("summary").filter({ hasText: "Add film" }).click();
+  await expect(movies.getByText("Missing original language: 1")).toBeVisible();
+  await movies.locator("summary").filter({ hasText: "Add film" }).click();
+  const row = movies.getByRole("listitem").filter({ hasText: movie.title });
+  await row.getByRole("button", { name: "Edit", exact: true }).click();
+  const language = movies.getByLabel("Original language (ISO code, for example en)");
+  await expect(language).toHaveValue("ja");
+  await language.fill("fr");
+
+  const credits = movies.getByRole("region", { name: "Cast & Crew" });
+  for (const [type, label, person] of [["actor", "Cast", "Test Actor"], ["director", "Directors", "Test Director"], ["producer", "Producers", "Test Producer"]] as const) {
+    const group = credits.getByRole("group", { name: label });
+    await group.getByLabel(`Find a person · ${label}`).fill(person);
+    await group.getByRole("button", { name: "Search", exact: true }).click();
+    await group.getByRole("list", { name: `${label} · Search results` }).getByRole("button", { name: "Add", exact: true }).click();
+  }
+  await credits.getByLabel("Character name").fill("The Lead");
+  await credits.getByLabel("Cast order").fill("2");
+  await movies.getByRole("button", { name: "Save", exact: true }).click();
+
+  await expect(row.getByRole("button", { name: "Edit", exact: true })).toBeFocused();
+  expect(writes.find(write => write.path === `/api/admin/movies/${movie.id}`)?.data).toMatchObject({
+    originalLanguage: "fr",
+    actorCredits: [{ actorId: 31, characterName: "The Lead", castOrder: 2 }],
+    directorIds: [32],
+    producerIds: [33],
+  });
 });
 
 test("single TMDB sync rejects malformed IDs and submits the exact valid ID", async ({ page }) => {

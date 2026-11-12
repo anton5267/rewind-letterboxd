@@ -1,6 +1,7 @@
 package com.rewind.rewind.movie.repo;
 
 import com.rewind.rewind.movie.entity.Movie;
+import com.rewind.rewind.movie.dto.admin.AdminMovieCatalogResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -30,6 +31,21 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
     Page<Movie> findByTmdbIdIsNotNull(Pageable pageable);
 
     @Query(value = """
+        select new com.rewind.rewind.movie.dto.admin.AdminMovieCatalogResponse(
+            m.id, m.tmdbId, m.title, m.releaseDate, m.rating, m.photoUrl, m.durationMinutes, m.ageRating,
+            (select count(r.id) from Review r
+             where r.movie.id = m.id and r.isHidden = false and r.user.isActive = true)
+        )
+        from Movie m
+        where (:query is null or locate(lower(:query), lower(m.title)) > 0)
+        """,
+        countQuery = """
+        select count(m.id) from Movie m
+        where (:query is null or locate(lower(:query), lower(m.title)) > 0)
+        """)
+    Page<AdminMovieCatalogResponse> findAdminMovieCatalog(@Param("query") String query, Pageable pageable);
+
+    @Query(value = """
         SELECT COUNT(*) AS totalMovies,
                COALESCE(SUM(CASE WHEN m.tmdb_id IS NOT NULL THEN 1 ELSE 0 END), 0) AS tmdbLinkedMovies,
                COALESCE(SUM(CASE WHEN m.tmdb_id IS NOT NULL AND NULLIF(TRIM(m.photo_url), '') IS NULL THEN 1 ELSE 0 END), 0) AS missingPoster,
@@ -40,10 +56,14 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
                COALESCE(SUM(CASE WHEN m.tmdb_id IS NOT NULL AND NOT EXISTS (
                    SELECT 1 FROM external_ratings er WHERE er.movie_id = m.id AND er.source = 'TMDB'
                ) THEN 1 ELSE 0 END), 0) AS missingTmdbRating,
+               COALESCE(SUM(CASE WHEN m.tmdb_id IS NOT NULL AND
+                   (NULLIF(TRIM(m.original_language), '') IS NULL OR LENGTH(TRIM(m.original_language)) <> 2)
+               THEN 1 ELSE 0 END), 0) AS missingOriginalLanguage,
                COALESCE(SUM(CASE WHEN m.tmdb_id IS NOT NULL
                    AND NULLIF(TRIM(m.photo_url), '') IS NOT NULL
                    AND NULLIF(TRIM(m.backdrop_url), '') IS NOT NULL
                    AND NULLIF(TRIM(m.short_plot), '') IS NOT NULL
+                   AND LENGTH(TRIM(m.original_language)) = 2
                    AND m.duration_minutes IS NOT NULL
                    AND NULLIF(TRIM(m.trailer_url), '') IS NOT NULL
                    AND EXISTS (

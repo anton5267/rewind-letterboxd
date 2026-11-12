@@ -89,6 +89,7 @@ public class TmdbSyncService {
 
         movie.setTmdbId(data.tmdbId());
         if (data.imdbId() != null && !data.imdbId().isBlank()) movie.setImdbId(data.imdbId());
+        movie.setOriginalLanguage(data.originalLanguage());
         if (data.title() != null && !data.title().isBlank()) movie.setTitle(data.title());
         movie.setDurationMinutes(data.runtime());
         movie.setReleaseDate(data.releaseDate());

@@ -97,7 +97,7 @@ test("Admin Movies TMDB quality Retry returns focus after repeated failure and r
     if (url.pathname === "/api/admin/movies/tmdb-quality") {
       attempts++;
       if (attempts < 3) return route.fulfill({ status: 503, json: {} });
-      return route.fulfill({ json: { totalMovies: 0, tmdbLinkedMovies: 0, completeTmdbMovies: 0, missingPoster: 0, missingBackdrop: 0, missingPlot: 0, missingRuntime: 0, missingTrailer: 0, missingTmdbRating: 0, linkedCoveragePercent: 0, metadataCompletenessPercent: 0 } });
+      return route.fulfill({ json: { totalMovies: 0, tmdbLinkedMovies: 0, completeTmdbMovies: 0, missingPoster: 0, missingBackdrop: 0, missingPlot: 0, missingRuntime: 0, missingTrailer: 0, missingTmdbRating: 0, missingOriginalLanguage: 0, linkedCoveragePercent: 0, metadataCompletenessPercent: 0 } });
     }
     return route.fulfill({ json: emptyPage });
   });

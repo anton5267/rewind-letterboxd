@@ -1,6 +1,7 @@
 package com.rewind.rewind.movie.controller.admin;
 
 import com.rewind.rewind.movie.dto.MovieCardResponse;
+import com.rewind.rewind.movie.dto.admin.AdminMovieCatalogResponse;
 import com.rewind.rewind.movie.dto.admin.CreateMovieRequest;
 import com.rewind.rewind.movie.dto.admin.UpdateMovieRequest;
 import com.rewind.rewind.movie.service.admin.AdminMovieService;
@@ -20,8 +21,10 @@ public class AdminMovieController {
     }
 
     @GetMapping
-    public Page<MovieCardResponse> list(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "50") int size) {
-        return service.list(page, size);
+    public Page<AdminMovieCatalogResponse> list(@RequestParam(defaultValue = "0") int page,
+                                                @RequestParam(defaultValue = "50") int size,
+                                                @RequestParam(required = false, name = "q") String query) {
+        return service.listCatalog(page, size, query);
     }
 
     @PostMapping

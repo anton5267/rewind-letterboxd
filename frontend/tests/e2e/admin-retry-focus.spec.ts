@@ -32,7 +32,7 @@ async function installFixture(page: Page, target: Target) {
     }
     if (pathname === "/api/admin/users/91050/overview") return route.fulfill({ json: { stats: { watched: 0, reviews: 0, ratings: 0, watchlist: 0, favorites: 0, comments: 0, likesReceived: 0, customLists: 0 }, adminHistory: [] } });
     if (pathname === "/api/users/91050/profile") return route.fulfill({ json: { id: 91050, username: admin.username, displayName: admin.displayName, avatarUrl: null, hq: false, stats: { ratings: 0, reviews: 0, watched: 0, watchlist: 0, favorites: 0 }, ratingDistribution: [], socialLinks: [], lists: [], recentReviews: [] } });
-    if (pathname === "/api/admin/movies/tmdb-quality") return route.fulfill({ json: { totalMovies: 0, tmdbLinkedMovies: 0, completeTmdbMovies: 0, missingPoster: 0, missingBackdrop: 0, missingPlot: 0, missingRuntime: 0, missingTrailer: 0, missingTmdbRating: 0, linkedCoveragePercent: 0, metadataCompletenessPercent: 0 } });
+    if (pathname === "/api/admin/movies/tmdb-quality") return route.fulfill({ json: { totalMovies: 0, tmdbLinkedMovies: 0, completeTmdbMovies: 0, missingPoster: 0, missingBackdrop: 0, missingPlot: 0, missingRuntime: 0, missingTrailer: 0, missingTmdbRating: 0, missingOriginalLanguage: 0, linkedCoveragePercent: 0, metadataCompletenessPercent: 0 } });
     if (pathname === "/api/genres") return route.fulfill({ json: [] });
     return route.fulfill({ json: emptyPage });
   });

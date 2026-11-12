@@ -20,7 +20,7 @@ public class TmdbQualityService {
         Object[] row = rows.isEmpty() ? new Object[0] : rows.get(0);
         long totalMovies = number(row, 0);
         long tmdbLinkedMovies = number(row, 1);
-        long completeTmdbMovies = number(row, 8);
+        long completeTmdbMovies = number(row, 9);
         return new TmdbQualityReport(
                 totalMovies,
                 tmdbLinkedMovies,
@@ -31,6 +31,7 @@ public class TmdbQualityService {
                 number(row, 5),
                 number(row, 6),
                 number(row, 7),
+                number(row, 8),
                 percentage(tmdbLinkedMovies, totalMovies),
                 percentage(completeTmdbMovies, tmdbLinkedMovies)
         );

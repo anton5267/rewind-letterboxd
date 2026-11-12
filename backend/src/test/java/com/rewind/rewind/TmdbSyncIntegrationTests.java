@@ -65,6 +65,7 @@ class TmdbSyncIntegrationTests {
         when(tmdb.fetchMovie(100L)).thenReturn(new TmdbClient.MovieData(
                 100L,
                 "tt0100100",
+                "ja",
                 "Synced title",
                 121,
                 LocalDate.of(2025, 1, 2),
@@ -88,6 +89,7 @@ class TmdbSyncIntegrationTests {
         Movie saved = movies.findById(movieId).orElseThrow();
         assertEquals(100L, saved.getTmdbId());
         assertEquals("tt0100100", saved.getImdbId());
+        assertEquals("ja", saved.getOriginalLanguage());
         assertEquals("Synced title", saved.getTitle());
         assertEquals(1, result.genresUpdated());
         assertEquals(1, result.actorsUpdated());
@@ -115,7 +117,7 @@ class TmdbSyncIntegrationTests {
         Long secondId = movies.saveAndFlush(second).getId();
 
         when(tmdb.fetchMovie(500L)).thenReturn(new TmdbClient.MovieData(
-                500L, "tt0500500", "Batch synced", 100, LocalDate.of(2024, 2, 3),
+                500L, "tt0500500", "en", "Batch synced", 100, LocalDate.of(2024, 2, 3),
                 "Batch overview", null, null, null, new BigDecimal("6.8"), 42,
                 List.of(), List.of(), List.of(), List.of(), List.of()));
         when(tmdb.fetchMovie(501L)).thenThrow(new org.springframework.web.server.ResponseStatusException(
@@ -140,7 +142,7 @@ class TmdbSyncIntegrationTests {
     @Transactional
     void importCreatesNewMoviesAndRollsBackFailedItemsIndependently() {
         when(tmdb.fetchMovie(700L)).thenReturn(new TmdbClient.MovieData(
-                700L, "tt0700700", "Imported title", 98, LocalDate.of(2023, 7, 8),
+                700L, "tt0700700", "fr", "Imported title", 98, LocalDate.of(2023, 7, 8),
                 "Imported overview", null, null, null, new BigDecimal("7.1"), 700,
                 List.of(), List.of(), List.of(), List.of(), List.of()));
         when(tmdb.fetchMovie(701L)).thenThrow(new org.springframework.web.server.ResponseStatusException(
@@ -174,7 +176,7 @@ class TmdbSyncIntegrationTests {
         when(tmdb.discoverMovies(2, 2024, 18L, new BigDecimal("7.0"), 2))
                 .thenReturn(new TmdbClient.DiscoveryPage(2, 12, 240, List.of(800L, 801L)));
         when(tmdb.fetchMovie(800L)).thenReturn(new TmdbClient.MovieData(
-                800L, "tt0800800", "Discovery hit", 110, LocalDate.of(2024, 5, 6),
+                800L, "tt0800800", "en", "Discovery hit", 110, LocalDate.of(2024, 5, 6),
                 "Discovery overview", null, null, null, new BigDecimal("7.3"), 800,
                 List.of(), List.of(), List.of(), List.of(), List.of()));
         when(tmdb.fetchMovie(801L)).thenThrow(new org.springframework.web.server.ResponseStatusException(
@@ -201,6 +203,7 @@ class TmdbSyncIntegrationTests {
         Movie complete = new Movie();
         complete.setTitle("Quality complete");
         complete.setTmdbId(900L);
+        complete.setOriginalLanguage("en");
         complete.setDurationMinutes(100);
         complete.setReleaseDate(LocalDate.of(2024, 1, 2));
         complete.setShortPlot("A complete synopsis");
@@ -231,6 +234,7 @@ class TmdbSyncIntegrationTests {
         assertEquals(before.missingRuntime() + 1, after.missingRuntime());
         assertEquals(before.missingTrailer() + 1, after.missingTrailer());
         assertEquals(before.missingTmdbRating() + 1, after.missingTmdbRating());
+        assertEquals(before.missingOriginalLanguage() + 1, after.missingOriginalLanguage());
         assertTrue(after.linkedCoveragePercent() > 0.0);
         assertTrue(after.metadataCompletenessPercent() > 0.0);
     }

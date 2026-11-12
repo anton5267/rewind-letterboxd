@@ -1,4 +1,7 @@
 import { Pool } from "@db/postgres";
+import { buildAdminMovieUpdateQuery } from "./admin_movie_update.ts";
+import { replaceAdminMovieGenres } from "./admin_movie_genres.ts";
+import { replaceAdminMovieCredits } from "./admin_movie_credits.ts";
 import {
   createRewindApiHandler,
   type MovieDetailsResponse,
@@ -264,10 +267,10 @@ async function applyTmdbMovie(connection: PgConnection, adminId: number, movieId
     if (collision.rows.length) throw new RewindApiError(409, "IMDb id is already linked to another movie");
   }
   const update = await connection.queryObject<{ title: string }>({
-    text: `UPDATE rewind.movies SET tmdb_id=$2, imdb_id=COALESCE(NULLIF($3,''),imdb_id), title=$4,
-           duration_minutes=$5, release_date=$6, short_plot=NULLIF($7,''), photo_url=$8, backdrop_url=$9,
-           trailer_url=$10, updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING title`,
-    args: [movieId, data.tmdbId, data.imdbId, data.title, data.runtime, data.releaseDate, data.overview, data.posterUrl, data.backdropUrl, data.trailerUrl],
+    text: `UPDATE rewind.movies SET tmdb_id=$2, imdb_id=COALESCE(NULLIF($3,''),imdb_id), original_language=$4, title=$5,
+           duration_minutes=$6, release_date=$7, short_plot=NULLIF($8,''), photo_url=$9, backdrop_url=$10,
+           trailer_url=$11, updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING title`,
+    args: [movieId, data.tmdbId, data.imdbId, data.originalLanguage, data.title, data.runtime, data.releaseDate, data.overview, data.posterUrl, data.backdropUrl, data.trailerUrl],
   });
   for (const genre of data.genres) {
     const found = await connection.queryObject<{ id: string }>({ text: "SELECT id::text AS id FROM rewind.genres WHERE tmdb_id=$1 OR LOWER(name)=LOWER($2) ORDER BY (tmdb_id=$1) DESC NULLS LAST LIMIT 1", args: [genre.tmdbId, genre.name] });
@@ -1478,13 +1481,14 @@ const handler = createRewindApiHandler({
       const result = await connection.queryObject<{
         total_movies: string; tmdb_linked_movies: string; complete_tmdb_movies: string;
         missing_poster: string; missing_backdrop: string; missing_plot: string; missing_runtime: string;
-        missing_trailer: string; missing_tmdb_rating: string;
+        missing_trailer: string; missing_tmdb_rating: string; missing_original_language: string;
       }>({
         text: `SELECT COUNT(*)::text AS total_movies,
           COUNT(*) FILTER (WHERE m.tmdb_id IS NOT NULL)::text AS tmdb_linked_movies,
           COUNT(*) FILTER (WHERE m.tmdb_id IS NOT NULL
             AND NULLIF(TRIM(m.photo_url),'') IS NOT NULL AND NULLIF(TRIM(m.backdrop_url),'') IS NOT NULL
             AND NULLIF(TRIM(m.short_plot),'') IS NOT NULL AND m.duration_minutes IS NOT NULL
+            AND LENGTH(TRIM(m.original_language)) = 2
             AND NULLIF(TRIM(m.trailer_url),'') IS NOT NULL
             AND EXISTS (SELECT 1 FROM rewind.external_ratings er WHERE er.movie_id=m.id AND er.source='TMDB'))::text AS complete_tmdb_movies,
           COUNT(*) FILTER (WHERE m.tmdb_id IS NOT NULL AND NULLIF(TRIM(m.photo_url),'') IS NULL)::text AS missing_poster,
@@ -1493,7 +1497,9 @@ const handler = createRewindApiHandler({
           COUNT(*) FILTER (WHERE m.tmdb_id IS NOT NULL AND m.duration_minutes IS NULL)::text AS missing_runtime,
           COUNT(*) FILTER (WHERE m.tmdb_id IS NOT NULL AND NULLIF(TRIM(m.trailer_url),'') IS NULL)::text AS missing_trailer,
           COUNT(*) FILTER (WHERE m.tmdb_id IS NOT NULL
-            AND NOT EXISTS (SELECT 1 FROM rewind.external_ratings er WHERE er.movie_id=m.id AND er.source='TMDB'))::text AS missing_tmdb_rating
+            AND NOT EXISTS (SELECT 1 FROM rewind.external_ratings er WHERE er.movie_id=m.id AND er.source='TMDB'))::text AS missing_tmdb_rating,
+          COUNT(*) FILTER (WHERE m.tmdb_id IS NOT NULL
+            AND (NULLIF(TRIM(m.original_language),'') IS NULL OR LENGTH(TRIM(m.original_language)) <> 2))::text AS missing_original_language
           FROM rewind.movies m`,
       });
       await connection.queryObject("COMMIT");
@@ -1506,7 +1512,8 @@ const handler = createRewindApiHandler({
         totalMovies, tmdbLinkedMovies, completeTmdbMovies, missingPoster: Number(row.missing_poster),
         missingBackdrop: Number(row.missing_backdrop), missingPlot: Number(row.missing_plot),
         missingRuntime: Number(row.missing_runtime), missingTrailer: Number(row.missing_trailer),
-        missingTmdbRating: Number(row.missing_tmdb_rating), linkedCoveragePercent: percent(tmdbLinkedMovies, totalMovies),
+        missingTmdbRating: Number(row.missing_tmdb_rating), missingOriginalLanguage: Number(row.missing_original_language),
+        linkedCoveragePercent: percent(tmdbLinkedMovies, totalMovies),
         metadataCompletenessPercent: percent(completeTmdbMovies, tmdbLinkedMovies),
       } satisfies AdminTmdbQualityReport;
     } catch (error) {
@@ -1597,12 +1604,16 @@ const handler = createRewindApiHandler({
         id: string; tmdb_id: string | null; title: string; release_date: string | null;
         rating: string | number | null; photo_url: string | null; is_published: boolean;
       }>({
-        text: `INSERT INTO rewind.movies (imdb_id,title,duration_minutes,release_date,age_rating,rating,short_plot,photo_url,backdrop_url,trailer_url)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+        text: `INSERT INTO rewind.movies (imdb_id,original_language,title,duration_minutes,release_date,age_rating,rating,short_plot,photo_url,backdrop_url,trailer_url)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
                RETURNING id::text AS id, tmdb_id::text AS tmdb_id, title, release_date::text AS release_date, rating::text AS rating, photo_url, is_published`,
-        args: [body.imdbId ?? null, body.title, body.durationMinutes ?? null, body.releaseDate ?? null, body.ageRating ?? null,
+        args: [body.imdbId ?? null, body.originalLanguage ?? null, body.title, body.durationMinutes ?? null, body.releaseDate ?? null, body.ageRating ?? null,
           body.rating ?? null, body.shortPlot ?? null, body.photoUrl ?? null, body.backdropUrl ?? null, body.trailerUrl ?? null],
       });
+      if (body.genreIds !== undefined) await replaceAdminMovieGenres(connection, parseSafeCount(result.rows[0]!.id), body.genreIds);
+      if (body.actorCredits !== undefined || body.directorIds !== undefined || body.producerIds !== undefined) {
+        await replaceAdminMovieCredits(connection, parseSafeCount(result.rows[0]!.id), body);
+      }
       await connection.queryObject("COMMIT");
       return toAdminMovie(result.rows[0]!);
     } catch (error) {
@@ -1613,29 +1624,15 @@ const handler = createRewindApiHandler({
   async updateAdminMovie(authUser, id, body: AdminMovieWriteRequest) {
     const { connection } = await beginAdminTransaction(authUser);
     try {
-      const fields: string[] = [];
-      const args: unknown[] = [id];
-      const mappings = [
-        ["title", "title"], ["imdbId", "imdb_id"], ["durationMinutes", "duration_minutes"],
-        ["releaseDate", "release_date"], ["ageRating", "age_rating"], ["rating", "rating"],
-        ["shortPlot", "short_plot"], ["photoUrl", "photo_url"], ["backdropUrl", "backdrop_url"], ["trailerUrl", "trailer_url"],
-        ["published", "is_published"],
-      ] as const;
-      for (const [property, column] of mappings) {
-        const value = body[property];
-        if (value === undefined || value === null) continue;
-        args.push(value);
-        fields.push(`${column}=$${args.length}`);
-      }
+      const updateQuery = buildAdminMovieUpdateQuery(id, body);
       let result;
-      if (fields.length) {
+      if (updateQuery) {
         result = await connection.queryObject<{
           id: string; tmdb_id: string | null; title: string; release_date: string | null;
           rating: string | number | null; photo_url: string | null; is_published: boolean;
         }>({
-          text: `UPDATE rewind.movies SET ${fields.join(",")}, updated_at=CURRENT_TIMESTAMP WHERE id=$1
-                 RETURNING id::text AS id, tmdb_id::text AS tmdb_id, title, release_date::text AS release_date, rating::text AS rating, photo_url, is_published`,
-          args,
+          text: updateQuery.text,
+          args: updateQuery.args,
         });
       } else {
         result = await connection.queryObject<{
@@ -1645,6 +1642,10 @@ const handler = createRewindApiHandler({
           text: `SELECT id::text AS id, tmdb_id::text AS tmdb_id, title, release_date::text AS release_date,
                         rating::text AS rating, photo_url, is_published FROM rewind.movies WHERE id=$1`, args: [id],
         });
+      }
+      if (result.rows[0] && body.genreIds !== undefined) await replaceAdminMovieGenres(connection, id, body.genreIds);
+      if (result.rows[0] && (body.actorCredits !== undefined || body.directorIds !== undefined || body.producerIds !== undefined)) {
+        await replaceAdminMovieCredits(connection, id, body);
       }
       await connection.queryObject("COMMIT");
       return result.rows[0] ? toAdminMovie(result.rows[0]) : null;
@@ -3256,6 +3257,7 @@ const handler = createRewindApiHandler({
         connection.queryObject<{
           id: string;
           imdb_id: string | null;
+          original_language: string | null;
           tmdb_id: string | null;
           title: string;
           duration_minutes: string | null;
@@ -3267,7 +3269,7 @@ const handler = createRewindApiHandler({
           backdrop_url: string | null;
           trailer_url: string | null;
         }>({
-          text: `SELECT id::text AS id, imdb_id, tmdb_id::text AS tmdb_id, title,
+          text: `SELECT id::text AS id, imdb_id, original_language, tmdb_id::text AS tmdb_id, title,
                         duration_minutes::text AS duration_minutes, release_date::text AS release_date,
                         age_rating, rating::text AS rating, short_plot, photo_url, backdrop_url, trailer_url
                  FROM rewind.movies WHERE id = $1`,
@@ -3348,6 +3350,7 @@ const handler = createRewindApiHandler({
       return {
         id: safeId(first.id, "Movie ID"),
         imdbId: first.imdb_id,
+        originalLanguage: first.original_language,
         tmdbId: nullableNumber(first.tmdb_id),
         title: first.title,
         durationMinutes: nullableNumber(first.duration_minutes),

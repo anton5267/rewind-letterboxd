@@ -5,10 +5,15 @@ import com.rewind.rewind.actor.repo.MovieActorRepository;
 import com.rewind.rewind.director.repo.DirectorRepository;
 import com.rewind.rewind.director.repo.MovieDirectorRepository;
 import com.rewind.rewind.person.dto.PersonDetailsResponse;
+import com.rewind.rewind.person.dto.PersonSearchResponse;
 import com.rewind.rewind.producer.repo.MovieProducerRepository;
 import com.rewind.rewind.producer.repo.ProducerRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import java.util.Comparator;
@@ -54,6 +59,44 @@ public class PersonService {
                 .filter(link -> hasGenre(link.getMovie(), genreId))
                 .map(link -> film(link.getMovie(), null)).toList();
         return new PersonDetailsResponse(producer.getId(), producer.getName(), producer.getPhotoUrl(), "PRODUCER", sorted(films, sort));
+    }
+
+    @Transactional(readOnly = true)
+    public PersonSearchResponse search(String type, String query, int page, int size) {
+        if (page < 0 || page > 100) throw new IllegalArgumentException("Invalid page");
+        Pageable pageable = PageRequest.of(page, Math.max(1, Math.min(size, 50)),
+                Sort.by(Sort.Order.asc("name").ignoreCase(), Sort.Order.asc("id")));
+        String normalizedType = type == null ? "" : type.trim().toUpperCase(java.util.Locale.ROOT);
+        String normalizedQuery = query == null ? null : query.trim();
+        if (normalizedQuery != null && normalizedQuery.length() > 100) throw new IllegalArgumentException("Search query is too long");
+
+        return switch (normalizedType) {
+            case "ACTOR" -> actorSearch(normalizedQuery, pageable);
+            case "DIRECTOR" -> directorSearch(normalizedQuery, pageable);
+            case "PRODUCER" -> producerSearch(normalizedQuery, pageable);
+            default -> throw new IllegalArgumentException("Invalid person type");
+        };
+    }
+
+    private PersonSearchResponse actorSearch(String query, Pageable pageable) {
+        var result = query == null || query.isEmpty() ? actors.findAll(pageable) : actors.findByNameContainingIgnoreCase(query, pageable);
+        var content = result.getContent().stream().map(person -> new PersonSearchResponse.PersonSearchResult(
+                person.getId(), person.getName(), person.getPhotoUrl(), "ACTOR", movieActors.countById_ActorId(person.getId()))).toList();
+        return new PersonSearchResponse(content, result.getTotalPages(), result.getTotalElements(), result.getNumber());
+    }
+
+    private PersonSearchResponse directorSearch(String query, Pageable pageable) {
+        var result = query == null || query.isEmpty() ? directors.findAll(pageable) : directors.findByNameContainingIgnoreCase(query, pageable);
+        var content = result.getContent().stream().map(person -> new PersonSearchResponse.PersonSearchResult(
+                person.getId(), person.getName(), person.getPhotoUrl(), "DIRECTOR", movieDirectors.countById_DirectorId(person.getId()))).toList();
+        return new PersonSearchResponse(content, result.getTotalPages(), result.getTotalElements(), result.getNumber());
+    }
+
+    private PersonSearchResponse producerSearch(String query, Pageable pageable) {
+        var result = query == null || query.isEmpty() ? producers.findAll(pageable) : producers.findByNameContainingIgnoreCase(query, pageable);
+        var content = result.getContent().stream().map(person -> new PersonSearchResponse.PersonSearchResult(
+                person.getId(), person.getName(), person.getPhotoUrl(), "PRODUCER", movieProducers.countById_ProducerId(person.getId()))).toList();
+        return new PersonSearchResponse(content, result.getTotalPages(), result.getTotalElements(), result.getNumber());
     }
 
     private boolean hasGenre(com.rewind.rewind.movie.entity.Movie movie, Long genreId) {

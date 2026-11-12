@@ -21,6 +21,7 @@ export interface MovieSearchResult {
 export interface MovieDetailsResponse {
   id: number;
   imdbId: string | null;
+  originalLanguage: string | null;
   tmdbId: number | null;
   title: string;
   durationMinutes: number | null;
@@ -223,13 +224,15 @@ export function parseSafeCount(value: string): number {
 export interface AdminTmdbMovieCandidate { tmdbId: number; title: string; releaseDate: string | null; overview: string | null; posterUrl: string | null }
 export interface AdminMovieWriteRequest {
   title?: string; imdbId?: string | null; durationMinutes?: number | null; releaseDate?: string | null;
-  ageRating?: string | null; rating?: number | null; shortPlot?: string | null;
-  photoUrl?: string | null; backdropUrl?: string | null; trailerUrl?: string | null; published?: boolean;
+  originalLanguage?: string | null; ageRating?: string | null; rating?: number | null; shortPlot?: string | null;
+  photoUrl?: string | null; backdropUrl?: string | null; trailerUrl?: string | null; published?: boolean; genreIds?: number[];
+  actorCredits?: { actorId: number; characterName: string | null; castOrder: number | null }[];
+  directorIds?: number[]; producerIds?: number[];
 }
 export interface AdminTmdbQualityReport {
   totalMovies: number; tmdbLinkedMovies: number; completeTmdbMovies: number; missingPoster: number;
   missingBackdrop: number; missingPlot: number; missingRuntime: number; missingTrailer: number;
-  missingTmdbRating: number; linkedCoveragePercent: number; metadataCompletenessPercent: number;
+  missingTmdbRating: number; missingOriginalLanguage: number; linkedCoveragePercent: number; metadataCompletenessPercent: number;
 }
 export interface AdminTmdbSyncResponse {
   movieId: number; tmdbId: number; title: string; genresUpdated: number; actorsUpdated: number;
@@ -2441,6 +2444,10 @@ function parseAdminMovieWrite(value: unknown, create: boolean): AdminMovieWriteR
     if (key === "trailerUrl" && typeof raw === "string" && raw !== "" && !/^https?:\/\/\S+$/i.test(raw)) return null;
     (result as Record<string, unknown>)[key] = raw;
   }
+  if (body.originalLanguage !== undefined) {
+    if (body.originalLanguage !== null && (typeof body.originalLanguage !== "string" || !/^[a-z]{2}$/i.test(body.originalLanguage))) return null;
+    result.originalLanguage = typeof body.originalLanguage === "string" ? body.originalLanguage.toLowerCase() : null;
+  }
   if (body.published !== undefined) {
     if (typeof body.published !== "boolean") return null;
     result.published = body.published;
@@ -2458,6 +2465,40 @@ function parseAdminMovieWrite(value: unknown, create: boolean): AdminMovieWriteR
       || Number.isNaN(Date.parse(`${body.releaseDate}T00:00:00Z`))
       || new Date(`${body.releaseDate}T00:00:00Z`).toISOString().slice(0, 10) !== body.releaseDate)) return null;
     result.releaseDate = body.releaseDate as string | null;
+  }
+  if (body.genreIds !== undefined) {
+    if (!Array.isArray(body.genreIds) || body.genreIds.length > 100
+      || body.genreIds.some((id) => !Number.isSafeInteger(id) || (id as number) <= 0)
+      || new Set(body.genreIds).size !== body.genreIds.length) return null;
+    result.genreIds = body.genreIds as number[];
+  }
+  for (const field of ["directorIds", "producerIds"] as const) {
+    const ids = body[field];
+    if (ids !== undefined) {
+      if (!Array.isArray(ids) || ids.length > 100
+        || ids.some((id) => !Number.isSafeInteger(id) || (id as number) <= 0)
+        || new Set(ids).size !== ids.length) return null;
+      result[field] = ids as number[];
+    }
+  }
+  if (body.actorCredits !== undefined) {
+    if (!Array.isArray(body.actorCredits) || body.actorCredits.length > 100) return null;
+    const actorCredits: NonNullable<AdminMovieWriteRequest["actorCredits"]> = [];
+    const actorIds = new Set<number>();
+    for (const value of body.actorCredits) {
+      if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+      const credit = value as Record<string, unknown>;
+      const actorId = credit.actorId;
+      const characterName = credit.characterName;
+      const castOrder = credit.castOrder;
+      if (!Number.isSafeInteger(actorId) || (actorId as number) <= 0 || actorIds.has(actorId as number)
+        || (characterName !== null && characterName !== undefined && (typeof characterName !== "string" || characterName.length > 150))
+        || (castOrder !== null && castOrder !== undefined && (!Number.isSafeInteger(castOrder) || (castOrder as number) < 0))) return null;
+      actorIds.add(actorId as number);
+      actorCredits.push({ actorId: actorId as number, characterName: (characterName ?? null) as string | null,
+        castOrder: (castOrder ?? null) as number | null });
+    }
+    result.actorCredits = actorCredits;
   }
   return result;
 }

@@ -9,6 +9,7 @@ public class MovieDetailsResponse {
 
     private Long id;
     private String imdbId;
+    private String originalLanguage;
     private Long tmdbId;
     private String title;
     private Integer durationMinutes;
@@ -31,7 +32,7 @@ public class MovieDetailsResponse {
     private MyFlags myFlags; // null якщо не авторизований
 
     public MovieDetailsResponse(
-            Long id, String imdbId, Long tmdbId, String title, Integer durationMinutes, LocalDate releaseDate,
+            Long id, String imdbId, String originalLanguage, Long tmdbId, String title, Integer durationMinutes, LocalDate releaseDate,
             String ageRating, BigDecimal rating, String shortPlot,
             String photoUrl, String backdropUrl, String trailerUrl,
             List<IdNameDto> genres,
@@ -44,6 +45,7 @@ public class MovieDetailsResponse {
     ) {
         this.id = id;
         this.imdbId = imdbId;
+        this.originalLanguage = originalLanguage;
         this.tmdbId = tmdbId;
         this.title = title;
         this.durationMinutes = durationMinutes;
@@ -65,6 +67,7 @@ public class MovieDetailsResponse {
 
     public Long getId() { return id; }
     public String getImdbId() { return imdbId; }
+    public String getOriginalLanguage() { return originalLanguage; }
     public Long getTmdbId() { return tmdbId; }
     public String getTitle() { return title; }
     public Integer getDurationMinutes() { return durationMinutes; }

@@ -5,7 +5,7 @@ export interface TmdbMovieCandidate {
   tmdbId: number; title: string; releaseDate: string | null; overview: string | null; posterUrl: string | null;
 }
 export interface TmdbMovie {
-  tmdbId: number; imdbId: string | null; title: string; runtime: number | null; releaseDate: string | null;
+  tmdbId: number; imdbId: string | null; originalLanguage: string | null; title: string; runtime: number | null; releaseDate: string | null;
   overview: string | null; posterUrl: string | null; backdropUrl: string | null; trailerUrl: string | null;
   voteAverage: number | null; voteCount: number | null; genres: TmdbGenre[]; cast: TmdbCast[];
   directors: TmdbPerson[]; producers: TmdbPerson[]; similarTmdbIds: number[];
@@ -63,7 +63,8 @@ export function mapTmdbMovie(value: unknown, requestedId?: number): TmdbMovie {
   const similarTmdbIds = [...new Set(records(similar.results).map((x) => number(x.id)).filter((x): x is number => !!x && x !== tmdbId))].slice(0, 20);
   const external = (body.external_ids && typeof body.external_ids === "object" ? body.external_ids : {}) as Record<string, unknown>;
   return {
-    tmdbId, imdbId: text(external.imdb_id), title, runtime: number(body.runtime),
+    tmdbId, imdbId: text(external.imdb_id), originalLanguage: text(body.original_language)?.trim().toLowerCase().match(/^[a-z]{2}$/)?.[0] ?? null,
+    title, runtime: number(body.runtime),
     releaseDate: text(body.release_date), overview: text(body.overview), posterUrl: image(body.poster_path, "w500"),
     backdropUrl: image(body.backdrop_path, "original"), trailerUrl, voteAverage: number(body.vote_average),
     voteCount: number(body.vote_count), genres, cast, directors: [...directorMap.values()], producers: [...producerMap.values()], similarTmdbIds,

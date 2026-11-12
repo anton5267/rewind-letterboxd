@@ -11,5 +11,6 @@ public interface MovieDirectorRepository extends JpaRepository<MovieDirector, Mo
     @EntityGraph(attributePaths = "director")
     List<MovieDirector> findById_MovieId(Long movieId);
     List<MovieDirector> findById_DirectorId(Long directorId);
+    long countById_DirectorId(Long directorId);
     void deleteByIdMovieId(Long movieId);
 }

@@ -10,5 +10,6 @@ public interface MovieProducerRepository extends JpaRepository<MovieProducer, Mo
     @EntityGraph(attributePaths = "producer")
     List<MovieProducer> findById_MovieId(Long movieId);
     List<MovieProducer> findById_ProducerId(Long producerId);
+    long countById_ProducerId(Long producerId);
     void deleteByIdMovieId(Long movieId);
 }

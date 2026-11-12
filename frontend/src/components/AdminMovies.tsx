@@ -26,6 +26,8 @@ import { useAuth } from "../context/AuthContext";
 import Pagination from "./Pagination";
 import RetryNotice from "./RetryNotice";
 import ResilientImage from "./ResilientImage";
+import AdminMovieGenresField from "./AdminMovieGenresField";
+import AdminMovieCreditsField, { type AdminMovieCreditsDraft } from "./AdminMovieCreditsField";
 import { editorialText, useLocale } from "../i18n";
 import styles from "./AdminMovies.module.css";
 
@@ -33,8 +35,8 @@ interface Props {
   onTotalChange: (total: number) => void;
 }
 
-const emptyMovie: AdminMovieWrite = { title: "", imdbId: "", releaseDate: "", ageRating: "", rating: null, photoUrl: "", backdropUrl: "", trailerUrl: "", durationMinutes: null, shortPlot: "" };
-const emptyMovieCredits = { genres: [] as string[], directors: [] as string[], actors: [] as string[] };
+const emptyMovie: AdminMovieWrite = { title: "", imdbId: "", originalLanguage: "", releaseDate: "", ageRating: "", rating: null, photoUrl: "", backdropUrl: "", trailerUrl: "", durationMinutes: null, shortPlot: "", genreIds: [], actorCredits: [], directorIds: [], producerIds: [] };
+const emptyMovieCredits: AdminMovieCreditsDraft = { actors: [], directors: [], producers: [] };
 const verifiedTmdbCrosswalkUrl = "https://raw.githubusercontent.com/anton5267/rewind-letterboxd/master/docs/project/TMDB_VERIFIED_CROSSWALK.csv";
 
 const parseTmdbId = (value: string): number | null => {
@@ -88,7 +90,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
   const [actionError, setActionError] = useState("");
   const [mutationBusy, setMutationBusy] = useState(false);
   const [movieDraft, setMovieDraft] = useState<AdminMovieWrite>(emptyMovie);
-  const [movieCredits, setMovieCredits] = useState(emptyMovieCredits);
+  const [moviePeople, setMoviePeople] = useState(emptyMovieCredits);
   const [editingMovieId, setEditingMovieId] = useState<number | null>(null);
   const [pendingDelete, setPendingDelete] = useState<AdminMovie | null>(null);
   const [editorLoading, setEditorLoading] = useState(false);
@@ -215,7 +217,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
     setEditorDetailsFailed(false);
     setEditingMovieId(null);
     setMovieDraft(emptyMovie);
-    setMovieCredits(emptyMovieCredits);
+    setMoviePeople(emptyMovieCredits);
     setActionError("");
     if (movieEditor.current) movieEditor.current.open = false;
   }, [lang, user?.id, user?.role, page]);
@@ -237,12 +239,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
       if (pending.target === "title") {
         if (movieEditor.current?.open) {
           movieTitleInput.current?.focus();
-          const heading = catalogTitle.current;
-          if (heading) {
-            const headerBottom = document.querySelector("header")?.getBoundingClientRect().bottom ?? 0;
-            const hiddenByHeader = heading.getBoundingClientRect().top - headerBottom - 16;
-            if (hiddenByHeader < 0) window.scrollBy({ top: hiddenByHeader, behavior: "instant" });
-          }
+          movieTitleInput.current?.scrollIntoView({ block: "center", behavior: "instant" });
         }
       } else if (pending.target === "details-error") {
         if (movieEditor.current?.open) movieDetailsError.current?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
@@ -352,7 +349,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
     setEditorLoading(false);
     setEditorDetailsFailed(false);
     setMovieDraft(emptyMovie);
-    setMovieCredits(emptyMovieCredits);
+    setMoviePeople(emptyMovieCredits);
   };
 
   const editMovie = async (movie: AdminMovie, trigger: HTMLButtonElement, origin: HTMLElement | null = trigger) => {
@@ -366,19 +363,21 @@ export default function AdminMovies({ onTotalChange }: Props) {
     setActionError("");
     setEditorLoading(true);
     setEditorDetailsFailed(false);
-    setMovieCredits(emptyMovieCredits);
+    setMoviePeople(emptyMovieCredits);
     setMovieDraft({ ...emptyMovie, title: movie.title, releaseDate: movie.releaseDate ?? "", rating: movie.rating, photoUrl: movie.photoUrl ?? "" });
     try {
       const { data: details } = await getMovieDetails(movie.id);
       if (isCurrent()) {
-        setMovieCredits({
-          genres: (details.genres ?? []).map(genre => genre.name),
-          directors: (details.directors ?? []).map(director => director.name),
-          actors: (details.actors ?? []).map(actor => actor.characterName ? `${actor.name} (${actor.characterName})` : actor.name),
-        });
+        const credits: AdminMovieCreditsDraft = {
+          actors: (details.actors ?? []).map(actor => ({ ...actor, type: "ACTOR", filmCount: 0, characterName: actor.characterName, castOrder: actor.castOrder ?? null })),
+          directors: (details.directors ?? []).map(person => ({ ...person, type: "DIRECTOR", filmCount: 0 })),
+          producers: (details.producers ?? []).map(person => ({ ...person, type: "PRODUCER", filmCount: 0 })),
+        };
+        setMoviePeople(credits);
         setMovieDraft({
           title: details.title,
           imdbId: details.imdbId ?? "",
+          originalLanguage: details.originalLanguage ?? "",
           releaseDate: details.releaseDate ?? "",
           ageRating: details.ageRating ?? "",
           rating: movie.rating,
@@ -387,6 +386,10 @@ export default function AdminMovies({ onTotalChange }: Props) {
           trailerUrl: details.trailerUrl ?? "",
           durationMinutes: details.durationMinutes,
           shortPlot: details.shortPlot ?? "",
+          genreIds: (details.genres ?? []).map(genre => genre.id),
+          actorCredits: credits.actors.map(({ id, characterName, castOrder }) => ({ actorId: id, characterName, castOrder })),
+          directorIds: credits.directors.map(person => person.id),
+          producerIds: credits.producers.map(person => person.id),
         });
         pendingFocus.current = { scope, request: requestId, origin, target: "title", trigger };
       }
@@ -429,7 +432,9 @@ export default function AdminMovies({ onTotalChange }: Props) {
     setActionError("");
     const wasEditing = editingMovieId !== null;
     try {
-      const payload = { ...movieDraft, title: movieDraft.title.trim(), imdbId: movieDraft.imdbId || null, releaseDate: movieDraft.releaseDate || null, ageRating: movieDraft.ageRating || null, photoUrl: movieDraft.photoUrl || null, backdropUrl: movieDraft.backdropUrl || null, trailerUrl: movieDraft.trailerUrl || null };
+      const payload = { ...movieDraft, title: movieDraft.title.trim(), imdbId: movieDraft.imdbId || null,
+        originalLanguage: movieDraft.originalLanguage?.trim().toLowerCase() || null,
+        releaseDate: movieDraft.releaseDate || null, ageRating: movieDraft.ageRating || null, photoUrl: movieDraft.photoUrl || null, backdropUrl: movieDraft.backdropUrl || null, trailerUrl: movieDraft.trailerUrl || null };
       if (editingMovieId === null) {
         await createAdminMovie(payload);
         if (!currentScope()) return;
@@ -770,6 +775,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
                 <label className={`${styles.field} ${styles.durationField}`}>{t("movieDurationMinutes")}<input type="number" min="1" max="1000" value={movieDraft.durationMinutes ?? ""} onChange={event => setMovieDraft({ ...movieDraft, durationMinutes: event.target.value === "" ? null : Number(event.target.value) })} /></label>
                 {editingMovieId === null && <label className={styles.field}>{t("releaseDate")}<input type="date" value={movieDraft.releaseDate ?? ""} onChange={event => setMovieDraft({ ...movieDraft, releaseDate: event.target.value })} /></label>}
                 <label className={styles.field}>{t("imdbId")}<input maxLength={20} value={movieDraft.imdbId ?? ""} onChange={event => setMovieDraft({ ...movieDraft, imdbId: event.target.value })} /></label>
+                <label className={styles.field}>{t("originalLanguage")}<input maxLength={2} pattern="[A-Za-z]{2}" autoCapitalize="none" value={movieDraft.originalLanguage ?? ""} onChange={event => setMovieDraft({ ...movieDraft, originalLanguage: event.target.value })} /></label>
                 <label className={styles.field}>{t("ageRating")}<input maxLength={10} value={movieDraft.ageRating ?? ""} onChange={event => setMovieDraft({ ...movieDraft, ageRating: event.target.value })} /></label>
                 <label className={styles.field}>{t("rating")}<input type="number" min="0" max="10" step="0.1" value={movieDraft.rating ?? ""} onChange={event => setMovieDraft({ ...movieDraft, rating: event.target.value === "" ? null : Number(event.target.value) })} /></label>
                 <label className={styles.field}>{t("posterUrl")}<input type="url" maxLength={255} value={movieDraft.photoUrl ?? ""} onChange={event => setMovieDraft({ ...movieDraft, photoUrl: event.target.value })} /></label>
@@ -777,11 +783,15 @@ export default function AdminMovies({ onTotalChange }: Props) {
                 <label className={styles.field}>{t("trailerUrl")}<input type="url" maxLength={255} value={movieDraft.trailerUrl ?? ""} onChange={event => setMovieDraft({ ...movieDraft, trailerUrl: event.target.value })} /></label>
               </div>
               {editingMovieId !== null && <label className={`${styles.field} ${styles.releaseDateField}`}>{t("releaseDate")}<input type="date" value={movieDraft.releaseDate ?? ""} onChange={event => setMovieDraft({ ...movieDraft, releaseDate: event.target.value })} /></label>}
-              {editingMovieId !== null && (movieCredits.genres.length > 0 || movieCredits.directors.length > 0 || movieCredits.actors.length > 0) && <dl className={styles.editorMetadata}>
-                <div><dt>{t("genres")}</dt><dd>{movieCredits.genres.length ? movieCredits.genres.join(", ") : t("none")}</dd></div>
-                <div><dt>{t("directors")}</dt><dd>{movieCredits.directors.length ? movieCredits.directors.join(", ") : t("none")}</dd></div>
-                <div><dt>{t("actors")}</dt><dd>{movieCredits.actors.length ? movieCredits.actors.join(", ") : t("none")}</dd></div>
-              </dl>}
+              <AdminMovieGenresField selectedIds={movieDraft.genreIds ?? []} onChange={genreIds => setMovieDraft(current => ({ ...current, genreIds }))} />
+              <AdminMovieCreditsField value={moviePeople} onChange={credits => {
+                setMoviePeople(credits);
+                setMovieDraft(current => ({ ...current,
+                  actorCredits: credits.actors.map(({ id, characterName, castOrder }) => ({ actorId: id, characterName, castOrder })),
+                  directorIds: credits.directors.map(person => person.id),
+                  producerIds: credits.producers.map(person => person.id),
+                }));
+              }} />
               <label className={`${styles.field} ${styles.plotField}`}>{t("description")}<textarea maxLength={10000} rows={5} value={movieDraft.shortPlot ?? ""} onChange={event => setMovieDraft({ ...movieDraft, shortPlot: event.target.value })} /></label>
               <div className={styles.actions}><button type="submit" aria-busy={mutationBusy} disabled={mutationBusy || !movieDraft.title.trim()}>{mutationBusy ? t("saving") : editingMovieId === null ? t("create") : t("save")}</button>{editingMovieId !== null && <button type="button" disabled={mutationBusy} onClick={cancelEdit}>{t("cancel")}</button>}{editingMovie && <button type="button" className={styles.deleteAction} disabled={mutationBusy} onClick={event => requestMovieDelete(editingMovie, event.currentTarget)}>{t("deleteMovie")}</button>}</div>
             </form>}
@@ -790,7 +800,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
               <h3 className={styles.tmdbTitle} ref={qualityHeading} tabIndex={-1}>{t("tmdbImportTitle")}</h3>
               {qualityLoading && !tmdbQuality && <p className={styles.feedback} role="status">{t("loading")}</p>}
               {qualityError && <div ref={qualitySection} className={styles.qualityRetryFocus}><RetryNotice className={styles.error} message={t("tmdbQualityError")} retryLabel={t("retry")} disabled={qualityLoading} busy={qualityLoading} onRetry={retryQuality} /></div>}
-              {tmdbQuality && <div className={styles.quality}><strong>{t("tmdbQualityTitle")}</strong><p>{t("tmdbQualitySummary")}: {tmdbQuality.tmdbLinkedMovies}/{tmdbQuality.totalMovies} · {t("tmdbCoverage")}: {tmdbQuality.linkedCoveragePercent.toFixed(1)}% · {t("tmdbCompleteness")}: {tmdbQuality.metadataCompletenessPercent.toFixed(1)}%</p><ul className={styles.qualityList}><li>{t("tmdbMissingPoster")}: {tmdbQuality.missingPoster}</li><li>{t("tmdbMissingBackdrop")}: {tmdbQuality.missingBackdrop}</li><li>{t("tmdbMissingPlot")}: {tmdbQuality.missingPlot}</li><li>{t("tmdbMissingRuntime")}: {tmdbQuality.missingRuntime}</li><li>{t("tmdbMissingTrailer")}: {tmdbQuality.missingTrailer}</li><li>{t("tmdbMissingRating")}: {tmdbQuality.missingTmdbRating}</li></ul></div>}
+              {tmdbQuality && <div className={styles.quality}><strong>{t("tmdbQualityTitle")}</strong><p>{t("tmdbQualitySummary")}: {tmdbQuality.tmdbLinkedMovies}/{tmdbQuality.totalMovies} · {t("tmdbCoverage")}: {tmdbQuality.linkedCoveragePercent.toFixed(1)}% · {t("tmdbCompleteness")}: {tmdbQuality.metadataCompletenessPercent.toFixed(1)}%</p><ul className={styles.qualityList}><li>{t("tmdbMissingPoster")}: {tmdbQuality.missingPoster}</li><li>{t("tmdbMissingBackdrop")}: {tmdbQuality.missingBackdrop}</li><li>{t("tmdbMissingPlot")}: {tmdbQuality.missingPlot}</li><li>{t("tmdbMissingRuntime")}: {tmdbQuality.missingRuntime}</li><li>{t("tmdbMissingTrailer")}: {tmdbQuality.missingTrailer}</li><li>{t("tmdbMissingRating")}: {tmdbQuality.missingTmdbRating}</li><li>{t("tmdbMissingOriginalLanguage")}: {tmdbQuality.missingOriginalLanguage}</li></ul></div>}
               <form className={styles.batchSyncForm} aria-label={t("tmdbBatchSyncTitle")} onSubmit={syncTmdbPairs} aria-busy={tmdbSyncBatchBusy}>
                 <h4>{t("tmdbBatchSyncTitle")}</h4>
                 <p>{t("tmdbBatchSyncHint")}</p>

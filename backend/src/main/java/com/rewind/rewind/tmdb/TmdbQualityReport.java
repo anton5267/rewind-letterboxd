@@ -10,6 +10,7 @@ public record TmdbQualityReport(
         long missingRuntime,
         long missingTrailer,
         long missingTmdbRating,
+        long missingOriginalLanguage,
         double linkedCoveragePercent,
         double metadataCompletenessPercent
 ) {}

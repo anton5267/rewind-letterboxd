@@ -11,5 +11,6 @@ public interface MovieActorRepository extends JpaRepository<MovieActor, MovieAct
     @EntityGraph(attributePaths = "actor")
     List<MovieActor> findById_MovieIdOrderByCastOrderAsc(Long movieId);
     List<MovieActor> findById_ActorId(Long actorId);
+    long countById_ActorId(Long actorId);
     void deleteByIdMovieId(Long movieId);
 }

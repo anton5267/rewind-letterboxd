@@ -160,7 +160,10 @@ public class TmdbClient {
         }
 
         String imdbId = text(body.path("external_ids"), "imdb_id");
-        return new MovieData(id, imdbId, text(body, "title"), integerValue(body, "runtime"), releaseDate,
+        String originalLanguage = text(body, "original_language");
+        if (originalLanguage != null && !originalLanguage.matches("(?i)^[a-z]{2}$")) originalLanguage = null;
+        return new MovieData(id, imdbId, originalLanguage == null ? null : originalLanguage.toLowerCase(java.util.Locale.ROOT),
+                text(body, "title"), integerValue(body, "runtime"), releaseDate,
                 text(body, "overview"), imageUrl(text(body, "poster_path"), "w500"),
                 imageUrl(text(body, "backdrop_path"), "original"), trailerUrl,
                 decimalValue(body, "vote_average"), integerValue(body, "vote_count"),
@@ -194,6 +197,7 @@ public class TmdbClient {
     public record MovieData(
             Long tmdbId,
             String imdbId,
+            String originalLanguage,
             String title,
             Integer runtime,
             LocalDate releaseDate,

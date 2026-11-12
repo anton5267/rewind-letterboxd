@@ -674,7 +674,7 @@ Deno.test("movie details include private flags for a verified user and are not c
   const handler = authHandler({
     async getMovieDetails(id) {
       return {
-        id, imdbId: null, tmdbId: null, title: "Example", durationMinutes: null,
+        id, imdbId: null, originalLanguage: null, tmdbId: null, title: "Example", durationMinutes: null,
         releaseDate: null, ageRating: null, rating: null, shortPlot: null, photoUrl: null,
         backdropUrl: null, trailerUrl: null, genres: [], directors: [], producers: [], actors: [],
         externalRatings: [], similarMovies: [], myFlags: null,
@@ -901,7 +901,7 @@ Deno.test("movie detail returns the public fields and null user flags", async ()
   const handler = handlerWith({
     async getMovieDetails(id) {
       return {
-        id, imdbId: null, tmdbId: null, title: "Comedy Film", durationMinutes: null,
+        id, imdbId: null, originalLanguage: null, tmdbId: null, title: "Comedy Film", durationMinutes: null,
         releaseDate: "2024-01-10", ageRating: null, rating: 4.5, shortPlot: null,
         photoUrl: "https://example.invalid/poster.jpg", backdropUrl: null, trailerUrl: null,
         genres: [{ id: 4, name: "Comedy" }], directors: [], producers: [{ id: 8, name: "Producer One", photoUrl: null }], actors: [],
@@ -1548,7 +1548,7 @@ Deno.test("admin movie catalog routes preserve paging, validation, edits, delete
   const movie = { id: 10, tmdbId: null, title: "Test Film", releaseDate: "2024-02-29", rating: 8.2, photoUrl: null,
     durationMinutes: 123, ageRating: "PG-13", reviewCount: 7, published: true };
   const handler = authHandler({
-    async getAdminTmdbQuality() { calls.push(["quality"]); return { totalMovies: 50, tmdbLinkedMovies: 40, completeTmdbMovies: 20, missingPoster: 3, missingBackdrop: 4, missingPlot: 5, missingRuntime: 6, missingTrailer: 7, missingTmdbRating: 8, linkedCoveragePercent: 80, metadataCompletenessPercent: 50 }; },
+    async getAdminTmdbQuality() { calls.push(["quality"]); return { totalMovies: 50, tmdbLinkedMovies: 40, completeTmdbMovies: 20, missingPoster: 3, missingBackdrop: 4, missingPlot: 5, missingRuntime: 6, missingTrailer: 7, missingTmdbRating: 8, missingOriginalLanguage: 9, linkedCoveragePercent: 80, metadataCompletenessPercent: 50 }; },
     async getAdminMovies(_user, query, page, size) { calls.push(["list", query, page, size]); return { content: [movie], totalPages: 1, totalElements: 1, number: page }; },
     async createAdminMovie(_user, body) { calls.push(["create", body]); return { ...movie, title: body.title! }; },
     async updateAdminMovie(_user, id, body) { calls.push(["update", id, body]); return id === 10 ? { ...movie, ...body, published: body.published ?? movie.published } : null; },
@@ -1560,24 +1560,36 @@ Deno.test("admin movie catalog routes preserve paging, validation, edits, delete
   const invalidQuery = await handler(new Request(`https://project.supabase.co/api/admin/movies?q=${"x".repeat(121)}`, { headers }));
   const invalidMovie = await handler(new Request("https://project.supabase.co/api/admin/movies", { method: "POST", headers, body: JSON.stringify({ title: "  " }) }));
   const created = await handler(new Request("https://project.supabase.co/api/admin/movies", { method: "POST", headers,
-    body: JSON.stringify({ title: "New Film", rating: 9, trailerUrl: "https://example.test/trailer", tmdbId: 999, role: "ADMIN" }) }));
+    body: JSON.stringify({ title: "New Film", rating: 9, trailerUrl: "https://example.test/trailer", genreIds: [1, 2],
+      actorCredits: [{ actorId: 3, characterName: "Hero", castOrder: 0 }], directorIds: [5], producerIds: [6], tmdbId: 999, role: "ADMIN" }) }));
   const invalidDate = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "PUT", headers, body: JSON.stringify({ releaseDate: "2024-02-30" }) }));
   const invalidTrailer = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "PUT", headers, body: JSON.stringify({ trailerUrl: "javascript:alert(1)" }) }));
-  const updated = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "PUT", headers, body: JSON.stringify({ title: "Updated Film", tmdbId: 123, role: "ADMIN" }) }));
+  const invalidGenres = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "PUT", headers, body: JSON.stringify({ genreIds: [1, 1] }) }));
+  const invalidLanguage = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "PUT", headers, body: JSON.stringify({ originalLanguage: "eng" }) }));
+  const invalidCredits = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "PUT", headers, body: JSON.stringify({ actorCredits: [{ actorId: 3 }, { actorId: 3 }] }) }));
+  const updated = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "PUT", headers,
+    body: JSON.stringify({ title: "Updated Film", imdbId: null, ageRating: null, shortPlot: null, photoUrl: null,
+      backdropUrl: null, trailerUrl: null, durationMinutes: null, rating: null, releaseDate: null, genreIds: [4, 8],
+      actorCredits: [{ actorId: 3, characterName: "Hero", castOrder: 0 }], directorIds: [5], producerIds: [6], tmdbId: 123, role: "ADMIN" }) }));
   const missing = await handler(new Request("https://project.supabase.co/api/admin/movies/99", { method: "DELETE", headers }));
   const deleted = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "DELETE", headers }));
   const unauthenticated = await authHandler({})(new Request("https://project.supabase.co/api/admin/movies"));
   const listBody = await list.json();
-  if (quality.status !== 200 || (await quality.json()).metadataCompletenessPercent !== 50
+  const qualityBody = await quality.json();
+  if (quality.status !== 200 || qualityBody.metadataCompletenessPercent !== 50
+    || qualityBody.missingOriginalLanguage !== 9
     || list.status !== 200 || listBody.content[0].id !== 10 || listBody.content[0].durationMinutes !== 123
     || listBody.content[0].ageRating !== "PG-13" || listBody.content[0].reviewCount !== 7 || invalidQuery.status !== 400 || invalidMovie.status !== 400
-    || created.status !== 200 || (await created.json()).tmdbId !== null || invalidDate.status !== 400 || invalidTrailer.status !== 400
-    || updated.status !== 200 || (await updated.json()).title !== "Updated Film" || missing.status !== 404 || deleted.status !== 204 || unauthenticated.status !== 401
+    || created.status !== 200 || (await created.json()).tmdbId !== null || invalidDate.status !== 400 || invalidTrailer.status !== 400 || invalidGenres.status !== 400 || invalidCredits.status !== 400
+    || invalidLanguage.status !== 400 || updated.status !== 200 || (await updated.json()).title !== "Updated Film" || missing.status !== 404 || deleted.status !== 204 || unauthenticated.status !== 401
     || JSON.stringify(calls) !== JSON.stringify([
-      ["quality"], ["list", "film", 0, 100], ["create", { title: "New Film", trailerUrl: "https://example.test/trailer", rating: 9 }],
-      ["update", 10, { title: "Updated Film" }], ["delete", 99], ["delete", 10],
+      ["quality"], ["list", "film", 0, 100], ["create", { title: "New Film", trailerUrl: "https://example.test/trailer", rating: 9, genreIds: [1, 2],
+        directorIds: [5], producerIds: [6], actorCredits: [{ actorId: 3, characterName: "Hero", castOrder: 0 }] }],
+      ["update", 10, { title: "Updated Film", imdbId: null, ageRating: null, shortPlot: null, photoUrl: null,
+        backdropUrl: null, trailerUrl: null, durationMinutes: null, rating: null, releaseDate: null, genreIds: [4, 8],
+        directorIds: [5], producerIds: [6], actorCredits: [{ actorId: 3, characterName: "Hero", castOrder: 0 }] }], ["delete", 99], ["delete", 10],
     ])) {
-    throw new Error(`Admin movie contract changed: ${JSON.stringify({ calls, statuses: [quality.status, list.status, invalidQuery.status, invalidMovie.status, created.status, invalidDate.status, invalidTrailer.status, updated.status, missing.status, deleted.status, unauthenticated.status] })}`);
+    throw new Error(`Admin movie contract changed: ${JSON.stringify({ calls, statuses: [quality.status, list.status, invalidQuery.status, invalidMovie.status, created.status, invalidDate.status, invalidTrailer.status, invalidGenres.status, updated.status, missing.status, deleted.status, unauthenticated.status] })}`);
   }
 });
 

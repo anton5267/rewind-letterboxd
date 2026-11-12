@@ -1,5 +1,40 @@
 # Rewind — докази перевірок
 
+### Admin movie catalog aggregates and quality — local only — 12.11.2026
+
+- `GET /api/admin/movies` accepts optional title search `q` and returns a paginated catalog projection with visible review count. Hidden reviews and reviews from inactive authors are excluded, preserving public visibility rules. Integration fixture checked one visible review among three total/hidden/inactive rows.
+- TMDB quality now includes `missingOriginalLanguage`; metadata completeness requires a valid two-letter original language for linked films. Spring and Edge use matching criteria; UK/EN Admin UI displays the count.
+- Validation: Spring `AdminMovieServiceTests`, `AdminMovieIntegrationTests`, and `TmdbSyncIntegrationTests` **16/16 passed** against a fresh disposable MySQL 8.4 container with tmpfs and no mounts; Flyway validated all 32 MySQL migrations. Deno **103/103** + `deno check`; frontend `npm run verify:build` (309 modules); Admin Movies Playwright **13/13**. A focus regression uncovered by the 1440px test was corrected by scrolling the focused title input into view; final full file passed.
+- This is local evidence only. No Supabase migration, Edge deploy, Pages deploy, Git commit/push, or change to the ordinary `rewind-mysql` container, Compose config, or its data. Authenticated live Admin acceptance remains outstanding.
+
+### Admin movie original language — local only — 12.11.2026
+
+- Додано nullable `original_language` (дві літери ISO) в MySQL Flyway V32 і Supabase migration `20261112082507_admin_movie_original_language.sql`. Supabase migration надає `rewind_edge_app` права лише на INSERT/UPDATE цього стовпця; детальний подальший live read-back — у [окремому записі](#admin-movie-original-language-live-schema--12112026).
+- Значення проходить Spring Entity/DTO/Admin service, Edge detail/create/partial update/TMDB sync та frontend Admin editor. Коди валідовуються і приводяться до нижнього регістру; відсутній PUT-параметр не змінює значення, явний `null` очищає його.
+- Перевірки для цього наскрізного поля: Deno **103/103** і `deno check`; frontend `npm run verify:build`; Spring service/integration разом **16/16** на окремій disposable MySQL 8.4 з tmpfs. Валідація `TmdbSyncIntegrationTests` включена; деталі й поточний Admin aggregates стан — у [окремому записі](#admin-movie-catalog-aggregates-and-quality--local-only--12112026).
+- Зміни лише у робочій гілці. Немає Supabase cloud write/deploy, Pages deploy, Git commit/push чи змін звичайної Compose MySQL/data. Live Admin acceptance і релізний review залишаються окремими кроками.
+
+### Admin movie cast and crew editing — local only — 12.11.2026
+
+- Додано пошук акторів, режисерів і продюсерів у формі Admin Movies. Пошук використовує чинний `/api/people/search`; Spring тепер відповідає тому самому контракту Edge та повертає стабільне сортування за іменем/ID. Вибрані акторські зв’язки включають nullable character name і cast order.
+- Create/update передають окремі `actorCredits`, `directorIds`, `producerIds`. Відсутнє поле у частковому PUT не змінює зв’язок, порожній масив його очищає. Edge перевіряє всі запитані ID до зміни join rows і виконує заміну в транзакції; Spring застосовує ті самі правила й перевірки в `@Transactional` сервісі. Повторний ID або невідома людина відхиляються до видалення старих зв’язків.
+- Пошук у frontend відокремлений від форми збереження фільму; Enter виконує пошук і не відправляє save форму.
+- Перевірки: повний Deno suite **102/102**, `deno check` для Edge entrypoint/handler/helper, Spring `AdminMovieServiceTests` **5/5**, frontend `npm run verify:build`, Admin Movies Playwright файл **13/13** (включно з новим credits сценарієм).
+- Зміна локальна у `feature/list-discovery-curation`. Не виконували Supabase migration/Edge deploy, GitHub Pages deploy, Git commit/push або зміни звичайної MySQL Compose/data. Потрібна окрема live Admin acceptance після дозволеного розгортання; цей результат не є production-перевіркою.
+
+### Admin movie genre editing — local only — 12.11.2026
+
+- Додано accessible checkbox editor жанрів у форму Admin Movies; форма завантажує існуючі жанри, заповнює вибір із деталей фільму та надсилає числові `genreIds` під час create/update.
+- Edge валідовує ID як позитивні безпечні цілі числа без дублікатів і максимум 100. У транзакції спершу перевіряються всі жанри, потім join rows замінюються; `[]` очищає зв’язки, відсутня властивість нічого не змінює. Spring/MySQL підтримує ту саму семантику й перевіряє всі жанри до entity save.
+- Перевірки: Deno жанрові helper **3/3**, Admin Movie handler contract **1/1**, `deno check --no-lock --config deno.json index.ts handler.ts admin_movie_update.ts admin_movie_genres.ts` успішний; `./mvnw.cmd -Dtest=AdminMovieServiceTests test` — **2/2**; `npm run verify:build` пройшов TypeScript і Vite build; Playwright через тимчасовий Vite **1/1** (початковий вибір, зміна вибору, PUT `genreIds`, повернення фокуса).
+- Лише локальна зміна у відокремленій гілці `feature/list-discovery-curation`. Не застосовували cloud migration, не розгортали Supabase Edge чи Pages, не змінювали MySQL Compose/data; Git commit/push не робили. Поведінка UI та backend не підтверджена live Admin acceptance.
+
+### Admin movie editor nullable-field clearing — локальна правка — 12.11.2026
+
+- У Supabase Edge repository явний `null` у PUT `/api/admin/movies/{id}` тепер передається як SQL параметр для очищення nullable поля; відсутня властивість і далі означає «не змінювати». У Spring/MySQL API DTO відстежує присутність полів JSON, щоб зберегти цю саму семантику й не очищати дані при частковому оновленні.
+- Edge SQL builder винесений в окремий модуль із whitelist колонок. Цільові Deno тести перевіряють binding `null`, no-op і handler contract (**3/3 passed**). `deno check` успішний. Spring service unit test перевіряє Jackson partial update та явне очищення (**1/1 passed** через `./mvnw -Dtest=AdminMovieServiceTests test`). Deno запускав через Docker `denoland/deno:latest` із `--no-lock`; встановлений Windows Deno 2.2.12 не підтримує lockfile v5.
+- Лише локальна зміна в `feature/list-discovery-curation`; Supabase, Pages, Auth identities, GitHub і звичайний MySQL Compose/data не змінювалися. Це не live Admin acceptance і не deployment.
+
 ### Featured/Crew curation — live Edge rollout — 12.11.2026
 
 - До застосування: Supabase `rewind-api` v31, migration history до `20261112042014`; 2 REWIND profiles, 6 private system lists, 0 public CUSTOM lists. Користувацькі записи для цієї функції не створювалися.
@@ -6598,3 +6633,12 @@ Added a local Supabase Edge Function router with the existing public `GET /api/g
 - Release commit `923b95e` is on `master`. GitHub Pages deploy [run 43155221030](https://github.com/anton5267/rewind-letterboxd/actions/runs/43155221030) completed successfully. A read-only production HEAD request to the project-path SVG returned **200** (`image/svg+xml`).
 - A follow-up check extracted all **10 unique image URLs** referenced by production CSS and fetched them from Pages; **10/10 returned HTTP 200** under the `/rewind-letterboxd/images/` base path.
 - No Supabase settings or data, Auth accounts, or local MySQL/Compose state changed.
+### Admin Movie original language live schema — 12.11.2026
+
+- Applied the additive migration `admin_movie_original_language` to the hosted project's private `rewind` schema through the authenticated Supabase MCP. Supabase recorded migration version `20261112082507`.
+- Aligned the local migration filename to `20261112082507_admin_movie_original_language.sql` so local migration history uses the version already recorded by Supabase; SQL content was preserved.
+- Read-back confirmed `rewind.movies.original_language VARCHAR(10)` and only the intended column-level INSERT/UPDATE grants for `rewind_edge_app`. No movie rows were updated: all 50 current catalogue rows still have no language value. This is schema-only evidence; it does not claim the local Admin Movies implementation is deployed.
+- Post-migration read-only counts remained 2 Auth users (both confirmed), 2 linked REWIND profiles, 1 ADMIN, 50 movies, and 0 unpublished movies. No existing user/movie data was changed by the migration.
+- Deployed the Admin Movies Edge API as **v33 ACTIVE** (`verify_jwt=false`, preserving the function's existing internal Auth and ADMIN checks). Post-deploy public smoke returned HTTP **200** for `/api/genres`; anonymous `/api/admin/movies` and `/api/admin/dashboard` both returned **401**. The deployment includes the original-language write path, but the matching frontend/Admin UI has not been published to Pages, and no authenticated live mutation was attempted.
+- Local validation: Deno **103/103**, `deno check index.ts` from the function directory, frontend `verify:build` (309 modules), Spring service/integration **16/16** on isolated MySQL 8.4, and Admin Movies Playwright **13/13**. The first `deno check` invocation from the repository root did not load the function-local import map and failed; rerunning from `supabase/functions/rewind-api` passed. These checks do not establish live admin acceptance.
+- Security advisor after migration: 3 INFO findings for private RLS tables without policies; WARN for `pg_net` installed in `public`; WARN for disabled leaked-password protection. Performance advisor: 16 INFO unused-index findings; Health advisor: no findings. `pg_net` was not moved because a live cron job calls `net.http_post`; changing its schema without replacing that dependency could disrupt the scheduled refresh. No Auth settings, secrets, Edge deployment, Pages deployment, or ordinary MySQL Compose/data were changed.

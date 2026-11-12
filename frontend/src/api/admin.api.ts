@@ -16,7 +16,13 @@ export interface AdminReportedReview extends AdminReview { reportId: number; rep
 export interface AdminMovie { id: number; tmdbId: number | null; title: string; releaseDate: string | null; rating: number | null; photoUrl: string | null; published: boolean }
 export interface AdminMovieCatalog extends AdminMovie { durationMinutes: number | null; ageRating: string | null; reviewCount: number }
 export interface AdminTmdbMovieCandidate { tmdbId: number; title: string; releaseDate: string | null; overview: string | null; posterUrl: string | null }
-export interface AdminMovieWrite { title: string; imdbId?: string | null; durationMinutes?: number | null; releaseDate?: string | null; ageRating?: string | null; rating?: number | null; shortPlot?: string | null; photoUrl?: string | null; backdropUrl?: string | null; trailerUrl?: string | null; published?: boolean }
+export interface AdminMovieWrite {
+  title: string; imdbId?: string | null; originalLanguage?: string | null; durationMinutes?: number | null; releaseDate?: string | null;
+  ageRating?: string | null; rating?: number | null; shortPlot?: string | null; photoUrl?: string | null;
+  backdropUrl?: string | null; trailerUrl?: string | null; published?: boolean; genreIds?: number[];
+  actorCredits?: { actorId: number; characterName: string | null; castOrder: number | null }[];
+  directorIds?: number[]; producerIds?: number[];
+}
 export interface TmdbSyncResponse { movieId: number; tmdbId: number; title: string; genresUpdated: number; actorsUpdated: number; directorsUpdated: number; producersUpdated: number; similarMoviesLinked: number; trailerUpdated: boolean }
 export interface TmdbImportItem { movieId: number | null; tmdbId: number; status: "IMPORTED" | "FAILED"; title: string | null; message: string }
 export interface TmdbBatchSyncResponse { requested: number; succeeded: number; failed: number; items: TmdbImportItem[] }
@@ -24,7 +30,7 @@ export interface TmdbSyncBatchItem { movieId: number | null; tmdbId: number; sta
 export interface TmdbSyncBatchResponse { requested: number; succeeded: number; failed: number; items: TmdbSyncBatchItem[] }
 export interface TmdbDiscoveryRequest { page: number; year?: number; genreId?: number; minRating?: number; limit: number; syncSimilar?: boolean }
 export interface TmdbDiscoveryImportResponse { page: number; totalPages: number; totalResults: number; discovered: number; imports: TmdbBatchSyncResponse }
-export interface TmdbQualityReport { totalMovies: number; tmdbLinkedMovies: number; completeTmdbMovies: number; missingPoster: number; missingBackdrop: number; missingPlot: number; missingRuntime: number; missingTrailer: number; missingTmdbRating: number; linkedCoveragePercent: number; metadataCompletenessPercent: number }
+export interface TmdbQualityReport { totalMovies: number; tmdbLinkedMovies: number; completeTmdbMovies: number; missingPoster: number; missingBackdrop: number; missingPlot: number; missingRuntime: number; missingTrailer: number; missingTmdbRating: number; missingOriginalLanguage: number; linkedCoveragePercent: number; metadataCompletenessPercent: number }
 export interface AdminList { id: number; userId: number; username: string; name: string; description: string | null; listType: string; isPublic: boolean; itemCount: number; createdAt: string; updatedAt: string; featuredPosition: number | null }
 export interface AdminConversation { id: number; userOneId: number; userTwoId: number; messageCount: number; createdAt: string; updatedAt: string; lastMessageAt: string | null }
 export interface AdminNotification { id: number; recipientId: number; actorId: number | null; type: string; reviewId: number | null; createdAt: string; readAt: string | null }
