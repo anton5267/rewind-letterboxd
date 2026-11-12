@@ -16,6 +16,9 @@ test("About follows the measured Figma editorial shell", async ({ page }) => {
   const contentBox = await content.boundingBox();
   expect(contentBox?.x).toBe(120);
   expect(contentBox?.width).toBe(1200);
+  const tmdbLogo = page.getByRole("img", { name: "TMDB" });
+  await expect(tmdbLogo).toBeVisible();
+  await expect.poll(() => tmdbLogo.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
   const firstHeading = content.locator("h2").first();
   await expect(firstHeading).toBeVisible();
   const headingBox = await firstHeading.boundingBox();

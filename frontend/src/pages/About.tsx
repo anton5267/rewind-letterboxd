@@ -36,7 +36,7 @@ export default function About() {
       <div className={styles.story}>{sections.map(([title, body]) => <section key={title}><h2>{title}</h2><p>{body}</p></section>)}</div>
       <section className={styles.credits} aria-labelledby="credits-heading">
         <h2 className={styles.creditsTitle} id="credits-heading">{t("filmDataAndImages")}</h2>
-        <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer"><img className={styles.logo} src="/tmdb-logo.svg" alt="TMDB" /></a>
+        <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer"><img className={styles.logo} src={`${import.meta.env.BASE_URL}tmdb-logo.svg`} alt="TMDB" /></a>
         <p className={styles.disclaimer}>{t("tmdbDisclaimer")}</p>
       </section>
     </article>
