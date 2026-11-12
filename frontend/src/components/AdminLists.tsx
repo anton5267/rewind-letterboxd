@@ -1,6 +1,6 @@
 import AdminLoading from "./AdminLoading";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { deleteAdminList, getAdminLists, setAdminListVisibility, type AdminList } from "../api/admin.api";
+import { deleteAdminList, getAdminLists, setAdminListFeatured, setAdminListVisibility, type AdminList } from "../api/admin.api";
 import type { Page } from "../api/types";
 import { useAuth } from "../context/AuthContext";
 import Pagination from "./Pagination";
@@ -18,7 +18,7 @@ export default function AdminLists() {
   const [revision, setRevision] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [actionError, setActionError] = useState<"visibility" | "delete" | null>(null);
+  const [actionError, setActionError] = useState<"visibility" | "featured" | "delete" | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{ list: AdminList; trigger: HTMLButtonElement } | null>(null);
   const deleteDialog = useRef<HTMLDialogElement>(null);
@@ -27,13 +27,14 @@ export default function AdminLists() {
   const sectionRef = useRef<HTMLElement>(null);
   const mutationAlert = useRef<HTMLParagraphElement>(null);
   const visibilityButtons = useRef(new Map<number, HTMLButtonElement>());
+  const featuredButtons = useRef(new Map<number, HTMLButtonElement>());
   const mounted = useRef(false);
   const scopeGeneration = useRef(0);
   const actor = `${user?.id ?? ""}:${user?.role ?? ""}`;
   const currentActor = useRef(actor);
   const catalogRequest = useRef(0);
   const mutationToken = useRef<object | null>(null);
-  const pendingFocus = useRef<{ scope: number; origin: HTMLElement | null; target: "heading" | "error" | "retry" | "visibility"; id?: number } | null>(null);
+  const pendingFocus = useRef<{ scope: number; origin: HTMLElement | null; target: "heading" | "error" | "retry" | "visibility" | "featured"; id?: number } | null>(null);
   const internalClamp = useRef<{ page: number; lang: string; actor: string; focus: NonNullable<typeof pendingFocus.current> } | null>(null);
 
   useLayoutEffect(() => {
@@ -82,6 +83,10 @@ export default function AdminLists() {
       else if (pending.target === "retry" && error) sectionRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
       else if (pending.target === "visibility" && pending.id !== undefined) {
         const button = visibilityButtons.current.get(pending.id);
+        if (button && !button.disabled) button.focus();
+        else heading.current?.focus();
+      } else if (pending.target === "featured" && pending.id !== undefined) {
+        const button = featuredButtons.current.get(pending.id);
         if (button && !button.disabled) button.focus();
         else heading.current?.focus();
       } else heading.current?.focus();
@@ -140,6 +145,32 @@ export default function AdminLists() {
     }
   };
 
+  const toggleFeatured = async (list: AdminList, origin: HTMLButtonElement) => {
+    if (list.listType !== "CUSTOM" || (!list.isPublic && list.featuredPosition === null) || mutationToken.current !== null) return;
+    const token = {};
+    mutationToken.current = token;
+    const scope = scopeGeneration.current;
+    const sameActor = () => mounted.current && currentActor.current === actor && mutationToken.current === token;
+    const sameQuery = () => sameActor() && scopeGeneration.current === scope;
+    pendingFocus.current = null;
+    setBusyId(list.id);
+    setActionError(null);
+    try {
+      const { data: updated } = await setAdminListFeatured(list.id, list.featuredPosition === null);
+      if (!sameActor()) return;
+      if (!sameQuery()) { setRevision(value => value + 1); return; }
+      setData(current => current ? { ...current, content: current.content.map(item => item.id === updated.id ? updated : item) } : current);
+      pendingFocus.current = { scope, origin, target: "featured", id: list.id };
+    } catch {
+      if (!sameActor()) return;
+      if (!sameQuery()) { setRevision(value => value + 1); return; }
+      setActionError("featured");
+      pendingFocus.current = { scope, origin, target: "error" };
+    } finally {
+      if (sameActor()) { mutationToken.current = null; setBusyId(null); }
+    }
+  };
+
   const remove = async (list: AdminList, origin: HTMLButtonElement) => {
     if (list.listType !== "CUSTOM" || mutationToken.current !== null) return;
     const token = {};
@@ -190,7 +221,7 @@ export default function AdminLists() {
 
   return <section ref={sectionRef} className={`${styles.section} ${styles.listsSection}`} aria-label={t("adminAllLists")} aria-busy={loading || busyId !== null}>
     <h2 className={styles.title} ref={heading} tabIndex={-1}>{t("adminAllLists")}</h2>
-    {actionError && <p className={`${styles.error} ${styles.listActionFocus}`} ref={mutationAlert} tabIndex={-1} role="alert">{t(actionError === "visibility" ? "adminListVisibilityError" : "adminListDeleteError")}</p>}
+    {actionError && <p className={`${styles.error} ${styles.listActionFocus}`} ref={mutationAlert} tabIndex={-1} role="alert">{t(actionError === "visibility" ? "adminListVisibilityError" : actionError === "featured" ? "adminListFeaturedError" : "adminListDeleteError")}</p>}
     {loading && <AdminLoading label={t("loading")} layout="lists" />}
     {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => {
       pendingFocus.current = { scope: scopeGeneration.current, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, target: "retry" };
@@ -211,8 +242,10 @@ export default function AdminLists() {
             <time dateTime={list.createdAt}>{formatReviewDate(list.createdAt, lang)}</time>
           </div>
           <p className={styles.listStatus}>{list.isPublic ? t("publicList") : t("hiddenList")}</p>
+          {list.featuredPosition !== null && <p className={styles.listStatus}>{t("featuredPositionLabel")} {list.featuredPosition + 1}</p>}
           <div className={styles.rowActions}>
             <button ref={button => { if (button) visibilityButtons.current.set(list.id, button); else visibilityButtons.current.delete(list.id); }} type="button" aria-busy={busyId === list.id} disabled={busyId !== null} onClick={event => void toggleVisibility(list, event.currentTarget)}>{busyId === list.id ? t("loading") : list.isPublic ? t("hideList") : t("publishList")}</button>
+            {list.listType === "CUSTOM" && <button ref={button => { if (button) featuredButtons.current.set(list.id, button); else featuredButtons.current.delete(list.id); }} type="button" aria-busy={busyId === list.id} disabled={busyId !== null || (!list.isPublic && list.featuredPosition === null)} onClick={event => void toggleFeatured(list, event.currentTarget)}>{busyId === list.id ? t("loading") : t(list.featuredPosition === null ? "featureList" : "unfeatureList")}</button>}
             {list.listType === "CUSTOM" && <button type="button" aria-busy={busyId === list.id} disabled={busyId !== null} onClick={event => requestDelete(list, event.currentTarget)}>{busyId === list.id ? t("loading") : t("deleteList")}</button>}
           </div>
         </div>

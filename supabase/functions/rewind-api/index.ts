@@ -690,12 +690,13 @@ function toAdminUser(row: {
 function toAdminList(row: {
   id: string; user_id: string; username: string; name: string; description: string | null;
   list_type: AdminListResponse["listType"]; is_public: boolean; item_count: string;
-  created_at: string; updated_at: string;
+  created_at: string; updated_at: string; featured_position: number | null;
 }): AdminListResponse {
   return {
     id: safeId(row.id, "List ID"), userId: safeId(row.user_id, "User ID"), username: row.username,
     name: row.name, description: row.description, listType: row.list_type, isPublic: row.is_public,
     itemCount: Number(row.item_count), createdAt: row.created_at, updatedAt: row.updated_at,
+    featuredPosition: row.featured_position,
   };
 }
 
@@ -1276,11 +1277,11 @@ const handler = createRewindApiHandler({
         connection.queryObject<{
           id: string; user_id: string; username: string; name: string; description: string | null;
           list_type: AdminListResponse["listType"]; is_public: boolean; item_count: string;
-          created_at: string; updated_at: string;
+          created_at: string; updated_at: string; featured_position: number | null;
         }>({
           text: `SELECT l.id::text AS id, l.user_id::text AS user_id, u.username, l.name, l.description,
                         l.list_type, l.is_public, COUNT(li.id)::text AS item_count,
-                        l.created_at::text AS created_at, l.updated_at::text AS updated_at
+                        l.created_at::text AS created_at, l.updated_at::text AS updated_at, l.featured_position
                  FROM rewind.lists l JOIN rewind.users u ON u.id=l.user_id
                  LEFT JOIN rewind.list_items li ON li.list_id=l.id
                  GROUP BY l.id, u.username ORDER BY l.updated_at DESC LIMIT $1 OFFSET $2`,
@@ -1298,18 +1299,18 @@ const handler = createRewindApiHandler({
     const { connection, userId } = await beginAdminTransaction(authUser);
     try {
       const updated = await connection.queryObject({
-        text: "UPDATE rewind.lists SET is_public=$2, updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING id",
+        text: "UPDATE rewind.lists SET is_public=$2, featured_position=CASE WHEN $2 THEN featured_position ELSE NULL END, updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING id",
         args: [id, visible],
       });
       if (!updated.rows.length) { await connection.queryObject("COMMIT"); return null; }
       const row = await connection.queryObject<{
         id: string; user_id: string; username: string; name: string; description: string | null;
         list_type: AdminListResponse["listType"]; is_public: boolean; item_count: string;
-        created_at: string; updated_at: string;
+        created_at: string; updated_at: string; featured_position: number | null;
       }>({
         text: `SELECT l.id::text AS id, l.user_id::text AS user_id, u.username, l.name, l.description,
                       l.list_type, l.is_public, COUNT(li.id)::text AS item_count,
-                      l.created_at::text AS created_at, l.updated_at::text AS updated_at
+                      l.created_at::text AS created_at, l.updated_at::text AS updated_at, l.featured_position
                FROM rewind.lists l JOIN rewind.users u ON u.id=l.user_id
                LEFT JOIN rewind.list_items li ON li.list_id=l.id WHERE l.id=$1
                GROUP BY l.id, u.username`, args: [id],
@@ -1317,6 +1318,50 @@ const handler = createRewindApiHandler({
       await recordAdminAudit(connection, userId, visible ? "LIST_PUBLISHED" : "LIST_HIDDEN", "LIST", id, null);
       await connection.queryObject("COMMIT");
       return row.rows[0] ? toAdminList(row.rows[0]) : null;
+    } catch (error) {
+      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+      throw error;
+    } finally { connection.release(); }
+  },
+  async setAdminListFeatured(authUser, id, featured) {
+    const { connection, userId } = await beginAdminTransaction(authUser);
+    try {
+      await connection.queryObject("SELECT pg_advisory_xact_lock(1480, 1)");
+      const current = await connection.queryObject<{ id: string; featured_position: number | null; list_type: string; is_public: boolean; is_active: boolean }>({
+        text: `SELECT l.id::text AS id, l.featured_position, l.list_type, l.is_public, u.is_active
+               FROM rewind.lists l JOIN rewind.users u ON u.id=l.user_id WHERE l.id=$1 FOR UPDATE OF l`, args: [id],
+      });
+      const row = current.rows[0];
+      if (!row) { await connection.queryObject("COMMIT"); return null; }
+      if (featured && (row.list_type !== "CUSTOM" || !row.is_public || !row.is_active)) {
+        await connection.queryObject("COMMIT");
+        return "NOT_ELIGIBLE" as const;
+      }
+      if ((row.featured_position !== null) === featured) {
+        // Return the unchanged row through the same serializer below.
+      } else if (featured) {
+        const next = await connection.queryObject<{ next_position: number }>({
+          text: "SELECT COALESCE(MAX(featured_position) + 1, 0)::integer AS next_position FROM rewind.lists",
+        });
+        await connection.queryObject({ text: "UPDATE rewind.lists SET featured_position=$2 WHERE id=$1", args: [id, next.rows[0].next_position] });
+        await recordAdminAudit(connection, userId, "LIST_FEATURED", "LIST", id, `position=${next.rows[0].next_position}`);
+      } else {
+        await connection.queryObject({ text: "UPDATE rewind.lists SET featured_position=NULL WHERE id=$1", args: [id] });
+        await recordAdminAudit(connection, userId, "LIST_UNFEATURED", "LIST", id, null);
+      }
+      const updated = await connection.queryObject<{
+        id: string; user_id: string; username: string; name: string; description: string | null;
+        list_type: AdminListResponse["listType"]; is_public: boolean; item_count: string;
+        created_at: string; updated_at: string; featured_position: number | null;
+      }>({
+        text: `SELECT l.id::text AS id, l.user_id::text AS user_id, u.username, l.name, l.description,
+                      l.list_type, l.is_public, COUNT(li.id)::text AS item_count,
+                      l.created_at::text AS created_at, l.updated_at::text AS updated_at, l.featured_position
+               FROM rewind.lists l JOIN rewind.users u ON u.id=l.user_id LEFT JOIN rewind.list_items li ON li.list_id=l.id
+               WHERE l.id=$1 GROUP BY l.id, u.username`, args: [id],
+      });
+      await connection.queryObject("COMMIT");
+      return updated.rows[0] ? toAdminList(updated.rows[0]) : null;
     } catch (error) {
       try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
       throw error;
@@ -3900,6 +3945,7 @@ const handler = createRewindApiHandler({
       await connection.queryObject("SET ROLE rewind_edge_app");
       const tagFilter = feed === "all" && tag !== null;
       const teamFilter = feed === "team" ? " AND owner.is_hq = TRUE" : "";
+      const featuredFilter = feed === "featured" ? " AND l.featured_position IS NOT NULL" : "";
       const predicate = tagFilter
         ? `l.is_public = TRUE AND l.list_type = 'CUSTOM' AND owner.is_active = TRUE
            AND EXISTS (SELECT 1 FROM rewind.list_tags lt JOIN rewind.tags t ON t.id = lt.tag_id
@@ -3913,10 +3959,12 @@ const handler = createRewindApiHandler({
       const countResult = await connection.queryObject<{ total: string }>({
         text: `SELECT COUNT(${feed === "recently-liked" ? "DISTINCT l.id" : "*"})::text AS total
                FROM rewind.lists l JOIN rewind.users owner ON owner.id = l.user_id${countJoin}
-               WHERE ${predicate}${teamFilter}`,
+               WHERE ${predicate}${teamFilter}${featuredFilter}`,
         args: filterArgs,
       });
-      const orderBy = feed === "popular"
+      const orderBy = feed === "featured"
+        ? `l.featured_position ASC, l.id DESC`
+        : feed === "popular"
         ? `likes DESC, l.updated_at DESC, l.id DESC`
         : feed === "recently-liked"
         ? `recent_like_at DESC NULLS LAST, l.id DESC`
@@ -3947,7 +3995,7 @@ const handler = createRewindApiHandler({
                       (SELECT COUNT(*)::text FROM rewind.list_items li WHERE li.list_id = l.id) AS item_count
                       ${extraSelect}
                FROM rewind.lists l JOIN rewind.users owner ON owner.id = l.user_id${extraJoin}
-               WHERE ${predicate}${teamFilter}
+               WHERE ${predicate}${teamFilter}${featuredFilter}
                ORDER BY ${orderBy} LIMIT $${tagFilter ? 2 : 1} OFFSET $${tagFilter ? 3 : 2}`,
         args: listArgs,
       });

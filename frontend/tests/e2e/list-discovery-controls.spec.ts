@@ -88,7 +88,7 @@ test("long list tags fit mobile and desktop widths on the real API", async ({ pa
 });
 
 test("unfiltered public list feed selection keeps its real API endpoint", async ({ page }) => {
-  for (const feed of ["recent", "popular", "recently-liked", "team"]) {
+  for (const feed of ["recent", "popular", "recently-liked", "team", "featured"]) {
     const endpoint = feed === "recent" ? "/api/lists/public" : `/api/lists/public/${feed}`;
     const response = page.waitForResponse(item => new URL(item.url()).pathname === endpoint);
     await page.goto(`/en/lists/discover?feed=${feed}`);

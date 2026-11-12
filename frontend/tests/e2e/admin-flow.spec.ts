@@ -76,7 +76,7 @@ test("admin list table returns from an emptied last page", async ({ page }) => {
   const requestsAfterDelete: number[] = [];
   const list = (id: number, name: string) => ({
     id, userId: 1, username: "fixture-owner", name, description: null, listType: "CUSTOM",
-    isPublic: true, itemCount: 0, createdAt: "2026-10-17T00:00:00Z", updatedAt: "2026-10-17T00:00:00Z",
+    isPublic: true, itemCount: 0, createdAt: "2026-10-17T00:00:00Z", updatedAt: "2026-10-17T00:00:00Z", featuredPosition: null,
   });
   await page.route(/\/api\/admin\/lists(?:\?.*)?$/, async route => {
     const pageNumber = Number(new URL(route.request().url()).searchParams.get("page") ?? "0");

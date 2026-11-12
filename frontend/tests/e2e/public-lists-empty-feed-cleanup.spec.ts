@@ -16,17 +16,18 @@ const featuredList = {
   ],
 };
 
-async function mockLanding(page: Page, options: { featured?: boolean; failFeaturedOnce?: boolean; tags?: boolean } = {}) {
+async function mockLanding(page: Page, options: { featured?: boolean; crew?: boolean; failFeaturedOnce?: boolean; tags?: boolean } = {}) {
   let featuredRequests = 0;
   await page.route(url => url.pathname.startsWith("/api/"), async (route: Route) => {
     const { pathname } = new URL(route.request().url());
     if (pathname === "/api/users/me") return route.fulfill({ status: 401, json: {} });
     if (pathname === "/api/tags/popular") return route.fulfill({ json: options.tags ? [{ id: 989110, name: "Science fiction", slug: "science-fiction" }] : [] });
-    if (pathname === "/api/lists/public/team") {
+    if (pathname === "/api/lists/public/featured") {
       featuredRequests += 1;
       if (options.failFeaturedOnce && featuredRequests === 1) return route.fulfill({ status: 503, json: {} });
       return route.fulfill({ json: options.featured ? { ...emptyPage, content: [featuredList], totalPages: 1, totalElements: 1 } : emptyPage });
     }
+    if (pathname === "/api/lists/public/team") return route.fulfill({ json: options.crew ? { ...emptyPage, content: [{ ...featuredList, id: 989111, name: "A crew selection" }], totalPages: 1, totalElements: 1 } : emptyPage });
     if (["/api/lists/public/popular", "/api/lists/public/recently-liked", "/api/lists/public"].includes(pathname)) {
       return route.fulfill({ json: emptyPage });
     }
@@ -65,6 +66,20 @@ test("landing keeps only feeds with lists and keeps available tags", async ({ pa
   await expect(main.getByRole("heading", { name: "Recent lists" })).toHaveCount(0);
   await expect(main.getByRole("heading", { name: "Popular tags" })).toBeVisible();
   await expect(main.getByText("No public lists yet.", { exact: true })).toHaveCount(0);
+});
+
+test("Featured and Crew landing sections use separate API feeds", async ({ page }) => {
+  await mockLanding(page, { featured: true, crew: true });
+  await page.goto("/en/lists/discover");
+  const main = page.getByRole("main");
+  await expect(main).toHaveAttribute("aria-busy", "false");
+  const sections = main.locator('section[class*="landingSections"] > section[class*="landingSection"]');
+  const featured = sections.filter({ has: page.getByRole("heading", { name: "Featured lists" }) });
+  const crew = sections.filter({ has: page.getByRole("heading", { name: "Crew lists" }) });
+  await expect(featured.getByText("A useful film collection")).toBeVisible();
+  await expect(crew.getByText("A crew selection")).toBeVisible();
+  await expect(featured.getByText("A crew selection")).toHaveCount(0);
+  await expect(crew.getByText("A useful film collection")).toHaveCount(0);
 });
 
 test("failed list feed remains retryable while empty feeds stay hidden", async ({ page }) => {

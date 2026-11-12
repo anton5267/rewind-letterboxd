@@ -57,10 +57,11 @@ export interface UserListItem {
 
 export const getUserLists = () => api.get<UserList[]>("/lists/my");
 export const getUserListsPage = (page: number) => api.get<UserListPage>("/lists/my/page", { params: { page, size: 12 } });
-export const getPublicListFeed = (feed: "recent" | "popular" | "recently-liked" | "team", page: number, tag?: string, size = 12) => {
+export const getPublicListFeed = (feed: "recent" | "popular" | "recently-liked" | "team" | "featured", page: number, tag?: string, size = 12) => {
   const endpoint = feed === "popular" ? "/lists/public/popular"
     : feed === "recently-liked" ? "/lists/public/recently-liked"
-      : feed === "team" ? "/lists/public/team" : "/lists/public";
+      : feed === "team" ? "/lists/public/team"
+        : feed === "featured" ? "/lists/public/featured" : "/lists/public";
   return api.get<Page<PublicList>>(endpoint, { params: { page, size, ...(feed === "recent" && tag ? { tag } : {}) } });
 };
 export const getPublicList = (listId: string | number) => api.get<PublicListDetails>(`/lists/public/${listId}`);

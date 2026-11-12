@@ -13,7 +13,7 @@ const searchTabs = ["all", "films", "users", "lists", "tags", "people", "reviews
 
 const searchShortcuts = [
   { href: "/films", label: "films" },
-  { href: "/lists/discover?feed=team", label: "featuredLists" },
+  { href: "/lists/discover?feed=featured", label: "featuredLists" },
   { href: "/films?sort=rating_desc", label: "popularFilms" },
   { href: "/lists/discover", label: "searchLists" },
   { href: "/community", label: "searchMembers" },

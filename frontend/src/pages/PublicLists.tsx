@@ -11,42 +11,42 @@ import { toTagSlug } from "../utils/tagSlug";
 import { getUserInitial, getUserName } from "../utils/userIdentity";
 import styles from "./PublicLists.module.css";
 
-type Feed = "recent" | "popular" | "recently-liked" | "team";
-type LandingFeed = "featured" | "popular" | "recentlyLiked" | "recent";
+type Feed = "recent" | "popular" | "recently-liked" | "team" | "featured";
+type LandingFeed = "featured" | "popular" | "recentlyLiked" | "crew";
 
 const landingFeedRequests: { key: LandingFeed; feed: Feed }[] = [
-  { key: "featured", feed: "team" },
+  { key: "featured", feed: "featured" },
   { key: "popular", feed: "popular" },
   { key: "recentlyLiked", feed: "recently-liked" },
-  { key: "recent", feed: "recent" },
+  { key: "crew", feed: "team" },
 ];
 
 const createLandingLists = (): Record<LandingFeed, PublicList[]> => ({
   featured: [],
   popular: [],
   recentlyLiked: [],
-  recent: [],
+  crew: [],
 });
 
 const createLandingErrors = (): Record<LandingFeed, boolean> => ({
   featured: false,
   popular: false,
   recentlyLiked: false,
-  recent: false,
+  crew: false,
 });
 
 const createLandingLoading = (value = false): Record<LandingFeed, boolean> => ({
   featured: value,
   popular: value,
   recentlyLiked: value,
-  recent: value,
+  crew: value,
 });
 
 const createLandingRequestIds = (): Record<LandingFeed, number> => ({
   featured: 0,
   popular: 0,
   recentlyLiked: 0,
-  recent: 0,
+  crew: 0,
 });
 
 export default function PublicLists() {
@@ -58,7 +58,7 @@ export default function PublicLists() {
   const tag = rawTag ? toTagSlug(rawTag) : "";
   const filterLabel = rawTag.trim() || tag;
   const feedParam = searchParams.get("feed");
-  const feed: Feed = !tag && (feedParam === "popular" || feedParam === "recently-liked" || feedParam === "team") ? feedParam : "recent";
+  const feed: Feed = !tag && (feedParam === "popular" || feedParam === "recently-liked" || feedParam === "team" || feedParam === "featured") ? feedParam : "recent";
   const isLanding = !feedParam && !tag;
   const isTagged = Boolean(tag);
   const isFeedView = !isLanding && !isTagged;
@@ -211,32 +211,39 @@ export default function PublicLists() {
     { value: "recent", label: t("listFeedRecent") },
     { value: "popular", label: t("listFeedPopular") },
     { value: "recently-liked", label: t("listFeedRecentlyLiked") },
+    { value: "featured", label: t("featuredLists") },
     { value: "team", label: t("listFeedTeam") },
   ];
 
   const landingSections: { key: LandingFeed; feed: Feed; label: string }[] = [
-    { key: "featured", feed: "team", label: t("featuredLists") },
+    { key: "featured", feed: "featured", label: t("featuredLists") },
     { key: "popular", feed: "popular", label: t("popularThisWeek") },
     { key: "recentlyLiked", feed: "recently-liked", label: t("listFeedRecentlyLiked") },
-    { key: "recent", feed: "recent", label: t("listFeedRecent") },
+    { key: "crew", feed: "team", label: t("listFeedTeamSection") },
   ];
 
-  const feedHeroTitle = feed === "team"
+  const feedHeroTitle = feed === "featured"
     ? t("featuredLists")
+    : feed === "team"
+      ? t("listFeedTeamSection")
     : feed === "popular"
       ? t("popularListsTitle")
       : feed === "recently-liked"
         ? t("recentlyLikedListsTitle")
         : t("recentListsTitle");
-  const feedHeroIntro = feed === "team"
+  const feedHeroIntro = feed === "featured"
     ? t("featuredListsIntro")
+    : feed === "team"
+      ? t("crewListsIntro")
     : feed === "popular"
       ? t("popularListsIntro")
       : feed === "recently-liked"
         ? t("recentlyLikedListsIntro")
         : t("recentListsIntro");
-  const feedSectionHeading = feed === "team"
-    ? t("listFeedTeamSection")
+  const feedSectionHeading = feed === "featured"
+    ? t("featuredLists")
+    : feed === "team"
+      ? t("listFeedTeamSection")
     : feed === "popular"
       ? t("popularListsTitle")
       : feed === "recently-liked"
@@ -285,7 +292,7 @@ export default function PublicLists() {
   const anyLandingError = Object.values(landingErrors).some(Boolean);
   const showLandingEmpty = !anyLandingLoading && !anyLandingContent && !anyLandingError;
 
-  return <main className={`${styles.page} ${isLanding ? styles.landingPage : ""} ${isTagged ? styles.taggedPage : ""} ${isFeedView ? styles.feedPage : ""} ${feed === "team" ? styles.teamFeed : ""}`} aria-labelledby={isTagged ? "lists-grid-heading" : "public-lists-title"} aria-busy={loading || tagsLoading || anyLandingLoading}>
+  return <main className={`${styles.page} ${isLanding ? styles.landingPage : ""} ${isTagged ? styles.taggedPage : ""} ${isFeedView ? styles.feedPage : ""} ${feed === "team" || feed === "featured" ? styles.teamFeed : ""}`} aria-labelledby={isTagged ? "lists-grid-heading" : "public-lists-title"} aria-busy={loading || tagsLoading || anyLandingLoading}>
     <div className={styles.shell}>
       <section className={`${styles.hero} ${isLanding ? styles.landingHero : ""} ${isTagged ? styles.taggedHero : ""} ${isFeedView ? styles.feedHero : ""}`}>
         {isTagged ? <>

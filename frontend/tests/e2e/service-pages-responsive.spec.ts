@@ -78,7 +78,7 @@ test("admin shares the compact shell and keeps personal and platform metrics sep
   }], totalPages: 1, totalElements: 1 } }));
   await page.route("**/api/admin/lists**", route => route.fulfill({ json: { content: [{
     id: 900023, userId: 900011, username: "profile-fixture", name: "Lists fixture", description: null,
-    listType: "CUSTOM", isPublic: true, itemCount: 6, createdAt: "2026-01-01T00:00:00Z", updatedAt: "2026-01-01T00:00:00Z",
+    listType: "CUSTOM", isPublic: true, itemCount: 6, createdAt: "2026-01-01T00:00:00Z", updatedAt: "2026-01-01T00:00:00Z", featuredPosition: null,
   }], totalPages: 1, totalElements: 1 } }));
   await page.route("**/api/admin/moderation/queue**", route => route.fulfill({ json: { content: [{
     type: "REVIEW", id: 900021, parentId: null, movieId: 77, subject: "Review fixture", userId: 900011,

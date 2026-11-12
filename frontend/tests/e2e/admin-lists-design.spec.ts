@@ -3,21 +3,35 @@ import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 
 test("admin list cards retain contract-backed metadata across languages and responsive widths", async ({ page }) => {
+  let featuredPosition: number | null = null;
   await page.route("**/api/users/me", route => route.fulfill({ json: {
     id: 900010, username: "admin-fixture", role: "ADMIN", displayName: "Admin Fixture",
     email: "admin@example.invalid", avatarUrl: null, isActive: true, isHq: false,
   } }));
   await page.route("**/api/auth/csrf", route => route.fulfill({ json: { token: "admin-lists-design" } }));
   await page.route("**/api/*/unread-count", route => route.fulfill({ json: { count: 0 } }));
-  await page.route("**/api/admin/lists**", route => route.fulfill({ json: {
+  await page.route("**/api/admin/lists**", route => {
+    const url = new URL(route.request().url());
+    if (route.request().method() === "PUT" && /\/featured$/.test(url.pathname)) {
+      featuredPosition = url.searchParams.get("featured") === "true" ? 0 : null;
+      return route.fulfill({ json: {
+        id: 900023, userId: 900011, username: "fixture-owner", name: "A real API backed list",
+        description: "This description stays readable and grows naturally with its content.",
+        listType: "CUSTOM", isPublic: true, itemCount: 6,
+        createdAt: "2025-12-02T10:30:00Z", updatedAt: "2025-12-02T10:30:00Z", featuredPosition,
+      } });
+    }
+    return route.fulfill({ json: {
     content: [{
       id: 900023, userId: 900011, username: "fixture-owner", name: "A real API backed list",
       description: "This description stays readable and grows naturally with its content.",
       listType: "CUSTOM", isPublic: true, itemCount: 6,
       createdAt: "2025-12-02T10:30:00Z", updatedAt: "2025-12-02T10:30:00Z",
+      featuredPosition,
     }],
     totalPages: 1, totalElements: 1, number: 0, size: 50,
-  } }));
+    } });
+  });
 
   const captureDirectory = resolve(process.cwd(), "../artifacts/visual-audit-20261030/admin-lists-created-date-fixture");
   await mkdir(captureDirectory, { recursive: true });
@@ -33,6 +47,14 @@ test("admin list cards retain contract-backed metadata across languages and resp
       await expect(card.getByText(label, { exact: true })).toBeVisible();
       await expect(card.locator("time")).toHaveAttribute("dateTime", "2025-12-02T10:30:00Z");
       await expect(card.getByRole("button", { name: locale === "uk" ? "Приховати" : "Hide" })).toBeVisible();
+      await expect(card.getByRole("button", { name: locale === "uk" ? "Додати до вибраних" : "Feature list" })).toBeVisible();
+      if (width === 320) {
+        const featureButton = card.getByRole("button", { name: locale === "uk" ? "Додати до вибраних" : "Feature list" });
+        await featureButton.click();
+        await expect(card.getByText(locale === "uk" ? "Позиція у вибраних: 1" : "Featured position: 1")).toBeVisible();
+        await card.getByRole("button", { name: locale === "uk" ? "Прибрати з вибраних" : "Remove from featured" }).click();
+        await expect(featureButton).toBeVisible();
+      }
       await expect(lists.getByRole("button", { name: /reported lists|скаргами на списки/i })).toHaveCount(0);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
       if ((locale === "uk" && width === 1440) || (locale === "en" && width === 393)) {

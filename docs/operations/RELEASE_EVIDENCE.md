@@ -1,5 +1,21 @@
 # Rewind — докази перевірок
 
+### Featured/Crew curation — live Edge rollout — 12.11.2026
+
+- До застосування: Supabase `rewind-api` v31, migration history до `20261112042014`; 2 REWIND profiles, 6 private system lists, 0 public CUSTOM lists. Користувацькі записи для цієї функції не створювалися.
+- Застосовано `20261112050323_list_featured_curation` у приватній `rewind` schema. Read-back підтвердив RLS enabled, колонку/check/partial unique index, UPDATE grant для `rewind_edge_app`, відсутність такого grant у `anon` та 0 featured lists.
+- Розгорнуто `rewind-api` **v32 ACTIVE** (`verify_jwt=false` як і раніше). Live source read-back підтвердив збереження чинних TMDB refresh, movie publication та review reports шляхів.
+- Перевірки коду: Deno handler **73/73**, `deno check`, `npm run verify:build` (305 modules), targeted Playwright **7/7**. PostgreSQL 16 disposable migration check підтвердив unique position і grant boundary; контейнер видалено.
+- Production GET smoke: `/api/lists/public/featured?page=0&size=12` — **200, 0 items**; `/api/lists/public/team?page=0&size=12` — **200, 0 items**; `/api/genres` — **200, 17**; `/api/movies/search?page=0&size=2` — **200, total 50**. Порожні Featured/Crew feeds відповідають поточним даним (публічних CUSTOM/team lists немає).
+- На цьому етапі GitHub Pages frontend ще не оновлений цією функцією. Не змінювали Auth users, profile/list contents, локальний MySQL Compose/data; не створювали тестові публічні списки.
+
+### Featured/Crew list curation — локальна реалізація — 12.11.2026
+
+- У відокремленій гілці `feature/list-discovery-curation` додано `featured_position` у приватній `rewind.lists`, non-negative check, unique partial index і колонковий UPDATE grant лише для `rewind_edge_app`. Admin mutation перевіряє поточну серверну ADMIN-роль через наявний транзакційний шлях; дозволяє вмикати Featured лише для активного власника й публічного CUSTOM списку, audit-ить зміни, а приховування автоматично знімає Featured. Відповідь/видимість ролей браузера не розширювали.
+- `GET /api/lists/public/featured` фільтрує публічні CUSTOM списки активних авторів за curation position; `GET /team` лишається окремим Crew/HQ feed. Vite landing тепер розрізняє Featured і Crew; Admin Lists має локалізований toggle/позицію.
+- Перевірки: frontend `npm run verify:build`; Deno handler **73/73**; `deno check` для `index.ts` і `handler.ts`; Playwright Featured Figma desktop/phone **2/2**, landing empty/section separation/retry **4/4**, Admin Lists UK/EN responsive + curation toggle **1/1**. PostgreSQL 16 тимчасовий контейнер застосував міграцію; перевірені Edge-role column grant, відсутність такого grant у `anon` та унікальність позицій. Контейнер після тесту видалено.
+- Межі: перевірений SQL — лише нова міграція на тимчасовій БД; live Supabase migration, Edge deploy, Pages deploy, локальний MySQL Compose/data не змінювалися. Наявні production Pages build і Figma filled-state не є live acceptance для нових маршрутів. Порядок Featured зараз задається часом добирання через послідовну позицію; UI ручного drag/reorder не додавався.
+
 ### Supabase Edge admin movie catalog and quality — 09.11.2026
 
 - Added local migration `20261109183005_edge_admin_movies.sql` with narrow movie-column mutation grants and RLS policies requiring an active REWIND admin. Existing catalog reader remains read-only.

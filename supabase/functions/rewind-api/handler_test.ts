@@ -459,9 +459,10 @@ Deno.test("public list feeds preserve paging and tag filters across Spring route
   const popular = await handler(new Request("https://project.supabase.co/api/lists/public/popular?page=2&size=0"));
   const recent = await handler(new Request("https://project.supabase.co/api/lists/public/recently-liked"));
   const team = await handler(new Request("https://project.supabase.co/api/lists/public/team"));
+  const featured = await handler(new Request("https://project.supabase.co/api/lists/public/featured?page=1&size=6"));
   const body = await all.json();
-  if ([all, popular, recent, team].some((response) => response.status !== 200)
-    || calls.join(",") !== "all:sci-fi:0:50,popular:-:2:1,recently-liked:-:0:20,team:-:0:20"
+  if ([all, popular, recent, team, featured].some((response) => response.status !== 200)
+    || calls.join(",") !== "all:sci-fi:0:50,popular:-:2:1,recently-liked:-:0:20,team:-:0:20,featured:-:1:6"
     || body.totalElements !== 25 || all.headers.get("Cache-Control") !== "public, max-age=300, stale-while-revalidate=600") {
     throw new Error(`Unexpected public list page contract: ${JSON.stringify({ calls, body })}`);
   }
@@ -1488,10 +1489,11 @@ Deno.test("admin user routes preserve paging, fields, validation, active/HQ acti
 Deno.test("admin list routes preserve paging, visibility updates, deletion guards, and authorization", async () => {
   const calls: unknown[] = [];
   const list = { id: 19, userId: 4, username: "member", name: "Favorites", description: "Films",
-    listType: "CUSTOM" as const, isPublic: true, itemCount: 3, createdAt: "2026-11-01T10:00:00Z", updatedAt: "2026-11-09T10:00:00Z" };
+    listType: "CUSTOM" as const, isPublic: true, itemCount: 3, createdAt: "2026-11-01T10:00:00Z", updatedAt: "2026-11-09T10:00:00Z", featuredPosition: null };
   const handler = authHandler({
     async getAdminLists(_auth, page, size) { calls.push(["list", page, size]); return { content: [list], totalPages: 1, totalElements: 1, number: page }; },
     async setAdminListVisibility(_auth, id, visible) { calls.push(["visibility", id, visible]); return id === 19 ? { ...list, isPublic: visible } : null; },
+    async setAdminListFeatured(_auth, id, featured) { calls.push(["featured", id, featured]); return id === 19 ? { ...list, featuredPosition: featured ? 0 : null } : id === 21 ? "NOT_ELIGIBLE" : null; },
     async deleteAdminList(_auth, id) { calls.push(["delete", id]); return id === 19 ? "OK" : id === 20 ? "SYSTEM_LIST" : "NOT_FOUND"; },
   });
   const headers = { Authorization: "Bearer valid-token" };
@@ -1501,13 +1503,18 @@ Deno.test("admin list routes preserve paging, visibility updates, deletion guard
   const hide = await handler(new Request("https://project.supabase.co/api/admin/lists/19/visibility?visible=false", { method: "PUT", headers }));
   const invalidVisibility = await handler(new Request("https://project.supabase.co/api/admin/lists/19/visibility?visible=yes", { method: "PUT", headers }));
   const missing = await handler(new Request("https://project.supabase.co/api/admin/lists/99/visibility?visible=true", { method: "PUT", headers }));
+  const feature = await handler(new Request("https://project.supabase.co/api/admin/lists/19/featured?featured=true", { method: "PUT", headers }));
+  const unfeature = await handler(new Request("https://project.supabase.co/api/admin/lists/19/featured?featured=false", { method: "PUT", headers }));
+  const invalidFeatured = await handler(new Request("https://project.supabase.co/api/admin/lists/19/featured?featured=yes", { method: "PUT", headers }));
+  const ineligible = await handler(new Request("https://project.supabase.co/api/admin/lists/21/featured?featured=true", { method: "PUT", headers }));
   const deleted = await handler(new Request("https://project.supabase.co/api/admin/lists/19", { method: "DELETE", headers }));
   const systemDelete = await handler(new Request("https://project.supabase.co/api/admin/lists/20", { method: "DELETE", headers }));
   if (unauthenticated.status !== 401 || page.status !== 200 || (await page.json()).content[0].itemCount !== 3
     || invalidPage.status !== 400 || hide.status !== 200 || (await hide.json()).isPublic !== false
-    || invalidVisibility.status !== 400 || missing.status !== 404 || deleted.status !== 204
-    || systemDelete.status !== 400 || JSON.stringify(calls) !== JSON.stringify([["list", 0, 100], ["visibility", 19, false], ["visibility", 99, true], ["delete", 19], ["delete", 20]])) {
-    throw new Error(`Admin list contract changed: ${JSON.stringify({ calls, statuses: [unauthenticated.status, page.status, invalidPage.status, hide.status, invalidVisibility.status, missing.status, deleted.status, systemDelete.status] })}`);
+    || invalidVisibility.status !== 400 || missing.status !== 404 || feature.status !== 200 || (await feature.json()).featuredPosition !== 0
+    || unfeature.status !== 200 || (await unfeature.json()).featuredPosition !== null || invalidFeatured.status !== 400 || ineligible.status !== 409 || deleted.status !== 204
+    || systemDelete.status !== 400 || JSON.stringify(calls) !== JSON.stringify([["list", 0, 100], ["visibility", 19, false], ["visibility", 99, true], ["featured", 19, true], ["featured", 19, false], ["featured", 21, true], ["delete", 19], ["delete", 20]])) {
+    throw new Error(`Admin list contract changed: ${JSON.stringify({ calls, statuses: [unauthenticated.status, page.status, invalidPage.status, hide.status, invalidVisibility.status, missing.status, feature.status, unfeature.status, invalidFeatured.status, ineligible.status, deleted.status, systemDelete.status] })}`);
   }
 });
 

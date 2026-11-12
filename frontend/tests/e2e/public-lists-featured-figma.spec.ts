@@ -18,12 +18,12 @@ test("featured lists follows the raw desktop Figma card rhythm", async ({ page }
     if (url.pathname === "/api/users/me") return route.fulfill({ status: 401, json: {} });
     if (url.pathname === "/api/users/popular-reviewers") return route.fulfill({ json: [] });
     if (url.pathname === "/api/tags/popular") return route.fulfill({ json: [] });
-    if (url.pathname === "/api/lists/public/team") return route.fulfill({ json: { content: lists, totalPages: 1, totalElements: lists.length, number: 0, size: 12 } });
+    if (url.pathname === "/api/lists/public/featured") return route.fulfill({ json: { content: lists, totalPages: 1, totalElements: lists.length, number: 0, size: 12 } });
     return route.fulfill({ json: { content: [], totalPages: 0, totalElements: 0, number: 0, size: 0 } });
   });
 
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/en/lists/discover?feed=team");
+  await page.goto("/en/lists/discover?feed=featured");
   const main = page.getByRole("main");
   await expect(main).toHaveAttribute("aria-busy", "false");
   const hero = main.locator('section[class*="feedHero"]');
@@ -46,9 +46,9 @@ test("featured lists keeps the phone feed inside the viewport", async ({ page })
   await page.route("**/api/users/me", route => route.fulfill({ status: 401, json: {} }));
   await page.route("**/api/users/popular-reviewers**", route => route.fulfill({ json: [] }));
   await page.route("**/api/tags/popular", route => route.fulfill({ json: [] }));
-  await page.route("**/api/lists/public/team**", route => route.fulfill({ json: { content: lists, totalPages: 1, totalElements: lists.length, number: 0, size: 12 } }));
+  await page.route("**/api/lists/public/featured**", route => route.fulfill({ json: { content: lists, totalPages: 1, totalElements: lists.length, number: 0, size: 12 } }));
   await page.setViewportSize({ width: 393, height: 844 });
-  await page.goto("/uk/lists/discover?feed=team");
+  await page.goto("/uk/lists/discover?feed=featured");
   await expect(page.getByRole("main")).toHaveAttribute("aria-busy", "false");
   const overflow = await page.evaluate(() => ({ width: document.documentElement.scrollWidth, elements: [...document.querySelectorAll("body *")].filter(element => element.getBoundingClientRect().right > innerWidth + 1).slice(0, 8).map(element => ({ tag: element.tagName, className: String(element.className), right: element.getBoundingClientRect().right, width: element.getBoundingClientRect().width })) }));
   expect(overflow.width, JSON.stringify(overflow.elements)).toBeLessThanOrEqual(393);

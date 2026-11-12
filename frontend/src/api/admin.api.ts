@@ -25,7 +25,7 @@ export interface TmdbSyncBatchResponse { requested: number; succeeded: number; f
 export interface TmdbDiscoveryRequest { page: number; year?: number; genreId?: number; minRating?: number; limit: number; syncSimilar?: boolean }
 export interface TmdbDiscoveryImportResponse { page: number; totalPages: number; totalResults: number; discovered: number; imports: TmdbBatchSyncResponse }
 export interface TmdbQualityReport { totalMovies: number; tmdbLinkedMovies: number; completeTmdbMovies: number; missingPoster: number; missingBackdrop: number; missingPlot: number; missingRuntime: number; missingTrailer: number; missingTmdbRating: number; linkedCoveragePercent: number; metadataCompletenessPercent: number }
-export interface AdminList { id: number; userId: number; username: string; name: string; description: string | null; listType: string; isPublic: boolean; itemCount: number; createdAt: string; updatedAt: string }
+export interface AdminList { id: number; userId: number; username: string; name: string; description: string | null; listType: string; isPublic: boolean; itemCount: number; createdAt: string; updatedAt: string; featuredPosition: number | null }
 export interface AdminConversation { id: number; userOneId: number; userTwoId: number; messageCount: number; createdAt: string; updatedAt: string; lastMessageAt: string | null }
 export interface AdminNotification { id: number; recipientId: number; actorId: number | null; type: string; reviewId: number | null; createdAt: string; readAt: string | null }
 export interface AdminNotificationWrite { recipientId: number; type: "FOLLOW" | "REVIEW_LIKED"; actorId?: number | null; relatedUserId?: number | null; reviewId?: number | null }
@@ -67,6 +67,7 @@ export const discoverAndImportAdminTmdb = (request: TmdbDiscoveryRequest) => api
 export const getAdminTmdbQuality = () => api.get<TmdbQualityReport>("/admin/movies/tmdb-quality");
 export const getAdminLists = (page = 0) => api.get<Page<AdminList>>("/admin/lists", { params: { size: 50, page } });
 export const setAdminListVisibility = (id: number, visible: boolean) => api.put<AdminList>(`/admin/lists/${id}/visibility`, null, { params: { visible } });
+export const setAdminListFeatured = (id: number, featured: boolean) => api.put<AdminList>(`/admin/lists/${id}/featured`, null, { params: { featured } });
 export const deleteAdminList = (id: number) => api.delete<void>(`/admin/lists/${id}`);
 export const getAdminConversations = (page = 0) => api.get<Page<AdminConversation>>("/admin/conversations", { params: { size: 50, page } });
 export const getAdminNotifications = (filters: AdminNotificationFilters = {}, page = 0) => api.get<Page<AdminNotification>>("/admin/notifications", { params: { size: 50, page, ...filters } });

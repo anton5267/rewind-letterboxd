@@ -201,7 +201,7 @@ export interface AdminUserOverviewResponse {
 export interface AdminListResponse {
   id: number; userId: number; username: string; name: string; description: string | null;
   listType: "CUSTOM" | "WATCHED" | "WATCHLIST" | "FAVORITES"; isPublic: boolean; itemCount: number;
-  createdAt: string; updatedAt: string;
+  createdAt: string; updatedAt: string; featuredPosition: number | null;
 }
 export interface AdminAuditLogResponse {
   id: number; adminId: number; action: string; targetType: string; targetId: number | null; metadata: string | null; createdAt: string;
@@ -439,7 +439,7 @@ export interface RewindApiRepository {
   getReviewLikeStatus?(authUser: HostedAuthUser, reviewId: number): Promise<{ liked: boolean; likes: number } | null>;
   likeReview?(authUser: HostedAuthUser, reviewId: number): Promise<boolean>;
   unlikeReview?(authUser: HostedAuthUser, reviewId: number): Promise<boolean>;
-  getPublicLists?(feed: "all" | "popular" | "recently-liked" | "team", tag: string | null, page: number, size: number): Promise<PublicListPageResponse>;
+  getPublicLists?(feed: "all" | "popular" | "recently-liked" | "team" | "featured", tag: string | null, page: number, size: number): Promise<PublicListPageResponse>;
   getPopularTags?(size: number): Promise<PopularTagResponse[]>;
   getMyLists?(authUser: HostedAuthUser): Promise<MyListResponse[]>;
   getMyListsPage?(authUser: HostedAuthUser, page: number, size: number): Promise<MyListPageResponse>;
@@ -528,6 +528,7 @@ export interface RewindApiRepository {
   setAdminUserHq?(authUser: HostedAuthUser, id: number, hq: boolean): Promise<AdminUserResponse | null>;
   getAdminLists?(authUser: HostedAuthUser, page: number, size: number): Promise<{ content: AdminListResponse[]; totalPages: number; totalElements: number; number: number }>;
   setAdminListVisibility?(authUser: HostedAuthUser, id: number, visible: boolean): Promise<AdminListResponse | null>;
+  setAdminListFeatured?(authUser: HostedAuthUser, id: number, featured: boolean): Promise<AdminListResponse | null | "NOT_ELIGIBLE">;
   deleteAdminList?(authUser: HostedAuthUser, id: number): Promise<"OK" | "NOT_FOUND" | "SYSTEM_LIST">;
   getAdminDashboard?(authUser: HostedAuthUser): Promise<AdminDashboardResponse>;
   getAdminAuditLogs?(authUser: HostedAuthUser, page: number, size: number): Promise<{ content: AdminAuditLogResponse[]; totalPages: number; totalElements: number; number: number }>;
@@ -577,7 +578,7 @@ const REVIEW_DETAILS_PATTERN = /^\/api\/reviews\/(\d+)$/;
 const REVIEW_COMMENTS_PATTERN = /^\/api\/reviews\/(\d+)\/comments$/;
 const REVIEW_LIKES_PATTERN = /^\/api\/reviews\/(\d+)\/(likes|like-status)$/;
 const COMMENT_PATTERN = /^\/api\/comments\/(\d+)$/;
-const PUBLIC_LIST_FEED_PATTERN = /^\/api\/lists\/public(?:\/(popular|recently-liked|team))?$/;
+const PUBLIC_LIST_FEED_PATTERN = /^\/api\/lists\/public(?:\/(popular|recently-liked|team|featured))?$/;
 const PUBLIC_LIST_DETAILS_PATTERN = /^\/api\/lists\/public\/(\d+)(?:\/(like-status))?$/;
 const PUBLIC_LIST_LIKE_PATTERN = /^\/api\/lists\/(\d+)\/likes$/;
 const POPULAR_TAGS_PATH = "/api/tags/popular";
@@ -624,7 +625,7 @@ const ADMIN_NOTIFICATION_READ_ALL_PATH = "/api/admin/notifications/read-all";
 const ADMIN_USERS_PATH = "/api/admin/users";
 const ADMIN_USER_PATTERN = /^\/api\/admin\/users\/(\d+)(?:\/(overview|activate|deactivate|hq))?$/;
 const ADMIN_LISTS_PATH = "/api/admin/lists";
-const ADMIN_LIST_PATTERN = /^\/api\/admin\/lists\/(\d+)(?:\/(visibility))?$/;
+const ADMIN_LIST_PATTERN = /^\/api\/admin\/lists\/(\d+)(?:\/(visibility|featured))?$/;
 const ADMIN_DASHBOARD_PATH = "/api/admin/dashboard";
 const ADMIN_AUDIT_LOGS_PATH = "/api/admin/audit-logs";
 const ADMIN_SETTINGS_PATH = "/api/admin/settings";
@@ -817,7 +818,8 @@ export function createRewindApiHandler(
     const adminListMatch = path.match(ADMIN_LIST_PATTERN);
     if (path === ADMIN_LISTS_PATH || adminListMatch) {
       const isVisibilityRoute = adminListMatch?.[2] === "visibility";
-      const allowed = adminListMatch ? (isVisibilityRoute ? ["PUT"] : ["DELETE"]) : ["GET"];
+      const isFeaturedRoute = adminListMatch?.[2] === "featured";
+      const allowed = adminListMatch ? (isVisibilityRoute || isFeaturedRoute ? ["PUT"] : ["DELETE"]) : ["GET"];
       if (!allowed.includes(request.method)) {
         corsHeaders.set("Allow", `${allowed.join(", ")}, OPTIONS`);
         return json({ message: "Method not allowed" }, 405, corsHeaders);
@@ -833,11 +835,16 @@ export function createRewindApiHandler(
         }
         const id = parseRouteId(adminListMatch[1]);
         if (id === null) return json({ message: "Invalid list ID" }, 400, corsHeaders);
-        if (isVisibilityRoute) {
+        if (isVisibilityRoute || isFeaturedRoute) {
           const visible = parseOptionalBoolean(query.get("visible"));
-          if (visible === null || visible === INVALID_QUERY) return json({ message: "Invalid visibility" }, 400, corsHeaders);
-          if (!repository.setAdminListVisibility) return json({ message: "Not found" }, 404, corsHeaders);
-          const result = await repository.setAdminListVisibility(authUser, id, visible);
+          const value = isFeaturedRoute ? parseOptionalBoolean(query.get("featured")) : visible;
+          if (value === null || value === INVALID_QUERY) return json({ message: isFeaturedRoute ? "Invalid featured value" : "Invalid visibility" }, 400, corsHeaders);
+          const operation = isFeaturedRoute ? repository.setAdminListFeatured : repository.setAdminListVisibility;
+          if (!operation) return json({ message: "Not found" }, 404, corsHeaders);
+          const result = isFeaturedRoute
+            ? await repository.setAdminListFeatured!(authUser, id, value)
+            : await repository.setAdminListVisibility!(authUser, id, value);
+          if (result === "NOT_ELIGIBLE") return json({ message: "Only active public custom lists can be featured" }, 409, corsHeaders);
           return result ? json(result, 200, corsHeaders) : json({ message: "List not found" }, 404, corsHeaders);
         }
         if (!repository.deleteAdminList) return json({ message: "Not found" }, 404, corsHeaders);
@@ -1559,7 +1566,7 @@ export function createRewindApiHandler(
       }
       const page = Math.max(0, requestedPage);
       const size = Math.max(1, Math.min(requestedSize, 50));
-      const feed = (publicListFeedMatch[1] ?? "all") as "all" | "popular" | "recently-liked" | "team";
+      const feed = (publicListFeedMatch[1] ?? "all") as "all" | "popular" | "recently-liked" | "team" | "featured";
       const tag = feed === "all" ? query.get("tag")?.trim().toLowerCase() || null : null;
       if (tag && tag.length > 60) return json({ message: "Invalid tag" }, 400, corsHeaders);
       try {
