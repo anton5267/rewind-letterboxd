@@ -6679,6 +6679,12 @@ Added a local Supabase Edge Function router with the existing public `GET /api/g
 - No API mutation, role change, test report, or user-data change was performed. The live report queue remains empty; no dismiss test was attempted.
 - The browser surface could open the route, so the earlier Windows bridge failure is no longer the next-action blocker. An Admin-authorized browser session is still needed for the real read-only UI inspection.
 
+### Authenticated non-admin session still fails Admin guard — 12.11.2026
+
+- Opened the published `/en/admin/?view=movies` route in a fresh tab using the existing Chrome profile. It redirected to `/en/home`.
+- The rendered Home title was “Welcome back…”. Current source `Home.tsx` renders that text only when `isAuth` is true; `AdminDashboard.tsx` redirects when `!isAuth || user.role !== "ADMIN"`. Together, this establishes that the tested session is authenticated but does not satisfy the ADMIN role guard.
+- This does not identify which REWIND profile owns the browser session, and it is not Admin UI acceptance. No role, user, report, or other live data was changed. A real Admin-authorized session is still needed.
+
 ### Supabase Auth URL configuration Dashboard read-back — 12.11.2026
 
 - Read the already-open authenticated Chrome Dashboard at `Authentication → URL Configuration`; no settings were edited.
