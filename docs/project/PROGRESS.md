@@ -10,6 +10,8 @@
 - Admin Movies, report queue та Featured/Crew реалізовані в Edge v33 і frontend. Report queue порожня; живе dismiss не тестувався. Поточна браузерна сесія автентифікована, але не проходить ADMIN role guard; роль не змінювалася.
 - PostgreSQL baseline, MySQL-сумісність і локальний data-import rehearsal перевірені окремо від звичайного MySQL Compose. Full backend suite: 145/145 на PostgreSQL 17 та MySQL 8.4; import API flow: 21/21. Локальну MySQL базу й Compose не переносили.
 
+- **Безпека (Supabase advisors, 12.11 о 10:00 UTC):** 3 INFO про приватні таблиці з RLS без policy; read-only перевірка підтвердила, що `anon`, `authenticated`, `rewind_edge_reader` та `rewind_edge_app` не мають табличних прав на них. `pg_net` встановлений у `public`, але активний cron використовує `net.http_post`, тому не переносити extension без заміни й репетиції залежності. Захист від витоклих паролів вимкнений; Supabase надає його лише на Pro+, тож на поточному Free увімкнути не можна. Performance advisor показує 15 невикористаних індексів; Health findings немає. [Details](../operations/RELEASE_EVIDENCE.md#supabase-advisor-and-private-table-grants--12112026).
+
 ## Відкрито
 
 1. Пройти окремі UK/EN Auth token callbacks і deletion/outbox cleanup лише для disposable identity; звичайний профіль не видаляти.

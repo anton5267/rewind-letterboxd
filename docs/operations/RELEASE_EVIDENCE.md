@@ -6706,3 +6706,11 @@ Added a local Supabase Edge Function router with the existing public `GET /api/g
 - The live recovery subject/body select language from `.RedirectTo` when it exactly matches the configured EN or UK reset route, with `.Data.language` as fallback. The checked-in `recovery.html`, `config.toml`, and Management API helper used only `.Data.language`, so an EN recovery route could get a Ukrainian subject/body when the user's stored metadata was UK.
 - Updated those three local sources to match the observed live language-selection behavior. This aligns the version-controlled source of truth and future helper payload with the already-live template; no hosted template, email, account, role, schema, Pages runtime, or MySQL/Compose data was changed.
 - Supabase docs confirm `RedirectTo` is the redirect URL passed by the auth method. Source/diff verification is relevant to this template/config-only reconciliation; no live callback or email was initiated.
+
+### Supabase advisor and private-table grants — 12.11.2026
+
+- Live read-only advisors at 10:00 UTC reported 3 INFO findings for RLS-enabled private tables without policies (`rewind.password_reset_tokens`, `rewind.refresh_sessions`, `rewind.review_archive`); one WARN for `pg_net` installed in `public`; one WARN for disabled leaked-password protection; 15 unused-index INFO findings; and no Health findings.
+- A read-only `has_table_privilege` check confirmed `anon`, `authenticated`, `rewind_edge_reader`, and `rewind_edge_app` have no SELECT, INSERT, UPDATE, or DELETE privilege on those three tables. The no-policy advisor entries therefore remain closed behind the grant boundary.
+- The active `rewind-tmdb-refresh-daily` cron uses `net.http_post`; moving `pg_net` without replacing and rehearsing that dependency could break the scheduled refresh. No extension or cron change was made.
+- Supabase's [password security documentation](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) states leaked-password protection is available on Pro and above. The project is on Free, so this advisor warning cannot be remediated without changing the agreed plan. No plan upgrade was made.
+- This was a read-only inspection; no schema, roles, Auth settings, index, catalog, user data, or deployment changed.
