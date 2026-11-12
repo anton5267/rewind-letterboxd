@@ -13,6 +13,7 @@ import {
   syncAdminMoviesTmdb,
   updateAdminMovie,
   type AdminMovie,
+  type AdminMovieCatalog,
   type AdminMovieWrite,
   type AdminTmdbMovieCandidate,
   type TmdbDiscoveryRequest,
@@ -76,7 +77,7 @@ const tmdbSearchHref = (movie: AdminMovie) => {
 export default function AdminMovies({ onTotalChange }: Props) {
   const { lang, t } = useLocale();
   const { user } = useAuth();
-  const [data, setData] = useState<Page<AdminMovie> | null>(null);
+  const [data, setData] = useState<Page<AdminMovieCatalog> | null>(null);
   const [page, setPage] = useState(0);
   const [searchDraft, setSearchDraft] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -417,7 +418,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
       } else {
         const { data: updated } = await updateAdminMovie(editingMovieId, payload);
         if (!currentScope()) return;
-        setData(current => current ? { ...current, content: current.content.map(item => item.id === updated.id ? updated : item) } : current);
+        setData(current => current ? { ...current, content: current.content.map(item => item.id === updated.id ? { ...item, ...updated } : item) } : current);
       }
       if (!currentEditor()) return;
       resetMovieDraft();
@@ -832,6 +833,11 @@ export default function AdminMovies({ onTotalChange }: Props) {
               <div className={styles.movieCardHeading}>
                 <div><h3>{movieTitle}</h3><p>{movie.releaseDate || "—"}</p></div>
                 <span className={styles.movieRating} aria-label={`${t("rating")}: ${movie.rating ?? "—"}`}>★ {movie.rating ?? "—"}</span>
+              </div>
+              <div className={styles.movieMetadata} aria-label={t("adminMovieMetadata")}>
+                {movie.ageRating && <span>{t("ageRating")}: {movie.ageRating}</span>}
+                {movie.durationMinutes !== null && <span>{t("movieDurationMinutes")}: {movie.durationMinutes}</span>}
+                <span>{t("adminMovieVisibleReviews")}: {movie.reviewCount}</span>
               </div>
               <div className={styles.movieCardActions}>
                 <button type="button" data-admin-movie-edit-id={movie.id} disabled={mutationBusy} onClick={event => editMovie(movie, event.currentTarget)}>{t("editMovie")}</button>

@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 // These controlled API responses test UI validation and focus, never TMDB or a database.
 async function adminMovieFixture(page: Page, options: { candidateStatus?: number } = {}) {
-  const movie = { id: 940001, tmdbId: null, title: "Strict ID film", releaseDate: "2026-10-01", rating: 4, photoUrl: null };
+  const movie = { id: 940001, tmdbId: null, title: "Strict ID film", releaseDate: "2026-10-01", rating: 4, photoUrl: null, durationMinutes: 123, ageRating: "12+", reviewCount: 0 };
   const emptyPage = { content: [], totalPages: 0, totalElements: 0 };
   const writes: { path: string; data: unknown }[] = [];
   const candidateSearches: string[] = [];
@@ -44,6 +44,10 @@ async function adminMovieFixture(page: Page, options: { candidateStatus?: number
   await page.goto("/en/admin?view=movies");
   const movies = page.getByRole("region", { name: "Film database", exact: true });
   await expect(movies).toHaveAttribute("aria-busy", "false");
+  const card = movies.getByRole("listitem").filter({ hasText: movie.title });
+  await expect(card).toContainText("Age rating: 12+");
+  await expect(card).toContainText("Duration (minutes): 123");
+  await expect(card).toContainText("Visible reviews: 0");
   return { movie, movies, writes, candidateSearches, failBatchSyncRequest: (number: number) => { failedBatchSyncRequest = number; } };
 }
 

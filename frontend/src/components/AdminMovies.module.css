@@ -413,6 +413,14 @@
   white-space: nowrap;
 }
 
+.movieMetadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  color: var(--rewind-muted);
+  font-size: 14px;
+}
+
 .movieRating::first-letter {
   color: var(--rewind-gold);
 }
