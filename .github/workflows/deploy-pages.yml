@@ -4,7 +4,16 @@ on:
   push:
     branches: [master]
     paths:
-      - "frontend/**"
+      # Only source/build inputs should republish Pages; E2E-only changes run CI without a deploy.
+      - "frontend/src/**"
+      - "frontend/public/**"
+      - "frontend/index.html"
+      - "frontend/vite.config.*"
+      - "frontend/tsconfig*.json"
+      - "frontend/package.json"
+      - "frontend/package-lock.json"
+      - "frontend/scripts/prerender-public-catalog-routes.mjs"
+      - "frontend/scripts/verify-language-root-routes.mjs"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
