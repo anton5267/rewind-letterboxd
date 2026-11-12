@@ -375,6 +375,40 @@
   gap: 14px;
 }
 
+.followingActivity {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.followingActivityItem {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px 20px;
+  border-top: 1px solid #3d3d3d;
+  padding: 14px 0;
+}
+
+.followingActivityItem p {
+  min-width: 0;
+  margin: 0;
+  color: #a0a0a0;
+  overflow-wrap: anywhere;
+}
+
+.followingActivityItem a { color: #f5f5f5; text-underline-offset: 3px; }
+.followingActivityItem time { flex: 0 0 auto; color: var(--rewind-muted); font-size: 12px; }
+.followingActivityEmpty { margin: 0; color: var(--rewind-muted); }
+.followingActivityEmpty a { color: #7bdff2; }
+
+@media (max-width: 600px) {
+  .followingActivityItem { align-items: flex-start; flex-direction: column; gap: 5px; }
+}
+
 .journalCard {
   display: grid;
   grid-template-columns: 160px minmax(0, 1fr);

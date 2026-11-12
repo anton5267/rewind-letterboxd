@@ -19,6 +19,10 @@
 3. Після чотириденного cooldown перевірити повторне TMDB-заповнення 20 пропусків. Для єдиного фільму без TMDB ID знайдений кандидат `1147411`, але його ще потрібно підтвердити через офіційний TMDB/API та штатний Admin sync; у базу ID не записаний.
 4. Продовжити перевірені продуктні/UI gaps із матриці вимог; не трактувати локальні fixtures як live acceptance.
 
+## Наступне локальне Pages оновлення
+
+- Home має UK/EN стрічку активності людей, на яких підписаний авторизований користувач. Персональний endpoint не викликається гостем. Pages-base build і цільові fixture E2E — 2/2 пройшли; опублікований Home ще не оновлено, тож потрібні push/deploy і read-only перевірка. [Evidence](../operations/RELEASE_EVIDENCE.md#authenticated-home-following-activity--12112026-1229-utc).
+
 ## Межі цього оновлення
 
 Цього разу виконано live read-only звірку Auth, профілів, каталогу, refresh state, report queue і cron. Один штатний Vault-authenticated TMDB batch оновив лише публічні метадані фільмів. Код, ролі, приватні користувацькі дані, Auth settings, GitHub deployment і локальний MySQL/Compose не змінювалися. Documentation cleanup перевірено `git diff --check`; повні тести не запускалися, бо runtime-код не змінювався.

@@ -126,6 +126,78 @@ test("Home does not keep empty feeds as blank modules", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 });
 
+test("Member Home renders the authenticated following activity feed", async ({ page }) => {
+  const activity = [
+    { id: 991_001, type: "WATCHED", createdAt: "2026-11-11T10:00:00Z", actor: { id: 991_101, username: "movie-fan", displayName: "Movie Fan", avatarUrl: null }, movie: { id: 991_201, title: "Arrival" }, relatedUser: null, list: null },
+    { id: 991_002, type: "RATING", createdAt: "2026-11-11T09:00:00Z", actor: { id: 991_102, username: "film-critic", displayName: "Film Critic", avatarUrl: null }, movie: { id: 991_202, title: "Moonlight" }, relatedUser: null, list: null },
+    { id: 991_003, type: "REVIEW", createdAt: "2026-11-11T08:00:00Z", actor: { id: 991_103, username: "reviewer", displayName: "Reviewer", avatarUrl: null }, movie: { id: 991_203, title: "Portrait of a Lady on Fire" }, relatedUser: null, list: null },
+    { id: 991_004, type: "LIST", createdAt: "2026-11-11T07:00:00Z", actor: { id: 991_104, username: "curator", displayName: "Curator", avatarUrl: null }, movie: null, relatedUser: null, list: { id: 991_204, name: "Quiet evenings" } },
+    { id: 991_005, type: "FOLLOW", createdAt: "2026-11-11T06:00:00Z", actor: { id: 991_105, username: "new-member", displayName: "New Member", avatarUrl: null }, movie: null, relatedUser: { id: 991_205, username: "cinephile", displayName: "Cinephile" }, list: null },
+  ];
+  const emptyPage = { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 };
+
+  await page.route("**/api/auth/csrf", route => route.fulfill({ json: { token: "fixture-csrf" } }));
+  await page.route("**/api/auth/refresh", route => route.fulfill({ status: 401, json: { message: "Unauthorized" } }));
+  await page.route("**/api/users/me", route => route.fulfill({ json: { id: 991_100, username: "home-member", role: "USER" } }));
+  await page.route("**/api/activity/following**", route => route.fulfill({ json: { content: activity, totalElements: activity.length, totalPages: 1, number: 0, size: 10 } }));
+  await page.route("**/api/movies/search**", route => route.fulfill({ json: emptyPage }));
+  await page.route("**/api/reviews/popular**", route => route.fulfill({ json: emptyPage }));
+  await page.route("**/api/lists/public/popular**", route => route.fulfill({ json: emptyPage }));
+  await page.route("**/api/journal/articles**", route => route.fulfill({ json: emptyPage }));
+  await page.route("**/api/activity/recent-watched**", route => route.fulfill({ json: emptyPage }));
+  await page.route("**/api/conversations/unread-count", route => route.fulfill({ json: { count: 0 } }));
+  await page.route("**/api/notifications/unread-count", route => route.fulfill({ json: { count: 0 } }));
+  await page.route("**/api/users/popular-reviewers**", route => route.fulfill({ json: [] }));
+  await page.route("**/api/tags/popular**", route => route.fulfill({ json: [] }));
+
+  for (const locale of ["uk", "en"] as const) {
+    await page.setViewportSize({ width: locale === "uk" ? 1440 : 393, height: 852 });
+    await page.goto(`/${locale}/home`);
+    const section = page.locator("#home-following-activity");
+    await expect(page.locator("main")).toHaveAttribute("aria-busy", "false");
+    await expect(section).toBeVisible();
+    await expect(section.getByRole("heading", { name: locale === "uk" ? "Активність тих, на кого ви підписані" : "Activity from people you follow" })).toBeVisible();
+    await expect(section.getByRole("link", { name: "Arrival" })).toHaveAttribute("href", `/${locale}/films/991201`);
+    await expect(section.getByRole("link", { name: "Moonlight" })).toHaveAttribute("href", `/${locale}/films/991202`);
+    await expect(section.getByRole("link", { name: "Quiet evenings" })).toHaveAttribute("href", `/${locale}/lists/public/991204`);
+    await expect(section.getByRole("link", { name: "Cinephile" })).toHaveAttribute("href", `/${locale}/users/991205`);
+    for (const action of locale === "uk"
+      ? ["переглянув(-ла)", "оцінив(-ла)", "написав(-ла) огляд до", "створив(-ла) список", "підписався(-лася) на"]
+      : ["watched", "rated", "reviewed", "created a list", "followed"]) {
+      await expect(section).toContainText(action);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+  }
+});
+
+test("Guest Home does not request the private following activity feed", async ({ page }) => {
+  let followingRequests = 0;
+  const emptyPage = { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 };
+
+  await page.route("**/api/auth/csrf", route => route.fulfill({ json: { token: "fixture-csrf" } }));
+  await page.route("**/api/auth/refresh", route => route.fulfill({ status: 401, json: { message: "Unauthorized" } }));
+  await page.route("**/api/users/me", route => route.fulfill({ status: 401, json: { message: "Unauthorized" } }));
+  await page.route("**/api/activity/following**", route => {
+    followingRequests += 1;
+    return route.fulfill({ json: emptyPage });
+  });
+  await page.route("**/api/movies/search**", route => route.fulfill({ json: emptyPage }));
+  await page.route("**/api/reviews/popular**", route => route.fulfill({ json: emptyPage }));
+  await page.route("**/api/reviews/recent**", route => route.fulfill({ json: emptyPage }));
+  await page.route("**/api/lists/public/popular**", route => route.fulfill({ json: emptyPage }));
+  await page.route("**/api/journal/articles**", route => route.fulfill({ json: emptyPage }));
+  await page.route("**/api/activity/recent-watched**", route => route.fulfill({ json: emptyPage }));
+  await page.route("**/api/conversations/unread-count", route => route.fulfill({ json: { count: 0 } }));
+  await page.route("**/api/notifications/unread-count", route => route.fulfill({ json: { count: 0 } }));
+  await page.route("**/api/users/popular-reviewers**", route => route.fulfill({ json: [] }));
+  await page.route("**/api/tags/popular**", route => route.fulfill({ json: [] }));
+
+  await page.goto("/en/home");
+  await expect(page.locator("main")).toHaveAttribute("aria-busy", "false");
+  await expect(page.locator("#home-following-activity")).toHaveCount(0);
+  expect(followingRequests).toBe(0);
+});
+
 test("Guest Home keeps a short review card content-sized beside taller feed columns", async ({ page }) => {
   const review = {
     id: 970_001, movieId: 970_002, movieTitle: "A short review", userId: 970_003,

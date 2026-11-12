@@ -62,6 +62,7 @@ export const getBlockStatus = (userId: string | number) => api.get<BlockStatus>(
 export const blockUser = (userId: string | number) => api.post<BlockStatus>(`/users/${userId}/block`);
 export const unblockUser = (userId: string | number) => api.delete<BlockStatus>(`/users/${userId}/block`);
 export const getUserActivity = (userId: string | number, page = 0) => api.get<ActivityPage>(`/users/${userId}/activity`, { params: { page, size: 10 } });
+export const getFollowingActivity = (page = 0) => api.get<ActivityPage>("/activity/following", { params: { page, size: 10 } });
 export const getPopularReviewers = (size = 6) => api.get<PopularReviewer[]>("/users/popular-reviewers", { params: { size } });
 export const getHqUsers = () => api.get<CommunityUserPage>("/users/hq", { params: { page: 0, size: 12 } });
 export const getDirectoryUsers = (query: string, page: number) => api.get<CommunityUserPage>("/users/directory", { params: { q: query || undefined, page, size: 12 } });
