@@ -71,7 +71,7 @@ UI-файли — від `frontend/src/`, Java packages — від `backend/src/
 | Вимоги та відповідність реалізації | [ТЗ](docs/project/PROJECT_REQUIREMENTS.md), [таблиця відповідності](docs/project/PROJECT_REQUIREMENTS.md#implementation-status) |
 | Java, модель даних і HTTP контракти | [Backend і ER-схема](docs/backend/README.md), [API](docs/backend/API.md) |
 | React routes, спільні компоненти, дизайн | [Frontend](docs/frontend/README.md), [Figma handoff](docs/frontend/FIGMA_HANDOFF.md) |
-| Запуск / production / перевірки | [RUN_LOCAL](docs/operations/RUN_LOCAL.md), [DEPLOYMENT](docs/operations/DEPLOYMENT.md), [RELEASE_EVIDENCE](docs/operations/RELEASE_EVIDENCE.md) |
+| Запуск / production / перевірки | [RUN_LOCAL](docs/operations/RUN_LOCAL.md), [DEPLOYMENT](docs/operations/DEPLOYMENT.md), [SUPABASE_OPERATIONS](docs/operations/SUPABASE_OPERATIONS.md), [RELEASE_EVIDENCE](docs/operations/RELEASE_EVIDENCE.md) |
 | Захист диплома | [Матеріали](docs/diploma/DIPLOMA_MATERIALS.md) |
 
 Перевірка frontend: `npm run verify:build` із `frontend/`. Maven запускати з `backend/`; integration/browser suites працюють із виділеною тестовою БД, інструкції — в RUN_LOCAL. Secrets зберігаються локально поза Git; наявні Flyway migrations не переписуються.

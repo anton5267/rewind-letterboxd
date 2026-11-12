@@ -1,8 +1,19 @@
-import { createRewindApiHandler, RewindApiError, type AdminJournalArticleRequest, type RewindApiRepository, type RewindAuthVerifier } from "./handler.ts";
+import { createRewindApiHandler, parseSafeCount, RewindApiError, type AdminJournalArticleRequest, type InternalWorkerHandler, type RewindApiRepository, type RewindAuthVerifier } from "./handler.ts";
 
 const pagesOrigin = "https://anton5267.github.io";
 
-function handlerWith(repository: Partial<RewindApiRepository>) {
+Deno.test("admin catalog review count accepts zero and rejects invalid counts", () => {
+  if (parseSafeCount("0") !== 0 || parseSafeCount("7") !== 7) {
+    throw new Error("Valid non-negative review counts were not preserved");
+  }
+  for (const invalid of ["-1", "1.5", "not-a-count", "9007199254740992"]) {
+    let rejected = false;
+    try { parseSafeCount(invalid); } catch { rejected = true; }
+    if (!rejected) throw new Error(`Invalid count was accepted: ${invalid}`);
+  }
+});
+
+function handlerWith(repository: Partial<RewindApiRepository>, worker?: InternalWorkerHandler) {
   return createRewindApiHandler({
     listGenres: async () => [],
     searchMovies: async (params) => ({ content: [], totalPages: 0, totalElements: 0, number: params.page }),
@@ -10,8 +21,25 @@ function handlerWith(repository: Partial<RewindApiRepository>) {
     searchPeople: async (params) => ({ content: [], totalPages: 0, totalElements: 0, number: params.page }),
     getPersonFilmography: async () => null,
     ...repository,
-  }, [pagesOrigin, "http://localhost:5173"]);
+  }, [pagesOrigin, "http://localhost:5173"], undefined, worker);
 }
+
+Deno.test("internal TMDB worker route is POST-only, private, and does not expose its secret header to browser CORS", async () => {
+  const calls: string[] = [];
+  const handler = handlerWith({}, async () => { calls.push("worker"); return new Response("ok", { status: 200 }); });
+  const get = await handler(new Request("https://project.supabase.co/functions/v1/rewind-api/internal/tmdb-refresh"));
+  const post = await handler(new Request("https://project.supabase.co/functions/v1/rewind-api/internal/tmdb-refresh", {
+    method: "POST", headers: { Origin: pagesOrigin },
+  }));
+  const directPath = await handler(new Request("https://project.supabase.co/internal/tmdb-refresh", { method: "POST" }));
+  if (get.status !== 405 || post.status !== 200 || calls.length !== 2
+    || directPath.status !== 200
+    || post.headers.get("Access-Control-Allow-Headers")?.includes("X-Rewind-Cron-Secret")) {
+    throw new Error(`Internal route contract failed: ${JSON.stringify({ get: get.status, post: post.status, directPath: directPath.status, calls })}`);
+  }
+  const missingWorker = await handlerWith({})(new Request("https://project.supabase.co/functions/v1/rewind-api/internal/tmdb-refresh", { method: "POST" }));
+  if (missingWorker.status !== 404) throw new Error("Unconfigured internal worker route was not closed");
+});
 
 function authHandler(overrides: Partial<RewindApiRepository> = {}, valid = true, confirmed = true, authOverrides: Partial<RewindAuthVerifier> = {}) {
   return createRewindApiHandler({
@@ -209,7 +237,7 @@ Deno.test("movie status requires a confirmed user and returns the Spring API con
 Deno.test("GET /api/profile/me verifies identity and returns the private profile contract uncached", async () => {
   const profile = {
     id: 42, username: "cinephile", displayName: "Cinephile", email: "person@example.test",
-    role: "USER", avatarUrl: null, supabaseLinked: true,
+    role: "USER", avatarUrl: null, bio: "Loves thoughtful film stories.", supabaseLinked: true,
     stats: { ratings: 1, reviews: 0, watched: 2, watchlist: 3, favorites: 0 },
     lists: [{ id: 5, name: "Watchlist", listType: "WATCHLIST", isPublic: false }],
     recentRatings: [], recentReviews: [],
@@ -222,13 +250,13 @@ Deno.test("GET /api/profile/me verifies identity and returns the private profile
   const body = await response.json();
   if (response.status !== 200 || requestedUser !== "supabase-uuid"
     || response.headers.get("Cache-Control") !== "no-store"
-    || JSON.stringify(body) !== JSON.stringify(profile)) {
+    || JSON.stringify(body) !== JSON.stringify(profile) || body.bio !== "Loves thoughtful film stories.") {
     throw new Error(`Unexpected private profile response: ${JSON.stringify(body)}`);
   }
 });
 
 Deno.test("PATCH /api/profile/me validates and persists only profile fields", async () => {
-  let update: { displayName?: string; avatarUrl?: string } | null = null;
+  let update: { displayName?: string; avatarUrl?: string; bio?: string } | null = null;
   const profile = {
     id: 42, username: "cinephile", displayName: "New name", email: "person@example.test",
     role: "USER", avatarUrl: "https://example.test/avatar.png", supabaseLinked: true,
@@ -241,19 +269,50 @@ Deno.test("PATCH /api/profile/me validates and persists only profile fields", as
   });
   const invalid = await handler(new Request("https://project.supabase.co/api/profile/me", {
     method: "PATCH", headers: { Authorization: "Bearer valid-token", "Content-Type": "application/json" },
-    body: JSON.stringify({ displayName: "x", avatarUrl: "javascript:alert(1)" }),
+    body: JSON.stringify({ displayName: "x", avatarUrl: "javascript:alert(1)", bio: "x".repeat(501) }),
   }));
   if (invalid.status !== 400 || update !== null) throw new Error("Invalid profile content reached the repository");
 
   const valid = await handler(new Request("https://project.supabase.co/api/profile/me", {
     method: "PATCH", headers: { Authorization: "Bearer valid-token", "Content-Type": "application/json" },
-    body: JSON.stringify({ displayName: "New name", avatarUrl: "https://example.test/avatar.png", role: "ADMIN" }),
+    body: JSON.stringify({ displayName: "New name", avatarUrl: "https://example.test/avatar.png", bio: "Film fan.", role: "ADMIN" }),
   }));
   const body = await valid.json();
   if (valid.status !== 200 || JSON.stringify(update) !== JSON.stringify({
-    displayName: "New name", avatarUrl: "https://example.test/avatar.png",
+    displayName: "New name", avatarUrl: "https://example.test/avatar.png", bio: "Film fan.",
   }) || body.role !== "USER") {
     throw new Error(`Unexpected profile update response: ${JSON.stringify(body)}`);
+  }
+
+  const clear = await handler(new Request("https://project.supabase.co/api/profile/me", {
+    method: "PATCH", headers: { Authorization: "Bearer valid-token", "Content-Type": "application/json" },
+    body: JSON.stringify({ bio: "" }),
+  }));
+  if (clear.status !== 200 || JSON.stringify(update) !== JSON.stringify({ bio: "" })) {
+    throw new Error("An empty bio should clear only the bio field.");
+  }
+});
+
+Deno.test("PATCH /api/profile/me rejects missing, invalid, and unconfirmed sessions before updating", async () => {
+  let updateCalls = 0;
+  const repository = { async updateMyProfile() { updateCalls++; } };
+  const requests = [
+    [authHandler(repository), new Request("https://project.supabase.co/api/profile/me", {
+      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bio: "Should not persist" }),
+    })],
+    [authHandler(repository), new Request("https://project.supabase.co/api/profile/me", {
+      method: "PATCH", headers: { Authorization: "Bearer invalid-token", "Content-Type": "application/json" },
+      body: JSON.stringify({ bio: "Should not persist" }),
+    })],
+    [authHandler(repository, true, false), new Request("https://project.supabase.co/api/profile/me", {
+      method: "PATCH", headers: { Authorization: "Bearer valid-token", "Content-Type": "application/json" },
+      body: JSON.stringify({ bio: "Should not persist" }),
+    })],
+  ] as const;
+
+  const responses = await Promise.all(requests.map(([handler, request]) => handler(request)));
+  if (responses.some((response) => response.status !== 401) || updateCalls !== 0) {
+    throw new Error(`Unauthenticated profile updates must stop before persistence; statuses=${responses.map((response) => response.status)}; calls=${updateCalls}`);
   }
 });
 
@@ -1059,7 +1118,7 @@ Deno.test("review likes expose public counts and require confirmed auth for muta
 Deno.test("public social profile routes preserve Spring response shapes and page limits", async () => {
   const requested: unknown[] = [];
   const profile = {
-    id: 7, username: "filmfan", displayName: "Film Fan", avatarUrl: null, hq: false,
+    id: 7, username: "filmfan", displayName: "Film Fan", avatarUrl: null, bio: "Film fan.", hq: false,
     stats: { ratings: 2, reviews: 1, watched: 1, watchlist: 0, favorites: 0 },
     ratingDistribution: [{ rating: 5, count: 2 }], socialLinks: [], lists: [], recentReviews: [],
   };
@@ -1077,7 +1136,8 @@ Deno.test("public social profile routes preserve Spring response shapes and page
   const publicProfile = await handler(new Request("https://project.supabase.co/api/users/7/profile"));
   const collection = await handler(new Request("https://project.supabase.co/api/users/7/collections/watched?page=2&size=999"));
   const followers = await handler(new Request("https://project.supabase.co/api/users/7/followers?page=-2&size=8"));
-  if (publicProfile.status !== 200 || (await publicProfile.json()).stats.reviews !== 1
+  const publicProfileBody = await publicProfile.json();
+  if (publicProfile.status !== 200 || publicProfileBody.stats.reviews !== 1 || publicProfileBody.bio !== "Film fan."
     || collection.status !== 200 || followers.status !== 200
     || JSON.stringify(requested) !== JSON.stringify([["profile", 7], ["collection", 7, "watched", 2, 50], ["followers", 7, 0, 8]])) {
     throw new Error(`Public profile route or pagination contract changed: ${JSON.stringify(requested)}`);
@@ -1478,7 +1538,8 @@ Deno.test("admin dashboard, audit, and site settings preserve authorization and 
 
 Deno.test("admin movie catalog routes preserve paging, validation, edits, deletes, and authorization", async () => {
   const calls: unknown[] = [];
-  const movie = { id: 10, tmdbId: null, title: "Test Film", releaseDate: "2024-02-29", rating: 8.2, photoUrl: null };
+  const movie = { id: 10, tmdbId: null, title: "Test Film", releaseDate: "2024-02-29", rating: 8.2, photoUrl: null,
+    durationMinutes: 123, ageRating: "PG-13", reviewCount: 7 };
   const handler = authHandler({
     async getAdminTmdbQuality() { calls.push(["quality"]); return { totalMovies: 50, tmdbLinkedMovies: 40, completeTmdbMovies: 20, missingPoster: 3, missingBackdrop: 4, missingPlot: 5, missingRuntime: 6, missingTrailer: 7, missingTmdbRating: 8, linkedCoveragePercent: 80, metadataCompletenessPercent: 50 }; },
     async getAdminMovies(_user, query, page, size) { calls.push(["list", query, page, size]); return { content: [movie], totalPages: 1, totalElements: 1, number: page }; },
@@ -1499,8 +1560,10 @@ Deno.test("admin movie catalog routes preserve paging, validation, edits, delete
   const missing = await handler(new Request("https://project.supabase.co/api/admin/movies/99", { method: "DELETE", headers }));
   const deleted = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "DELETE", headers }));
   const unauthenticated = await authHandler({})(new Request("https://project.supabase.co/api/admin/movies"));
+  const listBody = await list.json();
   if (quality.status !== 200 || (await quality.json()).metadataCompletenessPercent !== 50
-    || list.status !== 200 || (await list.json()).content[0].id !== 10 || invalidQuery.status !== 400 || invalidMovie.status !== 400
+    || list.status !== 200 || listBody.content[0].id !== 10 || listBody.content[0].durationMinutes !== 123
+    || listBody.content[0].ageRating !== "PG-13" || listBody.content[0].reviewCount !== 7 || invalidQuery.status !== 400 || invalidMovie.status !== 400
     || created.status !== 200 || (await created.json()).tmdbId !== null || invalidDate.status !== 400 || invalidTrailer.status !== 400
     || updated.status !== 200 || (await updated.json()).title !== "Updated Film" || missing.status !== 404 || deleted.status !== 204 || unauthenticated.status !== 401
     || JSON.stringify(calls) !== JSON.stringify([

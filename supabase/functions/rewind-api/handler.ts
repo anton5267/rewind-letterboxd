@@ -211,6 +211,15 @@ export interface AdminSettingResponse { key: string; value: string; updatedBy: n
 export interface NewsletterQueueResponse { articleId: number; recipients: number }
 export interface NewsletterDeliveryStatusResponse { articleId: number; pending: number; sending: number; sent: number; failed: number; cancelled: number }
 export interface AdminMovieResponse { id: number; tmdbId: number | null; title: string; releaseDate: string | null; rating: number | null; photoUrl: string | null }
+export interface AdminMovieCatalogResponse extends AdminMovieResponse {
+  durationMinutes: number | null; ageRating: string | null; reviewCount: number;
+}
+export function parseSafeCount(value: string): number {
+  if (!/^\d+$/.test(value)) throw new Error("Count must be a non-negative integer.");
+  const count = Number(value);
+  if (!Number.isSafeInteger(count)) throw new Error("Count is outside the safe JSON integer range.");
+  return count;
+}
 export interface AdminTmdbMovieCandidate { tmdbId: number; title: string; releaseDate: string | null; overview: string | null; posterUrl: string | null }
 export interface AdminMovieWriteRequest {
   title?: string; imdbId?: string | null; durationMinutes?: number | null; releaseDate?: string | null;
@@ -526,7 +535,7 @@ export interface RewindApiRepository {
   updateAdminSetting?(authUser: HostedAuthUser, key: string, value: string): Promise<AdminSettingResponse | null>;
   queueAdminNewsletter?(authUser: HostedAuthUser, articleId: number): Promise<NewsletterQueueResponse>;
   getAdminNewsletterStatus?(authUser: HostedAuthUser, articleId: number): Promise<NewsletterDeliveryStatusResponse | null>;
-  getAdminMovies?(authUser: HostedAuthUser, query: string | null, page: number, size: number): Promise<{ content: AdminMovieResponse[]; totalPages: number; totalElements: number; number: number }>;
+  getAdminMovies?(authUser: HostedAuthUser, query: string | null, page: number, size: number): Promise<{ content: AdminMovieCatalogResponse[]; totalPages: number; totalElements: number; number: number }>;
   createAdminMovie?(authUser: HostedAuthUser, body: AdminMovieWriteRequest): Promise<AdminMovieResponse>;
   updateAdminMovie?(authUser: HostedAuthUser, id: number, body: AdminMovieWriteRequest): Promise<AdminMovieResponse | null>;
   deleteAdminMovie?(authUser: HostedAuthUser, id: number): Promise<boolean>;
@@ -547,6 +556,8 @@ export interface RewindAuthVerifier {
   changePassword?(user: HostedAuthUser, currentPassword: string, newPassword: string): Promise<void>;
   processPendingIdentityDeletion?(): Promise<void>;
 }
+
+export type InternalWorkerHandler = (request: Request) => Promise<Response>;
 
 const FUNCTION_PREFIX = "/functions/v1/rewind-api";
 const GENRES_PATH = "/api/genres";
@@ -669,6 +680,7 @@ export function createRewindApiHandler(
   repository: RewindApiRepository,
   allowedOrigins: readonly string[],
   authVerifier?: RewindAuthVerifier,
+  internalWorker?: InternalWorkerHandler,
 ): (request: Request) => Promise<Response> {
   const origins = new Set(allowedOrigins);
 
@@ -690,7 +702,16 @@ export function createRewindApiHandler(
       return new Response(null, { status: 204, headers: corsHeaders });
     }
 
-    const path = apiPath(new URL(request.url).pathname);
+    const pathname = new URL(request.url).pathname.replace(/\/+$/, "");
+    const path = apiPath(pathname);
+    if (path === "/internal/tmdb-refresh" || pathname.endsWith("/internal/tmdb-refresh")) {
+      if (request.method !== "POST") {
+        return json({ message: "Method not allowed" }, 405, { Allow: "POST" });
+      }
+      if (!internalWorker) return json({ message: "Not found" }, 404);
+      try { return await internalWorker(request); }
+      catch { return json({ message: "Unable to refresh catalog" }, 503); }
+    }
     const query = new URL(request.url).searchParams;
     const publicUserMatch = path.match(PUBLIC_USER_PATTERN);
     const socialProfileMatch = path.match(PUBLIC_PROFILE_PATTERN);

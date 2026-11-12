@@ -59,6 +59,8 @@ import {
   type NewsletterQueueResponse,
   type NewsletterDeliveryStatusResponse,
   type AdminMovieResponse,
+  type AdminMovieCatalogResponse,
+  parseSafeCount,
   type AdminTmdbMovieCandidate,
   type AdminMovieWriteRequest,
   type AdminTmdbQualityReport,
@@ -70,6 +72,7 @@ import {
   RewindApiError,
 } from "./handler.ts";
 import { discoverTmdbMovies, fetchTmdbMovie, searchTmdbMovieCandidates, TmdbError, type TmdbMovie, type TmdbPerson } from "./tmdb.ts";
+import { matchesWorkerSecret, runTmdbRefreshBatch, type TmdbRefreshCandidate, type TmdbRefreshErrorCode } from "./tmdb_refresh.ts";
 import {
   createHostedIdentityDeleter,
   createHostedPasswordChanger,
@@ -86,6 +89,9 @@ if (!databaseUrl) {
 // The server-only connection URL never leaves this function. Each checkout
 // assumes a narrowly scoped NOLOGIN role for each operation.
 const pool = new Pool(databaseUrl, 1, true);
+// A separate connection is held only for the advisory lock. The main pool has
+// one connection and must remain available to the normal per-movie transactions.
+const tmdbRefreshLockPool = new Pool(databaseUrl, 1, true);
 type PgConnection = Awaited<ReturnType<typeof pool.connect>>;
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
 const supabaseAnonKey = readPublishableKey((name) => Deno.env.get(name));
@@ -333,6 +339,121 @@ async function syncOneTmdb(authUser: HostedAuthUser, movieId: number, tmdbId: nu
     try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may be closed */ }
     throw error;
   } finally { connection.release(); }
+}
+
+async function readTmdbRefreshSecret(): Promise<string | null> {
+  const connection = await pool.connect();
+  try {
+    // Pool connections may have passed through role-scoped application work.
+    // Vault is read only under the database login role, before any app role is set.
+    await connection.queryObject("RESET ROLE");
+    const result = await connection.queryObject<{ decrypted_secret: string }>({
+      text: "SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'rewind_tmdb_refresh_secret' LIMIT 1",
+    });
+    return result.rows[0]?.decrypted_secret ?? null;
+  } finally { connection.release(); }
+}
+
+async function getTmdbRefreshAdmin(): Promise<HostedAuthUser> {
+  const connection = await pool.connect();
+  try {
+    const result = await connection.queryObject<{ id: string; email: string; supabase_user_id: string | null }>({
+      text: `SELECT id::text AS id, email, supabase_user_id::text AS supabase_user_id
+             FROM rewind.users WHERE role = 'ADMIN' AND is_active AND supabase_user_id IS NOT NULL
+             ORDER BY id LIMIT 1`,
+    });
+    const admin = result.rows[0];
+    if (!admin?.supabase_user_id || !admin.email) throw new Error("No active linked administrator");
+    return { id: admin.supabase_user_id, email: admin.email, emailConfirmed: true, username: "scheduled-catalog-worker" };
+  } finally { connection.release(); }
+}
+
+async function getTmdbRefreshCandidates(): Promise<TmdbRefreshCandidate[]> {
+  const connection = await pool.connect();
+  try {
+    await connection.queryObject("BEGIN");
+    await connection.queryObject("SET LOCAL ROLE rewind_edge_app");
+    await connection.queryObject("SELECT set_config('rewind.tmdb_refresh_worker', 'true', TRUE)");
+    const result = await connection.queryObject<{ movie_id: string; tmdb_id: string }>({
+      text: `SELECT m.id::text AS movie_id, m.tmdb_id::text AS tmdb_id
+             FROM rewind.movies m
+             LEFT JOIN rewind.tmdb_refresh_state s ON s.movie_id = m.id
+             WHERE m.tmdb_id IS NOT NULL
+               AND (s.attempted_at IS NULL OR s.attempted_at < CURRENT_TIMESTAMP - INTERVAL '4 days')
+             ORDER BY s.attempted_at ASC NULLS FIRST, m.id ASC
+             LIMIT 10`,
+    });
+    await connection.queryObject("COMMIT");
+    return result.rows.flatMap((row) => {
+      const movieId = Number(row.movie_id), tmdbId = Number(row.tmdb_id);
+      return Number.isSafeInteger(movieId) && movieId > 0 && Number.isSafeInteger(tmdbId) && tmdbId > 0
+        ? [{ movieId, tmdbId }]
+        : [];
+    });
+  } catch (error) {
+    try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may have closed */ }
+    throw error;
+  } finally { connection.release(); }
+}
+
+async function recordTmdbRefreshAttempt(candidate: TmdbRefreshCandidate, succeeded: boolean, errorCode: TmdbRefreshErrorCode | null): Promise<void> {
+  const connection = await pool.connect();
+  try {
+    await connection.queryObject("BEGIN");
+    await connection.queryObject("SET LOCAL ROLE rewind_edge_app");
+    await connection.queryObject("SELECT set_config('rewind.tmdb_refresh_worker', 'true', TRUE)");
+    await connection.queryObject({
+      text: `INSERT INTO rewind.tmdb_refresh_state (movie_id, attempted_at, succeeded_at, last_error_code)
+             VALUES ($1, CURRENT_TIMESTAMP, CASE WHEN $2 THEN CURRENT_TIMESTAMP ELSE NULL END, $3)
+             ON CONFLICT (movie_id) DO UPDATE SET attempted_at = EXCLUDED.attempted_at,
+               succeeded_at = CASE WHEN $2 THEN EXCLUDED.succeeded_at ELSE rewind.tmdb_refresh_state.succeeded_at END,
+               last_error_code = EXCLUDED.last_error_code`,
+      args: [candidate.movieId, succeeded, errorCode],
+    });
+    await connection.queryObject("COMMIT");
+  } catch (error) {
+    try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may have closed */ }
+    throw error;
+  } finally { connection.release(); }
+}
+
+async function runScheduledTmdbRefresh(): Promise<{ attempted: number; succeeded: number; failed: number }> {
+  const admin = await getTmdbRefreshAdmin();
+  const candidates = await getTmdbRefreshCandidates();
+  return await runTmdbRefreshBatch(
+    candidates,
+    async ({ movieId, tmdbId }) => await syncOneTmdb(admin, movieId, tmdbId, false),
+    recordTmdbRefreshAttempt,
+    10,
+  );
+}
+
+async function handleTmdbRefreshRequest(request: Request): Promise<Response> {
+  let expectedSecret: string | null;
+  try { expectedSecret = await readTmdbRefreshSecret(); }
+  catch { return new Response(JSON.stringify({ message: "Worker configuration unavailable" }), { status: 503, headers: { "Content-Type": "application/json" } }); }
+  if (!matchesWorkerSecret(request.headers.get("X-Rewind-Cron-Secret"), expectedSecret)) {
+    return new Response(JSON.stringify({ message: "Authentication required" }), { status: 401, headers: { "Content-Type": "application/json" } });
+  }
+
+  const lock = await tmdbRefreshLockPool.connect();
+  let locked = false;
+  try {
+    // Transaction-scoped locks also work through Supabase's transaction pooler.
+    await lock.queryObject("BEGIN");
+    const lockResult = await lock.queryObject<{ locked: boolean }>({
+      text: "SELECT pg_try_advisory_xact_lock(76211841011::bigint) AS locked",
+    });
+    locked = lockResult.rows[0]?.locked === true;
+    if (!locked) return new Response(JSON.stringify({ message: "Refresh already running" }), { status: 409, headers: { "Content-Type": "application/json" } });
+    const result = await runScheduledTmdbRefresh();
+    return new Response(JSON.stringify(result), { status: 200, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
+  } catch {
+    return new Response(JSON.stringify({ message: "Unable to refresh catalog" }), { status: 503, headers: { "Content-Type": "application/json" } });
+  } finally {
+    try { await lock.queryObject("COMMIT"); } catch { try { await lock.queryObject("ROLLBACK"); } catch { /* connection will release transaction */ } }
+    lock.release();
+  }
 }
 
 function batchResult(items: AdminTmdbBatchResponse["items"]): AdminTmdbBatchResponse {
@@ -586,6 +707,17 @@ function toAdminMovie(row: {
     id: safeId(row.id, "Movie ID"), tmdbId: row.tmdb_id === null ? null : safeId(row.tmdb_id, "TMDB ID"),
     title: row.title, releaseDate: row.release_date,
     rating: row.rating === null ? null : Number(row.rating), photoUrl: row.photo_url,
+  };
+}
+
+function toAdminMovieCatalog(row: {
+  id: string; tmdb_id: string | null; title: string; release_date: string | null;
+  rating: string | number | null; photo_url: string | null; duration_minutes: number | null;
+  age_rating: string | null; review_count: string | number;
+}): AdminMovieCatalogResponse {
+  return {
+    ...toAdminMovie(row), durationMinutes: row.duration_minutes, ageRating: row.age_rating,
+    reviewCount: parseSafeCount(String(row.review_count)),
   };
 }
 
@@ -1393,16 +1525,21 @@ const handler = createRewindApiHandler({
         connection.queryObject<{ total: string }>({ text: `SELECT COUNT(*)::text AS total FROM rewind.movies m ${where}`, args }),
         connection.queryObject<{
           id: string; tmdb_id: string | null; title: string; release_date: string | null;
-          rating: string | number | null; photo_url: string | null;
+          rating: string | number | null; photo_url: string | null; duration_minutes: number | null;
+          age_rating: string | null; review_count: string;
         }>({
           text: `SELECT m.id::text AS id, m.tmdb_id::text AS tmdb_id, m.title, m.release_date::text AS release_date,
-                        m.rating::text AS rating, m.photo_url FROM rewind.movies m ${where}
+                        m.rating::text AS rating, m.photo_url, m.duration_minutes, m.age_rating,
+                        (SELECT COUNT(*)::text FROM rewind.reviews r
+                         JOIN rewind.users author ON author.id = r.user_id AND author.is_active = TRUE
+                         WHERE r.movie_id = m.id AND r.is_hidden = FALSE) AS review_count
+                 FROM rewind.movies m ${where}
                  ORDER BY m.id DESC LIMIT $${args.length + 1} OFFSET $${args.length + 2}`,
           args: [...args, size, page * size],
         }),
       ]);
       await connection.queryObject("COMMIT");
-      return pageResult(rows.rows.map(toAdminMovie), count.rows[0]?.total ?? "0", page, size);
+      return pageResult(rows.rows.map(toAdminMovieCatalog), count.rows[0]?.total ?? "0", page, size);
     } catch (error) {
       try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
       throw error;
@@ -4508,7 +4645,7 @@ const handler = createRewindApiHandler({
   verifyCurrentPassword: verifyHostedPassword,
   changePassword: changeHostedPassword,
   async processPendingIdentityDeletion() { await processPendingIdentityDeletion(); },
-});
+}, handleTmdbRefreshRequest);
 
 Deno.serve(async (request) => {
   const response = await handler(request);
