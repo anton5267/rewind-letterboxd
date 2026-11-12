@@ -1,5 +1,12 @@
 # Rewind — докази перевірок
 
+### Admin Featured list ordering release — 12.11.2026
+
+- Додано локалізовані доступні Move up/Move down дії для CUSTOM списків, які вже є featured. Edge endpoint перевіряє сесію, ADMIN роль, напрямок і допустимість списку; перестановка позиції з сусіднім eligible списком виконується атомарно під advisory lock, із audit записом. Публічні API-контракти не змінені; міграцій немає.
+- Перевірки: Deno suite **107/107**, `deno check index.ts`, frontend `verify:build` (**309 модулів**), Admin Lists Playwright **1/1** (UK/EN, сім ширин; up/down і межі позицій), disposable PostgreSQL 17 перевірив SQL swap та unique index. `git diff --check` успішний.
+- Supabase Edge `rewind-api` **v36 ACTIVE** розгорнуто з `verify_jwt=false`; live source read-back підтвердив reorder route, audit action і lock. Анонімний запит до нового endpoint отримав **401**; публічний `/api/genres` — **200**. GitHub Pages deploy [43266760644](https://github.com/anton5267/rewind-letterboxd/actions/runs/43266760644) та CI [43266760220](https://github.com/anton5267/rewind-letterboxd/actions/runs/43266760220) успішні. Опублікований Pages bundle містить нові endpoint і UI тексти.
+- Live reorder не виконувався: у production 0 CUSTOM lists. Не створювали тестовий список і не змінювали користувацькі дані. PostgreSQL container для синтаксичного тесту прибрано; звичайний MySQL Compose/data не змінювали.
+
 ### Admin Lists visibility fixture regression — CI — 12.11.2026
 
 - Commit `181dbf2` розширив наявний Admin Lists Playwright сценарій системним `WATCHLIST` fixture поряд із кастомним списком. UK/EN і сім ширин перевіряють, що системний рядок не має visibility-кнопок, а CUSTOM і далі має Hide/Feature.
