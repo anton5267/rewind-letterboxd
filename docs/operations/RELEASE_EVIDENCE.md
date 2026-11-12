@@ -5,6 +5,13 @@
 - Admin Lists query now sorts equal `updated_at` values by descending list ID as a deterministic tie-breaker. This prevents equal timestamps from shifting records across offset-paginated pages. No endpoint or response shape changed.
 - Deno suite passed **107/107** and `deno check index.ts` passed in an isolated Deno Docker container. Supabase Edge `rewind-api` deployed as **v37 ACTIVE** with `verify_jwt=false` and `deno.json` import map; authenticated source read-back confirmed the live SQL includes the `id DESC` tie-breaker.
 - Read-only live smoke after deployment: `/api/genres` returned **200** and anonymous `/api/admin/lists` returned **401**. The identity-deletion outbox had **0 ready / 0 total** jobs before smoke; no user or catalog data changed. No Admin mutation or Pages deployment was performed.
+- Source and evidence commit `287729a` was pushed to the isolated branch; GitHub CI [43272219527](https://github.com/anton5267/rewind-letterboxd/actions/runs/43272219527) passed (backend MySQL tests, TMDB crosswalk validation, frontend type-check/build, HTTPS proxy validation).
+
+### Profile bio contract and published build read-back — 12.11.2026
+
+- Corrected stale Figma candidate notes that still described profile bio as unavailable. Current `Profile.tsx` has localized bio inputs; `profile.api.ts` sends `bio`; Edge `ProfileUpdateRequest` validates it at 500 characters; public profile reads it.
+- Read-only Supabase metadata query confirmed `rewind.users.bio` is `varchar(500)`. The public GitHub Pages root and its JS asset returned **200**; the published bundle contains the localized profile bio UI. No profile content was read or changed.
+- This closes the documented API-support gap, not visual acceptance: matched frame geometry, keyboard, save and error states remain open for `251:430`, `1043:2125`, and `1043:2303`.
 
 ### TMDB catalog refresh read-back and cooldown — 12.11.2026
 
