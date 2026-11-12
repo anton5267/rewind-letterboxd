@@ -6678,3 +6678,10 @@ Added a local Supabase Edge Function router with the existing public `GET /api/g
 - Current source `frontend/src/pages/AdminDashboard.tsx` redirects to the localized Home when the session is absent or `user.role !== "ADMIN"`. The browser result confirms this session did not pass the Admin guard, but does not distinguish which condition applied. This is not an Admin acceptance test.
 - No API mutation, role change, test report, or user-data change was performed. The live report queue remains empty; no dismiss test was attempted.
 - The browser surface could open the route, so the earlier Windows bridge failure is no longer the next-action blocker. An Admin-authorized browser session is still needed for the real read-only UI inspection.
+
+### Supabase Auth URL configuration Dashboard read-back — 12.11.2026
+
+- Read the already-open authenticated Chrome Dashboard at `Authentication → URL Configuration`; no settings were edited.
+- The saved Site URL is `https://anton5267.github.io/rewind-letterboxd/`. The four saved redirect URLs are `/uk/login/`, `/en/login/`, `/uk/reset-password/`, and `/en/reset-password/` under that same Pages origin. Dashboard showed **Save changes disabled**, consistent with no pending edits.
+- This is a read-back of saved configuration only. It does not prove all four live email-token callbacks were exercised. Signup confirmation, recovery/reset and sign-in for the disposable identity were separately reported/completed earlier; UK/EN callback acceptance and disposable-account deletion/outbox cleanup remain open.
+- The Chrome extension browser route worked without the Windows browser bridge. No Auth identities, roles, app data, SMTP settings, Supabase schema, GitHub Pages, or local MySQL/Compose state were changed.
