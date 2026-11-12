@@ -74,14 +74,15 @@ test("admin list table returns from an emptied last page", async ({ page }) => {
 
   let deleted = false;
   const requestsAfterDelete: number[] = [];
-  const list = (id: number, name: string) => ({
-    id, userId: 1, username: "fixture-owner", name, description: null, listType: "CUSTOM",
+  const list = (id: number, name: string, listType: "CUSTOM" | "WATCHLIST" = "CUSTOM") => ({
+    id, userId: 1, username: "fixture-owner", name, description: null, listType,
     isPublic: true, itemCount: 0, createdAt: "2026-10-17T00:00:00Z", updatedAt: "2026-10-17T00:00:00Z", featuredPosition: null,
   });
   await page.route(/\/api\/admin\/lists(?:\?.*)?$/, async route => {
     const pageNumber = Number(new URL(route.request().url()).searchParams.get("page") ?? "0");
     if (deleted) requestsAfterDelete.push(pageNumber);
     const firstPage = Array.from({ length: 50 }, (_, index) => list(71000 + index, `fixture-list-${index + 1}`));
+    firstPage[0] = list(71000, "fixture-system-list", "WATCHLIST");
     if (deleted) await route.fulfill({ json: { content: firstPage, totalPages: 1, totalElements: 50 } });
     else if (pageNumber === 0) await route.fulfill({ json: { content: firstPage, totalPages: 2, totalElements: 51 } });
     else await route.fulfill({ json: { content: [list(77777, "fixture-list-51")], totalPages: 2, totalElements: 51 } });
@@ -95,6 +96,8 @@ test("admin list table returns from an emptied last page", async ({ page }) => {
   await page.goto("/uk/admin?view=lists");
   const lists = page.getByRole("region", { name: "Списки" });
   await expect(lists.getByRole("listitem")).toHaveCount(50);
+  await expect(lists.getByRole("listitem").first().getByRole("button")).toHaveCount(0);
+  await expect(lists.getByRole("listitem").nth(1).getByRole("button")).toHaveCount(3);
   await expect(lists.getByRole("status")).toHaveText("Сторінка 1 з 2 · 51");
   await lists.getByRole("button", { name: "Далі" }).click();
   await expect(lists.getByRole("listitem")).toHaveCount(1);

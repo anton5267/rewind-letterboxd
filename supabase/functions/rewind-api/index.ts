@@ -1302,7 +1302,7 @@ const handler = createRewindApiHandler({
     const { connection, userId } = await beginAdminTransaction(authUser);
     try {
       const updated = await connection.queryObject({
-        text: "UPDATE rewind.lists SET is_public=$2, featured_position=CASE WHEN $2 THEN featured_position ELSE NULL END, updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING id",
+        text: "UPDATE rewind.lists SET is_public=$2, featured_position=CASE WHEN $2 THEN featured_position ELSE NULL END, updated_at=CURRENT_TIMESTAMP WHERE id=$1 AND list_type='CUSTOM' RETURNING id",
         args: [id, visible],
       });
       if (!updated.rows.length) { await connection.queryObject("COMMIT"); return null; }

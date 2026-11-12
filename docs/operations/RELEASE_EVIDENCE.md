@@ -6763,3 +6763,18 @@ Added a local Supabase Edge Function router with the existing public `GET /api/g
 - Commit [`65479be`](https://github.com/anton5267/rewind-letterboxd/commit/65479be) narrows `.github/workflows/deploy-pages.yml` to frontend source/build inputs rather than all `frontend/**`. This prevents test-only changes (for example, Playwright specs) from causing a production Pages deployment; workflow file changes still trigger validation.
 - GitHub CI [43254958747](https://github.com/anton5267/rewind-letterboxd/actions/runs/43254958747) passed backend MySQL tests, TMDB crosswalk validation, frontend build/typecheck, and HTTPS proxy configuration checks. The workflow-change Pages validation deployment [43254959185](https://github.com/anton5267/rewind-letterboxd/actions/runs/43254959185) completed build and deploy successfully.
 - No Supabase settings/data, Auth identities, roles, or local MySQL/Compose data changed in this workflow update.
+
+<a id="authenticated-admin-lists-route-read-only--12112026-1616-utc"></a>
+### Authenticated Admin Lists route read-only — 12.11.2026 16:16 UTC
+
+- Opened the existing authenticated GitHub Pages Admin session at `/uk/admin?view=lists`. The route passed the Admin guard and rendered its live list table. Six system lists were present; this matched the read-only database aggregate of six total lists and zero `CUSTOM` lists.
+- Inspected the route and its controls only. No visibility, Featured/Crew, delete, role, list, or user-data mutation was submitted. The empty `CUSTOM` inventory means a live Featured/Crew mutation cannot be validated without creating user content; report dismissal likewise remains untested because the report queue is empty.
+- This confirms only Admin Lists route access and live rendering, not the other Admin routes or list mutation behavior. Session identity and role were not changed.
+
+<a id="custom-list-visibility-guard-local-validation--12112026-1628-utc"></a>
+### CUSTOM list visibility guard — local validation — 12.11.2026 16:28 UTC
+
+- Admin UI now renders Publish/Hide only for `CUSTOM` lists. Edge repository SQL updates visibility only when `list_type='CUSTOM'`; system lists yield no updated row and the API returns 404. This aligns the admin control with the public list endpoints, which expose only public `CUSTOM` lists.
+- Verification: `npx --yes deno test supabase/functions/rewind-api` — **107 passed, 0 failed**; `npm run verify:build` — typecheck and Vite build passed; `git diff --check` passed.
+- The focused Playwright scenario in `frontend/tests/e2e/admin-flow.spec.ts` was skipped because `E2E_ADMIN_EMAIL` and `E2E_ADMIN_PASSWORD` were not configured. Existing authenticated live Admin Lists route was inspected read-only; no production list was changed.
+- This source change is local and not yet deployed: production Edge remains v34. The live table has no CUSTOM lists, so a production mutation test is unavailable without creating content.
