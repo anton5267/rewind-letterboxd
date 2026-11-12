@@ -1,5 +1,11 @@
 # Rewind — докази перевірок
 
+### Admin Lists visibility fixture regression — CI — 12.11.2026
+
+- Commit `181dbf2` розширив наявний Admin Lists Playwright сценарій системним `WATCHLIST` fixture поряд із кастомним списком. UK/EN і сім ширин перевіряють, що системний рядок не має visibility-кнопок, а CUSTOM і далі має Hide/Feature.
+- Цільовий Playwright сценарій пройшов **1/1** локально; GitHub Actions CI run [43262921374](https://github.com/anton5267/rewind-letterboxd/actions/runs/43262921374) завершився успішно. Це mocked fixture, а не перевірка live Admin-сесії чи мутації.
+- Pages не перевидавався навмисно: `.github/workflows/deploy-pages.yml` запускає deploy лише для frontend source/build inputs. Production Edge і UI не змінювалися цим test-only commit.
+
 ### Admin movie catalog aggregates and quality — local only — 12.11.2026
 
 - `GET /api/admin/movies` accepts optional title search `q` and returns a paginated catalog projection with visible review count. Hidden reviews and reviews from inactive authors are excluded, preserving public visibility rules. Integration fixture checked one visible review among three total/hidden/inactive rows.
