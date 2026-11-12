@@ -1,6 +1,6 @@
 # REWIND — поточний прогрес
 
-> **Supabase read-back: 12.11.2026, 15:56 UTC; GitHub CI read-back: 16:02 UTC.** Публічний сайт: [GitHub Pages](https://anton5267.github.io/rewind-letterboxd/); API — Supabase Edge `rewind-api` **v34 ACTIVE**; база — приватна схема `rewind` у Supabase Free. Точний порядок робіт — у [PLAN.md](../../PLAN.md), перевірки й історичні докази — у [RELEASE_EVIDENCE.md](../operations/RELEASE_EVIDENCE.md), вимоги та gaps — у [PROJECT_REQUIREMENTS.md](PROJECT_REQUIREMENTS.md).
+> **Supabase read-back: 12.11.2026, 15:56 UTC; GitHub Actions read-back: 16:08 UTC.** Публічний сайт: [GitHub Pages](https://anton5267.github.io/rewind-letterboxd/); API — Supabase Edge `rewind-api` **v34 ACTIVE**; база — приватна схема `rewind` у Supabase Free. Точний порядок робіт — у [PLAN.md](../../PLAN.md), перевірки й історичні докази — у [RELEASE_EVIDENCE.md](../operations/RELEASE_EVIDENCE.md), вимоги та gaps — у [PROJECT_REQUIREMENTS.md](PROJECT_REQUIREMENTS.md).
 
 ## Підтверджено
 
@@ -26,4 +26,4 @@
 
 ## Межі цього оновлення
 
-Останній release block синхронізував джерело вже активного Edge v34, не змінюючи live Edge, схему, ролі, Auth settings, Pages runtime чи локальний MySQL/Compose. Deno Edge suite 107/107, `deno check`, `git diff --check` і GitHub CI [43251041084](https://github.com/anton5267/rewind-letterboxd/actions/runs/43251041084) пройшли. Точковий Admin update/publication toggle і повернення статусу Published зафіксовані в [release evidence](../operations/RELEASE_EVIDENCE.md#admin-movie-publication-toggle-live-acceptance--12112026-1524-utc). Ізольована перевірка Windows browser bridge не змогла визначити поточний URL, тому нових UI дій у Chrome не виконано.
+Останній release block синхронізував джерело вже активного Edge v34, не змінюючи live Edge, схему, ролі, Auth settings, Pages runtime чи локальний MySQL/Compose. Deno Edge suite 107/107, `deno check`, `git diff --check` і GitHub CI [43251041084](https://github.com/anton5267/rewind-letterboxd/actions/runs/43251041084) пройшли. Додатково commit `65479be` звужує Pages path filter, щоб E2E-only зміни не публікували сайт; CI [43254958747](https://github.com/anton5267/rewind-letterboxd/actions/runs/43254958747) і Pages deploy [43254959185](https://github.com/anton5267/rewind-letterboxd/actions/runs/43254959185) успішні. Chrome bridge не визначив адресу поточної вкладки, тож нових UI дій у Chrome не виконано.

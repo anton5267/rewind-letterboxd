@@ -6756,3 +6756,10 @@ Added a local Supabase Edge Function router with the existing public `GET /api/g
 - Expanded the focused Playwright suite to cover signup confirmation and password recovery in both Ukrainian and English. All four cases verify the localized prompt, stripping the token fragment from the URL, waiting for an explicit click, sending the correct `token_hash`/verification type, and routing to the existing app destination.
 - `npx playwright test tests/e2e/supabase-email-action.spec.ts` passed **4/4** against an isolated Vite server on port 3001. Supabase verify requests and REWIND API calls were mocked by the test fixture; no email was sent and no live identity/session/data was changed. The temporary dev server was stopped after the run.
 - This closes a missing local locale-combination test only. Actual hosted UK/EN token callbacks and disposable identity deletion/outbox cleanup remain open.
+
+<a id="github-pages-path-filter-validation--12112026-1608-utc"></a>
+### GitHub Pages path-filter validation — 12.11.2026 16:08 UTC
+
+- Commit [`65479be`](https://github.com/anton5267/rewind-letterboxd/commit/65479be) narrows `.github/workflows/deploy-pages.yml` to frontend source/build inputs rather than all `frontend/**`. This prevents test-only changes (for example, Playwright specs) from causing a production Pages deployment; workflow file changes still trigger validation.
+- GitHub CI [43254958747](https://github.com/anton5267/rewind-letterboxd/actions/runs/43254958747) passed backend MySQL tests, TMDB crosswalk validation, frontend build/typecheck, and HTTPS proxy configuration checks. The workflow-change Pages validation deployment [43254959185](https://github.com/anton5267/rewind-letterboxd/actions/runs/43254959185) completed build and deploy successfully.
+- No Supabase settings/data, Auth identities, roles, or local MySQL/Compose data changed in this workflow update.
