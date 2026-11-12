@@ -6734,3 +6734,10 @@ Added a local Supabase Edge Function router with the existing public `GET /api/g
 - The source patch records `MOVIE_CREATED`, `MOVIE_UPDATED`, and `MOVIE_DELETED` audit events in the existing transaction. Update metadata contains only allowlisted changed field names, never submitted values. Existing live audit records confirmed update and publication-toggle activity.
 - Isolated Deno Edge suite passed **107/107**, `deno check --no-lock index.ts` passed, and `git diff --check` passed. GitHub CI [43251041084](https://github.com/anton5267/rewind-letterboxd/actions/runs/43251041084) passed backend MySQL tests, TMDB crosswalk verification, frontend build/typecheck, and HTTPS proxy validation. CI does not include Deno tests, which were run separately.
 - This source synchronization does not change database schema, user roles/data, Auth settings, Pages runtime, or local MySQL/Compose.
+
+### TMDB API usage classification review — 12.11.2026
+
+- The current [TMDB API FAQ](https://developer.themoviedb.org/docs/faq) says the developer API is free for non-commercial use with attribution, and defines commercial projects by whether their primary purpose is to create revenue for the owner. It does not publish a fixed `$150/month` requirement in that FAQ.
+- A source scan of frontend, Spring backend, and Supabase Edge found no payment/advertising provider integration. This is code evidence only; it cannot prove the owner's actual business plans or TMDB's approval of this application.
+- REWIND is a public multi-user website, so the previously selected “personal use only” label and “Desktop Application” application type should be checked for accuracy with TMDB. Public access alone does not establish commercial use. The site currently has no revenue feature identified in source; no commercial license is claimed.
+- No TMDB account, API key, database, or catalog record was changed. Existing attribution remains in About/Film Data; before adding monetization or changing the product's primary purpose, obtain TMDB's written guidance/license.

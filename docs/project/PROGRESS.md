@@ -1,6 +1,6 @@
 # REWIND — поточний прогрес
 
-> **Live read-back: 12.11.2026, 15:47 UTC.** Публічний сайт: [GitHub Pages](https://anton5267.github.io/rewind-letterboxd/); API — Supabase Edge `rewind-api` **v34 ACTIVE**; база — приватна схема `rewind` у Supabase Free. Точний порядок робіт — у [PLAN.md](../../PLAN.md), перевірки й історичні докази — у [RELEASE_EVIDENCE.md](../operations/RELEASE_EVIDENCE.md), вимоги та gaps — у [PROJECT_REQUIREMENTS.md](PROJECT_REQUIREMENTS.md).
+> **Supabase read-back: 12.11.2026, 15:34 UTC; GitHub CI read-back: 15:46 UTC.** Публічний сайт: [GitHub Pages](https://anton5267.github.io/rewind-letterboxd/); API — Supabase Edge `rewind-api` **v34 ACTIVE**; база — приватна схема `rewind` у Supabase Free. Точний порядок робіт — у [PLAN.md](../../PLAN.md), перевірки й історичні докази — у [RELEASE_EVIDENCE.md](../operations/RELEASE_EVIDENCE.md), вимоги та gaps — у [PROJECT_REQUIREMENTS.md](PROJECT_REQUIREMENTS.md).
 
 ## Підтверджено
 
@@ -15,9 +15,10 @@
 ## Відкрито
 
 1. Пройти окремі UK/EN Auth token callbacks і deletion/outbox cleanup лише для disposable identity; звичайний профіль не видаляти.
-2. Прийняти Admin UI з браузерною сесією справжнього ADMIN; не видавати роль лише заради тесту. Для report dismiss потрібна реальна скарга, не fixture у production.
-3. Після чотириденного cooldown перевірити повторне TMDB-заповнення 20 пропусків. Для єдиного фільму без TMDB ID знайдений кандидат `1147411`, але його ще потрібно підтвердити через офіційний TMDB/API та штатний Admin sync; у базу ID не записаний.
-4. Продовжити перевірені продуктні/UI gaps із матриці вимог; не трактувати локальні fixtures як live acceptance.
+2. Прийняти інші Admin routes і list curation mutations. Для report-dismiss потрібна справжня скарга; черга зараз порожня, production fixture не створювати.
+3. Після чотириденного cooldown перевірити повторне TMDB-заповнення 20 пропусків. Для єдиного фільму без TMDB ID знайдений кандидат `1147411`, але його ще потрібно підтвердити через офіційний TMDB API та штатний Admin sync; у базу ID не записаний.
+4. Уточнити TMDB application details: сайт публічний, але в source scan немає платіжного чи рекламного provider. Офіційний FAQ визначає commercial use за основною метою отримати дохід і дозволяє безплатне non-commercial використання з атрибуцією; сама публічність не доводить commercial use. Не додавати монетизацію й не вважати API key комерційною ліцензією. [TMDB FAQ](https://developer.themoviedb.org/docs/faq).
+5. Продовжити перевірені продуктні/UI gaps із матриці вимог; не трактувати локальні fixtures як live acceptance.
 
 ## Home activity feed — опубліковано 12.11
 
@@ -25,4 +26,4 @@
 
 ## Межі цього оновлення
 
-Останній release block синхронізував джерело вже активного Edge v34, не змінюючи live Edge, схему, ролі, Auth settings, Pages runtime чи локальний MySQL/Compose. Deno Edge suite 107/107, `deno check`, `git diff --check` і GitHub CI [43251041084](https://github.com/anton5267/rewind-letterboxd/actions/runs/43251041084) пройшли. Точковий Admin update/publication toggle і повернення статусу Published зафіксовані в [release evidence](../operations/RELEASE_EVIDENCE.md#admin-movie-publication-toggle-live-acceptance--12112026-1524-utc).
+Останній release block синхронізував джерело вже активного Edge v34, не змінюючи live Edge, схему, ролі, Auth settings, Pages runtime чи локальний MySQL/Compose. Deno Edge suite 107/107, `deno check`, `git diff --check` і GitHub CI [43251041084](https://github.com/anton5267/rewind-letterboxd/actions/runs/43251041084) пройшли. Точковий Admin update/publication toggle і повернення статусу Published зафіксовані в [release evidence](../operations/RELEASE_EVIDENCE.md#admin-movie-publication-toggle-live-acceptance--12112026-1524-utc). Ізольована перевірка Windows browser bridge не змогла визначити поточний URL, тому нових UI дій у Chrome не виконано.
