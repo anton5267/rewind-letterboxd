@@ -6671,3 +6671,10 @@ Added a local Supabase Edge Function router with the existing public `GET /api/g
 - The first Pages run exposed a missing Supabase session in this E2E fixture, which sent the app to Home before the Admin check. Added a synthetic persisted test session to the fixture; the rerun reached Admin and passed. This corrects test setup only; no application runtime code changed.
 - Earlier release notes describing reported reviews as an API gap are historical snapshots and are superseded by this implementation. Live non-empty queue handling and authenticated Admin acceptance remain unverified because the production table is empty and the Windows browser bridge stopped before UI interaction.
 - The fixture/docs commit `eea10523d114b44ae65ddfec844f560e509a9d1f` passed GitHub Actions CI run [43189693740](https://github.com/anton5267/rewind-letterboxd/actions/runs/43189693740). This verifies repository CI for the test/docs change; it does not deploy new frontend runtime code.
+
+### Live Admin route guard from current Chrome session — 12.11.2026
+
+- Opened `https://anton5267.github.io/rewind-letterboxd/en/admin?view=movies` in the existing Chrome session. The Admin shell began loading, then the app redirected to `/en/home`; no Admin controls or data were shown.
+- Current source `frontend/src/pages/AdminDashboard.tsx` redirects to the localized Home when the session is absent or `user.role !== "ADMIN"`. The browser result confirms this session did not pass the Admin guard, but does not distinguish which condition applied. This is not an Admin acceptance test.
+- No API mutation, role change, test report, or user-data change was performed. The live report queue remains empty; no dismiss test was attempted.
+- The browser surface could open the route, so the earlier Windows bridge failure is no longer the next-action blocker. An Admin-authorized browser session is still needed for the real read-only UI inspection.
