@@ -1307,6 +1307,8 @@
     text-align: center;
   }
 
+  .page:not([data-profile-view]) .hero { padding-bottom: 180px; }
+
   /* Raw own-profile layers 238:1060 / 363:304 use the same Babylon
      original as Authentication; its image slot is 817 px high. */
   .hero::before {

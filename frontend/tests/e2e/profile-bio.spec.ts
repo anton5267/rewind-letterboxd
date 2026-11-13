@@ -3,6 +3,11 @@ import { expect, test } from "@playwright/test";
 const userId = 981000;
 const originalBio = "A short original profile note.";
 const updatedBio = "I love thoughtful stories and talking about films.";
+const socialLinks = [
+  { platform: "website", url: "https://rewind-profile.example.invalid/" },
+  { platform: "instagram", url: "https://www.instagram.com/rewind_profile" },
+  { platform: "tiktok", url: "javascript:alert(1)" },
+];
 const emptyPage = { content: [], number: 0, size: 12, totalElements: 0, totalPages: 0 };
 
 for (const { lang, label, saveLabel, successLabel } of [
@@ -67,14 +72,14 @@ for (const { lang, label, saveLabel, successLabel } of [
           hq: false,
           stats: { ratings: 0, reviews: 0, watched: 0, watchlist: 0, favorites: 0 },
           ratingDistribution: [],
-          socialLinks: [],
+          socialLinks,
           lists: [],
           recentReviews: [],
         } });
       }
 
       if (pathname === "/api/profile/me/social-links" || pathname.endsWith("/social-links")) {
-        return route.fulfill({ json: [] });
+        return route.fulfill({ json: socialLinks });
       }
       if (pathname === "/api/users/me" && request.method() !== "GET") {
         return route.fulfill({ status: 405, json: {} });
@@ -95,8 +100,20 @@ for (const { lang, label, saveLabel, successLabel } of [
 
     await page.goto(`/${lang}/profile`);
     await expect(page.getByRole("region", { name: "Bio Reader", exact: true }).getByText(updatedBio, { exact: true })).toBeVisible();
+    const ownLinks = page.getByRole("region", { name: "Bio Reader", exact: true }).getByRole("navigation").getByRole("link");
+    await expect(ownLinks).toHaveCount(2);
+    await expect(ownLinks.first()).toHaveAttribute("href", socialLinks[0].url);
+    await expect(ownLinks.first()).toHaveAttribute("rel", "noopener noreferrer");
+    const ownHero = page.getByRole("region", { name: "Bio Reader", exact: true });
+    const metrics = await ownHero.locator("dl").boundingBox();
+    const edit = await ownHero.getByRole("button", { name: /редагувати профіль|edit profile/i }).boundingBox();
+    expect(edit!.y).toBeGreaterThanOrEqual(metrics!.y + metrics!.height);
 
     await page.goto(`/${lang}/users/${userId}`);
     await expect(page.getByText(updatedBio, { exact: true })).toBeVisible();
+    const publicLinks = page.getByRole("region", { name: "Bio Reader", exact: true }).getByRole("navigation").getByRole("link");
+    await expect(publicLinks).toHaveCount(2);
+    await page.setViewportSize({ width: 393, height: 852 });
+    await expect(publicLinks.first()).toBeVisible();
   });
 }

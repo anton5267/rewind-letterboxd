@@ -1,4 +1,5 @@
 import ProfileLoading from "../components/ProfileLoading";
+import ProfileSocialLinks from "../components/ProfileSocialLinks";
 import { isAxiosError } from "axios";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -779,6 +780,7 @@ export default function PublicProfile() {
             <p className={styles.eyebrow}>{t("profile")}</p>
             <h1 id="public-profile-title" tabIndex={-1}>{identityName}{profile.hq && <span className={styles.hq} aria-label={t("hq")} title={t("hq")}>{t("hq")}</span>}</h1>
             <p className={styles.username}>{getUserHandle(profile, t("someone"))}</p>
+            <ProfileSocialLinks links={profile.socialLinks} />
             {profile.bio?.trim() && <p className={styles.bio}>{profile.bio}</p>}
           </div>
         </div>

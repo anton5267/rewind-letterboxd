@@ -18,6 +18,7 @@ import ProfileListCard from "../components/ProfileListCard";
 import UserFollowRow from "../components/UserFollowRow";
 import PublicProfilePoster from "../components/PublicProfilePoster";
 import ProfileReviewScore from "../components/ProfileReviewScore";
+import ProfileSocialLinks from "../components/ProfileSocialLinks";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { FollowActionsProvider } from "../context/FollowActionsContext";
 import { useAuth } from "../context/AuthContext";
@@ -235,6 +236,7 @@ export default function Profile() {
     if (pendingNewsletterFocus.current?.scope !== newsletterFocusScope) pendingNewsletterFocus.current = null;
   }, [newsletterFocusScope]);
   const [socialLinkValues, setSocialLinkValues] = useState<Record<SocialLinkPlatform, string>>({ website: "", instagram: "", tiktok: "", letterboxd: "" });
+  const [savedSocialLinks, setSavedSocialLinks] = useState<{ userId: number | null; links: SocialLink[] } | null>(null);
   const [socialLinksLoading, setSocialLinksLoading] = useState(false);
   const [socialLinksError, setSocialLinksError] = useState(false);
   const [socialLinksAttempt, setSocialLinksAttempt] = useState(0);
@@ -477,6 +479,7 @@ export default function Profile() {
   }, [profileActionsOpen]);
 
   const applySocialLinks = (data: SocialLink[]) => {
+    setSavedSocialLinks({ userId: user?.id ?? null, links: data });
     setSocialLinkValues({
       website: data.find(link => link.platform === "website")?.url ?? "",
       instagram: data.find(link => link.platform === "instagram")?.url ?? "",
@@ -1412,6 +1415,7 @@ export default function Profile() {
           <p className={styles.eyebrow}>{t("profile")}</p>
           <h2 id="profile-identity">{getUserIdentity(profile, t("someone"))}</h2>
           <p className={styles.username}>{getUserHandle(profile, t("someone"))}</p>
+          {savedSocialLinks && savedSocialLinks.userId === user?.id && <ProfileSocialLinks links={savedSocialLinks.links} />}
           {profile.bio?.trim() && <p className={styles.bio}>{profile.bio}</p>}
         </div>
         <dl className={styles.heroMetrics}>
