@@ -1009,6 +1009,12 @@ export default function Profile() {
   const savePassword = async (event: React.FormEvent) => {
     event.preventDefault();
     if (passwordBusy) return;
+    const scope = ++settingsFeedbackGeneration.current;
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    const origin = submitter instanceof HTMLElement ? submitter : document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setSettingsFeedback(null);
+    setMessage("");
+    setError("");
     if (!isPasswordWithinByteLimit(newPassword)) {
       setError(t("passwordByteLimitError"));
       document.getElementById("profile-new-password")?.focus();
@@ -1023,9 +1029,14 @@ export default function Profile() {
     const requestId = ++passwordMutation.current;
     const requestUserId = activeUserId.current;
     const isCurrentRequest = () => requestUserId !== null && activeUserId.current === requestUserId && passwordMutation.current === requestId;
+    const reportError = (text: string) => {
+      if (!isCurrentRequest() || !settingsMounted.current || settingsFeedbackGeneration.current !== scope) return;
+      setMessage("");
+      setError(text);
+      setSettingsFeedback({ id: ++settingsFeedbackSequence.current, origin, kind: "error" });
+    };
     setPasswordBusy(true);
     setPasswordConfirmError(false);
-    setError("");
     try {
       await changePassword(currentPassword, newPassword);
       if (!isCurrentRequest()) return;
@@ -1038,9 +1049,9 @@ export default function Profile() {
         await logout();
         navigate(`${path("/login")}?passwordChanged=1`, { replace: true });
       } catch {
-        if (isCurrentRequest()) setError(t("passwordChangedLogoutError"));
+        reportError(t("passwordChangedLogoutError"));
       }
-    } catch { if (isCurrentRequest()) setError(t("changePasswordError")); }
+    } catch { reportError(t("changePasswordError")); }
     finally { if (isCurrentRequest()) setPasswordBusy(false); }
   };
   const startSupabaseAccountLink = async (event: React.FormEvent) => {
