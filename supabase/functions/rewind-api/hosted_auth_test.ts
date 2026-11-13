@@ -1,4 +1,5 @@
 import {
+  createHostedAccessTokenVerifier,
   createHostedIdentityDeleter,
   createHostedPasswordChanger,
   createHostedPasswordVerifier,
@@ -8,6 +9,40 @@ import {
 import { RewindApiError } from "./handler.ts";
 
 const user = { id: "8c7f2866-7ee8-4edb-8f3d-f74ac2ea662a", email: "member@example.test", emailConfirmed: true, username: "member" };
+
+Deno.test("access token verifier uses provider email and version and ignores metadata identity claims", async () => {
+  const updatedAt = "2026-11-14T00:00:00.123456Z";
+  const verify = createHostedAccessTokenVerifier("https://project.supabase.co", "publishable", async (input, init) => {
+    const headers = new Headers(init?.headers);
+    if (String(input) !== "https://project.supabase.co/auth/v1/user"
+      || headers.get("Authorization") !== "Bearer opaque-token" || headers.get("apikey") !== "publishable") {
+      throw new Error("Identity must come from the authenticated provider endpoint");
+    }
+    return Response.json({ id: user.id, email: user.email, email_confirmed_at: updatedAt, updated_at: updatedAt,
+      user_metadata: { username: " member! ", email: "attacker@example.test", role: "ADMIN", updated_at: "2099-01-01T00:00:00Z" } });
+  });
+  const result = await verify("opaque-token");
+  if (result?.email !== user.email || result.updatedAt !== updatedAt || result.username !== "member"
+    || !result.emailConfirmed || "role" in result) throw new Error("Provider identity fields were not preserved");
+});
+
+Deno.test("access token verifier preserves legacy responses without a valid provider version", async () => {
+  for (const updated_at of [undefined, "invalid", 123]) {
+    const verify = createHostedAccessTokenVerifier("https://project.supabase.co", "publishable", async () =>
+      Response.json({ id: user.id, email: user.email, updated_at }));
+    const result = await verify("opaque-token");
+    if (!result || result.emailConfirmed || result.updatedAt !== undefined) throw new Error("Invalid provider version was accepted");
+  }
+});
+
+Deno.test("access token verifier rejects unavailable or malformed identities", async () => {
+  const absent = createHostedAccessTokenVerifier(undefined, undefined, () => { throw new Error("Must not fetch without configuration"); });
+  if (await absent("opaque-token") !== null) throw new Error("Missing configuration must fail closed");
+  for (const response of [new Response(null, { status: 401 }), Response.json({ id: user.id })]) {
+    const verify = createHostedAccessTokenVerifier("https://project.supabase.co", "publishable", async () => response);
+    if (await verify("opaque-token") !== null) throw new Error("Invalid identity was accepted");
+  }
+});
 
 Deno.test("password changer verifies current credentials for the same Supabase identity before updating", async () => {
   const calls: { url: string; init?: RequestInit }[] = [];

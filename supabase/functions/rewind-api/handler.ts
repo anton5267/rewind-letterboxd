@@ -13,6 +13,7 @@ import { handleSocialRoutes } from "./http/routes/social.ts";
 import { handleListRoutes } from "./http/routes/lists.ts";
 import { handleReviewRoutes } from "./http/routes/reviews.ts";
 import { handleCurrentUserRoute, handleProfileRoutes } from "./http/routes/profile.ts";
+import { handleProfileEmailRoute } from "./http/routes/profile_email.ts";
 import { handleMovieRatingRoutes, handleMovieStatusRoutes } from "./http/routes/movie_actions.ts";
 import { handleCatalogRoutes } from "./http/routes/catalog.ts";
 
@@ -41,6 +42,7 @@ const routeHandlers = [
   handleListRoutes,
   handleReviewRoutes,
   handleProfileRoutes,
+  handleProfileEmailRoute,
   handleMovieStatusRoutes,
   handleCurrentUserRoute,
   handleMovieRatingRoutes,

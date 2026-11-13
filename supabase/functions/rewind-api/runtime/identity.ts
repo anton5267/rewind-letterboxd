@@ -1,6 +1,8 @@
-import type { HostedAuthUser, RewindAuthVerifier } from "../contracts/auth.ts";
+import type { RewindAuthVerifier } from "../contracts/auth.ts";
 import { RewindApiError } from "../http/errors.ts";
 import {
+  createHostedAccessTokenVerifier,
+  createHostedEmailChangeRequester,
   createHostedIdentityDeleter,
   createHostedPasswordChanger,
   createHostedPasswordVerifier,
@@ -9,12 +11,17 @@ import {
   supabaseAnonKey,
   supabaseSecretKey,
   supabaseUrl,
+  publicBaseUrl,
 } from "./config.ts";
 import {
   pool,
 } from "./database.ts";
 
 const changeHostedPassword = createHostedPasswordChanger(supabaseUrl, supabaseAnonKey);
+
+const verifyHostedAccessToken = createHostedAccessTokenVerifier(supabaseUrl, supabaseAnonKey);
+
+const requestHostedEmailChange = createHostedEmailChangeRequester(supabaseUrl, supabaseAnonKey, publicBaseUrl);
 
 const verifyHostedPassword = createHostedPasswordVerifier(supabaseUrl, supabaseAnonKey);
 
@@ -85,26 +92,8 @@ export async function processPendingIdentityDeletion(): Promise<void> {
 }
 
 export const hostedAuthVerifier: RewindAuthVerifier = {
-  async verifyAccessToken(token: string): Promise<HostedAuthUser | null> {
-    if (!supabaseUrl || !supabaseAnonKey) return null;
-    const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
-      headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${token}` },
-    });
-    if (!response.ok) return null;
-    const user = await response.json();
-    if (typeof user?.id !== "string" || typeof user?.email !== "string") return null;
-    const metadataUsername = typeof user.user_metadata?.username === "string"
-      ? user.user_metadata.username.trim()
-      : "";
-    const candidate = metadataUsername.replace(/[^\p{L}\p{N}_.-]/gu, "").slice(0, 50);
-    const emailPrefix = user.email.split("@")[0].replace(/[^\p{L}\p{N}_.-]/gu, "").slice(0, 40);
-    return {
-      id: user.id,
-      email: user.email,
-      emailConfirmed: Boolean(user.email_confirmed_at),
-      username: candidate.length >= 3 ? candidate : (emailPrefix.length >= 3 ? emailPrefix : `user_${user.id.slice(0, 8)}`),
-    };
-  },
+  verifyAccessToken: verifyHostedAccessToken,
+  requestEmailChange: requestHostedEmailChange,
   verifyCurrentPassword: verifyHostedPassword,
   changePassword: changeHostedPassword,
   async processPendingIdentityDeletion() { await processPendingIdentityDeletion(); },

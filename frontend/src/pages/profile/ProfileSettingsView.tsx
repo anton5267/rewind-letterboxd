@@ -4,6 +4,8 @@ import ProfileSettingsShell, { type ProfileSettingsTab } from "../../components/
 import ProfileBioField from "../../components/ProfileBioField";
 import ProfilePronounField from "../../components/ProfilePronounField";
 import ProfileReplyPreferenceField from "../../components/ProfileReplyPreferenceField";
+import ProfileEmailField from "../../components/ProfileEmailField";
+import { usesHostedSupabaseAuth } from "../../api/supabaseClient";
 import settingsStyles from "../../components/ProfileSettingsShell.module.css";
 import RetryNotice from "../../components/RetryNotice";
 import { Link } from "react-router-dom";
@@ -22,6 +24,7 @@ interface Props {
     ProfileIdentityModel,
     | "profileLoading"
     | "profile"
+    | "setProfile"
     | "profileLoadError"
     | "nameBusy"
     | "pendingProfileLoadFocus"
@@ -163,7 +166,9 @@ export default function ProfileSettingsView({ settingsTab, identity, account, co
         <div><label htmlFor="settings-profile-location">{t("profileLocation")}</label><input id="settings-profile-location" value={profileLocation} maxLength={80} disabled={nameBusy} onChange={event => setProfileLocation(event.target.value)} /></div>
         <ProfilePronounField key={`${user?.id}-${lang}`} value={pronoun} disabled={nameBusy} onChange={setPronoun} />
         <ProfileReplyPreferenceField key={`${user?.id}-${lang}`} value={replyPreference} disabled={nameBusy} onChange={setReplyPreference} />
-        <div><label htmlFor="settings-email">{t("email")}</label><output id="settings-email">{profile.email}</output></div>
+        {usesHostedSupabaseAuth ? <ProfileEmailField key={`${user?.id}-${lang}`} email={profile.email} userId={profile.id} disabled={nameBusy}
+          onConfirmed={email => identity.setProfile(current => current?.id === profile.id ? { ...current, email } : current)} />
+          : <div><label htmlFor="settings-email">{t("email")}</label><output id="settings-email">{profile.email}</output></div>}
         <button type="submit" disabled={nameBusy}>{nameBusy ? t("saving") : t("save")}</button>
       </form>
       <section ref={favoriteSettingsRef} className={settingsStyles.favorites} aria-labelledby="settings-favorites-title" aria-busy={favoritePreviewLoading || favoriteRemovalId !== null}>

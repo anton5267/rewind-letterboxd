@@ -1,6 +1,68 @@
 import { RewindApiError } from "./http/errors.ts";
 import type { HostedAuthUser } from "./contracts/auth.ts";
 
+export function createHostedAccessTokenVerifier(
+  supabaseUrl: string | undefined,
+  publishableKey: string | undefined,
+  fetcher: typeof fetch = fetch,
+) {
+  return async (token: string): Promise<HostedAuthUser | null> => {
+    if (!supabaseUrl || !publishableKey) return null;
+    const response = await fetcher(`${supabaseUrl}/auth/v1/user`, {
+      headers: { apikey: publishableKey, Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) return null;
+    const user = await response.json();
+    if (typeof user?.id !== "string" || typeof user?.email !== "string") return null;
+    const metadataUsername = typeof user.user_metadata?.username === "string"
+      ? user.user_metadata.username.trim()
+      : "";
+    const candidate = metadataUsername.replace(/[^\p{L}\p{N}_.-]/gu, "").slice(0, 50);
+    const emailPrefix = user.email.split("@")[0].replace(/[^\p{L}\p{N}_.-]/gu, "").slice(0, 40);
+    const updatedAt = typeof user.updated_at === "string" && Number.isFinite(Date.parse(user.updated_at))
+      ? user.updated_at : undefined;
+    return {
+      id: user.id,
+      email: user.email,
+      emailConfirmed: Boolean(user.email_confirmed_at),
+      username: candidate.length >= 3 ? candidate : (emailPrefix.length >= 3 ? emailPrefix : `user_${user.id.slice(0, 8)}`),
+      ...(updatedAt ? { updatedAt } : {}),
+    };
+  };
+}
+
+export function createHostedEmailChangeRequester(
+  supabaseUrl: string | undefined,
+  publishableKey: string | undefined,
+  publicBaseUrl: string,
+  fetcher: typeof fetch = fetch,
+) {
+  return async (accessToken: string, email: string, language: "uk" | "en"): Promise<void> => {
+    if (!supabaseUrl || !publishableKey) throw new RewindApiError(503, "Authentication service is temporarily unavailable");
+    try {
+      const base = new URL(publicBaseUrl.endsWith("/") ? publicBaseUrl : `${publicBaseUrl}/`);
+      if (base.protocol !== "https:" || base.username || base.password || base.search || base.hash) {
+        throw new RewindApiError(503, "Public email callback is not configured");
+      }
+      const destination = new URL(`${language}/login/`, base);
+      const endpoint = new URL(`${supabaseUrl}/auth/v1/user`);
+      endpoint.searchParams.set("redirect_to", destination.toString());
+      const response = await fetcher(endpoint, {
+        method: "PUT",
+        headers: { apikey: publishableKey, Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (response.ok) return;
+      if (response.status === 429) throw new RewindApiError(429, "Too many authentication attempts");
+      if (response.status >= 500) throw new RewindApiError(503, "Authentication service is temporarily unavailable");
+      throw new RewindApiError(400, "Unable to request email change");
+    } catch (error) {
+      if (error instanceof RewindApiError) throw error;
+      throw new RewindApiError(503, "Authentication service is temporarily unavailable");
+    }
+  };
+}
+
 export function readPublishableKey(env: (name: string) => string | undefined): string | undefined {
   const legacy = env("SUPABASE_ANON_KEY");
   if (legacy) return legacy;

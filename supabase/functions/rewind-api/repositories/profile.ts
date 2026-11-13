@@ -3,6 +3,7 @@ import type { PublicListCardResponse } from "../contracts/lists.ts";
 import type { PublicProfileResponse, ReplyPreference } from "../contracts/profile.ts";
 import type { RewindApiRepository } from "../contracts/repository.ts";
 import { RewindApiError } from "../http/errors.ts";
+import { syncVerifiedProfileEmail } from "../runtime/profile_email.ts";
 import {
   supabaseSecretKey,
   supabaseUrl,
@@ -234,6 +235,7 @@ export const profileRepository: Pick<RewindApiRepository,
           text: "SELECT set_config('rewind.user_id', $1, TRUE)",
           args: [String(userId)],
         });
+        await syncVerifiedProfileEmail(connection, userId, authUser);
         await ensureSystemLists(connection, userId);
         await connection.queryObject("COMMIT");
         return { id: userId, username: row.username, role: row.role, avatarUrl: row.avatar_url };
@@ -283,6 +285,7 @@ export const profileRepository: Pick<RewindApiRepository,
         text: "SELECT set_config('rewind.user_id', $1, TRUE)",
         args: [String(userId)],
       });
+      await syncVerifiedProfileEmail(connection, userId, authUser);
       await ensureSystemLists(connection, userId);
       await connection.queryObject("COMMIT");
       return { id: userId, username: row.username, role: row.role, avatarUrl: row.avatar_url };

@@ -1,5 +1,7 @@
-param(
-    [switch]$Apply
+﻿param(
+    [switch]$Apply,
+    [ValidateSet('All', 'EmailChange')]
+    [string]$Template = 'All'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -8,8 +10,9 @@ $managementUri = "https://api.supabase.com/v1/projects/$projectRef/config/auth"
 $scriptRoot = Split-Path -Parent $PSCommandPath
 $confirmationPath = Join-Path $scriptRoot '..\supabase\templates\confirmation.html'
 $recoveryPath = Join-Path $scriptRoot '..\supabase\templates\recovery.html'
+$emailChangePath = Join-Path $scriptRoot '..\supabase\templates\email-change.html'
 
-foreach ($path in @($confirmationPath, $recoveryPath)) {
+foreach ($path in @($confirmationPath, $recoveryPath, $emailChangePath)) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
         throw "Required Auth template is missing: $path"
     }
@@ -17,19 +20,39 @@ foreach ($path in @($confirmationPath, $recoveryPath)) {
 
 $confirmationHtml = Get-Content -LiteralPath $confirmationPath -Raw -Encoding UTF8
 $recoveryHtml = Get-Content -LiteralPath $recoveryPath -Raw -Encoding UTF8
-if ([string]::IsNullOrWhiteSpace($confirmationHtml) -or [string]::IsNullOrWhiteSpace($recoveryHtml)) {
+$emailChangeHtml = Get-Content -LiteralPath $emailChangePath -Raw -Encoding UTF8
+if ([string]::IsNullOrWhiteSpace($confirmationHtml) -or [string]::IsNullOrWhiteSpace($recoveryHtml) -or [string]::IsNullOrWhiteSpace($emailChangeHtml)) {
     throw 'An Auth email template is empty.'
 }
 
-$payload = @{
+$recoverySubject = '{{ $uk := eq .RedirectTo (printf "%suk/reset-password/" .SiteURL) }}{{ if or (eq .RedirectTo (printf "%sen/reset-password/" .SiteURL)) (and (not $uk) (eq .Data.language "en")) }}Reset your REWIND password{{ else }}Відновіть пароль REWIND{{ end }}'
+if ($recoverySubject.Length -gt 255) {
+    throw "Recovery subject exceeds Supabase's 255-character limit ($($recoverySubject.Length))."
+}
+
+$emailChangeSubject = '{{ $uk := eq .RedirectTo (printf "%suk/login/" .SiteURL) }}{{ if or (eq .RedirectTo (printf "%sen/login/" .SiteURL)) (and (not $uk) (eq .Data.language "en")) }}Confirm REWIND email change{{ else }}Підтвердьте зміну пошти{{ end }}'
+if ($emailChangeSubject.Length -gt 255) {
+    throw "Email change subject exceeds Supabase's 255-character limit ($($emailChangeSubject.Length))."
+}
+
+$templates = @{
     mailer_subjects_confirmation = '{{ if eq .Data.language "en" }}Confirm your REWIND email{{ else }}Підтвердьте пошту REWIND{{ end }}'
     mailer_templates_confirmation_content = $confirmationHtml
-    mailer_subjects_recovery = '{{ $uk := eq .RedirectTo (printf "%suk/reset-password/" .SiteURL) }}{{ if or (eq .RedirectTo (printf "%sen/reset-password/" .SiteURL)) (and (not $uk) (eq .Data.language "en")) }}Reset your REWIND password{{ else }}Відновіть пароль REWIND{{ end }}'
+    mailer_subjects_recovery = $recoverySubject
     mailer_templates_recovery_content = $recoveryHtml
-} | ConvertTo-Json -Depth 4 -Compress
+    mailer_subjects_email_change = $emailChangeSubject
+    mailer_templates_email_change_content = $emailChangeHtml
+}
+if ($Template -eq 'EmailChange') {
+    $templates = @{
+        mailer_subjects_email_change = $templates.mailer_subjects_email_change
+        mailer_templates_email_change_content = $templates.mailer_templates_email_change_content
+    }
+}
+$payload = $templates | ConvertTo-Json -Depth 4 -Compress
 
 if (-not $Apply) {
-    Write-Output "Prepared confirmation and recovery templates for Supabase project $projectRef. No network request or hosted setting change was made."
+    Write-Output "Prepared Auth templates ($Template) for Supabase project $projectRef. No network request or hosted setting change was made."
     Write-Output 'Review the source templates, then rerun with -Apply. If the process token is absent, PowerShell will request it with hidden input.'
     return
 }
@@ -77,4 +100,4 @@ foreach ($key in $expected.PSObject.Properties.Name) {
     }
 }
 
-Write-Output "Supabase confirmation and recovery templates were updated and verified for project $projectRef. No SMTP settings or other Auth fields were changed."
+Write-Output "Supabase Auth templates ($Template) were updated and verified for project $projectRef."

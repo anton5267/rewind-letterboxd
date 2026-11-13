@@ -1,0 +1,147 @@
+.field {
+  min-width: 0;
+}
+
+.trigger {
+  min-width: 0;
+  min-height: 79px;
+  border: 1px solid transparent;
+  border-radius: 37px;
+  padding: 24px 30px;
+  background: #282828;
+  color: #fff;
+  font: inherit;
+  font-size: 22px;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,.65);
+}
+
+.sheet {
+  width: min(588px, calc(100vw - 48px));
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  border-radius: 20px;
+  background: #282828;
+  color: #fff;
+  font-family: var(--rewind-font-sans);
+}
+
+.toolbar {
+  composes: toolbar from "./ProfilePronounField.module.css";
+  padding-inline: 10px;
+}
+
+.toolbar button:last-child {
+  justify-self: end;
+  color: var(--rewind-brand-amber);
+  font-weight: 700;
+}
+
+.toolbar button:disabled {
+  color: #7e7e7e;
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.emailRow {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(0,1.4fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 45px;
+  border-bottom: 1px solid #191919;
+  padding: 0 34px;
+}
+
+.emailRow label {
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.emailRow input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 0;
+  padding: 8px 0;
+  background: transparent;
+  color: #aaa;
+  font: inherit;
+  font-size: 16px;
+  text-align: right;
+}
+
+.hint, .notice {
+  margin: 16px 34px;
+  font-size: 14px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.hint {
+  color: #aaa;
+}
+
+.notice[role="alert"] {
+  color: #ffd2d2;
+}
+
+.field > .notice {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.check {
+  min-height: 44px;
+  margin: 12px 34px 24px;
+  border: 1px solid #777;
+  border-radius: 12px;
+  padding: 10px 16px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+}
+
+.field > .check {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.sheet :is(input,button):focus-visible, .notice:focus {
+  outline: 2px solid var(--rewind-cyan);
+  outline-offset: -2px;
+}
+
+@media (max-width:767px) {
+  .backdrop {
+    display: block;
+    background: #191919;
+  }
+  .sheet {
+    width: 100%;
+    height: 100dvh;
+    max-height: none;
+    box-sizing: border-box;
+    border-radius: 0;
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  }
+  .trigger {
+    min-height: 45px;
+    border-radius: 0;
+    padding: 8px 0;
+    background: transparent;
+    font-size: 16px;
+    text-align: right;
+  }
+}

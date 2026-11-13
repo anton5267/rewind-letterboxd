@@ -5,6 +5,8 @@ import {
 
 export const supabaseUrl = Deno.env.get("SUPABASE_URL");
 
+export const publicBaseUrl = Deno.env.get("PUBLIC_BASE_URL") ?? "https://anton5267.github.io/rewind-letterboxd/";
+
 export const supabaseAnonKey = readPublishableKey((name) => Deno.env.get(name));
 
 export const supabaseSecretKey = readSecretKey((name) => Deno.env.get(name));

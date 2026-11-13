@@ -2,9 +2,38 @@ import { expect, test, type Page } from "@playwright/test";
 
 const tokenHash = "one-time-fixture-token-hash";
 
+for (const language of ["uk", "en"] as const) {
+  for (const complete of [false, true]) {
+    test(`${language} email change handles ${complete ? "final" : "intermediate"} confirmation after an explicit click`, async ({ page }) => {
+      const bodies = await mockSupabaseVerification(page);
+      let verifications = 0;
+      if (!complete) await page.route("**/auth/v1/verify**", async route => {
+        verifications++;
+        const body = route.request().postDataJSON();
+        expect(body).toMatchObject({ type: "email_change", token_hash: tokenHash });
+        await route.fulfill({ json: { msg: "Confirmation accepted" } });
+      });
+      await page.goto(`/${language}/email-action/#rewind_action=email_change&token_hash=${tokenHash}&type=email_change`);
+      const heading = language === "uk" ? "Підтвердьте зміну email" : "Confirm your email change";
+      await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+      await expect(page).toHaveURL(new RegExp(`/${language}/email-action/?$`));
+      expect(bodies.length + verifications).toBe(0);
+      await page.getByRole("button", { name: language === "uk" ? "Підтвердити пошту" : "Confirm email" }).click();
+      const result = complete
+        ? language === "uk" ? "Email оновлено" : "Email updated"
+        : language === "uk" ? "Підтвердження прийнято" : "Confirmation accepted";
+      await expect(page.getByRole("heading", { name: result })).toBeVisible();
+      await expect(page.getByRole("alert")).toHaveCount(0);
+      expect(bodies.length + verifications).toBe(1);
+      if (complete) expect(bodies[0].type).toBe("email_change");
+    });
+  }
+}
+
 async function mockSupabaseVerification(page: Page) {
   const appOrigin = new URL(process.env.E2E_BASE_URL ?? "http://127.0.0.1:3000").origin;
   const verificationBodies: Array<{ token_hash: string; type: string }> = [];
+  await page.route("**/auth/v1/**", route => route.fulfill({ status: 404, json: { message: "Unmocked fixture Auth request" } }));
   await page.route("**/auth/v1/verify**", async route => {
     verificationBodies.push(route.request().postDataJSON() as { token_hash: string; type: string });
     const now = Math.floor(Date.now() / 1000);
