@@ -1,0 +1,64 @@
+name: Encrypted Supabase application backup
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Export and encrypt application schema
+        shell: bash
+        env:
+          PGHOST: ${{ secrets.SUPABASE_BACKUP_HOST }}
+          PGUSER: ${{ secrets.SUPABASE_BACKUP_USER }}
+          PGPASSWORD: ${{ secrets.SUPABASE_BACKUP_PASSWORD }}
+          BACKUP_PASSPHRASE: ${{ secrets.REWIND_BACKUP_PASSPHRASE }}
+          PGPORT: "5432"
+          PGDATABASE: postgres
+          PGSSLMODE: require
+          PGCONNECT_TIMEOUT: "30"
+        run: |
+          set -euo pipefail
+          umask 077
+          for name in PGHOST PGUSER PGPASSWORD BACKUP_PASSPHRASE; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing required backup setting $name"
+              exit 1
+            fi
+          done
+          work="$RUNNER_TEMP/rewind-backup"
+          mkdir -p "$work"
+          trap 'rm -f "$work/rewind.dump"' EXIT
+          docker run --rm \
+            -e PGHOST -e PGUSER -e PGPASSWORD -e PGPORT -e PGDATABASE \
+            -e PGSSLMODE -e PGCONNECT_TIMEOUT \
+            postgres:17 pg_dump --format=custom --schema=rewind --no-owner --no-acl \
+            > "$work/rewind.dump"
+          test -s "$work/rewind.dump"
+          docker run --rm -i postgres:17 pg_restore --list \
+            < "$work/rewind.dump" > /dev/null
+          printf '%s' "$BACKUP_PASSPHRASE" | gpg --batch --yes \
+            --pinentry-mode loopback --passphrase-fd 0 --symmetric \
+            --cipher-algo AES256 --output "$work/rewind.dump.gpg" "$work/rewind.dump"
+          printf '%s' "$BACKUP_PASSPHRASE" | gpg --batch --quiet \
+            --pinentry-mode loopback --passphrase-fd 0 --decrypt "$work/rewind.dump.gpg" \
+            | cmp --silent "$work/rewind.dump" -
+          cd "$work"
+          sha256sum rewind.dump.gpg > rewind.dump.gpg.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rewind-encrypted-backup-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/rewind-backup/rewind.dump.gpg
+            ${{ runner.temp }}/rewind-backup/rewind.dump.gpg.sha256
+          retention-days: 30
+          if-no-files-found: error

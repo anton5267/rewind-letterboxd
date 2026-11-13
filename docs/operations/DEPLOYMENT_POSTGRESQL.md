@@ -53,6 +53,19 @@ After the Auth URL/callback and SMTP configuration is available, test using a di
 
 Until this passes, describe the site as publicly browsable with the account UI deployed, not as a fully accepted public account service. Local legacy profiles remain in MySQL and are intentionally not matched to Supabase users by email.
 
+## GitHub Actions encrypted application export
+
+The manual workflow `.github/workflows/backup-supabase.yml` exports the `rewind` schema using PostgreSQL 17, checks the archive table of contents, encrypts it with GPG AES256, and uploads only ciphertext plus its SHA-256 checksum. Artifacts expire after 30 days. The hosted database reports PostgreSQL 17.11. The workflow is available through manual dispatch after publication. Its first production export and restore rehearsal remain pending.
+
+Configure repository Actions secrets at `https://github.com/anton5267/rewind-letterboxd/settings/secrets/actions` using the project's **session pooler** connection details, port 5432.
+
+- `SUPABASE_BACKUP_HOST` — session pooler hostname.
+- `SUPABASE_BACKUP_USER` — session pooler database username.
+- `SUPABASE_BACKUP_PASSWORD` — database password.
+- `REWIND_BACKUP_PASSPHRASE` — strong independent encryption passphrase, also retained in the owner's password manager for recovery.
+
+After publishing the workflow, run it manually from Actions. Download the encrypted artifact before expiry. Decrypt with `gpg --output rewind.dump --decrypt rewind.dump.gpg`, which prompts for the passphrase. Restore into a disposable PostgreSQL database with the required REWIND roles/functions available and compare rows, IDs, foreign keys and sequences before accepting recovery. The dump contains application schema/data. Auth identities, Storage objects, role definitions, Edge secrets and Dashboard settings require separate recovery handling. A successful archive listing alone does not complete restore acceptance.
+
 ## References
 
 - [Project plan](../../PLAN.md)
