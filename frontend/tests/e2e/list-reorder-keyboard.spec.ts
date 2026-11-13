@@ -36,6 +36,7 @@ test("owner reorders list films with keyboard, touch and mouse, preserving saved
 
   await page.setViewportSize({ width: 393, height: 844 });
   await page.goto("/uk/lists?list=98021&mode=edit");
+  await page.getByRole("button", { name: /^Редагувати фільми/ }).click();
   const first = page.getByRole("button", { name: "Змінити порядок: Arrival" });
   await expect(first).toBeVisible();
   await expect(page.getByRole("button", { name: "Змінити порядок: Moonlight" })).toBeVisible();
@@ -84,6 +85,7 @@ test("owner reorders list films with keyboard, touch and mouse, preserving saved
   await first.dragTo(page.getByRole("button", { name: "Змінити порядок: Moonlight" }));
   await expect.poll(() => savedOrders).toEqual([[98102, 98101], [98102, 98101], [98101, 98102], [98102, 98101]]);
   await page.reload();
+  await page.getByRole("button", { name: /^Редагувати фільми/ }).click();
   await expect(first).toBeVisible();
   await expect.poll(async () => page.locator('button[aria-label^="Змінити порядок:"]').evaluateAll(buttons => buttons.map(button => button.getAttribute("aria-label"))))
     .toEqual(["Змінити порядок: Moonlight", "Змінити порядок: Arrival"]);

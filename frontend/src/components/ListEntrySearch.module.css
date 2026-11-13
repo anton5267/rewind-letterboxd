@@ -1,0 +1,10 @@
+.search { margin: 16px 34px 0; }
+.search form { display: flex; min-height: 36px; align-items: center; gap: 8px; border-radius: 37px; padding: 7px 16px; background: #191919; color: #7e7e7e; }
+.search form i { flex: 0 0 auto; font-size: 13px; }
+.search input { width: 100%; min-width: 0; min-height: 30px; border: 0; padding: 0; background: transparent; color: #fff; font-size: 14px; }
+.search p { margin: 12px 0; font-size: 14px; }
+.results { display: grid; gap: 8px; margin: 12px 0; padding: 0; list-style: none; }
+.results button { width: 100%; min-height: 44px; border: 1px solid #555; border-radius: 12px; padding: 8px 12px; background: #191919; color: #fff; font-size: 14px; text-align: left; }
+.results button:disabled { opacity: .55; }
+.search nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; font-size: 13px; }
+.search nav button { min-width: 44px; min-height: 44px; border: 1px solid #555; border-radius: 12px; padding: 8px 12px; background: #191919; color: #fff; }

@@ -47,7 +47,7 @@
 .form input[type="checkbox"] { accent-color: var(--rewind-cyan); }
 .form button:not([data-retry-button]),
 .form button:not([data-retry-button]),
-.section button:not([data-retry-button]) { width: fit-content; min-height: 44px; border: 1px solid #d4a85f; border-radius: 2px; padding: 9px 14px; background: #d4a85f; color: #1f1f1f; font-weight: 700; cursor: pointer; }
+.section:not(.phoneCustomSection) button:not([data-retry-button]) { width: fit-content; min-height: 44px; border: 1px solid #d4a85f; border-radius: 2px; padding: 9px 14px; background: #d4a85f; color: #1f1f1f; font-weight: 700; cursor: pointer; }
 .form button:not([data-retry-button]):disabled,
 .section button:not([data-retry-button]):disabled { cursor: not-allowed; opacity: .45; }
 .createForm { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
@@ -106,7 +106,6 @@
 .itemActions button { min-width: 44px; min-height: 44px; padding: 8px 10px; border-color: rgba(255, 255, 255, .18); background: transparent; color: #fff; }
 .itemActions button:hover { border-color: #d4a85f; color: #d4a85f; }
 .mobileMoveHandle { display: none; }
-.itemRemoveButton span[aria-hidden="true"] { display: block; font-size: 21px; line-height: 1; }
 .browseFilms { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; margin-top: 22px; border: 1px solid var(--rewind-line); border-radius: 999px; padding: 9px 16px; background: #1f1f1f; color: #fff; font-size: 14px; text-decoration: none; }
 .browseFilms i { display: none; }
 .browseMobile { display: none; }
@@ -212,7 +211,7 @@
   .emptyPreview { padding: 28px 18px; }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .page { padding: 84px 16px calc(90px + env(safe-area-inset-bottom)); background: #191919; }
   .mobileEditorPage { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
   .content { width: 100%; }
@@ -268,17 +267,34 @@
   .itemYear, .itemRating { color: var(--rewind-muted); font-size: 12px; line-height: 1.2; }
   .itemRating { flex-basis: 100%; }
   .itemActions { width: 94px; min-width: 0; grid-column: 3; grid-row: 1; align-self: center; flex-wrap: nowrap; justify-content: flex-end; gap: 6px; }
-  .section .itemActions button { flex: 0 0 44px; width: 44px; min-width: 44px; height: 44px; min-height: 44px; border-color: transparent; padding: 0; background: #191919; color: #fff; }
+  .section .itemActions button { flex: 0 0 44px; width: 44px; min-width: 44px; height: 44px; min-height: 44px; border: 1px solid transparent; padding: 0; background: #191919; color: #fff; }
   .section .itemActions button:hover:not(:disabled) { border-color: var(--rewind-line); background: #353535; }
   .itemRemoveButton { display: grid; place-items: center; width: 44px; border-color: #d55a63 !important; border-radius: 50% !important; background: #c43f4a !important; color: #fff !important; font-size: 0; }
-  .itemRemoveButton span[aria-hidden="true"] { display: block; font-size: 21px; font-weight: 400; line-height: 1; }
   .itemMoveButton { display: none !important; }
   .mobileMoveHandle { display: grid !important; place-items: center; border-radius: 50% !important; cursor: grab; touch-action: none; }
   .mobileMoveHandle:active { cursor: grabbing; }
   .mobileMoveHandle:focus-visible { outline: 3px solid #64dbe2; outline-offset: 3px; }
   .mobileMoveHandle img { pointer-events: none; }
   .mobileMoveHandle[data-reordering="true"] { outline: 3px solid var(--rewind-cyan); outline-offset: 3px; cursor: grabbing; }
+  .phoneCustomPage { padding-inline: 0; }
+  .phoneCustomPage > .hero { position: absolute; width: 1px; height: 1px; min-height: 0; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
+  .phoneCustomPage .content { width: 100%; }
+  .phoneCustomSection { margin: 0; padding: 0 0 24px; }
+  .phoneCustomPage .listPicker { display: none; }
+  .phoneCustomPage .alert, .phoneCustomPage .status { margin-inline: 16px; }
+  .phoneCustomSection > .stateCard, .phoneCustomSection > .heroCopy { margin-inline: 34px; }
+  .phoneCustomSection .items { margin: 29px 18px 0 34px; }
+  .phoneCustomSection .itemRow { position: relative; }
+  .phoneCustomSection .itemRow:not(:last-child)::after { position: absolute; bottom: -23px; left: -34px; right: -18px; height: 1px; background: #191919; content: ""; pointer-events: none; }
+  .entriesToolbar { display: flex; min-height: 44px; align-items: center; gap: 0; padding: 0 34px 0 12px; }
+  .entriesToolbar button { display: grid; width: 44px; height: 44px; flex: 0 0 44px; align-items: center; justify-items: end; border: 0; padding: 0; background: transparent; color: #fff; }
+  .section .entriesToolbar h2 { margin: 0; font-size: 16px; font-weight: 500; line-height: 1.12; }
+  .phoneCustomSection > :is(.entriesToolbar, [role="search"], .items) { animation: entriesReveal .16s ease-out; }
+  .alert:focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; }
 }
+
+@keyframes entriesReveal { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .phoneCustomSection > :is(.entriesToolbar, [role="search"], .items) { animation: none; } }
 
 @media (max-width: 380px) {
   .listButtons { gap: 6px; }

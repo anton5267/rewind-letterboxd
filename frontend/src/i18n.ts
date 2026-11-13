@@ -65,6 +65,7 @@ const adminUserMessages = {
 const messages = {
   uk: {
     ...adminUserMessages.uk,
+    editListEntries: "Редагувати фільми…", editList: "Редагувати список",
     termsTitle: "Умови користування", termsBody: "Користування Rewind та відповідальність учасників.",
     conditionsTitle: "Умови роботи", conditionsBody: "Доступність функцій і матеріалів Rewind.",
     safetyNoticeTitle: "Безпека спільноти", safetyNoticeBody: "Захист акаунта й безпечна взаємодія.",
@@ -210,6 +211,7 @@ const messages = {
   },
   en: {
     ...adminUserMessages.en,
+    editListEntries: "Edit entries…", editList: "Edit List",
     termsTitle: "Terms", termsBody: "Using Rewind and participating responsibly.",
     conditionsTitle: "Conditions", conditionsBody: "Availability of Rewind features and content.",
     safetyNoticeTitle: "Safety Notice", safetyNoticeBody: "Account protection and safe interaction.",

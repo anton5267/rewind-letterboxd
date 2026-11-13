@@ -1,12 +1,14 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { createList, deleteList, getListItems, getUserLists, getUserListsPage, removeMovieFromList, reorderListItems, updateList, type UserList, type UserListItem } from "../api/lists.api";
+import { addMovieToList, createList, deleteList, getListItems, getUserLists, getUserListsPage, removeMovieFromList, reorderListItems, updateList, type UserList, type UserListItem } from "../api/lists.api";
 import { searchMovies, type MovieCard } from "../api/search.api";
 import Pagination from "../components/Pagination";
 import ResilientImage from "../components/ResilientImage";
 import RetryButton from "../components/RetryButton";
 import ConfirmDialog from "../components/ConfirmDialog";
 import ListReorderHandle from "../components/ListReorderHandle";
+import MobileListSettings from "../components/MobileListSettings";
+import ListEntrySearch from "../components/ListEntrySearch";
 import { useAuth } from "../context/AuthContext";
 import { editorialText, formatMovieYear, useLocale } from "../i18n";
 import { getLastPageIndex, isPageOutOfRange } from "../utils/pagination";
@@ -38,6 +40,10 @@ export default function UserLists() {
   const editorNameRef = useRef<HTMLInputElement>(null);
   const editAddFilmsRef = useRef<HTMLAnchorElement>(null);
   const selectedHeadingRef = useRef<HTMLHeadingElement>(null);
+  const mobileEntriesRef = useRef<HTMLButtonElement>(null);
+  const [mobileEntriesOpen, setMobileEntriesOpen] = useState(false);
+  const [phoneLayout, setPhoneLayout] = useState(() => window.matchMedia("(max-width: 767px)").matches);
+  const viewportEditorFocus = useRef<{ field: string; ownerId: number | null; listId: number | null; start: number | null; end: number | null } | null>(null);
   const focusEditor = useRef(false);
   const [items, setItems] = useState<UserListItem[]>([]);
   const pendingReorderFocus = useRef<{ itemId: number; origin: HTMLElement | null } | null>(null);
@@ -79,6 +85,7 @@ export default function UserLists() {
   const [editPublic, setEditPublic] = useState(false);
   const [editTags, setEditTags] = useState("");
   const [error, setError] = useState("");
+  const actionErrorRef = useRef<HTMLParagraphElement>(null);
   const [status, setStatus] = useState("");
   const [createBusy, setCreateBusy] = useState(false);
   const [draftFilms, setDraftFilms] = useState<MovieCard[]>([]);
@@ -97,6 +104,38 @@ export default function UserLists() {
   const itemMutation = useRef(0);
 
   activeUserId.current = user?.id ?? null;
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const update = () => {
+      const active = document.activeElement;
+      if ((active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) && active.dataset.listField) {
+        viewportEditorFocus.current = { field: active.dataset.listField, ownerId: activeUserId.current, listId: selectedRef.current, start: active.selectionStart, end: active.selectionEnd };
+      }
+      setPhoneLayout(media.matches);
+    };
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  useLayoutEffect(() => {
+    const pending = viewportEditorFocus.current;
+    viewportEditorFocus.current = null;
+    if (!pending || pending.ownerId !== activeUserId.current || pending.listId !== selectedRef.current || document.activeElement !== document.body) return;
+    const target = document.querySelector<HTMLInputElement | HTMLTextAreaElement>(`[data-list-field="${pending.field}"]`);
+    if (!target?.getClientRects().length) return;
+    target.focus();
+    if (pending.start !== null && pending.end !== null) target.setSelectionRange(pending.start, pending.end);
+  }, [phoneLayout]);
+
+  useEffect(() => { setMobileEntriesOpen(false); }, [selected, user?.id, lang, detailMode]);
+  useEffect(() => {
+    if (phoneLayout && !detailMode && selected !== null && location.hash === "#add-films") setMobileEntriesOpen(true);
+  }, [phoneLayout, detailMode, selected, location.hash]);
+  useEffect(() => {
+    if (!mobileEntriesOpen || !phoneLayout) return;
+    selectedHeadingRef.current?.focus({ preventScroll: true });
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [mobileEntriesOpen, phoneLayout]);
 
   useEffect(() => {
     listMutation.current += 1;
@@ -253,7 +292,7 @@ export default function UserLists() {
       if (failed) scope?.querySelector<HTMLElement>("[data-retry-button]")?.focus();
       else if (pending.kind === "linked") listDetailHeadingRef.current?.focus();
       else if (pending.kind === "films") filmQueryRef.current?.focus();
-      else if (pending.kind === "items") selectedHeadingRef.current?.focus();
+      else if (pending.kind === "items") (selectedHeadingRef.current ?? editorNameRef.current)?.focus();
       else listsHeadingRef.current?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
@@ -342,6 +381,50 @@ export default function UserLists() {
     ?? (linkedList?.id === selected ? linkedList : null)
     ?? (selectedListSnapshot?.id === selected ? selectedListSnapshot : null);
   const listControlsBusy = listsLoading || itemsBusy || createBusy || saveBusy || deleting;
+  const phoneCustomEditor = phoneLayout && !detailMode && selectedList?.listType === "CUSTOM";
+  const closeMobileEntries = () => {
+    const ownerId = activeUserId.current;
+    const listId = selected;
+    setMobileEntriesOpen(false);
+    window.requestAnimationFrame(() => {
+      if (activeUserId.current === ownerId && selectedRef.current === listId) mobileEntriesRef.current?.focus();
+    });
+  };
+  const cancelMobileSettings = () => {
+    if (!selectedList || listControlsBusy) return;
+    setEditName(selectedList.name);
+    setEditDescription(selectedList.description ?? "");
+    setEditPublic(selectedList.isPublic);
+    setEditTags(selectedList.tags.join(", "));
+    setError("");
+    setStatus("");
+    navigate(path(`/lists?list=${selectedList.id}&mode=view`));
+  };
+  const addEntry = async (movieId: number) => {
+    if (!selectedList || selectedList.listType !== "CUSTOM" || itemsLoading || itemsLoadError || listControlsBusy) return false;
+    const listId = selectedList.id;
+    const ownerId = activeUserId.current;
+    const origin = document.activeElement;
+    const requestId = ++itemMutation.current;
+    const current = () => ownerId !== null && activeUserId.current === ownerId && selectedRef.current === listId && itemMutation.current === requestId;
+    setItemsBusy(true);
+    setError("");
+    try {
+      await addMovieToList(listId, movieId);
+      if (!current()) return false;
+      setStatus(t("filmAdded"));
+      setItemsReload(value => value + 1);
+      return true;
+    } catch {
+      if (current()) {
+        setError(t("addFilmError"));
+        window.requestAnimationFrame(() => {
+          if (current() && (document.activeElement === document.body || document.activeElement === origin)) actionErrorRef.current?.focus();
+        });
+      }
+      return false;
+    } finally { if (current()) setItemsBusy(false); }
+  };
   const focusFilmSearch = () => {
     if (window.matchMedia("(min-width: 1024px)").matches) {
       setFilmSearchOpen(true);
@@ -400,7 +483,7 @@ export default function UserLists() {
       setEditPublic(data.isPublic);
       setEditTags(data.tags.join(", "));
       setError("");
-      setStatus("");
+      setStatus(t("saved"));
     } catch { if (isCurrentRequest()) setError(t("updateListError")); }
     finally { if (isCurrentRequest()) setSaveBusy(false); }
   };
@@ -475,7 +558,12 @@ export default function UserLists() {
     if (Number.isSafeInteger(sourceItemId) && targetIndex >= 0) void moveToIndex(sourceItemId, targetIndex);
   };
 
-  return <main className={`${styles.page} ${styles.mobileEditorPage} ${!selectedList ? styles.createPage : ""}`} data-list-editor={!selectedList ? "create" : "edit"} aria-labelledby="user-lists-title" aria-busy={listsLoading || itemsLoading || itemsBusy || createBusy || saveBusy || deleting}>
+  const itemsFeedback = <>
+    {itemsLoading && <div className={styles.stateCard} role="status"><span className={styles.stateMark} aria-hidden="true">…</span><strong>{t("loading")}</strong></div>}
+    {itemsLoadError && <div className={`${styles.stateCard} ${styles.stateError}`} role="alert"><strong>{t("loadItemsError")}</strong><RetryButton label={t("retry")} onClick={() => { rememberRetry("items", document.activeElement as HTMLElement); setItemsReload(value => value + 1); }} /></div>}
+  </>;
+
+  return <main className={`${styles.page} ${styles.mobileEditorPage} ${!selectedList ? styles.createPage : ""} ${phoneCustomEditor ? styles.phoneCustomPage : ""}`} data-list-editor={!selectedList ? "create" : "edit"} aria-labelledby="user-lists-title" aria-busy={listsLoading || itemsLoading || itemsBusy || createBusy || saveBusy || deleting}>
     {!selectedList && <div className={styles.createMobileHeader}>
       <Link to={path("/profile?view=lists")} aria-label={t("backToProfile")}><img src="/images/list-create-back.svg" alt="" width="18" height="18" /></Link>
       <span>{t("createListTitle")}</span>
@@ -487,7 +575,7 @@ export default function UserLists() {
       <p className={styles.heroCopy}>{t("createListIntro")}</p>
     </header>
     <div className={styles.content}>
-    {error && <p className={styles.alert} role="alert">{error}</p>}
+    {error && <p ref={actionErrorRef} className={styles.alert} role="alert" tabIndex={-1}>{error}</p>}
     {(status || (detailMode && location.state?.listCreated === selectedList?.id)) && <p className={styles.status} role="status">{status || t("listCreated")}</p>}
     {!selectedList && <form className={`${styles.form} ${styles.createForm}`} aria-labelledby="user-lists-title" aria-busy={createBusy} onSubmit={create}>
       <label className={styles.nameField} htmlFor="new-list-name">{t("listName")} <input ref={editorNameRef} id="new-list-name" required disabled={createBusy} value={name} maxLength={120} onChange={e => setName(e.target.value)} /></label>
@@ -525,14 +613,32 @@ export default function UserLists() {
       <p>{description.trim() || t("emptyList")}</p>
       {tags.trim() && <div className={styles.previewTags}>{tags.split(",").map(tag => tag.trim()).filter(Boolean).map(tag => <span key={tag}>#{tag}</span>)}</div>}
     </aside>}
-      {selectedList && <section className={`${styles.section} ${styles.selectedSection} ${selectedList.listType === "CUSTOM" ? styles.customEditor : ""}`} aria-labelledby="selected-list-heading" aria-busy={itemsLoading || itemsBusy || saveBusy || deleting}>
-      <div className={styles.sectionHeader}>
+      {selectedList && <section className={`${styles.section} ${styles.selectedSection} ${selectedList.listType === "CUSTOM" ? styles.customEditor : ""} ${phoneCustomEditor ? styles.phoneCustomSection : ""}`} aria-labelledby={phoneCustomEditor ? undefined : "selected-list-heading"} aria-label={phoneCustomEditor ? selectedList.name : undefined} aria-busy={itemsLoading || itemsBusy || saveBusy || deleting}>
+      {phoneCustomEditor && itemsFeedback}
+      {phoneCustomEditor && !mobileEntriesOpen && <MobileListSettings
+        key={`${user?.id}:${selectedList.id}:${lang}`}
+        name={editName} description={editDescription} tags={editTags} isPublic={editPublic}
+        items={items} itemsReady={!itemsLoading && !itemsLoadError} busy={listControlsBusy}
+        nameRef={editorNameRef} entriesRef={mobileEntriesRef}
+        initialTagsFocus={viewportEditorFocus.current?.field === "tags"}
+        publicHref={selectedList.isPublic ? path(`/lists/public/${selectedList.id}`) : undefined}
+        onName={setEditName} onDescription={setEditDescription} onTags={setEditTags} onPublic={setEditPublic}
+        onEntries={() => setMobileEntriesOpen(true)} onCancel={cancelMobileSettings} onSave={saveList} onDelete={requestListDelete}
+      />}
+      {phoneCustomEditor && mobileEntriesOpen && <>
+        <header className={styles.entriesToolbar}>
+          <button type="button" disabled={listControlsBusy} aria-label={t("listSettings")} onClick={closeMobileEntries}><img src="/images/list-entry-back.png" width={22} height={22} alt="" /></button>
+          <h2 ref={selectedHeadingRef} id="selected-list-heading" tabIndex={-1}>{t("editList")}</h2>
+        </header>
+        <ListEntrySearch key={`${user?.id}:${selectedList.id}:${lang}`} existingIds={items.map(item => item.movie.id)} busy={listControlsBusy || itemsLoading || itemsLoadError} onAdd={addEntry} />
+      </>}
+      {!phoneCustomEditor && <div className={styles.sectionHeader}>
         <div>
           <p className={styles.eyebrow}>{selectedList.isPublic ? t("publicList") : t("privateList")}</p>
           <h2 ref={selectedHeadingRef} id="selected-list-heading" tabIndex={-1} className={styles.retryFocusHeading}>{editorialText(selectedList.name, t("lists"))}</h2>
         </div>
         <button type="button" className={styles.secondaryButton} disabled={listControlsBusy} onClick={clearSelection}>{t("newList")}</button>
-      </div>
+      </div>}
       {detailMode && <div className={styles.ownerDetail}>
         {selectedList.description && <p>{selectedList.description}</p>}
         <p>{selectedList.isPublic ? t("publicList") : t("privateList")}</p>
@@ -543,11 +649,11 @@ export default function UserLists() {
           {selectedList.isPublic && <Link className={styles.viewListButton} to={path(`/lists/public/${selectedList.id}`)}>{t("viewList")}</Link>}
         </div>
       </div>}
-      {!detailMode && selectedList.listType === "CUSTOM" && <form className={`${styles.form} ${styles.editForm}`} aria-labelledby="selected-list-heading" aria-busy={itemsBusy || saveBusy || deleting} onSubmit={saveList}>
-        <label className={styles.nameField} htmlFor="edit-list-name">{t("listName")} <input ref={editorNameRef} id="edit-list-name" required maxLength={120} disabled={itemsBusy || saveBusy || deleting} value={editName} onChange={event => setEditName(event.target.value)} aria-invalid={!editName.trim()} aria-describedby={!editName.trim() ? "edit-list-name-error" : undefined} />{!editName.trim() && <span className={styles.nameError} id="edit-list-name-error" role="alert">{t("listNameRequired")}</span>}</label>
-        <label className={styles.descriptionField} htmlFor="edit-list-description">{t("description")} <textarea id="edit-list-description" rows={5} maxLength={5000} disabled={itemsBusy || saveBusy || deleting} value={editDescription} onChange={event => setEditDescription(event.target.value)} /></label>
-        <label className={styles.tagsField} htmlFor="edit-list-tags">{t("tags")} <input id="edit-list-tags" value={editTags} maxLength={509} disabled={itemsBusy || saveBusy || deleting} placeholder={t("tagsHint")} onChange={event => setEditTags(event.target.value)} /></label>
-        <label className={styles.checkboxLabel}><input type="checkbox" checked={editPublic} disabled={itemsBusy || saveBusy || deleting} onChange={event => setEditPublic(event.target.checked)} /> <span>{t("publicList")}</span></label>
+      {!phoneCustomEditor && !detailMode && selectedList.listType === "CUSTOM" && <form className={`${styles.form} ${styles.editForm}`} aria-labelledby="selected-list-heading" aria-busy={itemsBusy || saveBusy || deleting} onSubmit={saveList}>
+        <label className={styles.nameField} htmlFor="edit-list-name">{t("listName")} <input ref={editorNameRef} id="edit-list-name" data-list-field="name" required maxLength={120} disabled={itemsBusy || saveBusy || deleting} value={editName} onChange={event => setEditName(event.target.value)} aria-invalid={!editName.trim()} aria-describedby={!editName.trim() ? "edit-list-name-error" : undefined} />{!editName.trim() && <span className={styles.nameError} id="edit-list-name-error" role="alert">{t("listNameRequired")}</span>}</label>
+        <label className={styles.descriptionField} htmlFor="edit-list-description">{t("description")} <textarea id="edit-list-description" data-list-field="description" rows={5} maxLength={5000} disabled={itemsBusy || saveBusy || deleting} value={editDescription} onChange={event => setEditDescription(event.target.value)} /></label>
+        <label className={styles.tagsField} htmlFor="edit-list-tags">{t("tags")} <input id="edit-list-tags" data-list-field="tags" value={editTags} maxLength={509} disabled={itemsBusy || saveBusy || deleting} placeholder={t("tagsHint")} onChange={event => setEditTags(event.target.value)} /></label>
+        <label className={styles.checkboxLabel}><input type="checkbox" data-list-field="visibility" checked={editPublic} disabled={itemsBusy || saveBusy || deleting} onChange={event => setEditPublic(event.target.checked)} /> <span>{t("publicList")}</span></label>
         <div className={styles.editActions}>
           <Link ref={editAddFilmsRef} className={styles.browseFilms} to={path("/films")} aria-disabled={listControlsBusy || undefined} onClick={event => { if (listControlsBusy) event.preventDefault(); }}>
             <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
@@ -560,11 +666,10 @@ export default function UserLists() {
           <button type="submit" aria-busy={saveBusy} disabled={itemsBusy || saveBusy || deleting || !editName.trim()}>{saveBusy ? t("saving") : t("save")}</button>
         </div>
       </form>}
-      {itemsLoading && <div className={styles.stateCard} role="status"><span className={styles.stateMark} aria-hidden="true">…</span><strong>{t("loading")}</strong></div>}
-      {itemsLoadError && <div className={`${styles.stateCard} ${styles.stateError}`} role="alert"><strong>{t("loadItemsError")}</strong><RetryButton label={t("retry")} onClick={() => { rememberRetry("items", document.activeElement as HTMLElement); setItemsReload(value => value + 1); }} /></div>}
+      {!phoneCustomEditor && itemsFeedback}
       {!detailMode && !itemsLoading && !itemsLoadError && selectedList.listType === "CUSTOM" && items.length === 1 && <p className={styles.heroCopy}>{t("listKeepOneFilm")}</p>}
       {!itemsLoading && !itemsLoadError && items.length === 0 && <div className={`${styles.emptyPreview} ${styles.selectedEmpty}`}><p className={styles.eyebrow}>{t("emptyListLabel")}</p><strong>{editorialText(selectedList.name, t("lists"))}</strong><p>{t("emptyList")}</p></div>}
-      {!itemsLoading && !itemsLoadError && items.length > 0 && <>
+      {(!phoneCustomEditor || mobileEntriesOpen) && !itemsLoading && !itemsLoadError && items.length > 0 && <>
         {selectedList.listType === "CUSTOM" && <p id="list-reorder-instructions" className="srOnly">{t("listReorderHelp")}</p>}
         <ul className={styles.items}>{items.map((item, index) => {
         const movieTitle = editorialText(item.movie.title, t("untitledFilm"));
@@ -578,7 +683,7 @@ export default function UserLists() {
           </div>
           {!detailMode && <div className={styles.itemActions}>
             <button className={styles.itemRemoveButton} type="button" aria-busy={itemsBusy} disabled={itemsBusy || saveBusy || deleting || (selectedList.listType === "CUSTOM" && items.length === 1)} onClick={() => void remove(item.movie.id)}>
-              <span aria-hidden="true">−</span><span className="srOnly">{t("remove")}</span>
+              <img src="/images/list-entry-remove.png" width={25} height={25} alt="" /><span className="srOnly">{t("remove")}</span>
             </button>
             {selectedList.listType === "CUSTOM" && <>
               <ListReorderHandle
