@@ -4,9 +4,11 @@ import App from "./App";
 import AppErrorBoundary from "./components/AppErrorBoundary";
 import { AuthProvider } from "./context/AuthContext";
 import { capturePkceSignupCallback } from "./auth/authCallbackState";
+import { enableStaleAssetRecovery } from "./utils/staleAssetRecovery";
 import "./global.css";
 
 capturePkceSignupCallback();
+enableStaleAssetRecovery();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "")}>
