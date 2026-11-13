@@ -256,7 +256,7 @@ Deno.test("GET /api/profile/me verifies identity and returns the private profile
 });
 
 Deno.test("PATCH /api/profile/me validates and persists only profile fields", async () => {
-  let update: { displayName?: string; avatarUrl?: string; bio?: string } | null = null;
+  let update: { displayName?: string; avatarUrl?: string; bio?: string; location?: string; pronoun?: string } | null = null;
   const profile = {
     id: 42, username: "cinephile", displayName: "New name", email: "person@example.test",
     role: "USER", avatarUrl: "https://example.test/avatar.png", supabaseLinked: true,
@@ -275,15 +275,19 @@ Deno.test("PATCH /api/profile/me validates and persists only profile fields", as
 
   const valid = await handler(new Request("https://project.supabase.co/api/profile/me", {
     method: "PATCH", headers: { Authorization: "Bearer valid-token", "Content-Type": "application/json" },
-    body: JSON.stringify({ displayName: "New name", avatarUrl: "https://example.test/avatar.png", bio: "Film fan.", role: "ADMIN" }),
+    body: JSON.stringify({ displayName: "New name", avatarUrl: "https://example.test/avatar.png", bio: "Film fan.", location: " Berlin ", pronoun: "She / her", role: "ADMIN" }),
   }));
   const body = await valid.json();
   if (valid.status !== 200 || JSON.stringify(update) !== JSON.stringify({
-    displayName: "New name", avatarUrl: "https://example.test/avatar.png", bio: "Film fan.",
+    displayName: "New name", avatarUrl: "https://example.test/avatar.png", bio: "Film fan.", location: "Berlin", pronoun: "She / her",
   }) || body.role !== "USER") {
     throw new Error(`Unexpected profile update response: ${JSON.stringify(body)}`);
   }
 
+  for (const fields of [{ location: "x".repeat(81) }, { pronoun: "unsupported" }, { location: 7 }, { pronoun: ["She / her"] }]) {
+    const invalidFields = await handler(new Request("https://project.supabase.co/api/profile/me", { method: "PATCH", headers: { Authorization: "Bearer valid-token", "Content-Type": "application/json" }, body: JSON.stringify(fields) }));
+    if (invalidFields.status !== 400) throw new Error("Invalid identity fields reached persistence");
+  }
   const clear = await handler(new Request("https://project.supabase.co/api/profile/me", {
     method: "PATCH", headers: { Authorization: "Bearer valid-token", "Content-Type": "application/json" },
     body: JSON.stringify({ bio: "" }),

@@ -117,6 +117,8 @@ export interface ProfileResponse {
   role: string;
   avatarUrl: string | null;
   bio?: string | null;
+  location?: string | null;
+  pronoun?: string | null;
   supabaseLinked: boolean;
   stats: { ratings: number; reviews: number; watched: number; watchlist: number; favorites: number };
   lists: { id: number; name: string; listType: string; isPublic: boolean }[];
@@ -135,6 +137,8 @@ export interface ProfileUpdateRequest {
   displayName?: string;
   avatarUrl?: string;
   bio?: string;
+  location?: string;
+  pronoun?: string;
 }
 
 export interface PublicSocialUser { id: number; username: string; displayName: string | null; avatarUrl: string | null }
@@ -253,7 +257,7 @@ export interface ConversationResponse {
   lastMessage: { id: number; senderId: number; body: string; createdAt: string; readAt: string | null } | null;
 }
 export interface PublicProfileResponse {
-  id: number; username: string; displayName: string; avatarUrl: string | null; bio?: string | null; hq: boolean;
+  id: number; username: string; displayName: string; avatarUrl: string | null; bio?: string | null; location?: string | null; pronoun?: string | null; hq: boolean;
   stats: { ratings: number; reviews: number; watched: number; watchlist: number; favorites: number };
   ratingDistribution: { rating: number; count: number }[];
   socialLinks: { platform: string; url: string }[];
@@ -2585,6 +2589,19 @@ function parseProfileUpdate(value: unknown): ProfileUpdateRequest | null {
     const bio = body.bio ?? "";
     if (bio.length > 500) return null;
     update.bio = bio;
+  }
+  if (Object.hasOwn(body, "location")) {
+    if (body.location !== null && typeof body.location !== "string") return null;
+    const location = (body.location ?? "").trim();
+    if (location.length > 80) return null;
+    update.location = location;
+  }
+  if (Object.hasOwn(body, "pronoun")) {
+    if (body.pronoun !== null && typeof body.pronoun !== "string") return null;
+    const pronoun = (body.pronoun ?? "").trim();
+    const supported = ["", "They / their", "He / his", "He / their", "She / her", "She / their", "Xe / xyr", "Ze / hir", "Ze / zir", "It / its"];
+    if (!supported.includes(pronoun)) return null;
+    update.pronoun = pronoun;
   }
   return update;
 }

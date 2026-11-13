@@ -31,6 +31,7 @@ import { getUserHandle, getUserIdentity, getUserInitial, getUserName } from "../
 import { isPasswordWithinByteLimit, MAX_PASSWORD_BYTES } from "../utils/passwordValidation";
 import styles from "./Profile.module.css";
 
+const profilePronouns = ["They / their", "He / his", "He / their", "She / her", "She / their", "Xe / xyr", "Ze / hir", "Ze / zir", "It / its"] as const;
 const collectionKinds = ["watched", "watchlist", "favorites"] as const;
 type SocialLinkPlatform = "website" | "instagram" | "tiktok" | "letterboxd";
 const socialLinkPlatforms = ["website", "instagram", "tiktok", "letterboxd"] as const satisfies readonly SocialLinkPlatform[];
@@ -84,6 +85,8 @@ export default function Profile() {
   const [displayName, setDisplayName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [bio, setBio] = useState("");
+  const [profileLocation, setProfileLocation] = useState("");
+  const [pronoun, setPronoun] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
@@ -502,6 +505,8 @@ export default function Profile() {
       setDisplayName(data.displayName ?? "");
       setAvatarUrl(data.avatarUrl ?? "");
       setBio(data.bio ?? "");
+      setProfileLocation(data.location ?? "");
+      setPronoun(data.pronoun ?? "");
     }).catch(() => { if (isCurrentRequest()) setProfileLoadError(true); })
       .finally(() => { if (isCurrentRequest()) setProfileLoading(false); });
     return () => { current = false; };
@@ -984,13 +989,17 @@ export default function Profile() {
       const { data } = await updateProfile({
         ...(fields !== "avatar" ? { displayName: displayName.trim() } : {}),
         ...(fields !== "name" ? { avatarUrl: normalizedAvatarUrl ?? "" } : {}),
-        ...(fields !== "avatar" ? { bio: bio.trim() } : {}),
+        ...(fields !== "avatar" ? { bio: bio.trim(), location: profileLocation.trim(), pronoun } : {}),
       });
       if (!isCurrentRequest()) return;
       setProfile(data);
       if (fields !== "avatar") setDisplayName(data.displayName ?? "");
       if (fields !== "name") setAvatarUrl(data.avatarUrl ?? "");
-      if (fields !== "avatar") setBio(data.bio ?? "");
+      if (fields !== "avatar") {
+        setBio(data.bio ?? "");
+        setProfileLocation(data.location ?? "");
+        setPronoun(data.pronoun ?? "");
+      }
       report("success", fields === "avatar" ? (lang === "uk" ? "Аватар оновлено." : "Avatar updated.") : t("nameSaved"));
     } catch { report("error", t(fields === "avatar" ? "saveAvatarError" : "saveNameError")); }
     finally { if (isCurrentRequest()) setNameBusy(false); }
@@ -1223,6 +1232,8 @@ export default function Profile() {
         <div><label htmlFor="settings-username">{t("username")}</label><output id="settings-username">{profile.username}</output></div>
         <div><label htmlFor="profile-display-name">{t("displayName")}</label><input id="profile-display-name" value={displayName} disabled={nameBusy} minLength={displayName.trim() ? 2 : undefined} maxLength={60} autoComplete="nickname" onChange={event => setDisplayName(event.target.value)} /></div>
         <div><label htmlFor="settings-profile-bio">{t("bio")}</label><textarea id="settings-profile-bio" value={bio} disabled={nameBusy} maxLength={500} aria-describedby="settings-profile-bio-hint" onChange={event => setBio(event.target.value)} /><p id="settings-profile-bio-hint">{t("bioHint")} {bio.length}/500</p></div>
+        <div><label htmlFor="settings-profile-location">{t("profileLocation")}</label><input id="settings-profile-location" value={profileLocation} maxLength={80} disabled={nameBusy} onChange={event => setProfileLocation(event.target.value)} /></div>
+        <div><label htmlFor="settings-profile-pronoun">{t("profilePronoun")}</label><select id="settings-profile-pronoun" value={pronoun} disabled={nameBusy} onChange={event => setPronoun(event.target.value)}><option value="">{t("profilePronounNone")}</option>{profilePronouns.map(value => <option key={value} value={value}>{value}</option>)}</select></div>
         <div><label htmlFor="settings-email">{t("email")}</label><output id="settings-email">{profile.email}</output></div>
         <button type="submit" disabled={nameBusy}>{nameBusy ? t("saving") : t("save")}</button>
       </form>
@@ -1415,6 +1426,7 @@ export default function Profile() {
           <p className={styles.eyebrow}>{t("profile")}</p>
           <h2 id="profile-identity">{getUserIdentity(profile, t("someone"))}</h2>
           <p className={styles.username}>{getUserHandle(profile, t("someone"))}</p>
+          {profile.location?.trim() && <p className={styles.username} aria-label={t("profileLocation")}><i className="fa-solid fa-location-dot" aria-hidden="true" /> {profile.location}</p>}
           {savedSocialLinks && savedSocialLinks.userId === user?.id && <ProfileSocialLinks links={savedSocialLinks.links} />}
           {profile.bio?.trim() && <p className={styles.bio}>{profile.bio}</p>}
         </div>

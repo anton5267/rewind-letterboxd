@@ -16,6 +16,8 @@ for (const { lang, label, saveLabel, successLabel } of [
 ] as const) {
   test(`profile bio can be edited and appears publicly in ${lang}`, async ({ page }) => {
     let bio: string | null = originalBio;
+    let location: string | null = null;
+    let pronoun: string | null = null;
     let patchBody: Record<string, unknown> | null = null;
 
     await page.route(url => url.pathname.startsWith("/api/"), async route => {
@@ -34,7 +36,7 @@ for (const { lang, label, saveLabel, successLabel } of [
           email: "bio-reader@example.invalid",
           role: "USER",
           avatarUrl: null,
-          bio,
+          bio, location, pronoun,
           supabaseLinked: true,
           stats: { ratings: 0, reviews: 0, watched: 0, watchlist: 0, favorites: 0 },
           lists: [],
@@ -46,6 +48,8 @@ for (const { lang, label, saveLabel, successLabel } of [
       if (pathname === "/api/profile/me" && request.method() === "PATCH") {
         patchBody = request.postDataJSON() as Record<string, unknown>;
         bio = typeof patchBody.bio === "string" ? patchBody.bio : bio;
+        if (Object.hasOwn(patchBody, "location")) location = String(patchBody.location ?? "").trim() || null;
+        if (Object.hasOwn(patchBody, "pronoun")) pronoun = String(patchBody.pronoun ?? "").trim() || null;
         return route.fulfill({ json: {
           id: userId,
           username: "bio-reader",
@@ -53,7 +57,7 @@ for (const { lang, label, saveLabel, successLabel } of [
           email: "bio-reader@example.invalid",
           role: "USER",
           avatarUrl: null,
-          bio,
+          bio, location, pronoun,
           supabaseLinked: true,
           stats: { ratings: 0, reviews: 0, watched: 0, watchlist: 0, favorites: 0 },
           lists: [],
@@ -68,7 +72,7 @@ for (const { lang, label, saveLabel, successLabel } of [
           username: "bio-reader",
           displayName: "Bio Reader",
           avatarUrl: null,
-          bio,
+          bio, location, pronoun,
           hq: false,
           stats: { ratings: 0, reviews: 0, watched: 0, watchlist: 0, favorites: 0 },
           ratingDistribution: [],
@@ -92,11 +96,16 @@ for (const { lang, label, saveLabel, successLabel } of [
     await expect(textarea).toHaveValue(originalBio);
     await expect(textarea).toHaveAttribute("maxlength", "500");
     await textarea.fill(updatedBio);
+    const locationInput = page.getByLabel(lang === "uk" ? "Місце проживання" : "Location", { exact: true });
+    const pronounInput = page.getByLabel(lang === "uk" ? "Займенник" : "Pronoun", { exact: true });
+    await expect(pronounInput.getByRole("option")).toHaveCount(10);
+    await locationInput.fill(" Berlin ");
+    await pronounInput.selectOption("She / her");
 
     const profileForm = page.locator("#settings-form-profile");
     await profileForm.getByRole("button", { name: saveLabel, exact: true }).click();
     await expect(page.getByText(successLabel, { exact: true })).toBeVisible();
-    expect(patchBody).toMatchObject({ displayName: "Bio Reader", bio: updatedBio });
+    expect(patchBody).toMatchObject({ displayName: "Bio Reader", bio: updatedBio, location: "Berlin", pronoun: "She / her" });
 
     await page.goto(`/${lang}/profile`);
     await expect(page.getByRole("region", { name: "Bio Reader", exact: true }).getByText(updatedBio, { exact: true })).toBeVisible();
@@ -117,5 +126,17 @@ for (const { lang, label, saveLabel, successLabel } of [
     await page.setViewportSize({ width: 393, height: 852 });
     await expect(page.getByText(updatedBio, { exact: true })).toHaveCSS("font-size", "12px");
     await expect(publicLinks.first()).toBeVisible();
+    await expect(page.getByLabel(lang === "uk" ? "Місце проживання" : "Location", { exact: true })).toHaveText("Berlin");
+    await page.goto(`/${lang}/profile?settings=profile`);
+    await expect(locationInput).toHaveValue("Berlin");
+    await expect(pronounInput).toHaveValue("She / her");
+    await locationInput.fill("");
+    await pronounInput.selectOption("");
+    await page.locator('button[form="settings-form-profile"]').click();
+    await expect(page.getByText(successLabel, { exact: true })).toBeVisible();
+    expect(patchBody).toMatchObject({ location: "", pronoun: "" });
+    await page.reload();
+    await expect(locationInput).toHaveValue("");
+    await expect(pronounInput).toHaveValue("");
   });
 }
