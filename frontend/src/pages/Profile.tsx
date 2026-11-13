@@ -20,6 +20,7 @@ import PublicProfilePoster from "../components/PublicProfilePoster";
 import ProfileReviewScore from "../components/ProfileReviewScore";
 import ProfileSocialLinks from "../components/ProfileSocialLinks";
 import ProfilePronounField from "../components/ProfilePronounField";
+import ProfileBioField from "../components/ProfileBioField";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { FollowActionsProvider } from "../context/FollowActionsContext";
 import { useAuth } from "../context/AuthContext";
@@ -1231,7 +1232,7 @@ export default function Profile() {
         <h2 id="profile-identity-form-title">{t("profileIdentity")}</h2>
         <div><label htmlFor="settings-username">{t("username")}</label><output id="settings-username">{profile.username}</output></div>
         <div><label htmlFor="profile-display-name">{t("displayName")}</label><input id="profile-display-name" value={displayName} disabled={nameBusy} minLength={displayName.trim() ? 2 : undefined} maxLength={60} autoComplete="nickname" onChange={event => setDisplayName(event.target.value)} /></div>
-        <div><label htmlFor="settings-profile-bio">{t("bio")}</label><textarea id="settings-profile-bio" value={bio} disabled={nameBusy} maxLength={500} aria-describedby="settings-profile-bio-hint" onChange={event => setBio(event.target.value)} /><p id="settings-profile-bio-hint">{t("bioHint")} {bio.length}/500</p></div>
+        <ProfileBioField key={`${user?.id}-${lang}`} value={bio} disabled={nameBusy} onChange={setBio} />
         <div><label htmlFor="settings-profile-location">{t("profileLocation")}</label><input id="settings-profile-location" value={profileLocation} maxLength={80} disabled={nameBusy} onChange={event => setProfileLocation(event.target.value)} /></div>
         <ProfilePronounField key={`${user?.id}-${lang}`} value={pronoun} disabled={nameBusy} onChange={setPronoun} />
         <div><label htmlFor="settings-email">{t("email")}</label><output id="settings-email">{profile.email}</output></div>
