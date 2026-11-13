@@ -1,0 +1,396 @@
+.listLinks {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.listLinks li {
+  border: 1px solid #3a3a3a;
+  background: #252525;
+}
+
+.listLinks a {
+  display: block;
+  padding: 11px 12px;
+  color: #fff;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.listLinks a:hover {
+  background: #30253d;
+  color: var(--rewind-cyan);
+}
+
+.activityList {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activityList li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid #3a3a3a;
+  color: #d4d4d4;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.activityList li:last-child { border-bottom: 0; }
+
+.activityList a {
+  color: var(--rewind-cyan);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.activityList a:hover,
+.activityList a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+
+.activityList time {
+  flex: 1 0 100%;
+  color: var(--rewind-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 767px) {
+  .page {
+    padding: 88px 16px 32px;
+  }
+
+  .hero,
+  .section,
+  .form {
+    padding: 16px;
+  }
+
+  .section {
+    scroll-margin-top: 78px;
+  }
+
+  .section > h2 {
+    scroll-margin-top: 78px;
+  }
+
+  .hero {
+    min-height: 210px;
+    align-items: flex-end;
+    padding: 24px 16px;
+  }
+
+  .heroActions,
+  .heroEdit {
+    top: 12px;
+  }
+
+  .heroActions { right: 12px; }
+  .heroEdit { left: 12px; }
+
+  .profileNav {
+    margin-inline: -2px;
+  }
+
+  .stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .stat {
+    padding: 9px 8px;
+  }
+
+  .stat strong {
+    font-size: 20px;
+  }
+
+  .stat span {
+    font-size: 12px;
+  }
+
+  .inlineForm {
+    grid-template-columns: 1fr;
+  }
+
+  .inlineForm button,
+  .form button:not([data-retry-button]) {
+    width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .page {
+    padding-inline: 10px;
+  }
+
+  .content {
+    min-width: 0;
+  }
+
+  .hero {
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 210px;
+  }
+
+  .heroCopy {
+    width: 100%;
+    padding-right: 0;
+    padding-top: 48px;
+  }
+
+  .stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .form button:not([data-retry-button]),
+  .pagination button,
+  .tabs button {
+    min-height: 44px;
+  }
+
+}
+
+.section a,
+.form a {
+  color: var(--rewind-cyan);
+}
+
+.userList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.userList li {
+  border: 1px solid #3a3a3a;
+  background: #252525;
+}
+
+.userRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  color: #fff !important;
+  text-decoration: none;
+}
+
+.userRow img,
+.userAvatarFallback {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #3c2a55;
+}
+
+.userAvatarFallback {
+  display: grid;
+  place-items: center;
+  color: #e4c9ff;
+  font-weight: 800;
+}
+
+.userRow > span:last-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.userRow strong,
+.userRow small {
+  overflow-wrap: anywhere;
+}
+
+.userRow strong {
+  color: #fff;
+}
+
+.userRow small {
+  color: #a9a9a9;
+}
+
+.collectionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 18px 14px;
+}
+
+.collectionCard {
+  min-width: 0;
+}
+
+.collectionPosterLink,
+.collectionPoster,
+.collectionPosterFallback {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+}
+
+.collectionPosterLink {
+  overflow: hidden;
+  border: 1px solid #454545;
+  background: #303030;
+}
+
+.collectionPoster {
+  object-fit: cover;
+  transition: transform .2s ease;
+}
+
+.collectionPosterLink:hover .collectionPoster {
+  transform: scale(1.04);
+}
+
+.collectionPosterFallback {
+  display: grid;
+  place-items: center;
+  color: #d8a5ff;
+  background: linear-gradient(145deg, #35234a, #242424);
+  font-size: 34px;
+  font-weight: 800;
+}
+
+.collectionCard h3 {
+  margin: 9px 0 0;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.collectionCard h3 a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.collectionCard p {
+  margin: 5px 0 0;
+  color: #999;
+  font-size: 12px;
+}
+
+.posterRail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 110px;
+  justify-content: start;
+  gap: 16px;
+  overflow-x: auto;
+  margin: 16px -6px -2px;
+  padding: 6px;
+  list-style: none;
+  scrollbar-width: thin;
+  scroll-padding-inline: 6px;
+}
+
+.posterRail > li {
+  min-width: 0;
+}
+
+.railPosterLink,
+.reviewPosterLink,
+.railPoster,
+.railPosterFallback {
+  display: block;
+  width: 100%;
+  aspect-ratio: 79 / 116;
+  border-radius: 3px;
+}
+
+.railPosterLink,
+.reviewPosterLink {
+  background: #303030;
+  text-decoration: none;
+}
+
+.railPoster {
+  object-fit: cover;
+}
+
+.railPosterFallback {
+  display: grid;
+  place-items: center;
+  color: #d8a5ff;
+  background: #303030;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.railRating {
+  margin: 6px 0 0;
+  color: #dedede;
+  font-size: 12px;
+  text-align: center;
+}
+
+.reviewCards {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reviewCard {
+  display: grid;
+  grid-template-columns: 79px minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+  padding: 18px;
+  border-radius: 10px;
+  background: #282828;
+}
+
+.reviewCopy {
+  min-width: 0;
+}
+
+.reviewCopy h3 {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.reviewCopy h3 a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.reviewCopy time {
+  display: block;
+  margin-top: 6px;
+  color: #aaa;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.reviewCopy .reviewContent {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 12px;
+  color: #e5e5e5;
+  font-size: 12px;
+  line-height: 1.55;
+  text-decoration: none;
+  white-space: pre-line;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 7;
+  line-clamp: 7;
+}
+
+.reviewContent:hover {
+  text-decoration: underline;
+}

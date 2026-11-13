@@ -1,0 +1,240 @@
+@media (max-width: 480px) {
+  .page {
+    padding: 88px 16px 32px;
+    background: #1f1f1f;
+  }
+
+  .content {
+    min-width: 0;
+  }
+
+  .pageTitle {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-align: center;
+    color: #c5c5c5;
+  }
+
+  .hero {
+    flex-direction: column;
+    align-items: center;
+    justify-content: start;
+    gap: 12px;
+    min-height: 0;
+    margin-top: 18px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    text-align: center;
+  }
+
+  .hero::after,
+  .eyebrow {
+    display: none;
+  }
+
+  .avatar,
+  .avatarFallback {
+    width: 120px;
+    height: 120px;
+  }
+
+  .hero h2 {
+    font-size: 26px;
+    line-height: 1.2;
+  }
+
+  .username {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .section:not(.settingsSection) {
+    margin-top: 28px;
+    padding: 8px 0 0;
+    border: 0;
+    border-top: 1px solid #444;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .section > h2 {
+    margin: 0 0 18px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .section.overviewSection {
+    margin-top: 24px;
+    padding: 0;
+    border: 0;
+  }
+
+  .overviewSection > h2 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .stats {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0;
+    margin: 0;
+  }
+
+  .stat {
+    align-content: start;
+    gap: 5px;
+    padding: 0 3px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    text-align: center;
+  }
+
+  .stat + .stat {
+    border-left: 1px solid #444;
+  }
+
+  .stat strong {
+    font-size: 15px;
+  }
+
+  .stat span {
+    color: #ddd;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  .profileNav {
+    gap: 4px;
+    margin: 24px -6px -2px;
+    padding: 6px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+  }
+
+  .profileNav a {
+    justify-content: center;
+    min-width: 87px;
+    min-height: 44px;
+    padding: 12px 10px;
+    border: 0;
+    background: linear-gradient(#282828, #282828) center / 100% 32px no-repeat;
+    color: #fff;
+    font-size: 12px;
+  }
+
+  .profileNav a:focus-visible { outline-offset: -3px; }
+
+  .profileNav a:hover,
+  .profileNav a:focus-visible,
+  .profileNav .activeProfileNav {
+    background: linear-gradient(#fff, #fff) center / 100% 32px no-repeat;
+    color: #171717;
+  }
+
+  .posterRail {
+    grid-auto-columns: 79px;
+    gap: 15px;
+    margin-top: -6px;
+  }
+
+  .reviewCards {
+    margin-top: 0;
+  }
+
+  .reviewCard {
+    gap: 16px;
+    padding: 18px;
+  }
+
+  .reviewCopy .reviewContent {
+    font-size: 12px;
+  }
+
+  .userList {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    margin: -6px;
+    padding: 6px;
+    scrollbar-width: thin;
+    scroll-padding-inline: 6px;
+  }
+
+  .userList li {
+    flex: 0 0 auto;
+    border: 0;
+    background: none;
+  }
+
+  .userRow {
+    position: relative;
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .userRow img,
+  .userAvatarFallback {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+
+  .userRow > span:last-child:not(.userAvatarFallback) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .listLinks li {
+    border: 0;
+    border-radius: 10px;
+    background: #282828;
+  }
+
+  .listLinks a {
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 14px 16px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .form,
+  .settingsSection {
+    margin-top: 24px;
+    padding: 16px;
+  }
+
+  .form h2 {
+    font-size: 17px;
+  }
+
+  .form input:not([type="checkbox"]),
+  .inlineForm input,
+  .form button:not([data-retry-button]),
+  .tabs button {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 380px) {
+  .collectionGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -1,4 +1,5 @@
-import { RewindApiError, type HostedAuthUser } from "./handler.ts";
+import { RewindApiError } from "./http/errors.ts";
+import type { HostedAuthUser } from "./contracts/auth.ts";
 
 export function readPublishableKey(env: (name: string) => string | undefined): string | undefined {
   const legacy = env("SUPABASE_ANON_KEY");

@@ -1,0 +1,243 @@
+.hero {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  min-height: 238px;
+  margin-top: 16px;
+  border-color: #3d3d3d;
+  background:
+    radial-gradient(circle at 78% 12%, rgba(212, 168, 95, .35), transparent 34%),
+    radial-gradient(circle at 22% 15%, rgba(45, 101, 114, .72), transparent 46%),
+    linear-gradient(125deg, #101719 0%, #18252b 42%, #2a1d3b 100%);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, .2);
+}
+
+.hero::after {
+  position: absolute;
+  right: -12%;
+  bottom: -68%;
+  width: 58%;
+  height: 175%;
+  border-radius: 50%;
+  background: rgba(127, 82, 177, .2);
+  content: "";
+  filter: blur(18px);
+  transform: rotate(-16deg);
+}
+
+.hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.heroActions,
+.heroEdit {
+  position: absolute;
+  top: 16px;
+}
+
+.heroActions {
+  right: 16px;
+  z-index: 3 !important;
+}
+
+.heroEdit {
+  left: 16px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: 50%;
+  background: rgba(19, 20, 24, .62);
+  color: #fff;
+  cursor: pointer;
+}
+
+.heroAction {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: 50%;
+  background: rgba(19, 20, 24, .62);
+  color: #fff;
+  cursor: pointer;
+}
+
+.heroEdit:hover,
+.heroEdit:focus-visible,
+.heroAction:hover,
+.heroAction:focus-visible {
+  border-color: var(--rewind-gold);
+  background: rgba(19, 20, 24, .86);
+}
+
+.heroActionsMenu {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  display: grid;
+  min-width: 170px;
+  padding: 6px;
+  border: 1px solid #51475b;
+  border-radius: 10px;
+  background: #211d25;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, .4);
+}
+
+.heroActionsMenu button {
+  min-height: 44px;
+  padding: 9px 11px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.heroActionsMenu button:hover,
+.heroActionsMenu button:focus-visible {
+  background: #362849;
+  color: #fff;
+}
+
+.hero > div {
+  min-width: 0;
+}
+
+.heroCopy {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  padding-right: 102px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--rewind-gold);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.hero h2,
+.hero p {
+  overflow-wrap: anywhere;
+}
+
+.hero h2 {
+  margin: 0;
+  font-size: clamp(26px, 5vw, 42px);
+  line-height: 1;
+}
+
+.username {
+  margin: 0;
+}
+
+.username {
+  color: #e0caff;
+  font-size: 15px;
+}
+
+.bio {
+  max-width: 44ch;
+  margin: 12px 0 0;
+  color: #aaa;
+  font-size: 15px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.avatar,
+.avatarFallback {
+  width: 96px;
+  height: 96px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #303030;
+}
+
+.avatarFallback {
+  display: grid;
+  place-items: center;
+  color: #f4d28c;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.profileNav {
+  display: flex;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 6px;
+  overflow-x: auto;
+  border: 1px solid #383838;
+  border-radius: 999px;
+  background: #252525;
+  scrollbar-width: thin;
+  scroll-padding-inline: 6px;
+}
+
+.profileNav a {
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-height: 44px;
+  box-sizing: border-box;
+  align-items: center;
+  padding: 9px 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: #c7c7c7;
+  font-size: 12px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.profileNav a:hover,
+.profileNav a:focus-visible,
+.profileNav .activeProfileNav {
+  border-color: var(--rewind-gold);
+  background: var(--rewind-gold);
+  color: #17120d;
+  font-weight: 800;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin: 12px 0 0;
+}
+
+.stat {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  background: #252525;
+}
+
+.stat strong {
+  color: #fff;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.stat span {
+  overflow-wrap: anywhere;
+  color: #c7c7c7;
+  font-size: 12px;
+}

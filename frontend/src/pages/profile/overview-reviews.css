@@ -1,0 +1,153 @@
+/* Own overview238:865 /896:1838: four favorites, poster activity, two
+   review previews, following avatars, one list and six phone links. */
+.content > section.section.previewSection { width: 100%; max-width: 100%; box-sizing: border-box; margin: 60px 0 0; padding: 18px 0 0; border: 0; border-top: 1px solid #4d4d4d; border-radius: 0; background: transparent; box-shadow: none; }
+.content > section.previewSection > h2 { margin: 0 0 40px; color: #fff; font-size: 22px; font-weight: 500; line-height: 27px; text-align: left; }
+.content > section.previewSection > h2 a { color: inherit; font: inherit; text-decoration: none; }
+.content > section.previewSection > h2 a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.overviewPosterGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; margin: 0; padding: 0; list-style: none; }
+.overviewPosterGrid > li { min-width: 0; }
+.overviewPosterGrid :is(.railPosterLink, .railPoster, .railPosterFallback) { aspect-ratio: 265 / 395; border-radius: 20px; }
+.previewSection .activityCaption { display: flex; flex-direction: column; gap: 4px; margin: 12px 0 0; color: #aaa; font-size: 14px; line-height: 1.4; }
+.activityCaption time { font-size: 12px; }
+.previewAction { display: table; min-height: 44px; max-width: 100%; box-sizing: border-box; margin: 12px 0 0 auto; padding: 11px 18px; border: 1px solid #5a5a5a; border-radius: 999px; background: transparent; color: #ddd; font: inherit; font-size: 12px; line-height: 20px; text-align: center; overflow-wrap: anywhere; cursor: pointer; }
+.previewAction:hover { border-color: var(--rewind-cyan); color: #fff; }
+.previewSection .reviewCards { margin-top: 0; }
+.reviewHeading { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+.reviewHeading h3 { flex: 1; min-width: 0; }
+.reviewHeadingActions { display: flex; flex: 0 0 auto; align-items: center; gap: 14px; }
+.reviewActions { display: flex; align-items: center; gap: 6px; }
+.reviewActions button { position: relative; display: grid; width: 44px; height: 44px; flex: 0 0 auto; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #eee; cursor: pointer; }
+.mobileReviewActionLabel { display: none; }
+.reviewActions button::before { position: absolute; inset: 4px; border: 1px solid #555; border-radius: 50%; content: ""; }
+.reviewActions button:hover:not(:disabled)::before { border-color: var(--rewind-cyan); }
+.reviewActions button:hover:not(:disabled) { color: var(--rewind-cyan); }
+.reviewActions button:focus-visible, .reviewEditor button:focus-visible, .reviewEditor textarea:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 3px; }
+.retryFocusHeading:focus { outline: 3px solid var(--rewind-cyan); outline-offset: 4px; border-radius: 4px; }
+.reviewActions button:disabled, .reviewEditor button:disabled { cursor: not-allowed; opacity: .55; }
+.reviewEditor { display: grid; gap: 12px; margin-top: 12px; }
+.reviewEditor textarea { width: 100%; min-height: 180px; box-sizing: border-box; padding: 12px; border: 1px solid #555; border-radius: 8px; background: #1c1c1c; color: #f4f4f4; font: inherit; font-size: 14px; line-height: 1.55; resize: vertical; }
+.reviewEditorActions { display: flex; justify-content: flex-end; gap: 10px; }
+.reviewEditorActions button { min-height: 44px; padding: 10px 18px; border: 1px solid #5a5a5a; border-radius: 999px; background: #282828; color: #fff; font: inherit; cursor: pointer; }
+.reviewEditorActions .reviewSaveButton { border-color: #f5f5f5; background: #f5f5f5; color: #151515; }
+.reviewEditorActions .reviewDeleteButton { margin-right: auto; }
+.reviewHeading > span { flex: 0 0 auto; color: #ddd; font-size: 12px; line-height: 1.4; white-space: nowrap; }
+.followingPreview { display: flex; gap: 4px; margin: -6px; padding: 6px; overflow-x: auto; scroll-padding: 6px; list-style: none; }
+.followingPreview > li { flex: 0 0 auto; }
+.followingPreview a { display: grid; width: 80px; min-height: 80px; place-items: center; border-radius: 50%; text-decoration: none; }
+.followingPreview img, .followingInitial { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; }
+.followingInitial { display: grid; place-items: center; background: #343434; color: #fff; font-size: 26px; }
+.overviewLinks { display: none; }
+@media (min-width: 768px) {
+  .page[data-profile-view="collection"] .tabs { display: none; }
+}
+@media (min-width: 1024px) {
+  .content > section.section.previewSection { margin-top: 85px; }
+  .content > section.previewSection > h2 { margin-bottom: 59px; font-size: 24px; }
+  .overviewPosterGrid { gap: 46px; }
+  .reviewCard { grid-template-columns: 175px minmax(0, 1fr); gap: 40px; }
+  .reviewCopy h3 { font-size: 24px; }
+  .reviewCopy time { font-size: 14px; }
+  .reviewCopy .reviewContent { font-size: 18px; }
+  .previewSection .reviewCards { gap: 36px; }
+}
+@media (max-width: 767px) {
+  .profileNav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin: 35px 0 0; padding: 0; overflow: visible; border: 0; border-radius: 0; background: transparent; }
+  .profileNav a { min-width: 0; min-height: 44px; justify-content: center; padding: 8px 4px; font-size: 12px; line-height: 1.3; text-align: center; white-space: normal; overflow-wrap: anywhere; }
+  .profileNav a[data-collection-kind="watched"] { display: none; }
+  .content > section.section.previewSection { margin-top: 35px; padding-top: 8px; }
+  .content > section.section.previewSection[id="profile-overview"] { margin-top: 23px; }
+  .content > section.previewSection > h2 { margin-bottom: 24px; font-size: 14px; line-height: 16px; }
+  .overviewPosterGrid { gap: 15px; }
+  .overviewPosterGrid :is(.railPosterLink, .railPoster, .railPosterFallback) { aspect-ratio: 79 / 116; border-radius: 10px; }
+  .previewSection .activityCaption { margin-top: 9px; font-size: 12px; line-height: 1.4; }
+  .activityCaption time { font-size: 12px; }
+  .previewSection .reviewCard { min-height: 208px; box-sizing: border-box; padding: 26px 18px; }
+  .followingPreview a { width: 44px; min-height: 44px; }
+  .followingPreview img, .followingInitial { width: 40px; height: 40px; }
+  .followingInitial { font-size: 18px; }
+  .overviewLinks { display: grid; gap: 5px; margin-top: 35px; }
+  .overviewLinks a { display: flex; min-width: 0; min-height: 44px; align-items: center; justify-content: space-between; gap: 16px; box-sizing: border-box; padding: 10px 15px; border-radius: 37px; background: #282828; color: #fff; font-size: 12px; line-height: 1.4; text-decoration: none; overflow-wrap: anywhere; }
+  .overviewLinks a > span { font-size: 20px; line-height: 1; }
+  .overviewLinks a:focus-visible { outline-offset: -3px; }
+}
+
+@media (max-width: 360px) {
+  .profileNav { display: flex; justify-content: space-between; gap: 2px; overflow-x: auto; }
+  .profileNav a { flex: 0 0 auto; white-space: nowrap; overflow-wrap: normal; }
+}
+
+@media (min-width: 361px) and (max-width: 767px) {
+  .profileNav a[data-collection-kind="watchlist"] { padding-inline: 2px; font-size: 12px; white-space: nowrap; }
+}
+
+@media (max-width: 560px) {
+  .page[data-profile-view="reviews"] .reviewHeading { flex-wrap: wrap; }
+  .page[data-profile-view="reviews"] .reviewHeading h3 { flex-basis: 100%; }
+  .page[data-profile-view="reviews"] .reviewHeadingActions { width: 100%; min-width: 0; flex-wrap: wrap; align-items: flex-start; gap: 8px; }
+  .page[data-profile-view="reviews"] .reviewActions { max-width: 100%; flex-wrap: wrap; gap: 4px; }
+  .page[data-profile-view="reviews"] .reviewActions button { display: inline-flex; width: auto; min-width: 44px; height: 44px; align-items: center; justify-content: center; gap: 6px; padding: 0 6px; border: 0; border-radius: 0; font-size: 12px; white-space: nowrap; }
+  .page[data-profile-view="reviews"] .reviewActions button::before { display: none; }
+  .page[data-profile-view="reviews"] .mobileReviewActionLabel { display: inline; }
+  .page[data-profile-view="reviews"] .reviewActions button:first-child { flex-direction: row-reverse; }
+  .page[data-profile-view="reviews"] .reviewActions button:last-child i { display: none; }
+  .reviewEditorActions button { min-width: 0; padding-inline: 12px; font-size: 12px; }
+}
+
+@media (max-width: 400px) {
+  .reviewEditorActions { flex-direction: column; align-items: stretch; }
+  .reviewEditorActions button { width: 100%; }
+}
+
+.page .reviewFeedbackFocus:focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
+
+.collectionToolbar h2:focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
+.page :global(#profile-activity-title):focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
+.page :global(#profile-favorite-preview-title):focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
+.page :global(#profile-lists-title):focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
+.page :global(#profile-following-title):focus,
+.page :global(#profile-followers-title):focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
+
+/* Statistics remain readable when localized labels or text zoom grow. */
+.stat :is(a, span, strong) { min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+
+.reviewDetailToolbar { display: none; }
+.reviewActionIcon { display: block; width: 35px; height: 35px; object-fit: contain; }
+.reviewLoading { display: grid; grid-template-columns: 175px minmax(0, 1fr); gap: 40px; margin-top: 24px; }
+.reviewLoading > span { display: block; aspect-ratio: 2 / 3; border-radius: 20px; background: #383838; }
+.reviewLoading > div { display: grid; align-content: start; gap: 24px; padding: 24px; border-radius: 20px; background: #282828; }
+.reviewLoading > div > span { display: block; height: 24px; border-radius: 6px; background: #454545; }
+.reviewLoading > div > span:last-child { height: 110px; }
+.globalReviewLink { display: inline-flex; min-height: 44px; align-items: center; margin-top: 12px; color: #ddd; font-size: 13px; }
+.page[data-review-detail] .reviewCopy .reviewContent { display: block; overflow: visible; margin-bottom: 0; -webkit-line-clamp: unset; line-clamp: unset; overflow-wrap: anywhere; }
+.page[data-review-detail] .reviewCopy p.reviewContent:hover { text-decoration: none; }
+
+@media (min-width: 1024px) {
+  .page[data-review-detail] .reviewCard { background: transparent; }
+  .page[data-review-detail] .reviewCopy { min-height: 395px; box-sizing: border-box; border-radius: 20px; padding: 40px; background: #282828; }
+  .page[data-review-detail] .reviewCopy .reviewContent { margin-top: 40px; }
+}
+
+@media (max-width: 767px) {
+  .page:not([data-profile-view]) .heroProfileEdit { display: none; }
+}
+
+@media (max-width: 767px) {
+  .reviewLoading { grid-template-columns: 79px minmax(0, 1fr); gap: 16px; }
+  .reviewActionIcon { width: 13px; height: 13px; }
+  .reviewLoading > div { padding: 16px; }
+  .page[data-review-detail] .hero, .page[data-review-detail] .profileNav, .page[data-review-detail] .reviewsBack { display: none; }
+  .reviewDetailToolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 8px; width: 100%; padding-top: 44px; margin-bottom: 28px; text-align: center; }
+  .reviewDetailToolbar a { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 50%; background: #282828; color: #fff; font-size: 24px; text-decoration: none; }
+  .reviewDetailToolbar > h2 { min-width: 0; margin: 0; overflow-wrap: anywhere; font-size: 14px; font-weight: 500; line-height: 1.4; }
+  .reviewDetailToolbar > h2:focus { outline: 3px solid var(--rewind-cyan); outline-offset: 4px; }
+  .page[data-review-detail] { min-height: calc(100dvh - 70px); }
+  .page[data-review-detail] .content > section[id="profile-reviews"] { margin: 0; padding: 0; border: 0; }
+  .page[data-review-detail] .content > section[id="profile-reviews"] > h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .page[data-review-detail] .reviewCard { position: relative; margin-bottom: 72px; }
+  .page[data-review-detail] .reviewCopy .reviewContent { font-size: 14px; line-height: 1.5; }
+  .page[data-review-detail] .reviewHeadingActions { width: auto; }
+  .page[data-review-detail] .reviewActions { position: absolute; top: calc(100% + 16px); right: 0; }
+  .page[data-review-detail] .reviewActions button { min-height: 44px; border-radius: 24px; padding-inline: 12px; background: #282828; font-size: 12px; }
+  .page[data-review-detail] .reviewEditorActions { align-items: stretch; }
+  .page[data-review-detail] .reviewEditor textarea { min-height: 280px; }
+}
