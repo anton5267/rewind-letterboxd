@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import type { UserListItem } from "../api/lists.api";
 import { editorialText, useLocale } from "../i18n";
 import ResilientImage from "./ResilientImage";
+import ListRankingField from "./ListRankingField";
 import styles from "./MobileListSettings.module.css";
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
   description: string;
   tags: string;
   isPublic: boolean;
+  isRanked: boolean;
   items: UserListItem[];
   busy: boolean;
   itemsReady: boolean;
@@ -21,6 +23,7 @@ interface Props {
   onDescription: (value: string) => void;
   onTags: (value: string) => void;
   onPublic: (value: boolean) => void;
+  onRanked: (value: boolean) => void;
   onEntries: () => void;
   onCancel: () => void;
   onSave: (event: FormEvent) => void;
@@ -69,6 +72,9 @@ export default function MobileListSettings(props: Props) {
           <img src="/images/list-settings-add-tag.png" width={20} height={20} alt="" />
         </button>
       </div>}
+    </div>
+    <div className={styles.ranking}>
+      <ListRankingField checked={props.isRanked} disabled={props.busy} onChange={props.onRanked} />
     </div>
     <div className={styles.actions}>
       <button type="button" disabled={props.busy} onClick={props.onCancel}>{t("cancel")}</button>

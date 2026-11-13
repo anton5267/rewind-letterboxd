@@ -7,6 +7,7 @@ import ResilientImage from "../components/ResilientImage";
 import RetryButton from "../components/RetryButton";
 import ConfirmDialog from "../components/ConfirmDialog";
 import ListReorderHandle from "../components/ListReorderHandle";
+import ListRankingField from "../components/ListRankingField";
 import MobileListSettings from "../components/MobileListSettings";
 import ListEntrySearch from "../components/ListEntrySearch";
 import { useAuth } from "../context/AuthContext";
@@ -68,6 +69,7 @@ export default function UserLists() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isPublic, setIsPublic] = useState(false);
+  const [isRanked, setIsRanked] = useState(false);
   const [tags, setTags] = useState("");
   const [tagsEditing, setTagsEditing] = useState(true);
   const tagsCollapseTimer = useRef<number | null>(null);
@@ -83,9 +85,11 @@ export default function UserLists() {
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editPublic, setEditPublic] = useState(false);
+  const [editRanked, setEditRanked] = useState(true);
   const [editTags, setEditTags] = useState("");
   const [error, setError] = useState("");
   const actionErrorRef = useRef<HTMLParagraphElement>(null);
+  const pendingAddErrorFocus = useRef<{ ownerId: number | null; listId: number; requestId: number; origin: Element | null } | null>(null);
   const [status, setStatus] = useState("");
   const [createBusy, setCreateBusy] = useState(false);
   const [draftFilms, setDraftFilms] = useState<MovieCard[]>([]);
@@ -104,6 +108,14 @@ export default function UserLists() {
   const itemMutation = useRef(0);
 
   activeUserId.current = user?.id ?? null;
+
+  useLayoutEffect(() => {
+    const pending = pendingAddErrorFocus.current;
+    if (!pending || !error || itemsBusy) return;
+    pendingAddErrorFocus.current = null;
+    if (pending.ownerId !== activeUserId.current || pending.listId !== selectedRef.current || pending.requestId !== itemMutation.current) return;
+    if (document.activeElement === document.body || document.activeElement === pending.origin) actionErrorRef.current?.focus();
+  }, [error, itemsBusy]);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 767px)");
@@ -154,6 +166,7 @@ export default function UserLists() {
     setDescription("");
     setTags("");
     setIsPublic(false);
+    setIsRanked(false);
   }, [isAuth, user?.id]);
 
   useEffect(() => {
@@ -201,6 +214,7 @@ export default function UserLists() {
       setEditName(list.name);
       setEditDescription(list.description ?? "");
       setEditPublic(list.isPublic);
+      setEditRanked(list.isRanked !== false);
       setEditTags(list.tags.join(", "));
     }).catch(() => { if (active) setLinkedError(true); })
       .finally(() => { if (active) setLinkedLoading(false); });
@@ -344,7 +358,7 @@ export default function UserLists() {
     setCreateBusy(true);
     setError("");
     try {
-      const { data } = await createList(name.trim(), description.trim(), isPublic, tags.split(",").map(tag => tag.trim()).filter(Boolean), draftFilms.map(film => film.id));
+      const { data } = await createList(name.trim(), description.trim(), isPublic, tags.split(",").map(tag => tag.trim()).filter(Boolean), draftFilms.map(film => film.id), isRanked);
       if (!isCurrentRequest()) return;
       const createdListId = data.id;
       setListPage(0);
@@ -352,6 +366,7 @@ export default function UserLists() {
       setName("");
       setDescription("");
       setIsPublic(false);
+      setIsRanked(false);
       setTags("");
       setDraftFilms([]);
       setFilmSearchOpen(false);
@@ -395,6 +410,7 @@ export default function UserLists() {
     setEditName(selectedList.name);
     setEditDescription(selectedList.description ?? "");
     setEditPublic(selectedList.isPublic);
+    setEditRanked(selectedList.isRanked !== false);
     setEditTags(selectedList.tags.join(", "));
     setError("");
     setStatus("");
@@ -417,10 +433,8 @@ export default function UserLists() {
       return true;
     } catch {
       if (current()) {
+        pendingAddErrorFocus.current = { ownerId, listId, requestId, origin };
         setError(t("addFilmError"));
-        window.requestAnimationFrame(() => {
-          if (current() && (document.activeElement === document.body || document.activeElement === origin)) actionErrorRef.current?.focus();
-        });
       }
       return false;
     } finally { if (current()) setItemsBusy(false); }
@@ -461,6 +475,7 @@ export default function UserLists() {
     setEditName(list.name);
     setEditDescription(list.description ?? "");
     setEditPublic(list.isPublic);
+    setEditRanked(list.isRanked !== false);
     setEditTags(list.tags.join(", "));
   };
 
@@ -474,13 +489,14 @@ export default function UserLists() {
     setSaveBusy(true);
     setError("");
     try {
-      const { data } = await updateList(selectedList.id, editName.trim(), editDescription.trim(), editPublic, editTags.split(",").map(tag => tag.trim()).filter(Boolean));
+      const { data } = await updateList(selectedList.id, editName.trim(), editDescription.trim(), editPublic, editTags.split(",").map(tag => tag.trim()).filter(Boolean), editRanked);
       if (!isCurrentRequest()) return;
       setLists(current => current.map(list => list.id === data.id ? data : list));
       setLinkedList(current => current?.id === data.id ? data : current);
       setEditName(data.name);
       setEditDescription(data.description ?? "");
       setEditPublic(data.isPublic);
+      setEditRanked(data.isRanked !== false);
       setEditTags(data.tags.join(", "));
       setError("");
       setStatus(t("saved"));
@@ -587,7 +603,7 @@ export default function UserLists() {
       <fieldset className={styles.createSettings}>
         <legend><span className={styles.settingsLegendMobile}>{t("settings")}</span><span className={styles.settingsLegendDesktop}>{t("whoCanView")}</span></legend>
         <label className={styles.checkboxLabel}><input type="checkbox" checked={isPublic} disabled={createBusy} onChange={e => setIsPublic(e.target.checked)} /><span className={styles.settingIcon}><img src="/images/list-create-public.svg" alt="" width="18" height="18" /></span> <span>{t("publicList")}</span></label>
-        <p className={styles.rankingUnavailable}><span className={styles.settingIcon}><img src="/images/list-create-ranked.svg" alt="" width="18" height="18" /></span><span>{t("listRankingUnavailable")}</span></p>
+        <ListRankingField checked={isRanked} disabled={createBusy} icon="/images/list-create-ranked.svg" onChange={setIsRanked} />
       </fieldset>
       <section className={styles.draftFilms} aria-labelledby="draft-films-title">
         <div className={styles.draftFilmsHeading}><h2 id="draft-films-title">{t("films")}</h2><span>{draftFilms.length} {t("listEntries")}</span></div>
@@ -600,7 +616,7 @@ export default function UserLists() {
           {!filmSearchLoading && !filmSearchError && filmQuery.trim() && filmResults.length === 0 && <p>{t("noFilms")}</p>}
             {!filmSearchLoading && !filmSearchError && filmResults.length > 0 && <ul className={styles.draftResults}>{filmResults.map(film => <li key={film.id}><button type="button" disabled={createBusy || draftFilms.some(item => item.id === film.id)} onClick={() => setDraftFilms(current => current.some(item => item.id === film.id) ? current : [...current, film])}>{editorialText(film.title, t("untitledFilm"))} · {formatMovieYear(film.releaseDate, t("unknownYear"))}</button></li>)}</ul>}
         </div>
-        {draftFilms.length === 0 ? <div className={styles.draftEmpty}><strong>{t("listNoFilmsTitle")}</strong><p>{t("listNoFilmsHint")}</p></div> : <ul className={styles.draftSelection}>{draftFilms.map(film => <li key={film.id}><span>{editorialText(film.title, t("untitledFilm"))}</span><button type="button" disabled={createBusy} aria-label={`${t("remove")} ${editorialText(film.title, t("untitledFilm"))}`} onClick={() => setDraftFilms(current => current.filter(item => item.id !== film.id))}>−</button></li>)}</ul>}
+        {draftFilms.length === 0 ? <div className={styles.draftEmpty}><strong>{t("listNoFilmsTitle")}</strong><p>{t("listNoFilmsHint")}</p></div> : <ul className={styles.draftSelection}>{draftFilms.map((film, index) => <li key={film.id}><span>{isRanked && <><span data-list-rank="true">{index + 1}</span>{". "}</>}<span>{editorialText(film.title, t("untitledFilm"))}</span></span><button type="button" disabled={createBusy} aria-label={`${t("remove")} ${editorialText(film.title, t("untitledFilm"))}`} onClick={() => setDraftFilms(current => current.filter(item => item.id !== film.id))}>−</button></li>)}</ul>}
         <div className={styles.createActions}>
           <Link className={styles.createCancel} to={path("/profile?view=lists")} aria-disabled={createBusy || undefined} onClick={event => { if (createBusy) event.preventDefault(); }}>{t("cancel")}</Link>
           <button type="submit" aria-busy={createBusy} disabled={createBusy || !name.trim() || draftFilms.length === 0}>{createBusy ? t("saving") : t("save")}</button>
@@ -617,12 +633,12 @@ export default function UserLists() {
       {phoneCustomEditor && itemsFeedback}
       {phoneCustomEditor && !mobileEntriesOpen && <MobileListSettings
         key={`${user?.id}:${selectedList.id}:${lang}`}
-        name={editName} description={editDescription} tags={editTags} isPublic={editPublic}
+        name={editName} description={editDescription} tags={editTags} isPublic={editPublic} isRanked={editRanked}
         items={items} itemsReady={!itemsLoading && !itemsLoadError} busy={listControlsBusy}
         nameRef={editorNameRef} entriesRef={mobileEntriesRef}
         initialTagsFocus={viewportEditorFocus.current?.field === "tags"}
         publicHref={selectedList.isPublic ? path(`/lists/public/${selectedList.id}`) : undefined}
-        onName={setEditName} onDescription={setEditDescription} onTags={setEditTags} onPublic={setEditPublic}
+        onName={setEditName} onDescription={setEditDescription} onTags={setEditTags} onPublic={setEditPublic} onRanked={setEditRanked}
         onEntries={() => setMobileEntriesOpen(true)} onCancel={cancelMobileSettings} onSave={saveList} onDelete={requestListDelete}
       />}
       {phoneCustomEditor && mobileEntriesOpen && <>
@@ -654,6 +670,7 @@ export default function UserLists() {
         <label className={styles.descriptionField} htmlFor="edit-list-description">{t("description")} <textarea id="edit-list-description" data-list-field="description" rows={5} maxLength={5000} disabled={itemsBusy || saveBusy || deleting} value={editDescription} onChange={event => setEditDescription(event.target.value)} /></label>
         <label className={styles.tagsField} htmlFor="edit-list-tags">{t("tags")} <input id="edit-list-tags" data-list-field="tags" value={editTags} maxLength={509} disabled={itemsBusy || saveBusy || deleting} placeholder={t("tagsHint")} onChange={event => setEditTags(event.target.value)} /></label>
         <label className={styles.checkboxLabel}><input type="checkbox" data-list-field="visibility" checked={editPublic} disabled={itemsBusy || saveBusy || deleting} onChange={event => setEditPublic(event.target.checked)} /> <span>{t("publicList")}</span></label>
+        <div className={styles.rankingField}><ListRankingField checked={editRanked} disabled={listControlsBusy} onChange={setEditRanked} /></div>
         <div className={styles.editActions}>
           <Link ref={editAddFilmsRef} className={styles.browseFilms} to={path("/films")} aria-disabled={listControlsBusy || undefined} onClick={event => { if (listControlsBusy) event.preventDefault(); }}>
             <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
@@ -673,7 +690,9 @@ export default function UserLists() {
         {selectedList.listType === "CUSTOM" && <p id="list-reorder-instructions" className="srOnly">{t("listReorderHelp")}</p>}
         <ul className={styles.items}>{items.map((item, index) => {
         const movieTitle = editorialText(item.movie.title, t("untitledFilm"));
-        return <li className={styles.itemRow} key={item.id} data-list-item-id={item.id} onDragOver={event => { if (selectedList.listType === "CUSTOM") event.preventDefault(); }} onDrop={event => handleItemDrop(event, item.id)}>
+        const ranked = selectedList.listType === "CUSTOM" && (detailMode ? selectedList.isRanked !== false : editRanked);
+        return <li className={`${styles.itemRow} ${ranked ? styles.rankedItemRow : ""}`} key={item.id} data-list-item-id={item.id} onDragOver={event => { if (selectedList.listType === "CUSTOM") event.preventDefault(); }} onDrop={event => handleItemDrop(event, item.id)}>
+          {ranked && <span className={styles.itemRank} data-list-rank="true">{index + 1}</span>}
           <Link className={styles.itemPosterLink} to={path(`/films/${item.movie.id}`)} aria-label={`${movieTitle} ${t("poster")}`}>
             <ResilientImage className={styles.itemPoster} src={item.movie.photoUrl} alt="" fallback={<span className={styles.itemPosterFallback}>{movieTitle}</span>} />
           </Link>

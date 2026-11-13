@@ -15,7 +15,7 @@ async function activate(locator: Locator, projectName: string) {
   else await locator.click();
 }
 
-async function mockList(page: Page) {
+async function mockList(page: Page, isRanked?: boolean) {
   await page.route("https://list-owner.example.invalid/avatar.svg", route => route.fulfill({
     contentType: "image/svg+xml",
     body: '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30"><circle cx="15" cy="15" r="15" fill="#5a8a90"/></svg>',
@@ -32,6 +32,7 @@ async function mockList(page: Page) {
       ownerAvatarUrl: "https://list-owner.example.invalid/avatar.svg",
       tags: ["Science Fiction", "Thrillers"],
       likeCount: 554,
+      ...(isRanked === undefined ? {} : { isRanked }),
       movies,
     } });
     return route.fulfill({ json: {} });
@@ -100,3 +101,29 @@ test("public list detail follows phone rows and its information sheet works with
   await expect(dialog).toBeHidden();
   await expect(more).toBeFocused();
 });
+
+for (const lang of ["uk", "en"] as const) {
+  test(`public list ranked mode preserves film order on phone and desktop in ${lang}`, async ({ page }) => {
+    for (const isRanked of [true, false]) {
+      await mockList(page, isRanked);
+      for (const width of [393, 1440]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(`/${lang}/lists/public/985000`);
+        const main = page.getByRole("main");
+        await expect(main).toHaveAttribute("aria-busy", "false");
+        const posters = main.locator('a[class*="movieMedia"]');
+        await expect(posters).toHaveCount(movies.length);
+        const targets = await posters.evaluateAll(links => links.map(link => link.getAttribute("href")));
+        expect(targets).toEqual(movies.map(movie => expect.stringMatching(new RegExp(`/films/${movie.id}/?$`))));
+        const ranks = main.locator("[data-list-rank]");
+        if (isRanked) {
+          await expect(ranks).toHaveText(movies.map((_, index) => String(index + 1)));
+          for (const rank of await ranks.all()) await expect(rank).toBeVisible();
+        } else {
+          await expect(ranks).toHaveCount(0);
+        }
+        expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+      }
+    }
+  });
+}

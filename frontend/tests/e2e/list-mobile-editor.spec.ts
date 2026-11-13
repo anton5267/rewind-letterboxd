@@ -5,8 +5,8 @@ const searchTitles = ["Whiplash", "The Whale", "Whisper of the Heart", "White No
 for (const lang of ["uk", "en"] as const) {
   test(`mobile list settings and entries preserve drafts and use the owner API in ${lang}`, async ({ page }, testInfo) => {
     const copy = lang === "uk"
-      ? { settings: "Налаштування списку", name: "Назва списку", description: "Опис", tags: "Теги", public: "Публічний список", save: "Зберегти", saved: "Збережено.", cancel: "Скасувати", add: "Додати фільм", retry: "Спробувати ще", previous: "Назад", next: "Далі", entries: /^Редагувати фільми/, addError: "Не вдалося додати фільм до списку." }
-      : { settings: "List Settings", name: "List name", description: "Description", tags: "Tags", public: "Public list", save: "Save", saved: "Saved.", cancel: "Cancel", add: "Add a film", retry: "Retry", previous: "Previous", next: "Next", entries: /^Edit entries/, addError: "Could not add the film to the list." };
+      ? { settings: "Налаштування списку", name: "Назва списку", description: "Опис", tags: "Теги", public: "Публічний список", ranked: "Ранжований список", save: "Зберегти", saved: "Збережено.", cancel: "Скасувати", add: "Додати фільм", retry: "Спробувати ще", previous: "Назад", next: "Далі", entries: /^Редагувати фільми/, addError: "Не вдалося додати фільм до списку." }
+      : { settings: "List Settings", name: "List name", description: "Description", tags: "Tags", public: "Public list", ranked: "Ranked list", save: "Save", saved: "Saved.", cancel: "Cancel", add: "Add a film", retry: "Retry", previous: "Previous", next: "Next", entries: /^Edit entries/, addError: "Could not add the film to the list." };
     const owner = { id: 98001, username: "list-mobile-owner", role: "USER" };
     let list = { id: 98021, name: "My Top", description: "A personal collection of favourite films.", listType: "CUSTOM", isPublic: true, tags: ["mytop", "favorites", "rewatch"] };
     const film = (id: number, title: string) => ({ id, title, releaseDate: "2014-01-01", rating: 7.9, photoUrl: null });
@@ -58,7 +58,9 @@ for (const lang of ["uk", "en"] as const) {
     await page.goto(`/${lang}/lists?list=98021&mode=edit`);
     const settings = page.getByRole("form", { name: copy.settings, exact: true });
     const name = settings.getByRole("textbox", { name: copy.name, exact: true });
+    const ranked = settings.getByRole("checkbox", { name: copy.ranked, exact: true });
     const entries = settings.getByRole("button", { name: copy.entries });
+    await expect(ranked).toBeChecked();
     await expect(entries).toContainText("10");
     await expect(settings.getByRole("listitem")).toHaveCount(8);
     for (const image of await settings.locator("img").all()) {
@@ -71,6 +73,7 @@ for (const lang of ["uk", "en"] as const) {
     await settings.getByRole("textbox", { name: copy.description, exact: true }).fill("Updated description");
     await settings.getByText(copy.public, { exact: true }).click();
     await expect(settings.getByRole("checkbox", { name: copy.public, exact: true })).not.toBeChecked();
+    await ranked.uncheck();
     await settings.getByRole("button", { name: copy.tags, exact: true }).click();
     await settings.getByRole("textbox", { name: copy.tags, exact: true }).fill("newtag, favorites");
     await entries.click();
@@ -80,6 +83,7 @@ for (const lang of ["uk", "en"] as const) {
     const entriesTitle = await page.getByRole("heading", { name: lang === "uk" ? "Редагувати список" : "Edit List", exact: true }).boundingBox();
     expect(entriesTitle?.x).toBe(56);
     await expect(page.locator("[data-list-item-id]")).toHaveCount(10);
+    await expect(page.locator("[data-list-rank]")).toHaveCount(0);
     for (const image of await page.locator("[data-list-item-id] img, header button img").all()) {
       await expect(image).toHaveJSProperty("complete", true);
       expect(await image.evaluate(element => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
@@ -112,24 +116,30 @@ for (const lang of ["uk", "en"] as const) {
     await expect(entries).toBeFocused();
     await expect(entries).toContainText("11");
     await expect(name).toHaveValue("  Updated list  ");
+    await expect(ranked).not.toBeChecked();
     await expect(settings.getByText("newtag", { exact: true })).toBeVisible();
     await settings.getByRole("button", { name: copy.save, exact: true }).click();
     await expect(page.getByRole("status").filter({ hasText: copy.saved })).toBeVisible();
-    expect(updates).toEqual([{ name: "Updated list", description: "Updated description", isPublic: false, tags: ["newtag", "favorites"] }]);
+    expect(updates).toEqual([{ name: "Updated list", description: "Updated description", isPublic: false, isRanked: false, tags: ["newtag", "favorites"] }]);
     await page.reload();
     await expect(name).toHaveValue("Updated list");
+    await expect(ranked).not.toBeChecked();
     await name.fill("Discard this name");
+    await ranked.check();
     await settings.getByRole("button", { name: copy.cancel, exact: true }).click();
     await expect(page).toHaveURL(/mode=view/);
     expect(updates).toHaveLength(1);
     await page.getByRole("link", { name: copy.settings, exact: true }).click();
     await expect(name).toHaveValue("Updated list");
+    await expect(ranked).not.toBeChecked();
     await settings.getByRole("button", { name: copy.tags, exact: true }).click();
     await expect(settings.getByRole("textbox", { name: copy.tags, exact: true })).toBeFocused();
     await page.setViewportSize({ width: 768, height: 900 });
     await expect(page.locator("#edit-list-tags")).toBeFocused();
+    await expect(page.getByRole("checkbox", { name: copy.ranked, exact: true })).not.toBeChecked();
     await page.setViewportSize({ width: 767, height: 900 });
     await expect(settings.getByRole("textbox", { name: copy.tags, exact: true })).toBeFocused();
+    await expect(ranked).not.toBeChecked();
     await name.focus();
     await page.setViewportSize({ width: 768, height: 900 });
     await expect(page.locator("#edit-list-name")).toBeVisible();

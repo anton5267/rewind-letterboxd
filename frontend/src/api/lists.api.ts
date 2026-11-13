@@ -8,6 +8,7 @@ export interface UserList {
   description: string | null;
   listType: string;
   isPublic: boolean;
+  isRanked?: boolean;
   tags: string[];
 }
 
@@ -47,6 +48,7 @@ export interface PublicListDetails {
   ownerAvatarUrl: string | null;
   tags: string[];
   likeCount: number;
+  isRanked?: boolean;
   movies: MoviePreview[];
 }
 
@@ -73,11 +75,11 @@ export const getMyListReport = (listId: string | number) => api.get<ReviewReport
 export const reportList = (listId: string | number, reason: ReviewReportReason) =>
   api.post<{ id: number; reason: ReviewReportReason; createdAt: string }>(`/lists/public/${listId}/report`, { reason });
 
-export const createList = (name: string, description: string, isPublic: boolean, tags: string[], movieIds: number[]) =>
-  api.post<UserList>("/lists", { name, description: description || null, isPublic, tags, movieIds });
+export const createList = (name: string, description: string, isPublic: boolean, tags: string[], movieIds: number[], isRanked?: boolean) =>
+  api.post<UserList>("/lists", { name, description: description || null, isPublic, tags, movieIds, isRanked });
 
-export const updateList = (listId: number, name: string, description: string, isPublic: boolean, tags: string[]) =>
-  api.patch<UserList>(`/lists/${listId}`, { name, description: description || null, isPublic, tags });
+export const updateList = (listId: number, name: string, description: string, isPublic: boolean, tags: string[], isRanked?: boolean) =>
+  api.patch<UserList>(`/lists/${listId}`, { name, description: description || null, isPublic, tags, isRanked });
 
 export const deleteList = (listId: number) => api.delete<void>(`/lists/${listId}`);
 

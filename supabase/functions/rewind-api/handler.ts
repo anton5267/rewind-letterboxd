@@ -21,8 +21,8 @@ export interface MovieSearchResult {
 export interface MovieDetailsResponse {
   id: number;
   imdbId: string | null;
-  originalLanguage: string | null;
   tmdbId: number | null;
+  originalLanguage: string | null;
   title: string;
   durationMinutes: number | null;
   releaseDate: string | null;
@@ -165,6 +165,7 @@ export interface AdminReviewResponse {
   id: number; movieId: number; movieTitle: string; userId: number; username: string; content: string;
   rating: number | null; isHidden: boolean; moderatedReason: string | null; moderatedAt: string | null; createdAt: string;
 }
+export interface AdminReviewContentUpdate { content: string }
 export type ReviewReportReason = "SPAM" | "INAPPROPRIATE_CONTENT" | "BULLYING";
 export interface ReviewReportResponse { id: number; reason: ReviewReportReason; createdAt: string }
 export interface ReviewReportStatusResponse { reported: boolean; report: ReviewReportResponse | null }
@@ -174,6 +175,9 @@ export interface AdminReportedReviewResponse extends AdminReviewResponse {
 export interface AdminCommentResponse {
   id: number; reviewId: number; userId: number; username: string; content: string; isHidden: boolean;
   moderatedReason: string | null; moderatedAt: string | null; createdAt: string;
+}
+export interface AdminReportedCommentResponse extends AdminCommentResponse {
+  reportId: number; reportReason: ReviewReportReason; reportCreatedAt: string;
 }
 export interface AdminModerationQueueItem {
   type: "REVIEW" | "COMMENT"; id: number; parentId: number | null; movieId: number | null;
@@ -207,6 +211,9 @@ export interface AdminListResponse {
   id: number; userId: number; username: string; name: string; description: string | null;
   listType: "CUSTOM" | "WATCHED" | "WATCHLIST" | "FAVORITES"; isPublic: boolean; itemCount: number;
   createdAt: string; updatedAt: string; featuredPosition: number | null;
+}
+export interface AdminReportedListResponse extends AdminListResponse {
+  reportId: number; reportReason: ReviewReportReason; reportCreatedAt: string;
 }
 export interface AdminAuditLogResponse {
   id: number; adminId: number; action: string; targetType: string; targetId: number | null; metadata: string | null; createdAt: string;
@@ -373,6 +380,7 @@ export interface PublicListDetailsResponse {
   ownerAvatarUrl: string | null;
   tags: string[];
   likeCount: number;
+  isRanked?: boolean;
   movies: MovieCardResponse[];
 }
 
@@ -391,6 +399,7 @@ export interface MyListResponse {
   description: string | null;
   listType: "CUSTOM" | "WATCHED" | "WATCHLIST" | "FAVORITES";
   isPublic: boolean;
+  isRanked?: boolean;
   tags: string[];
 }
 export interface MyListPageResponse {
@@ -408,6 +417,7 @@ export interface CreateMyListRequest {
   name: string;
   description: string | null;
   isPublic: boolean;
+  isRanked?: boolean;
   tags: string[];
   movieIds: number[];
 }
@@ -415,6 +425,7 @@ export interface UpdateMyListRequest {
   name?: string;
   description?: string | null;
   isPublic?: boolean;
+  isRanked?: boolean;
   tags?: string[];
 }
 
@@ -436,6 +447,10 @@ export interface RewindApiRepository {
   getReviewDetails?(reviewId: number): Promise<ReviewDetailsResponse | null>;
   getMyReviewReport?(authUser: HostedAuthUser, reviewId: number): Promise<ReviewReportStatusResponse | null>;
   reportReview?(authUser: HostedAuthUser, reviewId: number, reason: ReviewReportReason): Promise<ReviewReportResponse | null>;
+  getMyCommentReport?(authUser: HostedAuthUser, commentId: number): Promise<ReviewReportStatusResponse | null>;
+  reportComment?(authUser: HostedAuthUser, commentId: number, reason: ReviewReportReason): Promise<ReviewReportResponse | null>;
+  getMyListReport?(authUser: HostedAuthUser, listId: number): Promise<ReviewReportStatusResponse | null>;
+  reportList?(authUser: HostedAuthUser, listId: number, reason: ReviewReportReason): Promise<ReviewReportResponse | null>;
   updateMyReview?(authUser: HostedAuthUser, reviewId: number, update: ReviewMutationRequest): Promise<ReviewResponse | null>;
   deleteMyReview?(authUser: HostedAuthUser, reviewId: number): Promise<boolean>;
   getReviewComments?(reviewId: number, page: number, size: number): Promise<CommentPageResponse>;
@@ -509,8 +524,13 @@ export interface RewindApiRepository {
   getNewsletterSubscription?(authUser: HostedAuthUser): Promise<NewsletterSubscriptionResponse>;
   updateNewsletterSubscription?(authUser: HostedAuthUser, subscribed: boolean): Promise<NewsletterSubscriptionResponse>;
   getAdminReviews?(authUser: HostedAuthUser, filters: { movieId: number | null; userId: number | null; hidden: boolean | null }, page: number, size: number): Promise<{ content: AdminReviewResponse[]; totalPages: number; totalElements: number; number: number }>;
+  updateAdminReviewContent?(authUser: HostedAuthUser, id: number, content: string): Promise<AdminReviewResponse | null>;
   getAdminReportedReviews?(authUser: HostedAuthUser, page: number, size: number): Promise<{ content: AdminReportedReviewResponse[]; totalPages: number; totalElements: number; number: number }>;
   dismissAdminReviewReport?(authUser: HostedAuthUser, reportId: number): Promise<boolean>;
+  getAdminReportedComments?(authUser: HostedAuthUser, page: number, size: number): Promise<{ content: AdminReportedCommentResponse[]; totalPages: number; totalElements: number; number: number }>;
+  dismissAdminCommentReport?(authUser: HostedAuthUser, reportId: number): Promise<boolean>;
+  getAdminReportedLists?(authUser: HostedAuthUser, page: number, size: number): Promise<{ content: AdminReportedListResponse[]; totalPages: number; totalElements: number; number: number }>;
+  dismissAdminListReport?(authUser: HostedAuthUser, reportId: number): Promise<boolean>;
   setAdminReviewHidden?(authUser: HostedAuthUser, id: number, hidden: boolean, reason: string | null): Promise<AdminReviewResponse | null>;
   deleteAdminReview?(authUser: HostedAuthUser, id: number): Promise<boolean>;
   getAdminComments?(authUser: HostedAuthUser, hidden: boolean | null, page: number, size: number): Promise<{ content: AdminCommentResponse[]; totalPages: number; totalElements: number; number: number }>;
@@ -618,8 +638,14 @@ const NEWSLETTER_SUBSCRIPTION_PATH = "/api/newsletter/subscription";
 const ADMIN_JOURNAL_PATH = "/api/admin/journal/articles";
 const ADMIN_JOURNAL_ARTICLE_PATTERN = /^\/api\/admin\/journal\/articles\/(\d+)(?:\/(newsletter))?$/;
 const REVIEW_REPORT_PATTERN = /^\/api\/reviews\/(\d+)\/report$/;
+const COMMENT_REPORT_PATTERN = /^\/api\/comments\/(\d+)\/report$/;
+const PUBLIC_LIST_REPORT_PATTERN = /^\/api\/lists\/public\/(\d+)\/report$/;
 const ADMIN_REPORTED_REVIEWS_PATH = "/api/admin/reported-reviews";
 const ADMIN_REPORTED_REVIEW_DISMISS_PATTERN = /^\/api\/admin\/reported-reviews\/(\d+)\/dismiss$/;
+const ADMIN_REPORTED_COMMENTS_PATH = "/api/admin/reported-comments";
+const ADMIN_REPORTED_COMMENT_DISMISS_PATTERN = /^\/api\/admin\/reported-comments\/(\d+)\/dismiss$/;
+const ADMIN_REPORTED_LISTS_PATH = "/api/admin/reported-lists";
+const ADMIN_REPORTED_LIST_DISMISS_PATTERN = /^\/api\/admin\/reported-lists\/(\d+)\/dismiss$/;
 const ADMIN_REVIEW_PATTERN = /^\/api\/admin\/reviews(?:\/(\d+)(?:\/(hide|unhide))?)?$/;
 const ADMIN_COMMENT_PATTERN = /^\/api\/admin\/comments(?:\/(\d+)(?:\/(hide|unhide))?)?$/;
 const ADMIN_MODERATION_HIDE_PATTERN = /^\/api\/admin\/moderation\/([^/]+)\/(\d+)\/hide$/;
@@ -732,24 +758,36 @@ export function createRewindApiHandler(
     const adminReviewMatch = path.match(ADMIN_REVIEW_PATTERN);
     const adminCommentMatch = path.match(ADMIN_COMMENT_PATTERN);
     const dismissReviewReportMatch = path.match(ADMIN_REPORTED_REVIEW_DISMISS_PATTERN);
-    if (dismissReviewReportMatch) {
+    const dismissCommentReportMatch = path.match(ADMIN_REPORTED_COMMENT_DISMISS_PATTERN);
+    const dismissListReportMatch = path.match(ADMIN_REPORTED_LIST_DISMISS_PATTERN);
+    const reportQueue = path === ADMIN_REPORTED_REVIEWS_PATH
+      ? { kind: "review", load: repository.getAdminReportedReviews, dismiss: repository.dismissAdminReviewReport }
+      : path === ADMIN_REPORTED_COMMENTS_PATH
+        ? { kind: "comment", load: repository.getAdminReportedComments, dismiss: repository.dismissAdminCommentReport }
+        : path === ADMIN_REPORTED_LISTS_PATH
+          ? { kind: "list", load: repository.getAdminReportedLists, dismiss: repository.dismissAdminListReport }
+          : null;
+    const dismissMatch = dismissReviewReportMatch ?? dismissCommentReportMatch ?? dismissListReportMatch;
+    if (dismissMatch) {
       if (request.method !== "POST") {
         corsHeaders.set("Allow", "POST, OPTIONS");
         return json({ message: "Method not allowed" }, 405, corsHeaders);
       }
       const authUser = await confirmedAuthUser(request, authVerifier);
       if (!authUser) return json({ message: "Authentication required" }, 401, corsHeaders);
-      const reportId = parseRouteId(dismissReviewReportMatch[1]);
+      const reportId = parseRouteId(dismissMatch[1]);
       if (reportId === null) return json({ message: "Invalid report ID" }, 400, corsHeaders);
-      if (!repository.dismissAdminReviewReport) return json({ message: "Not found" }, 404, corsHeaders);
+      const dismiss = dismissReviewReportMatch ? repository.dismissAdminReviewReport
+        : dismissCommentReportMatch ? repository.dismissAdminCommentReport : repository.dismissAdminListReport;
+      if (!dismiss) return json({ message: "Not found" }, 404, corsHeaders);
       try {
-        if (!await repository.dismissAdminReviewReport(authUser, reportId)) return json({ message: "Report not found" }, 404, corsHeaders);
+        if (!await dismiss(authUser, reportId)) return json({ message: "Report not found" }, 404, corsHeaders);
         return new Response(null, { status: 204, headers: corsHeaders });
       } catch (error) {
-        return repositoryFailure(error, "Unable to dismiss review report", corsHeaders);
+        return repositoryFailure(error, "Unable to dismiss report", corsHeaders);
       }
     }
-    if (path === ADMIN_REPORTED_REVIEWS_PATH) {
+    if (reportQueue) {
       if (request.method !== "GET") {
         corsHeaders.set("Allow", "GET, OPTIONS");
         return json({ message: "Method not allowed" }, 405, corsHeaders);
@@ -758,11 +796,11 @@ export function createRewindApiHandler(
       if (!authUser) return json({ message: "Authentication required" }, 401, corsHeaders);
       const page = parseAdminPage(query);
       if (!page) return json({ message: "Invalid page or size" }, 400, corsHeaders);
-      if (!repository.getAdminReportedReviews) return json({ message: "Not found" }, 404, corsHeaders);
+      if (!reportQueue.load) return json({ message: "Not found" }, 404, corsHeaders);
       try {
-        return json(await repository.getAdminReportedReviews(authUser, page.page, page.size), 200, corsHeaders);
+        return json(await reportQueue.load(authUser, page.page, page.size), 200, corsHeaders);
       } catch (error) {
-        return repositoryFailure(error, "Unable to load reported reviews", corsHeaders);
+        return repositoryFailure(error, `Unable to load reported ${reportQueue.kind}s`, corsHeaders);
       }
     }
     if (adminReviewMatch || adminCommentMatch) {
@@ -771,7 +809,7 @@ export function createRewindApiHandler(
       const rootPath = isReview ? "/api/admin/reviews" : "/api/admin/comments";
       const idText = match[1] ?? null;
       const action = match[2] ?? null;
-      const allowed = idText === null ? ["GET"] : action ? ["POST"] : ["DELETE"];
+      const allowed = idText === null ? ["GET"] : action ? ["POST"] : isReview ? ["PATCH", "DELETE"] : ["DELETE"];
       if (!allowed.includes(request.method)) {
         corsHeaders.set("Allow", `${allowed.join(", ")}, OPTIONS`);
         return json({ message: "Method not allowed" }, 405, corsHeaders);
@@ -812,6 +850,16 @@ export function createRewindApiHandler(
             : await repository.setAdminCommentHidden?.(authUser, id, hiddenValue, reason);
           if (!result) return json({ message: `${isReview ? "Review" : "Comment"} not found` }, 404, corsHeaders);
           return json(result, 200, corsHeaders);
+        }
+        if (request.method === "PATCH") {
+          if (!isReview) return json({ message: "Not found" }, 404, corsHeaders);
+          if (!repository.updateAdminReviewContent) return json({ message: "Not found" }, 404, corsHeaders);
+          let body: unknown;
+          try { body = await request.json(); } catch { return json({ message: "Invalid request body" }, 400, corsHeaders); }
+          const content = parseAdminReviewContentUpdate(body);
+          if (content === null) return json({ message: "Invalid review content" }, 400, corsHeaders);
+          const updated = await repository.updateAdminReviewContent(authUser, id, content);
+          return updated ? json(updated, 200, corsHeaders) : json({ message: "Review not found" }, 404, corsHeaders);
         }
         const deleted = isReview
           ? await repository.deleteAdminReview?.(authUser, id)
@@ -1829,9 +1877,13 @@ export function createRewindApiHandler(
     }
     const reviewDetailsMatch = path.match(REVIEW_DETAILS_PATTERN);
     const reviewReportMatch = path.match(REVIEW_REPORT_PATTERN);
-    if (reviewReportMatch) {
-      const reviewId = parseRouteId(reviewReportMatch[1]);
-      if (reviewId === null) return json({ message: "Invalid review ID" }, 400, corsHeaders);
+    const commentReportMatch = path.match(COMMENT_REPORT_PATTERN);
+    const listReportMatch = path.match(PUBLIC_LIST_REPORT_PATTERN);
+    const userReportMatch = reviewReportMatch ?? commentReportMatch ?? listReportMatch;
+    if (userReportMatch) {
+      const reportTarget = reviewReportMatch ? "review" : commentReportMatch ? "comment" : "list";
+      const targetId = parseRouteId(userReportMatch[1]);
+      if (targetId === null) return json({ message: `Invalid ${reportTarget} ID` }, 400, corsHeaders);
       if (request.method !== "GET" && request.method !== "POST") {
         corsHeaders.set("Allow", "GET, POST, OPTIONS");
         return json({ message: "Method not allowed" }, 405, corsHeaders);
@@ -1840,19 +1892,23 @@ export function createRewindApiHandler(
       if (!authUser) return json({ message: "Authentication required" }, 401, corsHeaders);
       try {
         if (request.method === "GET") {
-          if (!repository.getMyReviewReport) return json({ message: "Not found" }, 404, corsHeaders);
-          const status = await repository.getMyReviewReport(authUser, reviewId);
-          return status ? json(status, 200, corsHeaders) : json({ message: "Review not found" }, 404, corsHeaders);
+          const getStatus = reportTarget === "review" ? repository.getMyReviewReport
+            : reportTarget === "comment" ? repository.getMyCommentReport : repository.getMyListReport;
+          if (!getStatus) return json({ message: "Not found" }, 404, corsHeaders);
+          const status = await getStatus(authUser, targetId);
+          return status ? json(status, 200, corsHeaders) : json({ message: `${reportTarget} not found or cannot be reported` }, 404, corsHeaders);
         }
-        if (!repository.reportReview) return json({ message: "Not found" }, 404, corsHeaders);
+        const submit = reportTarget === "review" ? repository.reportReview
+          : reportTarget === "comment" ? repository.reportComment : repository.reportList;
+        if (!submit) return json({ message: "Not found" }, 404, corsHeaders);
         let value: unknown;
         try { value = await request.json(); } catch { return json({ message: "Invalid request body" }, 400, corsHeaders); }
         const reason = parseReviewReportReason(value);
         if (!reason) return json({ message: "Invalid report reason" }, 400, corsHeaders);
-        const report = await repository.reportReview(authUser, reviewId, reason);
-        return report ? json(report, 200, corsHeaders) : json({ message: "Review cannot be reported" }, 404, corsHeaders);
+        const report = await submit(authUser, targetId, reason);
+        return report ? json(report, 200, corsHeaders) : json({ message: `${reportTarget} cannot be reported` }, 404, corsHeaders);
       } catch (error) {
-        return repositoryFailure(error, "Unable to submit review report", corsHeaders);
+        return repositoryFailure(error, `Unable to submit ${reportTarget} report`, corsHeaders);
       }
     }
     if (reviewDetailsMatch) {
@@ -2146,8 +2202,8 @@ export function createRewindApiHandler(
         if (!repository.deleteMyMovieFlag) return json({ message: "Not found" }, 404, corsHeaders);
         await repository.deleteMyMovieFlag(authUser, movieId, flag!);
         return new Response(null, { status: 204, headers: corsHeaders });
-      } catch {
-        return json({ message: "Unable to update movie status" }, 500, corsHeaders);
+      } catch (error) {
+        return repositoryFailure(error, "Unable to update movie status", corsHeaders);
       }
     }
     if (path === "/api/users/me") {
@@ -2205,8 +2261,8 @@ export function createRewindApiHandler(
         }
         await repository.setMyRating(authUser, movieId, rating);
         return new Response(null, { status: 200, headers: corsHeaders });
-      } catch {
-        return json({ message: "Unable to update rating" }, 500, corsHeaders);
+      } catch (error) {
+        return repositoryFailure(error, "Unable to update rating", corsHeaders);
       }
     }
     if (path === GENRES_PATH) {
@@ -2653,6 +2709,14 @@ function parseReviewUpdate(value: unknown): ReviewMutationRequest | null {
   return update;
 }
 
+function parseAdminReviewContentUpdate(value: unknown): string | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const body = value as Record<string, unknown>;
+  if (Object.keys(body).length !== 1 || typeof body.content !== "string"
+    || !body.content.trim() || body.content.length > 5000) return null;
+  return body.content;
+}
+
 function parseCommentText(value: unknown): string | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const text = (value as Record<string, unknown>).text;
@@ -2685,6 +2749,7 @@ function parseCreateMyList(value: unknown): CreateMyListRequest | null {
   if (body.description !== undefined && body.description !== null
     && (typeof body.description !== "string" || body.description.length > 5000)) return null;
   if (body.isPublic !== undefined && body.isPublic !== null && typeof body.isPublic !== "boolean") return null;
+  if (body.isRanked !== undefined && body.isRanked !== null && typeof body.isRanked !== "boolean") return null;
   const tags = parseListTags(body.tags);
   if (tags === null) return null;
   if (!Array.isArray(body.movieIds) || body.movieIds.length < 1 || body.movieIds.length > 100) return null;
@@ -2694,6 +2759,7 @@ function parseCreateMyList(value: unknown): CreateMyListRequest | null {
     name: body.name,
     description: typeof body.description === "string" ? body.description : null,
     isPublic: body.isPublic === true,
+    isRanked: body.isRanked !== false,
     tags,
     movieIds: movieIds as number[],
   };
@@ -2714,6 +2780,10 @@ function parseUpdateMyList(value: unknown): UpdateMyListRequest | null {
   if (body.isPublic !== undefined && body.isPublic !== null) {
     if (typeof body.isPublic !== "boolean") return null;
     update.isPublic = body.isPublic;
+  }
+  if (body.isRanked !== undefined && body.isRanked !== null) {
+    if (typeof body.isRanked !== "boolean") return null;
+    update.isRanked = body.isRanked;
   }
   if (body.tags !== undefined && body.tags !== null) {
     const tags = parseListTags(body.tags);

@@ -14,6 +14,10 @@ export type TmdbRefreshErrorCode =
   | "TMDB_UNAVAILABLE"
   | "SYNC_FAILED";
 
+function isProviderRateLimit(error: unknown): boolean {
+  return error instanceof Error && "providerStatus" in error && error.providerStatus === 429;
+}
+
 export async function runTmdbRefreshBatch(
   candidates: readonly TmdbRefreshCandidate[],
   sync: (candidate: TmdbRefreshCandidate) => Promise<unknown>,
@@ -36,6 +40,7 @@ export async function runTmdbRefreshBatch(
     result.attempted++;
     let succeeded = false;
     let errorCode: TmdbRefreshErrorCode | null = null;
+    let rateLimited = false;
     try {
       await sync(candidate);
       succeeded = true;
@@ -49,8 +54,12 @@ export async function runTmdbRefreshBatch(
           ? "TMDB_UNAVAILABLE"
           : "SYNC_FAILED";
       result.failed++;
+      rateLimited = isProviderRateLimit(error);
     }
     await record(candidate, succeeded, errorCode);
+    // A provider-wide rate limit applies to the remaining candidates too.
+    // Stop immediately so this scheduled run does not keep sending requests.
+    if (rateLimited) break;
   }
   return result;
 }

@@ -11,7 +11,7 @@ export interface TmdbMovie {
   directors: TmdbPerson[]; producers: TmdbPerson[]; similarTmdbIds: number[];
 }
 export class TmdbError extends Error {
-  constructor(readonly status: number, message: string) { super(message); }
+  constructor(readonly status: number, message: string, readonly providerStatus: number | null = null) { super(message); }
 }
 
 const API_URL = "https://api.themoviedb.org/3";
@@ -78,8 +78,8 @@ async function apiGet(path: string, params: Record<string, string>, apiKey: stri
   let response: Response;
   try { response = await fetcher(url, { headers: { Accept: "application/json" } }); }
   catch { throw new TmdbError(502, "TMDB request failed"); }
-  if (response.status === 404) throw new TmdbError(404, "TMDB movie not found");
-  if (!response.ok) throw new TmdbError(502, "TMDB request failed");
+  if (response.status === 404) throw new TmdbError(404, "TMDB movie not found", response.status);
+  if (!response.ok) throw new TmdbError(502, "TMDB request failed", response.status);
   try {
     const body: unknown = await response.json();
     if (!body || typeof body !== "object") throw new Error();

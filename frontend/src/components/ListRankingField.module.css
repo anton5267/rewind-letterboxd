@@ -1,0 +1,9 @@
+.field.field { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; min-height: 44px; cursor: pointer; color: #fff; font-size: 16px; line-height: 1.2; }
+.field.field input[type="checkbox"] { position: static; flex: 0 0 22px; width: 22px; height: 22px; min-height: 0; margin: 0; padding: 0; opacity: 1; accent-color: var(--rewind-cyan); }
+.field.field input:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; }
+.field:has(input:disabled) { opacity: .55; cursor: not-allowed; }
+.hint { flex: 1 1 190px; color: #aaa; font-size: 14px; }
+@media (min-width: 768px) {
+  .field.field { font-size: 22px; }
+  .hint { font-size: 22px; }
+}

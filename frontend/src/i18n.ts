@@ -66,6 +66,7 @@ const messages = {
   uk: {
     ...adminUserMessages.uk,
     editListEntries: "Редагувати фільми…", editList: "Редагувати список",
+    rankedList: "Ранжований список", rankedListHint: "Показувати позицію кожного фільму.",
     termsTitle: "Умови користування", termsBody: "Користування Rewind та відповідальність учасників.",
     conditionsTitle: "Умови роботи", conditionsBody: "Доступність функцій і матеріалів Rewind.",
     safetyNoticeTitle: "Безпека спільноти", safetyNoticeBody: "Захист акаунта й безпечна взаємодія.",
@@ -81,7 +82,6 @@ const messages = {
     listNoFilmsHint: "Додайте перший фільм до цього списку.",
     listKeepOneFilm: "У власному списку має залишатися щонайменше один фільм.",
     listEntries: "фільмів",
-    listRankingUnavailable: "Ранжування недоступне",
     listDraftAddError: "Список збережено, але деякі фільми не додано. Повторіть збереження, щоб завершити.",
     listCreated: "Список створено.",
     clearSearch: "Очистити пошук",
@@ -212,6 +212,7 @@ const messages = {
   en: {
     ...adminUserMessages.en,
     editListEntries: "Edit entries…", editList: "Edit List",
+    rankedList: "Ranked list", rankedListHint: "Show position for each film.",
     termsTitle: "Terms", termsBody: "Using Rewind and participating responsibly.",
     conditionsTitle: "Conditions", conditionsBody: "Availability of Rewind features and content.",
     safetyNoticeTitle: "Safety Notice", safetyNoticeBody: "Account protection and safe interaction.",
@@ -227,7 +228,6 @@ const messages = {
     listNoFilmsHint: "Add your first film to start building this list.",
     listKeepOneFilm: "Keep at least one film in a custom list.",
     listEntries: "entries",
-    listRankingUnavailable: "Ranking unavailable",
     listDraftAddError: "The list was saved, but some films could not be added. Retry Save to finish.",
     listCreated: "List created.",
     clearSearch: "Clear search",

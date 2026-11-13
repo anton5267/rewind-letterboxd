@@ -301,15 +301,13 @@
   .stateCard { padding: 14px; }
 }
 
-/* READY 1480:9542 is a standalone create page. API-backed drafts stay local
-   until Save; unsupported ranking settings are explicitly unavailable. */
+/* READY 1480:9542 is a standalone create page. API-backed drafts stay local until Save. */
 .createMobileHeader { display: none; }
 .settingsLegendDesktop { display: none; }
 .createSettings { min-width: 0; margin: 0; border: 0; padding: 0; }
 .createSettings legend { margin-bottom: 10px; color: #b9b9b9; }
 .createSettings .checkboxLabel { margin: 0; }
 .settingIcon { display: none; }
-.rankingUnavailable { margin: 10px 0 0; color: #b9b9b9; font-size: 12px; line-height: 1.5; }
 .draftTags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .draftTags > span { max-width: 100%; border: 1px solid #7e7e7e; border-radius: 999px; padding: 8px 14px; color: #fff; font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
 .form .draftTags > button { display: grid; place-items: center; min-width: 44px; min-height: 44px; border: 1px solid #7e7e7e; border-radius: 50%; padding: 0; background: #282828; }
@@ -390,8 +388,6 @@
   .createSettings .checkboxLabel:has(input:focus-visible) { outline: 2px solid #fff; outline-offset: 3px; }
   .createSettings .checkboxLabel:has(input:checked) { border-color: #fff; }
   .settingIcon { display: grid; flex: 0 0 34px; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: #282828; }
-  .rankingUnavailable { display: flex; align-items: center; gap: 8px; min-width: 0; margin: 0; border: 1px solid #3a3a3a; border-radius: 16px; padding: 10px; background: #191919; font-size: 12px; line-height: 1.25; }
-  .rankingUnavailable > span:last-child { overflow-wrap: anywhere; }
   .createPage .draftFilms { display: contents; }
   .draftFilmsHeading { order: 5; font-size: 12px; line-height: 15px; }
   .draftFilmsHeading h2 { letter-spacing: .04em; text-transform: uppercase; }
@@ -410,4 +406,14 @@
 @media (max-width: 359px) {
   .createPage { padding-inline: 16px; }
   .createSettings { grid-template-columns: 1fr; }
+}
+
+.rankingField { grid-column: 1 / -1; }
+.rankedItemRow { position: relative; }
+.itemRank { position: absolute; z-index: 1; top: 4px; left: 4px; display: grid; min-width: 24px; min-height: 24px; padding: 2px; place-items: center; border-radius: 50%; background: #191919; color: #fff; font-size: 14px; font-weight: 700; }
+@media (min-width: 768px) {
+  .editForm .rankingField { grid-row: 5; }
+  .editForm .editActions { grid-row: 6; }
+  .rankedItemRow { grid-template-columns: 32px 91px minmax(0, 1fr) auto; }
+  .itemRank { position: static; min-width: 0; padding: 0; background: transparent; font-size: 40px; }
 }

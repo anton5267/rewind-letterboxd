@@ -2,6 +2,7 @@ import { Pool } from "@db/postgres";
 import { buildAdminMovieAuditMetadata, buildAdminMovieUpdateQuery } from "./admin_movie_update.ts";
 import { replaceAdminMovieGenres } from "./admin_movie_genres.ts";
 import { replaceAdminMovieCredits } from "./admin_movie_credits.ts";
+import { buildAdminMovieCreateQuery } from "./admin_movie_create.ts";
 import {
   createRewindApiHandler,
   type MovieDetailsResponse,
@@ -150,6 +151,91 @@ async function beginAdminTransaction(authUser: HostedAuthUser) {
   }
 }
 
+type ReportableContent = "comment" | "list";
+function contentReportTable(target: ReportableContent) {
+  return target === "comment"
+    ? { reports: "rewind.comment_reports", targetColumn: "comment_id", targetTable: "rewind.comments", valid: `EXISTS (
+        SELECT 1 FROM rewind.comments c
+        JOIN rewind.reviews r ON r.id=c.review_id
+        JOIN rewind.movies m ON m.id=r.movie_id AND m.is_published=TRUE
+        JOIN rewind.users ca ON ca.id=c.user_id
+        JOIN rewind.users ra ON ra.id=r.user_id
+        WHERE c.id=t.id AND c.is_hidden=FALSE AND r.is_hidden=FALSE
+          AND c.user_id<>$2 AND ca.is_active=TRUE AND ra.is_active=TRUE
+      )` }
+    : { reports: "rewind.list_reports", targetColumn: "list_id", targetTable: "rewind.lists", valid: `EXISTS (
+        SELECT 1 FROM rewind.lists l JOIN rewind.users owner ON owner.id=l.user_id
+        WHERE l.id=t.id AND l.list_type='CUSTOM' AND l.is_public=TRUE
+          AND l.user_id<>$2 AND owner.is_active=TRUE
+      )` };
+}
+
+async function getMyContentReport(authUser: HostedAuthUser, target: ReportableContent, targetId: number): Promise<ReviewReportStatusResponse | null> {
+  const { connection, userId } = await beginUserTransaction(authUser);
+  const config = contentReportTable(target);
+  try {
+    const valid = await connection.queryObject<{ id: string }>({
+      text: `SELECT t.id::text AS id FROM ${config.targetTable} t WHERE t.id=$1 AND ${config.valid}`,
+      args: [targetId, userId],
+    });
+    if (!valid.rows[0]) { await connection.queryObject("COMMIT"); return null; }
+    const result = await connection.queryObject<{ id: string; reason: ReviewReportReason; created_at: string }>({
+      text: `SELECT id::text AS id, reason, created_at::text AS created_at
+             FROM ${config.reports} WHERE ${config.targetColumn}=$1 AND reporter_id=$2 AND status='OPEN'`,
+      args: [targetId, userId],
+    });
+    await connection.queryObject("COMMIT");
+    const row = result.rows[0];
+    return row ? { reported: true, report: { id: safeId(row.id, "Report ID"), reason: row.reason, createdAt: row.created_at } }
+      : { reported: false, report: null };
+  } catch (error) {
+    try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+    throw error;
+  } finally { connection.release(); }
+}
+
+async function submitContentReport(authUser: HostedAuthUser, target: ReportableContent, targetId: number, reason: ReviewReportReason): Promise<ReviewReportResponse | null> {
+  const { connection, userId } = await beginUserTransaction(authUser);
+  const config = contentReportTable(target);
+  try {
+    const insert = await connection.queryObject<{ id: string; reason: ReviewReportReason; created_at: string }>({
+      text: `INSERT INTO ${config.reports} (${config.targetColumn}, reporter_id, reason)
+             SELECT t.id, $2, $3 FROM ${config.targetTable} t
+             WHERE t.id=$1 AND ${config.valid}
+             ON CONFLICT (${config.targetColumn}, reporter_id) WHERE status='OPEN' DO NOTHING
+             RETURNING id::text AS id, reason, created_at::text AS created_at`,
+      args: [targetId, userId, reason],
+    });
+    const row = insert.rows[0] ?? (await connection.queryObject<{ id: string; reason: ReviewReportReason; created_at: string }>({
+      text: `SELECT id::text AS id, reason, created_at::text AS created_at FROM ${config.reports}
+             WHERE ${config.targetColumn}=$1 AND reporter_id=$2 AND status='OPEN'`, args: [targetId, userId],
+    })).rows[0];
+    await connection.queryObject("COMMIT");
+    return row ? { id: safeId(row.id, "Report ID"), reason: row.reason, createdAt: row.created_at } : null;
+  } catch (error) {
+    try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+    throw error;
+  } finally { connection.release(); }
+}
+
+async function dismissContentReport(authUser: HostedAuthUser, reportId: number, target: ReportableContent): Promise<boolean> {
+  const { connection, userId } = await beginAdminTransaction(authUser);
+  const config = contentReportTable(target);
+  const targetType = target === "comment" ? "COMMENT_REPORT" : "LIST_REPORT";
+  try {
+    const result = await connection.queryObject<{ id: string }>({
+      text: `UPDATE ${config.reports} SET status='DISMISSED', reviewed_at=CURRENT_TIMESTAMP, reviewed_by=$2
+             WHERE id=$1 AND status='OPEN' RETURNING id::text AS id`, args: [reportId, userId],
+    });
+    if (result.rows.length) await recordAdminAudit(connection, userId, `${target.toUpperCase()}_REPORT_DISMISSED`, targetType, reportId, null);
+    await connection.queryObject("COMMIT");
+    return result.rows.length > 0;
+  } catch (error) {
+    try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+    throw error;
+  } finally { connection.release(); }
+}
+
 async function recordAdminAudit(connection: PgConnection, userId: number, action: string, targetType: string, targetId: number | null, metadata: string | null) {
   await connection.queryObject({
     text: "INSERT INTO rewind.admin_audit_logs (admin_id, action, target_type, target_id, metadata) VALUES ($1, $2, $3, $4, $5)",
@@ -228,8 +314,16 @@ async function processPendingIdentityDeletion(): Promise<void> {
   } finally { finish.release(); }
 }
 
+class TmdbProviderApiError extends RewindApiError {
+  constructor(status: number, message: string, readonly providerStatus: number | null) {
+    super(status, message);
+  }
+}
+
 function tmdbApiFailure(error: unknown): never {
-  if (error instanceof TmdbError) throw new RewindApiError(error.status, error.message);
+  if (error instanceof TmdbError) {
+    throw new TmdbProviderApiError(error.status, error.message, error.providerStatus);
+  }
   throw error;
 }
 
@@ -786,9 +880,9 @@ async function replaceListTags(connection: PgConnection, listId: number, values:
 async function fetchMyListRows(connection: PgConnection, userId: number, limit?: number, offset = 0): Promise<MyListResponse[]> {
   const paged = limit !== undefined;
   const rows = await connection.queryObject<{
-    id: string; name: string; description: string | null; list_type: MyListResponse["listType"]; is_public: boolean;
+    id: string; name: string; description: string | null; list_type: MyListResponse["listType"]; is_public: boolean; is_ranked: boolean;
   }>({
-    text: `SELECT id::text AS id, name, description, list_type, is_public FROM rewind.lists
+    text: `SELECT id::text AS id, name, description, list_type, is_public, is_ranked FROM rewind.lists
            WHERE user_id = $1 ORDER BY updated_at DESC, id DESC${paged ? " LIMIT $2 OFFSET $3" : ""}`,
     args: paged ? [userId, limit, offset] : [userId],
   });
@@ -797,7 +891,7 @@ async function fetchMyListRows(connection: PgConnection, userId: number, limit?:
   return rows.rows.map((row) => {
     const id = safeId(row.id, "List ID");
     return { id, name: row.name, description: row.description, listType: row.list_type,
-      isPublic: row.is_public, tags: tags.get(id) ?? [] };
+      isPublic: row.is_public, isRanked: row.is_ranked, tags: tags.get(id) ?? [] };
   });
 }
 
@@ -844,8 +938,11 @@ async function queryActivityPage(connection: PgConnection, predicate: string, pr
     connection.queryObject<{ total: string }>({
       text: `SELECT COUNT(*)::text AS total FROM rewind.user_activities a
              JOIN rewind.users actor ON actor.id = a.user_id AND actor.is_active
-             LEFT JOIN rewind.lists l ON l.id = a.list_id AND (l.list_type <> 'CUSTOM' OR l.is_public)
-             WHERE ${predicate} AND (a.list_id IS NULL OR l.id IS NOT NULL)`, args: predicateArgs,
+             LEFT JOIN rewind.movies visible_movie ON visible_movie.id = a.movie_id AND visible_movie.is_published = TRUE
+             LEFT JOIN rewind.lists l ON l.id = a.list_id AND l.is_public
+               AND EXISTS (SELECT 1 FROM rewind.users list_owner WHERE list_owner.id = l.user_id AND list_owner.is_active = TRUE)
+             WHERE ${predicate} AND (a.list_id IS NULL OR l.id IS NOT NULL)
+               AND (a.movie_id IS NULL OR visible_movie.id IS NOT NULL)`, args: predicateArgs,
     }),
     connection.queryObject<{
       id: string; activity_type: ActivityResponse["type"]; created_at: string;
@@ -860,10 +957,12 @@ async function queryActivityPage(connection: PgConnection, predicate: string, pr
                     related.id::text AS related_user_id, related.username AS related_username, related.display_name AS related_display_name,
                     l.id::text AS list_id, l.name AS list_name
              FROM rewind.user_activities a JOIN rewind.users actor ON actor.id = a.user_id AND actor.is_active
-             LEFT JOIN rewind.movies m ON m.id = a.movie_id
+              LEFT JOIN rewind.movies m ON m.id = a.movie_id AND m.is_published = TRUE
              LEFT JOIN rewind.users related ON related.id = a.related_user_id AND related.is_active
-             LEFT JOIN rewind.lists l ON l.id = a.list_id AND (l.list_type <> 'CUSTOM' OR l.is_public)
-             WHERE ${predicate} AND (a.list_id IS NULL OR l.id IS NOT NULL)
+              LEFT JOIN rewind.lists l ON l.id = a.list_id AND l.is_public
+                AND EXISTS (SELECT 1 FROM rewind.users list_owner WHERE list_owner.id = l.user_id AND list_owner.is_active = TRUE)
+              WHERE ${predicate} AND (a.list_id IS NULL OR l.id IS NOT NULL)
+                AND (a.movie_id IS NULL OR m.id IS NOT NULL)
              ORDER BY a.created_at DESC, a.id DESC LIMIT $${predicateArgs.length + 1} OFFSET $${predicateArgs.length + 2}`,
       args: [...predicateArgs, size, page * size],
     }),
@@ -1287,7 +1386,7 @@ const handler = createRewindApiHandler({
                         l.created_at::text AS created_at, l.updated_at::text AS updated_at, l.featured_position
                  FROM rewind.lists l JOIN rewind.users u ON u.id=l.user_id
                  LEFT JOIN rewind.list_items li ON li.list_id=l.id
-                 GROUP BY l.id, u.username ORDER BY l.updated_at DESC LIMIT $1 OFFSET $2`,
+                 GROUP BY l.id, u.username ORDER BY l.updated_at DESC, l.id DESC LIMIT $1 OFFSET $2`,
           args: [size, page * size],
         }),
       ]);
@@ -1650,13 +1749,7 @@ const handler = createRewindApiHandler({
       const result = await connection.queryObject<{
         id: string; tmdb_id: string | null; title: string; release_date: string | null;
         rating: string | number | null; photo_url: string | null; is_published: boolean;
-      }>({
-        text: `INSERT INTO rewind.movies (imdb_id,original_language,title,duration_minutes,release_date,age_rating,rating,short_plot,photo_url,backdrop_url,trailer_url)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-               RETURNING id::text AS id, tmdb_id::text AS tmdb_id, title, release_date::text AS release_date, rating::text AS rating, photo_url, is_published`,
-        args: [body.imdbId ?? null, body.originalLanguage ?? null, body.title, body.durationMinutes ?? null, body.releaseDate ?? null, body.ageRating ?? null,
-          body.rating ?? null, body.shortPlot ?? null, body.photoUrl ?? null, body.backdropUrl ?? null, body.trailerUrl ?? null],
-      });
+      }>(buildAdminMovieCreateQuery(body));
       const movieId = parseSafeCount(result.rows[0]!.id);
       if (body.genreIds !== undefined) await replaceAdminMovieGenres(connection, movieId, body.genreIds);
       if (body.actorCredits !== undefined || body.directorIds !== undefined || body.producerIds !== undefined) {
@@ -1957,10 +2050,95 @@ const handler = createRewindApiHandler({
       throw error;
     } finally { connection.release(); }
   },
+  async getAdminReportedComments(authUser, page, size) {
+    const { connection } = await beginAdminTransaction(authUser);
+    try {
+      const [count, rows] = await Promise.all([
+        connection.queryObject<{ total: string }>({ text: "SELECT COUNT(*)::text AS total FROM rewind.comment_reports WHERE status='OPEN'" }),
+        connection.queryObject<Parameters<typeof toAdminComment>[0] & { report_id: string; report_reason: ReviewReportReason; report_created_at: string }>({
+          text: `SELECT cr.id::text AS report_id, cr.reason AS report_reason, cr.created_at::text AS report_created_at,
+                       c.id::text AS id, c.review_id::text AS review_id, c.user_id::text AS user_id,
+                       u.username, c.content, c.is_hidden, c.moderated_reason,
+                       c.moderated_at::text AS moderated_at, c.created_at::text AS created_at
+                FROM rewind.comment_reports cr
+                JOIN rewind.comments c ON c.id=cr.comment_id
+                JOIN rewind.users u ON u.id=c.user_id
+                WHERE cr.status='OPEN'
+                ORDER BY cr.created_at DESC, cr.id DESC LIMIT $1 OFFSET $2`, args: [size, page * size],
+        }),
+      ]);
+      const content = rows.rows.map(row => ({
+        ...toAdminComment(row), reportId: safeId(row.report_id, "Report ID"),
+        reportReason: row.report_reason, reportCreatedAt: row.report_created_at,
+      }));
+      await connection.queryObject("COMMIT");
+      return pageResult(content, count.rows[0]?.total ?? "0", page, size);
+    } catch (error) {
+      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+      throw error;
+    } finally { connection.release(); }
+  },
+  async dismissAdminCommentReport(authUser, reportId) {
+    return await dismissContentReport(authUser, reportId, "comment");
+  },
+  async getAdminReportedLists(authUser, page, size) {
+    const { connection } = await beginAdminTransaction(authUser);
+    try {
+      const [count, rows] = await Promise.all([
+        connection.queryObject<{ total: string }>({ text: "SELECT COUNT(*)::text AS total FROM rewind.list_reports WHERE status='OPEN'" }),
+        connection.queryObject<Parameters<typeof toAdminList>[0] & { report_id: string; report_reason: ReviewReportReason; report_created_at: string }>({
+          text: `SELECT lr.id::text AS report_id, lr.reason AS report_reason, lr.created_at::text AS report_created_at,
+                       l.id::text AS id, l.user_id::text AS user_id, u.username, l.name, l.description,
+                       l.list_type, l.is_public, (SELECT COUNT(*)::text FROM rewind.list_items li WHERE li.list_id=l.id) AS item_count,
+                       l.created_at::text AS created_at, l.updated_at::text AS updated_at, l.featured_position
+                FROM rewind.list_reports lr JOIN rewind.lists l ON l.id=lr.list_id JOIN rewind.users u ON u.id=l.user_id
+                WHERE lr.status='OPEN' ORDER BY lr.created_at DESC, lr.id DESC LIMIT $1 OFFSET $2`, args: [size, page * size],
+        }),
+      ]);
+      const content = rows.rows.map(row => ({
+        ...toAdminList(row), reportId: safeId(row.report_id, "Report ID"),
+        reportReason: row.report_reason, reportCreatedAt: row.report_created_at,
+      }));
+      await connection.queryObject("COMMIT");
+      return pageResult(content, count.rows[0]?.total ?? "0", page, size);
+    } catch (error) {
+      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+      throw error;
+    } finally { connection.release(); }
+  },
+  async dismissAdminListReport(authUser, reportId) {
+    return await dismissContentReport(authUser, reportId, "list");
+  },
   async setAdminReviewHidden(authUser, id, hidden, reason) {
     const { connection, userId } = await beginAdminTransaction(authUser);
     try {
       await setReviewModeration(connection, userId, id, hidden, reason);
+      const result = await connection.queryObject<Parameters<typeof toAdminReview>[0]>({
+        text: `SELECT r.id::text AS id, r.movie_id::text AS movie_id, m.title AS movie_title,
+                     r.user_id::text AS user_id, u.username, r.content, r.rating::int AS rating, r.is_hidden,
+                     r.moderated_reason, r.moderated_at::text AS moderated_at, r.created_at::text AS created_at
+              FROM rewind.reviews r JOIN rewind.movies m ON m.id=r.movie_id JOIN rewind.users u ON u.id=r.user_id
+              WHERE r.id=$1`, args: [id],
+      });
+      await connection.queryObject("COMMIT");
+      return result.rows[0] ? toAdminReview(result.rows[0]) : null;
+    } catch (error) {
+      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+      throw error;
+    } finally { connection.release(); }
+  },
+  async updateAdminReviewContent(authUser, id, content) {
+    const { connection, userId } = await beginAdminTransaction(authUser);
+    try {
+      const updated = await connection.queryObject<{ id: string }>({
+        text: "UPDATE rewind.reviews SET content=$2, updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING id::text AS id",
+        args: [id, content],
+      });
+      if (updated.rows.length === 0) {
+        await connection.queryObject("COMMIT");
+        return null;
+      }
+      await recordAdminAudit(connection, userId, "REVIEW_CONTENT_EDITED", "REVIEW", id, "content edited by administrator");
       const result = await connection.queryObject<Parameters<typeof toAdminReview>[0]>({
         text: `SELECT r.id::text AS id, r.movie_id::text AS movie_id, m.title AS movie_title,
                      r.user_id::text AS user_id, u.username, r.content, r.rating::int AS rating, r.is_hidden,
@@ -2260,14 +2438,14 @@ const handler = createRewindApiHandler({
       const [counts, distribution, lists, reviews, socialLinks] = await Promise.all([
         connection.queryObject<{ ratings: string; reviews: string; watched: string; watchlist: string; favorites: string }>({
           text: `SELECT
-            (SELECT COUNT(*)::text FROM rewind.ratings WHERE user_id = $1) AS ratings,
-            (SELECT COUNT(*)::text FROM rewind.reviews WHERE user_id = $1 AND NOT is_hidden) AS reviews,
-            (SELECT COUNT(*)::text FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id WHERE l.user_id = $1 AND l.list_type = 'WATCHED') AS watched,
-            (SELECT COUNT(*)::text FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id WHERE l.user_id = $1 AND l.list_type = 'WATCHLIST') AS watchlist,
-            (SELECT COUNT(*)::text FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id WHERE l.user_id = $1 AND l.list_type = 'FAVORITES') AS favorites`, args: [userId],
+            (SELECT COUNT(*)::text FROM rewind.ratings r JOIN rewind.movies m ON m.id = r.movie_id WHERE r.user_id = $1 AND m.is_published) AS ratings,
+            (SELECT COUNT(*)::text FROM rewind.reviews r JOIN rewind.movies m ON m.id = r.movie_id WHERE r.user_id = $1 AND NOT r.is_hidden AND m.is_published) AS reviews,
+            (SELECT COUNT(*)::text FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id JOIN rewind.movies m ON m.id = i.movie_id WHERE l.user_id = $1 AND l.list_type = 'WATCHED' AND m.is_published) AS watched,
+            (SELECT COUNT(*)::text FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id JOIN rewind.movies m ON m.id = i.movie_id WHERE l.user_id = $1 AND l.list_type = 'WATCHLIST' AND m.is_published) AS watchlist,
+            (SELECT COUNT(*)::text FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id JOIN rewind.movies m ON m.id = i.movie_id WHERE l.user_id = $1 AND l.list_type = 'FAVORITES' AND m.is_published) AS favorites`, args: [userId],
         }),
         connection.queryObject<{ rating: number; count: string }>({
-          text: "SELECT rating, COUNT(*)::text AS count FROM rewind.ratings WHERE user_id = $1 GROUP BY rating ORDER BY rating",
+          text: "SELECT r.rating, COUNT(*)::text AS count FROM rewind.ratings r JOIN rewind.movies m ON m.id = r.movie_id WHERE r.user_id = $1 AND m.is_published GROUP BY r.rating ORDER BY r.rating",
           args: [userId],
         }),
         connection.queryObject<{ id: string; name: string; description: string | null }>({
@@ -2278,8 +2456,8 @@ const handler = createRewindApiHandler({
         connection.queryObject<{ id: string; movie_id: string; movie_title: string; content: string; rating: number | null; updated_at: string }>({
           text: `SELECT r.id::text AS id, r.movie_id::text AS movie_id, m.title AS movie_title,
                         r.content, r.rating, r.updated_at::text AS updated_at
-                 FROM rewind.reviews r JOIN rewind.movies m ON m.id = r.movie_id
-                 WHERE r.user_id = $1 AND NOT r.is_hidden
+                  FROM rewind.reviews r JOIN rewind.movies m ON m.id = r.movie_id
+                  WHERE r.user_id = $1 AND NOT r.is_hidden AND m.is_published
                  ORDER BY r.updated_at DESC, r.id DESC LIMIT 10`, args: [userId],
         }),
         connection.queryObject<{ platform: string; url: string }>({
@@ -2318,11 +2496,11 @@ const handler = createRewindApiHandler({
       if (!list.rows[0]) return { content: [], totalPages: 0, totalElements: 0, number: page };
       const listId = safeId(list.rows[0].id, "List ID");
       const [count, movies] = await Promise.all([
-        connection.queryObject<{ total: string }>({ text: "SELECT COUNT(*)::text AS total FROM rewind.list_items WHERE list_id = $1", args: [listId] }),
+        connection.queryObject<{ total: string }>({ text: "SELECT COUNT(*)::text AS total FROM rewind.list_items i JOIN rewind.movies m ON m.id = i.movie_id WHERE i.list_id = $1 AND m.is_published", args: [listId] }),
         connection.queryObject<{ id: string; title: string; release_date: string | null; rating: string | null; photo_url: string | null }>({
           text: `SELECT m.id::text AS id, m.title, m.release_date::text AS release_date, m.rating::text AS rating, m.photo_url
                  FROM rewind.list_items i JOIN rewind.movies m ON m.id = i.movie_id
-                 WHERE i.list_id = $1 ORDER BY i.added_at DESC, i.id DESC LIMIT $2 OFFSET $3`,
+                  WHERE i.list_id = $1 AND m.is_published ORDER BY i.added_at DESC, i.id DESC LIMIT $2 OFFSET $3`,
           args: [listId, size, page * size],
         }),
       ]);
@@ -2353,7 +2531,7 @@ const handler = createRewindApiHandler({
       const [tags, counts, previews, likes] = await Promise.all([
         loadListTags(connection, ids),
         ids.length ? connection.queryObject<{ list_id: string; total: string }>({
-          text: "SELECT list_id::text AS list_id, COUNT(*)::text AS total FROM rewind.list_items WHERE list_id = ANY($1::bigint[]) GROUP BY list_id", args: [ids],
+           text: "SELECT i.list_id::text AS list_id, COUNT(*)::text AS total FROM rewind.list_items i JOIN rewind.movies m ON m.id = i.movie_id WHERE i.list_id = ANY($1::bigint[]) AND m.is_published GROUP BY i.list_id", args: [ids],
         }) : Promise.resolve({ rows: [] as { list_id: string; total: string }[] }),
         ids.length ? connection.queryObject<{ list_id: string; id: string; title: string; release_date: string | null; rating: string | null; photo_url: string | null }>({
           text: `SELECT list_id::text AS list_id, id::text AS id, title, release_date::text AS release_date,
@@ -2361,7 +2539,7 @@ const handler = createRewindApiHandler({
                    SELECT i.list_id, m.id, m.title, m.release_date, m.rating, m.photo_url,
                           ROW_NUMBER() OVER (PARTITION BY i.list_id ORDER BY i.position NULLS LAST, i.id) AS rn
                    FROM rewind.list_items i JOIN rewind.movies m ON m.id = i.movie_id
-                   WHERE i.list_id = ANY($1::bigint[])
+                    WHERE i.list_id = ANY($1::bigint[]) AND m.is_published
                  ) ranked WHERE rn <= 3 ORDER BY list_id, rn`, args: [ids],
         }) : Promise.resolve({ rows: [] as { list_id: string; id: string; title: string; release_date: string | null; rating: string | null; photo_url: string | null }[] }),
         ids.length ? connection.queryObject<{ list_id: string; total: string }>({
@@ -2399,6 +2577,7 @@ const handler = createRewindApiHandler({
         connection.queryObject<{ total: string }>({
           text: `SELECT COUNT(*)::text AS total FROM rewind.review_likes rl
                  JOIN rewind.reviews r ON r.id = rl.review_id AND NOT r.is_hidden
+                  JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                  JOIN rewind.users author ON author.id = r.user_id AND author.is_active
                  WHERE rl.user_id = $1`, args: [userId],
         }),
@@ -2407,7 +2586,7 @@ const handler = createRewindApiHandler({
                         r.content, r.rating, r.updated_at::text AS updated_at
                  FROM rewind.review_likes rl JOIN rewind.reviews r ON r.id = rl.review_id AND NOT r.is_hidden
                  JOIN rewind.users author ON author.id = r.user_id AND author.is_active
-                 JOIN rewind.movies m ON m.id = r.movie_id
+                  JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                  WHERE rl.user_id = $1 ORDER BY rl.created_at DESC, rl.id DESC LIMIT $2 OFFSET $3`, args: [userId, size, page * size],
         }),
       ]);
@@ -2440,13 +2619,14 @@ const handler = createRewindApiHandler({
       const [count, rows] = await Promise.all([
         connection.queryObject<{ total: string }>({
           text: `SELECT COUNT(*)::text AS total FROM rewind.user_activities a
-                 JOIN rewind.users u ON u.id = a.user_id AND u.is_active WHERE a.activity_type = 'WATCHED'`,
+                  JOIN rewind.users u ON u.id = a.user_id AND u.is_active
+                  JOIN rewind.movies m ON m.id = a.movie_id AND m.is_published = TRUE WHERE a.activity_type = 'WATCHED'`,
         }),
         connection.queryObject<{ id: string; created_at: string; actor_id: string | null; username: string | null; display_name: string | null; movie_id: string | null; title: string | null }>({
           text: `SELECT a.id::text AS id, a.created_at::text AS created_at, u.id::text AS actor_id,
                         u.username, u.display_name, m.id::text AS movie_id, m.title
                  FROM rewind.user_activities a JOIN rewind.users u ON u.id = a.user_id AND u.is_active
-                 LEFT JOIN rewind.movies m ON m.id = a.movie_id
+                  JOIN rewind.movies m ON m.id = a.movie_id AND m.is_published = TRUE
                  WHERE a.activity_type = 'WATCHED'
                  ORDER BY a.created_at DESC, a.id DESC LIMIT $1`, args: [size],
         }),
@@ -2468,10 +2648,11 @@ const handler = createRewindApiHandler({
         review_count: string; watched_count: string; list_count: string;
       }>({
         text: `SELECT u.id::text AS id, u.username, u.display_name, u.avatar_url, COUNT(rl.id)::text AS likes,
-                      (SELECT COUNT(*) FROM rewind.reviews r WHERE r.user_id = u.id AND NOT r.is_hidden)::text AS review_count,
-                      (SELECT COUNT(*) FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id WHERE l.user_id = u.id AND l.list_type = 'WATCHED')::text AS watched_count,
-                      (SELECT COUNT(*) FROM rewind.lists l WHERE l.user_id = u.id AND l.list_type = 'CUSTOM')::text AS list_count
+                      (SELECT COUNT(*) FROM rewind.reviews r JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published WHERE r.user_id = u.id AND NOT r.is_hidden)::text AS review_count,
+                      (SELECT COUNT(*) FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id JOIN rewind.movies m ON m.id = i.movie_id AND m.is_published WHERE l.user_id = u.id AND l.list_type = 'WATCHED')::text AS watched_count,
+                      (SELECT COUNT(*) FROM rewind.lists l WHERE l.user_id = u.id AND l.list_type = 'CUSTOM' AND l.is_public)::text AS list_count
                FROM rewind.review_likes rl JOIN rewind.reviews r ON r.id = rl.review_id AND NOT r.is_hidden
+               JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                JOIN rewind.users u ON u.id = r.user_id AND u.is_active
                JOIN rewind.users liker ON liker.id = rl.user_id AND liker.is_active
                GROUP BY u.id, u.username, u.display_name, u.avatar_url
@@ -2732,7 +2913,10 @@ const handler = createRewindApiHandler({
         connection.queryObject<{ total: string }>({
           text: `SELECT COUNT(*)::text AS total FROM rewind.conversations c
                  JOIN rewind.users other ON other.id = CASE WHEN c.user_one_id = $1 THEN c.user_two_id ELSE c.user_one_id END AND other.is_active
-                 WHERE $1 IN (c.user_one_id, c.user_two_id)`, args: [userId],
+                 WHERE $1 IN (c.user_one_id, c.user_two_id)
+                   AND NOT EXISTS (SELECT 1 FROM rewind.user_blocks b
+                     WHERE (b.blocker_id = c.user_one_id AND b.blocked_id = c.user_two_id)
+                        OR (b.blocker_id = c.user_two_id AND b.blocked_id = c.user_one_id))`, args: [userId],
         }),
         connection.queryObject<{
           id: string; updated_at: string; other_id: string; other_username: string; other_display_name: string | null; other_avatar_url: string | null;
@@ -2746,7 +2930,11 @@ const handler = createRewindApiHandler({
                  JOIN rewind.users other ON other.id = CASE WHEN c.user_one_id = $1 THEN c.user_two_id ELSE c.user_one_id END AND other.is_active
                  LEFT JOIN LATERAL (SELECT m.id, m.sender_id, m.body, m.created_at, m.read_at FROM rewind.messages m
                    WHERE m.conversation_id = c.id ORDER BY m.created_at DESC, m.id DESC LIMIT 1) last ON TRUE
-                 WHERE $1 IN (c.user_one_id, c.user_two_id) ORDER BY c.updated_at DESC, c.id DESC LIMIT $2 OFFSET $3`,
+                 WHERE $1 IN (c.user_one_id, c.user_two_id)
+                   AND NOT EXISTS (SELECT 1 FROM rewind.user_blocks b
+                     WHERE (b.blocker_id = c.user_one_id AND b.blocked_id = c.user_two_id)
+                        OR (b.blocker_id = c.user_two_id AND b.blocked_id = c.user_one_id))
+                 ORDER BY c.updated_at DESC, c.id DESC LIMIT $2 OFFSET $3`,
           args: [userId, size, page * size],
         }),
       ]);
@@ -2762,7 +2950,10 @@ const handler = createRewindApiHandler({
     try {
       const result = await connection.queryObject<{ total: string }>({
         text: `SELECT COUNT(*)::text AS total FROM rewind.messages m JOIN rewind.conversations c ON c.id = m.conversation_id
-               WHERE $1 IN (c.user_one_id, c.user_two_id) AND m.sender_id <> $1 AND m.read_at IS NULL`, args: [userId],
+               WHERE $1 IN (c.user_one_id, c.user_two_id) AND m.sender_id <> $1 AND m.read_at IS NULL
+                 AND NOT EXISTS (SELECT 1 FROM rewind.user_blocks b
+                   WHERE (b.blocker_id = c.user_one_id AND b.blocked_id = c.user_two_id)
+                      OR (b.blocker_id = c.user_two_id AND b.blocked_id = c.user_one_id))`, args: [userId],
       });
       await connection.queryObject("COMMIT");
       return Number(result.rows[0]?.total ?? "0");
@@ -2883,13 +3074,13 @@ const handler = createRewindApiHandler({
     try {
       const movieIds = [...new Set(body.movieIds)];
       const movies = await connection.queryObject<{ id: string }>({
-        text: "SELECT id::text AS id FROM rewind.movies WHERE id = ANY($1::bigint[])", args: [movieIds],
+        text: "SELECT id::text AS id FROM rewind.movies WHERE id = ANY($1::bigint[]) AND is_published = TRUE", args: [movieIds],
       });
       if (movies.rows.length !== movieIds.length) throw new RewindApiError(400, "One or more movies were not found");
       const inserted = await connection.queryObject<{ id: string }>({
-        text: `INSERT INTO rewind.lists (user_id, name, description, list_type, is_public)
-               VALUES ($1, $2, $3, 'CUSTOM', $4) RETURNING id::text AS id`,
-        args: [userId, body.name, body.description, body.isPublic],
+        text: `INSERT INTO rewind.lists (user_id, name, description, list_type, is_public, is_ranked)
+               VALUES ($1, $2, $3, 'CUSTOM', $4, $5) RETURNING id::text AS id`,
+        args: [userId, body.name, body.description, body.isPublic, body.isRanked ?? true],
       });
       const listId = safeId(inserted.rows[0].id, "List ID");
       for (let index = 0; index < movieIds.length; index++) {
@@ -2909,7 +3100,7 @@ const handler = createRewindApiHandler({
       }
       await connection.queryObject("COMMIT");
       return { id: listId, name: body.name, description: body.description,
-        listType: "CUSTOM", isPublic: body.isPublic, tags };
+        listType: "CUSTOM", isPublic: body.isPublic, isRanked: body.isRanked ?? true, tags };
     } catch (error) {
       try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
       throw error;
@@ -2919,10 +3110,10 @@ const handler = createRewindApiHandler({
     const { connection, userId } = await beginUserTransaction(authUser);
     try {
       const selected = await connection.queryObject<{
-        name: string; description: string | null; list_type: MyListResponse["listType"]; is_public: boolean;
+        name: string; description: string | null; list_type: MyListResponse["listType"]; is_public: boolean; is_ranked: boolean;
       }>({
-        text: `SELECT name, description, list_type, is_public FROM rewind.lists
-               WHERE id = $1 AND user_id = $2`, args: [listId, userId],
+        text: `SELECT name, description, list_type, is_public, is_ranked FROM rewind.lists
+               WHERE id = $1 AND user_id = $2 FOR UPDATE`, args: [listId, userId],
       });
       const current = selected.rows[0];
       if (!current) { await connection.queryObject("COMMIT"); return null; }
@@ -2932,10 +3123,12 @@ const handler = createRewindApiHandler({
         text: `UPDATE rewind.lists SET
                  name = CASE WHEN $3 THEN $4 ELSE name END,
                  description = CASE WHEN $5 THEN $6 ELSE description END,
-                 is_public = CASE WHEN $7 THEN $8 ELSE is_public END
+                 is_public = CASE WHEN $7 THEN $8 ELSE is_public END,
+                 is_ranked = CASE WHEN $9 THEN $10 ELSE is_ranked END
                WHERE id = $1 AND user_id = $2`,
         args: [listId, userId, body.name !== undefined, body.name ?? null,
-          updateDescription, body.description ?? null, body.isPublic !== undefined, body.isPublic ?? false],
+          updateDescription, body.description ?? null, body.isPublic !== undefined, body.isPublic ?? false,
+          body.isRanked !== undefined, body.isRanked ?? true],
       });
       const tags = body.tags === undefined
         ? (await loadListTags(connection, [listId])).get(listId) ?? []
@@ -2943,7 +3136,8 @@ const handler = createRewindApiHandler({
       await connection.queryObject("COMMIT");
       return { id: listId, name: body.name ?? current.name,
         description: updateDescription ? body.description! : current.description,
-        listType: "CUSTOM", isPublic: body.isPublic ?? current.is_public, tags };
+        listType: "CUSTOM", isPublic: body.isPublic ?? current.is_public,
+        isRanked: body.isRanked ?? current.is_ranked, tags };
     } catch (error) {
       try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
       throw error;
@@ -2999,7 +3193,7 @@ const handler = createRewindApiHandler({
         text: "SELECT 1 FROM rewind.lists WHERE id = $1 AND user_id = $2", args: [listId, userId],
       });
       if (!list.rows.length) { await connection.queryObject("COMMIT"); return "LIST_NOT_FOUND"; }
-      const movie = await connection.queryObject({ text: "SELECT 1 FROM rewind.movies WHERE id = $1", args: [movieId] });
+      const movie = await connection.queryObject({ text: "SELECT 1 FROM rewind.movies WHERE id = $1 AND is_published = TRUE", args: [movieId] });
       if (!movie.rows.length) { await connection.queryObject("COMMIT"); return "MOVIE_NOT_FOUND"; }
       let resolvedPosition = position;
       if (resolvedPosition === null) {
@@ -3077,7 +3271,7 @@ const handler = createRewindApiHandler({
     } finally { connection.release(); }
   },
   async searchMovies(params: MovieSearchParams): Promise<MovieSearchResult> {
-    const filters = ["NULLIF(BTRIM(m.title), '') IS NOT NULL"];
+    const filters = ["m.is_published = TRUE", "NULLIF(BTRIM(m.title), '') IS NOT NULL"];
     const args: unknown[] = [];
     const bind = (value: unknown): string => {
       args.push(value);
@@ -3156,10 +3350,10 @@ const handler = createRewindApiHandler({
       const fallbackLanguage = language === "en" ? "uk" : "en";
       const [filmCount, films, userCount, users, listCount, lists, tags, people, reviewCount, reviews, articleCount, articles] = await Promise.all([
         connection.queryObject<{ total: string }>({ text: `SELECT COUNT(*)::text AS total FROM rewind.movies m
-          WHERE NULLIF(BTRIM(m.title), '') IS NOT NULL AND POSITION($1 IN LOWER(m.title)) > 0`, args: [normalizedQuery] }),
+          WHERE m.is_published = TRUE AND NULLIF(BTRIM(m.title), '') IS NOT NULL AND POSITION($1 IN LOWER(m.title)) > 0`, args: [normalizedQuery] }),
         connection.queryObject<{ id: string; title: string; release_date: string | null; rating: string | null; photo_url: string | null }>({
           text: `SELECT m.id::text AS id, m.title, m.release_date::text AS release_date, m.rating::text AS rating, m.photo_url
-                 FROM rewind.movies m WHERE NULLIF(BTRIM(m.title), '') IS NOT NULL
+                  FROM rewind.movies m WHERE m.is_published = TRUE AND NULLIF(BTRIM(m.title), '') IS NOT NULL
                    AND POSITION($1 IN LOWER(m.title)) > 0
                  ORDER BY m.title ASC, m.id DESC LIMIT $2`, args: [normalizedQuery, size],
         }),
@@ -3183,7 +3377,7 @@ const handler = createRewindApiHandler({
                         owner.username AS owner_username, owner.avatar_url AS owner_avatar_url,
                         (SELECT COUNT(*)::text FROM rewind.list_likes ll JOIN rewind.users liker
                           ON liker.id = ll.user_id AND liker.is_active = TRUE WHERE ll.list_id = l.id) AS like_count,
-                        (SELECT COUNT(*)::text FROM rewind.list_items li WHERE li.list_id = l.id) AS item_count
+                         (SELECT COUNT(*)::text FROM rewind.list_items li JOIN rewind.movies visible_movie ON visible_movie.id = li.movie_id AND visible_movie.is_published = TRUE WHERE li.list_id = l.id) AS item_count
                  FROM rewind.lists l JOIN rewind.users owner ON owner.id = l.user_id AND owner.is_active = TRUE
                  WHERE l.is_public = TRUE AND l.list_type = 'CUSTOM'
                    AND (POSITION($1 IN LOWER(l.name)) > 0 OR POSITION($1 IN LOWER(COALESCE(l.description, ''))) > 0
@@ -3209,18 +3403,18 @@ const handler = createRewindApiHandler({
                      SELECT p.id, p.name, p.photo_url, 'PRODUCER'::text FROM rewind.producers p WHERE POSITION($1 IN LOWER(p.name)) > 0
                    ) matched ORDER BY name ASC, type ASC, id ASC LIMIT $2`, args: [normalizedQuery, size],
           }),
-        connection.queryObject<{ total: string }>({ text: `SELECT COUNT(*)::text AS total FROM rewind.reviews r
-          JOIN rewind.movies m ON m.id = r.movie_id JOIN rewind.users author ON author.id = r.user_id
-          WHERE r.is_hidden = FALSE AND author.is_active = TRUE AND (POSITION($1 IN LOWER(r.content)) > 0
+         connection.queryObject<{ total: string }>({ text: `SELECT COUNT(*)::text AS total FROM rewind.reviews r
+           JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE JOIN rewind.users author ON author.id = r.user_id
+           WHERE r.is_hidden = FALSE AND author.is_active = TRUE AND (POSITION($1 IN LOWER(r.content)) > 0
             OR POSITION($1 IN LOWER(m.title)) > 0 OR POSITION($1 IN LOWER(author.username)) > 0)`, args: [normalizedQuery] }),
         connection.queryObject<{ id: string; movie_id: string; movie_title: string; user_id: string; username: string; content: string;
           rating: string | null; created_at: string; movie_photo_url: string | null; user_avatar_url: string | null }>({
           text: `SELECT r.id::text AS id, r.movie_id::text AS movie_id, m.title AS movie_title,
                         author.id::text AS user_id, author.username, r.content, r.rating::text AS rating,
                         r.created_at::text AS created_at, m.photo_url AS movie_photo_url, author.avatar_url AS user_avatar_url
-                 FROM rewind.reviews r JOIN rewind.movies m ON m.id = r.movie_id
+                  FROM rewind.reviews r JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                  JOIN rewind.users author ON author.id = r.user_id
-                 WHERE r.is_hidden = FALSE AND author.is_active = TRUE AND (POSITION($1 IN LOWER(r.content)) > 0
+                  WHERE r.is_hidden = FALSE AND author.is_active = TRUE AND (POSITION($1 IN LOWER(r.content)) > 0
                    OR POSITION($1 IN LOWER(m.title)) > 0 OR POSITION($1 IN LOWER(author.username)) > 0)
                  ORDER BY r.updated_at DESC, r.id DESC LIMIT $2`, args: [normalizedQuery, size],
         }),
@@ -3256,7 +3450,7 @@ const handler = createRewindApiHandler({
                      SELECT li.list_id, m.id AS movie_id, m.title, m.release_date::text AS release_date,
                             m.rating::text AS rating, m.photo_url,
                             ROW_NUMBER() OVER (PARTITION BY li.list_id ORDER BY li.position ASC NULLS LAST, li.id ASC) AS rn
-                     FROM rewind.list_items li JOIN rewind.movies m ON m.id = li.movie_id WHERE li.list_id = ANY($1::bigint[])
+                      FROM rewind.list_items li JOIN rewind.movies m ON m.id = li.movie_id AND m.is_published = TRUE WHERE li.list_id = ANY($1::bigint[])
                    ) ranked WHERE rn <= 3 ORDER BY list_id, rn`, args: [listIds],
           }),
         ]);
@@ -3315,8 +3509,8 @@ const handler = createRewindApiHandler({
         connection.queryObject<{
           id: string;
           imdb_id: string | null;
-          original_language: string | null;
           tmdb_id: string | null;
+          original_language: string | null;
           title: string;
           duration_minutes: string | null;
           release_date: string | null;
@@ -3327,10 +3521,10 @@ const handler = createRewindApiHandler({
           backdrop_url: string | null;
           trailer_url: string | null;
         }>({
-          text: `SELECT id::text AS id, imdb_id, original_language, tmdb_id::text AS tmdb_id, title,
+          text: `SELECT id::text AS id, imdb_id, tmdb_id::text AS tmdb_id, original_language, title,
                         duration_minutes::text AS duration_minutes, release_date::text AS release_date,
                         age_rating, rating::text AS rating, short_plot, photo_url, backdrop_url, trailer_url
-                 FROM rewind.movies WHERE id = $1`,
+                 FROM rewind.movies WHERE id = $1 AND is_published = TRUE`,
           args: [id],
         }),
         connection.queryObject<{ id: string; name: string }>({
@@ -3384,7 +3578,8 @@ const handler = createRewindApiHandler({
         }>({
           text: `SELECT m.id::text AS id, m.title, m.release_date::text AS release_date,
                         m.rating::text AS rating, m.photo_url
-                 FROM rewind.similar_movies sm JOIN rewind.movies m ON m.id = sm.similar_movie_id
+                 FROM rewind.similar_movies sm JOIN rewind.movies m
+                   ON m.id = sm.similar_movie_id AND m.is_published = TRUE
                  WHERE sm.movie_id = $1
                  ORDER BY m.release_date DESC NULLS LAST, m.id DESC`,
           args: [id],
@@ -3408,8 +3603,8 @@ const handler = createRewindApiHandler({
       return {
         id: safeId(first.id, "Movie ID"),
         imdbId: first.imdb_id,
-        originalLanguage: first.original_language,
         tmdbId: nullableNumber(first.tmdb_id),
+        originalLanguage: first.original_language,
         title: first.title,
         durationMinutes: nullableNumber(first.duration_minutes),
         releaseDate: first.release_date,
@@ -3469,9 +3664,10 @@ const handler = createRewindApiHandler({
           film_count: string;
         }>({
           text: `SELECT p.id::text AS id, p.name, p.photo_url,
-                        COUNT(DISTINCT r.movie_id)::text AS film_count
+                        COUNT(DISTINCT m.id)::text AS film_count
                  FROM rewind.${peopleTable} p
                  LEFT JOIN rewind.${relationTable} r ON r.${relationPersonColumn} = p.id
+                 LEFT JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                  ${filter}
                  GROUP BY p.id, p.name, p.photo_url
                  ORDER BY LOWER(p.name), p.id
@@ -3507,7 +3703,8 @@ const handler = createRewindApiHandler({
       await connection.queryObject("SET ROLE rewind_edge_app");
       const countResult = await connection.queryObject<{ total: string }>({
         text: `SELECT COUNT(*)::text AS total
-               FROM rewind.reviews r JOIN rewind.users author ON author.id = r.user_id
+                FROM rewind.reviews r JOIN rewind.users author ON author.id = r.user_id
+                JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                WHERE r.is_hidden = FALSE AND author.is_active = TRUE`,
       });
       const rows = await connection.queryObject<{
@@ -3520,18 +3717,18 @@ const handler = createRewindApiHandler({
                     author.id::text AS user_id, author.username, r.content, r.rating::text AS rating,
                     r.created_at::text AS created_at, m.photo_url AS movie_photo_url,
                     author.avatar_url AS user_avatar_url
-             FROM rewind.reviews r
+              FROM rewind.reviews r
              JOIN rewind.users author ON author.id = r.user_id
-             JOIN rewind.movies m ON m.id = r.movie_id
+              JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
              WHERE r.is_hidden = FALSE AND author.is_active = TRUE
              ORDER BY r.created_at DESC, r.id DESC LIMIT $1 OFFSET $2`
           : `SELECT r.id::text AS id, r.movie_id::text AS movie_id, m.title AS movie_title,
                     author.id::text AS user_id, author.username, r.content, r.rating::text AS rating,
                     r.created_at::text AS created_at, m.photo_url AS movie_photo_url,
                     author.avatar_url AS user_avatar_url
-             FROM rewind.reviews r
+              FROM rewind.reviews r
              JOIN rewind.users author ON author.id = r.user_id
-             JOIN rewind.movies m ON m.id = r.movie_id
+              JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
              LEFT JOIN rewind.review_likes rl ON rl.review_id = r.id
              LEFT JOIN rewind.users liker ON liker.id = rl.user_id AND liker.is_active = TRUE
              WHERE r.is_hidden = FALSE AND author.is_active = TRUE
@@ -3565,6 +3762,7 @@ const handler = createRewindApiHandler({
         connection.queryObject<{ total: string }>({
           text: `SELECT COUNT(*)::text AS total FROM rewind.reviews r
                  JOIN rewind.users author ON author.id = r.user_id
+                 JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                  WHERE r.movie_id = $1 AND r.is_hidden = FALSE AND author.is_active = TRUE`,
           args: [movieId],
         }),
@@ -3575,6 +3773,7 @@ const handler = createRewindApiHandler({
           text: `SELECT r.id::text AS id, author.id::text AS user_id, author.username,
                         author.avatar_url AS user_avatar_url, r.content, r.rating, r.created_at::text AS created_at
                  FROM rewind.reviews r JOIN rewind.users author ON author.id = r.user_id
+                 JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                  WHERE r.movie_id = $1 AND r.is_hidden = FALSE AND author.is_active = TRUE
                  ORDER BY r.created_at DESC, r.id DESC LIMIT $2 OFFSET $3`,
           args: [movieId, size, page * size],
@@ -3609,7 +3808,7 @@ const handler = createRewindApiHandler({
   async createReview(authUser, movieId, content, rating): Promise<ReviewResponse> {
     const { connection, userId } = await beginUserTransaction(authUser);
     try {
-      const movie = await connection.queryObject({ text: "SELECT 1 FROM rewind.movies WHERE id = $1", args: [movieId] });
+      const movie = await connection.queryObject({ text: "SELECT 1 FROM rewind.movies WHERE id = $1 AND is_published = TRUE", args: [movieId] });
       if (!movie.rows.length) throw new RewindApiError(400, "Movie not found");
       const inserted = await connection.queryObject<{ id: string }>(
         { text: `INSERT INTO rewind.reviews (user_id, movie_id, content, rating)
@@ -3660,7 +3859,7 @@ const handler = createRewindApiHandler({
                       m.duration_minutes, m.age_rating, m.photo_url, m.backdrop_url, m.trailer_url
                FROM rewind.reviews r JOIN rewind.users author ON author.id = r.user_id
                JOIN rewind.movies m ON m.id = r.movie_id
-               WHERE r.id = $1 AND r.is_hidden = FALSE AND author.is_active = TRUE`,
+                WHERE r.id = $1 AND r.is_hidden = FALSE AND author.is_active = TRUE AND m.is_published = TRUE`,
         args: [reviewId],
       });
       const review = result.rows[0];
@@ -3750,7 +3949,9 @@ const handler = createRewindApiHandler({
     try {
       const visible = await connection.queryObject<{ id: string; user_id: string }>(
         { text: `SELECT r.id::text AS id, r.user_id::text AS user_id
-                 FROM rewind.reviews r JOIN rewind.users author ON author.id=r.user_id
+                 FROM rewind.reviews r
+                 JOIN rewind.users author ON author.id=r.user_id
+                 JOIN rewind.movies m ON m.id=r.movie_id AND m.is_published=TRUE
                  WHERE r.id=$1 AND r.is_hidden=FALSE AND author.is_active=TRUE`, args: [reviewId] },
       );
       if (!visible.rows[0]) { await connection.queryObject("COMMIT"); return null; }
@@ -3779,6 +3980,7 @@ const handler = createRewindApiHandler({
                FROM rewind.review_reports rr
                JOIN rewind.reviews r ON r.id=rr.review_id
                JOIN rewind.users author ON author.id=r.user_id
+               JOIN rewind.movies m ON m.id=r.movie_id AND m.is_published=TRUE
                WHERE rr.review_id=$1 AND rr.reporter_id=$2 AND rr.status='OPEN' AND r.is_hidden=FALSE AND author.is_active=TRUE`,
         args: [reviewId, userId],
       });
@@ -3792,6 +3994,7 @@ const handler = createRewindApiHandler({
         text: `INSERT INTO rewind.review_reports (review_id, reporter_id, reason)
                SELECT r.id, $2, $3
                FROM rewind.reviews r JOIN rewind.users author ON author.id=r.user_id
+               JOIN rewind.movies m ON m.id=r.movie_id AND m.is_published=TRUE
                WHERE r.id=$1 AND r.user_id<>$2 AND r.is_hidden=FALSE AND author.is_active=TRUE
                ON CONFLICT (review_id, reporter_id) WHERE status='OPEN' DO NOTHING
                RETURNING id::text AS id, reason, created_at::text AS created_at`,
@@ -3805,12 +4008,25 @@ const handler = createRewindApiHandler({
       throw error;
     } finally { connection.release(); }
   },
+  async getMyCommentReport(authUser, commentId) {
+    return await getMyContentReport(authUser, "comment", commentId);
+  },
+  async reportComment(authUser, commentId, reason) {
+    return await submitContentReport(authUser, "comment", commentId, reason);
+  },
+  async getMyListReport(authUser, listId) {
+    return await getMyContentReport(authUser, "list", listId);
+  },
+  async reportList(authUser, listId, reason) {
+    return await submitContentReport(authUser, "list", listId, reason);
+  },
   async getReviewComments(reviewId, page, size): Promise<CommentPageResponse> {
     const connection = await pool.connect();
     try {
       await connection.queryObject("SET ROLE rewind_edge_app");
       const visible = await connection.queryObject({
         text: `SELECT 1 FROM rewind.reviews r JOIN rewind.users author ON author.id = r.user_id
+               JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                WHERE r.id = $1 AND r.is_hidden = FALSE AND author.is_active = TRUE`, args: [reviewId],
       });
       if (!visible.rows.length) throw new RewindApiError(404, "Review not found");
@@ -3842,6 +4058,7 @@ const handler = createRewindApiHandler({
     try {
       const review = await connection.queryObject({
         text: `SELECT 1 FROM rewind.reviews r JOIN rewind.users author ON author.id = r.user_id
+               JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                WHERE r.id = $1 AND r.is_hidden = FALSE AND author.is_active = TRUE`, args: [reviewId],
       });
       if (!review.rows.length) { await connection.queryObject("COMMIT"); return null; }
@@ -3923,6 +4140,7 @@ const handler = createRewindApiHandler({
       const result = await connection.queryObject<{ total: string }>({
         text: `SELECT COUNT(liker.id)::text AS total FROM rewind.reviews r
                JOIN rewind.users author ON author.id = r.user_id
+               JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                LEFT JOIN rewind.review_likes rl ON rl.review_id = r.id
                LEFT JOIN rewind.users liker ON liker.id = rl.user_id AND liker.is_active = TRUE
                WHERE r.id = $1 AND r.is_hidden = FALSE AND author.is_active = TRUE
@@ -3938,7 +4156,8 @@ const handler = createRewindApiHandler({
         { text: `SELECT EXISTS (SELECT 1 FROM rewind.review_likes mine
                                   WHERE mine.review_id = r.id AND mine.user_id = $2) AS liked,
                         COUNT(liker.id)::text AS likes
-                 FROM rewind.reviews r JOIN rewind.users author ON author.id = r.user_id
+                  FROM rewind.reviews r JOIN rewind.users author ON author.id = r.user_id
+                  JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                  LEFT JOIN rewind.review_likes rl ON rl.review_id = r.id
                  LEFT JOIN rewind.users liker ON liker.id = rl.user_id AND liker.is_active = TRUE
                  WHERE r.id = $1 AND r.is_hidden = FALSE AND author.is_active = TRUE
@@ -3957,6 +4176,7 @@ const handler = createRewindApiHandler({
       const review = await connection.queryObject<{ user_id: string }>(
         { text: `SELECT r.user_id::text AS user_id FROM rewind.reviews r
                  JOIN rewind.users author ON author.id = r.user_id
+                 JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                  WHERE r.id = $1 AND r.is_hidden = FALSE AND author.is_active = TRUE`, args: [reviewId] },
       );
       if (!review.rows[0]) { await connection.queryObject("COMMIT"); return false; }
@@ -3989,6 +4209,7 @@ const handler = createRewindApiHandler({
     try {
       const visible = await connection.queryObject({
         text: `SELECT 1 FROM rewind.reviews r JOIN rewind.users author ON author.id = r.user_id
+               JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                WHERE r.id = $1 AND r.is_hidden = FALSE AND author.is_active = TRUE`, args: [reviewId],
       });
       if (!visible.rows.length) { await connection.queryObject("COMMIT"); return false; }
@@ -4053,7 +4274,7 @@ const handler = createRewindApiHandler({
                       owner.id::text AS owner_id, owner.username AS owner_username, owner.avatar_url AS owner_avatar_url,
                       (SELECT COUNT(*)::text FROM rewind.list_likes ll JOIN rewind.users liker
                         ON liker.id = ll.user_id AND liker.is_active = TRUE WHERE ll.list_id = l.id) AS like_count,
-                      (SELECT COUNT(*)::text FROM rewind.list_items li WHERE li.list_id = l.id) AS item_count
+                       (SELECT COUNT(*)::text FROM rewind.list_items li JOIN rewind.movies visible_movie ON visible_movie.id = li.movie_id AND visible_movie.is_published = TRUE WHERE li.list_id = l.id) AS item_count
                       ${extraSelect}
                FROM rewind.lists l JOIN rewind.users owner ON owner.id = l.user_id${extraJoin}
                WHERE ${predicate}${teamFilter}${featuredFilter}
@@ -4078,8 +4299,8 @@ const handler = createRewindApiHandler({
                    FROM (SELECT li.list_id, li.id, li.position, m.id AS movie_id, m.title,
                                 m.release_date::text AS release_date, m.rating::text AS rating, m.photo_url,
                                 ROW_NUMBER() OVER (PARTITION BY li.list_id ORDER BY li.position ASC NULLS LAST, li.id ASC) AS rn
-                         FROM rewind.list_items li JOIN rewind.movies m ON m.id = li.movie_id
-                         WHERE li.list_id = ANY($1::bigint[])) ranked WHERE rn <= 3
+                          FROM rewind.list_items li JOIN rewind.movies m ON m.id = li.movie_id AND m.is_published = TRUE
+                          WHERE li.list_id = ANY($1::bigint[])) ranked WHERE rn <= 3
                    ORDER BY list_id, rn`, args: [ids],
           }),
         ]);
@@ -4123,10 +4344,10 @@ const handler = createRewindApiHandler({
       await connection.queryObject("SET ROLE rewind_edge_app");
       const listResult = await connection.queryObject<{
         id: string; name: string; description: string | null; owner_id: string;
-        owner_username: string; owner_avatar_url: string | null;
+        owner_username: string; owner_avatar_url: string | null; is_ranked: boolean;
       }>({
         text: `SELECT l.id::text AS id, l.name, l.description, owner.id::text AS owner_id,
-                      owner.username AS owner_username, owner.avatar_url AS owner_avatar_url
+                      owner.username AS owner_username, owner.avatar_url AS owner_avatar_url, l.is_ranked
                FROM rewind.lists l JOIN rewind.users owner ON owner.id = l.user_id
                WHERE l.id = $1 AND l.list_type = 'CUSTOM' AND l.is_public = TRUE AND owner.is_active = TRUE`,
         args: [listId],
@@ -4147,8 +4368,8 @@ const handler = createRewindApiHandler({
         }>({
           text: `SELECT m.id::text AS id, m.title, m.release_date::text AS release_date,
                         m.rating::text AS rating, m.photo_url
-                 FROM rewind.list_items li JOIN rewind.movies m ON m.id = li.movie_id
-                 WHERE li.list_id = $1 ORDER BY li.position ASC NULLS LAST, li.id ASC`, args: [listId],
+                  FROM rewind.list_items li JOIN rewind.movies m ON m.id = li.movie_id AND m.is_published = TRUE
+                  WHERE li.list_id = $1 ORDER BY li.position ASC NULLS LAST, li.id ASC`, args: [listId],
         }),
       ]);
       const toId = (value: string) => {
@@ -4160,7 +4381,7 @@ const handler = createRewindApiHandler({
         id: toId(list.id), name: list.name, description: list.description,
         ownerId: toId(list.owner_id), ownerUsername: list.owner_username,
         ownerAvatarUrl: list.owner_avatar_url, tags: tags.rows.map((row) => row.name),
-        likeCount: Number(likes.rows[0]?.total ?? "0"),
+        likeCount: Number(likes.rows[0]?.total ?? "0"), isRanked: list.is_ranked,
         movies: movies.rows.map((movie) => ({
           id: toId(movie.id), title: movie.title, releaseDate: movie.release_date,
           rating: movie.rating === null ? null : Number(movie.rating), photoUrl: movie.photo_url,
@@ -4273,7 +4494,7 @@ const handler = createRewindApiHandler({
                       ${characterColumn} AS character_name
                FROM rewind.${relation} ${relationAlias}
                JOIN rewind.movies m ON m.id = ${relationAlias}.movie_id
-               WHERE ${relationAlias}.${personColumn} = $1 ${genreFilter}
+               WHERE ${relationAlias}.${personColumn} = $1 AND m.is_published = TRUE ${genreFilter}
                ORDER BY ${ordering}, m.id ASC`,
         args,
       });
@@ -4401,11 +4622,11 @@ const handler = createRewindApiHandler({
           ratings: string; reviews: string; watched: string; watchlist: string; favorites: string;
         }>({
           text: `SELECT
-            (SELECT COUNT(*)::text FROM rewind.ratings WHERE user_id = $1) AS ratings,
-            (SELECT COUNT(*)::text FROM rewind.reviews WHERE user_id = $1 AND is_hidden = FALSE) AS reviews,
-            (SELECT COUNT(*)::text FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id WHERE l.user_id = $1 AND l.list_type = 'WATCHED') AS watched,
-            (SELECT COUNT(*)::text FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id WHERE l.user_id = $1 AND l.list_type = 'WATCHLIST') AS watchlist,
-            (SELECT COUNT(*)::text FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id WHERE l.user_id = $1 AND l.list_type = 'FAVORITES') AS favorites`,
+            (SELECT COUNT(*)::text FROM rewind.ratings r JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE WHERE r.user_id = $1) AS ratings,
+            (SELECT COUNT(*)::text FROM rewind.reviews r JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE WHERE r.user_id = $1 AND r.is_hidden = FALSE) AS reviews,
+            (SELECT COUNT(*)::text FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id JOIN rewind.movies m ON m.id = i.movie_id AND m.is_published = TRUE WHERE l.user_id = $1 AND l.list_type = 'WATCHED') AS watched,
+            (SELECT COUNT(*)::text FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id JOIN rewind.movies m ON m.id = i.movie_id AND m.is_published = TRUE WHERE l.user_id = $1 AND l.list_type = 'WATCHLIST') AS watchlist,
+            (SELECT COUNT(*)::text FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id JOIN rewind.movies m ON m.id = i.movie_id AND m.is_published = TRUE WHERE l.user_id = $1 AND l.list_type = 'FAVORITES') AS favorites`,
           args: [userId],
         }),
         connection.queryObject<{ id: string; name: string; list_type: string; is_public: boolean }>({
@@ -4417,7 +4638,7 @@ const handler = createRewindApiHandler({
           movie_id: string; title: string; photo_url: string | null; rating: number; updated_at: string;
         }>({
           text: `SELECT r.movie_id::text AS movie_id, m.title, m.photo_url, r.rating, r.updated_at::text AS updated_at
-                 FROM rewind.ratings r JOIN rewind.movies m ON m.id = r.movie_id
+                 FROM rewind.ratings r JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                  WHERE r.user_id = $1 ORDER BY r.updated_at DESC, r.id DESC LIMIT 10`,
           args: [userId],
         }),
@@ -4426,7 +4647,7 @@ const handler = createRewindApiHandler({
         }>({
           text: `SELECT r.id::text AS review_id, r.movie_id::text AS movie_id, m.title, m.photo_url,
                         r.content, r.updated_at::text AS updated_at
-                 FROM rewind.reviews r JOIN rewind.movies m ON m.id = r.movie_id
+                 FROM rewind.reviews r JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                  WHERE r.user_id = $1 ORDER BY r.updated_at DESC, r.id DESC LIMIT 10`,
           args: [userId],
         }),
@@ -4540,6 +4761,7 @@ const handler = createRewindApiHandler({
           connection.queryObject<{ total: string }>({
             text: `SELECT COUNT(*)::text AS total FROM rewind.list_items i
                    JOIN rewind.lists l ON l.id = i.list_id
+                   JOIN rewind.movies m ON m.id = i.movie_id AND m.is_published = TRUE
                    WHERE l.user_id = $1 AND l.list_type = $2`, args,
           }),
           connection.queryObject<{
@@ -4548,7 +4770,7 @@ const handler = createRewindApiHandler({
             text: `SELECT m.id::text AS id, m.title, m.release_date::text AS release_date,
                           m.rating::text AS rating, m.photo_url
                    FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id
-                   JOIN rewind.movies m ON m.id = i.movie_id
+                   JOIN rewind.movies m ON m.id = i.movie_id AND m.is_published = TRUE
                    WHERE l.user_id = $1 AND l.list_type = $2
                    ORDER BY i.added_at DESC, i.id DESC LIMIT $3 OFFSET $4`,
             args: [...args, size, offset],
@@ -4562,13 +4784,15 @@ const handler = createRewindApiHandler({
       } else if (collection === "ratings") {
         const [countResult, rows] = await Promise.all([
           connection.queryObject<{ total: string }>({
-            text: "SELECT COUNT(*)::text AS total FROM rewind.ratings WHERE user_id = $1", args: [userId],
+            text: `SELECT COUNT(*)::text AS total FROM rewind.ratings r
+                   JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
+                   WHERE r.user_id = $1`, args: [userId],
           }),
           connection.queryObject<{
             movie_id: string; title: string; photo_url: string | null; rating: number; updated_at: string;
           }>({
             text: `SELECT r.movie_id::text AS movie_id, m.title, m.photo_url, r.rating, r.updated_at::text AS updated_at
-                   FROM rewind.ratings r JOIN rewind.movies m ON m.id = r.movie_id
+                   FROM rewind.ratings r JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                    WHERE r.user_id = $1 ORDER BY r.updated_at DESC, r.id DESC LIMIT $2 OFFSET $3`,
             args: [userId, size, offset],
           }),
@@ -4581,14 +4805,16 @@ const handler = createRewindApiHandler({
       } else {
         const [countResult, rows] = await Promise.all([
           connection.queryObject<{ total: string }>({
-            text: "SELECT COUNT(*)::text AS total FROM rewind.reviews WHERE user_id = $1", args: [userId],
+            text: `SELECT COUNT(*)::text AS total FROM rewind.reviews r
+                   JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
+                   WHERE r.user_id = $1`, args: [userId],
           }),
           connection.queryObject<{
             review_id: string; movie_id: string; title: string; photo_url: string | null; content: string; updated_at: string;
           }>({
             text: `SELECT r.id::text AS review_id, r.movie_id::text AS movie_id, m.title, m.photo_url,
                           r.content, r.updated_at::text AS updated_at
-                   FROM rewind.reviews r JOIN rewind.movies m ON m.id = r.movie_id
+                   FROM rewind.reviews r JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                    WHERE r.user_id = $1 ORDER BY r.updated_at DESC, r.id DESC LIMIT $2 OFFSET $3`,
             args: [userId, size, offset],
           }),
@@ -4654,8 +4880,8 @@ const handler = createRewindApiHandler({
   async setMyMovieFlag(authUser, movieId, flag) {
     const { connection, userId } = await beginUserTransaction(authUser);
     try {
-      const movie = await connection.queryObject({ text: "SELECT 1 FROM rewind.movies WHERE id = $1", args: [movieId] });
-      if (!movie.rows.length) throw new Error("Movie not found.");
+      const movie = await connection.queryObject({ text: "SELECT 1 FROM rewind.movies WHERE id = $1 AND is_published = TRUE", args: [movieId] });
+      if (!movie.rows.length) throw new RewindApiError(400, "Movie not found");
       const listType = flag === "favorite" ? "FAVORITES" : flag.toUpperCase();
       const list = await connection.queryObject<{ id: string }>({
         text: "SELECT id::text AS id FROM rewind.lists WHERE user_id = $1 AND list_type = $2",
@@ -4702,8 +4928,8 @@ const handler = createRewindApiHandler({
   async setMyRating(authUser, movieId, rating): Promise<void> {
     const { connection, userId } = await beginUserTransaction(authUser);
     try {
-      const movie = await connection.queryObject({ text: "SELECT 1 FROM rewind.movies WHERE id = $1", args: [movieId] });
-      if (!movie.rows.length) throw new Error("Movie not found.");
+      const movie = await connection.queryObject({ text: "SELECT 1 FROM rewind.movies WHERE id = $1 AND is_published = TRUE", args: [movieId] });
+      if (!movie.rows.length) throw new RewindApiError(400, "Movie not found");
       await connection.queryObject({
         text: `INSERT INTO rewind.ratings (user_id, movie_id, rating)
                VALUES ($1, $2, $3)

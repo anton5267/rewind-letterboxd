@@ -56,6 +56,9 @@ test("Create List keeps film selection local until Save, then opens the returned
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/en/lists");
   await expect(page.locator('main[data-list-editor="create"]')).toHaveAttribute("aria-busy", "false");
+  const ranked = page.getByRole("checkbox", { name: "Ranked list", exact: true });
+  await expect(ranked).not.toBeChecked();
+  await ranked.check();
 
   await page.locator("#new-list-name").fill("Films to revisit");
   await page.locator("#new-list-description").fill("A private draft with a selected film.");
@@ -71,6 +74,8 @@ test("Create List keeps film selection local until Save, then opens the returned
   await query.fill("Arrival");
   await activate(page.getByRole("button", { name: /Arrival/ }), testInfo.project.name);
   await expect(page.getByText("Arrival", { exact: true })).toBeVisible();
+  await expect(page.locator("[data-list-rank]")).toHaveText(["1"]);
+  await expect(page.locator("[data-list-rank]")).toBeVisible();
   expect(mutations).toEqual([]);
   await captureDraft(page, "desktop-en-1440", testInfo.project.name);
 
@@ -78,9 +83,17 @@ test("Create List keeps film selection local until Save, then opens the returned
   await expect(page).toHaveURL("/en/lists?list=98021&mode=view");
   await expect(page.getByRole("status").filter({ hasText: "List created." })).toBeVisible();
   await expect(page.getByRole("heading", { level: 1, name: "Films to revisit" })).toBeVisible();
+  await expect(page.locator("[data-list-rank]")).toHaveText(["1"]);
+  await expect(page.locator("[data-list-rank]")).toBeVisible();
   await expect(page.getByRole("link", { name: "List settings" })).toHaveAttribute("href", "/en/lists?list=98021&mode=edit");
   expect(mutations).toEqual(["create"]);
   expect((await page.evaluate(() => fetch("/api/lists/98021/items").then(response => response.json()))).length).toBe(1);
+  await activate(page.getByRole("link", { name: "List settings" }), testInfo.project.name);
+  await expect(ranked).toBeChecked();
+  const rankingBox = await ranked.boundingBox();
+  const saveBox = await page.getByRole("button", { name: "Save", exact: true }).boundingBox();
+  expect(rankingBox!.y).toBeLessThan(saveBox!.y);
+  await page.screenshot({ path: testInfo.outputPath("ranked-desktop-editor.png"), fullPage: true });
 });
 
 test("Create List cannot be saved without a selected film", async ({ page }) => {

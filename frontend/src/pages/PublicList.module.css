@@ -163,3 +163,5 @@
   .movieRank { top: 4px; left: 4px; width: 19px; height: 19px; font-size: 12px; }
   .movieCard h3 { font-size: 12px; }
 }
+
+.movieRank[data-list-rank] { display: grid; }

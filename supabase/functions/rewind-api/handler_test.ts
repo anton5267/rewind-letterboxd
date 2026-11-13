@@ -165,6 +165,41 @@ Deno.test("admin report dismissal requires an administrator and records the sele
   }
 });
 
+Deno.test("comment and list report routes enforce auth, validate reasons, and expose isolated admin queues", async () => {
+  const calls: unknown[] = [];
+  const handler = authHandler({
+    async getMyCommentReport(_user, id) { calls.push(["comment-status", id]); return { reported: false, report: null }; },
+    async reportComment(_user, id, reason) { calls.push(["comment-report", id, reason]); return { id: 31, reason, createdAt: "2026-11-13T05:00:00Z" }; },
+    async getMyListReport(_user, id) { calls.push(["list-status", id]); return { reported: true, report: { id: 32, reason: "SPAM", createdAt: "2026-11-13T05:00:00Z" } }; },
+    async reportList(_user, id, reason) { calls.push(["list-report", id, reason]); return { id: 32, reason, createdAt: "2026-11-13T05:00:00Z" }; },
+    async getAdminReportedComments(_user, page, size) { calls.push(["admin-comments", page, size]); return { content: [], totalPages: 0, totalElements: 0, number: page }; },
+    async getAdminReportedLists(_user, page, size) { calls.push(["admin-lists", page, size]); return { content: [], totalPages: 0, totalElements: 0, number: page }; },
+    async dismissAdminCommentReport(_user, id) { calls.push(["dismiss-comment", id]); return id === 41; },
+    async dismissAdminListReport(_user, id) { calls.push(["dismiss-list", id]); return id === 42; },
+  });
+  const headers = { Authorization: "Bearer valid-token", "Content-Type": "application/json" };
+  const unauthorized = await authHandler({}).call(null, new Request("https://project.supabase.co/api/comments/8/report"));
+  const commentStatus = await handler(new Request("https://project.supabase.co/api/comments/8/report", { headers }));
+  const comment = await handler(new Request("https://project.supabase.co/api/comments/8/report", { method: "POST", headers, body: JSON.stringify({ reason: "BULLYING" }) }));
+  const listStatus = await handler(new Request("https://project.supabase.co/api/lists/public/9/report", { headers }));
+  const badReason = await handler(new Request("https://project.supabase.co/api/lists/public/9/report", { method: "POST", headers, body: JSON.stringify({ reason: "OTHER" }) }));
+  const comments = await handler(new Request("https://project.supabase.co/api/admin/reported-comments?page=1&size=90", { headers }));
+  const lists = await handler(new Request("https://project.supabase.co/api/admin/reported-lists", { headers }));
+  const dismissComment = await handler(new Request("https://project.supabase.co/api/admin/reported-comments/41/dismiss", { method: "POST", headers }));
+  const dismissList = await handler(new Request("https://project.supabase.co/api/admin/reported-lists/42/dismiss", { method: "POST", headers }));
+  const denied = await authHandler({ async getAdminReportedComments() { throw new RewindApiError(403, "Administrator access required"); } })(
+    new Request("https://project.supabase.co/api/admin/reported-comments", { headers }));
+  if (unauthorized.status !== 401 || commentStatus.status !== 200 || comment.status !== 200
+    || listStatus.status !== 200 || !(await listStatus.json()).reported || badReason.status !== 400
+    || comments.status !== 200 || lists.status !== 200 || dismissComment.status !== 204 || dismissList.status !== 204 || denied.status !== 403
+    || JSON.stringify(calls) !== JSON.stringify([
+      ["comment-status", 8], ["comment-report", 8, "BULLYING"], ["list-status", 9],
+      ["admin-comments", 1, 50], ["admin-lists", 0, 20], ["dismiss-comment", 41], ["dismiss-list", 42],
+    ])) {
+    throw new Error(`Comment/list report API contract failed: ${JSON.stringify({ calls, statuses: [unauthorized.status, commentStatus.status, comment.status, listStatus.status, badReason.status, comments.status, lists.status, dismissComment.status, dismissList.status, denied.status] })}`);
+  }
+});
+
 Deno.test("DELETE /api/profile/me verifies the current password before deleting", async () => {
   let verifiedUserId = "";
   let verifiedPassword = "";
@@ -463,10 +498,10 @@ Deno.test("public list feeds preserve paging and tag filters across Spring route
   const popular = await handler(new Request("https://project.supabase.co/api/lists/public/popular?page=2&size=0"));
   const recent = await handler(new Request("https://project.supabase.co/api/lists/public/recently-liked"));
   const team = await handler(new Request("https://project.supabase.co/api/lists/public/team"));
-  const featured = await handler(new Request("https://project.supabase.co/api/lists/public/featured?page=1&size=6"));
+  const featured = await handler(new Request("https://project.supabase.co/api/lists/public/featured"));
   const body = await all.json();
   if ([all, popular, recent, team, featured].some((response) => response.status !== 200)
-    || calls.join(",") !== "all:sci-fi:0:50,popular:-:2:1,recently-liked:-:0:20,team:-:0:20,featured:-:1:6"
+    || calls.join(",") !== "all:sci-fi:0:50,popular:-:2:1,recently-liked:-:0:20,team:-:0:20,featured:-:0:20"
     || body.totalElements !== 25 || all.headers.get("Cache-Control") !== "public, max-age=300, stale-while-revalidate=600") {
     throw new Error(`Unexpected public list page contract: ${JSON.stringify({ calls, body })}`);
   }
@@ -475,7 +510,7 @@ Deno.test("public list feeds preserve paging and tag filters across Spring route
 Deno.test("public list detail hides unknown lists and has a separate authenticated like status", async () => {
   const detail = {
     id: 8, name: "Space films", description: null, ownerId: 3, ownerUsername: "filmfan",
-    ownerAvatarUrl: null, tags: ["Sci-Fi"], likeCount: 2,
+    ownerAvatarUrl: null, tags: ["Sci-Fi"], likeCount: 2, isRanked: false,
     movies: [{ id: 20, title: "Arrival", releaseDate: "2016-11-11", rating: 7.9, photoUrl: null }],
   };
   const handler = authHandler({
@@ -593,7 +628,7 @@ Deno.test("custom list creation validates input and ignores privilege fields", a
   }));
   const body = await created.json();
   if (empty.status !== 400 || unconfirmed.status !== 401 || created.status !== 200 || JSON.stringify(saved) !== JSON.stringify({
-    name: "Sci-fi", description: "", isPublic: true, tags: ["Sci-Fi"], movieIds: [1, 2],
+    name: "Sci-fi", description: "", isPublic: true, isRanked: true, tags: ["Sci-Fi"], movieIds: [1, 2],
   }) || body.listType !== "CUSTOM" || body.id !== 12) {
     throw new Error(`Unexpected custom-list creation result: ${JSON.stringify({ saved, body })}`);
   }
@@ -621,6 +656,66 @@ Deno.test("custom list update/delete preserve owner and system-list guards", asy
     || actions.join(",") !== "update:7:Renamed,update:8:-,delete:7") {
     throw new Error(`Unexpected custom-list update/delete statuses ${updated.status}/${missing.status}/${deleted.status}`);
   }
+});
+
+Deno.test("custom list ranked creation preserves legacy defaults and explicit boolean values", async () => {
+  const saved: Array<{ isRanked?: boolean }> = [];
+  const handler = authHandler({
+    async createMyList(_user, body) {
+      saved.push(body);
+      return { id: 12, name: body.name, description: body.description, listType: "CUSTOM",
+        isPublic: body.isPublic, isRanked: body.isRanked, tags: body.tags };
+    },
+  });
+  for (const [value, expected] of [[undefined, true], [null, true], [false, false], [true, true]] as const) {
+    const response = await handler(new Request("https://project.supabase.co/api/lists", {
+      method: "POST", headers: { Authorization: "Bearer valid-token", "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "My list", movieIds: [1, 2], isRanked: value }),
+    }));
+    const body = await response.json();
+    if (response.status !== 200 || saved.at(-1)?.isRanked !== expected || body.isRanked !== expected) {
+      throw new Error(`Unexpected ranked creation contract: ${JSON.stringify({ value, saved, body })}`);
+    }
+  }
+  for (const value of [0, "false", [], {}]) {
+    const response = await handler(new Request("https://project.supabase.co/api/lists", {
+      method: "POST", headers: { Authorization: "Bearer valid-token", "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "My list", movieIds: [1, 2], isRanked: value }),
+    }));
+    if (response.status !== 400) throw new Error(`Non-boolean ranked creation value was accepted: ${JSON.stringify(value)}`);
+  }
+  if (saved.length !== 4) throw new Error("Invalid ranked creation inputs reached the repository");
+});
+
+Deno.test("custom list ranked updates distinguish omission from false and reject non-booleans", async () => {
+  const saved: Array<{ isRanked?: boolean }> = [];
+  const handler = authHandler({
+    async updateMyList(_user, id, body) {
+      saved.push(body);
+      return { id, name: "My list", description: null, listType: "CUSTOM",
+        isPublic: true, isRanked: body.isRanked ?? true, tags: [] };
+    },
+  });
+  for (const value of [undefined, null, false, true]) {
+    const response = await handler(new Request("https://project.supabase.co/api/lists/7", {
+      method: "PATCH", headers: { Authorization: "Bearer valid-token", "Content-Type": "application/json" },
+      body: JSON.stringify({ isRanked: value, role: "ADMIN", userId: 999, listType: "WATCHED" }),
+    }));
+    const expected = value == null ? {} : { isRanked: value };
+    const body = await response.json();
+    if (response.status !== 200 || JSON.stringify(saved.at(-1)) !== JSON.stringify(expected)
+      || body.isRanked !== (value ?? true)) {
+      throw new Error(`Unexpected ranked update contract: ${JSON.stringify({ value, saved, body })}`);
+    }
+  }
+  for (const value of [0, "false", [], {}]) {
+    const response = await handler(new Request("https://project.supabase.co/api/lists/7", {
+      method: "PATCH", headers: { Authorization: "Bearer valid-token", "Content-Type": "application/json" },
+      body: JSON.stringify({ isRanked: value }),
+    }));
+    if (response.status !== 400) throw new Error(`Non-boolean ranked update value was accepted: ${JSON.stringify(value)}`);
+  }
+  if (saved.length !== 4) throw new Error("Invalid ranked update inputs reached the repository");
 });
 
 Deno.test("list item add/remove/reorder routes validate IDs and preserve nonempty custom lists", async () => {
@@ -672,13 +767,20 @@ Deno.test("movie flag endpoints persist only allowlisted user actions", async ()
   if (added.status !== 200 || removed.status !== 204 || actions.join(",") !== "add:18:favorite,remove:18:favorite") {
     throw new Error(`Unexpected movie flag action results: ${actions.join(",")}`);
   }
+  const missingMovieHandler = authHandler({
+    async setMyMovieFlag() { throw new RewindApiError(400, "Movie not found"); },
+  });
+  const missingMovie = await missingMovieHandler(new Request("https://project.supabase.co/api/movies/999/watched", {
+    method: "POST", headers: { Authorization: "Bearer valid-token" },
+  }));
+  if (missingMovie.status !== 400) throw new Error(`Expected missing movie status 400, got ${missingMovie.status}`);
 });
 
 Deno.test("movie details include private flags for a verified user and are not cached", async () => {
   const handler = authHandler({
     async getMovieDetails(id) {
       return {
-        id, imdbId: null, originalLanguage: null, tmdbId: null, title: "Example", durationMinutes: null,
+        id, imdbId: null, tmdbId: null, originalLanguage: null, title: "Example", durationMinutes: null,
         releaseDate: null, ageRating: null, rating: null, shortPlot: null, photoUrl: null,
         backdropUrl: null, trailerUrl: null, genres: [], directors: [], producers: [], actors: [],
         externalRatings: [], similarMovies: [], myFlags: null,
@@ -711,6 +813,15 @@ Deno.test("PUT /api/movies/:id/rating accepts only integer values from 1 to 5", 
     body: JSON.stringify({ rating: 5 }),
   }));
   if (valid.status !== 200 || saved !== 5) throw new Error("Valid rating did not reach the repository");
+
+  const missingMovieHandler = authHandler({
+    async setMyRating() { throw new RewindApiError(400, "Movie not found"); },
+  });
+  const missingMovie = await missingMovieHandler(new Request("https://project.supabase.co/api/movies/999/rating", {
+    method: "PUT", headers: { Authorization: "Bearer valid-token", "Content-Type": "application/json" },
+    body: JSON.stringify({ rating: 5 }),
+  }));
+  if (missingMovie.status !== 400) throw new Error(`Expected missing movie rating status 400, got ${missingMovie.status}`);
 });
 
 Deno.test("GET /api/genres returns the existing array contract and accepts the Pages origin", async () => {
@@ -905,7 +1016,7 @@ Deno.test("movie detail returns the public fields and null user flags", async ()
   const handler = handlerWith({
     async getMovieDetails(id) {
       return {
-        id, imdbId: null, originalLanguage: null, tmdbId: null, title: "Comedy Film", durationMinutes: null,
+        id, imdbId: null, tmdbId: null, originalLanguage: "uk", title: "Comedy Film", durationMinutes: null,
         releaseDate: "2024-01-10", ageRating: null, rating: 4.5, shortPlot: null,
         photoUrl: "https://example.invalid/poster.jpg", backdropUrl: null, trailerUrl: null,
         genres: [{ id: 4, name: "Comedy" }], directors: [], producers: [{ id: 8, name: "Producer One", photoUrl: null }], actors: [],
@@ -916,7 +1027,7 @@ Deno.test("movie detail returns the public fields and null user flags", async ()
   const response = await handler(new Request("https://project.supabase.co/functions/v1/rewind-api/api/movies/101/details"));
   if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
   const body = await response.json();
-  if (body.id !== 101 || body.title !== "Comedy Film" || body.myFlags !== null || body.genres[0].name !== "Comedy"
+  if (body.id !== 101 || body.title !== "Comedy Film" || body.originalLanguage !== "uk" || body.myFlags !== null || body.genres[0].name !== "Comedy"
     || body.producers[0]?.id !== 8 || body.producers[0]?.name !== "Producer One") {
     throw new Error(`Unexpected movie detail response: ${JSON.stringify(body)}`);
   }
@@ -1399,6 +1510,7 @@ Deno.test("admin moderation routes preserve filters, status codes, audit payload
       calls.push(["reviews", filters, page, size]);
       return { content: [review], totalPages: 1, totalElements: 1, number: page };
     },
+    async updateAdminReviewContent(_user, id, content) { calls.push(["review-edit", id, content]); return { ...review, id, content }; },
     async setAdminReviewHidden(_user, id, hidden, reason) { calls.push(["review-hidden", id, hidden, reason]); return { ...review, id, isHidden: hidden, moderatedReason: reason }; },
     async deleteAdminReview(_user, id) { calls.push(["review-delete", id]); return id === 21; },
     async getAdminComments(_user, hidden, page, size) { calls.push(["comments", hidden, page, size]); return { content: [comment], totalPages: 1, totalElements: 1, number: page }; },
@@ -1414,6 +1526,9 @@ Deno.test("admin moderation routes preserve filters, status codes, audit payload
   const invalidList = await handler(new Request("https://project.supabase.co/api/admin/reviews?hidden=perhaps", { headers }));
   const reviewHide = await handler(new Request("https://project.supabase.co/api/admin/reviews/21/hide", { method: "POST", headers, body: JSON.stringify({ reason: " Rule ", role: "ADMIN" }) }));
   const reviewUnhide = await handler(new Request("https://project.supabase.co/api/admin/reviews/21/unhide", { method: "POST", headers: { Authorization: "Bearer valid-token" } }));
+  const reviewEdit = await handler(new Request("https://project.supabase.co/api/admin/reviews/21", { method: "PATCH", headers, body: JSON.stringify({ content: "Updated review" }) }));
+  const invalidReviewEdit = await handler(new Request("https://project.supabase.co/api/admin/reviews/21", { method: "PATCH", headers, body: JSON.stringify({ content: " ", rating: 1 }) }));
+  const unauthorizedReviewEdit = await authHandler({})(new Request("https://project.supabase.co/api/admin/reviews/21", { method: "PATCH", body: JSON.stringify({ content: "Updated review" }) }));
   const reviewDelete = await handler(new Request("https://project.supabase.co/api/admin/reviews/21", { method: "DELETE", headers }));
   const missingComment = await handler(new Request("https://project.supabase.co/api/admin/comments/99", { method: "DELETE", headers }));
   const queue = await handler(new Request("https://project.supabase.co/api/admin/moderation/queue?type=comment&query=%20name%20&page=1&size=75", { headers }));
@@ -1428,13 +1543,15 @@ Deno.test("admin moderation routes preserve filters, status codes, audit payload
   if (denied.status !== 401 || reviewList.status !== 200 || reviewListBody.content[0].movieTitle !== "Film"
     || invalidList.status !== 400 || reviewHide.status !== 200 || (await reviewHide.json()).moderatedReason !== " Rule "
     || reviewUnhide.status !== 200 || (await reviewUnhide.json()).moderatedReason !== null
+    || reviewEdit.status !== 200 || (await reviewEdit.json()).content !== "Updated review"
+    || invalidReviewEdit.status !== 400 || unauthorizedReviewEdit.status !== 401
     || reviewDelete.status !== 204 || missingComment.status !== 404
     || queue.status !== 200 || queueBody.content[0].type !== "REVIEW" || invalidType.status !== 400
     || queueHide.status !== 200 || (await queueHide.text()) !== "" || bulk.status !== 200 || (await bulk.json()).hidden !== 2
     || invalidBulk.status !== 400 || forbiddenList.status !== 403
     || JSON.stringify(calls) !== JSON.stringify([
       ["reviews", { movieId: 7, userId: 3, hidden: true }, 0, 50], ["review-hidden", 21, true, " Rule "],
-      ["review-hidden", 21, false, null], ["review-delete", 21], ["comment-delete", 99],
+      ["review-hidden", 21, false, null], ["review-edit", 21, "Updated review"], ["review-delete", 21], ["comment-delete", 99],
       ["queue", "COMMENT", " name ", 1, 50], ["queue-hide", "COMMENT", 31, "Spam"],
       ["bulk", [{ type: "REVIEW", id: 22 }, { type: "COMMENT", id: 32 }], "Repeated abuse"],
     ])) {
@@ -1493,12 +1610,12 @@ Deno.test("admin user routes preserve paging, fields, validation, active/HQ acti
 Deno.test("admin list routes preserve paging, visibility updates, deletion guards, and authorization", async () => {
   const calls: unknown[] = [];
   const list = { id: 19, userId: 4, username: "member", name: "Favorites", description: "Films",
-    listType: "CUSTOM" as const, isPublic: true, itemCount: 3, createdAt: "2026-11-01T10:00:00Z", updatedAt: "2026-11-09T10:00:00Z", featuredPosition: null };
+    listType: "CUSTOM" as const, isPublic: true, itemCount: 3, createdAt: "2026-11-01T10:00:00Z", updatedAt: "2026-11-09T10:00:00Z", featuredPosition: null as number | null };
   const handler = authHandler({
     async getAdminLists(_auth, page, size) { calls.push(["list", page, size]); return { content: [list], totalPages: 1, totalElements: 1, number: page }; },
     async setAdminListVisibility(_auth, id, visible) { calls.push(["visibility", id, visible]); return id === 19 ? { ...list, isPublic: visible } : null; },
     async setAdminListFeatured(_auth, id, featured) { calls.push(["featured", id, featured]); return id === 19 ? { ...list, featuredPosition: featured ? 0 : null } : id === 21 ? "NOT_ELIGIBLE" : null; },
-    async moveAdminListFeatured(_auth, id, direction) { calls.push(["featured-position", id, direction]); return id === 19 ? "OK" : id === 20 ? "BOUNDARY" : id === 21 ? "NOT_ELIGIBLE" : "NOT_FOUND"; },
+    async moveAdminListFeatured(_auth, id, direction) { calls.push(["move-featured", id, direction]); return id === 19 ? "OK" : id === 20 ? "BOUNDARY" : id === 21 ? "NOT_ELIGIBLE" : "NOT_FOUND"; },
     async deleteAdminList(_auth, id) { calls.push(["delete", id]); return id === 19 ? "OK" : id === 20 ? "SYSTEM_LIST" : "NOT_FOUND"; },
   });
   const headers = { Authorization: "Bearer valid-token" };
@@ -1509,24 +1626,30 @@ Deno.test("admin list routes preserve paging, visibility updates, deletion guard
   const invalidVisibility = await handler(new Request("https://project.supabase.co/api/admin/lists/19/visibility?visible=yes", { method: "PUT", headers }));
   const missing = await handler(new Request("https://project.supabase.co/api/admin/lists/99/visibility?visible=true", { method: "PUT", headers }));
   const systemVisibility = await handler(new Request("https://project.supabase.co/api/admin/lists/20/visibility?visible=true", { method: "PUT", headers }));
-  const feature = await handler(new Request("https://project.supabase.co/api/admin/lists/19/featured?featured=true", { method: "PUT", headers }));
-  const unfeature = await handler(new Request("https://project.supabase.co/api/admin/lists/19/featured?featured=false", { method: "PUT", headers }));
+  const featured = await handler(new Request("https://project.supabase.co/api/admin/lists/19/featured?featured=true", { method: "PUT", headers }));
+  const unfeatured = await handler(new Request("https://project.supabase.co/api/admin/lists/19/featured?featured=false", { method: "PUT", headers }));
   const invalidFeatured = await handler(new Request("https://project.supabase.co/api/admin/lists/19/featured?featured=yes", { method: "PUT", headers }));
-  const ineligible = await handler(new Request("https://project.supabase.co/api/admin/lists/21/featured?featured=true", { method: "PUT", headers }));
-  const moveUp = await handler(new Request("https://project.supabase.co/api/admin/lists/19/featured-position?direction=up", { method: "PUT", headers }));
-  const invalidMove = await handler(new Request("https://project.supabase.co/api/admin/lists/19/featured-position?direction=sideways", { method: "PUT", headers }));
-  const boundaryMove = await handler(new Request("https://project.supabase.co/api/admin/lists/20/featured-position?direction=down", { method: "PUT", headers }));
-  const ineligibleMove = await handler(new Request("https://project.supabase.co/api/admin/lists/21/featured-position?direction=up", { method: "PUT", headers }));
-  const missingMove = await handler(new Request("https://project.supabase.co/api/admin/lists/99/featured-position?direction=up", { method: "PUT", headers }));
+  const ineligibleFeatured = await handler(new Request("https://project.supabase.co/api/admin/lists/21/featured?featured=true", { method: "PUT", headers }));
+  const reordered = await handler(new Request("https://project.supabase.co/api/admin/lists/19/featured-position?direction=up", { method: "PUT", headers }));
+  const invalidDirection = await handler(new Request("https://project.supabase.co/api/admin/lists/19/featured-position?direction=sideways", { method: "PUT", headers }));
+  const boundary = await handler(new Request("https://project.supabase.co/api/admin/lists/20/featured-position?direction=down", { method: "PUT", headers }));
+  const ineligibleReorder = await handler(new Request("https://project.supabase.co/api/admin/lists/21/featured-position?direction=up", { method: "PUT", headers }));
+  const missingReorder = await handler(new Request("https://project.supabase.co/api/admin/lists/99/featured-position?direction=up", { method: "PUT", headers }));
   const deleted = await handler(new Request("https://project.supabase.co/api/admin/lists/19", { method: "DELETE", headers }));
   const systemDelete = await handler(new Request("https://project.supabase.co/api/admin/lists/20", { method: "DELETE", headers }));
   if (unauthenticated.status !== 401 || page.status !== 200 || (await page.json()).content[0].itemCount !== 3
     || invalidPage.status !== 400 || hide.status !== 200 || (await hide.json()).isPublic !== false
-    || invalidVisibility.status !== 400 || missing.status !== 404 || systemVisibility.status !== 404 || feature.status !== 200 || (await feature.json()).featuredPosition !== 0
-    || unfeature.status !== 200 || (await unfeature.json()).featuredPosition !== null || invalidFeatured.status !== 400 || ineligible.status !== 409 || moveUp.status !== 204
-    || invalidMove.status !== 400 || boundaryMove.status !== 409 || ineligibleMove.status !== 409 || missingMove.status !== 404 || deleted.status !== 204
-    || systemDelete.status !== 400 || JSON.stringify(calls) !== JSON.stringify([["list", 0, 100], ["visibility", 19, false], ["visibility", 99, true], ["visibility", 20, true], ["featured", 19, true], ["featured", 19, false], ["featured", 21, true], ["featured-position", 19, "up"], ["featured-position", 20, "down"], ["featured-position", 21, "up"], ["featured-position", 99, "up"], ["delete", 19], ["delete", 20]])) {
-    throw new Error(`Admin list contract changed: ${JSON.stringify({ calls, statuses: [unauthenticated.status, page.status, invalidPage.status, hide.status, invalidVisibility.status, missing.status, systemVisibility.status, feature.status, unfeature.status, invalidFeatured.status, ineligible.status, moveUp.status, invalidMove.status, boundaryMove.status, ineligibleMove.status, missingMove.status, deleted.status, systemDelete.status] })}`);
+    || invalidVisibility.status !== 400 || missing.status !== 404 || systemVisibility.status !== 404 || deleted.status !== 204
+    || featured.status !== 200 || (await featured.json()).featuredPosition !== 0
+    || unfeatured.status !== 200 || (await unfeatured.json()).featuredPosition !== null || invalidFeatured.status !== 400 || ineligibleFeatured.status !== 409
+    || reordered.status !== 204 || invalidDirection.status !== 400 || boundary.status !== 409 || ineligibleReorder.status !== 409 || missingReorder.status !== 404
+    || systemDelete.status !== 400 || JSON.stringify(calls) !== JSON.stringify([
+      ["list", 0, 100], ["visibility", 19, false], ["visibility", 99, true], ["visibility", 20, true],
+      ["featured", 19, true], ["featured", 19, false], ["featured", 21, true],
+      ["move-featured", 19, "up"], ["move-featured", 20, "down"],
+      ["move-featured", 21, "up"], ["move-featured", 99, "up"], ["delete", 19], ["delete", 20],
+    ])) {
+    throw new Error(`Admin list contract changed: ${JSON.stringify({ calls, statuses: [unauthenticated.status, page.status, invalidPage.status, hide.status, invalidVisibility.status, missing.status, systemVisibility.status, featured.status, unfeatured.status, invalidFeatured.status, ineligibleFeatured.status, reordered.status, invalidDirection.status, boundary.status, ineligibleReorder.status, missingReorder.status, deleted.status, systemDelete.status] })}`);
   }
 });
 
@@ -1562,8 +1685,8 @@ Deno.test("admin movie catalog routes preserve paging, validation, edits, delete
   const handler = authHandler({
     async getAdminTmdbQuality() { calls.push(["quality"]); return { totalMovies: 50, tmdbLinkedMovies: 40, completeTmdbMovies: 20, missingPoster: 3, missingBackdrop: 4, missingPlot: 5, missingRuntime: 6, missingTrailer: 7, missingTmdbRating: 8, missingOriginalLanguage: 9, linkedCoveragePercent: 80, metadataCompletenessPercent: 50 }; },
     async getAdminMovies(_user, query, page, size) { calls.push(["list", query, page, size]); return { content: [movie], totalPages: 1, totalElements: 1, number: page }; },
-    async createAdminMovie(_user, body) { calls.push(["create", body]); return { ...movie, title: body.title! }; },
-    async updateAdminMovie(_user, id, body) { calls.push(["update", id, body]); return id === 10 ? { ...movie, ...body, published: body.published ?? movie.published } : null; },
+    async createAdminMovie(_user, body) { calls.push(["create", body]); return { ...movie, title: body.title!, published: body.published ?? true }; },
+    async updateAdminMovie(_user, id, body) { calls.push(["update", id, body]); return id === 10 ? { ...movie, ...body } : null; },
     async deleteAdminMovie(_user, id) { calls.push(["delete", id]); return id === 10; },
   });
   const headers = { Authorization: "Bearer valid-token", "Content-Type": "application/json" };
@@ -1571,37 +1694,44 @@ Deno.test("admin movie catalog routes preserve paging, validation, edits, delete
   const list = await handler(new Request("https://project.supabase.co/api/admin/movies?q=%20film%20&page=-1&size=300", { headers }));
   const invalidQuery = await handler(new Request(`https://project.supabase.co/api/admin/movies?q=${"x".repeat(121)}`, { headers }));
   const invalidMovie = await handler(new Request("https://project.supabase.co/api/admin/movies", { method: "POST", headers, body: JSON.stringify({ title: "  " }) }));
+  const invalidNullPublishedCreate = await handler(new Request("https://project.supabase.co/api/admin/movies", { method: "POST", headers,
+    body: JSON.stringify({ title: "Null publication state", published: null }) }));
   const created = await handler(new Request("https://project.supabase.co/api/admin/movies", { method: "POST", headers,
-    body: JSON.stringify({ title: "New Film", rating: 9, trailerUrl: "https://example.test/trailer", genreIds: [1, 2],
-      actorCredits: [{ actorId: 3, characterName: "Hero", castOrder: 0 }], directorIds: [5], producerIds: [6], tmdbId: 999, role: "ADMIN" }) }));
+    body: JSON.stringify({ title: "New Film", originalLanguage: "FR", published: false, genreIds: [], actorCredits: [], rating: 9,
+      trailerUrl: "https://example.test/trailer", tmdbId: 999, role: "ADMIN" }) }));
   const invalidDate = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "PUT", headers, body: JSON.stringify({ releaseDate: "2024-02-30" }) }));
   const invalidTrailer = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "PUT", headers, body: JSON.stringify({ trailerUrl: "javascript:alert(1)" }) }));
-  const invalidGenres = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "PUT", headers, body: JSON.stringify({ genreIds: [1, 1] }) }));
-  const invalidLanguage = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "PUT", headers, body: JSON.stringify({ originalLanguage: "eng" }) }));
-  const invalidCredits = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "PUT", headers, body: JSON.stringify({ actorCredits: [{ actorId: 3 }, { actorId: 3 }] }) }));
-  const updated = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "PUT", headers,
-    body: JSON.stringify({ title: "Updated Film", imdbId: null, ageRating: null, shortPlot: null, photoUrl: null,
-      backdropUrl: null, trailerUrl: null, durationMinutes: null, rating: null, releaseDate: null, genreIds: [4, 8],
-      actorCredits: [{ actorId: 3, characterName: "Hero", castOrder: 0 }], directorIds: [5], producerIds: [6], tmdbId: 123, role: "ADMIN" }) }));
+  const invalidPublished = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "PUT", headers, body: JSON.stringify({ published: "false" }) }));
+  const invalidNullPublishedUpdate = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "PUT", headers,
+    body: JSON.stringify({ published: null }) }));
+  const invalidGenres = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "PUT", headers, body: JSON.stringify({ genreIds: [2, 2] }) }));
+  const unpublished = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "PUT", headers, body: JSON.stringify({ published: false }) }));
+  const updated = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "PUT", headers, body: JSON.stringify({ title: "Updated Film", tmdbId: 123, role: "ADMIN" }) }));
+  const updatedMetadata = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "PUT", headers,
+    body: JSON.stringify({ originalLanguage: "EN", genreIds: [2, 4], actorCredits: [{ actorId: 7, characterName: "Lead", castOrder: 0 }], directorIds: [3], producerIds: [] }) }));
   const missing = await handler(new Request("https://project.supabase.co/api/admin/movies/99", { method: "DELETE", headers }));
   const deleted = await handler(new Request("https://project.supabase.co/api/admin/movies/10", { method: "DELETE", headers }));
   const unauthenticated = await authHandler({})(new Request("https://project.supabase.co/api/admin/movies"));
   const listBody = await list.json();
-  const qualityBody = await quality.json();
-  if (quality.status !== 200 || qualityBody.metadataCompletenessPercent !== 50
-    || qualityBody.missingOriginalLanguage !== 9
-    || list.status !== 200 || listBody.content[0].id !== 10 || listBody.content[0].durationMinutes !== 123
+  const createdBody = await created.json();
+  if (quality.status !== 200 || (await quality.json()).metadataCompletenessPercent !== 50
+    || list.status !== 200 || listBody.content[0].id !== 10 || listBody.content[0].durationMinutes !== 123 || listBody.content[0].published !== true
     || listBody.content[0].ageRating !== "PG-13" || listBody.content[0].reviewCount !== 7 || invalidQuery.status !== 400 || invalidMovie.status !== 400
-    || created.status !== 200 || (await created.json()).tmdbId !== null || invalidDate.status !== 400 || invalidTrailer.status !== 400 || invalidGenres.status !== 400 || invalidCredits.status !== 400
-    || invalidLanguage.status !== 400 || updated.status !== 200 || (await updated.json()).title !== "Updated Film" || missing.status !== 404 || deleted.status !== 204 || unauthenticated.status !== 401
+    || created.status !== 200 || createdBody.tmdbId !== null || createdBody.published !== false
+    || invalidDate.status !== 400 || invalidTrailer.status !== 400
+    || invalidPublished.status !== 400 || invalidNullPublishedCreate.status !== 400 || invalidNullPublishedUpdate.status !== 400
+    || invalidGenres.status !== 400 || unpublished.status !== 200 || (await unpublished.json()).published !== false
+    || updated.status !== 200 || (await updated.json()).title !== "Updated Film"
+    || updatedMetadata.status !== 200 || (await updatedMetadata.json()).originalLanguage !== "en"
+    || missing.status !== 404 || deleted.status !== 204 || unauthenticated.status !== 401
     || JSON.stringify(calls) !== JSON.stringify([
-      ["quality"], ["list", "film", 0, 100], ["create", { title: "New Film", trailerUrl: "https://example.test/trailer", rating: 9, genreIds: [1, 2],
-        directorIds: [5], producerIds: [6], actorCredits: [{ actorId: 3, characterName: "Hero", castOrder: 0 }] }],
-      ["update", 10, { title: "Updated Film", imdbId: null, ageRating: null, shortPlot: null, photoUrl: null,
-        backdropUrl: null, trailerUrl: null, durationMinutes: null, rating: null, releaseDate: null, genreIds: [4, 8],
-        directorIds: [5], producerIds: [6], actorCredits: [{ actorId: 3, characterName: "Hero", castOrder: 0 }] }], ["delete", 99], ["delete", 10],
+      ["quality"], ["list", "film", 0, 100], ["create", { title: "New Film", trailerUrl: "https://example.test/trailer",
+        originalLanguage: "fr", published: false, rating: 9, genreIds: [], actorCredits: [] }],
+      ["update", 10, { published: false }], ["update", 10, { title: "Updated Film" }],
+      ["update", 10, { originalLanguage: "en", genreIds: [2, 4], directorIds: [3], producerIds: [], actorCredits: [{ actorId: 7, characterName: "Lead", castOrder: 0 }] }],
+      ["delete", 99], ["delete", 10],
     ])) {
-    throw new Error(`Admin movie contract changed: ${JSON.stringify({ calls, statuses: [quality.status, list.status, invalidQuery.status, invalidMovie.status, created.status, invalidDate.status, invalidTrailer.status, invalidGenres.status, updated.status, missing.status, deleted.status, unauthenticated.status] })}`);
+    throw new Error(`Admin movie contract changed: ${JSON.stringify({ calls, statuses: [quality.status, list.status, invalidQuery.status, invalidMovie.status, created.status, invalidDate.status, invalidTrailer.status, updated.status, missing.status, deleted.status, unauthenticated.status] })}`);
   }
 });
 

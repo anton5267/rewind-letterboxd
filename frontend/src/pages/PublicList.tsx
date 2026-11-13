@@ -245,8 +245,8 @@ export default function PublicList() {
         {list.movies.map((movie, index) => {
           const movieTitle = editorialText(movie.title, t("untitledFilm"));
           return <article className={styles.movieCard} key={movie.id}>
-          <Link className={styles.movieMedia} to={path(`/films/${movie.id}`)} aria-label={`${movieTitle} ${t("poster")}`}>
-            <span className={styles.movieRank} aria-hidden="true">{index + 1}</span>
+          <Link className={styles.movieMedia} to={path(`/films/${movie.id}`)} aria-label={`${movieTitle} ${t("poster")}`} aria-describedby={list.isRanked !== false ? `list-${list.id}-rank-${movie.id}` : undefined}>
+            {list.isRanked !== false && <span className={styles.movieRank} data-list-rank="true" id={`list-${list.id}-rank-${movie.id}`}>{index + 1}</span>}
             <MoviePoster movie={movie} fallbackTitle={movieTitle} />
           </Link>
           <h3><Link to={path(`/films/${movie.id}`)}>{movieTitle}</Link></h3>
