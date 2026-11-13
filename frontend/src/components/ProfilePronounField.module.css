@@ -1,0 +1,91 @@
+.mobileTrigger { display: none; }
+
+.sheet {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  background: #282828;
+  color: #fff;
+  font-family: var(--rewind-font-sans);
+}
+
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: grid;
+  min-height: 96px;
+  box-sizing: border-box;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: start;
+  border-bottom: 1px solid #191919;
+  padding: 8px 10px 0;
+  background: #282828;
+}
+
+.toolbar button {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  align-items: center;
+  gap: 7px;
+  justify-self: start;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #7e7e7e;
+  font-size: 16px;
+  line-height: 1.12;
+}
+
+.toolbar h2 { margin: 12px 0 0; font-size: 16px; font-weight: 700; line-height: 1.12; }
+.toolbar img { flex: 0 0 auto; }
+.toolbar button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.options { min-width: 0; margin: 0; border: 0; padding: 0; }
+.option {
+  position: relative;
+  display: flex;
+  min-height: 45px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #191919;
+  padding: 10px 31px 10px 34px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.12;
+  cursor: pointer;
+}
+
+.option input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.option img { flex: 0 0 auto; visibility: hidden; }
+.option input:checked ~ img { visibility: visible; }
+.toolbar button:focus-visible, .option:has(input:focus-visible) { outline: 2px solid var(--rewind-cyan); outline-offset: -3px; }
+
+@media (max-width: 767px) {
+  .desktopSelect { display: none; }
+  .mobileTrigger {
+    display: flex;
+    min-width: 0;
+    min-height: 45px;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    border: 0;
+    padding: 8px 0;
+    background: transparent;
+    color: #fff;
+    font-size: 16px;
+    line-height: 1.25;
+    text-align: right;
+  }
+  .mobileTrigger:disabled { opacity: .55; }
+  .mobileTrigger img { flex: 0 0 auto; transform: rotate(180deg); }
+}

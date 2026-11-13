@@ -14,7 +14,7 @@ for (const { lang, label, saveLabel, successLabel } of [
   { lang: "uk", label: "Про себе", saveLabel: "Зберегти", successLabel: "Профіль оновлено." },
   { lang: "en", label: "About me", saveLabel: "Save", successLabel: "Profile updated." },
 ] as const) {
-  test(`profile bio can be edited and appears publicly in ${lang}`, async ({ page }) => {
+  test(`profile bio can be edited and appears publicly in ${lang}`, async ({ page }, testInfo) => {
     let bio: string | null = originalBio;
     let location: string | null = null;
     let pronoun: string | null = null;
@@ -97,7 +97,8 @@ for (const { lang, label, saveLabel, successLabel } of [
     await expect(textarea).toHaveAttribute("maxlength", "500");
     await textarea.fill(updatedBio);
     const locationInput = page.getByLabel(lang === "uk" ? "Місце проживання" : "Location", { exact: true });
-    const pronounInput = page.getByLabel(lang === "uk" ? "Займенник" : "Pronoun", { exact: true });
+    const pronounLabel = lang === "uk" ? "Займенник" : "Pronoun";
+    const pronounInput = page.getByRole("combobox", { name: pronounLabel, exact: true });
     await expect(pronounInput.getByRole("option")).toHaveCount(10);
     await locationInput.fill(" Berlin ");
     await pronounInput.selectOption("She / her");
@@ -129,14 +130,51 @@ for (const { lang, label, saveLabel, successLabel } of [
     await expect(page.getByLabel(lang === "uk" ? "Місце проживання" : "Location", { exact: true })).toHaveText("Berlin");
     await page.goto(`/${lang}/profile?settings=profile`);
     await expect(locationInput).toHaveValue("Berlin");
-    await expect(pronounInput).toHaveValue("She / her");
+    const pronounTrigger = page.getByRole("button", { name: pronounLabel, exact: true });
+    await expect(pronounTrigger).toContainText("She / her");
+    await pronounTrigger.click();
+    const pronounDialog = page.getByRole("dialog", { name: pronounLabel, exact: true });
+    await expect(pronounDialog).toBeVisible();
+    await expect(pronounDialog.getByRole("radio")).toHaveCount(10);
+    await expect(pronounDialog.getByRole("radio", { name: "She / her", exact: true })).toBeChecked();
+    for (const image of await pronounDialog.locator("img").all()) {
+      await expect(image).toHaveJSProperty("complete", true);
+      expect(await image.evaluate(element => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+    }
+    await pronounDialog.screenshot({ path: testInfo.outputPath("pronoun-selector.png") });
+    const backButton = pronounDialog.getByRole("button", { name: lang === "uk" ? "Налаштування" : "Settings", exact: true });
+    await expect(backButton).toBeFocused();
+    await page.keyboard.press("Shift+Tab");
+    await expect(pronounDialog.getByRole("radio", { name: "She / her", exact: true })).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await expect(pronounDialog.getByRole("radio", { name: "She / their", exact: true })).toBeChecked();
+    await page.keyboard.press("Escape");
+    await expect(pronounDialog).toHaveCount(0);
+    await expect(pronounTrigger).toBeFocused();
+    await pronounTrigger.click();
+    await pronounDialog.getByRole("radio", { name: "They / their", exact: true }).check();
+    await expect(pronounDialog.getByRole("radio", { name: "They / their", exact: true })).toBeChecked();
+    expect(patchBody).toMatchObject({ pronoun: "She / her" });
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await expect(pronounDialog).toHaveCount(0);
+    await expect(pronounInput).toBeVisible();
+    await expect(pronounInput).toHaveValue("They / their");
+    await page.setViewportSize({ width: 393, height: 852 });
+    await pronounTrigger.click();
+    await page.setViewportSize({ width: 320, height: 568 });
+    const backBounds = await backButton.boundingBox();
+    const titleBounds = await pronounDialog.getByRole("heading", { name: pronounLabel, exact: true }).boundingBox();
+    expect(backBounds!.x + backBounds!.width).toBeLessThanOrEqual(titleBounds!.x);
+    await pronounDialog.getByRole("radio", { name: lang === "uk" ? "Не вказано" : "Not specified", exact: true }).check();
+    await backButton.click();
+    await expect(pronounTrigger).toBeFocused();
+    await expect(pronounTrigger).toHaveAttribute("aria-expanded", "false");
     await locationInput.fill("");
-    await pronounInput.selectOption("");
     await page.locator('button[form="settings-form-profile"]').click();
     await expect(page.getByText(successLabel, { exact: true })).toBeVisible();
     expect(patchBody).toMatchObject({ location: "", pronoun: "" });
     await page.reload();
     await expect(locationInput).toHaveValue("");
-    await expect(pronounInput).toHaveValue("");
+    await expect(pronounTrigger).toContainText(lang === "uk" ? "Не вказано" : "Not specified");
   });
 }
