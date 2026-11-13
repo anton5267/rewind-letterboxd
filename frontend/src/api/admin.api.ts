@@ -13,15 +13,27 @@ export interface AdminArticle { id: number; slug: string; language: string; cate
 export interface NewsletterDeliveryStatus { articleId: number; pending: number; sending: number; sent: number; failed: number; cancelled: number }
 export interface AdminReview { id: number; movieId: number; movieTitle: string; userId: number; username: string; content: string; rating: number | null; isHidden: boolean; moderatedReason: string | null; moderatedAt: string | null; createdAt: string }
 export interface AdminReportedReview extends AdminReview { reportId: number; reportReason: "SPAM" | "INAPPROPRIATE_CONTENT" | "BULLYING"; reportCreatedAt: string; likesCount: number; commentsCount: number }
+export interface AdminReportedComment extends AdminComment { reportId: number; reportReason: "SPAM" | "INAPPROPRIATE_CONTENT" | "BULLYING"; reportCreatedAt: string }
 export interface AdminMovie { id: number; tmdbId: number | null; title: string; releaseDate: string | null; rating: number | null; photoUrl: string | null; published: boolean }
 export interface AdminMovieCatalog extends AdminMovie { durationMinutes: number | null; ageRating: string | null; reviewCount: number }
 export interface AdminTmdbMovieCandidate { tmdbId: number; title: string; releaseDate: string | null; overview: string | null; posterUrl: string | null }
 export interface AdminMovieWrite {
-  title: string; imdbId?: string | null; originalLanguage?: string | null; durationMinutes?: number | null; releaseDate?: string | null;
-  ageRating?: string | null; rating?: number | null; shortPlot?: string | null; photoUrl?: string | null;
-  backdropUrl?: string | null; trailerUrl?: string | null; published?: boolean; genreIds?: number[];
+  title: string;
+  imdbId?: string | null;
+  originalLanguage?: string | null;
+  genreIds?: number[];
   actorCredits?: { actorId: number; characterName: string | null; castOrder: number | null }[];
-  directorIds?: number[]; producerIds?: number[];
+  directorIds?: number[];
+  producerIds?: number[];
+  durationMinutes?: number | null;
+  releaseDate?: string | null;
+  ageRating?: string | null;
+  rating?: number | null;
+  shortPlot?: string | null;
+  photoUrl?: string | null;
+  backdropUrl?: string | null;
+  trailerUrl?: string | null;
+  published?: boolean;
 }
 export interface TmdbSyncResponse { movieId: number; tmdbId: number; title: string; genresUpdated: number; actorsUpdated: number; directorsUpdated: number; producersUpdated: number; similarMoviesLinked: number; trailerUpdated: boolean }
 export interface TmdbImportItem { movieId: number | null; tmdbId: number; status: "IMPORTED" | "FAILED"; title: string | null; message: string }
@@ -32,6 +44,7 @@ export interface TmdbDiscoveryRequest { page: number; year?: number; genreId?: n
 export interface TmdbDiscoveryImportResponse { page: number; totalPages: number; totalResults: number; discovered: number; imports: TmdbBatchSyncResponse }
 export interface TmdbQualityReport { totalMovies: number; tmdbLinkedMovies: number; completeTmdbMovies: number; missingPoster: number; missingBackdrop: number; missingPlot: number; missingRuntime: number; missingTrailer: number; missingTmdbRating: number; missingOriginalLanguage: number; linkedCoveragePercent: number; metadataCompletenessPercent: number }
 export interface AdminList { id: number; userId: number; username: string; name: string; description: string | null; listType: string; isPublic: boolean; itemCount: number; createdAt: string; updatedAt: string; featuredPosition: number | null }
+export interface AdminReportedList extends AdminList { reportId: number; reportReason: "SPAM" | "INAPPROPRIATE_CONTENT" | "BULLYING"; reportCreatedAt: string }
 export interface AdminConversation { id: number; userOneId: number; userTwoId: number; messageCount: number; createdAt: string; updatedAt: string; lastMessageAt: string | null }
 export interface AdminNotification { id: number; recipientId: number; actorId: number | null; type: string; reviewId: number | null; createdAt: string; readAt: string | null }
 export interface AdminNotificationWrite { recipientId: number; type: "FOLLOW" | "REVIEW_LIKED"; actorId?: number | null; relatedUserId?: number | null; reviewId?: number | null }
@@ -57,8 +70,14 @@ export const updateAdminArticle = (id: number, article: AdminArticleWrite) => ap
 export const queueAdminNewsletter = (articleId: number) => api.post<{ articleId: number; recipients: number }>(`/admin/journal/articles/${articleId}/newsletter`);
 export const getAdminNewsletterStatus = (articleId: number) => api.get<NewsletterDeliveryStatus>(`/admin/journal/articles/${articleId}/newsletter`);
 export const getAdminReviews = (page = 0, hidden?: boolean) => api.get<Page<AdminReview>>("/admin/reviews", { params: { size: 50, page, ...(hidden === undefined ? {} : { hidden }) } });
+export const updateAdminReviewContent = (id: number, content: string) =>
+  api.patch<AdminReview>(`/admin/reviews/${id}`, { content });
 export const getAdminReportedReviews = (page = 0) => api.get<Page<AdminReportedReview>>("/admin/reported-reviews", { params: { size: 50, page } });
 export const dismissAdminReviewReport = (reportId: number) => api.post<void>(`/admin/reported-reviews/${reportId}/dismiss`);
+export const getAdminReportedComments = (page = 0) => api.get<Page<AdminReportedComment>>("/admin/reported-comments", { params: { size: 50, page } });
+export const dismissAdminCommentReport = (reportId: number) => api.post<void>(`/admin/reported-comments/${reportId}/dismiss`);
+export const getAdminReportedLists = (page = 0) => api.get<Page<AdminReportedList>>("/admin/reported-lists", { params: { size: 50, page } });
+export const dismissAdminListReport = (reportId: number) => api.post<void>(`/admin/reported-lists/${reportId}/dismiss`);
 export const setAdminReviewHidden = (id: number, hidden: boolean, reason = "") => api.post<AdminReview>(`/admin/reviews/${id}/${hidden ? "hide" : "unhide"}`, { reason });
 export const deleteAdminReview = (id: number) => api.delete<void>(`/admin/reviews/${id}`);
 export const getAdminMovies = (page = 0, size = 50, query = "") => api.get<Page<AdminMovieCatalog>>("/admin/movies", { params: { size, page, ...(query ? { q: query } : {}) } });

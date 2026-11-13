@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { getPublicList, getPublicListLikeStatus, likePublicList, unlikePublicList, type MoviePreview, type PublicListDetails, type PublicListLikeStatus } from "../api/lists.api";
 import ResilientImage from "../components/ResilientImage";
 import RetryButton from "../components/RetryButton";
+import ContentReportAction from "../components/ContentReportAction";
 import { useAuth } from "../context/AuthContext";
 import { editorialText, formatMovieYear, useLocale } from "../i18n";
 import { useDialogFocusTrap } from "../hooks/useDialogFocusTrap";
@@ -18,7 +19,7 @@ function MoviePoster({ movie, fallbackTitle }: { movie: MoviePreview; fallbackTi
 export default function PublicList() {
   const { id } = useParams();
   const { path, t, lang } = useLocale();
-  const { isAuth } = useAuth();
+  const { isAuth, user } = useAuth();
   const listId = Number(id);
   const validListId = Number.isSafeInteger(listId) && listId > 0;
   const [list, setList] = useState<PublicListDetails | null>(null);
@@ -226,6 +227,7 @@ export default function PublicList() {
         <div ref={heroActionsRef} data-public-list-actions className={styles.heroActions}>
           <span className={styles.likeCount}>{list.likeCount ?? 0} {t("likes").toLocaleLowerCase(lang)}</span>
           {likeControls}
+          {isAuth && user?.id !== list.ownerId && <ContentReportAction type="list" id={list.id} />}
         </div>
       </div>
     </section>

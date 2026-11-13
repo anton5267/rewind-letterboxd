@@ -1,5 +1,10 @@
 # Rewind — докази перевірок
 
+### Admin report controls release candidate — local validation — 13.11.2026
+
+- Built an isolated worktree from freshly fetched GitHub `master` (`df81b58`) on `codex/release-report-ui`; no merge/reset of the original checkout. This candidate adds the already-deployed comment/list report controls and Admin queues, retains newer upstream localization/movie editor keys, and restores keyboard focus after review edits finish.
+- Validation: `npm run verify:build` passed (311 Vite modules); targeted UK/EN report submission, Admin comment/list dismissal, Admin review dismissal, and duplicate-report review editing passed **7/7**. The first E2E attempt hit `ERR_CONNECTION_REFUSED` because Playwright expects a running preview; after starting the isolated production preview, the scenarios passed. No broad test suite was run.
+- This is a local release candidate only: no GitHub branch push/PR, Pages deployment, Supabase mutation, or live report action has happened yet. Changes are limited to the release worktree; the original 260-path worktree remains untouched.
 ### TMDB catalog refresh read-back and cooldown — 12.11.2026
 
 - Read-only Supabase query at 17:27 UTC counted 50 movies: 49 with `tmdb_id`, 29 linked movies with `original_language`, 20 linked movies without it, and one movie without a TMDB ID. No catalog rows were changed.

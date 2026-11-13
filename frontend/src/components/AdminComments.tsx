@@ -1,6 +1,6 @@
 import AdminLoading from "./AdminLoading";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { deleteAdminComment, getAdminComments, setAdminCommentHidden, type AdminComment } from "../api/admin.api";
+import { deleteAdminComment, dismissAdminCommentReport, getAdminComments, getAdminReportedComments, setAdminCommentHidden, type AdminComment, type AdminReportedComment } from "../api/admin.api";
 import type { Page } from "../api/types";
 import { useAuth } from "../context/AuthContext";
 import Pagination from "./Pagination";
@@ -11,18 +11,19 @@ import styles from "./AdminShared.module.css";
 import dialogStyles from "./AdminConfirmDialog.module.css";
 
 type VisibilityFilter = "all" | "visible" | "hidden";
+type CommentFilter = VisibilityFilter | "reported";
 
-const hiddenValue = (filter: VisibilityFilter) => filter === "all" ? undefined : filter === "hidden";
+const hiddenValue = (filter: CommentFilter) => filter === "all" || filter === "reported" ? undefined : filter === "hidden";
 export default function AdminComments() {
   const { t, lang } = useLocale();
   const { user } = useAuth();
-  const [data, setData] = useState<Page<AdminComment> | null>(null);
-  const [filter, setFilter] = useState<VisibilityFilter>("all");
+  const [data, setData] = useState<Page<AdminComment | AdminReportedComment> | null>(null);
+  const [filter, setFilter] = useState<CommentFilter>("all");
   const [page, setPage] = useState(0);
   const [revision, setRevision] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [actionError, setActionError] = useState<"moderate" | "delete" | false>(false);
+  const [actionError, setActionError] = useState<"moderate" | "delete" | "report" | false>(false);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{ comment: AdminComment; trigger: HTMLButtonElement } | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -98,7 +99,7 @@ export default function AdminComments() {
     setLoading(true);
     setError(false);
     setData(null);
-    getAdminComments(page, hiddenValue(filter))
+    (filter === "reported" ? getAdminReportedComments(page) : getAdminComments(page, hiddenValue(filter)))
       .then(({ data: response }) => {
         if (!current) return;
         const lastPage = Math.max(0, response.totalPages - 1);
@@ -113,11 +114,35 @@ export default function AdminComments() {
     return () => { current = false; };
   }, [filter, page, revision, actor]);
 
-  const changeFilter = (next: VisibilityFilter) => {
+  const changeFilter = (next: CommentFilter) => {
     focusAfterReload.current = false;
     reloadFocusOrigin.current = null;
     setFilter(next);
     setPage(0);
+  };
+
+  const dismissReport = async (comment: AdminReportedComment, origin: HTMLButtonElement) => {
+    if (busyId !== null || currentActor.current !== actor) return;
+    const token = {};
+    mutationToken.current = token;
+    const isCurrentActor = () => mounted.current && currentActor.current === actor && mutationToken.current === token;
+    const generation = queryGeneration.current;
+    setBusyId(comment.id);
+    setActionError(false);
+    try {
+      await dismissAdminCommentReport(comment.reportId);
+      if (!isCurrentActor()) return;
+      if (queryGeneration.current !== generation) { setRevision(value => value + 1); return; }
+      reloadFocusOrigin.current = origin;
+      focusAfterReload.current = true;
+      if (data?.content.length === 1 && page > 0) setPage(value => value - 1);
+      else setRevision(value => value + 1);
+    } catch {
+      if (!isCurrentActor()) return;
+      setActionError("report");
+    } finally {
+      if (isCurrentActor()) { mutationToken.current = null; setBusyId(null); }
+    }
   };
 
   const toggleHidden = async (comment: AdminComment, origin: HTMLButtonElement) => {
@@ -227,12 +252,13 @@ export default function AdminComments() {
 
   return <section ref={sectionRef} className={`${styles.section} ${styles.commentsSection}`} aria-label={t("adminComments")} aria-busy={loading || busyId !== null}>
     <h2 className={styles.title} ref={headingRef} tabIndex={-1}>{t("adminCommentsTitle")}</h2>
-    {actionError && <p className={styles.error} role="alert">{t(actionError === "delete" ? "adminCommentDeleteError" : "adminCommentModerationError")}</p>}
+    {actionError && <p className={styles.error} role="alert">{t(actionError === "delete" ? "adminCommentDeleteError" : actionError === "report" ? "adminReviewReportDismissError" : "adminCommentModerationError")}</p>}
     <label className={styles.filter}>{t("adminVisibilityFilter")}{" "}
-      <select className={styles.control} value={filter} onChange={event => changeFilter(event.target.value as VisibilityFilter)}>
+      <select className={styles.control} value={filter} onChange={event => changeFilter(event.target.value as CommentFilter)}>
         <option value="all">{t("allVisibilityStates")}</option>
         <option value="visible">{t("visibleOnly")}</option>
         <option value="hidden">{t("hiddenOnly")}</option>
+        <option value="reported">{t("reportedOnly")}</option>
       </select>
     </label>
     {loading && <AdminLoading label={t("loading")} layout="comments" />}
@@ -240,7 +266,7 @@ export default function AdminComments() {
     {data && data.content.length === 0 && <p>{t("noAdminComments")}</p>}
     {data && <>
       <ul className={styles.list}>{data.content.map(comment => {
-        return <li className={styles.row} key={comment.id}>
+        return <li className={styles.row} key={"reportId" in comment ? comment.reportId : comment.id}>
         <div className={styles.commentMain}>
           <strong className={styles.commentIdentity}>{getUserName({ username: comment.username }, t("someone"))}</strong>
           <p className={styles.commentText}>{comment.content}</p>
@@ -251,7 +277,9 @@ export default function AdminComments() {
             <time dateTime={comment.createdAt}>{formatReviewDate(comment.createdAt, lang)}</time>
           </div>
           <p className={styles.commentStatus}>{comment.isHidden ? t("hiddenComment") : t("visibleComment")}</p>
+          {filter === "reported" && "reportId" in comment && <p className={styles.commentDate}>{t("reportedReason")}: {t(`reviewReportReason_${comment.reportReason}`)} · {formatReviewDate(comment.reportCreatedAt, lang)}</p>}
           <div className={styles.rowActions}>
+            {filter === "reported" && "reportId" in comment && <button type="button" aria-busy={busyId === comment.id} disabled={busyId !== null} onClick={event => void dismissReport(comment, event.currentTarget)}>{busyId === comment.id ? t("loading") : t("dismissReport")}</button>}
             <button type="button" aria-busy={busyId === comment.id} disabled={busyId !== null} onClick={event => void toggleHidden(comment, event.currentTarget)}>{busyId === comment.id ? t("loading") : comment.isHidden ? t("unhideComment") : t("hideComment")}</button>
             <button type="button" aria-busy={busyId === comment.id} disabled={busyId !== null} onClick={event => requestDelete(comment, event.currentTarget)}>{busyId === comment.id ? t("loading") : t("deleteComment")}</button>
           </div>

@@ -1,6 +1,7 @@
 # REWIND — поточний прогрес
 
-> **Supabase Edge source read-back: 12.11.2026, 17:16 UTC; database read-only snapshot: 17:27 UTC; GitHub Actions: 17:14 UTC.** Публічний сайт: [GitHub Pages](https://anton5267.github.io/rewind-letterboxd/); API — Supabase Edge `rewind-api` **v36 ACTIVE**; база — приватна схема `rewind` у Supabase Free. Точний порядок робіт — у [PLAN.md](../../PLAN.md), перевірки й історичні докази — у [RELEASE_EVIDENCE.md](../operations/RELEASE_EVIDENCE.md), вимоги та gaps — у [PROJECT_REQUIREMENTS.md](PROJECT_REQUIREMENTS.md).
+
+> **Оновлення 13.11.2026:** GitHub Pages production лишається на останньому успішному deploy `c1202364`, а актуальний repo release record підтверджує Edge API v43. Коментарі/списки reports та Admin review editor зібрані в ізольованій гілці від свіжого `master`; цільові E2E **7/7** і build пройшли. Це ще не Pages deployment; див. [release-candidate evidence](../operations/RELEASE_EVIDENCE.md#admin-report-controls-release-candidate--local-validation--13112026).> **Supabase Edge source read-back: 12.11.2026, 17:16 UTC; database read-only snapshot: 17:27 UTC; GitHub Actions: 17:14 UTC.** Публічний сайт: [GitHub Pages](https://anton5267.github.io/rewind-letterboxd/); API — Supabase Edge `rewind-api` **v36 ACTIVE**; база — приватна схема `rewind` у Supabase Free. Точний порядок робіт — у [PLAN.md](../../PLAN.md), перевірки й історичні докази — у [RELEASE_EVIDENCE.md](../operations/RELEASE_EVIDENCE.md), вимоги та gaps — у [PROJECT_REQUIREMENTS.md](PROJECT_REQUIREMENTS.md).
 
 ## Підтверджено
 
