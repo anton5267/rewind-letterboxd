@@ -111,9 +111,11 @@ for (const { lang, label, saveLabel, successLabel } of [
 
     await page.goto(`/${lang}/users/${userId}`);
     await expect(page.getByText(updatedBio, { exact: true })).toBeVisible();
+    await expect(page.getByText(updatedBio, { exact: true })).toHaveCSS("font-size", "24px");
     const publicLinks = page.getByRole("region", { name: "Bio Reader", exact: true }).getByRole("navigation").getByRole("link");
     await expect(publicLinks).toHaveCount(2);
     await page.setViewportSize({ width: 393, height: 852 });
+    await expect(page.getByText(updatedBio, { exact: true })).toHaveCSS("font-size", "12px");
     await expect(publicLinks.first()).toBeVisible();
   });
 }

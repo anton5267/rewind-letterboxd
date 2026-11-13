@@ -871,6 +871,8 @@
     max-width: 760px;
   }
 
+  .bio { max-width: 369px; margin-inline: auto; font-size: 24px; line-height: 1.2; }
+
   .identity .eyebrow {
     display: none;
   }
@@ -1224,6 +1226,7 @@
 
 @media (max-width: 767px) {
   /* Confirmed profile collection frames 861:1474, 863:2474 and 863:2717: toolbar50, content123. */
+  .bio { max-width: 325px; margin-inline: auto; font-size: 12px; line-height: 1.2; }
   .page[data-profile-view] .hero,
   .page[data-profile-view] .profileRail,
   .page[data-profile-view] .shell > p { display: none; }

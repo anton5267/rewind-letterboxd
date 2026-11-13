@@ -8,7 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import { editorialText, formatMovieYear, useLocale } from "../i18n";
 import { useDialogFocusTrap } from "../hooks/useDialogFocusTrap";
 import { toTagSlug } from "../utils/tagSlug";
-import { getUserName } from "../utils/userIdentity";
+import { getUserInitial, getUserName } from "../utils/userIdentity";
 import styles from "./PublicList.module.css";
 
 function MoviePoster({ movie, fallbackTitle }: { movie: MoviePreview; fallbackTitle: string }) {
@@ -219,7 +219,11 @@ export default function PublicList() {
       <div className={styles.heroInner}>
         <p className={styles.eyebrow}>{t("listEyebrow")}</p>
         <h1 ref={headingRef} tabIndex={-1} id="public-list-heading">{listName}</h1>
-        <p className={styles.ownerLine}>{t("listBy")} <Link to={path(`/users/${list.ownerId}`)}>{ownerName}</Link></p>
+        <p className={styles.ownerLine}>
+          <ResilientImage className={styles.ownerAvatar} src={list.ownerAvatarUrl} alt="" width={30} height={30}
+            fallback={<span className={styles.ownerAvatar} aria-hidden="true">{getUserInitial({ username: list.ownerUsername })}</span>} />
+          <span>{t("listBy")} <Link to={path(`/users/${list.ownerId}`)}>{ownerName}</Link></span>
+        </p>
         {list.description && <p className={styles.description}>{list.description}</p>}
         {list.tags.length > 0 && <div className={styles.tags} role="group" aria-label={t("tags")}>
           {list.tags.map(tag => <Link key={tag} to={path(`/lists/discover?feed=recent&tag=${encodeURIComponent(toTagSlug(tag))}`)}>#{tag}</Link>)}

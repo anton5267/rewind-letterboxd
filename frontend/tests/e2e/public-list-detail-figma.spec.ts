@@ -16,6 +16,10 @@ async function activate(locator: Locator, projectName: string) {
 }
 
 async function mockList(page: Page) {
+  await page.route("https://list-owner.example.invalid/avatar.svg", route => route.fulfill({
+    contentType: "image/svg+xml",
+    body: '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30"><circle cx="15" cy="15" r="15" fill="#5a8a90"/></svg>',
+  }));
   await page.route(/^https?:\/\/[^/]+\/api\//, route => {
     const url = new URL(route.request().url());
     if (url.pathname === "/api/users/me") return route.fulfill({ status: 401, json: {} });
@@ -25,7 +29,7 @@ async function mockList(page: Page) {
       description: "A collection of mind-bending, time-twisting films.",
       ownerId: 985001,
       ownerUsername: "FilmOracle",
-      ownerAvatarUrl: null,
+      ownerAvatarUrl: "https://list-owner.example.invalid/avatar.svg",
       tags: ["Science Fiction", "Thrillers"],
       likeCount: 554,
       movies,
@@ -42,6 +46,8 @@ test("public list detail follows the raw desktop poster grid", async ({ page }, 
   await expect(main).toHaveAttribute("aria-busy", "false");
   const hero = main.locator("section").first();
   await expect(hero).toHaveCSS("min-height", "818px");
+  await expect(hero.locator('img[class*="ownerAvatar"]')).toHaveAttribute("src", "https://list-owner.example.invalid/avatar.svg");
+  await expect(hero.locator('img[class*="ownerAvatar"]')).toHaveCSS("width", "30px");
   const heading = main.getByRole("heading", { level: 1, name: "Christopher Nolan Best Films" });
   const headingBox = await heading.boundingBox();
   expect(headingBox?.x).toBeCloseTo(120, 0);
@@ -66,6 +72,7 @@ test("public list detail follows phone rows and its information sheet works with
   await page.goto("/uk/lists/public/985000");
   const main = page.getByRole("main");
   await expect(main).toHaveAttribute("aria-busy", "false");
+  await expect(main.locator('img[class*="ownerAvatar"]')).toHaveCSS("width", "20px");
   const heading = main.getByRole("heading", { level: 1, name: "Christopher Nolan Best Films" });
   const headingBox = await heading.boundingBox();
   expect(headingBox?.x).toBeCloseTo(16, 0);
