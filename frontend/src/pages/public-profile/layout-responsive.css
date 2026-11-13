@@ -1,0 +1,243 @@
+/* Figma public profile desktop frame `238:596`.
+   Measurements come from the local raw node archive: 1440px canvas,
+   1020px image hero, 1200px content rail, 24px editorial headings,
+   and six 174x260 poster cards with 31px spacing. */
+@media (min-width: 1024px) {
+  .page {
+    padding: 0 0 72px;
+    background: #1f1f1f;
+  }
+
+  .shell {
+    width: 1200px;
+    max-width: calc(100% - 48px);
+    margin-left: max(24px, calc((100vw - 1200px) / 2));
+    margin-right: 0;
+    padding: 0;
+  }
+
+  .hero {
+    width: 100vw;
+    min-height: 1020px;
+    box-sizing: border-box;
+    margin-left: calc(50% - 50vw);
+    padding: 274px 24px 120px;
+    justify-content: flex-start;
+    border-radius: 0;
+    background:
+      linear-gradient(180deg, rgba(0, 0, 0, .16), rgba(0, 0, 0, .82)),
+      #111 url("/images/public-profile-hero.jpg") center / cover no-repeat;
+    text-align: center;
+  }
+
+  .identity {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .avatar,
+  .avatarFallback {
+    width: 265px;
+    height: 265px;
+    flex-basis: 265px;
+    border-radius: 50%;
+  }
+
+  .identityCopy {
+    max-width: 760px;
+  }
+
+  .bio { max-width: 369px; margin-inline: auto; font-size: 24px; line-height: 1.2; }
+
+  .identity .eyebrow {
+    display: none;
+  }
+
+  .identity h1 {
+    font-size: 58px;
+    line-height: 1.12;
+    letter-spacing: 0;
+  }
+
+  .username {
+    margin-top: 16px;
+    color: #e7e7e7;
+    font-size: 24px;
+    line-height: 1.2;
+  }
+
+  .profileActions {
+    justify-content: center;
+    margin-top: 24px;
+  }
+
+  .profileRail {
+    display: flex;
+    width: 1200px;
+    max-width: 100%;
+    height: 79px;
+    box-sizing: border-box;
+    margin: 85px auto 0;
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+    border: 0;
+    border-bottom: 1px solid #4d4d4d;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .profileRailLink {
+    display: inline-flex;
+    flex: 1 1 0;
+    min-height: 79px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    border-radius: 0;
+    color: #a8a8a8;
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .profileRailLink:hover,
+  .profileRailLink:focus-visible,
+  .profileRailLinkActive {
+    background: #fff;
+    color: #161616;
+  }
+
+  .shell > section.section {
+    width: 1200px;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 85px auto 0;
+    padding: 0 0 48px;
+    border: 0;
+    border-bottom: 1px solid #4d4d4d;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .section, .section > h2 { scroll-margin-top: 122px; }
+
+  .shell > section.section > h2 {
+    margin: 0 0 48px;
+    color: #fff;
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1.12;
+    text-align: center;
+  }
+
+  .page[data-profile-view="collection"] .tabs { display: none; }
+  .page[data-profile-view="collection"] [id="public-profile-collections-title"] { text-align: left; }
+
+  .stats {
+    gap: 31px;
+  }
+
+  .stat {
+    min-height: 88px;
+    border-color: #4d4d4d;
+    border-radius: 20px;
+    background: #282828;
+  }
+
+  .collectionGrid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 31px;
+  }
+
+  .collectionPosterLink,
+  .collectionPoster,
+  .collectionPosterFallback {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 174 / 260;
+    border-radius: 20px;
+  }
+
+  .collectionPosterLink {
+    border: 0;
+  }
+
+  .posterRail {
+    grid-auto-columns: 265px;
+    gap: 46px;
+  }
+
+  .railPosterLink,
+  .railPoster,
+  .railPosterFallback {
+    aspect-ratio: 265 / 395;
+    border-radius: 20px;
+  }
+
+  .reviewList {
+    gap: 20px;
+  }
+
+  .reviewList li {
+    min-height: 315px;
+    box-sizing: border-box;
+    padding: 28px;
+    border: 0;
+    border-radius: 20px;
+    background: #282828;
+  }
+
+  .publicListCard {
+    min-height: 339px;
+    border: 0;
+    border-radius: 20px;
+    background: #282828;
+  }
+}
+
+@media (max-width: 400px) {
+  .mobileToolbar { margin-bottom: 96px; }
+  .profileRailLink { padding-inline: 12px; }
+  .stat { min-height: 70px; padding-inline: 6px; }
+  .stat strong { font-size: 21px; }
+
+  .collectionGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .publicListCard {
+    grid-template-columns: 108px minmax(0, 1fr);
+  }
+
+  .publicListPoster {
+    min-height: 138px;
+    padding-inline: 4px;
+  }
+
+  .publicListBody {
+    padding: 14px 10px 14px 2px;
+  }
+
+  .publicListTitle {
+    font-size: 15px;
+  }
+
+  .publicListCount {
+    font-size: 12px;
+    white-space: normal;
+  }
+
+  .publicListDescription {
+    margin-top: 7px;
+    font-size: 12px;
+  }
+
+  .publicListTags {
+    gap: 5px;
+    margin-top: 9px;
+  }
+}

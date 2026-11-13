@@ -104,3 +104,66 @@ test("public profile Following Retry leaves a manually moved focus in place", as
   await expect(section.getByRole("status")).toBeHidden();
   await expect.poll(async () => page.evaluate(() => document.activeElement?.id || document.activeElement?.getAttribute("aria-label") || document.activeElement?.tagName)).toBe(active);
 });
+
+test("public profile ignores a delayed target response after SPA back navigation", async ({ page }) => {
+  const targetA = { ...profile, id: 95171, username: "late-target-a", displayName: "Delayed Target A", bio: "Late identity A must stay cancelled." };
+  const targetB = { ...profile, id: 95172, username: "current-target-b", displayName: "Current Target B", bio: "Current identity B stays visible." };
+  let releaseTargetA!: () => void;
+  const targetAGate = new Promise<void>(resolve => { releaseTargetA = resolve; });
+  let targetBLoads = 0;
+
+  await page.route(/^https?:\/\/[^/]+\/api\//, async route => {
+    const { pathname } = new URL(route.request().url());
+    if (pathname === "/api/users/me" || pathname === "/api/auth/refresh") return route.fulfill({ status: 401, json: {} });
+    if (pathname === `/api/users/${targetA.id}/profile`) {
+      await targetAGate;
+      return route.fulfill({ json: targetA });
+    }
+    if (pathname === `/api/users/${targetB.id}/profile`) {
+      targetBLoads++;
+      return route.fulfill({ json: targetB });
+    }
+    if (pathname === `/api/users/${targetB.id}/following`) return route.fulfill({ json: {
+      ...emptyPage,
+      content: [{ id: targetA.id, username: targetA.username, displayName: targetA.displayName, avatarUrl: null }],
+      totalElements: 1,
+      totalPages: 1,
+    } });
+    if (pathname.includes("/collections/") || /\/(following|followers|activity|lists|liked-reviews)$/.test(pathname)) return route.fulfill({ json: emptyPage });
+    if (pathname.endsWith("/unread-count")) return route.fulfill({ json: { count: 0 } });
+    return route.fulfill({ json: [] });
+  });
+
+  try {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.goto(`/en/users/${targetB.id}?view=following`);
+    const identity = page.locator("#public-profile-title");
+    await expect(identity).toHaveText(targetB.displayName);
+    const targetLink = page.locator(`#public-profile-following a[href="/en/users/${targetA.id}"]`);
+    await expect(targetLink).toBeVisible();
+    const targetARequest = page.waitForRequest(request => new URL(request.url()).pathname === `/api/users/${targetA.id}/profile`);
+    await targetLink.click();
+    const pendingRequest = await targetARequest;
+    await expect(page).toHaveURL(`/en/users/${targetA.id}`);
+
+    await page.goBack();
+    await expect(page).toHaveURL(`/en/users/${targetB.id}?view=following`);
+    await expect.poll(() => targetBLoads).toBe(2);
+    await expect(identity).toHaveText(targetB.displayName);
+    await expect(targetLink).toBeVisible();
+    releaseTargetA();
+    const response = await pendingRequest.response();
+    if (response) await response.finished();
+    // Give the delivered payload a rendering opportunity before checking the restored target.
+    await page.evaluate(() => new Promise<void>(resolve => window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()))));
+
+    await expect(page).toHaveURL(`/en/users/${targetB.id}?view=following`);
+    await expect(identity).toHaveText(targetB.displayName);
+    await expect(page.getByText(targetB.bio, { exact: true })).toBeVisible();
+    await expect(page.getByText(targetA.bio, { exact: true })).toHaveCount(0);
+    await expect(page.getByRole("alert")).toHaveCount(0);
+    await expect(targetLink).toBeVisible();
+  } finally {
+    releaseTargetA();
+  }
+});

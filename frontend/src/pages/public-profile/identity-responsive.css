@@ -1,0 +1,62 @@
+@media (max-width: 767px) {
+  .page { padding: 0 0 92px; background: #1f1f1f; }
+  .shell { box-sizing: border-box; padding: 0 16px; }
+  /* Figma 825:1393: original Whiplash layer in a 430x295 slot at x=-19.
+     The gradient approximates the black blur; the flat surface starts at547. */
+  .hero { width: 100vw; min-height: 547px; box-sizing: border-box; margin-left: calc(50% - 50vw); align-items: center; justify-content: flex-start; flex-direction: column; gap: 0; border-radius: 0; padding: 50px 16px 10px; background: linear-gradient(180deg, rgba(0, 0, 0, .12), #000 295px, #000 547px, #1f1f1f 547px), #000 url("/images/public-profile-hero-phone.png") center -1px / max(100%, 430px) 304px no-repeat; box-shadow: none; text-align: center; }
+  .hero .eyebrow { display: none; }
+  .identity { width: 100%; align-items: center; flex-direction: column; gap: 7px; }
+  .identityCopy { width: min(100%, 361px); }
+  .avatar, .avatarFallback { width: 120px; height: 120px; flex-basis: 120px; }
+  .identity h1 { max-width: 100%; font-size: 26px; line-height: 1.08; letter-spacing: 0; text-wrap: balance; }
+  .username { margin-top: 7px; color: #aaa; font-size: 14px; line-height: 1.4; }
+  .mobileToolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 10px; width: 100%; margin-bottom: 96px; color: #fff; font-size: 13px; font-weight: 800; text-align: center; }
+  .mobileToolbar > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mobileBack,
+  .mobileSearch { position: relative; isolation: isolate; display: grid; width: 44px; height: 44px; place-items: center; color: #fff; text-decoration: none; }
+  .mobileBack::before,
+  .mobileSearch::before { position: absolute; z-index: -1; inset: 4px; border: 1px solid rgba(255, 255, 255, .35); border-radius: 50%; background: rgba(12, 12, 16, .28); content: ""; pointer-events: none; }
+  .mobileBack { font-size: 22px; }
+  .mobileSearch { font-size: 22px; }
+  .mobileBack:focus-visible,
+  .mobileSearch:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 2px; }
+  .profileActions { display: grid; width: min(100%, 361px); grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 20px; }
+  .profileActions :is(button, a) { min-width: 0; min-height: 44px; box-sizing: border-box; border-radius: 24px; padding: 10px 14px; color: #fff; font-size: 14px; line-height: 1.25; overflow-wrap: anywhere; text-align: center; }
+  .profileActions .primaryButton { grid-column: 1 / -1; justify-self: center; width: max-content; max-width: 100%; min-width: 124px; border-color: #fff; background: #fff; color: #191919; }
+  .profileActions .guestFollowButton { width: min(265px, 100%); min-width: 0; min-height: 59px; padding: 14px 20px; border-radius: 37px; }
+  .profileActions > :only-child { grid-column: 1 / -1; justify-self: center; }
+  /* Phone overview `825:1378` goes from the 547px identity hero to
+     Favorites at y=590; its six section links are the lower navigation. */
+  .profileRail { display: none; }
+  .profileRailLink { display: inline-flex; flex: 0 0 auto; min-height: 44px; box-sizing: border-box; align-items: center; padding: 9px 14px; border: 1px solid #464646; border-radius: 999px; background: #242424; color: #f1f1f1; font-size: 12px; font-weight: 800; line-height: 1; text-decoration: none; }
+  .profileRailLinkActive { border-color: var(--rewind-gold); background: var(--rewind-gold); color: #17120d; }
+  .profileRailLink:hover { border-color: var(--rewind-cyan); color: #fff; }
+}
+
+/* Desktop Public Profile `238:596`: centered identity header and state rail.
+   The photographic layer is added only when its original Figma asset is available. */
+@media (min-width: 768px) {
+  .hero { width: 100vw; min-height: 458px; box-sizing: border-box; margin-left: calc(50% - 50vw); align-items: center; justify-content: flex-start; flex-direction: column; gap: 0; padding: 112px 24px 76px; border-radius: 0; background: linear-gradient(180deg, rgba(0, 0, 0, .24), rgba(0, 0, 0, .88)), #111 url("/images/public-profile-hero.jpg") center / cover no-repeat; text-align: center; }
+  .identity { flex-direction: column; gap: 12px; }
+  .avatar, .avatarFallback { width: 120px; height: 120px; flex-basis: 120px; }
+  .identityCopy { max-width: min(100%, 680px); }
+  .identity h1 { font-size: clamp(32px, 3vw, 44px); line-height: 1.04; }
+  .username { margin-top: 7px; font-size: 15px; }
+  .profileActions { justify-content: center; margin-top: 20px; }
+  .profileRail { display: flex; width: max-content; max-width: calc(100vw - 48px); margin: -20px auto 24px; padding: 5px; gap: 4px; overflow-x: auto; border: 1px solid rgba(255, 255, 255, .13); border-radius: 999px; background: #222; scrollbar-width: none; }
+  .profileRail::-webkit-scrollbar { display: none; }
+  .profileRailLink { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: 8px 19px; border-radius: 999px; color: #aaa; font-size: 13px; font-weight: 700; line-height: 1; text-decoration: none; white-space: nowrap; }
+  .profileRailLink:hover { color: #fff; }
+  .profileRailLinkActive { background: #fff; color: #171717; }
+}
+
+@media (max-width: 400px) {
+  .hero { align-items: center; text-align: center; }
+  .identity { align-items: center; flex-direction: column; width: 100%; gap: 7px; }
+  /* Figma phone frame `825:1378` keeps identity copy inside the 361 px
+     x=16..377 rail so long display names wrap without moving the avatar. */
+  .identityCopy { width: min(100%, 361px); }
+  .avatar,
+  .avatarFallback { width: 120px; height: 120px; flex-basis: 120px; }
+  .identity h1 { max-width: 100%; font-size: clamp(22px, 6.6vw, 26px); line-height: 1.08; overflow-wrap: anywhere; text-wrap: balance; }
+}

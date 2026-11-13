@@ -1,0 +1,327 @@
+/* Profile design slice: the Figma profile frames use one dark editorial surface
+   with raised content panels, compact stats and poster-led collections. */
+
+.shell > section.section > h2 {
+  margin: 0 0 20px;
+  overflow-wrap: anywhere;
+  color: #fff;
+  font-size: clamp(25px, 3vw, 38px);
+  line-height: 1.05;
+}
+
+.shell > section.section p,
+.shell > section.section li {
+  overflow-wrap: anywhere;
+  color: #c7c7c7;
+  word-break: break-word;
+}
+
+.shell > section.section a {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.shell > section.section a,
+.activityList a,
+.reviewList a,
+.socialList a,
+.userList a {
+  color: var(--rewind-cyan);
+  font-weight: 700;
+}
+
+.shell > section.section > nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.shell > section.section ul,
+.socialList,
+.reviewList {
+  color: #c7c7c7;
+}
+
+.shell > section.section > ul > li,
+.reviewList li,
+.socialList li,
+.userList li,
+.activityList li {
+  border-color: #3a3a3a;
+}
+
+.collectionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 18px 14px;
+}
+
+.collectionCard {
+  min-width: 0;
+}
+
+.collectionPosterLink,
+.collectionPoster,
+.collectionPosterFallback {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+}
+
+.collectionPosterLink {
+  overflow: hidden;
+  border: 1px solid #454545;
+  background: #303030;
+}
+
+.collectionPoster {
+  object-fit: cover;
+  transition: transform .2s ease;
+}
+
+.collectionPosterLink:hover .collectionPoster {
+  transform: scale(1.04);
+}
+
+.collectionPosterFallback {
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  box-sizing: border-box;
+  color: #d8a5ff;
+  background: linear-gradient(145deg, #35234a, #242424);
+  font-size: 34px;
+  font-weight: 800;
+}
+
+.collectionCard h3 {
+  margin: 9px 0 0;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.collectionCard h3 a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.collectionCard p {
+  margin: 5px 0 0;
+  color: #999 !important;
+  font-size: 12px;
+}
+
+.publicListGrid {
+  display: grid;
+  gap: 14px;
+}
+
+.publicListCard {
+  display: grid;
+  grid-template-columns: 178px minmax(0, 1fr);
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  background: #242424;
+}
+
+.publicListPoster {
+  display: flex;
+  min-height: 178px;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px 12px 14px;
+  background: linear-gradient(145deg, rgba(45, 101, 114, .34), rgba(45, 45, 45, .1));
+  text-decoration: none;
+}
+
+.page .publicListPoster:focus-visible {
+  outline-offset: -5px;
+}
+
+.publicListBody {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  padding: 22px 24px 22px 8px;
+}
+
+.publicListHeading {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.publicListTitle {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 20px;
+  line-height: 1.15;
+}
+
+.publicListTitle a {
+  color: #fff !important;
+  text-decoration: none;
+}
+
+.publicListTitle a:hover {
+  color: var(--rewind-cyan) !important;
+}
+
+.publicListCount {
+  flex: 0 0 auto;
+  max-width: 100%;
+  color: #9d9d9d;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.publicListDescription {
+  display: -webkit-box;
+  margin: 10px 0 0;
+  overflow: hidden;
+  color: #b8b8b8 !important;
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.publicListTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 14px;
+}
+
+.publicListTags a {
+  overflow-wrap: anywhere;
+  color: var(--rewind-gold) !important;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  word-break: break-word;
+}
+
+.publicListTags a:hover {
+  color: #fff !important;
+}
+
+.profileListTagCloud {
+  margin: 28px 0 0;
+}
+
+.profileListTagHeading {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.profileListTagHeading h3 {
+  margin: 0;
+  color: #f1f1f1;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.profileListTagMore {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 4px;
+  color: #999;
+  font: inherit;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.profileListTagMore {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.profileListTagMore:hover {
+  color: #fff;
+}
+
+.profileListTagMore:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--rewind-cyan, #5ed7e8);
+  outline-offset: 2px;
+}
+
+.profileListTagChips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.profileListTagChip {
+  display: inline-flex;
+  min-width: 84px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  overflow-wrap: anywhere;
+  padding: 4px 10px;
+  border: 1px solid #575757;
+  border-radius: 999px;
+  color: #e6e6e6 !important;
+  font-size: 12px;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+}
+
+.profileListTagChip:hover {
+  border-color: var(--rewind-cyan, #5ed7e8);
+  color: #fff !important;
+}
+
+@media (max-width: 767px) {
+  .stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .stat { min-height: 76px; padding: 11px 8px; }
+  .stat strong { font-size: 23px; }
+  .stat span { font-size: 12px; line-height: 1.25; }
+
+  .publicListCard {
+    grid-template-columns: 132px minmax(0, 1fr);
+  }
+
+  .publicListPoster {
+    min-height: 152px;
+    padding-left: 8px;
+  }
+
+  .publicListBody {
+    padding: 16px 14px 16px 4px;
+  }
+
+  .publicListTitle {
+    font-size: 17px;
+  }
+
+  .publicListHeading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+}

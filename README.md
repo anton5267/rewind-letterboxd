@@ -84,7 +84,8 @@ npm run dev -- --host 127.0.0.1
 ```text
 frontend/src/
   pages/                  сторінки й маршрутна композиція
-    profile/              тематичні CSS-частини профілю
+    profile/              hooks, view-компоненти й CSS власного профілю
+    public-profile/       hooks, view-компоненти й CSS публічного профілю
   components/             повторно використовувані UI-компоненти
   api/                    HTTP-клієнти й контракти frontend
 backend/                  Java/Maven · src/, pom.xml, mvnw, .mvn/
