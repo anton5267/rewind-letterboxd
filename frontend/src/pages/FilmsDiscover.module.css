@@ -39,7 +39,7 @@
 .heading h2 { position: relative; z-index: 1; display: block; margin: 0; color: #f5f5f5; font-size: 21px; line-height: 27px; letter-spacing: -.02em; visibility: visible; opacity: 1; }
 .heading > a { position: relative; z-index: 1; min-height: 44px; display: inline-flex; align-items: center; color: #f4d28c; font-size: 14px; visibility: visible; opacity: 1; }
 .popularGrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 26px 31px; margin: 0; padding: 0; list-style: none; }
-.popularGrid li { min-width: 0; }
+.popularGrid li { position: relative; min-width: 0; }
 .poster,
 .railPoster,
 .reviewPoster { position: relative; display: block; overflow: hidden; border-radius: 12px; background: #292929; color: #fff; text-decoration: none; }

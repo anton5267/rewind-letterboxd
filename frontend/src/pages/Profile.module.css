@@ -308,6 +308,16 @@
   font-size: 15px;
 }
 
+.bio {
+  max-width: 44ch;
+  margin: 12px 0 0;
+  color: #aaa;
+  font-size: 15px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .avatar,
 .avatarFallback {
   width: 96px;
@@ -1344,6 +1354,8 @@
     line-height: 1.2;
   }
 
+  .bio { max-width: 538px; font-size: 24px; line-height: 1.2; }
+
   .profileNav {
     order: 2;
     width: 1200px;
@@ -1561,6 +1573,8 @@
   }
 
   .username { font-size: 12px; }
+
+  .bio { max-width: 291px; font-size: 12px; line-height: 1.2; }
 
   .overviewSection {
     position: relative;

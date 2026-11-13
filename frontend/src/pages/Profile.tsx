@@ -1379,7 +1379,7 @@ export default function Profile() {
   }} aria-labelledby="profile-page-title" aria-busy={pageBusy || followersLoading}>
     <div className={styles.content}>
     {requestedReviewValue !== null && <div className={styles.reviewDetailToolbar}><Link to={path("/profile?view=reviews")} aria-label={t("allReviews")}>←</Link><h2 ref={reviewDetailMobileHeadingRef} tabIndex={-1}>{t("review")}</h2><span aria-hidden="true" /></div>}
-    <h1 className={`${profileView === "reviews" || filmsView || networkView ? "srOnly" : styles.pageTitle} ${styles.retryFocusHeading}`} id="profile-page-title" tabIndex={-1}>{profileView ? viewTitle : t("myProfile")}</h1>
+    <h1 className={`${!profileView || profileView === "reviews" || filmsView || networkView ? "srOnly" : styles.pageTitle} ${styles.retryFocusHeading}`} id="profile-page-title" tabIndex={-1}>{profileView ? viewTitle : t("myProfile")}</h1>
     {error && <p className={styles.alert} id="profile-action-error" role="alert">{error}</p>}
     {message && <p className={styles.status} role="status">{message}</p>}
     {profileLoading && <ProfileLoading label={t("loading")} layout="identity" />}
@@ -1412,6 +1412,7 @@ export default function Profile() {
           <p className={styles.eyebrow}>{t("profile")}</p>
           <h2 id="profile-identity">{getUserIdentity(profile, t("someone"))}</h2>
           <p className={styles.username}>{getUserHandle(profile, t("someone"))}</p>
+          {profile.bio?.trim() && <p className={styles.bio}>{profile.bio}</p>}
         </div>
         <dl className={styles.heroMetrics}>
           <div><dt>{t("watched")}</dt><dd>{profile.stats.watched}</dd></div>

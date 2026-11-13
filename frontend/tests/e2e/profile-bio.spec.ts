@@ -93,6 +93,9 @@ for (const { lang, label, saveLabel, successLabel } of [
     await expect(page.getByText(successLabel, { exact: true })).toBeVisible();
     expect(patchBody).toMatchObject({ displayName: "Bio Reader", bio: updatedBio });
 
+    await page.goto(`/${lang}/profile`);
+    await expect(page.getByRole("region", { name: "Bio Reader", exact: true }).getByText(updatedBio, { exact: true })).toBeVisible();
+
     await page.goto(`/${lang}/users/${userId}`);
     await expect(page.getByText(updatedBio, { exact: true })).toBeVisible();
   });
