@@ -102,5 +102,15 @@ public class JournalArticleService {
         article.setTitle(request.title().trim()); article.setExcerpt(request.excerpt()); article.setContent(request.content()); article.setCoverUrl(request.coverUrl()); article.setAudioUrl(request.audioUrl());
         article.setIsPublished(request.published()); article.setPublishedAt(request.published() ? (article.getPublishedAt() == null ? Instant.now() : article.getPublishedAt()) : null);
     }
-    private JournalArticleResponse toResponse(JournalArticle a) { return new JournalArticleResponse(a.getId(), a.getSlug(), a.getLanguage(), a.getCategory(), a.getTitle(), a.getExcerpt(), a.getContent(), a.getCoverUrl(), a.getAudioUrl(), a.getPublishedAt()); }
+    private JournalArticleResponse toResponse(JournalArticle article) {
+        var author = article.getAuthor();
+        String authorName = null;
+        if (author != null && Boolean.TRUE.equals(author.getIsActive())) {
+            String displayName = author.getDisplayName();
+            authorName = displayName == null || displayName.isBlank() ? author.getUsername() : displayName.trim();
+        }
+        return new JournalArticleResponse(article.getId(), article.getSlug(), article.getLanguage(), article.getCategory(),
+                article.getTitle(), article.getExcerpt(), article.getContent(), article.getCoverUrl(),
+                article.getAudioUrl(), article.getPublishedAt(), authorName);
+    }
 }

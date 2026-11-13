@@ -4,6 +4,7 @@ import com.rewind.rewind.journal.entity.JournalArticle;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.repository.query.Param;
 import java.time.Instant;
 import java.util.Optional;
@@ -20,6 +21,7 @@ public interface JournalArticleRepository extends JpaRepository<JournalArticle, 
                     + "(select preferred.id from JournalArticle preferred where preferred.slug = a.slug "
                     + "and preferred.language = :language and preferred.isPublished = true))) "
                     + "and (:category is null or a.category = :category)")
+    @EntityGraph(attributePaths = "author")
     Page<JournalArticle> findPublishedWithFallback(@Param("language") String language, @Param("fallback") String fallback,
                                                     @Param("category") String category, Pageable pageable);
 
@@ -38,6 +40,7 @@ public interface JournalArticleRepository extends JpaRepository<JournalArticle, 
                     + "and (lower(a.title) like lower(concat('%', :q, '%')) "
                     + "or lower(coalesce(a.excerpt, '')) like lower(concat('%', :q, '%')) "
                     + "or lower(a.category) like lower(concat('%', :q, '%')))" )
+    @EntityGraph(attributePaths = "author")
     Page<JournalArticle> searchPublishedWithFallback(@Param("language") String language, @Param("fallback") String fallback,
                                                      @Param("q") String q, Pageable pageable);
 
@@ -54,6 +57,7 @@ public interface JournalArticleRepository extends JpaRepository<JournalArticle, 
                     + "and preferred.language = :language and preferred.isPublished = true))) "
                     + "and (:category is null or a.category = :category) "
                     + "and a.publishedAt >= :from and a.publishedAt < :to")
+    @EntityGraph(attributePaths = "author")
     Page<JournalArticle> findPublishedWithFallbackInRange(@Param("language") String language, @Param("fallback") String fallback,
                                                            @Param("category") String category, @Param("from") Instant from,
                                                            @Param("to") Instant to, Pageable pageable);
@@ -64,6 +68,8 @@ public interface JournalArticleRepository extends JpaRepository<JournalArticle, 
             + "and preferred.language = :language and preferred.isPublished = true))) "
             + "order by a.publishedAt desc, a.id desc")
     java.util.List<JournalArticle> findAllPublishedWithFallback(@Param("language") String language, @Param("fallback") String fallback);
+    @EntityGraph(attributePaths = "author")
     Optional<JournalArticle> findBySlugAndLanguageAndIsPublishedTrue(String slug, String language);
+    @EntityGraph(attributePaths = "author")
     Page<JournalArticle> findAllByOrderByUpdatedAtDescIdDesc(Pageable pageable);
 }

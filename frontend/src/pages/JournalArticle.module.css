@@ -92,6 +92,8 @@
 
 .meta span { color: var(--rewind-cyan); font-weight: 700; }
 
+.byline { margin: 0; color: var(--rewind-muted); font-size: 16px; line-height: 1.35; }
+
 .coverHero {
   position: relative;
   z-index: 2;

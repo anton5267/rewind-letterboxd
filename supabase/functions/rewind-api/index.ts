@@ -616,11 +616,11 @@ function toConversation(row: {
 
 function toJournalArticle(row: {
   id: string; slug: string; language: string; category: string; title: string; excerpt: string | null;
-  content: string; cover_url: string | null; audio_url: string | null; published_at: string | null;
+  content: string; cover_url: string | null; audio_url: string | null; published_at: string | null; author_name?: string | null;
 }): JournalArticleResponse {
   return { id: safeId(row.id, "Journal article ID"), slug: row.slug, language: row.language, category: row.category,
     title: row.title, excerpt: row.excerpt, content: row.content, coverUrl: row.cover_url, audioUrl: row.audio_url,
-    publishedAt: row.published_at };
+    publishedAt: row.published_at, authorName: row.author_name ?? null };
 }
 
 function toAdminReview(row: {
@@ -2127,7 +2127,9 @@ const handler = createRewindApiHandler({
           content: string; cover_url: string | null; audio_url: string | null; published_at: string | null;
         }>({
           text: `SELECT a.id::text AS id, a.slug, a.language, a.category, a.title, a.excerpt, a.content,
-                       a.cover_url, a.audio_url, a.published_at::text AS published_at
+                       a.cover_url, a.audio_url, a.published_at::text AS published_at,
+                       (SELECT COALESCE(NULLIF(BTRIM(author.display_name), ''), author.username)
+                         FROM rewind.users author WHERE author.id = a.author_id AND author.is_active = TRUE) AS author_name
                 FROM rewind.journal_articles a WHERE ${where}
                 ORDER BY a.published_at DESC, a.id DESC LIMIT $${args.length + 1} OFFSET $${args.length + 2}`,
           args: [...args, size, page * size],
@@ -2164,8 +2166,10 @@ const handler = createRewindApiHandler({
         id: string; slug: string; language: string; category: string; title: string; excerpt: string | null;
         content: string; cover_url: string | null; audio_url: string | null; published_at: string | null;
       }>({
-        text: `SELECT id::text AS id, slug, language, category, title, excerpt, content, cover_url, audio_url, published_at::text AS published_at
-               FROM rewind.journal_articles WHERE slug = $1 AND is_published = TRUE AND language IN ($2, $3)
+        text: `SELECT id::text AS id, slug, language, category, title, excerpt, content, cover_url, audio_url, published_at::text AS published_at,
+                      (SELECT COALESCE(NULLIF(BTRIM(author.display_name), ''), author.username)
+                         FROM rewind.users author WHERE author.id = a.author_id AND author.is_active = TRUE) AS author_name
+               FROM rewind.journal_articles a WHERE slug = $1 AND is_published = TRUE AND language IN ($2, $3)
                ORDER BY CASE WHEN language = $2 THEN 0 ELSE 1 END LIMIT 1`, args: [slug, language, fallback],
       });
       return result.rows[0] ? toJournalArticle(result.rows[0]) : null;

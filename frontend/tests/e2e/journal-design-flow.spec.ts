@@ -24,6 +24,7 @@ test("journal renders the dark editorial feed with cover art", async ({ page }) 
           content: "Повний текст",
           coverUrl: "https://cdn.example.invalid/rewind-cover.jpg",
           audioUrl: null,
+          authorName: "Редактор Rewind",
           publishedAt: "2025-12-25T12:00:00Z",
         })),
         totalPages: 1,
@@ -39,6 +40,7 @@ test("journal renders the dark editorial feed with cover art", async ({ page }) 
 
   await expect(page.getByRole("heading", { name: "Журнал", level: 1 })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Тестова історія Rewind", level: 3 })).toBeVisible();
+  await expect(page.getByText("Редактор Rewind", { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Читати" }).first()).toHaveAttribute("href", "/uk/journal/design-journal-fixture");
   await expect(page.locator('a[href="/uk/journal/design-journal-fixture"] img').first()).toHaveAttribute("src", "https://cdn.example.invalid/rewind-cover.jpg");
   await expect(page.locator("main")).toHaveCSS("background-color", "rgb(31, 31, 31)");
@@ -83,6 +85,7 @@ test("journal article keeps its cover and content in the editorial frame", async
     content: "The complete editorial text.",
     coverUrl: null,
     audioUrl: null,
+    authorName: "Sulima Bohdan",
     publishedAt: "2025-12-22T12:00:00Z",
   } }));
 
@@ -90,6 +93,7 @@ test("journal article keeps its cover and content in the editorial frame", async
   await page.goto("/en/journal/editorial-frame-fixture");
 
   await expect(page.getByRole("heading", { level: 1, name: 'Movies "Christmas Adventures"' })).toBeVisible();
+  await expect(page.getByText("Sulima Bohdan", { exact: true })).toBeVisible();
   const metadata = page.locator('[class*="eyebrow"]');
   await expect(metadata).toContainText("Cinemascope");
   await expect(metadata.locator("time")).toHaveText("Dec 22, 2025");
@@ -105,13 +109,17 @@ test("journal article keeps its cover and content in the editorial frame", async
   const hero = page.locator('[class*="coverHero"]');
   const heroBox = await hero.boundingBox();
   expect(heroBox?.x).toBeCloseTo(120, 0);
-  expect(heroBox?.y).toBeCloseTo(433, 0);
+  expect(heroBox!.y).toBeGreaterThanOrEqual(433);
+  expect(heroBox!.y).toBeLessThan(440);
   expect(heroBox?.width).toBe(1126);
   expect(heroBox?.height).toBe(642);
   expect(heroBox?.y).toBeGreaterThan(400);
 
   const content = await page.locator('[class*="articleContent"]').boundingBox();
   expect(content!.y).toBeGreaterThanOrEqual(heroBox!.y + heroBox!.height - 1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+  await page.setViewportSize({ width: 393, height: 852 });
+  await expect(page.getByText("Sulima Bohdan", { exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
 

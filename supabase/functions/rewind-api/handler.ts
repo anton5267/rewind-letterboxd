@@ -149,7 +149,7 @@ export interface NotificationResponse {
 export interface NotificationPreferencesResponse { followsEnabled: boolean; reviewLikesEnabled: boolean }
 export interface JournalArticleResponse {
   id: number; slug: string; language: string; category: string; title: string; excerpt: string | null;
-  content: string; coverUrl: string | null; audioUrl: string | null; publishedAt: string | null;
+  content: string; coverUrl: string | null; audioUrl: string | null; publishedAt: string | null; authorName?: string | null;
 }
 export interface JournalArchiveEntry { year: number; month: number; articleCount: number }
 export interface NewsletterSubscriptionResponse { subscribed: boolean }

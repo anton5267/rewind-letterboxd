@@ -129,7 +129,10 @@ export default function JournalArticle() {
               {article.publishedAt && <><span aria-hidden="true"> · </span><time dateTime={article.publishedAt}>{formatJournalDate(article.publishedAt, lang)}</time></>}
             </p>
             <h1 id="journal-article-title" ref={titleRef} tabIndex={-1} lang={article.title?.trim() ? articleLang : lang}>{title}</h1>
-            {(article.publishedAt || audioUrl) && <div className={styles.meta}>{audioUrl && <span>{t("podcastAudio")}</span>}</div>}
+            {(article.publishedAt || article.authorName?.trim() || audioUrl) && <div className={styles.meta}>
+              {article.authorName?.trim() && <p className={styles.byline}>{article.authorName.trim()}</p>}
+              {audioUrl && <span>{t("podcastAudio")}</span>}
+            </div>}
           </div>
           <div className={styles.coverHero}>
             <ResilientImage className={styles.coverImage} src={article.coverUrl} alt="" loading="eager" fallback={<span className={styles.coverFallback} aria-hidden="true">REWIND</span>} />

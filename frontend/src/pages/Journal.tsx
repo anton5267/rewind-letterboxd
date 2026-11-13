@@ -189,7 +189,7 @@ export default function Journal() {
                   {article.excerpt?.trim() && <p lang={articleLang}>{article.excerpt.trim()}</p>}
                   <div className={styles.cardFooter}>
                     <Link className={styles.readLink} to={articlePath}>{t("journalRead")}</Link>
-                    <span className={styles.byline}>{audioUrl ? t("podcastAudio") : t("journalEyebrow")}</span>
+                    <span className={styles.byline}>{article.authorName?.trim() || (audioUrl ? t("podcastAudio") : t("journalEyebrow"))}</span>
                   </div>
                 </div>
                 <Link className={styles.thumb} to={articlePath} aria-hidden="true" tabIndex={-1}>
