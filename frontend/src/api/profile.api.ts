@@ -18,6 +18,8 @@ export interface ProfileList {
   isPublic: boolean;
 }
 
+export type ProfileReplyPreference = "ANYONE" | "FOLLOWED" | "SELF";
+
 export interface ProfileResponse {
   id: number;
   username: string;
@@ -28,6 +30,7 @@ export interface ProfileResponse {
   bio?: string | null;
   location?: string | null;
   pronoun?: string | null;
+  replyPreference?: ProfileReplyPreference;
   supabaseLinked: boolean;
   stats: ProfileStats;
   lists: ProfileList[];
@@ -37,7 +40,14 @@ export interface ProfileResponse {
 
 export const getProfile = () => api.get<ProfileResponse>("/profile/me");
 
-export const updateProfile = (data: { displayName?: string; avatarUrl?: string; bio?: string; location?: string; pronoun?: string }) =>
+export const updateProfile = (data: {
+  displayName?: string;
+  avatarUrl?: string;
+  bio?: string;
+  location?: string;
+  pronoun?: string;
+  replyPreference?: ProfileReplyPreference;
+}) =>
   api.patch<ProfileResponse>("/profile/me", data);
 
 export interface SocialLink { platform: string; url: string; }

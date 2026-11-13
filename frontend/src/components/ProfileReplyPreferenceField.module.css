@@ -1,0 +1,25 @@
+.desktopSelect { composes: desktopSelect from "./ProfilePronounField.module.css"; }
+.mobileTrigger { composes: mobileTrigger from "./ProfilePronounField.module.css"; }
+.sheet { composes: sheet from "./ProfilePronounField.module.css"; }
+.toolbar { composes: toolbar from "./ProfilePronounField.module.css"; }
+.options { composes: options from "./ProfilePronounField.module.css"; }
+.option { composes: option from "./ProfilePronounField.module.css"; }
+
+.desktopHint {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #aaa;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.hint {
+  margin: 13px 34px 0;
+  color: #7e7e7e;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+@media (max-width: 767px) {
+  .desktopHint { display: none; }
+}

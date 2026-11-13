@@ -1,6 +1,6 @@
 import type { MovieCardResponse } from "../contracts/catalog.ts";
 import type { PublicListCardResponse } from "../contracts/lists.ts";
-import type { PublicProfileResponse } from "../contracts/profile.ts";
+import type { PublicProfileResponse, ReplyPreference } from "../contracts/profile.ts";
 import type { RewindApiRepository } from "../contracts/repository.ts";
 import { RewindApiError } from "../http/errors.ts";
 import {
@@ -298,9 +298,9 @@ export const profileRepository: Pick<RewindApiRepository,
     const { connection, userId } = await beginUserTransaction(authUser);
     try {
       const userResult = await connection.queryObject<{
-        id: string; username: string; display_name: string | null; role: string; avatar_url: string | null; bio: string | null; location: string | null; pronoun: string | null;
+        id: string; username: string; display_name: string | null; role: string; avatar_url: string | null; bio: string | null; location: string | null; pronoun: string | null; reply_preference: ReplyPreference;
       }>({
-        text: `SELECT id::text AS id, username, display_name, role, avatar_url, bio, location, pronoun
+        text: `SELECT id::text AS id, username, display_name, role, avatar_url, bio, location, pronoun, reply_preference
                FROM rewind.users WHERE id = $1`,
         args: [userId],
       });
@@ -359,6 +359,7 @@ export const profileRepository: Pick<RewindApiRepository,
         bio: user.bio,
         location: user.location,
         pronoun: user.pronoun,
+        replyPreference: user.reply_preference,
         supabaseLinked: true,
         stats: {
           ratings: Number(stats?.ratings ?? 0),
@@ -398,7 +399,8 @@ export const profileRepository: Pick<RewindApiRepository,
                    avatar_url = CASE WHEN $4 THEN NULLIF(BTRIM($5), '') ELSE avatar_url END,
                    bio = CASE WHEN $6 THEN NULLIF(BTRIM($7), '') ELSE bio END,
                    location = CASE WHEN $8 THEN NULLIF(BTRIM($9), '') ELSE location END,
-                   pronoun = CASE WHEN $10 THEN NULLIF(BTRIM($11), '') ELSE pronoun END
+                   pronoun = CASE WHEN $10 THEN NULLIF(BTRIM($11), '') ELSE pronoun END,
+                   reply_preference = CASE WHEN $12 THEN $13 ELSE reply_preference END
                WHERE id = $1`,
         args: [
           userId,
@@ -407,6 +409,7 @@ export const profileRepository: Pick<RewindApiRepository,
           Object.hasOwn(update, "bio"), update.bio ?? null,
           Object.hasOwn(update, "location"), update.location ?? null,
           Object.hasOwn(update, "pronoun"), update.pronoun ?? null,
+          Object.hasOwn(update, "replyPreference"), update.replyPreference ?? null,
         ],
       });
       await connection.queryObject("COMMIT");

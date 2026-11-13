@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { isAxiosError } from "axios";
 import { addComment, deleteComment, getComments, updateComment, type Comment } from "../api/comments.api";
 import Pagination from "../components/Pagination";
 import RetryNotice from "../components/RetryNotice";
@@ -134,10 +135,13 @@ export default function Comments({ reviewId }: { reviewId: number }) {
       setEditing(null);
       await load();
       if (!isCurrentMutation(currentMutation)) return;
-    } catch {
+    } catch (error) {
       if (!isCurrentMutation(currentMutation)) return;
       setPendingAction({ type: "save", commentId, text: value });
-      setActionError(commentId !== null ? t("updateCommentError") : t("createCommentError"));
+      const repliesRestricted = commentId === null && isAxiosError(error) && error.response?.status === 403;
+      const message = repliesRestricted ? t("commentRepliesRestricted")
+        : commentId !== null ? t("updateCommentError") : t("createCommentError");
+      setActionError(message);
     } finally {
       if (isCurrentMutation(currentMutation)) setMutationBusy(null);
     }

@@ -2,7 +2,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useLocation } from "react-router-dom";
 import { useLocale } from "../../i18n";
 import { useState, useRef, useLayoutEffect, useEffect } from "react";
-import { getProfile, updateProfile, type ProfileResponse } from "../../api/profile.api";
+import { getProfile, updateProfile, type ProfileResponse, type ProfileReplyPreference } from "../../api/profile.api";
 import { safeHttpUrl } from "../../utils/externalUrl";
 import { type ProfileRoute } from "./profileRoute";
 import { type ProfileFeedbackModel } from "./useProfileFeedback";
@@ -66,6 +66,8 @@ export function useProfileIdentity({ route, feedback }: {
 
   const [pronoun, setPronoun] = useState("");
 
+  const [replyPreference, setReplyPreference] = useState<ProfileReplyPreference>("ANYONE");
+
   const [nameBusy, setNameBusy] = useState(false);
 
   const identityMutation = useRef(0);
@@ -91,6 +93,7 @@ export function useProfileIdentity({ route, feedback }: {
       setBio(data.bio ?? "");
       setProfileLocation(data.location ?? "");
       setPronoun(data.pronoun ?? "");
+      setReplyPreference(data.replyPreference ?? "ANYONE");
     }).catch(() => { if (isCurrentRequest()) setProfileLoadError(true); })
       .finally(() => { if (isCurrentRequest()) setProfileLoading(false); });
     return () => { current = false; };
@@ -141,7 +144,7 @@ export function useProfileIdentity({ route, feedback }: {
       const { data } = await updateProfile({
         ...(fields !== "avatar" ? { displayName: displayName.trim() } : {}),
         ...(fields !== "name" ? { avatarUrl: normalizedAvatarUrl ?? "" } : {}),
-        ...(fields !== "avatar" ? { bio: bio.trim(), location: profileLocation.trim(), pronoun } : {}),
+        ...(fields !== "avatar" ? { bio: bio.trim(), location: profileLocation.trim(), pronoun, replyPreference } : {}),
       });
       if (!isCurrentRequest()) return;
       setProfile(data);
@@ -151,6 +154,7 @@ export function useProfileIdentity({ route, feedback }: {
         setBio(data.bio ?? "");
         setProfileLocation(data.location ?? "");
         setPronoun(data.pronoun ?? "");
+        setReplyPreference(data.replyPreference ?? "ANYONE");
       }
       report("success", fields === "avatar" ? (lang === "uk" ? "Аватар оновлено." : "Avatar updated.") : t("nameSaved"));
     } catch { report("error", t(fields === "avatar" ? "saveAvatarError" : "saveNameError")); }
@@ -179,6 +183,8 @@ export function useProfileIdentity({ route, feedback }: {
     setProfileLocation,
     pronoun,
     setPronoun,
+    replyPreference,
+    setReplyPreference,
     avatarUrl,
     setAvatarUrl,
   };

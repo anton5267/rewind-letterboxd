@@ -1,3 +1,5 @@
+export type ReplyPreference = "ANYONE" | "FOLLOWED" | "SELF";
+
 export interface ProfileResponse {
   id: number;
   username: string;
@@ -8,6 +10,7 @@ export interface ProfileResponse {
   bio?: string | null;
   location?: string | null;
   pronoun?: string | null;
+  replyPreference?: ReplyPreference;
   supabaseLinked: boolean;
   stats: { ratings: number; reviews: number; watched: number; watchlist: number; favorites: number };
   lists: { id: number; name: string; listType: string; isPublic: boolean }[];
@@ -28,6 +31,7 @@ export interface ProfileUpdateRequest {
   bio?: string;
   location?: string;
   pronoun?: string;
+  replyPreference?: ReplyPreference;
 }
 
 export interface PublicProfileResponse {

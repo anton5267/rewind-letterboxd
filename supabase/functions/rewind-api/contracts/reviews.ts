@@ -1,5 +1,7 @@
 export type ReviewReportReason = "SPAM" | "INAPPROPRIATE_CONTENT" | "BULLYING";
 
+export type CreateCommentResult = CommentResponse | null | "FORBIDDEN";
+
 export interface ReviewReportResponse { id: number; reason: ReviewReportReason; createdAt: string }
 
 export interface ReviewReportStatusResponse { reported: boolean; report: ReviewReportResponse | null }

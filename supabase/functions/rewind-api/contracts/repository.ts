@@ -3,7 +3,7 @@ import type { CurrentUserResponse, HostedAuthUser } from "./auth.ts";
 import type { ProfileCollectionResult, ProfileResponse, ProfileUpdateRequest, PublicProfileResponse } from "./profile.ts";
 import type { ActivityResponse, BlockStatusResponse, ConversationResponse, FollowStatusResponse, MessageResponse, NotificationPreferencesResponse, NotificationResponse, PopularReviewerResponse, PublicSocialUser, SocialLinkResponse } from "./social.ts";
 import type { AdminJournalArticleRequest, JournalArchiveEntry, JournalArticleResponse, NewsletterDeliveryStatusResponse, NewsletterQueueResponse, NewsletterSubscriptionResponse } from "./journal.ts";
-import type { CommentPageResponse, CommentResponse, ReviewDetailsResponse, ReviewFeedResponse, ReviewMutationRequest, ReviewPageResponse, ReviewReportReason, ReviewReportResponse, ReviewReportStatusResponse, ReviewResponse } from "./reviews.ts";
+import type { CommentPageResponse, CommentResponse, CreateCommentResult, ReviewDetailsResponse, ReviewFeedResponse, ReviewMutationRequest, ReviewPageResponse, ReviewReportReason, ReviewReportResponse, ReviewReportStatusResponse, ReviewResponse } from "./reviews.ts";
 import type { CreateMyListRequest, ListLikeStatusResponse, MyListItemResponse, MyListPageResponse, MyListResponse, PopularTagResponse, PublicListDetailsResponse, PublicListPageResponse, UpdateMyListRequest } from "./lists.ts";
 import type { AdminAuditLogResponse, AdminCommentResponse, AdminConversationResponse, AdminCreateNotificationRequest, AdminDashboardResponse, AdminListResponse, AdminModerationQueueItem, AdminModerationTarget, AdminMovieCatalogResponse, AdminMovieResponse, AdminMovieWriteRequest, AdminNotificationResponse, AdminReportedCommentResponse, AdminReportedListResponse, AdminReportedReviewResponse, AdminReviewResponse, AdminSettingResponse, AdminTmdbBatchResponse, AdminTmdbDiscoveryInput, AdminTmdbDiscoveryResponse, AdminTmdbMovieCandidate, AdminTmdbQualityReport, AdminTmdbSyncInput, AdminTmdbSyncResponse, AdminUserOverviewResponse, AdminUserResponse, AdminUserUpdateRequest } from "./admin.ts";
 
@@ -28,7 +28,7 @@ export interface RewindApiRepository {
   updateMyReview?(authUser: HostedAuthUser, reviewId: number, update: ReviewMutationRequest): Promise<ReviewResponse | null>;
   deleteMyReview?(authUser: HostedAuthUser, reviewId: number): Promise<boolean>;
   getReviewComments?(reviewId: number, page: number, size: number): Promise<CommentPageResponse>;
-  createReviewComment?(authUser: HostedAuthUser, reviewId: number, text: string): Promise<CommentResponse | null>;
+  createReviewComment?(authUser: HostedAuthUser, reviewId: number, text: string): Promise<CreateCommentResult>;
   updateReviewComment?(authUser: HostedAuthUser, commentId: number, text: string): Promise<CommentResponse | null | "FORBIDDEN">;
   deleteReviewComment?(authUser: HostedAuthUser, commentId: number): Promise<"OK" | "NOT_FOUND" | "FORBIDDEN">;
   getReviewLikes?(reviewId: number): Promise<number | null>;

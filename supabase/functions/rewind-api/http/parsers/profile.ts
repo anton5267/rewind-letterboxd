@@ -35,5 +35,10 @@ export function parseProfileUpdate(value: unknown): ProfileUpdateRequest | null 
     if (!supported.includes(pronoun)) return null;
     update.pronoun = pronoun;
   }
+  if (Object.hasOwn(body, "replyPreference")) {
+    const preference = body.replyPreference;
+    if (preference !== "ANYONE" && preference !== "FOLLOWED" && preference !== "SELF") return null;
+    update.replyPreference = preference;
+  }
   return update;
 }

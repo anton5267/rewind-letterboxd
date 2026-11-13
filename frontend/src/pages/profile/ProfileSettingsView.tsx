@@ -3,6 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import ProfileSettingsShell, { type ProfileSettingsTab } from "../../components/ProfileSettingsShell";
 import ProfileBioField from "../../components/ProfileBioField";
 import ProfilePronounField from "../../components/ProfilePronounField";
+import ProfileReplyPreferenceField from "../../components/ProfileReplyPreferenceField";
 import settingsStyles from "../../components/ProfileSettingsShell.module.css";
 import RetryNotice from "../../components/RetryNotice";
 import { Link } from "react-router-dom";
@@ -39,6 +40,8 @@ interface Props {
     | "setProfileLocation"
     | "pronoun"
     | "setPronoun"
+    | "replyPreference"
+    | "setReplyPreference"
     | "avatarUrl"
     | "setAvatarUrl"
   >;
@@ -101,6 +104,8 @@ export default function ProfileSettingsView({ settingsTab, identity, account, co
     setProfileLocation,
     pronoun,
     setPronoun,
+    replyPreference,
+    setReplyPreference,
     avatarUrl,
     setAvatarUrl,
   } = identity;
@@ -157,6 +162,7 @@ export default function ProfileSettingsView({ settingsTab, identity, account, co
         <ProfileBioField key={`${user?.id}-${lang}`} value={bio} disabled={nameBusy} onChange={setBio} />
         <div><label htmlFor="settings-profile-location">{t("profileLocation")}</label><input id="settings-profile-location" value={profileLocation} maxLength={80} disabled={nameBusy} onChange={event => setProfileLocation(event.target.value)} /></div>
         <ProfilePronounField key={`${user?.id}-${lang}`} value={pronoun} disabled={nameBusy} onChange={setPronoun} />
+        <ProfileReplyPreferenceField key={`${user?.id}-${lang}`} value={replyPreference} disabled={nameBusy} onChange={setReplyPreference} />
         <div><label htmlFor="settings-email">{t("email")}</label><output id="settings-email">{profile.email}</output></div>
         <button type="submit" disabled={nameBusy}>{nameBusy ? t("saving") : t("save")}</button>
       </form>

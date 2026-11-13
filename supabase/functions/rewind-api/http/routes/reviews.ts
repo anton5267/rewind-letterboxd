@@ -185,6 +185,7 @@ export async function handleReviewRoutes(context: HttpRouteContext): Promise<Res
     if (text === null) return json({ message: "Invalid comment details" }, 400, corsHeaders);
     try {
       const comment = await repository.createReviewComment(authUser, reviewId, text);
+      if (comment === "FORBIDDEN") return json({ message: "The review author does not allow this reply" }, 403, corsHeaders);
       return comment ? json(comment, 200, corsHeaders) : json({ message: "Review not found" }, 404, corsHeaders);
     } catch (error) {
       return repositoryFailure(error, "Unable to create comment", corsHeaders);

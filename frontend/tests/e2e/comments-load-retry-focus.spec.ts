@@ -132,3 +132,62 @@ test("review comments cannot be submitted with whitespace-only text", async ({ p
   await composer.fill("A useful comment.");
   await expect(send).toBeEnabled();
 });
+
+for (const lang of ["uk", "en"] as const) {
+  test(`reply restriction keeps the comment draft and recovers through Retry in ${lang}`, async ({ page }) => {
+    const user = { id: 7303, username: "commenter", role: "USER", displayName: "Commenter", avatarUrl: null };
+    const movie = {
+      id: 7301, title: "Reply permissions", imdbId: null, shortPlot: null, photoUrl: null, backdropUrl: null,
+      releaseDate: "2024-01-01", durationMinutes: 100, ageRating: null, rating: null, trailerUrl: null,
+      genres: [], actors: [], directors: [], producers: [], externalRatings: [], similarMovies: [], myFlags: null,
+    };
+    const review = { id: 7302, userId: 7304, username: "author", content: "A review with reply permissions.", rating: 4, createdAt: "2026-10-01T12:00:00Z" };
+    let postAttempts = 0;
+    let savedText = "";
+    await page.route(/^https?:\/\/[^/]+\/api\//, async route => {
+      const { pathname } = new URL(route.request().url());
+      if (pathname === "/api/users/me") return route.fulfill({ json: user });
+      if (pathname === "/api/auth/csrf") return route.fulfill({ json: { token: "reply-permissions-fixture" } });
+      if (pathname === "/api/auth/refresh") return route.fulfill({ status: 401, json: {} });
+      if (pathname.endsWith("/unread-count")) return route.fulfill({ json: { count: 0 } });
+      if (pathname === `/api/movies/${movie.id}/details`) return route.fulfill({ json: movie });
+      if (pathname === `/api/movies/${movie.id}/reviews`) return route.fulfill({ json: { content: [review], number: 0, totalElements: 1, totalPages: 1 } });
+      if (pathname === `/api/movies/${movie.id}/reviews/me`) return route.fulfill({ status: 204 });
+      if (pathname.endsWith("/like-status")) return route.fulfill({ json: { liked: false, likes: 0 } });
+      if (pathname === `/api/reviews/${review.id}/comments`) {
+        if (route.request().method() === "POST") {
+          postAttempts++;
+          if (postAttempts === 1) return route.fulfill({ status: 403, json: { message: "Replies are not allowed for this review" } });
+          savedText = route.request().postDataJSON().text;
+          return route.fulfill({ json: { id: 7305, reviewId: review.id, userId: user.id, username: user.username, text: savedText } });
+        }
+        const content = savedText ? [{ id: 7305, reviewId: review.id, userId: user.id, username: user.username, text: savedText }] : [];
+        return route.fulfill({ json: { content, number: 0, totalElements: content.length, totalPages: content.length ? 1 : 0 } });
+      }
+      return route.fulfill({ json: [] });
+    });
+
+    await page.setViewportSize({ width: lang === "uk" ? 393 : 1440, height: 900 });
+    await page.goto(`/${lang}/films/${movie.id}`);
+    const comments = page.getByRole("region", { name: lang === "uk" ? "Коментарі" : "Comments" });
+    await comments.getByRole("button", { name: lang === "uk" ? "Показати коментарі" : "Show comments" }).click();
+    const composer = comments.getByRole("textbox", { name: lang === "uk" ? "Ваш коментар" : "Your comment" });
+    const draft = "This draft survives a permission rejection.";
+    await composer.fill(draft);
+    await comments.getByRole("button", { name: lang === "uk" ? "Надіслати" : "Send" }).click();
+    const message = lang === "uk"
+      ? "Автор обмежив коментування цього огляду або заблокував взаємодію."
+      : "The author has restricted comments on this review or blocked this interaction.";
+    await expect(comments.getByRole("alert")).toContainText(message);
+    await expect(composer).toHaveValue(draft);
+    const retry = comments.getByRole("button", { name: lang === "uk" ? "Спробувати ще" : "Retry" });
+    await retry.focus();
+    await retry.press("Enter");
+    await expect.poll(() => postAttempts).toBe(2);
+    await expect(comments.getByText(draft, { exact: true })).toBeVisible();
+    await expect(composer).toHaveValue("");
+    await expect(comments.locator("[data-comments-panel]")).toBeFocused();
+    await expect(comments.getByRole("alert")).toHaveCount(0);
+    expect(savedText).toBe(draft);
+  });
+}

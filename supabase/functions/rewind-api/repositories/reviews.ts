@@ -1,5 +1,6 @@
 import type { RewindApiRepository } from "../contracts/repository.ts";
-import type { CommentPageResponse, CommentResponse, ReviewDetailsResponse, ReviewMutationRequest, ReviewPageResponse, ReviewReportReason, ReviewReportResponse, ReviewReportStatusResponse, ReviewResponse } from "../contracts/reviews.ts";
+import type { CommentPageResponse, CommentResponse, CreateCommentResult, ReviewDetailsResponse, ReviewMutationRequest, ReviewPageResponse, ReviewReportReason, ReviewReportResponse, ReviewReportStatusResponse, ReviewResponse } from "../contracts/reviews.ts";
+import { PostgresError } from "@db/postgres";
 import { RewindApiError } from "../http/errors.ts";
 import {
   pool,
@@ -420,15 +421,31 @@ export const reviewsRepository: Pick<RewindApiRepository,
     } finally { connection.release(); }
   },
 
-  async createReviewComment(authUser, reviewId, text): Promise<CommentResponse | null> {
+  async createReviewComment(authUser, reviewId, text): Promise<CreateCommentResult> {
     const { connection, userId } = await beginUserTransaction(authUser);
     try {
-      const review = await connection.queryObject({
-        text: `SELECT 1 FROM rewind.reviews r JOIN rewind.users author ON author.id = r.user_id
+      const review = await connection.queryObject<{ can_reply: boolean }>({
+        text: `SELECT (
+                 r.user_id = $2 OR (
+                   NOT EXISTS (
+                     SELECT 1 FROM rewind.user_blocks b
+                     WHERE (b.blocker_id = r.user_id AND b.blocked_id = $2)
+                        OR (b.blocker_id = $2 AND b.blocked_id = r.user_id)
+                   ) AND (
+                     author.reply_preference = 'ANYONE'
+                     OR (author.reply_preference = 'FOLLOWED' AND EXISTS (
+                       SELECT 1 FROM rewind.follows f
+                       WHERE f.follower_id = r.user_id AND f.following_id = $2
+                     ))
+                   )
+                 )
+               ) AS can_reply
+               FROM rewind.reviews r JOIN rewind.users author ON author.id = r.user_id
                JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
-               WHERE r.id = $1 AND r.is_hidden = FALSE AND author.is_active = TRUE`, args: [reviewId],
+               WHERE r.id = $1 AND r.is_hidden = FALSE AND author.is_active = TRUE`, args: [reviewId, userId],
       });
       if (!review.rows.length) { await connection.queryObject("COMMIT"); return null; }
+      if (!review.rows[0].can_reply) { await connection.queryObject("COMMIT"); return "FORBIDDEN"; }
       const inserted = await connection.queryObject<{ id: string }>({
         text: "INSERT INTO rewind.comments (review_id, user_id, content) VALUES ($1, $2, $3) RETURNING id::text AS id",
         args: [reviewId, userId, text.trim()],
@@ -448,6 +465,10 @@ export const reviewsRepository: Pick<RewindApiRepository,
       return result.rows[0] ? commentResponse(result.rows[0]) : null;
     } catch (error) {
       try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+      if (error instanceof PostgresError && error.fields.code === "42501"
+        && error.fields.table === "comments" && error.message.includes("row-level security")) {
+        return "FORBIDDEN";
+      }
       throw error;
     } finally { connection.release(); }
   },
