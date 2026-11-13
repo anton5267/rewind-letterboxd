@@ -23,7 +23,7 @@ const selectedKey = { actor: "actors", director: "directors", producer: "produce
 export default function AdminMovieCreditsField({ value, onChange }: Props) {
   const { t } = useLocale();
   const [queries, setQueries] = useState<Record<PersonType, string>>({ actor: "", director: "", producer: "" });
-  const [results, setResults] = useState<Record<PersonType, SearchPerson[]>>({ actor: [], director: [], producer: [] });
+  const [results, setResults] = useState<Record<PersonType, SearchPerson[] | null>>({ actor: null, director: null, producer: null });
   const [loading, setLoading] = useState<Record<PersonType, boolean>>({ actor: false, director: false, producer: false });
   const [errors, setErrors] = useState<Record<PersonType, boolean>>({ actor: false, director: false, producer: false });
 
@@ -75,15 +75,15 @@ export default function AdminMovieCreditsField({ value, onChange }: Props) {
         <label className={styles.searchField}>{t("adminMoviePeopleSearch")} · {labels[type]}
           <input value={queries[type]} minLength={2} maxLength={100} onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
             if (event.key === "Enter") { event.preventDefault(); void search(type); }
-          }} onChange={event => setQueries(current => ({ ...current, [type]: event.target.value }))} />
+          }} onChange={event => { setQueries(current => ({ ...current, [type]: event.target.value })); setResults(current => ({ ...current, [type]: null })); }} />
         </label>
         <button type="button" disabled={loading[type] || queries[type].trim().length < 2} onClick={() => { void search(type); }}>{loading[type] ? t("loading") : t("search")}</button>
       </div>
       {errors[type] && <RetryNotice className={styles.error} message={t("peopleSearchError")} retryLabel={t("retry")} disabled={loading[type]} busy={loading[type]} onRetry={() => {
         void search(type);
       }} />}
-      {!errors[type] && results[type].length > 0 && <ul className={styles.results} aria-label={`${labels[type]} · ${t("adminMoviePeopleResults")}`}>
-        {results[type].map(person => <li key={person.id}><span>{person.name}</span><button type="button" disabled={selected(type).some(item => item.id === person.id)} onClick={() => add(type, person)}>
+      {!errors[type] && !!results[type]?.length && <ul className={styles.results} aria-label={`${labels[type]} · ${t("adminMoviePeopleResults")}`}>
+        {results[type]?.map(person => <li key={person.id}><span>{person.name}</span><button type="button" disabled={selected(type).some(item => item.id === person.id)} onClick={() => add(type, person)}>
           {selected(type).some(item => item.id === person.id) ? t("selected") : t("add")}
         </button></li>)}
       </ul>}
@@ -97,7 +97,7 @@ export default function AdminMovieCreditsField({ value, onChange }: Props) {
           <button type="button" aria-label={`${t("remove")} ${person.name}`} onClick={() => remove(type, person.id)}>{t("remove")}</button>
         </li>)}
       </ul>}
-      {results[type].length === 0 && !errors[type] && !loading[type] && queries[type].trim().length >= 2 && <p className={styles.empty} role="status">{t("noGlobalResults")}</p>}
+      {results[type]?.length === 0 && !errors[type] && !loading[type] && queries[type].trim().length >= 2 && <p className={styles.empty} role="status">{t("noGlobalResults")}</p>}
     </fieldset>)}
   </section>;
 }
