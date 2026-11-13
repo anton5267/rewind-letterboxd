@@ -276,7 +276,8 @@
   .mobileMoveHandle { display: grid !important; place-items: center; border-radius: 50% !important; cursor: grab; touch-action: none; }
   .mobileMoveHandle:active { cursor: grabbing; }
   .mobileMoveHandle:focus-visible { outline: 3px solid #64dbe2; outline-offset: 3px; }
-  .mobileMoveHandle span { font-size: 21px; line-height: 1; }
+  .mobileMoveHandle img { pointer-events: none; }
+  .mobileMoveHandle[data-reordering="true"] { outline: 3px solid var(--rewind-cyan); outline-offset: 3px; cursor: grabbing; }
 }
 
 @media (max-width: 380px) {

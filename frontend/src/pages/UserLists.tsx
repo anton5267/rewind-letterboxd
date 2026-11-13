@@ -6,6 +6,7 @@ import Pagination from "../components/Pagination";
 import ResilientImage from "../components/ResilientImage";
 import RetryButton from "../components/RetryButton";
 import ConfirmDialog from "../components/ConfirmDialog";
+import ListReorderHandle from "../components/ListReorderHandle";
 import { useAuth } from "../context/AuthContext";
 import { editorialText, formatMovieYear, useLocale } from "../i18n";
 import { getLastPageIndex, isPageOutOfRange } from "../utils/pagination";
@@ -567,7 +568,7 @@ export default function UserLists() {
         {selectedList.listType === "CUSTOM" && <p id="list-reorder-instructions" className="srOnly">{t("listReorderHelp")}</p>}
         <ul className={styles.items}>{items.map((item, index) => {
         const movieTitle = editorialText(item.movie.title, t("untitledFilm"));
-        return <li className={styles.itemRow} key={item.id} onDragOver={event => { if (selectedList.listType === "CUSTOM") event.preventDefault(); }} onDrop={event => handleItemDrop(event, item.id)}>
+        return <li className={styles.itemRow} key={item.id} data-list-item-id={item.id} onDragOver={event => { if (selectedList.listType === "CUSTOM") event.preventDefault(); }} onDrop={event => handleItemDrop(event, item.id)}>
           <Link className={styles.itemPosterLink} to={path(`/films/${item.movie.id}`)} aria-label={`${movieTitle} ${t("poster")}`}>
             <ResilientImage className={styles.itemPoster} src={item.movie.photoUrl} alt="" fallback={<span className={styles.itemPosterFallback}>{movieTitle}</span>} />
           </Link>
@@ -580,16 +581,15 @@ export default function UserLists() {
               <span aria-hidden="true">−</span><span className="srOnly">{t("remove")}</span>
             </button>
             {selectedList.listType === "CUSTOM" && <>
-              <button className={styles.mobileMoveHandle} type="button" data-list-reorder-item={item.id} draggable={!itemsBusy && !saveBusy && !deleting} disabled={itemsBusy || saveBusy || deleting} aria-label={`${t("reorderItem")} ${movieTitle}`} aria-describedby="list-reorder-instructions" aria-keyshortcuts="ArrowUp ArrowDown" onKeyDown={event => {
-                if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
-                event.preventDefault();
-                void moveToIndex(item.id, index + (event.key === "ArrowUp" ? -1 : 1));
-              }} onDragStart={event => {
-                event.dataTransfer.effectAllowed = "move";
-                event.dataTransfer.setData("text/plain", String(item.id));
-              }}>
-                <span aria-hidden="true">✥</span>
-              </button>
+              <ListReorderHandle
+                key={`${user?.id}:${selectedList.id}:${lang}`}
+                className={styles.mobileMoveHandle}
+                itemId={item.id}
+                label={`${t("reorderItem")} ${movieTitle}`}
+                disabled={itemsBusy || saveBusy || deleting}
+                onStep={direction => void moveToIndex(item.id, index + direction)}
+                onDrop={targetItemId => void moveToIndex(item.id, items.findIndex(entry => entry.id === targetItemId))}
+              />
               <button className={styles.itemMoveButton} type="button" data-list-reorder-item={item.id} aria-busy={itemsBusy} disabled={itemsBusy || saveBusy || deleting || index === 0} onClick={() => void move(item.id, -1)} aria-label={t("moveUp")}>↑</button>
               <button className={styles.itemMoveButton} type="button" data-list-reorder-item={item.id} aria-busy={itemsBusy} disabled={itemsBusy || saveBusy || deleting || index === items.length - 1} onClick={() => void move(item.id, 1)} aria-label={t("moveDown")}>↓</button>
             </>}
