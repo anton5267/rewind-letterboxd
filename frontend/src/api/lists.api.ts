@@ -1,5 +1,6 @@
 import api from "./axios";
 import type { NumberedPage, Page } from "./types";
+import type { ReviewReportReason, ReviewReportStatus } from "./reviews.api";
 
 export interface UserList {
   id: number;
@@ -68,6 +69,9 @@ export const getPublicList = (listId: string | number) => api.get<PublicListDeta
 export const getPublicListLikeStatus = (listId: string | number) => api.get<PublicListLikeStatus>(`/lists/public/${listId}/like-status`);
 export const likePublicList = (listId: string | number) => api.post<void>(`/lists/${listId}/likes`);
 export const unlikePublicList = (listId: string | number) => api.delete<void>(`/lists/${listId}/likes`);
+export const getMyListReport = (listId: string | number) => api.get<ReviewReportStatus>(`/lists/public/${listId}/report`);
+export const reportList = (listId: string | number, reason: ReviewReportReason) =>
+  api.post<{ id: number; reason: ReviewReportReason; createdAt: string }>(`/lists/public/${listId}/report`, { reason });
 
 export const createList = (name: string, description: string, isPublic: boolean, tags: string[], movieIds: number[]) =>
   api.post<UserList>("/lists", { name, description: description || null, isPublic, tags, movieIds });

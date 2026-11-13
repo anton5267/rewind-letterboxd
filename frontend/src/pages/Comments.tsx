@@ -3,6 +3,7 @@ import { addComment, deleteComment, getComments, updateComment, type Comment } f
 import Pagination from "../components/Pagination";
 import RetryNotice from "../components/RetryNotice";
 import ConfirmDialog from "../components/ConfirmDialog";
+import ContentReportAction from "../components/ContentReportAction";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
 import { getUserName } from "../utils/userIdentity";
@@ -196,6 +197,7 @@ export default function Comments({ reviewId }: { reviewId: number }) {
               <button type="button" disabled={mutationBusy !== null} onClick={() => { setEditing(null); setText(""); }}>{t("cancel")}</button>
             </form> : <p className={styles.itemText}>{comment.text}</p>}
             {canChange && !isEditing && <><button type="button" disabled={mutationBusy !== null} onClick={() => { setEditing(comment.id); setText(comment.text); }}>{t("editComment")}</button>{" "}<button type="button" disabled={mutationBusy !== null} aria-busy={mutationBusy === "delete"} onClick={event => remove(comment.id, event.currentTarget)}>{mutationBusy === "delete" ? t("deleting") : t("deleteComment")}</button></>}
+            {isAuth && comment.userId !== user?.id && <ContentReportAction type="comment" id={comment.id} />}
           </li>;
         })}
       </ul>

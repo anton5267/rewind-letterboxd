@@ -1,5 +1,6 @@
 import api from "./axios";
 import type { NumberedPage } from "./types";
+import type { ReviewReportReason, ReviewReportStatus } from "./reviews.api";
 
 export interface Comment {
   id: number;
@@ -25,3 +26,9 @@ export const updateComment = (commentId: number, text: string) =>
 
 export const deleteComment = (commentId: number) =>
   api.delete<void>(`/comments/${commentId}`);
+
+export const getMyCommentReport = (commentId: number) =>
+  api.get<ReviewReportStatus>(`/comments/${commentId}/report`);
+
+export const reportComment = (commentId: number, reason: ReviewReportReason) =>
+  api.post<{ id: number; reason: ReviewReportReason; createdAt: string }>(`/comments/${commentId}/report`, { reason });
