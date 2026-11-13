@@ -1,6 +1,8 @@
 # Rewind — повний редизайн за актуальним Figma
 
-## Поточний checkpoint — 12.11.2026
+## Поточний checkpoint — 13.11.2026
+
+- **✅ Admin review/comment/list report UI — опубліковано:** commit `0cb1d7d` merged into `master`; CI [43463187593](https://github.com/anton5267/rewind-letterboxd/actions/runs/43463187593) and Pages deployment [43463187511](https://github.com/anton5267/rewind-letterboxd/actions/runs/43463187511) succeeded. Focused local Playwright set passed **7/7** after starting the required Vite preview; `npm run verify:build` passed. Live Pages routes and emitted report/admin assets returned HTTP 200 and contained the expected controls/routes. Authenticated live report submission/dismissal remains unverified; the existing report queue is empty. [Evidence](docs/operations/RELEASE_EVIDENCE.md#admin-report-controls-pages-deployment-and-live-asset-read-back--13112026).
 
 - **✅ Featured Lists ordering — опубліковано:** Admin CUSTOM featured rows мають доступні Move up/Move down дії; Edge v36 атомарно міняє позицію із сусіднім eligible списком під advisory lock і записує audit metadata. CI [43266760220](https://github.com/anton5267/rewind-letterboxd/actions/runs/43266760220) і Pages deploy [43266760644](https://github.com/anton5267/rewind-letterboxd/actions/runs/43266760644) успішні. Немає CUSTOM списків у production, тому реальну перестановку ще не виконували. [Evidence](docs/operations/RELEASE_EVIDENCE.md#admin-featured-list-ordering-release--12112026).
 - **✅ Admin movie audit — live v34 synchronized to source:** narrowed source patch records create/update/delete actions and allowlisted changed field names; no submitted values enter audit metadata. Isolated Edge suite **107/107**, `deno check`, and GitHub CI [43251041084](https://github.com/anton5267/rewind-letterboxd/actions/runs/43251041084) passed. [Evidence](docs/operations/RELEASE_EVIDENCE.md#admin-movie-audit-edge-v34-source-sync--12112026).
