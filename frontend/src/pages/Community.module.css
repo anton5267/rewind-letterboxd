@@ -31,9 +31,11 @@
   padding: 0 24px 18px;
   align-items: end;
   border-radius: 30px;
-  background: linear-gradient(180deg, rgba(230, 135, 14, .92), rgba(67, 31, 10, .72));
+  background:
+    linear-gradient(180deg, transparent, rgba(31, 31, 31, .7)),
+    url("/images/community-members-banner.jpg") center 70.4% / cover no-repeat;
   color: #fff;
-  font-size: 13px;
+  font-size: 20px;
   line-height: 1.35;
 }
 
