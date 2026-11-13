@@ -227,7 +227,7 @@ export default function PublicList() {
         <div ref={heroActionsRef} data-public-list-actions className={styles.heroActions}>
           <span className={styles.likeCount}>{list.likeCount ?? 0} {t("likes").toLocaleLowerCase(lang)}</span>
           {likeControls}
-          {isAuth && user?.id !== list.ownerId && <ContentReportAction type="list" id={list.id} />}
+          {isAuth && user?.id !== list.ownerId && <ContentReportAction key={`${user?.id}:${list.id}`} type="list" id={list.id} />}
         </div>
       </div>
     </section>
