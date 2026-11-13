@@ -287,7 +287,7 @@ export default function UserLists() {
         : pending.kind === "films"
           ? document.getElementById("draft-film-search")
           : pending.kind === "items"
-            ? document.querySelector<HTMLElement>('[aria-labelledby="selected-list-heading"]')
+            ? document.querySelector<HTMLElement>("[data-selected-list]")
             : document.querySelector<HTMLElement>('[aria-labelledby="my-lists-heading"]');
       if (failed) scope?.querySelector<HTMLElement>("[data-retry-button]")?.focus();
       else if (pending.kind === "linked") listDetailHeadingRef.current?.focus();
@@ -613,7 +613,7 @@ export default function UserLists() {
       <p>{description.trim() || t("emptyList")}</p>
       {tags.trim() && <div className={styles.previewTags}>{tags.split(",").map(tag => tag.trim()).filter(Boolean).map(tag => <span key={tag}>#{tag}</span>)}</div>}
     </aside>}
-      {selectedList && <section className={`${styles.section} ${styles.selectedSection} ${selectedList.listType === "CUSTOM" ? styles.customEditor : ""} ${phoneCustomEditor ? styles.phoneCustomSection : ""}`} aria-labelledby={phoneCustomEditor ? undefined : "selected-list-heading"} aria-label={phoneCustomEditor ? selectedList.name : undefined} aria-busy={itemsLoading || itemsBusy || saveBusy || deleting}>
+      {selectedList && <section data-selected-list={selectedList.id} className={`${styles.section} ${styles.selectedSection} ${selectedList.listType === "CUSTOM" ? styles.customEditor : ""} ${phoneCustomEditor ? styles.phoneCustomSection : ""}`} aria-labelledby={phoneCustomEditor ? undefined : "selected-list-heading"} aria-label={phoneCustomEditor ? selectedList.name : undefined} aria-busy={itemsLoading || itemsBusy || saveBusy || deleting}>
       {phoneCustomEditor && itemsFeedback}
       {phoneCustomEditor && !mobileEntriesOpen && <MobileListSettings
         key={`${user?.id}:${selectedList.id}:${lang}`}

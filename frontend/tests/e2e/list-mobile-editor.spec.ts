@@ -16,7 +16,7 @@ for (const lang of ["uk", "en"] as const) {
     const additions: number[] = [];
     let failSearch = true;
     let failAdd = true;
-    let failItems = false;
+    let failItems = 0;
 
     await page.route(url => url.pathname.startsWith("/api/"), async route => {
       const request = route.request();
@@ -28,7 +28,7 @@ for (const lang of ["uk", "en"] as const) {
       if (url.pathname === "/api/lists/my") return route.fulfill({ json: [list] });
       if (url.pathname === "/api/lists/my/page") return route.fulfill({ json: { content: [list], number: 0, size: 12, totalPages: 1, totalElements: 1 } });
       if (url.pathname === "/api/lists/98021/items") {
-        if (failItems) { failItems = false; return route.fulfill({ status: 503, json: {} }); }
+        if (failItems > 0) { failItems -= 1; return route.fulfill({ status: 503, json: {} }); }
         return route.fulfill({ json: items });
       }
       if (url.pathname === "/api/lists/98021" && request.method() === "PATCH") {
@@ -47,7 +47,7 @@ for (const lang of ["uk", "en"] as const) {
         additions.push(movieId);
         if (failAdd) { failAdd = false; return route.fulfill({ status: 503, json: {} }); }
         items = [...items, { id: 98201, position: items.length, movie: candidates.find(movie => movie.id === movieId)! }];
-        failItems = true;
+        failItems = 2;
         return route.fulfill({ status: 200, body: "" });
       }
       return route.fulfill({ json: [] });
@@ -100,6 +100,8 @@ for (const lang of ["uk", "en"] as const) {
     await addWhiplash.click();
     await page.getByRole("button", { name: copy.retry, exact: true }).waitFor();
     await expect(addWhiplash).toBeDisabled();
+    await page.getByRole("button", { name: copy.retry, exact: true }).click();
+    await expect(page.getByRole("button", { name: copy.retry, exact: true })).toBeFocused();
     await page.getByRole("button", { name: copy.retry, exact: true }).click();
     await expect(page.locator('[data-list-item-id="98201"]')).toBeVisible();
     await expect(addWhiplash).toBeDisabled();
