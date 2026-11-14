@@ -61,7 +61,6 @@ export async function handleListRoutes(context: HttpRouteContext): Promise<Respo
     if (tag && tag.length > 60) return json({ message: "Invalid tag" }, 400, corsHeaders);
     try {
       const result = await repository.getPublicLists(feed, tag, page, size);
-      corsHeaders.set("Cache-Control", PUBLIC_CATALOG_CACHE);
       return json(result, 200, corsHeaders);
     } catch {
       return json({ message: "Unable to load public lists" }, 500, corsHeaders);
@@ -95,7 +94,6 @@ export async function handleListRoutes(context: HttpRouteContext): Promise<Respo
     try {
       const result = await repository.getPublicList(listId);
       if (!result) return json({ message: "Public list not found" }, 404, corsHeaders);
-      corsHeaders.set("Cache-Control", PUBLIC_CATALOG_CACHE);
       return json(result, 200, corsHeaders);
     } catch {
       return json({ message: "Unable to load public list" }, 500, corsHeaders);

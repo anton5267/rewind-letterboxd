@@ -9,7 +9,7 @@ Spring Boot/MySQL/Redis/Mailpit мають окремий локальний ж�
 ## Підтверджений стан — 14.11.2026
 
 - [x] Повний React frontend опублікований на GitHub Pages. Функціональні релізи та їхні CI/Pages докази наведені в release evidence. Стани Home та Header ізольовані за ID глядача. Cross-tab account switch і запізнілі відповіді перевірені цільовими UK/EN fixtures для feed та unread counters.
-- [x] Hosted API `rewind-api` v60 ACTIVE звірено з повним джерелом. Таблиці застосунку розміщені в приватній `rewind` schema з RLS, профілі пов’язані з Auth за UUID.
+- [x] Hosted API `rewind-api` v61 ACTIVE звірено з повним джерелом. Таблиці застосунку розміщені в приватній `rewind` schema з RLS, профілі пов’язані з Auth за UUID.
 - [x] Hosted session bootstrap очікує REWIND-профіль перед Admin guard. Прострочений токен, ADMIN/USER routing та Header account switch мають цільове покриття.
 - [x] Англійський README має три архітектурні схеми. Заголовок вкладки оновлюється після SPA/query/history переходів, Admin має явну локалізовану назву розділу. Цільові UK/EN сценарії 6/6. Edge API та React-профілі рознесені за відповідальністю.
 - [x] Shared Header/Footer отримали оригінальні Figma SVG, desktop search border і nav slots/opacity. Цільова UK/EN звірка геометрії та клавіатури пройшла у 10 viewport/locale комбінаціях. Типографіка й повна frame parity відкриті.
@@ -18,7 +18,7 @@ Spring Boot/MySQL/Redis/Mailpit мають окремий локальний ж�
 - [x] Історія hosted міграцій у джерелах звірена з 55/55 live версіями й назвами; чотири відсутні SQL-файли відновлені з перевіреної локальної копії. Favorites мають захист зміни акаунта й післявидальний focus, цільові UK/EN fixtures 6/6.
 - [x] Admin search має request/role guards, локалізовані жанри й окремі назву/помилку поля жанрів. Movie edit зберігає відсутню originalLanguage й nullable castOrder. Новий актор отримує наступну позицію з урахуванням integer bounds. Версійний Supabase config явно виключає rewind із Data API. Перевірки — у release evidence. Admin review editor має окремий CSS-модуль. Live UK/EN edit/cancel, hide/show і public reads прийняті на очищеному QA наборі. Захищений Admin GET деталей і hidden-film save/reload прийняті live. QA очищено, початкові 50 фільмів звірені. Спільний SQL reader відокремлений.
 - [x] Статусні документи скорочені, детальні checkpoints і варіанти попередніх текстів збережені в [архіві](docs/archive/README.md).
-- [x] Live owner list flow пройшов створення, порядок фільмів, rank/reply settings, очищення опису, pin/save/reload, comment create/edit/reload/delete та public→private з автоматичним unpin і анонімним 404. Тестові записи очищені. Картки приватних списків спрямовані на відповідний owner detail route, UK/EN navigation fixtures 2/2.
+- [x] Live owner list flow пройшов створення, порядок фільмів, rank/reply settings, очищення опису, pin/save/reload, comment create/edit/reload/delete та public→private з автоматичним unpin і анонімним 404. Тестові записи очищені. Картки приватних списків спрямовані на відповідний owner detail route, UK/EN navigation fixtures 2/2. Live Admin feature/unfeature/hide/publish і populated featured feed прийняті на очищеному QA списку. Виправлено кешування стрічок і деталей списків.
 
 - [x] Live profile settings пройшли UK save/reload, EN clear/reload та SELF/FOLLOWED/ANYONE. Перевірено owner-only names і website save/reload/public-read/clear. Початкові поля й порожні social/name записи відновлені.
 

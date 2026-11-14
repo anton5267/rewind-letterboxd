@@ -502,7 +502,7 @@ Deno.test("public list feeds preserve paging and tag filters across Spring route
   const body = await all.json();
   if ([all, popular, recent, team, featured].some((response) => response.status !== 200)
     || calls.join(",") !== "all:sci-fi:0:50,popular:-:2:1,recently-liked:-:0:20,team:-:0:20,featured:-:0:20"
-    || body.totalElements !== 25 || all.headers.get("Cache-Control") !== "public, max-age=300, stale-while-revalidate=600") {
+    || body.totalElements !== 25 || [all, popular, recent, team, featured].some(response => response.headers.get("Cache-Control") !== "no-store")) {
     throw new Error(`Unexpected public list page contract: ${JSON.stringify({ calls, body })}`);
   }
 });
@@ -528,8 +528,7 @@ Deno.test("public list detail hides unknown lists and has a separate authenticat
   if (visible.status !== 200 || missing.status !== 404 || unauthenticated.status !== 401
     || status.status !== 200 || JSON.stringify(detailBody) !== JSON.stringify(detail)
     || JSON.stringify(statusBody) !== JSON.stringify({ liked: true, likes: 2 })
-    || visible.headers.get("Cache-Control") !== "public, max-age=300, stale-while-revalidate=600"
-    || status.headers.get("Cache-Control") !== "no-store") {
+    || [visible, missing, unauthenticated, status].some(response => response.headers.get("Cache-Control") !== "no-store")) {
     throw new Error(`Unexpected public list detail/like-status response: ${JSON.stringify({ detailBody, statusBody })}`);
   }
 });
