@@ -12,7 +12,7 @@
     z-index: 0;
     inset: 0;
     border-radius: inherit;
-    background: linear-gradient(180deg, rgba(0, 0, 0, .2), rgba(0, 0, 0, .84) 76%, #1f1f1f), url("/images/profile-settings-hero.jpg") center top / cover no-repeat;
+    background: linear-gradient(180deg, rgba(0, 0, 0, .2), rgba(0, 0, 0, .84) 76%, #1f1f1f), var(--rewind-profile-banner, url("/images/profile-settings-hero.jpg")) center top / cover no-repeat;
     content: "";
     pointer-events: none;
   }
@@ -63,7 +63,7 @@
     height: max(496px, 100%);
     background:
       linear-gradient(180deg, rgba(0, 0, 0, .12), rgba(0, 0, 0, .4) 114px, rgba(0, 0, 0, .92) 245px, #000 295px),
-      url("/images/profile-settings-hero.jpg") center top / max(100%, 524.444px) auto no-repeat,
+      var(--rewind-profile-banner, url("/images/profile-settings-hero.jpg")) center top / max(100%, 524.444px) auto no-repeat,
       #000;
     content: "";
     pointer-events: none;

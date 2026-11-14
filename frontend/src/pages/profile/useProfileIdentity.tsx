@@ -1,3 +1,4 @@
+import type { ProfileMediaResponse } from "../../api/profile-media.api";
 import { usesHostedSupabaseAuth } from "../../api/supabaseClient";
 import { useAuth } from "../../context/AuthContext";
 import { useLocation } from "react-router-dom";
@@ -73,11 +74,13 @@ export function useProfileIdentity({ route, feedback }: {
   const [familyName, setFamilyName] = useState("");
 
   const [nameBusy, setNameBusy] = useState(false);
+  const nameBusyRef = useRef(false);
 
   const identityMutation = useRef(0);
 
   useEffect(() => {
     identityMutation.current += 1;
+    nameBusyRef.current = false;
     setNameBusy(false);
     setGivenName("");
     setFamilyName("");
@@ -127,9 +130,28 @@ export function useProfileIdentity({ route, feedback }: {
     return () => window.cancelAnimationFrame(frame);
   }, [profileAttempt, profileLoading, profileLoadError, settingsTab, profile?.id, location.key, lang, isAuth, user?.id]);
 
+  const beginMediaChange = (expectedUserId: number) => {
+    if (!settingsMounted.current || activeUserId.current !== expectedUserId || nameBusyRef.current) return null;
+    const token = ++identityMutation.current;
+    nameBusyRef.current = true;
+    setNameBusy(true);
+    settingsFeedbackGeneration.current += 1;
+    setError(""); setMessage(""); setSettingsFeedback(null);
+    return token;
+  };
+  const finishMediaChange = (expectedUserId: number, token: number, media?: ProfileMediaResponse) => {
+    if (!settingsMounted.current || activeUserId.current !== expectedUserId || identityMutation.current !== token) return;
+    if (media) {
+      setProfile(current => current?.id === expectedUserId ? { ...current, ...media } : current);
+      setAvatarUrl(media.avatarUrl ?? "");
+    }
+    nameBusyRef.current = false;
+    setNameBusy(false);
+  };
+
   const saveName = async (event: React.FormEvent, fields: "name" | "avatar" | "both" = "both") => {
     event.preventDefault();
-    if (nameBusy) return;
+    if (nameBusyRef.current) return;
     const requestId = ++identityMutation.current;
     const requestUserId = activeUserId.current;
     const scope = ++settingsFeedbackGeneration.current;
@@ -142,6 +164,7 @@ export function useProfileIdentity({ route, feedback }: {
       else { setMessage(""); setError(text); }
       setSettingsFeedback({ id: ++settingsFeedbackSequence.current, origin, kind });
     };
+    nameBusyRef.current = true;
     setNameBusy(true);
     setSettingsFeedback(null);
     setMessage("");
@@ -169,7 +192,7 @@ export function useProfileIdentity({ route, feedback }: {
       }
       report("success", fields === "avatar" ? (lang === "uk" ? "Аватар оновлено." : "Avatar updated.") : t("nameSaved"));
     } catch { report("error", t(fields === "avatar" ? "saveAvatarError" : "saveNameError")); }
-    finally { if (isCurrentRequest()) setNameBusy(false); }
+    finally { if (isCurrentRequest()) { nameBusyRef.current = false; setNameBusy(false); } }
   };
 
   return {
@@ -186,6 +209,8 @@ export function useProfileIdentity({ route, feedback }: {
     setProfileLoadError,
     setProfileAttempt,
     saveName,
+    beginMediaChange,
+    finishMediaChange,
     displayName,
     setDisplayName,
     givenName,

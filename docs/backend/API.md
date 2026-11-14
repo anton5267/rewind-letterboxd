@@ -125,3 +125,9 @@ Own `recentReviews` і paged `/api/profile/me/reviews` у поточному sou
 `CoreFilmFlowIntegrationTests` покриває основний film flow на MySQL. Команди Maven, конфігурація БД і CSRF/bootstrap описані в [RUN_LOCAL.md](../operations/RUN_LOCAL.md). Дати, результати й межі виконаних перевірок — лише в [release evidence](../operations/RELEASE_EVIDENCE.md).
 
 Пов'язані матеріали: [Backend](README.md), [ER](README.md#схема-даних), [карта функцій](../../README.md#де-шукати-функцію).
+
+## Hosted profile media
+
+`POST /api/profile/me/media/{avatar|banner}?expectedUserId={numericId}` accepts raw JPEG/PNG bytes. `DELETE` on the same URL clears that image. Both require a confirmed bearer identity and compare the expected numeric ID with the mapped profile before mutation. Responses contain nullable `avatarUrl` and `bannerUrl`. Own and public profile GET responses also include nullable `bannerUrl`. Images save immediately and are public.
+
+Limits are 2 MB and 4096 pixels per dimension. Unsupported MIME returns 415, oversized bodies 413, malformed data or missing ID 400, changed account 409, and pending-upload quota 429. Storage outages preserve the previous active image and return a retryable error. Old files are cleaned through the private media queue. Local Spring mode retains its existing avatar URL form.

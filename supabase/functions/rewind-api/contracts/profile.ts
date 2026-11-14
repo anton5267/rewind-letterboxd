@@ -9,6 +9,7 @@ export interface ProfileResponse {
   email: string;
   role: string;
   avatarUrl: string | null;
+  bannerUrl?: string | null;
   bio?: string | null;
   location?: string | null;
   pronoun?: string | null;
@@ -39,7 +40,7 @@ export interface ProfileUpdateRequest {
 }
 
 export interface PublicProfileResponse {
-  id: number; username: string; displayName: string; avatarUrl: string | null; bio?: string | null; location?: string | null; pronoun?: string | null; hq: boolean;
+  id: number; username: string; displayName: string; avatarUrl: string | null; bannerUrl?: string | null; bio?: string | null; location?: string | null; pronoun?: string | null; hq: boolean;
   stats: { ratings: number; reviews: number; watched: number; watchlist: number; favorites: number };
   ratingDistribution: { rating: number; count: number }[];
   socialLinks: { platform: string; url: string }[];

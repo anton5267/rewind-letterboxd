@@ -85,3 +85,18 @@ Supabase's [Cron guide](https://supabase.com/docs/guides/cron) documents `cron.j
 ## Backup and recovery
 
 The Free-plan export and restore prerequisites are tracked separately in [the PostgreSQL backup runbook](DEPLOYMENT_POSTGRESQL.md#supabase-free-backup-and-recovery--not-yet-accepted). Do not treat an application-schema dump as a full Supabase project backup: Auth identities, Storage objects, service settings, and Edge secrets need separate recovery planning. The current export helper intentionally refuses to run until CLI authentication, the project link, and an encrypted, access-restricted destination are verified.
+
+## Profile image storage and cleanup
+
+Hosted avatar and banner uploads use the public `rewind-profile-media` bucket. JPEG/PNG files are limited to 2 MB and 4096 pixels per dimension. The browser decodes and re-encodes images to remove source metadata. Edge checks MIME, file headers, dimensions and streamed byte size, then authenticates the numeric profile ID against the confirmed Supabase identity. Client Storage writes have no policies.
+
+The private RLS table `rewind.profile_media_objects` tracks PENDING uploads, ACTIVE images and DELETE work. Reservations expire after ten minutes. Replacement, removal and account deletion queue obsolete files. Cleanup uses bounded batches, leased jobs and retry backoff. The account-deletion trigger keeps detached cleanup records until Storage deletion succeeds.
+
+After restoring the application schema and Edge source, create the bucket with the metadata in migration `20261114014943_profile_media_storage.sql` if it is missing, restore its object bytes separately, and replay `scripts/configure-supabase-media-cleanup.sql` as the database owner. For another Supabase project, replace the public project URL in that script. Replaying the script updates the named five-minute Cron job. It calls the public genres API only while cleanup work is due, waking the Edge worker without an additional secret. An application-schema dump excludes Storage bytes, bucket metadata and Cron schedules.
+
+Inspect only the relevant state when diagnosing cleanup.
+
+```sql
+SELECT status, count(*) FROM rewind.profile_media_objects GROUP BY status;
+SELECT jobname, schedule, active FROM cron.job WHERE jobname = 'rewind-profile-media-cleanup';
+```

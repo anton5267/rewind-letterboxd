@@ -29,6 +29,7 @@ export interface ProfileResponse {
   email: string;
   role: string;
   avatarUrl: string | null;
+  bannerUrl?: string | null;
   bio?: string | null;
   location?: string | null;
   pronoun?: string | null;
@@ -110,6 +111,7 @@ export interface PublicProfileResponse {
   username: string;
   displayName: string;
   avatarUrl: string | null;
+  bannerUrl?: string | null;
   bio?: string | null;
   location?: string | null;
   pronoun?: string | null;

@@ -1,3 +1,4 @@
+import ProfileMediaSettings from "../../components/ProfileMediaSettings";
 import { useLocale, editorialText } from "../../i18n";
 import { useAuth } from "../../context/AuthContext";
 import ProfileSettingsShell, { type ProfileSettingsTab } from "../../components/ProfileSettingsShell";
@@ -36,6 +37,8 @@ interface Props {
     | "setProfileLoadError"
     | "setProfileAttempt"
     | "saveName"
+    | "beginMediaChange"
+    | "finishMediaChange"
     | "displayName"
     | "setDisplayName"
     | "givenName"
@@ -197,7 +200,11 @@ export default function ProfileSettingsView({ settingsTab, identity, account, co
         <Link className={settingsStyles.manageLink} to={`${path("/profile")}?view=collection&collection=favorites#profile-collections`}>{t("favoriteFilms")} <span aria-hidden="true">→</span></Link>
       </section>
     </>}
-    {(settingsTab === "avatar" || settingsTab === "profile") && <form id={settingsTab === "avatar" ? "settings-form-avatar" : undefined} className={settingsTab === "profile" ? settingsStyles.mobileOnly : undefined} data-settings-form="avatar" aria-labelledby="settings-avatar-title" aria-busy={nameBusy} onSubmit={event => { void saveName(event, "avatar"); }}>
+    {usesHostedSupabaseAuth && (settingsTab === "avatar" || settingsTab === "profile") && <ProfileMediaSettings
+      key={`${user?.id}-${profile.id}-${lang}`} userId={profile.id} avatarUrl={profile.avatarUrl} bannerUrl={profile.bannerUrl ?? null}
+      initial={getUserInitial(profile)} disabled={nameBusy} mobileOnly={settingsTab === "profile"}
+      beginChange={identity.beginMediaChange} finishChange={identity.finishMediaChange} />}
+    {!usesHostedSupabaseAuth && (settingsTab === "avatar" || settingsTab === "profile") && <form id={settingsTab === "avatar" ? "settings-form-avatar" : undefined} className={settingsTab === "profile" ? settingsStyles.mobileOnly : undefined} data-settings-form="avatar" aria-labelledby="settings-avatar-title" aria-busy={nameBusy} onSubmit={event => { void saveName(event, "avatar"); }}>
       <h2 id="settings-avatar-title">{t("avatarUrl")}</h2>
       <div className={settingsStyles.avatarPreview}><ResilientImage src={profile.avatarUrl} alt={getUserName(profile)} fallback={<span className={settingsStyles.avatarInitial}>{getUserInitial(profile)}</span>} /></div>
       <div className={settingsStyles.avatarField}><label htmlFor="profile-avatar-url">{t("avatarUrl")}</label><input id="profile-avatar-url" type="url" disabled={nameBusy} value={avatarUrl} maxLength={255} placeholder="https://…" onChange={event => setAvatarUrl(event.target.value)} /></div>

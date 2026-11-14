@@ -1,3 +1,4 @@
+import { usesHostedSupabaseAuth } from "../api/supabaseClient";
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { Link, useLocation, useNavigationType } from "react-router-dom";
 import { useLocale } from "../i18n";
@@ -109,7 +110,7 @@ export default function ProfileSettingsShell({ activeTab, children, loading, loa
   const tabs = [
     { id: "profile", label: t("profile") },
     { id: "authentication", label: t("authentication") },
-    { id: "avatar", label: t("avatarUrl") },
+    { id: "avatar", label: t(usesHostedSupabaseAuth ? "avatarAndBanner" : "avatarUrl") },
     { id: "connections", label: t("socialLinks") },
   ] as const;
   const saveFormId = `settings-form-${activeTab}`;
@@ -121,7 +122,7 @@ export default function ProfileSettingsShell({ activeTab, children, loading, loa
       <div className={styles.mobileToolbar}>
         <Link to={path("/profile")} aria-label={t("cancel")}>{t("cancel")}</Link>
         <h2 ref={mobileTitleRef} id="account-settings-mobile-title" tabIndex={-1} className={styles.retryFocusHeading}>{t("settings")}</h2>
-        <button type="submit" form={saveFormId} disabled={busy || loading || loadError}>{t("save")}</button>
+        {usesHostedSupabaseAuth && activeTab === "avatar" ? <Link to={path("/profile")}>{t("done")}</Link> : <button type="submit" form={saveFormId} disabled={busy || loading || loadError}>{t("save")}</button>}
       </div>
     </header>
     <div className={styles.content}>

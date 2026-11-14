@@ -16,9 +16,10 @@ flowchart LR
     Edge -->|"Identity verification"| Auth
     Edge -->|"SQL · roles · RLS"| Database[("PostgreSQL · private rewind")]
     Edge -->|"Film metadata"| TMDB["TMDB API"]
+    Edge -->|"Profile images"| Storage["Supabase Storage"]
 ```
 
-The frontend sends a Supabase access token with protected requests. Edge verifies identity and permissions, maps profiles by Supabase UUID, and preserves numeric REWIND IDs and roles. Application tables live in the private `rewind` schema with row-level security and narrowly scoped grants.
+The frontend sends a Supabase access token with protected requests. Edge verifies identity and permissions, maps profiles by Supabase UUID, and preserves numeric REWIND IDs and roles. Application tables live in the private `rewind` schema with row-level security and narrowly scoped grants. Public avatar and banner files use Supabase Storage, with owner-verified uploads and retryable server-side cleanup.
 
 ### Edge API organization
 

@@ -26,7 +26,7 @@
     border-radius: 0;
     background:
       linear-gradient(180deg, rgba(0, 0, 0, .16), rgba(0, 0, 0, .82)),
-      #111 url("/images/public-profile-hero.jpg") center / cover no-repeat;
+      #111 var(--rewind-profile-banner, url("/images/public-profile-hero.jpg")) center / cover no-repeat;
     text-align: center;
   }
 

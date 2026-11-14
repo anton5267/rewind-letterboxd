@@ -1,3 +1,4 @@
+import { handleProfileMediaRoute } from "./http/routes/profile_media.ts";
 import { handleCommentRoutes } from "./http/routes/comments.ts";
 import type { InternalWorkerHandler, RewindAuthVerifier } from "./contracts/auth.ts";
 import type { RewindApiRepository } from "./contracts/repository.ts";
@@ -45,6 +46,7 @@ const routeHandlers = [
   handleCommentRoutes,
   handleProfileRoutes,
   handleProfileEmailRoute,
+  handleProfileMediaRoute,
   handleMovieStatusRoutes,
   handleCurrentUserRoute,
   handleMovieRatingRoutes,

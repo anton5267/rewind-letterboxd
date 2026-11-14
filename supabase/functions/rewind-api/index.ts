@@ -1,6 +1,9 @@
+import { profileMediaRepository } from "./repositories/profile_media.ts";
+import { processPendingProfileMediaDeletion } from "./runtime/profile_media.ts";
 import { commentsRepository } from "./repositories/comments.ts";
 import "./runtime/database.ts";
 import { createRewindApiHandler, type RewindApiRepository } from "./handler.ts";
+import { apiPath } from "./http/response.ts";
 import { allowedOrigins } from "./runtime/config.ts";
 import { hostedAuthVerifier, processPendingIdentityDeletion } from "./runtime/identity.ts";
 import { handleTmdbRefreshRequest } from "./runtime/tmdb_refresh.ts";
@@ -31,6 +34,7 @@ const repository: RewindApiRepository = {
   ...adminModerationRepository,
   ...messagesRepository,
   ...profileRepository,
+  ...profileMediaRepository,
   ...socialRepository,
   ...listsRepository,
   ...reviewsRepository,
@@ -44,6 +48,9 @@ const handler = createRewindApiHandler(repository, allowedOrigins, hostedAuthVer
 Deno.serve(async (request) => {
   const response = await handler(request);
   const edgeRuntime = (globalThis as typeof globalThis & { EdgeRuntime?: { waitUntil(promise: Promise<unknown>): void } }).EdgeRuntime;
-  if (edgeRuntime) edgeRuntime.waitUntil(processPendingIdentityDeletion().catch(() => undefined));
+  const path = apiPath(new URL(request.url).pathname);
+  const profileMutation = response.ok && request.method !== "GET" && request.method !== "OPTIONS"
+    && (path === "/api/profile/me" || path.startsWith("/api/profile/me/media/"));
+  if (edgeRuntime) edgeRuntime.waitUntil(Promise.allSettled([processPendingIdentityDeletion(), processPendingProfileMediaDeletion(profileMutation)]));
   return response;
 });

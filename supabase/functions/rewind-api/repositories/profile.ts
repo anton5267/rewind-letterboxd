@@ -41,9 +41,9 @@ export const profileRepository: Pick<RewindApiRepository,
     try {
       await connection.queryObject("SET ROLE rewind_edge_app");
       const userResult = await connection.queryObject<{
-        id: string; username: string; display_name: string | null; avatar_url: string | null; bio: string | null; location: string | null; pronoun: string | null; is_hq: boolean;
+        id: string; username: string; display_name: string | null; avatar_url: string | null; banner_url: string | null; bio: string | null; location: string | null; pronoun: string | null; is_hq: boolean;
       }>({
-        text: "SELECT id::text AS id, username, display_name, avatar_url, bio, location, pronoun, is_hq FROM rewind.users WHERE id = $1 AND is_active",
+        text: "SELECT id::text AS id, username, display_name, avatar_url, banner_url, bio, location, pronoun, is_hq FROM rewind.users WHERE id = $1 AND is_active",
         args: [userId],
       });
       const user = userResult.rows[0];
@@ -80,7 +80,7 @@ export const profileRepository: Pick<RewindApiRepository,
       const stats = counts.rows[0];
       return {
         id: safeId(user.id, "User ID"), username: user.username,
-        displayName: user.display_name?.trim() || user.username, avatarUrl: user.avatar_url, bio: user.bio, location: user.location, pronoun: user.pronoun, hq: user.is_hq,
+        displayName: user.display_name?.trim() || user.username, avatarUrl: user.avatar_url, bannerUrl: user.banner_url, bio: user.bio, location: user.location, pronoun: user.pronoun, hq: user.is_hq,
         stats: {
           ratings: Number(stats?.ratings ?? 0), reviews: Number(stats?.reviews ?? 0),
           watched: Number(stats?.watched ?? 0), watchlist: Number(stats?.watchlist ?? 0), favorites: Number(stats?.favorites ?? 0),
@@ -302,9 +302,9 @@ export const profileRepository: Pick<RewindApiRepository,
     const { connection, userId } = await beginUserTransaction(authUser);
     try {
       const userResult = await connection.queryObject<{
-        id: string; username: string; display_name: string | null; role: string; avatar_url: string | null; bio: string | null; location: string | null; pronoun: string | null; reply_preference: ReplyPreference;
+        id: string; username: string; display_name: string | null; role: string; avatar_url: string | null; banner_url: string | null; bio: string | null; location: string | null; pronoun: string | null; reply_preference: ReplyPreference;
       }>({
-        text: `SELECT id::text AS id, username, display_name, role, avatar_url, bio, location, pronoun, reply_preference
+        text: `SELECT id::text AS id, username, display_name, role, avatar_url, banner_url, bio, location, pronoun, reply_preference
                FROM rewind.users WHERE id = $1`,
         args: [userId],
       });
@@ -362,6 +362,7 @@ export const profileRepository: Pick<RewindApiRepository,
         email: authUser.email,
         role: user.role,
         avatarUrl: user.avatar_url,
+        bannerUrl: user.banner_url,
         bio: user.bio,
         location: user.location,
         pronoun: user.pronoun,

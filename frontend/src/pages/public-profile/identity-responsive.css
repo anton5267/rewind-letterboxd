@@ -3,7 +3,7 @@
   .shell { box-sizing: border-box; padding: 0 16px; }
   /* Figma 825:1393: original Whiplash layer in a 430x295 slot at x=-19.
      The gradient approximates the black blur; the flat surface starts at547. */
-  .hero { width: 100vw; min-height: 547px; box-sizing: border-box; margin-left: calc(50% - 50vw); align-items: center; justify-content: flex-start; flex-direction: column; gap: 0; border-radius: 0; padding: 50px 16px 10px; background: linear-gradient(180deg, rgba(0, 0, 0, .12), #000 295px, #000 547px, #1f1f1f 547px), #000 url("/images/public-profile-hero-phone.png") center -1px / max(100%, 430px) 304px no-repeat; box-shadow: none; text-align: center; }
+  .hero { width: 100vw; min-height: 547px; box-sizing: border-box; margin-left: calc(50% - 50vw); align-items: center; justify-content: flex-start; flex-direction: column; gap: 0; border-radius: 0; padding: 50px 16px 10px; background: linear-gradient(180deg, rgba(0, 0, 0, .12), #000 295px, #000 547px, #1f1f1f 547px), #000 var(--rewind-profile-banner, url("/images/public-profile-hero-phone.png")) center -1px / max(100%, 430px) 304px no-repeat; box-shadow: none; text-align: center; }
   .hero .eyebrow { display: none; }
   .identity { width: 100%; align-items: center; flex-direction: column; gap: 7px; }
   .identityCopy { width: min(100%, 361px); }
@@ -36,7 +36,7 @@
 /* Desktop Public Profile `238:596`: centered identity header and state rail.
    The photographic layer is added only when its original Figma asset is available. */
 @media (min-width: 768px) {
-  .hero { width: 100vw; min-height: 458px; box-sizing: border-box; margin-left: calc(50% - 50vw); align-items: center; justify-content: flex-start; flex-direction: column; gap: 0; padding: 112px 24px 76px; border-radius: 0; background: linear-gradient(180deg, rgba(0, 0, 0, .24), rgba(0, 0, 0, .88)), #111 url("/images/public-profile-hero.jpg") center / cover no-repeat; text-align: center; }
+  .hero { width: 100vw; min-height: 458px; box-sizing: border-box; margin-left: calc(50% - 50vw); align-items: center; justify-content: flex-start; flex-direction: column; gap: 0; padding: 112px 24px 76px; border-radius: 0; background: linear-gradient(180deg, rgba(0, 0, 0, .24), rgba(0, 0, 0, .88)), #111 var(--rewind-profile-banner, url("/images/public-profile-hero.jpg")) center / cover no-repeat; text-align: center; }
   .identity { flex-direction: column; gap: 12px; }
   .avatar, .avatarFallback { width: 120px; height: 120px; flex-basis: 120px; }
   .identityCopy { max-width: min(100%, 680px); }

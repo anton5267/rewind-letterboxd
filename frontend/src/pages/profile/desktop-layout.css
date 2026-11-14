@@ -65,7 +65,7 @@
     z-index: 0;
     inset: 0 0 auto;
     height: 817px;
-    background: linear-gradient(180deg, rgba(0, 0, 0, .12), rgba(0, 0, 0, .84) 76%, #1f1f1f), url("/images/profile-settings-hero.jpg") center top / cover no-repeat;
+    background: linear-gradient(180deg, rgba(0, 0, 0, .12), rgba(0, 0, 0, .84) 76%, #1f1f1f), var(--rewind-profile-banner, url("/images/profile-settings-hero.jpg")) center top / cover no-repeat;
     content: "";
     pointer-events: none;
   }

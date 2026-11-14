@@ -1,3 +1,4 @@
+import type { ProfileMediaKind, ProfileMediaResponse, ProfileMediaUpload } from "./profile_media.ts";
 import type { GenreResponse, GlobalSearchResponse, MovieDetailsResponse, MovieFlagType, MovieSearchParams, MovieSearchResult, MovieStatusResponse, PersonFilmographyResponse, PersonSearchParams, PersonSearchResult } from "./catalog.ts";
 import type { CurrentUserResponse, HostedAuthUser } from "./auth.ts";
 import type { ProfileCollectionResult, ProfileResponse, ProfileUpdateRequest, PublicProfileResponse } from "./profile.ts";
@@ -54,6 +55,7 @@ export interface RewindApiRepository {
   unlikePublicList?(authUser: HostedAuthUser, listId: number): Promise<boolean>;
   getOrCreateCurrentUser?(authUser: HostedAuthUser): Promise<CurrentUserResponse>;
   getMyProfile?(authUser: HostedAuthUser): Promise<ProfileResponse>;
+  updateMyProfileMedia?(authUser: HostedAuthUser, kind: ProfileMediaKind, image: ProfileMediaUpload | null, expectedUserId: number): Promise<ProfileMediaResponse>;
   updateMyProfile?(authUser: HostedAuthUser, update: ProfileUpdateRequest): Promise<void>;
   deleteMyAccount?(authUser: HostedAuthUser): Promise<boolean>;
   getMyProfileCollection?(authUser: HostedAuthUser, collection: string, page: number, size: number): Promise<ProfileCollectionResult>;

@@ -1,3 +1,4 @@
+import { profileBannerStyle } from "../../utils/profileBannerStyle";
 import ProfileSocialLinks from "../../components/ProfileSocialLinks";
 import { Link } from "react-router-dom";
 import { type PublicCollection, type PublicProfileResponse } from "../../api/profile.api";
@@ -27,7 +28,7 @@ export default function PublicProfileIdentity({ profile, followingCount, followe
     retryRelationshipStatus,
   } = relationships;
   return <>
-<section className={styles.hero} aria-labelledby="public-profile-title">
+<section style={profileBannerStyle(profile.bannerUrl)} className={styles.hero} aria-labelledby="public-profile-title">
         <div className={styles.mobileToolbar}>
           <Link className={styles.mobileBack} to={path("/community")} aria-label={t("community")}>←</Link>
           <span>{t("profile")}</span>

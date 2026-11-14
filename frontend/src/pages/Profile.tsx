@@ -1,3 +1,4 @@
+import { profileBannerStyle } from "../utils/profileBannerStyle";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation, Navigate, Link } from "react-router-dom";
 import { useLocale } from "../i18n";
@@ -300,7 +301,7 @@ export default function Profile() {
         <h2 ref={filmsView ? collectionToolbarHeadingRef : networkView ? networkToolbarHeadingRef : undefined} tabIndex={filmsView || networkView ? -1 : undefined}>{viewTitle}</h2>
         {filmsView ? <button ref={collectionFilterButtonRef} type="button" aria-label={t("filters")} aria-expanded={collectionFiltersOpen} aria-controls="profile-collection-filters" onClick={() => setCollectionFiltersOpen(value => !value)} onKeyDown={event => { closeCollectionFiltersOnEscape(event); }}><i className="fa-solid fa-sliders" aria-hidden="true" /></button> : <span className={styles.toolbarAdornment} aria-hidden="true"><i className="fa-solid fa-sliders" /></span>}
       </div>}
-      <section className={styles.hero} aria-labelledby="profile-identity">
+      <section style={profileBannerStyle(profile.bannerUrl)} className={styles.hero} aria-labelledby="profile-identity">
         {profileView === "lists" && <Link className={styles.heroCreate} to={path("/lists")} aria-label={t("newList")}>＋</Link>}
         <div className={styles.heroActions}>
           <button ref={profileActionsButtonRef} className={styles.heroAction} type="button" aria-label={t("profileActions")} aria-expanded={profileActionsOpen} aria-controls={profileActionsOpen ? "profile-actions-menu" : undefined} onClick={() => setProfileActionsOpen(open => !open)}>
