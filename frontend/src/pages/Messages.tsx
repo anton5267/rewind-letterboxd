@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, Navigate, useLocation, useSearchParams } from "react-router-dom";
 import { getConversations, getMessages, markConversationRead, sendMessage, startConversation, type Conversation, type Message } from "../api/messages.api";
 import Pagination from "../components/Pagination";
@@ -9,6 +9,7 @@ import { getLastPageIndex, isPageOutOfRange } from "../utils/pagination";
 import { getUserIdentity } from "../utils/userIdentity";
 import { notifyUnreadCountsChanged } from "../utils/unreadEvents";
 import type { Page } from "../api/types";
+import { useMessageUpdates } from "../hooks/useMessageUpdates";
 import styles from "./Messages.module.css";
 
 export default function Messages() {
@@ -43,14 +44,22 @@ export default function Messages() {
   const sendRequest = useRef(0);
   const readRequest = useRef(0);
   const sendFocus = useRef<{ conversationId: number; origin: HTMLElement | null; composerOrigin: boolean } | null>(null);
-  const retryFocus = useRef<{ target: "conversations" | "target-conversation" | "messages" | "read"; origin: HTMLElement | null } | null>(null);
+  const retryFocus = useRef<{ target: "conversations" | "target-conversation" | "messages" | "read" | "refresh"; origin: HTMLElement | null } | null>(null);
   const conversationsPanel = useRef<HTMLElement | null>(null);
   const messagePanel = useRef<HTMLElement | null>(null);
+  const scrollToLatest = useRef(false);
+
+  useLayoutEffect(() => {
+    if (!scrollToLatest.current) return;
+    scrollToLatest.current = false;
+    const log = messagePanel.current?.querySelector<HTMLElement>("[role=log]");
+    if (log) log.scrollTop = log.scrollHeight;
+  }, [messages]);
 
   activeUserId.current = user?.id ?? null;
   activeConversationId.current = selected?.id ?? null;
 
-  const focusRetryCompletion = (target: "conversations" | "target-conversation" | "messages" | "read", loading: boolean, failed: boolean, panel: HTMLElement | null) => {
+  const focusRetryCompletion = (target: "conversations" | "target-conversation" | "messages" | "read" | "refresh", loading: boolean, failed: boolean, panel: HTMLElement | null) => {
     const pending = retryFocus.current;
     if (!pending || pending.target !== target || loading) return;
     retryFocus.current = null;
@@ -188,6 +197,7 @@ export default function Messages() {
           setMessagePage(getLastPageIndex(data.totalPages));
           return;
         }
+        scrollToLatest.current = messagePage === 0;
         setMessages(data);
         if (isCurrentRead()) {
           void markConversationRead(selected.id)
@@ -199,6 +209,31 @@ export default function Messages() {
       .finally(() => { if (current) setMessagesLoading(false); });
     return () => { current = false; };
   }, [messagePage, messageRevision, selected, user?.id]);
+
+  const updates = useMessageUpdates({
+    userId: ready && isAuth ? user?.id ?? null : null,
+    conversationId: selected?.id ?? null,
+    conversationPage,
+    messagePage,
+    latestMessageId: messages && messagePage === 0 ? messages.content[0]?.id ?? 0 : null,
+    paused: conversationsLoading || conversationsError || targetConversationLoading || messagesLoading || messagesError || sending || readRetrying,
+    readRequest,
+    onConversations: data => {
+      if (isPageOutOfRange(conversationPage, data.totalPages)) setConversationPage(getLastPageIndex(data.totalPages));
+      else setConversations(data);
+    },
+    onMessages: data => {
+      const log = messagePanel.current?.querySelector<HTMLElement>("[role=log]");
+      scrollToLatest.current = !log || log.scrollHeight - log.scrollTop - log.clientHeight < 32;
+      setMessages(data);
+    },
+    onConversationsUnavailable: () => { setConversations(null); setConversationsError(true); },
+    onMessagesUnavailable: () => { setMessages(null); setMessagesError(true); },
+    onReadError: setReadError,
+  });
+  useEffect(() => {
+    focusRetryCompletion("refresh", updates.refreshing, updates.error, selected ? messagePanel.current : conversationsPanel.current);
+  }, [updates.error, updates.refreshing, selected]);
 
   if (!ready) return <main className={styles.page} aria-labelledby="messages-title" aria-busy={!ready}><div className={styles.shell}><h1 id="messages-title" className="srOnly">{t("messages")}</h1><p className={styles.notice} role="status">{t("loading")}</p></div></main>;
   if (!isAuth) return <Navigate to={path("/login")} state={{ returnTo: `${location.pathname}${location.search}${location.hash}` }} replace />;
@@ -297,6 +332,11 @@ export default function Messages() {
           {conversations && <Pagination className={styles.pagination} page={conversationPage} totalPages={conversations.totalPages} label={t("conversationsPagination")} busy={conversationsLoading || sending} onPageChange={setConversationPage} />}
         </aside>
         <section ref={messagePanel} className={styles.panel} aria-labelledby={selected ? "conversation-title" : undefined} aria-label={selected ? undefined : t("messages")} aria-busy={messagesLoading || targetConversationLoading || sending}>
+          {updates.error && <RetryNotice className={styles.error} message={t("refreshMessagesError")} retryLabel={t("retry")}
+            disabled={updates.refreshing} busy={updates.refreshing} onRetry={() => {
+              retryFocus.current = { target: "refresh", origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
+              updates.refresh();
+            }} />}
           {!selected && targetConversationLoading && <div className={styles.panelState}><p className={styles.notice} role="status">{t("loading")}</p></div>}
           {!selected && targetConversationError && <div className={styles.panelState}><RetryNotice className={styles.error} message={t("startConversationError")} retryLabel={t("retry")} onRetry={() => { retryFocus.current = { target: "target-conversation", origin: document.activeElement instanceof HTMLElement ? document.activeElement : null }; setTargetConversationLoading(true); setTargetConversationError(false); setTargetConversationAttempt(value => value + 1); }} /></div>}
           {!selected && !targetConversationLoading && !targetConversationError && <div className={styles.panelState}><p className={styles.empty}>{t("chooseConversation")}</p></div>}
@@ -306,9 +346,14 @@ export default function Messages() {
             {messagesError && <RetryNotice className={styles.error} message={t("loadMessagesError")} retryLabel={t("retry")} onRetry={() => { retryFocus.current = { target: "messages", origin: document.activeElement instanceof HTMLElement ? document.activeElement : null }; setMessagesLoading(true); setMessagesError(false); setMessageRevision(value => value + 1); }} />}
             {readError && <RetryNotice className={styles.error} message={t("markMessagesReadError")} retryLabel={readRetrying ? t("loading") : t("retry")} disabled={readRetrying} busy={readRetrying} onRetry={() => { retryFocus.current = { target: "read", origin: document.activeElement instanceof HTMLElement ? document.activeElement : null }; void retryMarkRead(); }} />}
             {!messagesLoading && !messagesError && messages?.content.length === 0 && <p className={styles.empty}>{t("noMessages")}</p>}
-            {!messagesLoading && !messagesError && messages && messages.content.length > 0 && <ul className={styles.messageList}>
+            {!messagesLoading && !messagesError && messages && messages.content.length > 0 && <ul className={styles.messageList} role="log" aria-label={t("messages")} aria-live="polite" aria-relevant="additions">
               {[...messages.content].reverse().map(item => <li className={`${styles.messageBubble} ${item.senderId === user?.id ? styles.messageBubbleOwn : ""}`} key={item.id}><div>{editorialText(item.body, t("emptyMessageBody"))}</div><small>{formatDateTime(item.createdAt, lang)}</small></li>)}
             </ul>}
+            {updates.hasNewMessages && <button className={styles.newMessages} type="button" onClick={() => {
+              retryFocus.current = { target: "messages", origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
+              setMessagesLoading(true);
+              setMessagePage(0);
+            }}>{t("newMessagesAvailable")}</button>}
             {messages && <Pagination className={styles.pagination} page={messagePage} totalPages={messages.totalPages} label={t("messagesPagination")} busy={messagesLoading || sending} previousLabel={t("newerMessages")} nextLabel={t("olderMessages")} onPageChange={setMessagePage} />}
             <form className={styles.composer} onSubmit={submit} aria-busy={sending}>
               {sendError && <RetryNotice className={styles.error} message={t("sendMessageError")} retryLabel={t("retry")} disabled={sending || !body.trim()} busy={sending} onRetry={() => void sendCurrentMessage()} />}

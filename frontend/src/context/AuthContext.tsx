@@ -17,6 +17,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [ready, setReady] = useState(false);
   const [user, setUser] = useState<CurrentUser | null>(null);
   const authRequest = useRef(0);
+  const authOperation = useRef(0);
 
   useEffect(() => {
     if (usesHostedSupabaseAuth) {
@@ -45,6 +46,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
         const requestId = ++authRequest.current;
         if (!session) {
+          if (event === "SIGNED_OUT") authOperation.current += 1;
           setUser(null);
           setIsAuth(false);
           setReady(true);
@@ -82,11 +84,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const requestId = ++authRequest.current;
+    const operationId = ++authOperation.current;
+    let requestId = ++authRequest.current;
     try {
       await loginApi(email, password);
+      if (operationId !== authOperation.current) return;
+      // SIGNED_IN may start a profile refresh. The explicit login owns the profile
+      // request it awaits before the caller navigates to a protected destination.
+      requestId = ++authRequest.current;
       const { data } = await getCurrentUser();
-      if (requestId !== authRequest.current) return;
+      if (operationId !== authOperation.current || requestId !== authRequest.current) return;
       setUser(data);
       setIsAuth(true);
     } finally {
@@ -95,6 +102,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = async () => {
+    authOperation.current += 1;
     const requestId = ++authRequest.current;
     try {
       await logoutApi();
