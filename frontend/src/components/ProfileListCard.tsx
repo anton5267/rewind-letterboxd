@@ -40,7 +40,7 @@ export default function ProfileListCard({ list, ownerId, enabled, description, t
     return () => window.cancelAnimationFrame(frame);
   }, [attempt, error, items, list.id]);
   const title = editorialText(list.name, t("searchLists"));
-  const href = path(list.isPublic ? `/lists/public/${list.id}` : "/lists");
+  const href = path(list.isPublic ? `/lists/public/${list.id}` : `/lists?list=${list.id}`);
   return <li className={styles.card} data-profile-list-id={list.id} aria-busy={enabled && !items && !error}>
     <div className={styles.heading}><h3><Link to={href}>{title}</Link></h3>{items && <span>{formatMovieCount(items.length, lang)}</span>}</div>
     <div className={styles.preview}>{error ? <RetryNotice className={styles.error} message={t("loadItemsError")} retryLabel={t("retry")} onRetry={() => { retryFocus.current = { origin: document.activeElement instanceof HTMLElement ? document.activeElement : null }; setError(false); setItems(null); setAttempt(value => value + 1); }} /> : items ? <Link className={styles.posters} data-profile-list-posters={list.id} tabIndex={-1} to={href} aria-label={title}><ListPosterStack movies={items.map(item => item.movie)} label={title} fallbackTitle={t("untitledFilm")} layout="catalog" /></Link> : <p className={styles.loading} role="status">{t("loading")}</p>}</div>

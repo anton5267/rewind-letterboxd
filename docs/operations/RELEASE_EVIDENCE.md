@@ -6,7 +6,7 @@ Reviewed 14 November 2026. This page summarizes recorded production state and ac
 
 | Area | Last verified evidence |
 | --- | --- |
-| Frontend | Functional commit `645dbd7`, person biographies. [CI 43555741993](https://github.com/anton5267/rewind-letterboxd/actions/runs/43555741993) and [Pages 43555742013](https://github.com/anton5267/rewind-letterboxd/actions/runs/43555742013) succeeded. |
+| Frontend | Full UK/EN React application. List-description fix `798be84` passed [CI 43561364436](https://github.com/anton5267/rewind-letterboxd/actions/runs/43561364436) and [Pages 43561364447](https://github.com/anton5267/rewind-letterboxd/actions/runs/43561364447), followed by authenticated description-clear acceptance. Current publication is tracked by the [Pages workflow](https://github.com/anton5267/rewind-letterboxd/actions/workflows/deploy-pages.yml). |
 | Edge API | `rewind-api` v59 ACTIVE. All 71 deployed files matched the 85-file source/config package. Fourteen type-only modules were omitted by the provider. Git retains the full redeployable source. |
 | Database | Private `rewind` schema and RLS. The v55 inventory recorded 45/45 RLS-enabled application tables. Later Person releases added response enrichment without schema migrations. |
 | Auth | Confirmation, recovery/reset and sign-in exercised with disposable identities. Profiles map by Supabase UUID. The current `+rewindtest` ADMIN identity remains protected from automatic cleanup. |
@@ -18,6 +18,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 
 | Block | Recorded checks and live boundary |
 | --- | --- |
+| Owner lists and profile navigation | Production create/order/rank/reply, description clear, pin/save/reload, comment create/edit/reload/delete and public→private acceptance passed. Privacy removed the pin and anonymous reads returned 404. Temporary data was cleaned up. Two UK/EN navigation fixtures and the existing Retry/focus scenario passed. |
 | Admin credit queries and genre labels | Four new fixtures cover late success/failure for all three person roles, failed-query editing and Ukrainian genre labels. Two existing credit/genre save flows passed. Shared test setup was extracted, and source typecheck passed. |
 | Source reconciliation / favorite isolation | Four restored SQL files match their live migration statements after newline normalization; Git versions/names cover 55/55 live entries. Cross-tab success/failure 4/4 and current-account removal/focus/reload 2/2 passed in UK/EN, plus source typecheck. |
 | Person biographies `645dbd7` / v59 | New provider/HTTP 7/7, existing TMDB 7/7, six scoped browser flows, targeted follow-up after phone CSS change. Four live API samples preserved prior fields and returned biographies. Actual Amanda Seyfried More/Less expanded and collapsed. |
@@ -34,7 +35,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 
 - Encrypted export, disposable restore and full Auth/Storage/settings/secrets recovery. Backup password and independent encryption passphrase remain missing. [Recovery procedure](DEPLOYMENT_POSTGRESQL.md#supabase-free-backup-and-recovery--not-yet-accepted).
 - Row-level reconciliation of local MySQL and hosted records, plus remaining local/upstream source review. Preserve the verified local V32 identity/V33 outbox/V36 original-language lineage during future Spring integration. Production import awaits backup and rollback acceptance.
-- Controlled live save/comment/report/moderation, profile-media replacement/removal, list settings, email change, two-account messaging/notifications and editorial save. [Work order](../../PLAN.md#наступна-робота).
+- Controlled live save/comment/report/moderation, profile-media replacement/removal, cross-account list reply rules, email change, two-account messaging/notifications and editorial save. [Work order](../../PLAN.md#наступна-робота).
 - Remaining Figma/layout and product gaps. [Requirements](../project/PROJECT_REQUIREMENTS.md#implementation-status), [design handoff](../frontend/FIGMA_HANDOFF.md).
 - TMDB snapshot retains 20/49 missing original-language values and one unverified movie ID. The next eligible scheduled batch was recorded as 16 November 2026, 03:00 UTC. [Worker procedure](SUPABASE_OPERATIONS.md).
 - The recorded security review retains the Free-plan leaked-password limitation and three private no-policy table notices with denied client/app/reader SELECT. Preserve the grants and review changes against actual workload. [Dated advisor evidence](../archive/RELEASE_EVIDENCE_2026.md#pg_net-extension-registration-migration-isolated-verification--13112026-0516-utc).
