@@ -500,7 +500,9 @@ export default function UserLists() {
     setSaveBusy(true);
     setError("");
     try {
-      const { data } = await updateList(selectedList.id, editName.trim(), editDescription.trim(), editPublic, editTags.split(",").map(tag => tag.trim()).filter(Boolean), editRanked, usesHostedSupabaseAuth ? editReplyPreference : undefined);
+      const trimmedDescription = editDescription.trim();
+      const descriptionUpdate = trimmedDescription === (selectedList.description ?? "") ? undefined : trimmedDescription;
+      const { data } = await updateList(selectedList.id, editName.trim(), descriptionUpdate, editPublic, editTags.split(",").map(tag => tag.trim()).filter(Boolean), editRanked, usesHostedSupabaseAuth ? editReplyPreference : undefined);
       if (!isCurrentRequest()) return;
       setLists(current => current.map(list => list.id === data.id ? data : list));
       setLinkedList(current => current?.id === data.id ? data : current);

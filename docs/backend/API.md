@@ -49,7 +49,7 @@ Own `recentReviews` і paged `/api/profile/me/reviews` у поточному sou
 | P | `GET /api/lists/public/{listId}` | Деталі публічного CUSTOM списку з фільмами |
 | P | `GET /api/lists/public/popular`, `/api/lists/public/recently-liked`, `/api/lists/public/team` | Популярні, нещодавно вподобані та HQ/team public-list feeds |
 | U | `GET /api/lists/public/{listId}/like-status`; `POST`, `DELETE /api/lists/{listId}/likes` | Статус і зміна вподобання public list |
-| U | `PATCH`, `DELETE /api/lists/{listId}` | Зміна/видалення свого CUSTOM списку |
+| U | `PATCH`, `DELETE /api/lists/{listId}` | Зміна/видалення свого CUSTOM списку. У PATCH пропущений або `null` опис зберігає значення, `""` очищає текст |
 | U | `GET`, `POST /api/lists/{listId}/items`; `DELETE /api/lists/{listId}/items/{movieId}` | Елементи власного списку |
 | U | `PUT /api/lists/{listId}/items/reorder` | Порядок елементів CUSTOM списку |
 | U | `POST /api/lists/{listId}/movies`; `DELETE /api/lists/{listId}/movies/{movieId}` | Аліаси для frontend клієнта |
