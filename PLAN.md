@@ -22,7 +22,7 @@ Spring Boot/MySQL/Redis/Mailpit мають окремий локальний ж�
 
 - [x] Live profile settings пройшли UK save/reload, EN clear/reload та SELF/FOLLOWED/ANYONE. Перевірено owner-only names і website save/reload/public-read/clear. Початкові поля й порожні social/name записи відновлені.
 
-- [x] Settings мають desktop identity/media layout і мобільну панель із розділеними action targets. UK/EN fixtures охопили drafts, save/reload, media CRUD/retry/focus, responsive geometry та переходи між settings/profile. Phone-композиція узгоджує Footer, safe-area spacing і 20px corners. Повна settings parity відкрита.
+- [x] Settings мають desktop identity/media layout і мобільну панель із розділеними action targets. Прийняті парні Email/Pronoun та Location/Replies рядки й порядок полів/Tab. Username/display name стоять поруч у першому desktop-рядку. UK/EN fixtures охопили drafts, save/reload, media CRUD/retry/focus, responsive geometry та переходи між settings/profile. Phone-композиція узгоджує Footer, safe-area spacing і 20px corners. Повна settings parity відкрита.
 
 - [x] Test-fixture review охопив 16 файлів. Виправлені featured/team feeds, base-path navigation, Admin private/system assertions; signup включений у спільний набір. 17 цільових fixture-сценаріїв пройшли на root і project-prefix середовищах.
 
