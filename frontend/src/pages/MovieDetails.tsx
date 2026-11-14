@@ -632,6 +632,8 @@ export default function MovieDetails() {
     ...movie.directors.slice(0, 2).map(item => ({ id: `director-${item.id}`, personId: item.id, name: editorialText(item.name, t("unknownPerson")), type: "director" as const, role: t("directors") })),
   ].slice(0, 7) : [];
   const movieTitle = movie ? editorialText(movie.title, t("untitledFilm")) : t("untitledFilm");
+  const movieYear = formatMovieYear(movie?.releaseDate, "");
+  const documentTitle = movieYear ? `${movieTitle} (${movieYear})` : movieTitle;
   const pageBusy = loading || reviewsLoading || listsLoading || ratingLoading || (isAuth && !myReviewReady) || mutationBusy !== null;
 
   if (!validMovieId) return <main className={styles.state} aria-labelledby="movie-state-title" aria-busy={false}><h1 id="movie-state-title" className="srOnly">{t("films")}</h1><p role="alert">{t("invalidMovieId")}</p></main>;
@@ -665,7 +667,7 @@ export default function MovieDetails() {
                 {movie.ageRating && <span className={styles.mobileAgeRating}>{movie.ageRating}</span>}
                 {trailerUrl ? <a href={trailerUrl} target="_blank" rel="noopener noreferrer">{t("watchTrailer")}</a> : <span className={styles.mobileTrailerUnavailable}>{t("trailerUnavailable")}</span>}
               </div>
-              <h1 id="movie-title" ref={movieTitleRef} tabIndex={-1}>{movieTitle}</h1>
+              <h1 id="movie-title" ref={movieTitleRef} tabIndex={-1} data-document-title={documentTitle}>{movieTitle}</h1>
               <ul className={styles.meta} aria-label={t("filmData")}>
                 <li>{formatMovieYear(movie.releaseDate, t("unknownYear"))}</li>
                 {movie.durationMinutes ? <li>{movie.durationMinutes} {t("minutes")}</li> : null}

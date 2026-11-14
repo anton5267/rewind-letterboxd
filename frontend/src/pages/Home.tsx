@@ -213,7 +213,7 @@ function HomeContent() {
 
   const allSectionsLoading = hasPendingSectionLoads(sectionLoading, isAuth);
 
-  return <main className={styles.page} aria-labelledby="home-title" aria-busy={allSectionsLoading}>
+  return <main className={styles.page} aria-labelledby="home-title" data-document-title={t("homePageTitle")} aria-busy={allSectionsLoading}>
     <section className={`${styles.hero} ${isAuth ? styles.memberHero : ""}`}>
       {!isAuth && <p className={styles.eyebrow}>{t("homeEyebrow")}</p>}
       <h1 id="home-title" tabIndex={-1} aria-label={isAuth ? t("homeWelcomeTitle") : guestTitle}>{isAuth ? t("homeWelcomeTitle") : guestTitleSentences.map(sentence => <span className={styles.heroTitleSentence} key={sentence}>{sentence}</span>)}</h1>
