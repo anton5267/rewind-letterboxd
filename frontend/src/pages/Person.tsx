@@ -5,20 +5,17 @@ import ResilientImage from "../components/ResilientImage";
 import RetryButton from "../components/RetryButton";
 import RetryNotice from "../components/RetryNotice";
 import PersonFilmographyFilters from "../components/person/PersonFilmographyFilters";
+import PersonFilmographyGrid from "../components/person/PersonFilmographyGrid";
+import PersonLoading from "../components/person/PersonLoading";
+import RelatedPersonFilmography from "../components/person/RelatedPersonFilmography";
 import { getGenres, type Genre } from "../api/search.api";
-import { editorialText, formatMovieYear, useLocale } from "../i18n";
+import { editorialText, useLocale } from "../i18n";
 import styles from "./Person.module.css";
 import filterIcon from "../assets/figma/home-person/person-filter.png";
 import { setPublicCatalogMetadata } from "../utils/publicCatalogSeo";
 import { getFilmDecade } from "../utils/filmDecade";
 
 const publicCatalogOnly = import.meta.env.VITE_PUBLIC_CATALOG_ONLY === "true";
-
-function PersonLoading({ identity = false }: { identity?: boolean }) {
-  const { t } = useLocale();
-  const posters = <div className={styles.grid} aria-hidden="true">{Array.from({ length: 12 }, (_, index) => <span className={`${styles.poster} ${styles.skeleton}`} key={index} />)}</div>;
-  return <div role="status" aria-label={t("loading")}><span className="srOnly">{t("loading")}</span>{identity ? <><section className={styles.hero} aria-hidden="true"><div className={styles.mobileToolbar} /><div className={styles.heroIdentity}><span className={`${styles.avatarFallback} ${styles.skeleton}`} /><span className={`${styles.skeletonTitle} ${styles.skeleton}`} /></div></section><section className={styles.content}>{posters}</section></> : posters}</div>;
-}
 
 export default function Person() {
   const { type, id } = useParams();
@@ -150,8 +147,12 @@ export default function Person() {
   }, [lang, location.pathname, person?.photoUrl, personMatchesRoute, personName, type]);
   if (!person || !personMatchesRoute) return <main className={`${styles.page} ${error ? styles.statePage : ""} ${type === "director" ? styles.directorPage : ""}`} aria-labelledby="person-title" aria-busy={loading && !error}><div className={styles.stateBack}><Link className={styles.mobileBack} to={backPath} aria-label={t("search")}><img src="/images/help-icon-back.png" alt="" /></Link></div><h1 id="person-title" className={error ? styles.stateTitle : "srOnly"} ref={personHeadingRef} tabIndex={-1}>{t("filmography")}</h1>{error ? <p className={styles.error} role="alert">{!validPersonType || !validPersonId ? t("invalidPersonId") : t("loadPersonError")} {validPersonType && validPersonId && <RetryButton label={t("retry")} busy={loading} onClick={retryPerson} />}</p> : <PersonLoading identity />}</main>;
 
-  const personTypeLabel = type === "actor" ? t("actors") : type === "producer" ? t("producers") : t("directors");
-  const filmSectionTitle = type === "actor" ? t("filmsStarring") : type === "director" ? t("filmsDirected") : t("filmography");
+  const relatedPeople = person.relatedPeople ?? [];
+  const roleLabels = { ACTOR: t("personActorRole"), DIRECTOR: t("personDirectorRole"), PRODUCER: t("personProducerRole") };
+  const sectionTitles = { ACTOR: t("filmsStarring"), DIRECTOR: t("filmsDirected"), PRODUCER: t("filmsProduced") };
+  const personTypeLabel = [person.type, ...relatedPeople.map(related => related.type)].map(role => roleLabels[role]).join(" · ");
+  const filmSectionTitle = sectionTitles[person.type];
+  const relatedSectionIds = relatedPeople.map(related => `person-${related.type.toLowerCase()}-${related.id}`);
   const films = decade === ""
     ? person.films
     : person.films.filter(film => getFilmDecade(film.releaseDate) === Number(decade));
@@ -161,7 +162,7 @@ export default function Person() {
       <div className={styles.mobileToolbar}>
         <Link className={styles.mobileBack} to={backPath} aria-label={t("search")}><img src="/images/help-icon-back.png" alt="" /></Link>
         <span>{t("filmography")}</span>
-        <button ref={filterButton} className={styles.mobileSearch} type="button" aria-label={t("filters")} aria-expanded={filtersOpen} aria-controls="person-filters" onClick={() => setFiltersOpen(value => !value)}><img src={filterIcon} alt="" /></button>
+        <button ref={filterButton} className={styles.mobileSearch} type="button" aria-label={t("filters")} aria-expanded={filtersOpen} aria-controls={["person-filters", ...relatedSectionIds.map(id => `${id}-filters`)].join(" ")} onClick={() => setFiltersOpen(value => !value)}><img src={filterIcon} alt="" /></button>
       </div>
       <div className={styles.heroIdentity}>
         <ResilientImage className={styles.avatar} src={person.photoUrl} alt={personName} fallback={<div className={styles.avatarFallback} aria-hidden="true">{personName.slice(0, 1).toUpperCase()}</div>} />
@@ -182,19 +183,10 @@ export default function Person() {
         open={filtersOpen} sort={sort} genreId={genreId} decade={decade}
         onSortChange={setSort} onGenreChange={setGenreId} onDecadeChange={setDecade} />
       </div>
-      {loading ? <PersonLoading /> : !error && (films.length === 0 ? <div className={styles.empty}><p>{t("noFilms")}</p>{(genreId || decade) && <button type="button" onClick={() => { setGenreId(""); setDecade(""); filmographyHeadingRef.current?.focus(); }}>{t("personResetFilters")}</button>}</div> : <div id="person-films" className={styles.grid}>{(allFilms ? films : films.slice(0, 12)).map(film => {
-        const filmTitle = editorialText(film.title, t("untitledFilm"));
-        return <article className={styles.filmCard} key={film.id}>
-          <Link to={filmPath(film.id)} aria-label={`${filmTitle} — ${formatMovieYear(film.releaseDate, t("unknownYear"))}`}>
-            <ResilientImage className={styles.poster} src={film.photoUrl} alt={`${t("poster")} ${filmTitle}`} fallback={<div className={styles.posterFallback} aria-hidden="true">{filmTitle.slice(0, 1).toUpperCase()}</div>} />
-            <div className={styles.filmInfo}>
-              <h3 className={styles.filmTitle}>{filmTitle}</h3>
-              <p className={styles.filmMeta}>{formatMovieYear(film.releaseDate, t("unknownYear"))}{film.characterName?.trim() && ` · ${film.characterName.trim()}`}{film.rating !== null && ` · ★ ${film.rating}`}</p>
-            </div>
-          </Link>
-        </article>;
-      })}</div>)}
+      {loading ? <PersonLoading /> : !error && (films.length === 0 ? <div className={styles.empty}><p>{t("noFilms")}</p>{(genreId || decade) && <button type="button" onClick={() => { setGenreId(""); setDecade(""); filmographyHeadingRef.current?.focus(); }}>{t("personResetFilters")}</button>}</div> : <PersonFilmographyGrid id="person-films" films={films} expanded={allFilms} filmPath={filmPath} />)}
       {!loading && !error && films.length > 12 && <button type="button" className={styles.expandFilms} aria-expanded={allFilms} aria-controls="person-films" onClick={() => { setAllFilms(value => !value); if (allFilms) filmographyHeadingRef.current?.focus(); }}>{t(allFilms ? "personShowFewerFilms" : "personShowAllFilms")}</button>}
     </section>
+    {relatedPeople.map((related, index) => <RelatedPersonFilmography key={relatedSectionIds[index]} id={relatedSectionIds[index]} person={related}
+      title={sectionTitles[related.type]} genres={genres} genresUnavailable={genresLoading || genreError} filtersOpen={filtersOpen} filmPath={filmPath} />)}
   </main>;
 }

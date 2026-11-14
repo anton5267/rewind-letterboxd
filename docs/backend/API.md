@@ -20,7 +20,7 @@
 | P | `GET /api/movies`, `GET /api/movies/search`, `GET /api/movies/{id}` | Каталог, пошук, деталі |
 | P | `GET /api/movies/{id}/details` | Публічний alias повних деталей; auth додає власний контекст |
 | U | `GET /api/movies/{movieId}/status/me` | Власні watched/watchlist/favorite прапорці та оцінка |
-| P | `GET /api/actors/{id}`, `GET /api/directors/{id}`, `GET /api/producers/{id}` | Публічна filmography з sort/genreId; movie details links to all three crew types |
+| P | `GET /api/actors/{id}`, `GET /api/directors/{id}`, `GET /api/producers/{id}` | Публічна filmography з sort/genreId. Hosted API додає optional `relatedPeople: { id, type }[]` для інших ролей тієї самої TMDB identity з опублікованими роботами. Ролі мають окремі числові IDs; legacy відповіді можуть пропускати поле. |
 | U | `POST`, `DELETE /api/movies/{movieId}/watchlist` | Додати/забрати зі списку бажаного |
 | U | `POST`, `DELETE /api/movies/{movieId}/watched` | Позначити/скасувати перегляд |
 | U | `POST`, `DELETE /api/movies/{movieId}/favorite` | Додати/забрати з улюбленого |

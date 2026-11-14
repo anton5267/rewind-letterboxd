@@ -5,6 +5,7 @@ import { getFilmDecade } from "../../utils/filmDecade";
 import styles from "./PersonFilmographyFilters.module.css";
 
 interface Props {
+  id?: string;
   films: PersonFilmography["films"];
   genres: Genre[];
   genresUnavailable: boolean;
@@ -29,7 +30,7 @@ export default function PersonFilmographyFilters(props: Props) {
 
   return (
     <div
-      id="person-filters"
+      id={props.id ?? "person-filters"}
       className={`${styles.controls} ${props.open ? styles.open : ""}`}
     >
       <label className={styles.field}>

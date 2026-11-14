@@ -7,6 +7,7 @@ import {
   pageResult,
   safeId,
 } from "./shared/results.ts";
+import { findRelatedPersonRoles } from "./shared/person_roles.ts";
 
 export const catalogueRepository: Pick<RewindApiRepository,
   | "listGenres"
@@ -480,8 +481,9 @@ export const catalogueRepository: Pick<RewindApiRepository,
         id: string;
         name: string;
         photo_url: string | null;
+        tmdb_id: string | null;
       }>({
-        text: `SELECT id::text AS id, name, photo_url FROM rewind.${personTable} WHERE id = $1`,
+        text: `SELECT id::text AS id, name, photo_url, tmdb_id::text AS tmdb_id FROM rewind.${personTable} WHERE id = $1`,
         args: [id],
       });
       const person = personResult.rows[0];
@@ -527,6 +529,7 @@ export const catalogueRepository: Pick<RewindApiRepository,
         name: person.name,
         photoUrl: person.photo_url,
         type,
+        relatedPeople: await findRelatedPersonRoles(connection, type, person.tmdb_id),
         films: filmResult.rows.map((film) => ({
           id: safeId(film.id, "Movie ID"),
           title: film.title,

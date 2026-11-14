@@ -15,6 +15,7 @@
 .heroMeta { display: none; }
 .mobileToolbar { display: none; }
 .content { width: min(1200px, calc(100% - 48px)); margin-inline: auto; padding-top: 85px; }
+.content.relatedContent { padding-top: 16px; }
 .filmographyHeader { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 38px; border-top: 1px solid #4d4d4d; padding-top: 17px; }
 .sectionHeading { display: flex; align-items: center; min-height: 44px; min-width: 0; }
 .sectionHeading h2 { margin: 0; overflow-wrap: anywhere; font-size: 24px; line-height: 1.4; }

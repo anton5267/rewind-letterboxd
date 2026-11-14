@@ -60,6 +60,7 @@ export interface PersonFilmographyResponse {
   name: string;
   photoUrl: string | null;
   type: "ACTOR" | "DIRECTOR" | "PRODUCER";
+  relatedPeople?: { id: number; type: "ACTOR" | "DIRECTOR" | "PRODUCER" }[];
   films: {
     id: number;
     title: string;

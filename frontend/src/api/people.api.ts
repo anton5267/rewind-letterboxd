@@ -1,12 +1,19 @@
 import api from "./axios";
 
 export type PersonType = "actor" | "director" | "producer";
+export type PersonRole = "ACTOR" | "DIRECTOR" | "PRODUCER";
+
+export interface RelatedPersonRole {
+  id: number;
+  type: PersonRole;
+}
 
 export interface PersonFilmography {
   id: number;
   name: string;
   photoUrl: string | null;
-  type: string;
+  type: PersonRole;
+  relatedPeople?: RelatedPersonRole[];
   films: {
     id: number;
     title: string;
