@@ -22,6 +22,7 @@ import { listsRepository } from "./repositories/lists.ts";
 import { reviewsRepository } from "./repositories/reviews.ts";
 import { catalogueRepository } from "./repositories/catalogue.ts";
 import { ratingsRepository } from "./repositories/ratings.ts";
+import { createTmdbPersonBiographyProvider } from "./tmdb_person.ts";
 
 const repository: RewindApiRepository = {
   ...journalRepository,
@@ -43,7 +44,8 @@ const repository: RewindApiRepository = {
   ...ratingsRepository,
 };
 
-const handler = createRewindApiHandler(repository, allowedOrigins, hostedAuthVerifier, handleTmdbRefreshRequest);
+const personBiographyProvider = createTmdbPersonBiographyProvider(Deno.env.get("TMDB_API_KEY"));
+const handler = createRewindApiHandler(repository, allowedOrigins, hostedAuthVerifier, handleTmdbRefreshRequest, personBiographyProvider);
 
 Deno.serve(async (request) => {
   const response = await handler(request);

@@ -48,6 +48,7 @@ export default function RelatedPersonFilmography(props: Props) {
       props.person.id,
       sort,
       genreId,
+      lang,
     )
       .then(({ data }) => {
         if (current) setFilms(data.films);

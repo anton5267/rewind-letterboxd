@@ -71,7 +71,7 @@ export function mapTmdbMovie(value: unknown, requestedId?: number): TmdbMovie {
   };
 }
 
-async function apiGet(path: string, params: Record<string, string>, apiKey: string, fetcher: typeof fetch, baseUrl = API_URL): Promise<Record<string, unknown>> {
+export async function apiGet(path: string, params: Record<string, string>, apiKey: string, fetcher: typeof fetch, baseUrl = API_URL): Promise<Record<string, unknown>> {
   const url = new URL(`${baseUrl.replace(/\/$/, "")}${path}`);
   url.searchParams.set("api_key", apiKey);
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);

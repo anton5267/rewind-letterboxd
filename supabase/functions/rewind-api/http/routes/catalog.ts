@@ -1,4 +1,5 @@
 import type { HttpRouteContext } from "../context.ts";
+import type { PersonBiography } from "../../contracts/catalog.ts";
 import { optionalFiniteNumber, optionalInteger, optionalPositiveInteger } from "../parsers/query.ts";
 import { PUBLIC_CATALOG_CACHE, json } from "../response.ts";
 
@@ -166,11 +167,19 @@ export async function handleCatalogRoutes(context: HttpRouteContext): Promise<Re
     const rawGenreId = query.get("genreId");
     const genreId = rawGenreId === null ? null : optionalPositiveInteger(rawGenreId);
     if (rawGenreId !== null && genreId === null) return json({ message: "Invalid genre ID" }, 400, corsHeaders);
+    const language = query.get("language") ?? "en";
+    if (language !== "uk" && language !== "en") return json({ message: "Invalid biography language" }, 400, corsHeaders);
     const type = personMatch[1] === "actors" ? "ACTOR" : personMatch[1] === "directors" ? "DIRECTOR" : "PRODUCER";
     try {
       const person = await repository.getPersonFilmography(type, personId, genreId, query.get("sort") ?? "newest");
-      if (person) corsHeaders.set("Cache-Control", PUBLIC_CATALOG_CACHE);
-      return person ? json(person, 200, corsHeaders) : json({ message: "Not found" }, 404, corsHeaders);
+      if (!person) return json({ message: "Not found" }, 404, corsHeaders);
+      let biography: PersonBiography | null = null;
+      if (person.tmdbId && context.personBiographyProvider) {
+        try { biography = await context.personBiographyProvider(person.tmdbId, language); }
+        catch { /* Optional provider failure preserves the catalogue response. */ }
+      }
+      corsHeaders.set("Cache-Control", PUBLIC_CATALOG_CACHE);
+      return json({ ...person, biography: biography?.text ?? null, biographyLanguage: biography?.language ?? null }, 200, corsHeaders);
     } catch {
       return json({ message: "Internal server error" }, 500, corsHeaders);
     }

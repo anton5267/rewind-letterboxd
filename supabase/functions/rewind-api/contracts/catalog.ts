@@ -61,6 +61,9 @@ export interface PersonFilmographyResponse {
   photoUrl: string | null;
   type: "ACTOR" | "DIRECTOR" | "PRODUCER";
   relatedPeople?: { id: number; type: "ACTOR" | "DIRECTOR" | "PRODUCER" }[];
+  tmdbId?: number | null;
+  biography?: string | null;
+  biographyLanguage?: "uk" | "en" | null;
   films: {
     id: number;
     title: string;
@@ -70,6 +73,13 @@ export interface PersonFilmographyResponse {
     characterName: string | null;
   }[];
 }
+
+export interface PersonBiography {
+  text: string;
+  language: "uk" | "en";
+}
+
+export type PersonBiographyProvider = (id: number, language: "uk" | "en") => Promise<PersonBiography | null>;
 
 export interface PersonSearchResult {
   content: {

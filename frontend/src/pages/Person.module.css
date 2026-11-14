@@ -49,6 +49,7 @@
   .stateBack { display: block; position: absolute; z-index: 2; top: 50px; left: 16px; }
   .stateTitle { font-size: 28px; }
   .hero { min-height: 499px; padding: 50px 16px 48px; background: linear-gradient(180deg, #1f5c69, #24353b 50%, #1f1f1f); }
+  .hero.heroWithBiography { padding-bottom: 14px; background: linear-gradient(180deg, #1f5c69, #24353b 250px, #000 390px); }
   .hero::before, .hero::after { display: none; }
   .directorPage .hero { background: linear-gradient(180deg, transparent, #000 64%), url("/images/search-hero-phone.jpg") center top / 533.444px 300.062px no-repeat, #000; }
   .mobileToolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 10px; min-height: 44px; margin-bottom: 96px; }

@@ -14,6 +14,9 @@ export interface PersonFilmography {
   photoUrl: string | null;
   type: PersonRole;
   relatedPeople?: RelatedPersonRole[];
+  tmdbId?: number | null;
+  biography?: string | null;
+  biographyLanguage?: "uk" | "en" | null;
   films: {
     id: number;
     title: string;
@@ -31,8 +34,8 @@ export interface PersonSearchPage {
   number: number;
 }
 
-export const getPersonFilmography = (type: PersonType, id: string | number, sort: string, genreId: string) =>
-  api.get<PersonFilmography>(`/${type}s/${id}`, { params: { sort, genreId: genreId || undefined } });
+export const getPersonFilmography = (type: PersonType, id: string | number, sort: string, genreId: string, language?: "uk" | "en") =>
+  api.get<PersonFilmography>(`/${type}s/${id}`, { params: { sort, genreId: genreId || undefined, language } });
 
 export const searchPeople = (type: PersonType, q: string | undefined, page: number, size: number) =>
   api.get<PersonSearchPage>("/people/search", { params: { type, q, page, size } });

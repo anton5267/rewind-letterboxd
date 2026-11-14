@@ -2,6 +2,7 @@ import { handleProfileMediaRoute } from "./http/routes/profile_media.ts";
 import { handleCommentRoutes } from "./http/routes/comments.ts";
 import type { InternalWorkerHandler, RewindAuthVerifier } from "./contracts/auth.ts";
 import type { RewindApiRepository } from "./contracts/repository.ts";
+import type { PersonBiographyProvider } from "./contracts/catalog.ts";
 import { apiPath, json } from "./http/response.ts";
 
 import { handleAdminModerationRoutes, handleAdminReviewRoutes } from "./http/routes/admin_moderation.ts";
@@ -58,6 +59,7 @@ export function createRewindApiHandler(
   allowedOrigins: readonly string[],
   authVerifier?: RewindAuthVerifier,
   internalWorker?: InternalWorkerHandler,
+  personBiographyProvider?: PersonBiographyProvider,
 ): (request: Request) => Promise<Response> {
   const origins = new Set(allowedOrigins);
 
@@ -96,7 +98,7 @@ export function createRewindApiHandler(
 
     const query = new URL(request.url).searchParams;
 
-    const context = { request, path, query, corsHeaders, repository, authVerifier };
+    const context = { request, path, query, corsHeaders, repository, authVerifier, personBiographyProvider };
     for (const handleRoute of routeHandlers) {
       const response = await handleRoute(context);
       if (response) return response;

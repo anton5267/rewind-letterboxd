@@ -1,0 +1,12 @@
+.biography { width: min(535px, 100%); margin-top: 30px; color: #7e7e7e; }
+.text { margin: 0; font-size: 20px; line-height: 1.2; white-space: pre-line; overflow-wrap: anywhere; }
+.collapsed { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
+.toggle { min-height: 44px; max-width: 100%; margin-top: 7px; padding: 4px 20px; border: 1px solid currentColor; border-radius: 26px; background: transparent; color: inherit; font: inherit; font-size: 18px; line-height: 1.12; cursor: pointer; }
+.fallback { margin: 8px 0 0; font-size: 12px; line-height: 1.5; }
+
+@media (max-width: 767px) {
+  .biography { width: min(325px, 100%); margin-top: 16px; }
+  .text { font-size: 12px; }
+  .collapsed { -webkit-line-clamp: 3; }
+  .toggle { font-size: 12px; }
+}

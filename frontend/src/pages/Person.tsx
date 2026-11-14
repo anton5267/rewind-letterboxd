@@ -8,6 +8,7 @@ import PersonFilmographyFilters from "../components/person/PersonFilmographyFilt
 import PersonFilmographyGrid from "../components/person/PersonFilmographyGrid";
 import PersonLoading from "../components/person/PersonLoading";
 import RelatedPersonFilmography from "../components/person/RelatedPersonFilmography";
+import PersonBiography from "../components/person/PersonBiography";
 import { getGenres, type Genre } from "../api/search.api";
 import { editorialText, useLocale } from "../i18n";
 import styles from "./Person.module.css";
@@ -119,7 +120,7 @@ export default function Person() {
       setLoading(false);
       return;
     }
-    getPersonFilmography(type as PersonType, personId, sort, genreId)
+    getPersonFilmography(type as PersonType, personId, sort, genreId, lang)
       .then(({ data }) => { if (current) setPerson(data); })
       .catch(() => { if (current) setError(true); })
       .finally(() => { if (current) setLoading(false); });
@@ -158,7 +159,7 @@ export default function Person() {
     : person.films.filter(film => getFilmDecade(film.releaseDate) === Number(decade));
 
   return <main className={`${styles.page} ${type === "director" ? styles.directorPage : ""}`} aria-labelledby="person-title" aria-busy={loading || genresLoading} onKeyDown={event => { if (event.key === "Escape" && filtersOpen) { event.preventDefault(); setFiltersOpen(false); filterButton.current?.focus(); } }}>
-    <section className={styles.hero}>
+    <section className={`${styles.hero} ${person.biography?.trim() ? styles.heroWithBiography : ""}`}>
       <div className={styles.mobileToolbar}>
         <Link className={styles.mobileBack} to={backPath} aria-label={t("search")}><img src="/images/help-icon-back.png" alt="" /></Link>
         <span>{t("filmography")}</span>
@@ -171,6 +172,7 @@ export default function Person() {
           <h1 id="person-title" ref={personHeadingRef} tabIndex={-1}>{personName}</h1>
           <p className={styles.heroMeta}>{t("filmography")}</p>
         </div>
+        <PersonBiography key={`${person.type}:${person.id}:${lang}`} text={person.biography} language={person.biographyLanguage} />
       </div>
     </section>
 

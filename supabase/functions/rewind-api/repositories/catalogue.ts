@@ -530,6 +530,7 @@ export const catalogueRepository: Pick<RewindApiRepository,
         photoUrl: person.photo_url,
         type,
         relatedPeople: await findRelatedPersonRoles(connection, type, person.tmdb_id),
+        tmdbId: Number.isSafeInteger(Number(person.tmdb_id)) && Number(person.tmdb_id) > 0 ? Number(person.tmdb_id) : null,
         films: filmResult.rows.map((film) => ({
           id: safeId(film.id, "Movie ID"),
           title: film.title,
