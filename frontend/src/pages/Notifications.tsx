@@ -9,8 +9,7 @@ import { formatDateTime, localizeNotificationType, useLocale, type Translator } 
 import { getLastPageIndex, isPageOutOfRange } from "../utils/pagination";
 import { getUserIdentity } from "../utils/userIdentity";
 import { notifyUnreadCountsChanged } from "../utils/unreadEvents";
-import { usesHostedSupabaseAuth } from "../api/supabaseClient";
-import { isDocumentVisible } from "../utils/documentVisibility";
+import { useNotificationUpdates } from "../hooks/useNotificationUpdates";
 import styles from "./Notifications.module.css";
 
 function label(item: NotificationItem, t: Translator) {
@@ -54,10 +53,26 @@ export default function Notifications() {
   const markMutation = useRef(0);
   const markAllMutation = useRef(0);
   const preferencesMutation = useRef(0);
-  const notificationReadRetryFocus = useRef<{ target: "unread" | "preferences" | "feed"; scope: string; origin: HTMLElement | null } | null>(null);
+  const notificationReadRetryFocus = useRef<{ target: "unread" | "preferences" | "feed" | "refresh"; scope: string; origin: HTMLElement | null } | null>(null);
   const notificationReadRetryScope = JSON.stringify([lang, isAuth, user?.id ?? null, page]);
 
   activeUserId.current = user?.id ?? null;
+
+  const updates = useNotificationUpdates({
+    userId: ready && isAuth ? user?.id ?? null : null,
+    page,
+    unread,
+    paused: loading || error || unreadLoading || unreadError || busyId !== null || markAllBusy,
+    onNotifications: notifications => {
+      if (isPageOutOfRange(page, notifications.totalPages)) setPage(getLastPageIndex(notifications.totalPages));
+      else setData(notifications);
+    },
+    onUnread: setUnread,
+    onLocalNotification: () => {
+      setNotificationsRevision(value => value + 1);
+      setUnreadRevision(value => value + 1);
+    },
+  });
 
   useEffect(() => {
     if (notificationReadRetryFocus.current?.scope !== notificationReadRetryScope) notificationReadRetryFocus.current = null;
@@ -66,7 +81,8 @@ export default function Notifications() {
   useEffect(() => {
     const pending = notificationReadRetryFocus.current;
     if (!pending) return;
-    const state = pending.target === "unread" ? { loading: unreadLoading, error: unreadError } :
+    const state = pending.target === "refresh" ? { loading: updates.refreshing, error: updates.error } :
+      pending.target === "unread" ? { loading: unreadLoading, error: unreadError } :
       pending.target === "preferences" ? { loading: preferencesLoading, error: preferencesError } : { loading, error };
     if (state.loading) return;
     const frame = window.requestAnimationFrame(() => {
@@ -81,11 +97,13 @@ export default function Notifications() {
       else notificationHeadingRef.current?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [error, loading, notificationReadRetryScope, preferencesError, preferencesLoading, unreadError, unreadLoading]);
+  }, [error, loading, notificationReadRetryScope, preferencesError, preferencesLoading, unreadError, unreadLoading, updates.error, updates.refreshing]);
 
-  const retryNotificationRead = (target: "unread" | "preferences" | "feed") => {
+  const retryNotificationRead = (target: "unread" | "preferences" | "feed" | "refresh") => {
     notificationReadRetryFocus.current = { target, scope: notificationReadRetryScope, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
-    if (target === "unread") {
+    if (target === "refresh") {
+      updates.refresh();
+    } else if (target === "unread") {
       setUnreadLoading(true); setUnreadError(false); setUnreadRevision(value => value + 1);
     } else if (target === "preferences") {
       setPreferencesLoading(true); setPreferencesError(false); setPreferencesRevision(value => value + 1);
@@ -150,46 +168,6 @@ export default function Notifications() {
       .finally(() => { if (current) setPreferencesLoading(false); });
     return () => { current = false; };
   }, [isAuth, preferencesRevision, user?.id]);
-
-  useEffect(() => {
-    if (!isAuth) return;
-    if (usesHostedSupabaseAuth) {
-      let current = true;
-      let previousCount: number | null = null;
-      const poll = () => {
-        if (!current || !isDocumentVisible()) return;
-        getUnreadNotificationCount().then(({ data: result }) => {
-          if (!current) return;
-          if (previousCount !== null && previousCount !== result.count) {
-            notifyUnreadCountsChanged("notifications");
-            setNotificationsRevision(value => value + 1);
-          }
-          previousCount = result.count;
-        }).catch(() => { /* the normal unread request owns visible error state */ });
-      };
-      poll();
-      const timer = window.setInterval(poll, 15000);
-      return () => { current = false; window.clearInterval(timer); };
-    }
-    let source: EventSource | null = null;
-    let retry: number | undefined;
-    let stopped = false;
-    const connect = () => {
-      if (stopped) return;
-      source = new EventSource("/api/notifications/stream");
-      source.addEventListener("notification", () => {
-        notifyUnreadCountsChanged("notifications");
-        setNotificationsRevision(value => value + 1);
-        setUnreadRevision(value => value + 1);
-      });
-      source.onerror = () => {
-        source?.close();
-        if (!stopped) retry = window.setTimeout(connect, 3000);
-      };
-    };
-    connect();
-    return () => { stopped = true; source?.close(); if (retry) window.clearTimeout(retry); };
-  }, [isAuth, user?.id]);
 
   useLayoutEffect(() => {
     const pending = pendingMarkFocus.current;
@@ -341,6 +319,7 @@ export default function Notifications() {
       </section>
 
       {unreadError && <div data-notification-retry="unread"><RetryNotice className={styles.error} message={t("loadNotificationsError")} retryLabel={t("retry")} onRetry={() => retryNotificationRead("unread")} /></div>}
+      {updates.error && <div data-notification-retry="refresh"><RetryNotice className={styles.error} message={t("refreshNotificationsError")} retryLabel={t("retry")} disabled={pageBusy || updates.refreshing} busy={updates.refreshing} onRetry={() => retryNotificationRead("refresh")} /></div>}
       {actionError && <p ref={actionErrorRef} className={styles.error} role="alert">{t("notificationActionError")} <RetryButton label={t("retry")} disabled={busyId !== null || markAllBusy} onClick={() => {
         if (actionError.type === "all") {
           void markAllRead();
