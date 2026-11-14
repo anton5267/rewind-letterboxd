@@ -46,7 +46,9 @@ for (const language of ["uk", "en"] as const) {
         email: rect(form.querySelector("#settings-email")),
         pronoun: rect(form.querySelector("select")),
         location: rect(form.querySelector("#settings-profile-location")),
-        replies: rect(form.querySelector('select[aria-describedby$="-hint"]')),
+        replies: rect(form.querySelectorAll("select")[1]),
+        pronounHint: rect(form.querySelector("select")!.parentElement!.querySelector("p")),
+        repliesHint: rect(form.querySelectorAll("select")[1].parentElement!.querySelector("p")),
         save: rect(form.querySelector('button[type="submit"]')),
         givenName: rect(form.querySelector('input[autocomplete="given-name"]')),
         familyName: rect(form.querySelector('input[autocomplete="family-name"]')),
@@ -59,6 +61,15 @@ for (const language of ["uk", "en"] as const) {
     expect(geometry.displayName.width).toBeCloseTo(282, 0);
     expect(geometry.displayName.x - geometry.username.x - geometry.username.width).toBeCloseTo(24, 0);
     expect(geometry.displayName.y).toBeCloseTo(geometry.username.y, 0);
+    expect(geometry.email.height).toBeCloseTo(79, 0);
+    expect(geometry.pronoun.width).toBeCloseTo(300, 0);
+    expect(geometry.replies.width).toBeCloseTo(300, 0);
+    expect(geometry.pronoun.height).toBeCloseTo(79, 0);
+    expect(geometry.replies.height).toBeCloseTo(79, 0);
+    expect(geometry.pronounHint.x - geometry.pronoun.x - geometry.pronoun.width).toBeCloseTo(18, 0);
+    expect(geometry.repliesHint.x - geometry.replies.x - geometry.replies.width).toBeCloseTo(18, 0);
+    expect(geometry.pronounHint.y).toBeGreaterThanOrEqual(geometry.pronoun.y);
+    expect(geometry.repliesHint.y).toBeGreaterThanOrEqual(geometry.replies.y);
     expect(geometry.email.y).toBeCloseTo(geometry.pronoun.y, 0);
     expect(geometry.location.y).toBeCloseTo(geometry.replies.y, 0);
     expect(geometry.givenName.y).toBeLessThan(geometry.email.y);
@@ -71,6 +82,26 @@ for (const language of ["uk", "en"] as const) {
     expect(geometry.bio.height).toBeCloseTo(255, 0);
     expect(geometry.bio.y).toBeCloseTo(geometry.username.y, 0);
     expect(geometry.biography).toEqual({ radius: "37px", padding: "20px 30px", fontSize: "22px" });
+    const pronoun = form.locator("select").nth(0);
+    const replies = form.locator("select").nth(1);
+    const pronounExample = pronoun.locator("..").locator("p");
+    const repliesHint = replies.locator("..").locator("p");
+    await expect(pronounExample).toContainText(profile.displayName);
+    for (const value of ["They / their", "He / his", "He / their", "She / her", "She / their", "Xe / xyr", "Ze / hir", "Ze / zir", "It / its"]) {
+      await pronoun.selectOption(value);
+      await expect(pronounExample.locator('span[lang="en"]')).toHaveText(`Added Pride to ${value.split(" / ")[1]} watchlist.`);
+    }
+    await pronoun.selectOption("");
+    await expect(pronounExample).toHaveText(language === "uk" ? "Оберіть займенник для прикладу вживання." : "Select a pronoun to preview its use.");
+    await pronoun.selectOption("They / their");
+    await replies.selectOption("FOLLOWED");
+    expect((await replies.boundingBox())!.width).toBeCloseTo(588, 0);
+    expect((await repliesHint.boundingBox())!.y).toBeGreaterThan((await replies.boundingBox())!.y + 79);
+    for (const value of ["SELF", "ANYONE"]) {
+      await replies.selectOption(value);
+      expect((await replies.boundingBox())!.width).toBeCloseTo(300, 0);
+      expect((await repliesHint.boundingBox())!.x - (await replies.boundingBox())!.x).toBeCloseTo(318, 0);
+    }
     await form.locator('input[autocomplete="family-name"]').focus();
     await page.keyboard.press("Tab");
     await expect(form.locator("#settings-email")).toBeFocused();
@@ -86,11 +117,30 @@ for (const language of ["uk", "en"] as const) {
     await page.evaluate(() => scrollTo(0, 0));
     await page.screenshot({ path: test.info().outputPath("desktop-settings.png"), fullPage: true });
     await form.locator("#profile-display-name").fill("Updated reader");
+    await expect(pronounExample).toContainText("Updated reader");
     await form.locator('input[autocomplete="given-name"]').fill("Updated given name");
     await form.locator("textarea").fill("Saved across viewport changes");
     for (const width of [1024, 768]) {
       await page.setViewportSize({ width, height: 900 });
       await expect(form.locator("#profile-display-name")).toHaveValue("Updated reader");
+      if (width === 1024) {
+        expect((await pronoun.boundingBox())!.width).toBeCloseTo(300, 0);
+        const exampleBox = (await pronounExample.boundingBox())!;
+        expect(exampleBox.width).toBeGreaterThan(0);
+        expect(exampleBox.x + exampleBox.width).toBeLessThanOrEqual(width);
+        await form.locator("#profile-display-name").fill("A reader with a long display name for the pronoun example");
+        await expect(pronounExample).toContainText("A reader with a long display name");
+        expect((await pronoun.boundingBox())!.height).toBeCloseTo(79, 0);
+        await form.locator("#profile-display-name").fill("Updated reader");
+        await replies.selectOption("FOLLOWED");
+        const repliesBox = (await replies.boundingBox())!;
+        expect(repliesBox.width).toBeGreaterThan(300);
+        expect(repliesBox.x + repliesBox.width).toBeLessThanOrEqual(width);
+        await page.screenshot({ path: test.info().outputPath("tablet-followed-settings.png"), fullPage: true });
+        await replies.selectOption("ANYONE");
+      } else {
+        await expect(pronounExample).toBeHidden();
+      }
       expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
     }
     for (const width of [393, 320]) {

@@ -195,7 +195,14 @@ export default function ProfileSettingsView({ settingsTab, identity, account, co
         )}
         <div className={identityStyles.location}><label htmlFor="settings-profile-location">{t("profileLocation")}</label><input id="settings-profile-location" value={profileLocation} maxLength={80} disabled={nameBusy} onChange={event => setProfileLocation(event.target.value)} /></div>
         <ProfileBioField className={identityStyles.bio} key={`bio-${user?.id}-${lang}`} value={bio} disabled={nameBusy} onChange={setBio} />
-        <ProfilePronounField className={identityStyles.pronoun} key={`pronoun-${user?.id}-${lang}`} value={pronoun} disabled={nameBusy} onChange={setPronoun} />
+        <ProfilePronounField
+          className={identityStyles.pronoun}
+          key={`pronoun-${user?.id}-${lang}`}
+          exampleName={displayName.trim() || profile.username}
+          value={pronoun}
+          disabled={nameBusy}
+          onChange={setPronoun}
+        />
         <ReplyPreferenceField className={identityStyles.replies} key={`replies-${user?.id}-${lang}`} value={replyPreference} disabled={nameBusy} onChange={setReplyPreference} />
         {usesHostedSupabaseAuth && <ProfilePinnedListField className={identityStyles.pinnedList} lists={profile.lists} value={pinnedListId} disabled={nameBusy} onChange={setPinnedListId} />}
         <button className={identityStyles.save} type="submit" disabled={nameBusy}>{nameBusy ? t("saving") : t("save")}</button>

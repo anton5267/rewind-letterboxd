@@ -8,14 +8,16 @@ const pronouns = ["They / their", "He / his", "He / their", "She / her", "She / 
 
 interface Props {
   className?: string;
+  exampleName?: string;
   value: string;
   disabled: boolean;
   onChange: (value: string) => void;
 }
 
-export default function ProfilePronounField({ value, disabled, onChange, className }: Props) {
+export default function ProfilePronounField({ value, disabled, onChange, className, exampleName }: Props) {
   const { t } = useLocale();
   const id = useId();
+  const possessive = pronouns.find(pronoun => pronoun === value)?.split(" / ")[1];
   const [open, setOpen] = useState(false);
   const backButton = useRef<HTMLButtonElement>(null);
   const sheetRef = useDialogFocusTrap<HTMLElement>(open, () => setOpen(false), { initialFocusRef: backButton });
@@ -30,10 +32,23 @@ export default function ProfilePronounField({ value, disabled, onChange, classNa
 
   return <div className={className}>
     <label id={`${id}-label`} htmlFor={`${id}-select`}>{t("profilePronoun")}</label>
-    <select className={styles.desktopSelect} id={`${id}-select`} value={value} disabled={disabled} onChange={event => onChange(event.target.value)}>
+    <select
+      className={styles.desktopSelect}
+      id={`${id}-select`}
+      aria-describedby={exampleName ? `${id}-hint`: undefined}
+      value={value}
+      disabled={disabled}
+      onChange={event => onChange(event.target.value)}
+    >
       <option value="">{t("profilePronounNone")}</option>
       {pronouns.map(pronoun => <option key={pronoun} value={pronoun}>{pronoun}</option>)}
     </select>
+    {exampleName && <p className={styles.example} id={`${id}-hint`}>
+      {possessive ? <>
+        <span>{t("profilePronounExampleFor")} {exampleName}</span>
+        <span lang="en">{t("profilePronounExample").replace("{pronoun}", possessive)}</span>
+      </> : t("profilePronounExampleEmpty")}
+    </p>}
     <button className={styles.mobileTrigger} type="button" disabled={disabled} aria-labelledby={`${id}-label`} aria-describedby={`${id}-value`} aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? `${id}-dialog` : undefined} onClick={() => setOpen(true)}>
       <span id={`${id}-value`}>{value || t("profilePronounNone")}</span>
       <img src="/images/profile-pronoun-back.png" width={22} height={22} alt="" />

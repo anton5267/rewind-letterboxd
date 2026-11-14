@@ -19,6 +19,18 @@
   .pinnedList { grid-area: 6 / 3 / auto / span 2; }
   .save { grid-area: 6 / 1 / auto / span 2; }
 
+  .form.form > :is(.pronoun, .replies) {
+    grid-template-columns: 300px minmax(0, 1fr);
+    column-gap: 18px;
+  }
+
+  .form > :is(.pronoun, .replies) > label { grid-column: 1 / -1; }
+  .form > :is(.pronoun, .replies) > select { grid-area: 2 / 1; align-self: start; }
+  .form > :is(.pronoun, .replies) > p { grid-area: 2 / 2; align-self: center; }
+
+  .form > .replies:has(option[value="FOLLOWED"]:checked) > select { grid-column: 1 / -1; }
+  .form > .replies:has(option[value="FOLLOWED"]:checked) > p { grid-area: 3 / 1 / auto / -1; }
+
   .form.form > .bio {
     grid-area: 2 / 3 / span 2 / span 2;
     margin-bottom: 0;
