@@ -19,6 +19,7 @@ interface Props {
 
 const personTypes: PersonType[] = ["actor", "director", "producer"];
 const selectedKey = { actor: "actors", director: "directors", producer: "producers" } as const;
+const maxCastOrder = 2147483647;
 
 export default function AdminMovieCreditsField({ value, onChange }: Props) {
   const { t } = useLocale();
@@ -62,7 +63,9 @@ export default function AdminMovieCreditsField({ value, onChange }: Props) {
   const add = (type: PersonType, person: SearchPerson) => {
     if (selected(type).some(item => item.id === person.id)) return;
     if (type === "actor") {
-      onChange({ ...value, actors: [...value.actors, { ...person, characterName: null, castOrder: value.actors.length }] });
+      const nextOrder = Math.max(-1, ...value.actors.map(actor => actor.castOrder ?? -1)) + 1;
+      const castOrder = nextOrder <= maxCastOrder ? nextOrder : null;
+      onChange({ ...value, actors: [...value.actors, { ...person, characterName: null, castOrder }] });
     } else if (type === "director") {
       onChange({ ...value, directors: [...value.directors, person] });
     } else {
@@ -107,7 +110,7 @@ export default function AdminMovieCreditsField({ value, onChange }: Props) {
           <span className={styles.personName}>{person.name}</span>
           {type === "actor" && <div className={styles.actorFields}>
             <label>{t("characterName")}<input maxLength={150} value={(person as AdminMovieCreditsDraft["actors"][number]).characterName ?? ""} onChange={event => updateActor(person.id, "characterName", event.target.value)} /></label>
-            <label>{t("castOrder")}<input type="number" min="0" step="1" value={(person as AdminMovieCreditsDraft["actors"][number]).castOrder ?? ""} onChange={event => updateActor(person.id, "castOrder", event.target.value)} /></label>
+            <label>{t("castOrder")}<input type="number" min="0" max={maxCastOrder} step="1" value={(person as AdminMovieCreditsDraft["actors"][number]).castOrder ?? ""} onChange={event => updateActor(person.id, "castOrder", event.target.value)} /></label>
           </div>}
           <button type="button" aria-label={`${t("remove")} ${person.name}`} onClick={() => remove(type, person.id)}>{t("remove")}</button>
         </li>)}

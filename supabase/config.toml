@@ -1,3 +1,11 @@
+# Keep Supabase Data API limited to the default public schemas. REWIND's
+# application schema must remain private and browser access goes through Edge.
+[api]
+enabled = true
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
 # Auth templates are the version-controlled source of truth. Apply the same
 # subject/body in the hosted project's Authentication → Emails dashboard.
 [auth.email.template.confirmation]
