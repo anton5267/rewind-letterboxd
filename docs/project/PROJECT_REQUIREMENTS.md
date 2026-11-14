@@ -6,7 +6,7 @@
 
 Уточнення від 17.10.2026: користувач дозволив додавати обґрунтовані вимоги поза початковим ТЗ. Для адміністративних таблиць і черги зафіксовано: всі елементи доступні через серверну пагінацію без прихованих меж; пошук/фільтр починається з першої сторінки; однакові ключі сортування мають стабільний tie-breaker; після moderation/delete останнього елемента сторінки інтерфейс повертає на доступну сторінку; помилка завантаження показує retry, а застарілі записи не залишаються доступними для дій. Обґрунтування — відтворені пропуски/повтори, N+1 і відсутня UI-навігація. Реалізація й докази наведені у `PROGRESS.md`.
 
-Вебзастосунок для перегляду каталогу фільмів, власних списків і добірок, позначення переглянутого, оцінювання, написання оглядів та взаємодії з іншими користувачами. Фронтенд — **React**, бекенд — **Java Spring Boot**, база даних — **MySQL**.
+Вебзастосунок для перегляду каталогу фільмів, власних списків і добірок, позначення переглянутого, оцінювання, написання оглядів та взаємодії з іншими користувачами. Фронтенд — **React**, бекенд — **Java Spring Boot**, база даних — **MySQL**. Це технології вихідного ТЗ. Погоджений публічний стек GitHub Pages + Supabase та локальний Spring/MySQL режим описані в [README](../../README.md#architecture).
 
 ## 2. Функціональні вимоги
 
@@ -96,7 +96,7 @@
 
 ## 10. Доповнення
 
-Очікуються посилання на Figma та інша частина вимог. Після їх отримання слід додати конкретні екрани, стани, адаптивні розміри, компоненти й узгоджені рішення сюди або в окремі пов'язані документи. [FIGMA_HANDOFF.md](../frontend/FIGMA_HANDOFF.md) описує, як співвіднести макети з наявним React-кодом.
+Актуальне Figma-джерело отримано. Конкретні frames, стани, адаптивні розміри, компоненти й узгоджені рішення підтримуються у пов’язаному handoff. [FIGMA_HANDOFF.md](../frontend/FIGMA_HANDOFF.md) описує, як співвіднести макети з наявним React-кодом.
 
 - Власник може видалити свій кастомний список після явного підтвердження. Системні списки `WATCHED`, `WATCHLIST` і `FAVORITES` незмінно існують для акаунта й не видаляються цим сценарієм. Видалення має прибирати залежні елементи, теги та події активності без залишкових записів.
 - Адмінські таблиці з потенційно необмеженою кількістю записів використовують серверну пагінацію. Пошук і фільтри починаються з першої сторінки; після видалення останнього рядка непершої сторінки інтерфейс повертається на попередню й перечитує дані.
@@ -106,21 +106,19 @@
 
 <a id="implementation-status"></a>
 
-## 11. Відповідність реалізації — оновлено 12.11.2026
+## 11. Відповідність реалізації — 14.11.2026
 
-Цей датований розділ описує реалізацію, а не змінює надане вище ТЗ. Наявна функція не означає production-готовності. Поточний короткий стан — у [PROGRESS](PROGRESS.md), конкретні перевірки та їх межі — у [RELEASE_EVIDENCE](../operations/RELEASE_EVIDENCE.md), наступна робота — у [PLAN](../../PLAN.md).
+Надані вимоги вище збережені. Поточний стан і наступна робота — у [PROGRESS](PROGRESS.md) та [PLAN](../../PLAN.md), точні перевірки й межі — у [RELEASE_EVIDENCE](../operations/RELEASE_EVIDENCE.md). Докладні попередні матриці збережені в [архіві](../archive/IMPLEMENTATION_NOTES_2026_11.md).
 
-| Вимоги | Реалізація | Відкрите завершення |
+| Напрям | Реалізовано | Залишилося прийняти або допрацювати |
 | --- | --- | --- |
-| Акаунт і профілі | Hosted Supabase signup confirmation, password recovery/reset і повторний вхід власника пройдені; 2/2 identities confirmed і профілі linked, 2 активні ADMIN | UK/EN callback acceptance та disposable account deletion/outbox cleanup; наступний Profile/Community UI-прохід |
-| Каталог, фільм, персоналії | Home/catalog/search/filter/pagination, Details/credits/trailer/external rating за наявності даних, people/filmography; Admin Movies і TMDB refresh у live Edge v36 | 29/49 linked films ще без original language; 1 запис без підтвердженого TMDB ID; перевірити, що TMDB account metadata відповідає публічному сайту без монетизації; інші visual variants/fonts/tokens |
-| Особисті дії, огляди й коментарі | Watched/watchlist/favorites, ratings, review/comment CRUD, pagination, visibility/moderation | Збереження поведінки в нових UI-блоках; production перевірки |
-| Списки | Private CRUD/reorder, public feeds/detail/tags/likes; Featured/Crew та Admin curation доступні у live Edge v36; Admin featured Move up/Move down опубліковані; UK/EN Lists та API 10/10 прийняті live; залогінена Admin Lists route прочитана 12.11 на шести реальних системних списках без мутацій. Visibility UI/SQL обмежені CUSTOM | Live visibility/featured reorder mutation ще не прийняті; публічних CUSTOM списків поки немає, тому порожній Featured feed очікуваний; drag-and-drop UI та інші feed/detail variants лишаються відкритими |
-| Social/Community | Follow/block, network/activity, messages, notifications/SSE/unread; guards/retry | Подальший UI-прохід; delivery/reconnect у production |
-| Journal і службові сторінки | List/article/archive/audio/newsletter/editor; help/contact/legal/account-deletion surfaces | Погоджений UK/EN контент, covers/audio/dates; реальний контактний канал |
-| Admin | Users/HQ, Movies API/UI, reviews/comments/lists, report queue, communications, moderation/audit/settings із server pagination; Admin movie update/audit/publication toggle прийняті live 12.11; Lists route read-only завантажив реальні записи; Edge v36 блокує visibility updates для system lists і підтримує Featured reorder | Інші Admin routes і live curation mutations не прийняті; production не має CUSTOM списків; report queue порожня, тому live dismiss не приймався |
-| Адаптивність, UK/EN, дизайн | Адаптивні поверхні, localized states, keyboard/focus; Movie/Review/auth Profile, Home/Search і Lists мають локальні alignment докази | Решта variants, fonts/variables/overrides; повна Figma parity не підтверджена |
-| Безпека, продуктивність і дані | Access guards/validation, rate limits/cache, Flyway/ER; локальні contract/load/restore інструменти | Production capacity/monitoring і перевірки цільового середовища |
-| Розгортання й передача | GitHub Pages + Supabase Free публічно працюють; Gmail SMTP налаштований для Auth; відео користувач уже має | Підтримуваний безплатний mail delivery/ліміти, backup/restore й моніторинг; VPS/domain не входять у поточний безплатний запуск |
-
-Попередній повний regression передує останнім Home/Search і Lists змінам; вони перевірені окремими локальними build/targeted/Chrome доказами. Остаточні результати не дублюються в цій таблиці.
+| Акаунти | Hosted signup/confirmation, sign-in/out, recovery/reset, UUID-bound profile, deletion/outbox та email-change UI/callback | Контрольований двоадресний email change, решта token/deletion edge cases. Поточну ADMIN identity зберігати. |
+| Каталог і персоналії | Пошук/фільтри, metadata/credits, ACTOR/DIRECTOR/PRODUCER filmography, decade/genre/sort, біографії | TMDB language gaps та один непідтверджений ID, detailed job/written credits, повна visual parity. |
+| Особисті дії й огляди | Watched/watchlist/favorites, ratings, review/comment CRUD, visibility/moderation, reply overrides | Решта production mutation/ownership flows і фізичний native Share. |
+| Списки | Private/public CUSTOM, системні колекції, reorder, ranked mode, feeds/tags/likes, comments, reply overrides, pin, Admin curation | Контрольовані owner save/reload, двоакаунтні comments/reports і populated curation acceptance. |
+| Профілі та social | Bio/links, location/pronoun, owner names, avatar/banner, follow/block, activity, public statistics, messages/notifications | Медіа upload/replace/clear, решта settings saves, двоакаунтна доставка, local SSE reconnect. |
+| Journal і службові сторінки | Feed/article/archive/audio/newsletter, author, cover collage/content blocks, Admin editor, help/legal/service routes | Реальний editorial save, populated article acceptance і повна layout parity. |
+| Admin | Movie CRUD/audit/publication, queues/filters, reports/dismissal, review editor, CUSTOM list controls | Authenticated report submit/status/dismiss і review edit, реальні curation mutations, Figma navigation/parity. |
+| UK/EN і доступність | Локалізовані маршрути, responsive UI, keyboard/focus/retry, reduced-motion і цільові browser scenarios | Решта states/layouts за Figma, фізичні OS keyboard/zoom/Share перевірки. |
+| Безпека й дані | Приватна rewind schema, RLS/обмежені grants, UUID mapping, guest/owner/Admin guards, ізольований PG rehearsal | Encrypted backup/restore, local/hosted row reconciliation, Flyway V32, capacity/recovery review. Free-plan leaked-password limitation зафіксована. |
+| Передача | Повний Pages frontend + Supabase API, англійський README, схеми, модульна структура, операційні runbooks | Підсумкове приймання всіх вимог і відтворюваний recovery. |

@@ -128,7 +128,7 @@ Hosted Journal responses add optional nullable `coverImages` (one to three HTTP(
 
 `CoreFilmFlowIntegrationTests` покриває основний film flow на MySQL. Команди Maven, конфігурація БД і CSRF/bootstrap описані в [RUN_LOCAL.md](../operations/RUN_LOCAL.md). Дати, результати й межі виконаних перевірок — лише в [release evidence](../operations/RELEASE_EVIDENCE.md).
 
-Пов'язані матеріали: [Backend](README.md), [ER](README.md#схема-даних), [карта функцій](../../README.md#де-шукати-функцію).
+Пов'язані матеріали: [Backend](README.md), [ER](README.md#схема-даних), [карта функцій](../../README.md#code-structure).
 
 ## Hosted profile media
 

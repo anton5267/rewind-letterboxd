@@ -1,31 +1,25 @@
 # REWIND — поточний прогрес
 
+Оновлено 14.11.2026. Робочий порядок — у [PLAN](../../PLAN.md), вимоги — у [PROJECT_REQUIREMENTS](PROJECT_REQUIREMENTS.md), перевірки — у [RELEASE_EVIDENCE](../operations/RELEASE_EVIDENCE.md).
 
-> **Оновлення 13.11.2026:** GitHub Pages deploy `0cb1d7d` успішний; CI [43463187593](https://github.com/anton5267/rewind-letterboxd/actions/runs/43463187593) і Pages deployment [43463187511](https://github.com/anton5267/rewind-letterboxd/actions/runs/43463187511) зелені. Admin review/comment/list report UI опублікований. Цільові Playwright — **7/7**, production build пройшов; перевірені маршрути й JS assets доступні з Pages. Live authenticated report submit/dismiss іще не перевірені; черга production порожня. API — Supabase Edge `rewind-api` **v43 ACTIVE** за останнім підтвердженим repo read-back; ця UI публікація Edge не змінювала. Точний порядок робіт — у [PLAN.md](../../PLAN.md), докази — у [RELEASE_EVIDENCE.md](../operations/RELEASE_EVIDENCE.md), вимоги та gaps — у [PROJECT_REQUIREMENTS.md](PROJECT_REQUIREMENTS.md).
+## Опубліковано
 
-## Підтверджено
+- **Сайт і API.** GitHub Pages обслуговує повний UK/EN React frontend. Останній функціональний commit `645dbd7`; останній звірений hosted runtime — Edge v59 ACTIVE. [CI](https://github.com/anton5267/rewind-letterboxd/actions/runs/43555741993), [Pages](https://github.com/anton5267/rewind-letterboxd/actions/runs/43555742013).
+- **Акаунти.** Hosted signup confirmation, recovery/reset і sign-in пройшли на disposable identities. Профілі пов’язані з Auth UUID. Опубліковані email-change UI/callback, owner-only names, location/pronoun, загальні й індивідуальні reply preferences.
+- **Функції.** Каталог, ratings/reviews, private/public lists, list comments, follow/block, activity, messages/notifications, Journal і supported Admin controls доступні в hosted-стеку. Додані profile avatar/banner, pin і ranked/unranked lists, Journal media та Community public details.
+- **Останні UI зміни.** Messages/notifications оновлюються у видимій вкладці з guards від запізнілих відповідей. Person має десятиліття, окремі ACTOR/DIRECTOR/PRODUCER фільмографії та UK/EN біографії з позначеним English fallback і More/Less.
+- **Структура.** README англійською з трьома схемами. Edge розділений на contracts, HTTP, repositories і runtime. Власний/публічний React-профілі розділені на hooks, views і тематичні стилі. Докладна історія документації винесена в [архів](../archive/README.md).
+- **Локальна сумісність.** PostgreSQL baseline та MySQL→PostgreSQL rehearsal раніше пройшли на ізольованих копіях зі збереженням IDs/FK/NULL/sequences. Локальні й hosted записи мають відмінності, подальше перенесення очікує звірки.
 
-- Pages та публічний каталог доступні; прямі UK/EN Home/Admin маршрути повертають HTTP 200. `/api/genres` — 200; анонімні Admin API — 401. Приватні дані не відкриті через Data API.
-- Hosted Auth: Site URL, чотири UK/EN login/reset redirects, confirmation/recovery шаблони й Gmail SMTP збережені. Signup confirmation, recovery/reset та повторний sign-in тестової identity завершені. Live read-back: 2 підтверджені Auth identities, 2 зв’язані REWIND профілі, 2 активні ADMIN. Локальний recovery template узгоджений із Dashboard щодо RedirectTo-aware мови.
-- TMDB read-only snapshot (12.11 17:27 UTC): 50 фільмів, 49 зв’язані; original language є у **29/49**, ще **20** значень відсутні; один фільм без TMDB ID. Cron щоденний о 03:00 UTC; останній запуск 12.11 успішний, остання успішна спроба серед пропущених мов — 12.11 03:00 UTC, але значення не з’явилося. Перша повторна планова перевірка після cooldown — не раніше 16.11 03:00 UTC. ID кандидата для непов’язаного фільму офіційно не підтверджений і в БД не записаний.
-- Admin Movies, report queue та Featured/Crew реалізовані у live Edge v36 і frontend. Featured CUSTOM lists отримали Move up/Move down; Edge v36 та Pages source опубліковані й перевірені, але live reorder mutation не проводилась: у production 0 CUSTOM. Live ADMIN movie update/audit і publication toggle перевірені раніше з read-back. `review_reports` порожня, тож report dismiss також не тестувався. Поточні ролі та lifecycle identities не змінювали.
-- Edge suite: **107/107**; `deno check`, frontend `verify:build` (309 модулів), Admin Lists Playwright **1/1** (UK/EN × 7 ширин, ordering і межі позицій), GitHub CI [43266760220](https://github.com/anton5267/rewind-letterboxd/actions/runs/43266760220) та Pages deploy [43266760644](https://github.com/anton5267/rewind-letterboxd/actions/runs/43266760644) пройшли. Live Admin reorder acceptance не виконувався: немає CUSTOM списків; Playwright використовує ізольовані fixtures. Деталі — у [evidence](../operations/RELEASE_EVIDENCE.md#admin-featured-list-ordering-release--12112026).
-- PostgreSQL baseline, MySQL-сумісність і локальний data-import rehearsal перевірені окремо від звичайного MySQL Compose. Full backend suite: 145/145 на PostgreSQL 17 та MySQL 8.4; import API flow: 21/21. Локальну MySQL базу й Compose не переносили.
+## Залишилося
 
-- **Безпека (Supabase advisors, 12.11 о 10:00 UTC):** 3 INFO про приватні таблиці з RLS без policy; read-only перевірка підтвердила, що `anon`, `authenticated`, `rewind_edge_reader` та `rewind_edge_app` не мають табличних прав на них. `pg_net` встановлений у `public`, але активний cron використовує `net.http_post`, тому не переносити extension без заміни й репетиції залежності. Захист від витоклих паролів вимкнений; Supabase надає його лише на Pro+, тож на поточному Free увімкнути не можна. Performance advisor показує 15 невикористаних індексів; Health findings немає. [Details](../operations/RELEASE_EVIDENCE.md#supabase-advisor-and-private-table-grants--12112026).
+| Блок | Конкретна умова завершення |
+| --- | --- |
+| Recovery | Відсутні backup password/passphrase, перший encrypted export і disposable restore ще відкриті. Auth, Storage, settings і secrets потребують окремого recovery handling. |
+| Локальний source/data | Відновити Docker, звірити бази, завершити змістовний upstream review та узгодити Flyway V32. |
+| Live приватні дії | Save/clear settings, медіа, pin/ranked, comments/reports/moderation, двоадресний email change, двоакаунтна доставка й editorial save очікують контрольованого приймання. Fixtures і read-only UI перевірки вже мають датовані докази. |
+| TMDB | Snapshot 20/49 без original language, один фільм без підтвердженого ID. Наступний eligible refresh за останнім записом — 16.11.2026 03:00 UTC. |
+| Дизайн і продукт | Залишаються токени/типографіка, header/footer, повна parity окремих layout/states, детальні job/written credits та відкриті пункти матриці вимог. |
+| Free plan | Вбудована leaked-password protection недоступна. Межі capacity та recovery мають увійти до release review. |
 
-## Відкрито
-
-1. Пройти окремі UK/EN live Auth token callbacks і deletion/outbox cleanup лише для disposable identity; source fixture matrix 4/4 пройшла, але live token acceptance цим не підтверджений. Звичайний профіль не видаляти.
-2. Прийняти інші Admin routes і list curation mutations. Featured reorder Edge v36 та Pages UI опубліковані; live reorder не перевірений, бо CUSTOM списків немає. Для report-dismiss потрібна справжня скарга; черга порожня, production fixture не створювати.
-3. Після cooldown перевірити TMDB refresh: перші до 10 пропущених мов — не раніше 16.11 03:00 UTC, залишок — наступними плановими партіями. Для єдиного фільму без TMDB ID кандидат `1147411` досі потребує підтвердження офіційним TMDB API та штатного Admin sync; у БД ID не записаний.
-4. Уточнити TMDB application details: сайт публічний, але в source scan немає платіжного чи рекламного provider. Офіційний FAQ визначає commercial use за основною метою отримати дохід і дозволяє безплатне non-commercial використання з атрибуцією; сама публічність не доводить commercial use. Не додавати монетизацію й не вважати API key комерційною ліцензією. [TMDB FAQ](https://developer.themoviedb.org/docs/faq).
-5. Продовжити перевірені продуктні/UI gaps із матриці вимог; не трактувати локальні fixtures як live acceptance.
-
-## Home activity feed — опубліковано 12.11
-
-- Авторизовані користувачі мають UK/EN стрічку активності людей, на яких підписані. Гості не викликають персональний endpoint. Pages deploy і CI успішні; live UK Home показав новий текст, стрічку та empty state. Локальні fixture E2E — 2/2. [Evidence](../operations/RELEASE_EVIDENCE.md#authenticated-home-following-activity-pages-readback--12112026-1232-utc).
-
-## Межі цього оновлення
-
-Попередній release block синхронізував джерело Edge v34 і звузив Pages path filter, щоб E2E-only зміни не публікували сайт; історичні CI/Pages результати збережені в `RELEASE_EVIDENCE.md`. Новий live release з guard для CUSTOM visibility і його CI/Pages/API перевірки зафіксовані вище та в окремому evidence entry.
+Поточні результати підтверджують конкретні перевірені шляхи. Повне приймання всього проєкту залишається відкритим.

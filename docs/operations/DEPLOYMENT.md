@@ -1,5 +1,7 @@
 # Production deployment runbook
 
+The current public deployment uses [GitHub Pages + Supabase](DEPLOYMENT_POSTGRESQL.md). The procedures below support the optional Spring/MySQL server environment.
+
 This runbook prepares a Linux VPS deployment. It does not claim that a public VPS, domain, or SMTP account already exists.
 
 ## 1. VPS and DNS

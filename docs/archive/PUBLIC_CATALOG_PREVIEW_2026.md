@@ -1,0 +1,57 @@
+# REWIND public catalogue preview
+
+> Historical snapshot retained on 14 November 2026. Current guidance is linked from the [archive index](README.md). Old completion labels and local file paths describe their recorded date.
+
+> **Статус на 11.11.2026:** цей файл описує ранню каталог-only збірку, а не поточний production. GitHub Pages workflow зараз збирає повний React застосунок (`VITE_PUBLIC_CATALOG_ONLY=false`). Read-only перевірка live маршрутів `/uk/reviews/` і `/uk/lists/discover/` показала повний shell, навігацію, сторінки відгуків/добірок і footer. Порожні стани означають, що користувачі ще не створили публічний контент; вони не означають, що ці функції вимкнені. Поточні блокери й подальші кроки — у [PLAN.md](../../PLAN.md).
+
+The first public preview uses only the existing GitHub Pages repository and Supabase Free project. It publishes a read-only movie catalogue in Ukrainian and English.
+
+## Available
+
+- Browse and search 50 movies across 17 genres, with 153 movie-to-genre links. Filter by genre, release year, minimum community rating, and sort by newest or top rated.
+- Genre names in filters and movie details are localized for Ukrainian and English routes.
+- Search the existing 383 actors and 52 directors by name, view result counts, and open their catalog filmographies.
+- Open movie details with available poster/backdrop, release date, runtime, plot, age rating, IMDb ID, cast, directors, external ratings, and similar movies.
+- Open linked actor/director pages with catalog filmographies, title/year/rating filters, and actor character names.
+- The imported public metadata includes 383 actors / 400 cast links, 52 directors / 54 film links, 50 external ratings, and 300 similar-movie links.
+- Supabase Edge Function routes: `GET /api/genres`, `GET /api/movies/search`, `GET /api/movies/{id}/details`, `GET /api/people/search`, `GET /api/actors/{id}`, and `GET /api/directors/{id}`.
+- Successful public catalogue GET responses use a five-minute browser/shared cache with stale-while-revalidate; failures and missing records remain `no-store`.
+- REWIND tables live in the private `rewind` schema. All 9 catalogue tables have RLS enabled with a SELECT policy for `rewind_edge_reader` only. This NOLOGIN role has no `BYPASSRLS`; `anon` and `authenticated` have no schema or table grants. Direct PostgREST access to `rewind` returns HTTP 406.
+
+## Not available in this preview
+
+Accounts, sign-up, password recovery, profiles, reviews, lists, social features, and all write operations are not part of the preview. Private account and user-generated data were not copied to Supabase. The regular local MySQL Compose setup remains separate.
+
+## Deployment
+
+Public URL: <https://anton5267.github.io/rewind-letterboxd/>. The root route returns HTTP 200. The Pages build prerenders 976 catalog routes (UK/EN home, film, actor, and director pages) as static `index.html` files with route-specific title, description, canonical URL, and social preview metadata, so known deep links return HTTP 200 without relying on the `404.html` fallback. Unknown routes still use the fallback. The SVG favicon uses the project base path; its live asset returns HTTP 200 and the page has no browser console errors. Edge Function v10 returns extended film metadata, bounded movie and actor/director search, and filmographies, with five-minute caching for successful public reads.
+
+After commit `5f21893`, GitHub Pages Actions run [41894765919](https://github.com/anton5267/rewind-letterboxd/actions/runs/41894765919) completed successfully. A live phone-sized Playwright flow passed **1/1**, covering genre filter, title search, deep-link detail, runtime, cast, and external rating with no browser page errors.
+
+`.github/workflows/deploy-pages.yml` builds the static frontend with the GitHub project base path, Supabase Function URL, and repository variable `SUPABASE_PUBLISHABLE_KEY`. The Supabase database URL is available only to the Edge Function and is never included in the frontend build. Pushes to `master` that touch frontend files or this workflow deploy through GitHub Pages Actions.
+
+Checks completed: Edge Function handler tests (13/13), Deno type check, isolated PostgreSQL schema/seeds/RLS/read-only-role/API integration, live Supabase API and privilege checks, Supabase security advisor (no findings), frontend production build, and phone-sized browser flows for movie browsing and people search.
+
+After commit `35f3d8f`, GitHub Pages deployment [41897920751](https://github.com/anton5267/rewind-letterboxd/actions/runs/41897920751) and CI [41897920700](https://github.com/anton5267/rewind-letterboxd/actions/runs/41897920700) succeeded. The same phone-sized E2E passed **1/1** against the public site and live Supabase API. A direct actor deep link also rendered correctly through the Pages `404.html` SPA fallback with no browser errors; GitHub Pages returns HTTP 404 for that deep URL while serving the app shell.
+
+After commit `72a35d5`, GitHub Pages deployment [41898840285](https://github.com/anton5267/rewind-letterboxd/actions/runs/41898840285) and CI [41898840124](https://github.com/anton5267/rewind-letterboxd/actions/runs/41898840124) succeeded. A live phone-sized Playwright flow passed **1/1**, covering the year and minimum community rating filters together, genre and title search, movie details, cast, and actor filmography against the public Pages app and Supabase API.
+
+Edge Function v8 deployed the cache policy for successful public catalog reads. Four live API checks (genres, movie search, details, and actor filmography) returned HTTP 200 with `public, max-age=300, stale-while-revalidate=600`. Errors remain uncached; local Edge handler tests passed **11/11**, Deno typecheck and isolated PostgreSQL/RLS/API integration passed. No database schema or catalogue data changed.
+
+Edge Function v9 adds paginated actor/director name search using the existing private catalogue tables and restricted reader role. Live checks found Rachel McAdams (actor ID 286) and Sam Raimi (director ID 44), while rejecting the unsupported producer type with HTTP 400. The phone-sized Playwright flow passed **1/1** against the public site, including search for Rachel McAdams and opening her filmography. Local Edge handler tests passed **12/12** and the PostgreSQL/RLS/API verifier passed; no schema or catalogue data changed.
+
+After commit `c15b8ad`, GitHub Pages deployment [41905296846](https://github.com/anton5267/rewind-letterboxd/actions/runs/41905296846) and CI [41905296662](https://github.com/anton5267/rewind-letterboxd/actions/runs/41905296662) succeeded. The actor search UI and bounded 100-character query are live.
+
+Edge Function v10 applies bounded public movie search: title queries are limited to 100 characters, pages to 0–100, years to 1888–2100, and minimum ratings to 0–5. Live checks confirmed a valid movie query returns HTTP 200 and over-limit query/page/filter values return HTTP 400. Local handler tests passed **13/13** and the isolated PostgreSQL/RLS/API verifier passed; no schema or catalogue data changed.
+
+The Supabase performance advisor found the director lookup foreign key lacked an index. Added `movie_directors_director_id_idx` through migration `20261104203146_index_movie_directors_director_id` and verified its definition in both isolated PostgreSQL and the live project. The security advisor remains clear. The performance advisor now labels this index unused while the current 54-link catalogue is small; the index supports reverse director-to-film lookups as the public catalogue grows.
+
+After commit `e053c40`, GitHub Pages deployment [41900787797](https://github.com/anton5267/rewind-letterboxd/actions/runs/41900787797) and CI [41900787476](https://github.com/anton5267/rewind-letterboxd/actions/runs/41900787476) succeeded. The live phone-sized Playwright flow passed **1/1** and confirmed the public catalog HTML no longer requests the unused Font Awesome CDN; the standard full-app build retains its existing stylesheet.
+
+After commit `d6ba683`, GitHub Pages deployment [41908861716](https://github.com/anton5267/rewind-letterboxd/actions/runs/41908861716) succeeded. Genre filters and movie detail tags now use the existing UK/EN genre translations. The phone-sized Playwright flow passed **1/1** against the public site, checking the Ukrainian genre label, the English label after switching language, actor search, film details, and filmography. Follow-up commit `6a424cc` tightened the language-link selectors; its CI [41909178265](https://github.com/anton5267/rewind-letterboxd/actions/runs/41909178265) and Pages deployment [41909178324](https://github.com/anton5267/rewind-letterboxd/actions/runs/41909178324) also succeeded.
+
+After commits `f97cd40` and `18dc68b`, GitHub Pages now generates and serves all known catalog detail routes directly. The latest deployment [41912063937](https://github.com/anton5267/rewind-letterboxd/actions/runs/41912063937) and CI [41912063923](https://github.com/anton5267/rewind-letterboxd/actions/runs/41912063923) succeeded. Live HTTP checks returned **200** for Ukrainian and English home pages, a film page, and an actor page, with the expected page-specific title and canonical URL. The live browser loaded the catalog and fetched genres and film search results from the Supabase Edge Function successfully. Playwright's direct HTTP request helper intermittently ended with `ECONNRESET` in this environment, so the full test-file run could not be counted as passed.
+
+After commit `1bd4824`, browser-side navigation updates each public route's title, canonical URL, Open Graph metadata, language, and image metadata. On a **390×844** viewport, live navigation from the Ukrainian catalogue to *The Wrecking Crew*, then to Jason Momoa's filmography, updated the title and canonical/OG URL at each step; switching back to English updated the document language, locale, title, and canonical URL. The favicon returned HTTP 200, Supabase API and catalog image requests returned HTTP 200, and the browser console had no errors. CI [41915005502](https://github.com/anton5267/rewind-letterboxd/actions/runs/41915005502) and Pages deployment [41915005540](https://github.com/anton5267/rewind-letterboxd/actions/runs/41915005540) succeeded.
+
+The catalogue-only build described above was an earlier release stage. The current Pages workflow publishes the full React application; the preview component remains an opt-in fallback used only when `VITE_PUBLIC_CATALOG_ONLY=true`.
