@@ -57,3 +57,66 @@ test("tablet Details preserves the regular header and its primary navigation", a
   await expect(page.getByRole("navigation", { name: "Main navigation", exact: true })).toBeVisible();
   expect(writes).toEqual([]);
 });
+
+for (const language of ["uk", "en"] as const) {
+  test(`desktop header keeps the source background behind interactive controls in ${language}`, async ({ page }, testInfo) => {
+    const writes = await fixture(page);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`/${language}/films/${movieId}`);
+    await expect(page.locator("#movie-title")).toBeVisible();
+    const header = page.locator("header");
+
+    for (const width of [1440, 1024, 768]) {
+      await page.setViewportSize({ width, height: 900 });
+      const surface = await header.evaluate(element => {
+        const style = getComputedStyle(element);
+        const layer = getComputedStyle(element, "::before");
+        const box = element.getBoundingClientRect();
+        return {
+          background: style.backgroundColor,
+          backdrop: style.backdropFilter,
+          layerContent: layer.content,
+          layerPosition: layer.position,
+          layerBackground: layer.backgroundColor,
+          layerBackdrop: layer.backdropFilter,
+          layerFilter: layer.filter,
+          layerPointerEvents: layer.pointerEvents,
+          layerZIndex: layer.zIndex,
+          height: box.height,
+          viewportWidth: document.documentElement.clientWidth,
+          documentWidth: document.documentElement.scrollWidth,
+        };
+      });
+      expect(surface.background).toBe("rgba(0, 0, 0, 0)");
+      expect(surface.backdrop).toBe("none");
+      expect(surface.layerContent).toBe('""');
+      expect(surface.layerPosition).toBe("absolute");
+      expect(surface.layerBackground).toBe("rgba(0, 0, 0, 0.05)");
+      expect(surface.layerBackdrop).toBe("blur(5px)");
+      expect(surface.layerFilter).toBe("blur(50px)");
+      expect(surface.layerPointerEvents).toBe("none");
+      expect(surface.layerZIndex).toBe("-1");
+      expect(surface.height).toBe(106);
+      expect(surface.documentWidth).toBeLessThanOrEqual(surface.viewportWidth);
+
+      const account = header.getByRole("button", { name: language === "uk" ? "Акаунт" : "Account", exact: true });
+      await account.click();
+      await expect(account).toHaveAttribute("aria-expanded", "true");
+      await expect(header.locator(`#desktop-account-links a[href="/${language}/login"]`)).toBeVisible();
+      await account.press("Escape");
+      await expect(account).toHaveAttribute("aria-expanded", "false");
+      await expect(account).toBeFocused();
+    }
+
+    await page.setViewportSize({ width: 393, height: 852 });
+    expect(await header.evaluate(element => getComputedStyle(element, "::before").content)).toBe("none");
+    const bottomNav = page.getByRole("navigation", { name: language === "uk" ? "Головна навігація" : "Main navigation", exact: true });
+    const bounds = await bottomNav.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.y + bounds!.height).toBeCloseTo(852, 0);
+    await expect(bottomNav.getByRole("link")).toHaveCount(5);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.screenshot({ path: testInfo.outputPath(`desktop-header-${language}.png`) });
+    expect(writes).toEqual([]);
+  });
+}
