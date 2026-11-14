@@ -24,7 +24,7 @@
     margin-bottom: 0;
   }
 
-  .bio textarea {
+  .form .bio textarea {
     min-height: 255px;
     border-radius: 37px;
     padding: 20px 30px;

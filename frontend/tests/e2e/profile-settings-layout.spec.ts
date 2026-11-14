@@ -57,6 +57,14 @@ for (const language of ["uk", "en"] as const) {
     expect(geometry.bio.height).toBeCloseTo(255, 0);
     expect(geometry.bio.y).toBeCloseTo(geometry.username.y, 0);
     expect(geometry.biography).toEqual({ radius: "37px", padding: "20px 30px", fontSize: "22px" });
+    await form.locator('input[autocomplete="family-name"]').focus();
+    await page.keyboard.press("Tab");
+    await expect(form.locator("textarea")).toBeFocused();
+    await expect(form.locator("textarea")).toHaveCSS("outline-style", "solid");
+    await expect(form.locator("textarea")).toHaveCSS("outline-width", "2px");
+    await expect(form.locator("textarea")).toHaveCSS("outline-color", "rgb(212, 168, 95)");
+    await expect(form.locator("textarea")).toHaveCSS("outline-offset", "3px");
+    await expect(form.locator("textarea")).toHaveCSS("scroll-margin-block-start", "120px");
     await page.evaluate(() => scrollTo(0, 0));
     await page.screenshot({ path: test.info().outputPath("desktop-settings.png"), fullPage: true });
     await form.locator("#profile-display-name").fill("Updated reader");

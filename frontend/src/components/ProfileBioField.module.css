@@ -13,7 +13,9 @@
   font-size: 18px;
   line-height: 1.45;
   resize: vertical;
+  scroll-margin-block: 120px;
 }
+.desktopEditor:focus-visible { outline: 2px solid var(--rewind-gold); outline-offset: 3px; }
 .desktopHint { grid-column: 1 / -1; margin: 0; color: #aaa; font-size: 13px; line-height: 1.45; }
 
 .sheet {

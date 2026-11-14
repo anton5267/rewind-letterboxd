@@ -144,3 +144,19 @@ for (const locale of ["uk", "en"] as const) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
   });
 }
+
+test("actor character input accepts the shared 150 character limit", async ({ page }) => {
+  const { movie, movies, writes } = await adminMovieFixture(page, { details: {
+    actors: [{ id: 99100, name: "Existing Actor", characterName: "Existing role", castOrder: 0 }],
+  } });
+  await movies.getByRole("listitem").filter({ hasText: movie.title }).getByRole("button", { name: "Edit", exact: true }).click();
+  const cast = movies.getByRole("group", { name: "Cast", exact: true });
+  const character = cast.getByRole("textbox", { name: /^Character/ });
+  const characterName = "A".repeat(150);
+  await expect(character).toHaveAttribute("maxlength", "150");
+  await character.fill(characterName);
+  await expect(character).toHaveValue(characterName);
+  await movies.getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => writes.length).toBe(1);
+  expect(writes[0].data).toMatchObject({ actorCredits: [{ actorId: 99100, characterName, castOrder: 0 }] });
+});
