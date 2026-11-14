@@ -8,7 +8,7 @@ Spring Boot/MySQL/Redis/Mailpit мають окремий локальний ж�
 
 ## Підтверджений стан — 14.11.2026
 
-- [x] Повний React frontend опублікований на GitHub Pages. Функціональні релізи та їхні CI/Pages докази наведені в release evidence.
+- [x] Повний React frontend опублікований на GitHub Pages. Функціональні релізи та їхні CI/Pages докази наведені в release evidence. Стан Home ізольований за ID глядача, cross-tab account switch і старі відповіді перевірені UK/EN fixtures.
 - [x] Hosted API `rewind-api` v59 ACTIVE звірено з повним джерелом. Таблиці застосунку розміщені в приватній `rewind` schema з RLS, профілі пов’язані з Auth за UUID.
 - [x] Англійський README має три архітектурні схеми. Edge API та React-профілі рознесені за відповідальністю.
 - [x] Опубліковані settings, reply preferences, коментарі списків, медіа й закріплення профілю, Journal media, Community details, оновлення повідомлень/сповіщень і Person filters/roles/biographies. Межі приймання — у [PROGRESS](docs/project/PROGRESS.md).

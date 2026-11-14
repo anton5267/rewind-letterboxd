@@ -1,4 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { installHostedAuthFixture, signInHostedFixture } from "./fixtures/hosted-auth";
 
 const favorite = { id: 980110, title: "Shared favorite", photoUrl: null, releaseDate: "2020-01-01", rating: 4 };
 const emptyPage = { content: [], number: 0, totalElements: 0, totalPages: 0 };
@@ -8,18 +9,7 @@ async function installFixture(context: BrowserContext, delayed: boolean, fail = 
   const deletions: number[] = [];
   let release!: () => void;
   const responseGate = new Promise<void>(resolve => { release = resolve; });
-  const session = (id: number) => ({
-    access_token: `fixture-access-${id}`, refresh_token: `fixture-refresh-${id}`,
-    token_type: "bearer", expires_in: 3600,
-    user: {
-      id: `b1f5872a-148b-4878-8581-06b809b2992${id}`, email: "fixture@example.invalid",
-      aud: "authenticated", role: "authenticated", app_metadata: { provider: "email" },
-      user_metadata: {}, created_at: "2026-11-14T00:00:00Z",
-    },
-  });
-  await context.route("**/auth/v1/**", route => route.fulfill({ status: 404, json: {} }));
-  await context.route("**/auth/v1/token**", route => route.fulfill({ json: session(7) }));
-  await context.route("**/auth/v1/verify**", route => route.fulfill({ json: session(6) }));
+  await installHostedAuthFixture(context);
   await context.route(url => url.pathname.startsWith("/api/"), async route => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
@@ -58,11 +48,7 @@ async function installFixture(context: BrowserContext, delayed: boolean, fail = 
 }
 
 async function login(page: Page, language: "uk" | "en") {
-  await page.goto(`/${language}/login`);
-  await page.getByLabel(language === "uk" ? "Електронна пошта" : "Email", { exact: true }).fill("fixture@example.invalid");
-  await page.getByLabel(language === "uk" ? "Пароль" : "Password", { exact: true }).fill("fixture-password-only");
-  await page.getByRole("button", { name: language === "uk" ? "Увійти" : "Log in", exact: true }).click();
-  await expect(page).toHaveURL(new RegExp(`/${language}/films/?$`));
+  await signInHostedFixture(page, language);
   await page.goto(`/${language}/profile?settings=profile`);
   await expect(page.locator("#profile-display-name")).toHaveValue("Reader 7");
 }

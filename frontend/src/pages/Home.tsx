@@ -77,6 +77,11 @@ function HomeLoading({ kind }: { kind: HomeSection | "recentNews" }) {
 }
 
 export default function Home() {
+  const { user } = useAuth();
+  return <HomeContent key={user?.id ?? "guest"} />;
+}
+
+function HomeContent() {
   const { path, t, lang } = useLocale();
   const { isAuth, ready, user } = useAuth();
   const location = useLocation();
@@ -139,7 +144,7 @@ export default function Home() {
       case "followingActivity": setFollowingActivity([]); run(getFollowingActivity(), data => setFollowingActivity(data.content)); break;
       case "journal": setJournal([]); run(getJournal(lang), data => setJournal(data.content.slice(0, 3))); break;
     }
-  }, [isAuth, lang]);
+  }, [lang]);
 
   const retrySection = (section: HomeSection | null, targetId = "home-title") => {
     const origin = document.activeElement;
