@@ -8,7 +8,7 @@ Spring Boot/MySQL/Redis/Mailpit мають окремий локальний ж�
 
 ## Підтверджений стан — 14.11.2026
 
-- [x] Повний React frontend опублікований на GitHub Pages. Функціональні релізи та їхні CI/Pages докази наведені в release evidence. Стан Home ізольований за ID глядача, cross-tab account switch і старі відповіді перевірені UK/EN fixtures.
+- [x] Повний React frontend опублікований на GitHub Pages. Функціональні релізи та їхні CI/Pages докази наведені в release evidence. Стани Home та Header ізольовані за ID глядача. Cross-tab account switch і запізнілі відповіді перевірені цільовими UK/EN fixtures для feed та unread counters.
 - [x] Hosted API `rewind-api` v59 ACTIVE звірено з повним джерелом. Таблиці застосунку розміщені в приватній `rewind` schema з RLS, профілі пов’язані з Auth за UUID.
 - [x] Англійський README має три архітектурні схеми. Edge API та React-профілі рознесені за відповідальністю.
 - [x] Shared Header/Footer отримали оригінальні Figma SVG, desktop search border і nav slots/opacity. Цільова UK/EN звірка геометрії та клавіатури пройшла у 10 viewport/locale комбінаціях. Типографіка й повна frame parity відкриті.

@@ -29,6 +29,11 @@ function MobileNavIcon({ name }: { name: MobileNavIconName }) {
 }
 
 export default function Header() {
+  const { user } = useAuth();
+  return <HeaderContent key={user?.id ?? "guest"} />;
+}
+
+function HeaderContent() {
   const { isAuth, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
