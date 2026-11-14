@@ -1,3 +1,4 @@
+import { readMovieDetails } from "./shared/movie_details.ts";
 import {
   buildAdminMovieCreateQuery,
 } from "../admin_movie_create.ts";
@@ -49,6 +50,7 @@ function toAdminMovieCatalog(row: {
 
 export const adminMoviesRepository: Pick<RewindApiRepository,
   | "getAdminMovies"
+  | "getAdminMovieDetails"
   | "createAdminMovie"
   | "updateAdminMovie"
   | "deleteAdminMovie"
@@ -79,6 +81,18 @@ export const adminMoviesRepository: Pick<RewindApiRepository,
       ]);
       await connection.queryObject("COMMIT");
       return pageResult(rows.rows.map(toAdminMovieCatalog), count.rows[0]?.total ?? "0", page, size);
+    } catch (error) {
+      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+      throw error;
+    } finally { connection.release(); }
+  },
+
+  async getAdminMovieDetails(authUser, id) {
+    const { connection } = await beginAdminTransaction(authUser);
+    try {
+      const details = await readMovieDetails(connection, id, true);
+      await connection.queryObject("COMMIT");
+      return details;
     } catch (error) {
       try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
       throw error;

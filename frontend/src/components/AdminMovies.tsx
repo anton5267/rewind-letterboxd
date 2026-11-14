@@ -6,6 +6,7 @@ import {
   deleteAdminMovie,
   discoverAndImportAdminTmdb,
   getAdminMovies,
+  getAdminMovieDetails,
   getAdminMovieTmdbCandidates,
   getAdminTmdbQuality,
   importAdminTmdb,
@@ -21,7 +22,6 @@ import {
   type TmdbSyncBatchItem,
 } from "../api/admin.api";
 import type { Page } from "../api/types";
-import { getMovieDetails } from "../api/movies.api";
 import { useAuth } from "../context/AuthContext";
 import Pagination from "./Pagination";
 import RetryNotice from "./RetryNotice";
@@ -366,7 +366,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
     setMoviePeople(emptyMovieCredits);
     setMovieDraft({ ...emptyMovie, title: movie.title, releaseDate: movie.releaseDate ?? "", rating: movie.rating, photoUrl: movie.photoUrl ?? "" });
     try {
-      const { data: details } = await getMovieDetails(movie.id);
+      const { data: details } = await getAdminMovieDetails(movie.id);
       if (isCurrent()) {
         const credits: AdminMovieCreditsDraft = {
           actors: (details.actors ?? []).map(actor => ({ ...actor, type: "ACTOR", filmCount: 0, characterName: actor.characterName, castOrder: actor.castOrder ?? null })),

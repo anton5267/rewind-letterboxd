@@ -10,7 +10,7 @@ async function installFixture(page: Page, target: Target) {
     : target === "comments" ? "/api/admin/comments"
       : target === "users" ? "/api/admin/users"
         : target === "dashboard" ? "/api/admin/dashboard"
-          : target === "settings" ? "/api/admin/settings" : "/api/movies/91051/details";
+          : target === "settings" ? "/api/admin/settings" : "/api/admin/movies/91051";
   await page.route(/^https?:\/\/[^/]+\/api\//, async route => {
     const url = new URL(route.request().url());
     const { pathname } = url;

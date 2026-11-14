@@ -91,7 +91,7 @@ Hosted Journal responses add optional nullable `coverImages` (one to three HTTP(
 
 | Доступ | Метод і шлях | Призначення |
 | --- | --- | --- |
-| A | `GET`, `POST /api/admin/movies`; `PUT`, `DELETE /api/admin/movies/{id}` | Сторінковий список, створення, редагування, видалення фільму; dashboard має CRUD-форму |
+| A | `GET`, `POST /api/admin/movies`; `GET`, `PUT`, `DELETE /api/admin/movies/{id}` | Сторінковий список, створення, редагування, видалення фільму; dashboard має CRUD-форму |
 | A | `GET /api/admin/users`, `GET /api/admin/users/{id}`, `GET /api/admin/users/{id}/overview`, `PATCH /api/admin/users/{id}` | Пошук, detail, агрегований overview (статистика, reviews/activity/audit) і guard-оване редагування ролі/активності |
 | A | `POST /api/admin/users/{id}/activate`, `/api/admin/users/{id}/deactivate` | Активація/деактивація |
 | A | `GET /api/admin/reviews`; `POST /api/admin/reviews/{id}/hide`, `/api/admin/reviews/{id}/unhide`; `DELETE /api/admin/reviews/{id}` | Модерація відгуків; UI підключено до dashboard |

@@ -143,6 +143,7 @@ export interface RewindApiRepository {
   queueAdminNewsletter?(authUser: HostedAuthUser, articleId: number): Promise<NewsletterQueueResponse>;
   getAdminNewsletterStatus?(authUser: HostedAuthUser, articleId: number): Promise<NewsletterDeliveryStatusResponse | null>;
   getAdminMovies?(authUser: HostedAuthUser, query: string | null, page: number, size: number): Promise<{ content: AdminMovieCatalogResponse[]; totalPages: number; totalElements: number; number: number }>;
+  getAdminMovieDetails?(authUser: HostedAuthUser, id: number): Promise<MovieDetailsResponse | null>;
   createAdminMovie?(authUser: HostedAuthUser, body: AdminMovieWriteRequest): Promise<AdminMovieResponse>;
   updateAdminMovie?(authUser: HostedAuthUser, id: number, body: AdminMovieWriteRequest): Promise<AdminMovieResponse | null>;
   deleteAdminMovie?(authUser: HostedAuthUser, id: number): Promise<boolean>;

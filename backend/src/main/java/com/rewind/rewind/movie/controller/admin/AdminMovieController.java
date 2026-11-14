@@ -5,19 +5,30 @@ import com.rewind.rewind.movie.dto.admin.AdminMovieCatalogResponse;
 import com.rewind.rewind.movie.dto.admin.CreateMovieRequest;
 import com.rewind.rewind.movie.dto.admin.UpdateMovieRequest;
 import com.rewind.rewind.movie.service.admin.AdminMovieService;
+import com.rewind.rewind.movie.dto.MovieDetailsResponse;
+import com.rewind.rewind.movie.service.MovieDetailsService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/admin/movies")
 public class AdminMovieController {
 
     private final AdminMovieService service;
+    private final MovieDetailsService detailsService;
 
-    public AdminMovieController(AdminMovieService service) {
+    public AdminMovieController(AdminMovieService service, MovieDetailsService detailsService) {
         this.service = service;
+        this.detailsService = detailsService;
+    }
+
+    @GetMapping("/{id}")
+    public MovieDetailsResponse details(@PathVariable Long id, Principal principal) {
+        return detailsService.getDetails(id, principal.getName());
     }
 
     @GetMapping

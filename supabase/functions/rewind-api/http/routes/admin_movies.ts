@@ -113,7 +113,7 @@ export async function handleAdminMovieRoutes(context: HttpRouteContext): Promise
   const adminMovieMatch = path.match(ADMIN_MOVIE_PATTERN);
 
   if (path === ADMIN_MOVIES_PATH || adminMovieMatch) {
-    const allowed = !adminMovieMatch ? ["GET", "POST"] : ["PUT", "DELETE"];
+    const allowed = !adminMovieMatch ? ["GET", "POST"] : ["GET", "PUT", "DELETE"];
     if (!allowed.includes(request.method)) {
       corsHeaders.set("Allow", `${allowed.join(", ")}, OPTIONS`);
       return json({ message: "Method not allowed" }, 405, corsHeaders);
@@ -139,6 +139,11 @@ export async function handleAdminMovieRoutes(context: HttpRouteContext): Promise
       }
       const id = parseRouteId(adminMovieMatch![1]);
       if (id === null) return json({ message: "Invalid movie ID" }, 400, corsHeaders);
+      if (request.method === "GET") {
+        if (!repository.getAdminMovieDetails) return json({ message: "Not found" }, 404, corsHeaders);
+        const details = await repository.getAdminMovieDetails(authUser, id);
+        return details ? json(details, 200, corsHeaders) : json({ message: "Movie not found" }, 404, corsHeaders);
+      }
       if (request.method === "DELETE") {
         if (!repository.deleteAdminMovie) return json({ message: "Not found" }, 404, corsHeaders);
         return await repository.deleteAdminMovie(authUser, id)

@@ -9,7 +9,7 @@ const roles = [
 
 async function editor(page: Page) {
   const state = await adminMovieFixture(page);
-  await page.route(`**/api/movies/${state.movie.id}/details`, route => route.fulfill({ json: {
+  await page.route(`**/api/admin/movies/${state.movie.id}`, route => route.fulfill({ json: {
     ...state.movie, originalLanguage: "ja", genres: [], actors: [], directors: [], producers: [],
     shortPlot: null, backdropUrl: null, trailerUrl: null,
   } }));
