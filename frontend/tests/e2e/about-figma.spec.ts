@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("About follows the measured Figma editorial shell", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/en/about");
+  await page.goto("en/about");
 
   const hero = page.locator('main > [class*="hero"]');
   const heroBox = await hero.boundingBox();
@@ -26,7 +26,21 @@ test("About follows the measured Figma editorial shell", async ({ page }) => {
   expect(headingBox?.y).toBe(713);
 
   await page.setViewportSize({ width: 393, height: 852 });
-  await page.goto("/en/about");
+  await page.goto("en/about");
   await expect(page.getByRole("heading", { name: /^About Us$/i })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+});
+
+test("About attributes TMDB in UK and EN", async ({ page }) => {
+  const copy = {
+    uk: "Цей продукт використовує TMDB API, але не схвалений і не сертифікований TMDB.",
+    en: "This product uses the TMDB API but is not endorsed or certified by TMDB.",
+  };
+  for (const locale of ["uk", "en"] as const) {
+    await page.goto(`${locale}/about`);
+    await expect(page.getByText(copy[locale], { exact: true })).toBeVisible();
+    const logo = page.getByRole("img", { name: "TMDB" });
+    await expect(logo).toBeVisible();
+    await expect.poll(() => logo.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
+  }
 });

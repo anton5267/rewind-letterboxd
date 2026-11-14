@@ -23,14 +23,16 @@ test("release routes keep landmarks and no horizontal overflow across the viewpo
 
   // 720 CSS px approximates the reflow width at 200% browser zoom on a
   // 1440 CSS-pixel desktop; this still does not simulate native device zoom.
-  for (const width of [320, 393, 720, 768, 1440]) {
+  for (const width of [320, 360, 393, 720, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     for (const route of routes) {
       const pageErrors: string[] = [];
       page.removeAllListeners("pageerror");
       page.on("pageerror", error => pageErrors.push(error.message));
 
-      await page.goto(route);
+      // Relative navigation keeps the matrix runnable on both local root hosting
+      // and the GitHub Pages project base path supplied through E2E_BASE_URL.
+      await page.goto(route.replace(/^\/+/, ""));
       await waitForPageContent(page);
       await expect(page.locator('main[aria-busy="true"], main [aria-busy="true"]')).toHaveCount(0);
       await page.evaluate(() => document.fonts.ready);
@@ -53,7 +55,7 @@ test("release routes keep landmarks and no horizontal overflow across the viewpo
       else await expect(footer).toBeVisible();
       if (route === "/uk/route-that-does-not-exist") {
         await expect(page.getByRole("heading", { name: "Ой! Сторінку не знайдено" })).toBeVisible();
-        await expect(page.getByRole("link", { name: "На головну" })).toHaveAttribute("href", "/uk/home");
+        await expect(page.getByRole("link", { name: "На головну" })).toHaveAttribute("href", /\/uk\/home$/);
       }
       if (route === "/uk/community/reviewers" && width <= 720) {
         const header = await page.getByRole("banner").boundingBox();

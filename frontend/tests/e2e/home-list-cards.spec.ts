@@ -145,8 +145,8 @@ test("Member Home renders the authenticated following activity feed", async ({ p
   await page.route("**/api/lists/public/popular**", route => route.fulfill({ json: emptyPage }));
   await page.route("**/api/journal/articles**", route => route.fulfill({ json: emptyPage }));
   await page.route("**/api/activity/recent-watched**", route => route.fulfill({ json: emptyPage }));
-  await page.route("**/api/conversations/unread-count", route => route.fulfill({ json: { count: 0 } }));
-  await page.route("**/api/notifications/unread-count", route => route.fulfill({ json: { count: 0 } }));
+  await page.route("**/api/conversations/unread-count**", route => route.fulfill({ json: { count: 0 } }));
+  await page.route("**/api/notifications/unread-count**", route => route.fulfill({ json: { count: 0 } }));
   await page.route("**/api/users/popular-reviewers**", route => route.fulfill({ json: [] }));
   await page.route("**/api/tags/popular**", route => route.fulfill({ json: [] }));
 
@@ -187,8 +187,8 @@ test("Guest Home does not request the private following activity feed", async ({
   await page.route("**/api/lists/public/popular**", route => route.fulfill({ json: emptyPage }));
   await page.route("**/api/journal/articles**", route => route.fulfill({ json: emptyPage }));
   await page.route("**/api/activity/recent-watched**", route => route.fulfill({ json: emptyPage }));
-  await page.route("**/api/conversations/unread-count", route => route.fulfill({ json: { count: 0 } }));
-  await page.route("**/api/notifications/unread-count", route => route.fulfill({ json: { count: 0 } }));
+  await page.route("**/api/conversations/unread-count**", route => route.fulfill({ json: { count: 0 } }));
+  await page.route("**/api/notifications/unread-count**", route => route.fulfill({ json: { count: 0 } }));
   await page.route("**/api/users/popular-reviewers**", route => route.fulfill({ json: [] }));
   await page.route("**/api/tags/popular**", route => route.fulfill({ json: [] }));
 

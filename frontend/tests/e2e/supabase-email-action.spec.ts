@@ -13,7 +13,7 @@ for (const language of ["uk", "en"] as const) {
         expect(body).toMatchObject({ type: "email_change", token_hash: tokenHash });
         await route.fulfill({ json: { msg: "Confirmation accepted" } });
       });
-      await page.goto(`/${language}/email-action/#rewind_action=email_change&token_hash=${tokenHash}&type=email_change`);
+      await page.goto(`${language}/email-action/#rewind_action=email_change&token_hash=${tokenHash}&type=email_change`);
       const heading = language === "uk" ? "Підтвердьте зміну email" : "Confirm your email change";
       await expect(page.getByRole("heading", { name: heading })).toBeVisible();
       await expect(page).toHaveURL(new RegExp(`/${language}/email-action/?$`));
@@ -109,7 +109,7 @@ const emailActionFlows = [
 for (const flow of emailActionFlows) {
   test(`${flow.name} waits for an explicit click and removes its fragment before verification`, async ({ page }) => {
     const verificationBodies = await mockSupabaseVerification(page);
-    await page.goto(`/${flow.language}/email-action/#rewind_action=${flow.action}&token_hash=${tokenHash}&type=${flow.type}`);
+    await page.goto(`${flow.language}/email-action/#rewind_action=${flow.action}&token_hash=${tokenHash}&type=${flow.type}`);
 
     await expect(page.getByRole("heading", { name: flow.heading })).toBeVisible();
     await expect(page).toHaveURL(new RegExp(`/${flow.language}/email-action/?$`));

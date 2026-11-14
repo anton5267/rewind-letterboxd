@@ -5,7 +5,7 @@ test("mobile auth retains standalone composition and supported local forms", asy
   await page.route("**/api/auth/refresh", route => route.fulfill({ status: 401, json: {} }));
   await page.setViewportSize({ width: 393, height: 852 });
   for (const route of ["login", "register", "forgot-password", "reset-password?token=responsive-fixture-token"]) {
-    await page.goto(`/en/${route}`);
+    await page.goto(`en/${route}`);
     const main = page.locator("main");
     await expect(main.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(main.locator("form")).toHaveCount(1);

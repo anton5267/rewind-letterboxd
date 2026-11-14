@@ -1,16 +1,32 @@
-import { expect, test } from "@playwright/test";
+import { expect as baseExpect, test, type Page } from "@playwright/test";
+
+const expect = baseExpect.configure({ timeout: 15_000 });
+
+async function getWithNetworkRetry(page: Page, url: string) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await page.request.get(url, { timeout: 15_000 });
+    } catch (error) {
+      if (!String(error).includes("ECONNRESET") || attempt === 2) throw error;
+      await page.waitForTimeout(250 * (attempt + 1));
+    }
+  }
+  throw new Error("Unreachable: request retry loop ended without a response.");
+}
 
 test("full app home, public catalogue, and private account routing work on GitHub Pages", async ({ page }) => {
+  // The production smoke waits on live Supabase responses across several routes.
+  test.setTimeout(120_000);
   await page.setViewportSize({ width: 320, height: 844 });
   const pageErrors: string[] = [];
   page.on("pageerror", error => pageErrors.push(error.message));
 
-  const homeResponse = await page.request.get("/rewind-letterboxd/uk/home/");
+  const homeResponse = await getWithNetworkRetry(page, "/rewind-letterboxd/uk/home/");
   expect(homeResponse.status()).toBe(200);
   expect(homeResponse.headers()["content-type"]).toContain("text/html");
   expect(await homeResponse.text()).toContain("<title>Ваш кіножурнал | REWIND</title>");
 
-  const sitemapResponse = await page.request.get("/rewind-letterboxd/sitemap.xml");
+  const sitemapResponse = await getWithNetworkRetry(page, "/rewind-letterboxd/sitemap.xml");
   expect(sitemapResponse.status()).toBe(200);
   const sitemap = await sitemapResponse.text();
   const sitemapUrls = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map(match => match[1]);
@@ -19,7 +35,7 @@ test("full app home, public catalogue, and private account routing work on GitHu
   expect(sitemapUrls).toContain("https://anton5267.github.io/rewind-letterboxd/uk/films/33/");
   expect(sitemapUrls).toContain("https://anton5267.github.io/rewind-letterboxd/en/people/actor/286/");
 
-  const robotsResponse = await page.request.get("/rewind-letterboxd/robots.txt");
+  const robotsResponse = await getWithNetworkRetry(page, "/rewind-letterboxd/robots.txt");
   expect(robotsResponse.status()).toBe(200);
   expect(await robotsResponse.text()).toContain("Sitemap: https://anton5267.github.io/rewind-letterboxd/sitemap.xml");
 
@@ -44,7 +60,7 @@ test("full app home, public catalogue, and private account routing work on GitHu
   await expect(film).toBeVisible();
   const movieUrl = await film.getAttribute("href");
   expect(movieUrl).toBeTruthy();
-  const movieResponse = await page.request.get(`${movieUrl!.replace(/\/+$/, "")}/`);
+  const movieResponse = await getWithNetworkRetry(page, `${movieUrl!.replace(/\/+$/, "")}/`);
   expect(movieResponse.status()).toBe(200);
   expect(await movieResponse.text()).toContain("<title>The Running Man (2025) | REWIND</title>");
   await film.click();
@@ -58,7 +74,7 @@ test("full app home, public catalogue, and private account routing work on GitHu
   const actorName = (await actorLink.locator("strong").textContent())?.trim();
   const actorUrl = await actorLink.getAttribute("href");
   expect(actorUrl).toBeTruthy();
-  const actorResponse = await page.request.get(`${actorUrl!.replace(/\/+$/, "")}/`);
+  const actorResponse = await getWithNetworkRetry(page, `${actorUrl!.replace(/\/+$/, "")}/`);
   expect(actorResponse.status()).toBe(200);
   expect(await actorResponse.text()).toContain('rel="canonical"');
   await actorLink.click();
@@ -76,7 +92,7 @@ test("full app home, public catalogue, and private account routing work on GitHu
   await expect(page.getByRole("heading", { name: "Rachel McAdams" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Фільми за участі" })).toBeVisible();
   await page.getByRole("link", { name: "REWIND" }).click();
-  const englishHomeResponse = await page.request.get("/rewind-letterboxd/en/home/");
+  const englishHomeResponse = await getWithNetworkRetry(page, "/rewind-letterboxd/en/home/");
   expect(englishHomeResponse.status()).toBe(200);
   expect(await englishHomeResponse.text()).toContain("<title>Your film diary | REWIND</title>");
   await page.goto("/rewind-letterboxd/en/home/");

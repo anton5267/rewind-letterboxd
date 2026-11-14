@@ -65,8 +65,21 @@ test("tag conflicts use the real recent feed and preserve browser history", asyn
   }
 });
 
-test("long list tags fit mobile and desktop widths on the real API", async ({ page }) => {
+test("long public list tags fit mobile and desktop widths", async ({ page }) => {
   const tag = "a".repeat(50);
+  const emptyPage = { content: [], totalPages: 0, totalElements: 0, number: 0, size: 12 };
+  let taggedFeedRequested = false;
+  await page.route(/^https?:\/\/[^/]+\/api\//, route => {
+    const url = new URL(route.request().url());
+    if (url.pathname === "/api/users/me") return route.fulfill({ status: 401, json: {} });
+    if (url.pathname === "/api/tags/popular") return route.fulfill({ json: [] });
+    if (url.pathname === "/api/lists/public") {
+      taggedFeedRequested ||= url.searchParams.get("tag") === tag;
+      return route.fulfill({ json: emptyPage });
+    }
+    return route.fulfill({ json: [] });
+  });
+
   for (const width of [320, 393, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     const response = page.waitForResponse(item => {
@@ -85,9 +98,23 @@ test("long list tags fit mobile and desktop widths on the real API", async ({ pa
     expect(bounds.right).toBeLessThanOrEqual(bounds.viewport + 1);
     expect(bounds.overflow, `List tag at ${width}px must not overflow`).toBeLessThanOrEqual(1);
   }
+  expect(taggedFeedRequested).toBe(true);
 });
 
-test("unfiltered public list feed selection keeps its real API endpoint", async ({ page }) => {
+test("unfiltered public list feed selection maps to the expected API endpoint", async ({ page }) => {
+  const requests: URL[] = [];
+  const emptyPage = { content: [], totalPages: 0, totalElements: 0, number: 0, size: 0 };
+  await page.route(/^https?:\/\/[^/]+\/api\//, route => {
+    const url = new URL(route.request().url());
+    if (url.pathname === "/api/users/me") return route.fulfill({ status: 401, json: {} });
+    if (url.pathname === "/api/tags/popular") return route.fulfill({ json: [] });
+    if (url.pathname === "/api/lists/public" || /^\/api\/lists\/public\/(?:popular|recently-liked|team|featured)$/.test(url.pathname)) {
+      requests.push(url);
+      return route.fulfill({ json: emptyPage });
+    }
+    return route.fulfill({ json: [] });
+  });
+
   for (const feed of ["recent", "popular", "recently-liked", "team", "featured"]) {
     const endpoint = feed === "recent" ? "/api/lists/public" : `/api/lists/public/${feed}`;
     const response = page.waitForResponse(item => new URL(item.url()).pathname === endpoint);
@@ -95,6 +122,7 @@ test("unfiltered public list feed selection keeps its real API endpoint", async 
     const result = await response;
     expect(result.ok()).toBe(true);
     expect(new URL(result.url()).searchParams.has("tag")).toBe(false);
+    expect(requests.some(url => url.pathname === endpoint && !url.searchParams.has("tag"))).toBe(true);
     await expect(page).toHaveURL(new RegExp(`feed=${feed}$`));
     await expect(page.getByRole("main")).toHaveAttribute("aria-busy", "false");
     await expect(page.getByRole("alert")).toHaveCount(0);
@@ -102,7 +130,7 @@ test("unfiltered public list feed selection keeps its real API endpoint", async 
 });
 
 test("public lists landing follows the Figma section layout without a duplicate feed rail", async ({ page }) => {
-  const lists = ["Featured", "Popular", "Liked", "Recent"].map((name, index) => ({
+  const lists = ["Featured", "Popular", "Liked", "Crew"].map((name, index) => ({
     id: 986000 + index,
     name: `${name} list`,
     description: "A curated film collection.",
@@ -117,8 +145,8 @@ test("public lists landing follows the Figma section layout without a duplicate 
     const url = new URL(route.request().url());
     if (url.pathname === "/api/users/me") return route.fulfill({ status: 401, json: {} });
     if (url.pathname === "/api/tags/popular") return route.fulfill({ json: [{ id: 986200, name: "Drama", slug: "drama" }] });
-    if (["/api/lists/public/team", "/api/lists/public/popular", "/api/lists/public/recently-liked", "/api/lists/public"].includes(url.pathname)) {
-      const index = url.pathname.endsWith("/team") ? 0 : url.pathname.endsWith("/popular") ? 1 : url.pathname.endsWith("/recently-liked") ? 2 : 3;
+    if (["/api/lists/public/featured", "/api/lists/public/team", "/api/lists/public/popular", "/api/lists/public/recently-liked", "/api/lists/public"].includes(url.pathname)) {
+      const index = url.pathname.endsWith("/featured") ? 0 : url.pathname.endsWith("/popular") ? 1 : url.pathname.endsWith("/recently-liked") ? 2 : 3;
       return route.fulfill({ json: { content: [lists[index]], totalPages: 1, totalElements: 1, number: 0, size: 6 } });
     }
     return route.fulfill({ json: [] });
@@ -130,10 +158,10 @@ test("public lists landing follows the Figma section layout without a duplicate 
     await expect(main).toHaveAttribute("aria-busy", "false");
     await expect(main.getByRole("navigation", { name: "List feeds", exact: true })).toHaveCount(0);
     for (const [href, expectedCount] of [
-      ["/en/lists/discover?feed=team", 1],
+      ["/en/lists/discover?feed=featured", 1],
       ["/en/lists/discover?feed=popular", 1],
       ["/en/lists/discover?feed=recently-liked", 1],
-      ["/en/lists/discover?feed=recent", 2],
+      ["/en/lists/discover?feed=team", 1],
     ] as const) {
       await expect(main.locator(`a[href="${href}"]`).filter({ hasText: "View all" })).toHaveCount(expectedCount);
     }

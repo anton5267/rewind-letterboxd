@@ -28,27 +28,27 @@ test("public screens keep named controls and mobile layout", async ({ page }) =>
     await page.setViewportSize({ width, height: 800 });
 
     for (const route of publicRoutes) {
-      await page.goto(route);
+      await page.goto(route.replace(/^\/+/, ""));
       await waitForPageContent(page);
 
-    const unnamed = await page.locator("a, button, input, textarea, select").evaluateAll(elements => elements
-      .filter(element => {
-        const style = window.getComputedStyle(element);
-        return style.visibility !== "hidden" && style.display !== "none" && element.getBoundingClientRect().width > 0;
-      })
-      .map(element => {
-        const aria = element.getAttribute("aria-label")?.trim();
-        const labelledBy = element.getAttribute("aria-labelledby");
-        const label = labelledBy ? document.getElementById(labelledBy)?.textContent?.trim() : undefined;
-        const parentLabel = element.closest("label")?.textContent?.trim();
-        const associatedLabel = "labels" in element
-          ? [...((element as HTMLInputElement).labels ?? [])].map(item => item.textContent?.trim()).filter(Boolean).join(" ")
-          : undefined;
-        const imageAlt = element.querySelector("img[alt]")?.getAttribute("alt")?.trim();
-        const text = element.textContent?.trim();
-        return aria || label || parentLabel || associatedLabel || imageAlt || text ? null : element.outerHTML.slice(0, 160);
-      })
-      .filter(Boolean));
+      const unnamed = await page.locator("a, button, input, textarea, select").evaluateAll(elements => elements
+        .filter(element => {
+          const style = window.getComputedStyle(element);
+          return style.visibility !== "hidden" && style.display !== "none" && element.getBoundingClientRect().width > 0;
+        })
+        .map(element => {
+          const aria = element.getAttribute("aria-label")?.trim();
+          const labelledBy = element.getAttribute("aria-labelledby");
+          const label = labelledBy ? document.getElementById(labelledBy)?.textContent?.trim() : undefined;
+          const parentLabel = element.closest("label")?.textContent?.trim();
+          const associatedLabel = "labels" in element
+            ? [...((element as HTMLInputElement).labels ?? [])].map(item => item.textContent?.trim()).filter(Boolean).join(" ")
+            : undefined;
+          const imageAlt = element.querySelector("img[alt]")?.getAttribute("alt")?.trim();
+          const text = element.textContent?.trim();
+          return aria || label || parentLabel || associatedLabel || imageAlt || text ? null : element.outerHTML.slice(0, 160);
+        })
+        .filter(Boolean));
 
       expect(unnamed, `${route} at ${width}px contains unnamed interactive controls`).toEqual([]);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -56,9 +56,8 @@ test("public screens keep named controls and mobile layout", async ({ page }) =>
     }
   }
 });
-
 test("static app sends baseline browser security headers", async ({ page }) => {
-  const response = await page.goto("/uk/home");
+  const response = await page.goto("uk/home");
   expect(response).not.toBeNull();
   const headers = response!.headers();
   expect(headers["x-content-type-options"]).toBe("nosniff");
@@ -69,7 +68,9 @@ test("static app sends baseline browser security headers", async ({ page }) => {
 
 test("primary public routes have keyboard reachable controls", async ({ page }) => {
   for (const route of ["/uk/home", "/uk/films", "/en/help"]) {
-    await page.goto(route);
+    await page.goto(route.replace(/^\/+/, ""));
+    await waitForPageContent(page);
+    await expect(page.locator('main[aria-busy="true"], main [aria-busy="true"]'), route).toHaveCount(0, { timeout: 15_000 });
     const positiveTabIndexes = await page.locator("[tabindex]").evaluateAll(elements => elements
       .filter(element => Number(element.getAttribute("tabindex")) > 0)
       .map(element => element.outerHTML.slice(0, 120)));
@@ -87,8 +88,10 @@ test("primary public routes have keyboard reachable controls", async ({ page }) 
 
 test("public routes expose complete landmarks and image alternatives", async ({ page }) => {
   for (const route of publicRoutes) {
-    await page.goto(route);
-    await waitForPageContent(page);
+    await page.goto(route.replace(/^\/+/, ""));
+    await expect(page.locator("#route-loading-title"), route).toHaveCount(0);
+    await expect(page.locator("main h1").first(), route).toBeVisible();
+    await expect(page.locator('main[aria-busy="true"], main [aria-busy="true"]'), route).toHaveCount(0, { timeout: 15_000 });
     const audit = await page.evaluate(() => {
       const headings = [...document.querySelectorAll("h1, h2, h3, h4, h5, h6")].map(element => Number(element.tagName.slice(1)));
       const imagesWithoutAlt = [...document.images]
@@ -122,7 +125,9 @@ test("public routes expose complete landmarks and image alternatives", async ({ 
 
 test("public routes pass the WCAG 2 A/AA axe audit", async ({ page }) => {
   for (const route of publicRoutes) {
-    await page.goto(route);
+    await page.goto(route.replace(/^\/+/, ""));
+    await waitForPageContent(page);
+    await expect(page.locator('main[aria-busy="true"], main [aria-busy="true"]'), route).toHaveCount(0, { timeout: 15_000 });
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa"])
       .analyze();

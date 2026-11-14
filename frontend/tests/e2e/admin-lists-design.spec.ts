@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 test("admin list cards expose controls only for custom lists across languages and responsive widths", async ({ page }) => {
   let featuredPosition: number | null = null;
   let secondFeaturedPosition: number | null = 0;
+  let visibilityRequests = 0;
   await page.route("**/api/users/me", route => route.fulfill({ json: {
     id: 900010, username: "admin-fixture", role: "ADMIN", displayName: "Admin Fixture",
     email: "admin@example.invalid", avatarUrl: null, isActive: true, isHq: false,
@@ -13,6 +14,10 @@ test("admin list cards expose controls only for custom lists across languages an
   await page.route("**/api/*/unread-count", route => route.fulfill({ json: { count: 0 } }));
   await page.route("**/api/admin/lists**", route => {
     const url = new URL(route.request().url());
+    if (route.request().method() === "PUT" && url.pathname.endsWith("/visibility")) {
+      visibilityRequests++;
+      return route.fulfill({ status: 409, json: { message: "Unexpected visibility change" } });
+    }
     if (route.request().method() === "PUT" && /\/featured-position$/.test(url.pathname)) {
       const direction = url.searchParams.get("direction");
       if (direction === "down" && featuredPosition !== null && secondFeaturedPosition !== null && featuredPosition > secondFeaturedPosition) {
@@ -53,8 +58,13 @@ test("admin list cards expose controls only for custom lists across languages an
       description: null, listType: "CUSTOM", isPublic: true, itemCount: 4,
       createdAt: "2025-12-04T10:30:00Z", updatedAt: "2025-12-04T10:30:00Z",
       featuredPosition: secondFeaturedPosition,
+    }, {
+      id: 900026, userId: 900011, username: "fixture-owner", name: "Private custom list",
+      description: null, listType: "CUSTOM", isPublic: false, itemCount: 1,
+      createdAt: "2025-12-05T10:30:00Z", updatedAt: "2025-12-05T10:30:00Z",
+      featuredPosition: null,
     }],
-    totalPages: 1, totalElements: 2, number: 0, size: 50,
+    totalPages: 1, totalElements: 4, number: 0, size: 50,
     } });
   });
 
@@ -70,6 +80,7 @@ test("admin list cards expose controls only for custom lists across languages an
       const lists = page.getByRole("region", { name: locale === "uk" ? "Усі списки" : "All Lists" });
       const card = lists.getByRole("listitem").first();
       const systemCard = lists.getByRole("listitem").nth(1);
+      const privateCard = lists.getByRole("listitem").filter({ hasText: "Private custom list" });
       await expect(card.getByText("A real API backed list")).toBeVisible();
       await expect(card.getByText("fixture-owner")).toBeVisible();
       await expect(card.getByText(label, { exact: true })).toBeVisible();
@@ -78,6 +89,7 @@ test("admin list cards expose controls only for custom lists across languages an
       await expect(card.getByRole("button", { name: locale === "uk" ? "Додати до вибраних" : "Feature list" })).toBeVisible();
       await expect(systemCard.getByText("System watchlist")).toBeVisible();
       await expect(systemCard.getByRole("button")).toHaveCount(0);
+      await expect(privateCard.getByRole("button", { name: locale === "uk" ? "Додати до вибраних" : "Feature list" })).toBeDisabled();
       if (width === 320) {
         const featureButton = card.getByRole("button", { name: locale === "uk" ? "Додати до вибраних" : "Feature list" });
         await featureButton.click();
@@ -91,7 +103,8 @@ test("admin list cards expose controls only for custom lists across languages an
         await card.getByRole("button", { name: locale === "uk" ? "Прибрати з вибраних" : "Remove from featured" }).click();
         await expect(featureButton).toBeVisible();
       }
-      await expect(lists.getByRole("button", { name: /reported lists|скаргами на списки/i })).toHaveCount(0);
+      await expect(lists.getByRole("button", { name: /reported only|лише зі скаргами/i })).toBeVisible();
+      expect(visibilityRequests).toBe(0);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
       if ((locale === "uk" && width === 1440) || (locale === "en" && width === 393)) {
         await page.screenshot({ path: resolve(captureDirectory, `admin-lists-${locale}-${width}-fixture.png`), fullPage: true });
