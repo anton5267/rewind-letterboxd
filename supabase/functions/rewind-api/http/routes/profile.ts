@@ -1,6 +1,6 @@
 import type { HttpRouteContext } from "../context.ts";
 import type { SocialLinkResponse } from "../../contracts/social.ts";
-import { optionalInteger } from "../parsers/query.ts";
+import { optionalInteger, parseRouteId } from "../parsers/query.ts";
 import { parseProfileUpdate } from "../parsers/profile.ts";
 import { confirmedAuthUser, json, repositoryFailure } from "../response.ts";
 import { RewindApiError } from "../errors.ts";
@@ -125,7 +125,10 @@ export async function handleProfileRoutes(context: HttpRouteContext): Promise<Re
           try { body = await request.json(); } catch { return json({ message: "Invalid request body" }, 400, corsHeaders); }
           const update = parseProfileUpdate(body);
           if (!update) return json({ message: "Invalid profile fields" }, 400, corsHeaders);
-          await repository.updateMyProfile(authUser, update);
+          const expected = new URL(request.url).searchParams.get("expectedUserId");
+          const expectedUserId = expected === null ? undefined : parseRouteId(expected);
+          if (expectedUserId === null) return json({ message: "Invalid expected user ID" }, 400, corsHeaders);
+          await repository.updateMyProfile(authUser, update, expectedUserId);
         }
         return json(await repository.getMyProfile(authUser), 200, corsHeaders);
       }
@@ -138,8 +141,8 @@ export async function handleProfileRoutes(context: HttpRouteContext): Promise<Re
       if (requestedSize < 1) return json({ message: "Invalid page size" }, 400, corsHeaders);
       const size = Math.min(requestedSize, 50);
       return json(await repository.getMyProfileCollection(authUser, profileCollectionMatch![1], page, size), 200, corsHeaders);
-    } catch {
-      return json({ message: "Unable to load profile" }, 500, corsHeaders);
+    } catch (error) {
+      return repositoryFailure(error, "Unable to load profile", corsHeaders);
     }
   }
 

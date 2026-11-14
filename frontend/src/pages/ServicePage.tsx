@@ -87,13 +87,15 @@ const content: Record<ServiceKind, ServiceCopy> = {
       uk: [
         { heading: "Що означає HQ", body: "Позначка HQ відображається в публічному профілі та керується адміністраторами. Вона не є платною підпискою й не надає адміністративних прав." },
         { heading: "Доступні можливості", body: "Акаунт використовує наявні можливості профілю: списки фільмів, огляди, оцінки та взаємодію зі спільнотою. Видимість списків залежить від налаштувань їхнього власника." },
-        { heading: "Межі поточної реалізації", body: "Окремі інструменти HQ для аналітики показів, закріплення списків, завантаження фонів чи керування командою наразі не підтримуються. Позначка HQ сама по собі не змінює правила розрахунку оцінок фільмів." },
+        { heading: "Зображення й закріплений список", body: "У публічній версії власники профілів можуть завантажувати аватар і банер та закріпити один власний публічний список із коментарями. Ці можливості доступні всім профілям." },
+        { heading: "Межі поточної реалізації", body: "Інструменти аналітики показів і керування командою заплановані окремо. Позначка HQ сама по собі не змінює правила розрахунку оцінок фільмів." },
         { heading: "Питання про акаунт", body: "З питаннями про позначку HQ звертайтеся до команди й додайте посилання на профіль.", contactLink: true },
       ],
       en: [
         { heading: "What HQ Means", body: "The HQ badge appears on a public profile and is managed by administrators. It is not a paid subscription and does not grant administrative permissions." },
         { heading: "Available Features", body: "The account uses existing profile features: film lists, reviews, ratings, and community interaction. List visibility depends on the owner’s settings." },
-        { heading: "Current Limitations", body: "Separate HQ tools for impression analytics, pinned lists, background uploads, or team management are not currently supported. The HQ badge itself does not change how film ratings are calculated." },
+        { heading: "Images and a Pinned List", body: "Profile owners in the public application can upload an avatar and banner and pin one of their public lists with its comments. These features are available to all profiles." },
+        { heading: "Current Limitations", body: "Impression analytics and team management tools are planned separately. The HQ badge itself does not change how film ratings are calculated." },
         { heading: "Account Questions", body: "Contact the team about the HQ badge and include the profile address.", contactLink: true },
       ],
     },

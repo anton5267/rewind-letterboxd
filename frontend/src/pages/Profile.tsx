@@ -1,4 +1,5 @@
 import { profileBannerStyle } from "../utils/profileBannerStyle";
+import PinnedProfileList from "../components/PinnedProfileList";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation, Navigate, Link } from "react-router-dom";
 import { useLocale } from "../i18n";
@@ -351,6 +352,7 @@ export default function Profile() {
       </nav>
       {profileView === "reviews" && <div className={styles.reviewsBack}><Link to={requestedReviewValue !== null ? path("/profile?view=reviews") : sectionTarget("profile-overview", null)} aria-label={requestedReviewValue !== null ? t("allReviews") : t("backToProfile")}>←</Link></div>}
       {networkView && <Link className={styles.networkBack} to={sectionTarget("profile-overview", null)} aria-label={t("profile")}>←</Link>}
+      {!profileView && profile.pinnedListId != null && <PinnedProfileList key={`${profile.id}:${profile.pinnedListId}`} ownerId={profile.id} listId={profile.pinnedListId} />}
       <ProfileFavoritesSection favorites={favorites} sectionTarget={sectionTarget} />
       <ProfileActivitySection activityModel={activityModel} />
       {(profileView === "ratings" || (!profileView && location.hash.startsWith("#profile-ratings"))) && <>

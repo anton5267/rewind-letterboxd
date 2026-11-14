@@ -1,6 +1,7 @@
 export type ReplyPreference = "ANYONE" | "FOLLOWED" | "SELF";
 
 export interface ProfileResponse {
+  pinnedListId?: number | null;
   givenName?: string | null;
   familyName?: string | null;
   id: number;
@@ -29,6 +30,7 @@ export interface ProfileCollectionResult {
 }
 
 export interface ProfileUpdateRequest {
+  pinnedListId?: number | null;
   givenName?: string;
   familyName?: string;
   displayName?: string;
@@ -40,6 +42,7 @@ export interface ProfileUpdateRequest {
 }
 
 export interface PublicProfileResponse {
+  pinnedListId?: number | null;
   id: number; username: string; displayName: string; avatarUrl: string | null; bannerUrl?: string | null; bio?: string | null; location?: string | null; pronoun?: string | null; hq: boolean;
   stats: { ratings: number; reviews: number; watched: number; watchlist: number; favorites: number };
   ratingDistribution: { rating: number; count: number }[];

@@ -91,7 +91,7 @@ test("a profile-name save from the previous account cannot replace the current a
     await other.getByRole("button", { name: "Confirm email", exact: true }).click();
     await expect(other).toHaveURL(/\/en\/films\/?$/);
     await expect(given).toHaveValue(""); await given.fill("Current account");
-    const delayed = page.waitForResponse(r => r.request().method() === "PATCH" && r.url().endsWith("/api/profile/me"));
+    const delayed = page.waitForResponse(r => r.request().method() === "PATCH" && new URL(r.url()).pathname === "/api/profile/me");
     state.release(); await (await delayed).finished(); await page.waitForLoadState("networkidle");
     await expect(given).toHaveValue("Current account");
     await expect(page.getByText("Profile updated.", { exact: true })).toHaveCount(0);

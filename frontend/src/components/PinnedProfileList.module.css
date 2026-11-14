@@ -1,0 +1,34 @@
+.root {
+  order: 3;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 60px;
+  padding-top: 18px;
+  border-top: 1px solid #4d4d4d;
+}
+.root > h2 { margin: 0 0 40px; color: #fff; font-size: 24px; line-height: 1.12; }
+.root h2:focus { outline: 3px solid var(--rewind-cyan); outline-offset: 4px; }
+.card { display: grid; grid-template-columns: minmax(0, 446px) minmax(0, 1fr); gap: 52px; align-items: center; padding: 40px 34px; border-radius: 20px; background: #282828; }
+.posters { --catalog-poster-height: 260px; display: block; width: 100%; min-width: 0; color: #fff; text-decoration: none; }
+.posters > div { width: 100%; }
+.copy { min-width: 0; }
+.copy h3 { margin: 0; font-size: 24px; line-height: 1.12; overflow-wrap: anywhere; }
+.copy a { color: inherit; text-decoration: none; }
+.copy a:hover { text-decoration: underline; }
+.count { margin: 10px 0 0; color: #aaa; font-size: 14px; }
+.description { margin: 20px 0 0; color: #aaa; font-size: 20px; line-height: 1.2; white-space: pre-wrap; overflow-wrap: anywhere; }
+.error { color: #ffd2d2; }
+@media (max-width: 1023px) {
+  .card { gap: 24px; padding: 24px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .description { font-size: 16px; }
+}
+@media (max-width: 767px) {
+  .root { margin-top: 35px; }
+  .root > h2 { margin-bottom: 24px; font-size: 14px; }
+  .card { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: 24px 18px; }
+  .posters { --catalog-poster-height: 116px; }
+  .copy { order: -1; display: flex; gap: 12px; justify-content: space-between; align-items: baseline; }
+  .copy h3 { font-size: 13px; }
+  .count { flex-shrink: 0; margin: 0; font-size: 10px; }
+  .description { display: none; }
+}

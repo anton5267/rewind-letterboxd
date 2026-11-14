@@ -131,3 +131,9 @@ Own `recentReviews` і paged `/api/profile/me/reviews` у поточному sou
 `POST /api/profile/me/media/{avatar|banner}?expectedUserId={numericId}` accepts raw JPEG/PNG bytes. `DELETE` on the same URL clears that image. Both require a confirmed bearer identity and compare the expected numeric ID with the mapped profile before mutation. Responses contain nullable `avatarUrl` and `bannerUrl`. Own and public profile GET responses also include nullable `bannerUrl`. Images save immediately and are public.
 
 Limits are 2 MB and 4096 pixels per dimension. Unsupported MIME returns 415, oversized bodies 413, malformed data or missing ID 400, changed account 409, and pending-upload quota 429. Storage outages preserve the previous active image and return a retryable error. Old files are cleaned through the private media queue. Local Spring mode retains its existing avatar URL form.
+
+## Hosted profile pinned list
+
+Own and public profile responses include nullable `pinnedListId`. `PATCH /api/profile/me` accepts a positive numeric ID or explicit `null` to clear it. Omission preserves the existing pin. Only a public CUSTOM list owned by the mapped active profile can be pinned. Each profile has at most one pin. Making the list private, deleting it, or deleting its owner removes the pin.
+
+The hosted settings form sends optional `expectedUserId` in the query. A changed account returns 409 before mutation. Invalid selections return 400 with the profile transaction rolled back. Existing callers may omit this query parameter. The public profile reuses the existing public-list and comment endpoints. Pinning is available to all profile owners and grants no additional role or moderation permissions.

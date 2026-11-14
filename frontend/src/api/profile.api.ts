@@ -21,6 +21,7 @@ export interface ProfileList {
 export type ProfileReplyPreference = "ANYONE" | "FOLLOWED" | "SELF";
 
 export interface ProfileResponse {
+  pinnedListId?: number | null;
   givenName?: string | null;
   familyName?: string | null;
   id: number;
@@ -44,6 +45,7 @@ export interface ProfileResponse {
 export const getProfile = () => api.get<ProfileResponse>("/profile/me");
 
 export const updateProfile = (data: {
+  pinnedListId?: number | null;
   givenName?: string;
   familyName?: string;
   displayName?: string;
@@ -52,8 +54,8 @@ export const updateProfile = (data: {
   location?: string;
   pronoun?: string;
   replyPreference?: ProfileReplyPreference;
-}) =>
-  api.patch<ProfileResponse>("/profile/me", data);
+}, expectedUserId?: number) =>
+  api.patch<ProfileResponse>("/profile/me", data, { params: { expectedUserId } });
 
 export interface SocialLink { platform: string; url: string; }
 export const getSocialLinks = () => api.get<SocialLink[]>("/profile/me/social-links");
@@ -107,6 +109,7 @@ export interface PublicProfileReview {
 }
 
 export interface PublicProfileResponse {
+  pinnedListId?: number | null;
   id: number;
   username: string;
   displayName: string;

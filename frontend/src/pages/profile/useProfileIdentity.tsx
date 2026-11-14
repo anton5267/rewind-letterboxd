@@ -71,6 +71,7 @@ export function useProfileIdentity({ route, feedback }: {
   const [replyPreference, setReplyPreference] = useState<ProfileReplyPreference>("ANYONE");
 
   const [givenName, setGivenName] = useState("");
+  const [pinnedListId, setPinnedListId] = useState<number | null>(null);
   const [familyName, setFamilyName] = useState("");
 
   const [nameBusy, setNameBusy] = useState(false);
@@ -84,6 +85,7 @@ export function useProfileIdentity({ route, feedback }: {
     setNameBusy(false);
     setGivenName("");
     setFamilyName("");
+    setPinnedListId(null);
   }, [isAuth, user?.id]);
 
   useEffect(() => {
@@ -100,6 +102,7 @@ export function useProfileIdentity({ route, feedback }: {
       setDisplayName(data.displayName ?? "");
       setGivenName(data.givenName ?? "");
       setFamilyName(data.familyName ?? "");
+      setPinnedListId(data.pinnedListId ?? null);
       setAvatarUrl(data.avatarUrl ?? "");
       setBio(data.bio ?? "");
       setProfileLocation(data.location ?? "");
@@ -154,6 +157,7 @@ export function useProfileIdentity({ route, feedback }: {
     if (nameBusyRef.current) return;
     const requestId = ++identityMutation.current;
     const requestUserId = activeUserId.current;
+    if (requestUserId === null) return;
     const scope = ++settingsFeedbackGeneration.current;
     const submitter = (event.nativeEvent as SubmitEvent).submitter;
     const origin = submitter instanceof HTMLElement ? submitter : document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -177,7 +181,8 @@ export function useProfileIdentity({ route, feedback }: {
         ...(fields !== "name" ? { avatarUrl: normalizedAvatarUrl ?? "" } : {}),
         ...(fields !== "avatar" ? { bio: bio.trim(), location: profileLocation.trim(), pronoun, replyPreference } : {}),
         ...(fields !== "avatar" && usesHostedSupabaseAuth ? { givenName: givenName.trim(), familyName: familyName.trim() } : {}),
-      });
+        ...(fields !== "avatar" && usesHostedSupabaseAuth ? { pinnedListId } : {}),
+      }, requestUserId);
       if (!isCurrentRequest()) return;
       setProfile(data);
       if (fields !== "avatar") setDisplayName(data.displayName ?? "");
@@ -185,6 +190,7 @@ export function useProfileIdentity({ route, feedback }: {
       if (fields !== "avatar") {
         setGivenName(data.givenName ?? "");
         setFamilyName(data.familyName ?? "");
+        setPinnedListId(data.pinnedListId ?? null);
         setBio(data.bio ?? "");
         setProfileLocation(data.location ?? "");
         setPronoun(data.pronoun ?? "");
@@ -214,6 +220,8 @@ export function useProfileIdentity({ route, feedback }: {
     displayName,
     setDisplayName,
     givenName,
+    pinnedListId,
+    setPinnedListId,
     setGivenName,
     familyName,
     setFamilyName,

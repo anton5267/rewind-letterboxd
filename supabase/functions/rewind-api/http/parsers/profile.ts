@@ -5,6 +5,11 @@ export function parseProfileUpdate(value: unknown): ProfileUpdateRequest | null 
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const body = value as Record<string, unknown>;
   const update: ProfileUpdateRequest = {};
+  if (Object.hasOwn(body, "pinnedListId")) {
+    const listId = body.pinnedListId;
+    if (listId !== null && (typeof listId !== "number" || !Number.isSafeInteger(listId) || listId <= 0)) return null;
+    update.pinnedListId = listId as number | null;
+  }
   if (body.displayName !== undefined && body.displayName !== null) {
     if (typeof body.displayName !== "string") return null;
     const name = body.displayName;

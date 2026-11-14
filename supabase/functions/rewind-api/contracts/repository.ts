@@ -56,7 +56,7 @@ export interface RewindApiRepository {
   getOrCreateCurrentUser?(authUser: HostedAuthUser): Promise<CurrentUserResponse>;
   getMyProfile?(authUser: HostedAuthUser): Promise<ProfileResponse>;
   updateMyProfileMedia?(authUser: HostedAuthUser, kind: ProfileMediaKind, image: ProfileMediaUpload | null, expectedUserId: number): Promise<ProfileMediaResponse>;
-  updateMyProfile?(authUser: HostedAuthUser, update: ProfileUpdateRequest): Promise<void>;
+  updateMyProfile?(authUser: HostedAuthUser, update: ProfileUpdateRequest, expectedUserId?: number): Promise<void>;
   deleteMyAccount?(authUser: HostedAuthUser): Promise<boolean>;
   getMyProfileCollection?(authUser: HostedAuthUser, collection: string, page: number, size: number): Promise<ProfileCollectionResult>;
   getMyMovieStatus?(authUser: HostedAuthUser, movieId: number): Promise<MovieStatusResponse>;

@@ -3,6 +3,7 @@ import { useLocale, editorialText } from "../../i18n";
 import { useAuth } from "../../context/AuthContext";
 import ProfileSettingsShell, { type ProfileSettingsTab } from "../../components/ProfileSettingsShell";
 import ProfileNameFields from "../../components/ProfileNameFields";
+import ProfilePinnedListField from "../../components/ProfilePinnedListField";
 import ProfileBioField from "../../components/ProfileBioField";
 import ProfilePronounField from "../../components/ProfilePronounField";
 import ReplyPreferenceField from "../../components/ReplyPreferenceField";
@@ -43,6 +44,8 @@ interface Props {
     | "setDisplayName"
     | "givenName"
     | "setGivenName"
+    | "pinnedListId"
+    | "setPinnedListId"
     | "familyName"
     | "setFamilyName"
     | "bio"
@@ -111,6 +114,8 @@ export default function ProfileSettingsView({ settingsTab, identity, account, co
     setDisplayName,
     givenName,
     setGivenName,
+    pinnedListId,
+    setPinnedListId,
     familyName,
     setFamilyName,
     bio,
@@ -179,6 +184,7 @@ export default function ProfileSettingsView({ settingsTab, identity, account, co
         <div><label htmlFor="settings-profile-location">{t("profileLocation")}</label><input id="settings-profile-location" value={profileLocation} maxLength={80} disabled={nameBusy} onChange={event => setProfileLocation(event.target.value)} /></div>
         <ProfilePronounField key={`${user?.id}-${lang}`} value={pronoun} disabled={nameBusy} onChange={setPronoun} />
         <ReplyPreferenceField key={`${user?.id}-${lang}`} value={replyPreference} disabled={nameBusy} onChange={setReplyPreference} />
+        {usesHostedSupabaseAuth && <ProfilePinnedListField lists={profile.lists} value={pinnedListId} disabled={nameBusy} onChange={setPinnedListId} />}
         {usesHostedSupabaseAuth ? <ProfileEmailField key={`${user?.id}-${lang}`} email={profile.email} userId={profile.id} disabled={nameBusy}
           onConfirmed={email => identity.setProfile(current => current?.id === profile.id ? { ...current, email } : current)} />
           : <div><label htmlFor="settings-email">{t("email")}</label><output id="settings-email">{profile.email}</output></div>}

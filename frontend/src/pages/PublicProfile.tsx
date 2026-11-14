@@ -1,3 +1,4 @@
+import PinnedProfileList from "../components/PinnedProfileList";
 import ProfileLoading from "../components/ProfileLoading";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -245,6 +246,7 @@ export default function PublicProfile() {
       })}
     </nav>
     {networkView && <Link className={styles.networkBack} to={sectionTarget("public-profile-overview", null)} aria-label={t("profile")}>←</Link>}
+    {!profileView && profile.pinnedListId != null && <PinnedProfileList key={`${profile.id}:${profile.pinnedListId}`} ownerId={profile.id} listId={profile.pinnedListId} />}
     <section className={`${styles.section} ${styles.overviewSection}`} id="public-profile-overview" aria-labelledby="public-profile-favorites-title" aria-busy={favoritePreviewLoading} data-retry-focus-section="favorites">
       <h2 id="public-profile-favorites-title" tabIndex={-1}>{t("favoriteFilms")}</h2>
       {favoritePreviewLoading && <ProfileLoading label={t("loading")} layout="films" />}
