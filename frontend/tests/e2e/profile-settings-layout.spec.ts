@@ -42,6 +42,12 @@ for (const language of ["uk", "en"] as const) {
       const bioStyle = getComputedStyle(bio);
       return {
         form: rect(form), username: rect(form.querySelector("#settings-username")), bio: rect(bio),
+        displayName: rect(form.querySelector("#profile-display-name")),
+        email: rect(form.querySelector("#settings-email")),
+        pronoun: rect(form.querySelector("select")),
+        location: rect(form.querySelector("#settings-profile-location")),
+        replies: rect(form.querySelector('select[aria-describedby$="-hint"]')),
+        save: rect(form.querySelector('button[type="submit"]')),
         givenName: rect(form.querySelector('input[autocomplete="given-name"]')),
         familyName: rect(form.querySelector('input[autocomplete="family-name"]')),
         biography: { radius: bioStyle.borderRadius, padding: bioStyle.padding, fontSize: bioStyle.fontSize },
@@ -49,7 +55,15 @@ for (const language of ["uk", "en"] as const) {
     });
     expect(geometry.form.width).toBeCloseTo(1200, 0);
     expect(geometry.username.x).toBeCloseTo(120, 0);
-    expect(geometry.username.width).toBeCloseTo(588, 0);
+    expect(geometry.username.width).toBeCloseTo(282, 0);
+    expect(geometry.displayName.width).toBeCloseTo(282, 0);
+    expect(geometry.displayName.x - geometry.username.x - geometry.username.width).toBeCloseTo(24, 0);
+    expect(geometry.displayName.y).toBeCloseTo(geometry.username.y, 0);
+    expect(geometry.email.y).toBeCloseTo(geometry.pronoun.y, 0);
+    expect(geometry.location.y).toBeCloseTo(geometry.replies.y, 0);
+    expect(geometry.givenName.y).toBeLessThan(geometry.email.y);
+    expect(geometry.email.y).toBeLessThan(geometry.location.y);
+    expect(geometry.save.y).toBeGreaterThan(geometry.location.y + geometry.location.height);
     expect(geometry.givenName.width).toBeCloseTo(290, 0);
     expect(geometry.familyName.x - geometry.givenName.x - geometry.givenName.width).toBeCloseTo(8, 0);
     expect(geometry.bio.x).toBeCloseTo(732, 0);
@@ -58,6 +72,10 @@ for (const language of ["uk", "en"] as const) {
     expect(geometry.bio.y).toBeCloseTo(geometry.username.y, 0);
     expect(geometry.biography).toEqual({ radius: "37px", padding: "20px 30px", fontSize: "22px" });
     await form.locator('input[autocomplete="family-name"]').focus();
+    await page.keyboard.press("Tab");
+    await expect(form.locator("#settings-email")).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(form.locator("#settings-profile-location")).toBeFocused();
     await page.keyboard.press("Tab");
     await expect(form.locator("textarea")).toBeFocused();
     await expect(form.locator("textarea")).toHaveCSS("outline-style", "solid");
@@ -80,6 +98,11 @@ for (const language of ["uk", "en"] as const) {
       await expect(form.locator("#profile-display-name")).toHaveValue("Updated reader");
       await expect(form.locator('input[autocomplete="given-name"]')).toHaveValue("Updated given name");
       const bioTrigger = form.getByRole("button", { name: language === "uk" ? "Про себе" : "About me", exact: true });
+      const emailBox = await form.locator("#settings-email").boundingBox();
+      const locationBox = await form.locator("#settings-profile-location").boundingBox();
+      const bioBox = await bioTrigger.boundingBox();
+      expect(emailBox!.y).toBeLessThan(locationBox!.y);
+      expect(locationBox!.y).toBeLessThan(bioBox!.y);
       await bioTrigger.click();
       await expect(page.getByRole("dialog").getByRole("textbox")).toHaveValue("Saved across viewport changes");
       await page.keyboard.press("Escape");

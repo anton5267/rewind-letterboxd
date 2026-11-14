@@ -181,14 +181,23 @@ export default function ProfileSettingsView({ settingsTab, identity, account, co
         <div className={identityStyles.username}><label htmlFor="settings-username">{t("username")}</label><output id="settings-username">{profile.username}</output></div>
         <div className={identityStyles.displayName}><label htmlFor="profile-display-name">{t("displayName")}</label><input id="profile-display-name" value={displayName} disabled={nameBusy} minLength={displayName.trim() ? 2 : undefined} maxLength={60} autoComplete="nickname" onChange={event => setDisplayName(event.target.value)} /></div>
         {usesHostedSupabaseAuth && <ProfileNameFields className={identityStyles.names} givenName={givenName} familyName={familyName} disabled={nameBusy} onGivenName={setGivenName} onFamilyName={setFamilyName} />}
-        <ProfileBioField className={identityStyles.bio} key={`${user?.id}-${lang}`} value={bio} disabled={nameBusy} onChange={setBio} />
+        {usesHostedSupabaseAuth ? (
+          <ProfileEmailField
+            className={identityStyles.email}
+            key={`email-${user?.id}-${lang}`}
+            email={profile.email}
+            userId={profile.id}
+            disabled={nameBusy}
+            onConfirmed={email => identity.setProfile(current => current?.id === profile.id ? { ...current, email } : current)}
+          />
+        ) : (
+          <div className={identityStyles.email}><label htmlFor="settings-email">{t("email")}</label><output id="settings-email">{profile.email}</output></div>
+        )}
         <div className={identityStyles.location}><label htmlFor="settings-profile-location">{t("profileLocation")}</label><input id="settings-profile-location" value={profileLocation} maxLength={80} disabled={nameBusy} onChange={event => setProfileLocation(event.target.value)} /></div>
-        <ProfilePronounField className={identityStyles.pronoun} key={`${user?.id}-${lang}`} value={pronoun} disabled={nameBusy} onChange={setPronoun} />
-        <ReplyPreferenceField className={identityStyles.replies} key={`${user?.id}-${lang}`} value={replyPreference} disabled={nameBusy} onChange={setReplyPreference} />
+        <ProfileBioField className={identityStyles.bio} key={`bio-${user?.id}-${lang}`} value={bio} disabled={nameBusy} onChange={setBio} />
+        <ProfilePronounField className={identityStyles.pronoun} key={`pronoun-${user?.id}-${lang}`} value={pronoun} disabled={nameBusy} onChange={setPronoun} />
+        <ReplyPreferenceField className={identityStyles.replies} key={`replies-${user?.id}-${lang}`} value={replyPreference} disabled={nameBusy} onChange={setReplyPreference} />
         {usesHostedSupabaseAuth && <ProfilePinnedListField className={identityStyles.pinnedList} lists={profile.lists} value={pinnedListId} disabled={nameBusy} onChange={setPinnedListId} />}
-        {usesHostedSupabaseAuth ? <ProfileEmailField className={identityStyles.email} key={`${user?.id}-${lang}`} email={profile.email} userId={profile.id} disabled={nameBusy}
-          onConfirmed={email => identity.setProfile(current => current?.id === profile.id ? { ...current, email } : current)} />
-          : <div className={identityStyles.email}><label htmlFor="settings-email">{t("email")}</label><output id="settings-email">{profile.email}</output></div>}
         <button className={identityStyles.save} type="submit" disabled={nameBusy}>{nameBusy ? t("saving") : t("save")}</button>
       </form>
       <section ref={favoriteSettingsRef} className={settingsStyles.favorites} aria-labelledby="settings-favorites-title" aria-busy={favoritePreviewLoading || favoriteRemovalId !== null}>
