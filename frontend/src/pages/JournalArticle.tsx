@@ -1,7 +1,8 @@
+import JournalCover from "../components/journal/JournalCover";
+import JournalBody from "../components/journal/JournalBody";
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getJournalArticle, type JournalArticle as Article } from "../api/journal.api";
-import ResilientImage from "../components/ResilientImage";
 import RetryButton from "../components/RetryButton";
 import RetryNotice from "../components/RetryNotice";
 import { editorialText, formatJournalDate, localizeJournalCategory, useLocale } from "../i18n";
@@ -135,7 +136,7 @@ export default function JournalArticle() {
             </div>}
           </div>
           <div className={styles.coverHero}>
-            <ResilientImage className={styles.coverImage} src={article.coverUrl} alt="" loading="eager" fallback={<span className={styles.coverFallback} aria-hidden="true">REWIND</span>} />
+            <JournalCover className={styles.coverImage} coverUrl={article.coverUrl} images={article.coverImages} label={title} loading="eager" fallback={<span className={styles.coverFallback} aria-hidden="true">REWIND</span>} />
           </div>
         </div>
         <div className={styles.articleContent}>
@@ -149,7 +150,7 @@ export default function JournalArticle() {
             {audioLoading && <p className={`${styles.status} ${styles.audioFeedback}`} role="status">{t("loading")}</p>}
             {audioError && <RetryNotice className={`${styles.error} ${styles.audioFeedback}`} message={t("podcastAudioLoadError")} retryLabel={t("retry")} onRetry={retryAudio} />}
           </div>}
-          <div className={styles.body} lang={article.content?.trim() ? articleLang : lang}>{editorialText(article.content, t("noArticleContent"))}</div>
+          <div className={styles.body} lang={article.content?.trim() ? articleLang : lang}><JournalBody text={editorialText(article.content, t("noArticleContent"))} blocks={article.contentBlocks} /></div>
         </div>
       </article>
     </main>

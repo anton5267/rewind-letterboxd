@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getJournal, getJournalArchive, type JournalArticle, type JournalArchiveEntry } from "../api/journal.api";
 import Pagination from "../components/Pagination";
 import ResilientImage from "../components/ResilientImage";
+import JournalCover from "../components/journal/JournalCover";
 import RetryNotice from "../components/RetryNotice";
 import { editorialText, formatArchiveMonth, formatDateTime, localizeJournalCategory, useLocale } from "../i18n";
 import { safeHttpUrl } from "../utils/externalUrl";
@@ -168,15 +169,15 @@ export default function Journal() {
               const audioUrl = safeHttpUrl(article.audioUrl);
               return <article className={`${styles.card} ${index === 0 ? styles.feature : ""} ${index === 0 && featureCover?.key === featureCoverKey && featureCover.wide ? styles.wideFeature : ""}`} key={article.id}>
                 <Link className={styles.cover} to={articlePath} aria-label={title} lang={titleLang}>
-                  <ResilientImage src={article.coverUrl} alt="" loading={index === 0 ? "eager" : "lazy"} fallback={<span aria-hidden="true">REWIND</span>}
+                  <JournalCover coverUrl={article.coverUrl} images={article.coverImages} label={title} loading={index === 0 ? "eager" : "lazy"} fallback={<span aria-hidden="true">REWIND</span>}
                     onLoad={index === 0 ? event => {
                       if (currentFeatureCoverKey.current !== featureCoverKey) return;
                       const image = event.currentTarget;
                       if (image.currentSrc !== safeHttpUrl(article.coverUrl)) return;
-                      setFeatureCover({ key: featureCoverKey, wide: image.naturalHeight > 0 && image.naturalWidth > image.naturalHeight });
+                      setFeatureCover({ key: featureCoverKey, wide: (article.coverImages?.length ?? 0) > 1 || (image.naturalHeight > 0 && image.naturalWidth > image.naturalHeight) });
                     } : undefined}
                     onError={index === 0 ? () => {
-                      if (currentFeatureCoverKey.current === featureCoverKey) setFeatureCover({ key: featureCoverKey, wide: false });
+                      if (currentFeatureCoverKey.current === featureCoverKey) setFeatureCover({ key: featureCoverKey, wide: (article.coverImages?.length ?? 0) > 1 });
                     } : undefined}
                   />
                 </Link>

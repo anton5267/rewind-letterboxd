@@ -1,3 +1,4 @@
+import type { JournalArticle } from "./journal.api";
 import api from "./axios";
 import type { Page } from "./types";
 
@@ -9,7 +10,7 @@ export interface AdminUserOverview {
 }
 export interface AuditLog { id: number; adminId: number; action: string; targetType: string; targetId: number | null; metadata: string | null; createdAt: string }
 export interface AdminComment { id: number; reviewId: number | null; listId?: number | null; userId: number; username: string; content: string; isHidden: boolean; moderatedReason: string | null; moderatedAt: string | null; createdAt: string }
-export interface AdminArticle { id: number; slug: string; language: string; category: string; title: string; excerpt: string | null; content: string; coverUrl: string | null; audioUrl: string | null; publishedAt: string | null }
+export type AdminArticle = JournalArticle;
 export interface NewsletterDeliveryStatus { articleId: number; pending: number; sending: number; sent: number; failed: number; cancelled: number }
 export interface AdminReview { id: number; movieId: number; movieTitle: string; userId: number; username: string; content: string; rating: number | null; isHidden: boolean; moderatedReason: string | null; moderatedAt: string | null; createdAt: string }
 export interface AdminReportedReview extends AdminReview { reportId: number; reportReason: "SPAM" | "INAPPROPRIATE_CONTENT" | "BULLYING"; reportCreatedAt: string; likesCount: number; commentsCount: number }
@@ -64,7 +65,7 @@ export const getAdminComments = (page = 0, hidden?: boolean) => api.get<Page<Adm
 export const setAdminCommentHidden = (id: number, hidden: boolean, reason = "") => api.post<AdminComment>(`/admin/comments/${id}/${hidden ? "hide" : "unhide"}`, { reason });
 export const deleteAdminComment = (id: number) => api.delete<void>(`/admin/comments/${id}`);
 export const getAdminArticles = (page = 0) => api.get<Page<AdminArticle>>("/admin/journal/articles", { params: { size: 50, page } });
-export type AdminArticleWrite = Omit<AdminArticle, "id" | "publishedAt"> & { published: boolean };
+export type AdminArticleWrite = Omit<AdminArticle, "id" | "publishedAt" | "authorName"> & { published: boolean };
 export const createAdminArticle = (article: AdminArticleWrite) => api.post<AdminArticle>("/admin/journal/articles", article);
 export const updateAdminArticle = (id: number, article: AdminArticleWrite) => api.put<AdminArticle>(`/admin/journal/articles/${id}`, article);
 export const queueAdminNewsletter = (articleId: number) => api.post<{ articleId: number; recipients: number }>(`/admin/journal/articles/${articleId}/newsletter`);

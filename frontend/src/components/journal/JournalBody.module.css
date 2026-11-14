@@ -1,0 +1,21 @@
+.body { display: flow-root; white-space: normal; }
+.body > p { margin: 0 0 20px; white-space: pre-wrap; }
+.body > h2, .body > h3 { clear: both; margin: 44px 0 20px; color: #fff; line-height: 1.2; }
+.body > h2 { font-size: 24px; }
+.body > h3 { font-size: 22px; }
+.body > :first-child { margin-top: 0; }
+.body > ul { margin: 0 0 20px; padding-left: 30px; }
+.body li { white-space: pre-wrap; }
+.figure { clear: both; margin: 32px 0; }
+.media { overflow: hidden; border-radius: 20px; }
+.media img { display: block; width: 100%; height: auto; }
+.figure figcaption { margin-top: 8px; color: #aaa; font-size: 13px; line-height: 1.4; }
+.aside { float: right; clear: right; width: 174px; margin: 0 0 20px 32px; }
+.aside .media { aspect-ratio: 174 / 140; }
+.aside .media img { height: 100%; object-fit: cover; }
+.unavailable { display: grid; min-height: 140px; padding: 16px; box-sizing: border-box; place-items: center; background: #282828; color: #aaa; font-size: 14px; }
+@media (max-width: 767px) {
+  .body > h2 { font-size: 20px; }
+  .body > h3 { font-size: 18px; }
+  .aside { float: none; width: min(260px, 100%); margin: 24px auto; }
+}

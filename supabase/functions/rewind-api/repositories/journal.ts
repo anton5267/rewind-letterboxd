@@ -1,6 +1,7 @@
-import type { AdminJournalArticleRequest, JournalArchiveEntry, JournalArticleResponse, NewsletterDeliveryStatusResponse, NewsletterQueueResponse } from "../contracts/journal.ts";
+import type { AdminJournalArticleRequest, JournalArchiveEntry, NewsletterDeliveryStatusResponse, NewsletterQueueResponse } from "../contracts/journal.ts";
 import type { RewindApiRepository } from "../contracts/repository.ts";
 import { RewindApiError } from "../http/errors.ts";
+import { type JournalArticleRow, toJournalArticle } from "./shared/journal_article.ts";
 import {
   pool,
 } from "../runtime/database.ts";
@@ -15,15 +16,6 @@ import {
   pageResult,
   safeId,
 } from "./shared/results.ts";
-
-function toJournalArticle(row: {
-  id: string; slug: string; language: string; category: string; title: string; excerpt: string | null;
-  content: string; cover_url: string | null; audio_url: string | null; published_at: string | null; author_name?: string | null;
-}): JournalArticleResponse {
-  return { id: safeId(row.id, "Journal article ID"), slug: row.slug, language: row.language, category: row.category,
-    title: row.title, excerpt: row.excerpt, content: row.content, coverUrl: row.cover_url, audioUrl: row.audio_url,
-    publishedAt: row.published_at, authorName: row.author_name ?? null };
-}
 
 export const journalRepository: Pick<RewindApiRepository,
   | "getAdminJournalArticles"
@@ -43,11 +35,8 @@ export const journalRepository: Pick<RewindApiRepository,
     try {
       const [count, rows] = await Promise.all([
         connection.queryObject<{ total: string }>({ text: "SELECT COUNT(*)::text AS total FROM rewind.journal_articles", args: [] }),
-        connection.queryObject<{
-          id: string; slug: string; language: string; category: string; title: string; excerpt: string | null;
-          content: string; cover_url: string | null; audio_url: string | null; published_at: string | null;
-        }>({
-          text: `SELECT id::text AS id, slug, language, category, title, excerpt, content, cover_url, audio_url, published_at::text AS published_at
+        connection.queryObject<JournalArticleRow>({
+          text: `SELECT id::text AS id, slug, language, category, title, excerpt, content, cover_url, audio_url, cover_images, content_blocks, published_at::text AS published_at
                  FROM rewind.journal_articles ORDER BY updated_at DESC, id DESC LIMIT $1 OFFSET $2`, args: [size, page * size],
         }),
       ]);
@@ -116,15 +105,13 @@ export const journalRepository: Pick<RewindApiRepository,
   async createAdminJournalArticle(authUser, body: AdminJournalArticleRequest) {
     const { connection, userId } = await beginAdminTransaction(authUser);
     try {
-      const result = await connection.queryObject<{
-        id: string; slug: string; language: string; category: string; title: string; excerpt: string | null;
-        content: string; cover_url: string | null; audio_url: string | null; published_at: string | null;
-      }>({
+      const result = await connection.queryObject<JournalArticleRow>({
         text: `INSERT INTO rewind.journal_articles
-                 (slug, language, category, title, excerpt, content, cover_url, audio_url, is_published, published_at, author_id)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,CASE WHEN $9 THEN CURRENT_TIMESTAMP ELSE NULL END,$10)
-               RETURNING id::text AS id, slug, language, category, title, excerpt, content, cover_url, audio_url, published_at::text AS published_at`,
-        args: [body.slug, body.language, body.category, body.title, body.excerpt, body.content, body.coverUrl, body.audioUrl, body.published, userId],
+                 (slug, language, category, title, excerpt, content, cover_url, audio_url, is_published, published_at, author_id, cover_images, content_blocks)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,CASE WHEN $9 THEN CURRENT_TIMESTAMP ELSE NULL END,$10,$11::jsonb,$12::jsonb)
+               RETURNING id::text AS id, slug, language, category, title, excerpt, content, cover_url, audio_url, cover_images, content_blocks, published_at::text AS published_at`,
+        args: [body.slug, body.language, body.category, body.title, body.excerpt, body.content, body.coverUrl, body.audioUrl, body.published, userId,
+          body.coverImages == null ? null : JSON.stringify(body.coverImages), body.contentBlocks == null ? null : JSON.stringify(body.contentBlocks)],
       });
       const article = result.rows[0];
       if (!article) throw new Error("Journal article was not created.");
@@ -143,16 +130,17 @@ export const journalRepository: Pick<RewindApiRepository,
   async updateAdminJournalArticle(authUser, id, body: AdminJournalArticleRequest) {
     const { connection, userId } = await beginAdminTransaction(authUser);
     try {
-      const result = await connection.queryObject<{
-        id: string; slug: string; language: string; category: string; title: string; excerpt: string | null;
-        content: string; cover_url: string | null; audio_url: string | null; published_at: string | null;
-      }>({
+      const result = await connection.queryObject<JournalArticleRow>({
         text: `UPDATE rewind.journal_articles SET slug=$2, language=$3, category=$4, title=$5, excerpt=$6, content=$7,
-                 cover_url=$8, audio_url=$9, is_published=$10,
-                 published_at=CASE WHEN $10 THEN COALESCE(published_at,CURRENT_TIMESTAMP) ELSE NULL END
+                 cover_url=$8::varchar, audio_url=$9, is_published=$10,
+                 published_at=CASE WHEN $10 THEN COALESCE(published_at,CURRENT_TIMESTAMP) ELSE NULL END,
+                 cover_images=CASE WHEN $11 THEN $12::jsonb WHEN cover_url IS DISTINCT FROM $8::varchar THEN NULL ELSE cover_images END,
+                 content_blocks=CASE WHEN $13 THEN $14::jsonb WHEN content IS DISTINCT FROM $7 THEN NULL ELSE content_blocks END
                WHERE id=$1
-               RETURNING id::text AS id, slug, language, category, title, excerpt, content, cover_url, audio_url, published_at::text AS published_at`,
-        args: [id, body.slug, body.language, body.category, body.title, body.excerpt, body.content, body.coverUrl, body.audioUrl, body.published],
+               RETURNING id::text AS id, slug, language, category, title, excerpt, content, cover_url, audio_url, cover_images, content_blocks, published_at::text AS published_at`,
+        args: [id, body.slug, body.language, body.category, body.title, body.excerpt, body.content, body.coverUrl, body.audioUrl, body.published,
+          Object.hasOwn(body, "coverImages"), body.coverImages == null ? null : JSON.stringify(body.coverImages),
+          Object.hasOwn(body, "contentBlocks"), body.contentBlocks == null ? null : JSON.stringify(body.contentBlocks)],
       });
       const article = result.rows[0];
       if (!article) { await connection.queryObject("COMMIT"); return null; }
@@ -187,12 +175,9 @@ export const journalRepository: Pick<RewindApiRepository,
       const where = predicates.join(" AND ");
       const [count, rows] = await Promise.all([
         connection.queryObject<{ total: string }>({ text: `SELECT COUNT(*)::text AS total FROM rewind.journal_articles a WHERE ${where}`, args }),
-        connection.queryObject<{
-          id: string; slug: string; language: string; category: string; title: string; excerpt: string | null;
-          content: string; cover_url: string | null; audio_url: string | null; published_at: string | null;
-        }>({
+        connection.queryObject<JournalArticleRow>({
           text: `SELECT a.id::text AS id, a.slug, a.language, a.category, a.title, a.excerpt, a.content,
-                       a.cover_url, a.audio_url, a.published_at::text AS published_at,
+                       a.cover_url, a.audio_url, a.cover_images, a.content_blocks, a.published_at::text AS published_at,
                        (SELECT COALESCE(NULLIF(BTRIM(author.display_name), ''), author.username)
                          FROM rewind.users author WHERE author.id = a.author_id AND author.is_active = TRUE) AS author_name
                 FROM rewind.journal_articles a WHERE ${where}
@@ -229,11 +214,8 @@ export const journalRepository: Pick<RewindApiRepository,
     try {
       await connection.queryObject("SET ROLE rewind_edge_app");
       const fallback = language === "en" ? "uk" : "en";
-      const result = await connection.queryObject<{
-        id: string; slug: string; language: string; category: string; title: string; excerpt: string | null;
-        content: string; cover_url: string | null; audio_url: string | null; published_at: string | null;
-      }>({
-        text: `SELECT id::text AS id, slug, language, category, title, excerpt, content, cover_url, audio_url, published_at::text AS published_at,
+      const result = await connection.queryObject<JournalArticleRow>({
+        text: `SELECT id::text AS id, slug, language, category, title, excerpt, content, cover_url, audio_url, cover_images, content_blocks, published_at::text AS published_at,
                       (SELECT COALESCE(NULLIF(BTRIM(author.display_name), ''), author.username)
                          FROM rewind.users author WHERE author.id = a.author_id AND author.is_active = TRUE) AS author_name
                FROM rewind.journal_articles a WHERE slug = $1 AND is_published = TRUE AND language IN ($2, $3)

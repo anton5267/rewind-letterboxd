@@ -1,4 +1,5 @@
 import type { AdminJournalArticleRequest } from "../../contracts/journal.ts";
+import { journalPlainText, parseJournalMedia } from "./journal_media.ts";
 import type { AdminCreateNotificationRequest, AdminModerationTarget, AdminMovieWriteRequest, AdminUserUpdateRequest } from "../../contracts/admin.ts";
 
 export function parseAdminUserUpdate(value: unknown): AdminUserUpdateRequest | null {
@@ -156,6 +157,9 @@ export function parseAdminCreateNotification(value: unknown): AdminCreateNotific
 export function parseAdminJournalArticle(value: unknown): AdminJournalArticleRequest | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const body = value as Record<string, unknown>;
+  const media = parseJournalMedia(body);
+  if (!media) return null;
+  const content = media.contentBlocks ? journalPlainText(media.contentBlocks) : body.content;
   const nullableText = (key: string, max: number): string | null | false => {
     const item = body[key];
     if (item === undefined || item === null) return null;
@@ -170,9 +174,9 @@ export function parseAdminJournalArticle(value: unknown): AdminJournalArticleReq
     || (body.language !== "uk" && body.language !== "en")
     || typeof body.category !== "string" || !body.category.trim() || body.category.trim().length > 80
     || typeof body.title !== "string" || !body.title.trim() || body.title.trim().length > 255
-    || typeof body.content !== "string" || !body.content.trim()
+    || typeof content !== "string" || !content.trim()
     || (body.published !== undefined && typeof body.published !== "boolean")
     || (audioUrl !== null && !/^https?:\/\/\S+$/i.test(audioUrl))) return null;
   return { slug: body.slug.trim(), language: body.language, category: body.category.trim(), title: body.title.trim(),
-    excerpt, content: body.content, coverUrl, audioUrl, published: body.published === true };
+    excerpt, content, coverUrl: media.coverImages?.[0] ?? coverUrl, audioUrl, published: body.published === true, ...media };
 }

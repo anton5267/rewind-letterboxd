@@ -1,0 +1,13 @@
+.group { display: grid; min-width: 0; gap: 12px; margin: 0; padding: 16px; border: 1px solid var(--rewind-line); border-radius: 8px; }
+.group legend { padding: 0 6px; font-weight: 700; }
+.field { display: grid; min-width: 0; gap: 6px; }
+.input { composes: input from "../AdminArticles.module.css"; }
+.textarea { composes: textarea from "../AdminArticles.module.css"; }
+.select { composes: select from "../AdminArticles.module.css"; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.actions button { min-height: 44px; padding: 8px 12px; }
+.actions button:disabled { opacity: .5; cursor: not-allowed; }
+.blocks { display: grid; gap: 16px; }
+.block { display: grid; min-width: 0; gap: 12px; margin: 0; padding: 12px; border: 1px solid #454545; border-radius: 8px; }
+.hint { margin: 0; color: #aaa; font-size: 13px; line-height: 1.4; }
+@media (max-width: 767px) { .group { padding: 12px; } .actions { align-items: stretch; } }

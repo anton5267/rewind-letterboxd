@@ -78,6 +78,8 @@ Own `recentReviews` і paged `/api/profile/me/reviews` у поточному sou
 
 ## Journal
 
+Hosted Journal responses add optional nullable `coverImages` (one to three HTTP(S) image URLs) and `contentBlocks`. Blocks support paragraphs, H2/H3 headings, bulleted lists and images with required alt text, optional captions and full-width/aside layouts. The Admin POST/PUT endpoints accept the same fields, with up to 64 blocks and 100,000 derived text characters. The first cover image becomes `coverUrl`; the server derives `content` from blocks for search and newsletter consumers. Explicit null clears media. Legacy updates that omit these fields preserve media while the corresponding plain text/cover URL stays unchanged, and clear it when the legacy value changes. Existing Admin authorization, RLS, publication and language fallback rules apply. Local Spring retains its existing plain-text/single-cover contract.
+
 | Доступ | Метод і шлях | Призначення |
 | --- | --- | --- |
 | P | `GET /api/journal/articles?category=...&year=...&month=...`, `GET /api/journal/articles/archive`, `GET /api/journal/articles/{slug}` | Публічний журнал із мовним fallback, фільтром розділу, архівом і навігацією за місяцями |

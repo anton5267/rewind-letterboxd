@@ -10,13 +10,17 @@ import {
   type NewsletterDeliveryStatus,
 } from "../api/admin.api";
 import type { Page } from "../api/types";
+import type { JournalMedia } from "../api/journal-content";
+import { usesHostedSupabaseAuth } from "../api/supabaseClient";
+import JournalCoverFields from "./journal/JournalCoverFields";
+import JournalContentEditor from "./journal/JournalContentEditor";
 import Pagination from "./Pagination";
 import RetryNotice from "./RetryNotice";
 import { editorialText, localizeJournalCategory, useLocale, type Language } from "../i18n";
 import { isJournalCategory, isNewsletterCategory, journalCategories } from "../utils/journalCategories";
 import styles from "./AdminArticles.module.css";
 
-const emptyArticle: { slug: string; language: Language; category: string; title: string; excerpt: string; content: string; coverUrl: string; audioUrl: string; published: boolean } = { slug: "", language: "uk", category: "", title: "", excerpt: "", content: "", coverUrl: "", audioUrl: "", published: false };
+const emptyArticle: JournalMedia & { slug: string; language: Language; category: string; title: string; excerpt: string; content: string; coverUrl: string; audioUrl: string; published: boolean } = { slug: "", language: "uk", category: "", title: "", excerpt: "", content: "", coverUrl: "", audioUrl: "", published: false };
 
 export default function AdminArticles() {
   const { lang, t } = useLocale();
@@ -123,6 +127,8 @@ export default function AdminArticles() {
       coverUrl: item.coverUrl ?? "",
       audioUrl: item.audioUrl ?? "",
       published: item.publishedAt !== null,
+      coverImages: item.coverImages ?? null,
+      contentBlocks: item.contentBlocks ?? null,
     });
     setEditingId(item.id);
     setLegacyCategory(isJournalCategory(item.category) ? null : item.category);
@@ -150,8 +156,13 @@ export default function AdminArticles() {
     setCreating(true);
     setActionError("");
     try {
+      const { coverImages, contentBlocks, ...fields } = article;
       const request = {
-        ...article,
+        ...fields,
+        ...(usesHostedSupabaseAuth ? {
+          coverImages: coverImages?.some(image => image.trim()) ? coverImages.map(image => image.trim()) : null,
+          contentBlocks: contentBlocks ?? null,
+        } : {}),
         slug: article.slug.trim(),
         category: article.category.trim(),
         title: article.title.trim(),
@@ -220,9 +231,13 @@ export default function AdminArticles() {
       </select>
       <select className={styles.select} aria-label={t("articleLanguage")} value={article.language} onChange={event => setArticle({ ...article, language: event.target.value as Language })}><option value="uk">{t("articleLanguageUk")}</option><option value="en">{t("articleLanguageEn")}</option></select>
       <input className={styles.input} maxLength={500} aria-label={t("articleExcerpt")} placeholder={t("articleExcerpt")} value={article.excerpt} onChange={event => setArticle({ ...article, excerpt: event.target.value })} />
-      <input className={styles.input} type="url" maxLength={500} aria-label={t("articleCoverUrl")} placeholder={t("articleCoverUrl")} value={article.coverUrl} onChange={event => setArticle({ ...article, coverUrl: event.target.value })} />
+      {usesHostedSupabaseAuth ? <JournalCoverFields values={article.coverImages ?? [article.coverUrl]} disabled={creating}
+        onChange={coverImages => setArticle({ ...article, coverImages, coverUrl: coverImages[0] ?? "" })} /> :
+        <input className={styles.input} type="url" maxLength={500} aria-label={t("articleCoverUrl")} placeholder={t("articleCoverUrl")} value={article.coverUrl} onChange={event => setArticle({ ...article, coverUrl: event.target.value })} />}
       <input className={styles.input} type="url" maxLength={500} aria-label={t("audioUrl")} placeholder={t("audioUrl")} value={article.audioUrl} onChange={event => setArticle({ ...article, audioUrl: event.target.value })} />
-      <textarea className={styles.textarea} required aria-label={t("articleContent")} placeholder={t("articleContent")} value={article.content} onChange={event => setArticle({ ...article, content: event.target.value })} rows={8} />
+      {usesHostedSupabaseAuth ? <JournalContentEditor key={editingId ?? "new"} text={article.content} blocks={article.contentBlocks ?? null} disabled={creating}
+        onChange={(content, contentBlocks) => setArticle({ ...article, content, contentBlocks })} /> :
+        <textarea className={styles.textarea} required aria-label={t("articleContent")} placeholder={t("articleContent")} value={article.content} onChange={event => setArticle({ ...article, content: event.target.value })} rows={8} />}
       <label className={styles.publishToggle}><input type="checkbox" checked={article.published} onChange={event => setArticle({ ...article, published: event.target.checked })} /> {t("publishArticle")}</label>
       <button type="submit" aria-busy={creating} disabled={creating || !article.slug.trim() || !article.category.trim() || !article.title.trim() || !article.content.trim()}>{creating ? t("loading") : t(editingId === null ? "create" : "save")}</button>
       {editingId !== null && <button type="button" disabled={creating} onClick={cancelEditing}>{t("cancel")}</button>}
