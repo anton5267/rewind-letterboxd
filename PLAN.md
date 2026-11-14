@@ -22,7 +22,7 @@ Spring Boot/MySQL/Redis/Mailpit мають окремий локальний ж�
 
 - [x] Live profile settings пройшли UK save/reload, EN clear/reload та SELF/FOLLOWED/ANYONE. Перевірено owner-only names і website save/reload/public-read/clear. Початкові поля й порожні social/name записи відновлені.
 
-- [x] Desktop profile settings мають дві колонки за Figma, окремий CSS-модуль і парні name inputs. UK/EN fixtures підтвердили геометрію, чернетки на 320–1440px, mobile focus та save/reload. Перевірено сумісність зі старими локальними стилями та видимий клавіатурний focus біографії. Desktop media previews мають джерельні 37px corners, 543px height і центровані select buttons. UK/EN media fixtures охопили 320–1440px та CRUD/retry/focus. Повна settings parity відкрита.
+- [x] Desktop profile settings мають дві колонки за Figma, окремий CSS-модуль і парні name inputs. UK/EN fixtures підтвердили геометрію, чернетки на 320–1440px, mobile focus та save/reload. Перевірено сумісність зі старими локальними стилями та видимий клавіатурний focus біографії. Desktop media previews мають джерельні 37px corners, 543px height і центровані select buttons. UK/EN media fixtures охопили 320–1440px та CRUD/retry/focus. Mobile toolbar має розділені заголовок і action targets у всіх чотирьох вкладках UK/EN. Повна settings parity відкрита.
 
 - [x] Test-fixture review охопив 16 файлів. Виправлені featured/team feeds, base-path navigation, Admin private/system assertions; signup включений у спільний набір. 17 цільових fixture-сценаріїв пройшли на root і project-prefix середовищах.
 
