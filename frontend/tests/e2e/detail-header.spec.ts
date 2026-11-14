@@ -108,6 +108,22 @@ for (const language of ["uk", "en"] as const) {
       await expect(account).toBeFocused();
     }
 
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.evaluate(() => window.scrollTo(0, 500));
+    await expect.poll(() => header.evaluate(element => {
+      const layer = getComputedStyle(element, "::before");
+      return { background: layer.backgroundColor, filter: layer.filter };
+    })).toEqual({ background: "rgba(0, 0, 0, 0.85)", filter: "none" });
+    const scrolledAccount = header.getByRole("button", { name: language === "uk" ? "Акаунт" : "Account", exact: true });
+    await scrolledAccount.click();
+    await expect(scrolledAccount).toHaveAttribute("aria-expanded", "true");
+    await scrolledAccount.press("Escape");
+    await expect(scrolledAccount).toHaveAttribute("aria-expanded", "false");
+    await expect(scrolledAccount).toBeFocused();
+    await page.screenshot({ path: testInfo.outputPath(`scrolled-header-${language}.png`) });
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect.poll(() => header.evaluate(element => getComputedStyle(element, "::before").filter)).toBe("blur(50px)");
+
     await page.setViewportSize({ width: 393, height: 852 });
     expect(await header.evaluate(element => getComputedStyle(element, "::before").content)).toBe("none");
     const bottomNav = page.getByRole("navigation", { name: language === "uk" ? "Головна навігація" : "Main navigation", exact: true });

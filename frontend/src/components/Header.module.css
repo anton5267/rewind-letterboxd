@@ -123,6 +123,11 @@
     content: "";
   }
 
+  .header.scrolled:not(.listsLanding)::before {
+    background: rgba(0, 0, 0, .85);
+    filter: none;
+  }
+
   .logo { min-height: 44px; }
   .logoImage { width: 184px; height: 30px; }
   .desktopNav { display: flex; min-width: 411px; align-items: center; gap: 23px; color: var(--header-color); font-size: 14px; font-weight: 700; line-height: 17px; }

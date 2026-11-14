@@ -25,6 +25,7 @@ function HeaderContent() {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(() => window.scrollY > 0);
   const menuToggleRef = useRef<HTMLButtonElement>(null);
   const mobileMenuRef = useRef<HTMLElement>(null);
   const accountToggleRef = useRef<HTMLButtonElement>(null);
@@ -37,6 +38,13 @@ function HeaderContent() {
     const targets = [accountToggleRef.current, menuToggleRef.current, mobileNavRef.current?.querySelector<HTMLAnchorElement>("a")];
     targets.find(target => target && target.getClientRects().length > 0)?.focus();
   };
+
+  useEffect(() => {
+    const updateScrolled = () => setScrolled(window.scrollY > 0);
+    updateScrolled();
+    window.addEventListener("scroll", updateScrolled, { passive: true });
+    return () => window.removeEventListener("scroll", updateScrolled);
+  }, []);
 
   useEffect(() => {
     if (!isAuth) {
@@ -170,7 +178,24 @@ function HeaderContent() {
   const listsFeedHeader = listsLandingHeader && Boolean(listParams.get("feed"));
 
   return (
-    <header className={`${styles.header} ${mobileDetailHeader ? styles.mobileDetail : ""} ${mobileFilmsHeader ? styles.mobileFilms : ""} ${mobileListDetailHeader ? styles.mobileListDetail : ""} ${mobileSearchHeader ? styles.mobileSearch : ""} ${mobileHomeHeader ? styles.mobileHome : ""} ${mobileCommunityHeader ? styles.mobileCommunity : ""} ${mobilePersonHeader ? styles.mobilePerson : ""} ${mobilePublicProfileHeader ? styles.mobilePublicProfile : ""} ${mobileProfileHeader ? styles.mobileProfile : ""} ${mobileUserListsHeader ? styles.mobileUserLists : ""} ${mobileProfileSettingsHeader ? styles.mobileProfileSettings : ""} ${mobileAuthHeader ? styles.mobileAuth : ""} ${listsLandingHeader ? styles.listsLanding : ""} ${mobileTaggedListsHeader ? styles.mobileTaggedLists : ""}`}>
+    <header className={`
+      ${styles.header}
+      ${scrolled ? styles.scrolled : ""}
+      ${mobileDetailHeader ? styles.mobileDetail : ""}
+      ${mobileFilmsHeader ? styles.mobileFilms : ""}
+      ${mobileListDetailHeader ? styles.mobileListDetail : ""}
+      ${mobileSearchHeader ? styles.mobileSearch : ""}
+      ${mobileHomeHeader ? styles.mobileHome : ""}
+      ${mobileCommunityHeader ? styles.mobileCommunity : ""}
+      ${mobilePersonHeader ? styles.mobilePerson : ""}
+      ${mobilePublicProfileHeader ? styles.mobilePublicProfile : ""}
+      ${mobileProfileHeader ? styles.mobileProfile : ""}
+      ${mobileUserListsHeader ? styles.mobileUserLists : ""}
+      ${mobileProfileSettingsHeader ? styles.mobileProfileSettings : ""}
+      ${mobileAuthHeader ? styles.mobileAuth : ""}
+      ${listsLandingHeader ? styles.listsLanding : ""}
+      ${mobileTaggedListsHeader ? styles.mobileTaggedLists : ""}
+    `}>
 
       {listsLandingHeader && <div className={styles.listLandingControls}>
         <Link to={path(listsFeedHeader ? "/lists/discover" : "/home")} aria-label={listsFeedHeader ? t("discoverLists") : t("home")}><i className="fa-solid fa-chevron-left" aria-hidden="true" /></Link>
