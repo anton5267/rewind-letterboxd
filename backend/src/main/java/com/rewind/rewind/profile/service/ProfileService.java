@@ -248,8 +248,10 @@ public class ProfileService {
     private Page<MovieCardResponse> systemCollection(com.rewind.rewind.user.entity.User user, ListType type, int page, int size) {
         var list = lists.findByUserAndListType(user, type).orElseThrow();
         Pageable pageable = pageRequest(page, size);
-        return listItems.findMoviesByListId(list.getId(), pageable)
-                .map(m -> new MovieCardResponse(
+        var movies = type == ListType.FAVORITES
+                ? listItems.findFavoriteMoviesByListId(list.getId(), pageable)
+                : listItems.findMoviesByListId(list.getId(), pageable);
+        return movies.map(m -> new MovieCardResponse(
                         m.getId(),
                         m.getTitle(),
                         m.getReleaseDate(),

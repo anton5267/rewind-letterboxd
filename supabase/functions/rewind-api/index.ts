@@ -1,3 +1,4 @@
+import { profileFavoriteRepository } from "./repositories/profile_favorites.ts";
 import { profileMediaRepository } from "./repositories/profile_media.ts";
 import { processPendingProfileMediaDeletion } from "./runtime/profile_media.ts";
 import { commentsRepository } from "./repositories/comments.ts";
@@ -35,6 +36,7 @@ const repository: RewindApiRepository = {
   ...adminModerationRepository,
   ...messagesRepository,
   ...profileRepository,
+  ...profileFavoriteRepository,
   ...profileMediaRepository,
   ...socialRepository,
   ...listsRepository,

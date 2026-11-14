@@ -1,7 +1,7 @@
 import type { ProfileMediaKind, ProfileMediaResponse, ProfileMediaUpload } from "./profile_media.ts";
 import type { GenreResponse, GlobalSearchResponse, MovieDetailsResponse, MovieFlagType, MovieSearchParams, MovieSearchResult, MovieStatusResponse, PersonFilmographyResponse, PersonSearchParams, PersonSearchResult } from "./catalog.ts";
 import type { CurrentUserResponse, HostedAuthUser } from "./auth.ts";
-import type { ProfileCollectionResult, ProfileResponse, ProfileUpdateRequest, PublicProfileResponse } from "./profile.ts";
+import type { FavoriteMoveRequest, ProfileCollectionResult, ProfileResponse, ProfileUpdateRequest, PublicProfileResponse } from "./profile.ts";
 import type { ActivityResponse, BlockStatusResponse, ConversationResponse, FollowStatusResponse, MessageResponse, NotificationPreferencesResponse, NotificationResponse, PopularReviewerResponse, PublicSocialUser, CommunityUserResponse, SocialLinkResponse } from "./social.ts";
 import type { AdminJournalArticleRequest, JournalArchiveEntry, JournalArticleResponse, NewsletterDeliveryStatusResponse, NewsletterQueueResponse, NewsletterSubscriptionResponse } from "./journal.ts";
 import type { CommentPageResponse, CommentResponse, CreateCommentResult, ReviewDetailsResponse, ReviewFeedResponse, ReviewMutationRequest, ReviewPageResponse, ReviewReportReason, ReviewReportResponse, ReviewReportStatusResponse, ReviewResponse } from "./reviews.ts";
@@ -54,6 +54,7 @@ export interface RewindApiRepository {
   likePublicList?(authUser: HostedAuthUser, listId: number): Promise<boolean>;
   unlikePublicList?(authUser: HostedAuthUser, listId: number): Promise<boolean>;
   getOrCreateCurrentUser?(authUser: HostedAuthUser): Promise<CurrentUserResponse>;
+  moveMyFavorite?(authUser: HostedAuthUser, move: FavoriteMoveRequest): Promise<boolean>;
   getMyProfile?(authUser: HostedAuthUser): Promise<ProfileResponse>;
   updateMyProfileMedia?(authUser: HostedAuthUser, kind: ProfileMediaKind, image: ProfileMediaUpload | null, expectedUserId: number): Promise<ProfileMediaResponse>;
   updateMyProfile?(authUser: HostedAuthUser, update: ProfileUpdateRequest, expectedUserId?: number): Promise<void>;

@@ -221,7 +221,7 @@ public class MovieListService {
                 .orElseThrow(() -> new IllegalArgumentException("List not found"));
 
         return items.findAllByListId(list.getId()).stream()
-                .sorted(this::compareListItems)
+                .sorted(list.getListType() == ListType.FAVORITES ? FAVORITE_ORDER : this::compareListItems)
                 .map(li -> new ListItemResponse(
                         li.getId(),
                         li.getPosition(),
@@ -279,6 +279,11 @@ public class MovieListService {
     private List<String> tagNames(MovieList list) {
         return list.getTags().stream().map(tag -> tag.getName()).toList();
     }
+
+    private static final java.util.Comparator<ListItem> FAVORITE_ORDER =
+            java.util.Comparator.comparing(ListItem::getPosition, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()))
+                    .thenComparing(ListItem::getAddedAt, java.util.Comparator.nullsLast(java.util.Comparator.reverseOrder()))
+                    .thenComparing(ListItem::getId, java.util.Comparator.reverseOrder());
 
     private int compareListItems(ListItem left, ListItem right) {
         Integer leftPosition = left.getPosition();

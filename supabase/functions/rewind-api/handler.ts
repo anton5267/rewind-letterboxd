@@ -1,3 +1,4 @@
+import { handleFavoriteOrderRoute } from "./http/routes/profile_favorites.ts";
 import { handleProfileMediaRoute } from "./http/routes/profile_media.ts";
 import { handleCommentRoutes } from "./http/routes/comments.ts";
 import type { InternalWorkerHandler, RewindAuthVerifier } from "./contracts/auth.ts";
@@ -45,6 +46,7 @@ const routeHandlers = [
   handleListRoutes,
   handleReviewRoutes,
   handleCommentRoutes,
+  handleFavoriteOrderRoute,
   handleProfileRoutes,
   handleProfileEmailRoute,
   handleProfileMediaRoute,

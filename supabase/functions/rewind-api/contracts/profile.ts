@@ -50,3 +50,10 @@ export interface PublicProfileResponse {
   lists: { id: number; name: string; description: string | null }[];
   recentReviews: { id: number; movieId: number; movieTitle: string; content: string; rating: number | null; updatedAt: string }[];
 }
+
+export interface FavoriteMoveRequest {
+  movieId: number;
+  targetMovieId: number;
+  placement: "before" | "after";
+  expectedUserId: number;
+}

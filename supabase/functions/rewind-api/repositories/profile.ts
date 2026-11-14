@@ -1,3 +1,4 @@
+import { listItemOrder } from "./shared/list_order.ts";
 import { getProfileDetails, saveProfileDetails } from "./shared/profile_details.ts";
 import { getProfilePinnedListId, saveProfilePinnedList } from "./shared/profile_pin.ts";
 import type { MovieCardResponse } from "../contracts/catalog.ts";
@@ -117,7 +118,9 @@ export const profileRepository: Pick<RewindApiRepository,
         connection.queryObject<{ id: string; title: string; release_date: string | null; rating: string | null; photo_url: string | null }>({
           text: `SELECT m.id::text AS id, m.title, m.release_date::text AS release_date, m.rating::text AS rating, m.photo_url
                  FROM rewind.list_items i JOIN rewind.movies m ON m.id = i.movie_id
-                  WHERE i.list_id = $1 AND m.is_published ORDER BY i.added_at DESC, i.id DESC LIMIT $2 OFFSET $3`,
+                  WHERE i.list_id = $1 AND m.is_published
+                  ORDER BY ${collection === "favorites" ? listItemOrder("FAVORITES", "i") : "i.added_at DESC, i.id DESC"}
+                  LIMIT $2 OFFSET $3`,
           args: [listId, size, page * size],
         }),
       ]);
@@ -484,7 +487,8 @@ export const profileRepository: Pick<RewindApiRepository,
                    FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id
                    JOIN rewind.movies m ON m.id = i.movie_id AND m.is_published = TRUE
                    WHERE l.user_id = $1 AND l.list_type = $2
-                   ORDER BY i.added_at DESC, i.id DESC LIMIT $3 OFFSET $4`,
+                   ORDER BY ${collection === "favorites" ? listItemOrder("FAVORITES", "i") : "i.added_at DESC, i.id DESC"}
+                   LIMIT $3 OFFSET $4`,
             args: [...args, size, offset],
           }),
         ]);

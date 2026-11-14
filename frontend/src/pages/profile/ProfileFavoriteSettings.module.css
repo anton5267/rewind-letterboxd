@@ -55,3 +55,34 @@
   .favorites ul { gap: 3px; }
   .poster, .poster > img, .poster > span { aspect-ratio: 79 / 116; border-radius: 10px; }
 }
+
+.reorder {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .45);
+  border-radius: 12px;
+  padding: 0;
+  background: rgba(0, 0, 0, .75);
+  opacity: 0;
+  cursor: grab;
+  touch-action: none;
+  transition: opacity 160ms;
+}
+.reorder img { flex: 0 0 auto; }
+.reorder:disabled { cursor: wait; }
+.favorites li:is(:hover, :focus-within) .reorder,
+.reorder[data-reordering] { opacity: 1; }
+.reorder[data-reordering] { cursor: grabbing; outline: 2px solid var(--rewind-gold); }
+.instructions { margin: 12px 0 0; color: #aaa; font-size: 13px; line-height: 1.45; }
+
+@media (max-width: 767px), (hover: none) {
+  .reorder { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reorder { transition: none; }
+}

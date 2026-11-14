@@ -8,6 +8,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
@@ -27,6 +29,10 @@ public interface MovieListRepository extends JpaRepository<MovieList, Long> {
     @Query("select l from MovieList l join l.user u where l.id in :ids and l.isPublic = true and u.isActive = true")
     List<MovieList> findVisibleByIdIn(@Param("ids") Collection<Long> ids);
     Optional<MovieList> findByIdAndUser(Long id, User user);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select l from MovieList l where l.user = :user and l.listType = :type")
+    Optional<MovieList> findTypeForUpdate(@Param("user") User user, @Param("type") ListType type);
     Optional<MovieList> findByUserAndListType(User user, ListType listType);
 
     @Query(value = "select l.id as id, u.id as userId, u.username as username, l.name as name, l.description as description, l.listType as listType, l.isPublic as isPublic, count(i.id) as itemCount, l.createdAt as createdAt, l.updatedAt as updatedAt from MovieList l join l.user u left join ListItem i on i.list = l group by l.id, u.id, u.username, l.name, l.description, l.listType, l.isPublic, l.createdAt, l.updatedAt order by l.updatedAt desc, l.id desc",

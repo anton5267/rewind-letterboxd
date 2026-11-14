@@ -36,6 +36,7 @@ public class ListItem {
     }
 
     public Long getId() { return id; }
+    public Instant getAddedAt() { return addedAt; }
 
     public MovieList getList() { return list; }
     public void setList(MovieList list) { this.list = list; }

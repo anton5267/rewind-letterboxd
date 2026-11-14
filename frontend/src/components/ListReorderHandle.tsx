@@ -3,13 +3,14 @@ import { useEffect, useRef, useState } from "react";
 interface Props {
   itemId: number;
   label: string;
+  instructionsId?: string;
   className: string;
   disabled: boolean;
   onStep: (direction: -1 | 1) => void;
   onDrop: (targetItemId: number) => void;
 }
 
-export default function ListReorderHandle({ itemId, label, className, disabled, onStep, onDrop }: Props) {
+export default function ListReorderHandle({ itemId, label, className, disabled, onStep, onDrop, instructionsId = "list-reorder-instructions" }: Props) {
   const pointer = useRef<number | null>(null);
   const [dragging, setDragging] = useState(false);
 
@@ -30,7 +31,7 @@ export default function ListReorderHandle({ itemId, label, className, disabled, 
     draggable={!disabled}
     disabled={disabled}
     aria-label={label}
-    aria-describedby="list-reorder-instructions"
+    aria-describedby={instructionsId}
     aria-keyshortcuts="ArrowUp ArrowDown"
     onKeyDown={event => {
       if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;

@@ -1,3 +1,4 @@
+import { useProfileFavoriteOrder } from "./useProfileFavoriteOrder";
 import { useAuth } from "../../context/AuthContext";
 import { useLocale } from "../../i18n";
 import { useState, useRef, useLayoutEffect, useEffect } from "react";
@@ -37,6 +38,21 @@ export function useProfileFavorites({ feedback, identity }: {
   const favoriteRetryFocus = useRef<{ origin: HTMLElement | null; attempt: number; target: "overview" | "settings" } | null>(null);
 
   const favoriteActorScope = isAuth && user ? user.id : null;
+  const favoriteOrder = useProfileFavoriteOrder({
+    viewerId: favoriteActorScope,
+    activeUserId,
+    movieIds: favoritePreview?.content.map(movie => movie.id) ?? [],
+    removalBusy: favoriteRemovalId !== null,
+    previewLoading: favoritePreviewLoading,
+    sectionRef: favoriteSettingsRef,
+    reload: () => {
+      setFavoritePreviewLoading(true);
+      setFavoritePreviewError(false);
+      setFavoritePreviewAttempt(value => value + 1);
+    },
+    setError,
+    setMessage,
+  });
   useLayoutEffect(() => {
     favoriteMutation.current += 1;
     removalFocus.current = null;
@@ -95,7 +111,7 @@ export function useProfileFavorites({ feedback, identity }: {
   }, [favoritePreviewAttempt, favoritePreviewError, favoritePreviewLoading, favoritePreview]);
 
   const removeFavorite = async (movieId: number, index: number) => {
-    if (favoriteRemovalId !== null) return;
+    if (favoriteRemovalId !== null || favoriteOrder.busy) return;
     const requestId = ++favoriteMutation.current;
     const requestUserId = activeUserId.current;
     const isCurrentRequest = () => requestUserId !== null
@@ -123,6 +139,7 @@ export function useProfileFavorites({ feedback, identity }: {
   };
 
   return {
+    favoriteOrder,
     favoriteSettingsRef,
     favoritePreviewLoading,
     favoriteRemovalId,

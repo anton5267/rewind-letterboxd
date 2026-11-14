@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Collection;
 import java.util.Optional;
@@ -33,6 +34,15 @@ public interface ListItemRepository extends JpaRepository<ListItem, Long> {
     // Item lookup used by reorder operations.
     @EntityGraph(attributePaths = "movie")
     List<ListItem> findAllByListId(Long listId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select li from ListItem li where li.list.id = :listId "
+            + "order by case when li.position is null then 1 else 0 end, li.position, li.addedAt desc, li.id desc")
+    List<ListItem> findFavoriteItemsForUpdate(@Param("listId") Long listId);
+
+    @Query("select li.movie from ListItem li where li.list.id = :listId "
+            + "order by case when li.position is null then 1 else 0 end, li.position, li.addedAt desc, li.id desc")
+    Page<Movie> findFavoriteMoviesByListId(@Param("listId") Long listId, Pageable pageable);
 
     @Query("select li from ListItem li join fetch li.list join fetch li.movie "
             + "where li.list.id in :listIds "

@@ -151,3 +151,6 @@ export const getPublicProfileLists = (userId: string | number, page: number) =>
 
 export const getPublicProfileLikedReviews = (userId: string | number, page: number) =>
   api.get<PublicProfileReviewPage>(`/users/${userId}/liked-reviews`, { params: { page, size: 10 } });
+
+export const moveProfileFavorite = (movieId: number, targetMovieId: number, placement: "before" | "after", expectedUserId: number) =>
+  api.put<void>("/profile/me/favorites/order", { movieId, targetMovieId, placement, expectedUserId });
