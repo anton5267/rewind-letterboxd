@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import Pagination from "../components/Pagination";
-import UserFollowRow from "../components/UserFollowRow";
+import CommunityMemberCard from "../components/community/CommunityMemberCard";
 import RetryButton from "../components/RetryButton";
 import RetryNotice from "../components/RetryNotice";
 import { getDirectoryUsers, getHqUsers, getPopularReviewers, type CommunityUserPage, type PopularReviewer } from "../api/social.api";
@@ -136,11 +136,11 @@ export default function Community() {
       <div className={styles.grid}>
         <section className={styles.card} data-community-section="hq" aria-labelledby="community-hq" aria-busy={sectionLoading.hq}>
           <div className={styles.cardHeading}><h2 id="community-hq" tabIndex={-1}>{t("featuredMembers")}</h2></div>
-          {sectionLoading.hq ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.hq ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("hq")} /> : !hqUsers || hqUsers.content.length === 0 ? <p className={styles.empty}>{t("noFeaturedMembers")}</p> : <ul className={`${styles.list} ${styles.showcaseList}`}>{hqUsers.content.slice(0, 5).map(member => <UserFollowRow key={member.id} presentation="communityShowcase" user={member} href={path(`/users/${member.id}`)} meta={t("hq")} />)}</ul>}
+          {sectionLoading.hq ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.hq ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("hq")} /> : !hqUsers || hqUsers.content.length === 0 ? <p className={styles.empty}>{t("noFeaturedMembers")}</p> : <ul className={`${styles.list} ${styles.showcaseList}`}>{hqUsers.content.slice(0, 5).map(member => <CommunityMemberCard key={member.id} user={member} showcase />)}</ul>}
         </section>
         <section className={styles.card} data-community-section="reviewers" aria-labelledby="community-reviewers" aria-busy={sectionLoading.reviewers}>
           <div className={styles.cardHeading}><div className={styles.headingRow}><h2 id="community-reviewers" tabIndex={-1}>{t("popularThisWeek")}</h2><Link to={path("/community/reviewers")}>{t("viewAll")}</Link></div></div>
-          {sectionLoading.reviewers ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.reviewers ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("reviewers")} /> : reviewers.length === 0 ? <p className={styles.empty}>{t("noPopularReviewers")}</p> : <ul className={`${styles.list} ${styles.showcaseList}`}>{reviewers.slice(0, 5).map(reviewer => <UserFollowRow key={reviewer.id} presentation="communityShowcase" user={reviewer} href={path(`/users/${reviewer.id}`)} meta={`${reviewer.likes} ${t("likes")}`} />)}</ul>}
+          {sectionLoading.reviewers ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.reviewers ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("reviewers")} /> : reviewers.length === 0 ? <p className={styles.empty}>{t("noPopularReviewers")}</p> : <ul className={`${styles.list} ${styles.showcaseList}`}>{reviewers.slice(0, 5).map(reviewer => <CommunityMemberCard key={reviewer.id} user={reviewer} showcase />)}</ul>}
         </section>
         <section className={`${styles.card} ${styles.directoryCard}`} data-community-section="directory" aria-labelledby="community-directory" aria-busy={sectionLoading.directory}>
           <div className={styles.cardHeading}><h2 id="community-directory" tabIndex={-1}>{t("allUsers")}</h2></div>
@@ -148,7 +148,8 @@ export default function Community() {
             <label htmlFor="community-user-search">{t("searchUsers")}</label>
             <div><input id="community-user-search" aria-label={t("searchUsers")} value={directoryQuery} onChange={event => setDirectoryQuery(event.target.value)} placeholder={t("searchUsers")} /><button type="submit">{t("search")}</button></div>
           </form>
-          {sectionLoading.directory ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.directory ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("directory")} /> : !directory || directory.content.length === 0 ? <p className={styles.empty}>{t("noUsers")}</p> : <><ul className={styles.list}>{directory.content.map(member => <UserFollowRow key={member.id} user={member} href={path(`/users/${member.id}`)} />)}</ul><Pagination className={styles.pagination} page={directoryPage} totalPages={directory.totalPages} label={t("communityUsersPagination")} busy={sectionLoading.directory} onPageChange={page => { clearRetryFocus(); setDirectoryPage(page); }} /></>}
+          {directory && directory.content.some(member => member.watchedCount !== undefined) && <div className={styles.directoryMetricsHeading} aria-hidden="true"><span>{t("watched")}</span><span>{t("searchLists")}</span><span>{t("likes")}</span></div>}
+          {sectionLoading.directory ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.directory ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("directory")} /> : !directory || directory.content.length === 0 ? <p className={styles.empty}>{t("noUsers")}</p> : <><ul className={styles.list}>{directory.content.map(member => <CommunityMemberCard key={member.id} user={member} />)}</ul><Pagination className={styles.pagination} page={directoryPage} totalPages={directory.totalPages} label={t("communityUsersPagination")} busy={sectionLoading.directory} onPageChange={page => { clearRetryFocus(); setDirectoryPage(page); }} /></>}
         </section>
       </div>
     </div>

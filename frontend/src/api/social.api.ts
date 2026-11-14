@@ -1,3 +1,4 @@
+import type { MoviePreview } from "./lists.api";
 import api from "./axios";
 import type { NumberedPage } from "./types";
 
@@ -30,14 +31,24 @@ export interface Activity {
 
 export type ActivityPage = NumberedPage<Activity>;
 
-export interface PopularReviewer extends PublicNetworkUser {
+interface CommunityDetails {
+  watchedCount?: number;
+  reviewCount?: number;
+  listCount?: number;
+  likes?: number;
+  followerCount?: number;
+  followingCount?: number;
+  favoriteMovies?: MoviePreview[];
+}
+
+export interface PopularReviewer extends PublicNetworkUser, CommunityDetails {
   likes: number;
   reviewCount?: number;
   watchedCount?: number;
   listCount?: number;
 }
 
-export interface CommunityUser {
+export interface CommunityUser extends CommunityDetails {
   id: number;
   username: string;
   displayName: string | null;

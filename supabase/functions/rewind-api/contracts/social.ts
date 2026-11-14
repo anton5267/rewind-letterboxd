@@ -1,3 +1,5 @@
+import type { CommunityDetails } from "./community.ts";
+
 export interface PublicSocialUser { id: number; username: string; displayName: string | null; avatarUrl: string | null }
 
 export interface FollowStatusResponse { following: boolean; followers: number; followingCount: number }
@@ -28,6 +30,8 @@ export interface ActivityResponse {
   list: { id: number; name: string } | null;
 }
 
-export interface PopularReviewerResponse extends PublicSocialUser {
+export interface PopularReviewerResponse extends PublicSocialUser, CommunityDetails {
   likes: number; reviewCount: number; watchedCount: number; listCount: number;
 }
+
+export interface CommunityUserResponse extends PublicSocialUser, CommunityDetails {}

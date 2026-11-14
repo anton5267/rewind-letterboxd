@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { blockUser, getBlockStatus, unblockUser, type CommunityUser } from "../api/social.api";
 import { useFollowAction } from "../context/FollowActionsContext";
@@ -13,7 +13,7 @@ import styles from "./UserFollowRow.module.css";
 
 type ReviewerMetrics = { watched: number; lists: number; likes: number };
 
-export default function UserFollowRow({ user, href, meta, subtitle, label, reviewerMetrics, presentation, showMobileMoreAction = false, hideMobileNetworkStats = false, onFollowSettled }: { user: CommunityUser; href: string; meta?: string; subtitle?: string; label?: string; reviewerMetrics?: ReviewerMetrics; presentation?: "communityShowcase" | "profileNetwork"; showMobileMoreAction?: boolean; hideMobileNetworkStats?: boolean; onFollowSettled?: () => void }) {
+export default function UserFollowRow({ user, href, meta, subtitle, label, reviewerMetrics, presentation, showMobileMoreAction = false, hideMobileNetworkStats = false, onFollowSettled, children }: { user: CommunityUser; href: string; meta?: string; subtitle?: string; label?: string; reviewerMetrics?: ReviewerMetrics; presentation?: "communityShowcase" | "communityDirectory" | "profileNetwork"; showMobileMoreAction?: boolean; hideMobileNetworkStats?: boolean; onFollowSettled?: () => void; children?: ReactNode }) {
   const { t, path } = useLocale();
   const { actorId, authReady, state, retry, toggle } = useFollowAction(user.id);
   const [memberSheetOpen, setMemberSheetOpen] = useState(false);
@@ -170,7 +170,7 @@ export default function UserFollowRow({ user, href, meta, subtitle, label, revie
     }
   };
 
-  return <li data-network-member-id={user.id} className={`${styles.row} ${reviewerMetrics ? styles.reviewerRow : ""} ${presentation ? styles[presentation] : ""} ${hideMobileNetworkStats ? styles.hideMobileNetworkStats : ""}`}>
+  return <li data-network-member-id={user.id} className={`${styles.row} ${reviewerMetrics || presentation === "communityDirectory" ? styles.reviewerRow : ""} ${presentation ? styles[presentation] : ""} ${hideMobileNetworkStats ? styles.hideMobileNetworkStats : ""}`}>
     <Link className={styles.userLink} to={href} aria-label={label ?? `${identity} ${getUserHandle(user)}`}>
       <ResilientImage className={styles.avatar} src={user.avatarUrl} alt="" width={44} height={44}
         fallback={<span className={styles.avatarFallback} aria-hidden="true">{getUserInitial(user)}</span>} />
@@ -197,6 +197,7 @@ export default function UserFollowRow({ user, href, meta, subtitle, label, revie
         disabled={loading || blockBusy || (state.blocked && state.phase !== "error")} onClick={state.phase === "error" ? retryFollowAction : toggle}>
         <span className={styles.glyph} aria-hidden="true">{state.phase === "error" ? "↻" : loading ? "…" : state.blocked ? "×" : state.following ? "✓" : "＋"}</span>
       </button>)}
+    {children}
     {!self && !guest && state.phase === "error" && <p className={styles.error} id={feedbackId} role="alert">{t(state.error === "action" ? "followError" : state.error === "blockStatus" ? "loadBlockStatusError" : "loadFollowStatusError")}</p>}
     {!self && !guest && state.phase === "ready" && state.blocked && <p className={styles.feedback} id={feedbackId}>{t("interactionBlocked")}</p>}
     {memberSheetOpen && <div className={styles.memberBackdrop} role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) closeMemberSheet(); }}>

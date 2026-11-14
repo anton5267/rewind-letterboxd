@@ -139,7 +139,10 @@
 
 .directoryCard { grid-column: 1 / -1; }
 
-.showcaseList { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 24px; }
+.list.showcaseList { display: flex; justify-content: space-between; gap: 24px; }
+.showcaseList > li { flex: 0 1 194px; width: 194px; min-width: 0; }
+.grid > .card:not(.directoryCard) .cardHeading { margin-bottom: 50px; }
+.directoryMetricsHeading { display: flex; justify-content: space-between; width: 306px; margin: 24px 141px 12px auto; color: #8f8f8f; font-size: 20px; }
 
 .empty {
   margin: 0;
@@ -256,7 +259,10 @@
   .cardHeading h2 { font-size: 16px; }
   .cardHeading { margin: 11px 0 12px; }
   .grid > .card:first-child .cardHeading { margin: 8px 0 21px; }
-  .showcaseList { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  .list.showcaseList { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  .showcaseList > li { width: 100%; }
+  .grid > .card:not(.directoryCard) .cardHeading { margin-bottom: 21px; }
+  .directoryMetricsHeading { width: 133px; margin: 20px 52px 8px auto; font-size: 10px; }
   .showcaseList > li:nth-child(n + 5) { display: none; }
   .directoryCard { padding-bottom: 8px; }
 }

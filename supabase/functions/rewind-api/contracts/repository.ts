@@ -2,7 +2,7 @@ import type { ProfileMediaKind, ProfileMediaResponse, ProfileMediaUpload } from 
 import type { GenreResponse, GlobalSearchResponse, MovieDetailsResponse, MovieFlagType, MovieSearchParams, MovieSearchResult, MovieStatusResponse, PersonFilmographyResponse, PersonSearchParams, PersonSearchResult } from "./catalog.ts";
 import type { CurrentUserResponse, HostedAuthUser } from "./auth.ts";
 import type { ProfileCollectionResult, ProfileResponse, ProfileUpdateRequest, PublicProfileResponse } from "./profile.ts";
-import type { ActivityResponse, BlockStatusResponse, ConversationResponse, FollowStatusResponse, MessageResponse, NotificationPreferencesResponse, NotificationResponse, PopularReviewerResponse, PublicSocialUser, SocialLinkResponse } from "./social.ts";
+import type { ActivityResponse, BlockStatusResponse, ConversationResponse, FollowStatusResponse, MessageResponse, NotificationPreferencesResponse, NotificationResponse, PopularReviewerResponse, PublicSocialUser, CommunityUserResponse, SocialLinkResponse } from "./social.ts";
 import type { AdminJournalArticleRequest, JournalArchiveEntry, JournalArticleResponse, NewsletterDeliveryStatusResponse, NewsletterQueueResponse, NewsletterSubscriptionResponse } from "./journal.ts";
 import type { CommentPageResponse, CommentResponse, CreateCommentResult, ReviewDetailsResponse, ReviewFeedResponse, ReviewMutationRequest, ReviewPageResponse, ReviewReportReason, ReviewReportResponse, ReviewReportStatusResponse, ReviewResponse } from "./reviews.ts";
 import type { CreateMyListRequest, ListLikeStatusResponse, MyListItemResponse, MyListPageResponse, MyListResponse, PopularTagResponse, PublicListDetailsResponse, PublicListPageResponse, UpdateMyListRequest } from "./lists.ts";
@@ -77,8 +77,8 @@ export interface RewindApiRepository {
   getFollowingActivity?(authUser: HostedAuthUser, page: number, size: number): Promise<{ content: ActivityResponse[]; totalPages: number; totalElements: number; number: number }>;
   getRecentWatched?(size: number): Promise<{ content: { id: number; createdAt: string; actor: { id: number; username: string; displayName: string | null } | null; movie: { id: number; title: string } | null }[]; totalPages: number; totalElements: number; number: number }>;
   getPopularReviewers?(size: number): Promise<PopularReviewerResponse[]>;
-  getHqUsers?(page: number, size: number): Promise<{ content: PublicSocialUser[]; totalPages: number; totalElements: number; number: number }>;
-  getDirectoryUsers?(query: string | null, page: number, size: number): Promise<{ content: PublicSocialUser[]; totalPages: number; totalElements: number; number: number }>;
+  getHqUsers?(page: number, size: number): Promise<{ content: CommunityUserResponse[]; totalPages: number; totalElements: number; number: number }>;
+  getDirectoryUsers?(query: string | null, page: number, size: number): Promise<{ content: CommunityUserResponse[]; totalPages: number; totalElements: number; number: number }>;
   getPublicUser?(userId: number): Promise<PublicSocialUser | null>;
   getBlockStatus?(authUser: HostedAuthUser, userId: number): Promise<BlockStatusResponse | null>;
   setBlock?(authUser: HostedAuthUser, userId: number, blocked: boolean): Promise<boolean | null>;

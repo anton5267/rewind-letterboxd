@@ -66,6 +66,8 @@ Own `recentReviews` і paged `/api/profile/me/reviews` у поточному sou
 
 ## Social
 
+Hosted Community directory, HQ and popular-reviewer responses add optional watchedCount, reviewCount, listCount, likes, followerCount, followingCount and favoriteMovies. Counts use public collections, published films, visible reviews and active accounts. Likes count active users who liked visible reviews. favoriteMovies contains the first four published films in a public FAVORITES list, ordered by saved position and item ID. One bounded query enriches each returned page. Existing ranking, search and pagination contracts remain intact. Local Spring responses can omit these fields, and the UI leaves unavailable statistics and previews blank.
+
 | Доступ | Метод і шлях | Призначення |
 | --- | --- | --- |
 | U | `GET`, `POST /api/conversations`; `GET`, `POST /api/conversations/{id}/messages`; `POST /api/conversations/{id}/read` | Приватні діалоги й повідомлення; blocked pairs не можуть почати/читати/надсилати |

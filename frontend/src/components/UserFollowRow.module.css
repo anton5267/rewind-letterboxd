@@ -240,3 +240,29 @@
   .row:not(.reviewerRow) .userCopy strong { font-size: 14px; }
   .row:not(.reviewerRow) .glyph { width: 22px; height: 22px; }
 }
+
+.communityShowcase { width: 194px; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 14px; }
+.communityShowcase .userLink { width: 100%; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 18px; }
+.communityShowcase .avatar, .communityShowcase .avatarFallback { width: 100%; height: auto; max-width: 194px; aspect-ratio: 1; }
+.communityShowcase .userCopy { width: 100%; gap: 6px; text-align: center; }
+.communityShowcase .userCopy strong { font-size: 18px; line-height: 1.12; }
+.communityShowcase .userCopy span { color: #7e7e7e; font-size: 14px; line-height: 1.12; }
+.communityShowcase .feedback { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.communityDirectory .userLink { min-width: 0; }
+@media (max-width: 767px) {
+  .communityShowcase { width: 100%; gap: 8px; }
+  .communityShowcase .userLink { gap: 8px; }
+  .communityShowcase .avatar, .communityShowcase .avatarFallback { width: 100%; height: auto; aspect-ratio: 1; }
+  .communityShowcase .userCopy { gap: 3px; }
+  .row.communityShowcase .userCopy strong { font-size: 11.5px; line-height: 1.12; }
+  .communityShowcase .userCopy span { font-size: 10px; line-height: 1.12; }
+  .communityShowcase > .action { opacity: 1; }
+  .communityDirectory { flex-wrap: nowrap; gap: 8px; }
+  .communityDirectory .userLink { gap: 10px; }
+  .communityDirectory .userCopy strong { font-size: 11.5px; }
+  .communityDirectory .userCopy span { font-size: 10px; }
+  .communityDirectory .metrics { display: flex; flex: 0 0 133px; width: 133px; gap: 8px; }
+  .communityDirectory .metric { gap: 4px; }
+  .communityDirectory .metric img { width: 17px; height: 17px; flex-basis: 17px; }
+  .communityDirectory .metricValue { font-size: 10px; }
+}

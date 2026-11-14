@@ -1,3 +1,4 @@
+import { enrichCommunityUsers } from "./shared/community.ts";
 import type { RewindApiRepository } from "../contracts/repository.ts";
 import type { ActivityResponse, FollowStatusResponse, PopularReviewerResponse, PublicSocialUser } from "../contracts/social.ts";
 import { RewindApiError } from "../http/errors.ts";
@@ -53,7 +54,7 @@ async function readUsersPage(where: string, args: unknown[], page: number, size:
              WHERE u.is_active AND ${where} ORDER BY ${orderBy} LIMIT $${args.length + 1} OFFSET $${args.length + 2}`,
       args: [...args, size, page * size],
     });
-    return pageResult(rows.rows.map(toPublicUser), count.rows[0]?.total ?? "0", page, size);
+    return pageResult(await enrichCommunityUsers(connection, rows.rows.map(toPublicUser)), count.rows[0]?.total ?? "0", page, size);
   } finally { connection.release(); }
 }
 
@@ -200,12 +201,8 @@ export const socialRepository: Pick<RewindApiRepository,
       await connection.queryObject("SET ROLE rewind_edge_app");
       const rows = await connection.queryObject<{
         id: string; username: string; display_name: string | null; avatar_url: string | null; likes: string;
-        review_count: string; watched_count: string; list_count: string;
       }>({
-        text: `SELECT u.id::text AS id, u.username, u.display_name, u.avatar_url, COUNT(rl.id)::text AS likes,
-                      (SELECT COUNT(*) FROM rewind.reviews r JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published WHERE r.user_id = u.id AND NOT r.is_hidden)::text AS review_count,
-                      (SELECT COUNT(*) FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id JOIN rewind.movies m ON m.id = i.movie_id AND m.is_published WHERE l.user_id = u.id AND l.list_type = 'WATCHED')::text AS watched_count,
-                      (SELECT COUNT(*) FROM rewind.lists l WHERE l.user_id = u.id AND l.list_type = 'CUSTOM' AND l.is_public)::text AS list_count
+        text: `SELECT u.id::text AS id, u.username, u.display_name, u.avatar_url, COUNT(rl.id)::text AS likes
                FROM rewind.review_likes rl JOIN rewind.reviews r ON r.id = rl.review_id AND NOT r.is_hidden
                JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                JOIN rewind.users u ON u.id = r.user_id AND u.is_active
@@ -213,8 +210,7 @@ export const socialRepository: Pick<RewindApiRepository,
                GROUP BY u.id, u.username, u.display_name, u.avatar_url
                ORDER BY COUNT(rl.id) DESC, u.id DESC LIMIT $1`, args: [size],
       });
-      return rows.rows.map((row) => ({ ...toPublicUser(row), likes: Number(row.likes), reviewCount: Number(row.review_count),
-        watchedCount: Number(row.watched_count), listCount: Number(row.list_count) }));
+      return enrichCommunityUsers(connection, rows.rows.map((row) => ({ ...toPublicUser(row), likes: Number(row.likes) })));
     } finally { connection.release(); }
   },
 
