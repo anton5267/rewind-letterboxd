@@ -4,11 +4,13 @@ import { getPersonFilmography, type PersonFilmography, type PersonType } from ".
 import ResilientImage from "../components/ResilientImage";
 import RetryButton from "../components/RetryButton";
 import RetryNotice from "../components/RetryNotice";
+import PersonFilmographyFilters from "../components/person/PersonFilmographyFilters";
 import { getGenres, type Genre } from "../api/search.api";
-import { editorialText, formatMovieYear, localizeGenreName, useLocale } from "../i18n";
+import { editorialText, formatMovieYear, useLocale } from "../i18n";
 import styles from "./Person.module.css";
 import filterIcon from "../assets/figma/home-person/person-filter.png";
 import { setPublicCatalogMetadata } from "../utils/publicCatalogSeo";
+import { getFilmDecade } from "../utils/filmDecade";
 
 const publicCatalogOnly = import.meta.env.VITE_PUBLIC_CATALOG_ONLY === "true";
 
@@ -30,6 +32,7 @@ export default function Person() {
   const [person, setPerson] = useState<PersonFilmography | null>(null);
   const [sort, setSort] = useState("newest");
   const [genreId, setGenreId] = useState("");
+  const [decade, setDecade] = useState("");
   const [genres, setGenres] = useState<Genre[]>([]);
   const [genresLoading, setGenresLoading] = useState(true);
   const [genreError, setGenreError] = useState(false);
@@ -49,7 +52,9 @@ export default function Person() {
     focusPersonAfterRetry.current = null;
     focusGenresAfterRetry.current = null;
     setAllFilms(false);
-  }, [type, personId, lang, sort, genreId]);
+  }, [type, personId, lang, sort, genreId, decade]);
+
+  useEffect(() => { setDecade(""); }, [type, personId]);
 
   useEffect(() => {
     const pending = focusPersonAfterRetry.current;
@@ -147,6 +152,9 @@ export default function Person() {
 
   const personTypeLabel = type === "actor" ? t("actors") : type === "producer" ? t("producers") : t("directors");
   const filmSectionTitle = type === "actor" ? t("filmsStarring") : type === "director" ? t("filmsDirected") : t("filmography");
+  const films = decade === ""
+    ? person.films
+    : person.films.filter(film => getFilmDecade(film.releaseDate) === Number(decade));
 
   return <main className={`${styles.page} ${type === "director" ? styles.directorPage : ""}`} aria-labelledby="person-title" aria-busy={loading || genresLoading} onKeyDown={event => { if (event.key === "Escape" && filtersOpen) { event.preventDefault(); setFiltersOpen(false); filterButton.current?.focus(); } }}>
     <section className={styles.hero}>
@@ -170,12 +178,11 @@ export default function Person() {
       {genreError && <RetryNotice className={styles.error} message={t("loadGenresError")} retryLabel={t("retry")} onRetry={retryGenres} />}
       <div className={styles.filmographyHeader}>
       <div className={styles.sectionHeading}><h2 id="filmography-title" ref={filmographyHeadingRef} tabIndex={-1}>{filmSectionTitle}</h2></div>
-      <div id="person-filters" className={`${styles.controls} ${filtersOpen ? styles.controlsOpen : ""}`}>
-        <label className={styles.field}>{t("sortBy")} <select value={sort} onChange={event => setSort(event.target.value)}><option value="newest">{t("sortNewest")}</option><option value="oldest">{t("sortOldest")}</option><option value="rating">{t("sortBestRated")}</option><option value="title">{t("sortTitle")}</option></select></label>
-        <label className={styles.field}>{t("genre")} <select value={genreId} disabled={genresLoading || genreError} onChange={event => setGenreId(event.target.value)}><option value="">{t("allGenres")}</option>{genres.map(genre => <option key={genre.id} value={genre.id}>{localizeGenreName(genre.name, lang)}</option>)}</select></label>
+      <PersonFilmographyFilters films={person.films} genres={genres} genresUnavailable={genresLoading || genreError}
+        open={filtersOpen} sort={sort} genreId={genreId} decade={decade}
+        onSortChange={setSort} onGenreChange={setGenreId} onDecadeChange={setDecade} />
       </div>
-      </div>
-      {loading ? <PersonLoading /> : !error && (person.films.length === 0 ? <div className={styles.empty}><p>{t("noFilms")}</p>{genreId && <button type="button" onClick={() => { setGenreId(""); filmographyHeadingRef.current?.focus(); }}>{t("allGenres")}</button>}</div> : <div id="person-films" className={styles.grid}>{(allFilms ? person.films : person.films.slice(0, 12)).map(film => {
+      {loading ? <PersonLoading /> : !error && (films.length === 0 ? <div className={styles.empty}><p>{t("noFilms")}</p>{(genreId || decade) && <button type="button" onClick={() => { setGenreId(""); setDecade(""); filmographyHeadingRef.current?.focus(); }}>{t("personResetFilters")}</button>}</div> : <div id="person-films" className={styles.grid}>{(allFilms ? films : films.slice(0, 12)).map(film => {
         const filmTitle = editorialText(film.title, t("untitledFilm"));
         return <article className={styles.filmCard} key={film.id}>
           <Link to={filmPath(film.id)} aria-label={`${filmTitle} — ${formatMovieYear(film.releaseDate, t("unknownYear"))}`}>
@@ -187,7 +194,7 @@ export default function Person() {
           </Link>
         </article>;
       })}</div>)}
-      {!loading && !error && person.films.length > 12 && <button type="button" className={styles.expandFilms} aria-expanded={allFilms} aria-controls="person-films" onClick={() => { setAllFilms(value => !value); if (allFilms) filmographyHeadingRef.current?.focus(); }}>{t(allFilms ? "personShowFewerFilms" : "personShowAllFilms")}</button>}
+      {!loading && !error && films.length > 12 && <button type="button" className={styles.expandFilms} aria-expanded={allFilms} aria-controls="person-films" onClick={() => { setAllFilms(value => !value); if (allFilms) filmographyHeadingRef.current?.focus(); }}>{t(allFilms ? "personShowFewerFilms" : "personShowAllFilms")}</button>}
     </section>
   </main>;
 }

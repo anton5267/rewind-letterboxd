@@ -18,9 +18,6 @@
 .filmographyHeader { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 38px; border-top: 1px solid #4d4d4d; padding-top: 17px; }
 .sectionHeading { display: flex; align-items: center; min-height: 44px; min-width: 0; }
 .sectionHeading h2 { margin: 0; overflow-wrap: anywhere; font-size: 24px; line-height: 1.4; }
-.controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; min-width: 0; }
-.field { display: flex; min-width: 0; align-items: center; flex-wrap: wrap; gap: 8px; color: #aaa; font-size: 12px; line-height: 1.4; }
-.field select { min-height: 44px; max-width: 100%; box-sizing: border-box; border: 1px solid #555; border-radius: 24px; padding: 8px 28px 8px 12px; background: #282828; color: #ccc; font: inherit; }
 .grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 50px 31px; }
 .filmCard { min-width: 0; }
 .filmCard a { display: block; color: inherit; text-decoration: none; }
@@ -69,10 +66,6 @@
   .filmographyHeader { display: flex; flex-direction: column; align-items: stretch; gap: 12px; margin-bottom: 20px; padding-top: 7px; }
   .sectionHeading { min-height: 0; }
   .sectionHeading h2 { font-size: 14px; line-height: 1.4; }
-  .controls { display: none; flex-direction: column; align-items: stretch; gap: 12px; }
-  .controlsOpen { display: flex; }
-  .field { display: grid; width: 100%; font-size: 14px; }
-  .field select { width: 100%; font-size: 16px; }
   .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; }
   .poster, .posterFallback { aspect-ratio: 79 / 116; border-radius: 10px; }
   .posterFallback { padding: 8px; font-size: 12px; }
