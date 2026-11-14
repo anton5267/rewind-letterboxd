@@ -15,13 +15,15 @@
 
 - **Live списки.** Owner create/order/rank/reply, очищення опису, pin/save/reload та comment create/edit/reload/delete підтверджені через production UI і SQL. Приватизація автоматично зняла pin, анонімний GET повернув 404. Тестовий список/коментар очищені, початкові system lists і редаговані поля профілю звірені. Виправлені private-card links, UK/EN navigation 2/2 та попередній Retry/focus 1/1 пройшли.
 
+- **Live профіль.** UK save/reload та EN clear/reload підтвердили display name, owner names, bio, location, pronoun і три reply preferences. Публічна відповідь приховує names/email. Website link пройшов save/reload/public-read/clear, початковий стан відновлений. Media upload зупинений до передачі файла через відсутній дозвіл file URLs у Chrome extension.
+
 ## Залишилося
 
 | Блок | Конкретна умова завершення |
 | --- | --- |
 | Recovery | Відсутні backup password/passphrase, перший encrypted export і disposable restore ще відкриті. Auth, Storage, settings і secrets потребують окремого recovery handling. |
 | Локальний source/data | Відновити Docker, звірити бази, завершити змістовний upstream review. Зберігати підтверджену локальну V32/V33/V36 історію під час майбутньої інтеграції Spring. |
-| Live приватні дії | Save/clear settings, медіа, двоакаунтні reply/reports/moderation, двоадресний email change, двоакаунтна доставка й editorial save очікують контрольованого приймання. Fixtures і read-only UI перевірки вже мають датовані докази. |
+| Live приватні дії | Медіа upload/replace/clear очікує Chrome file-URL permission. Двоакаунтні reply/reports/moderation, двоадресний email change, двоакаунтна доставка й editorial save очікують контрольованого приймання. Fixtures і read-only UI перевірки вже мають датовані докази. |
 | TMDB | Snapshot 20/49 без original language, один фільм без підтвердженого ID. Наступний eligible refresh за останнім записом — 16.11.2026 03:00 UTC. |
 | Дизайн і продукт | Залишаються токени/типографіка, header/footer, повна parity окремих layout/states, детальні job/written credits та відкриті пункти матриці вимог. |
 | Free plan | Вбудована leaked-password protection недоступна. Межі capacity та recovery мають увійти до release review. |

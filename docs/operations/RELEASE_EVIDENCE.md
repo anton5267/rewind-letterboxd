@@ -18,6 +18,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 
 | Block | Recorded checks and live boundary |
 | --- | --- |
+| Profile settings and website link | Production UK save/reload and EN clear/reload passed for display name, names, bio, location, pronoun and all three reply preferences. Public reads omit names/email. Website save/reload/public-read/clear passed and baseline was restored. Media upload awaits Chrome extension file-URL permission. |
 | Owner lists and profile navigation | Production create/order/rank/reply, description clear, pin/save/reload, comment create/edit/reload/delete and public→private acceptance passed. Privacy removed the pin and anonymous reads returned 404. Temporary data was cleaned up. Two UK/EN navigation fixtures and the existing Retry/focus scenario passed. |
 | Admin credit queries and genre labels | Four new fixtures cover late success/failure for all three person roles, failed-query editing and Ukrainian genre labels. Two existing credit/genre save flows passed. Shared test setup was extracted, and source typecheck passed. |
 | Source reconciliation / favorite isolation | Four restored SQL files match their live migration statements after newline normalization; Git versions/names cover 55/55 live entries. Cross-tab success/failure 4/4 and current-account removal/focus/reload 2/2 passed in UK/EN, plus source typecheck. |
@@ -35,7 +36,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 
 - Encrypted export, disposable restore and full Auth/Storage/settings/secrets recovery. Backup password and independent encryption passphrase remain missing. [Recovery procedure](DEPLOYMENT_POSTGRESQL.md#supabase-free-backup-and-recovery--not-yet-accepted).
 - Row-level reconciliation of local MySQL and hosted records, plus remaining local/upstream source review. Preserve the verified local V32 identity/V33 outbox/V36 original-language lineage during future Spring integration. Production import awaits backup and rollback acceptance.
-- Controlled live save/comment/report/moderation, profile-media replacement/removal, cross-account list reply rules, email change, two-account messaging/notifications and editorial save. [Work order](../../PLAN.md#наступна-робота).
+- Controlled cross-account comment/report/moderation, profile-media upload/replacement/removal, cross-account list reply rules, email change, two-account messaging/notifications and editorial save. [Work order](../../PLAN.md#наступна-робота).
 - Remaining Figma/layout and product gaps. [Requirements](../project/PROJECT_REQUIREMENTS.md#implementation-status), [design handoff](../frontend/FIGMA_HANDOFF.md).
 - TMDB snapshot retains 20/49 missing original-language values and one unverified movie ID. The next eligible scheduled batch was recorded as 16 November 2026, 03:00 UTC. [Worker procedure](SUPABASE_OPERATIONS.md).
 - The recorded security review retains the Free-plan leaked-password limitation and three private no-policy table notices with denied client/app/reader SELECT. Preserve the grants and review changes against actual workload. [Dated advisor evidence](../archive/RELEASE_EVIDENCE_2026.md#pg_net-extension-registration-migration-isolated-verification--13112026-0516-utc).
