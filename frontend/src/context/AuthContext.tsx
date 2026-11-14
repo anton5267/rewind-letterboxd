@@ -44,6 +44,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           });
       };
       const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
+        if (event === "TOKEN_REFRESHED") return;
         const requestId = ++authRequest.current;
         if (!session) {
           if (event === "SIGNED_OUT") authOperation.current += 1;
