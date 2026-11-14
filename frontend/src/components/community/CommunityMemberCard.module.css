@@ -16,4 +16,8 @@
   .films { display: flex; width: 78px; height: 44px; margin-top: 0; align-items: center; gap: 0; }
   .films img, .fallback { flex: 0 0 34.615%; width: 34.615%; height: 43px; }
   .films > * + * { margin-inline-start: -12.82%; }
+  .films > :nth-child(1) { z-index: 4; }
+  .films > :nth-child(2) { z-index: 3; }
+  .films > :nth-child(3) { z-index: 2; }
+  .films > :nth-child(4) { z-index: 1; }
 }
