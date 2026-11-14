@@ -33,6 +33,8 @@ for (const language of ["uk", "en"] as const) {
       for (const width of [393, 360, 320, 767]) {
         await page.setViewportSize({ width, height: 852 });
         await expect(toolbar).toBeVisible();
+        await expect(page.locator("footer")).toBeHidden();
+        await expect(page.locator("body")).toHaveCSS("padding-bottom", "0px");
         const geometry = await toolbar.evaluate(element => {
           const textBounds = (node: Element) => {
             const range = document.createRange();
@@ -70,7 +72,16 @@ for (const language of ["uk", "en"] as const) {
         await page.screenshot({ path: test.info().outputPath(`toolbar-${language}.png`) });
       }
     }
+    await toolbar.getByRole("link").first().click();
+    await expect(page.locator("#profile-page-title")).toBeAttached();
+    await expect(page.locator("main")).toHaveAttribute("aria-busy", "false");
+    await expect(page.locator("footer")).toBeVisible();
+    await expect(page.locator("body")).toHaveCSS("padding-bottom", "70px");
+    await page.goBack();
+    await expect(toolbar).toBeVisible();
+    await expect(page.locator("footer")).toBeHidden();
     await page.setViewportSize({ width: 1440, height: 900 });
+    await expect(page.locator("footer")).toBeVisible();
     await expect(toolbar).toBeHidden();
     await expect(page.locator("#account-settings-title")).toBeVisible();
     expect(writes).toEqual([]);

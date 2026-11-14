@@ -106,22 +106,7 @@
 }
 
 @media (max-width: 767px) {
-  .footer.mobileAuthFooter {
-    display: none;
-  }
-}
-
-@media (max-width: 767px) {
-  .footer.mobileDetailFooter { display: none; }
-}
-
-@media (max-width: 767px) {
-  .footer.mobileSearchFooter,
-  .footer.mobileHomeFooter,
-  .footer.mobilePersonFooter { display: none; }
-}
-
-@media (max-width: 767px) {
+  .footer.mobileHidden,
   :global(body:has(main[data-list-editor="create"])) .footer,
   :global(body:has(main[data-review-detail])) .footer { display: none; }
 }

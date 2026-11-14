@@ -95,7 +95,7 @@ for (const lang of ["uk", "en"] as const) {
       const phone = width <= 767;
       const previewHeight = desktop ? 543 : phone ? 158 : 320;
       const avatarSize = desktop ? 265 : phone ? 90 : 150;
-      const radius = desktop ? "37px" : phone ? "10px" : "20px";
+      const radius = desktop ? "37px" : "20px";
       for (const panel of [avatarPanel, bannerPanel]) {
         const preview = panel.locator("div").first();
         await expect(preview).toHaveCSS("border-radius", radius);

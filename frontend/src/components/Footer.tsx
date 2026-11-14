@@ -10,8 +10,13 @@ export default function Footer() {
   const mobileSearchFooter = /^\/(uk|en)\/search\/?$/.test(location.pathname);
   const mobileHomeFooter = /^\/(uk|en)\/home\/?$/.test(location.pathname);
   const mobilePersonFooter = /^\/(uk|en)\/people\/(actor|director|producer)\/[^/]+\/?$/.test(location.pathname);
+  const settingsTab = new URLSearchParams(location.search).get("settings");
+  const mobileSettingsFooter = /^\/(uk|en)\/profile\/?$/.test(location.pathname)
+    && ["profile", "authentication", "avatar", "connections"].includes(settingsTab ?? "");
+  const mobileFooterHidden = mobileAuthFooter || mobileDetailFooter || mobileSearchFooter
+    || mobileHomeFooter || mobilePersonFooter || mobileSettingsFooter;
   return (
-    <footer className={`${styles.footer} ${mobileAuthFooter ? styles.mobileAuthFooter : ""} ${mobileDetailFooter ? styles.mobileDetailFooter : ""} ${mobileSearchFooter ? styles.mobileSearchFooter : ""} ${mobileHomeFooter ? styles.mobileHomeFooter : ""} ${mobilePersonFooter ? styles.mobilePersonFooter : ""}`}>
+    <footer className={`${styles.footer} ${mobileFooterHidden ? styles.mobileHidden : ""}`}>
 
       {/* TOP LINE */}
       <div className={styles.top}>
