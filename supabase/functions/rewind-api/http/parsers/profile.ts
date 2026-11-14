@@ -1,3 +1,4 @@
+import { isReplyPreference } from "./reply_preference.ts";
 import type { ProfileUpdateRequest } from "../../contracts/profile.ts";
 
 export function parseProfileUpdate(value: unknown): ProfileUpdateRequest | null {
@@ -37,7 +38,7 @@ export function parseProfileUpdate(value: unknown): ProfileUpdateRequest | null 
   }
   if (Object.hasOwn(body, "replyPreference")) {
     const preference = body.replyPreference;
-    if (preference !== "ANYONE" && preference !== "FOLLOWED" && preference !== "SELF") return null;
+    if (!isReplyPreference(preference)) return null;
     update.replyPreference = preference;
   }
   return update;

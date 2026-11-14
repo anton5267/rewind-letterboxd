@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import ProfileSettingsShell, { type ProfileSettingsTab } from "../../components/ProfileSettingsShell";
 import ProfileBioField from "../../components/ProfileBioField";
 import ProfilePronounField from "../../components/ProfilePronounField";
-import ProfileReplyPreferenceField from "../../components/ProfileReplyPreferenceField";
+import ReplyPreferenceField from "../../components/ReplyPreferenceField";
 import ProfileEmailField from "../../components/ProfileEmailField";
 import { usesHostedSupabaseAuth } from "../../api/supabaseClient";
 import settingsStyles from "../../components/ProfileSettingsShell.module.css";
@@ -165,7 +165,7 @@ export default function ProfileSettingsView({ settingsTab, identity, account, co
         <ProfileBioField key={`${user?.id}-${lang}`} value={bio} disabled={nameBusy} onChange={setBio} />
         <div><label htmlFor="settings-profile-location">{t("profileLocation")}</label><input id="settings-profile-location" value={profileLocation} maxLength={80} disabled={nameBusy} onChange={event => setProfileLocation(event.target.value)} /></div>
         <ProfilePronounField key={`${user?.id}-${lang}`} value={pronoun} disabled={nameBusy} onChange={setPronoun} />
-        <ProfileReplyPreferenceField key={`${user?.id}-${lang}`} value={replyPreference} disabled={nameBusy} onChange={setReplyPreference} />
+        <ReplyPreferenceField key={`${user?.id}-${lang}`} value={replyPreference} disabled={nameBusy} onChange={setReplyPreference} />
         {usesHostedSupabaseAuth ? <ProfileEmailField key={`${user?.id}-${lang}`} email={profile.email} userId={profile.id} disabled={nameBusy}
           onConfirmed={email => identity.setProfile(current => current?.id === profile.id ? { ...current, email } : current)} />
           : <div><label htmlFor="settings-email">{t("email")}</label><output id="settings-email">{profile.email}</output></div>}

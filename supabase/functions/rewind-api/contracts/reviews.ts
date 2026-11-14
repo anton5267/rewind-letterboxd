@@ -1,3 +1,5 @@
+import type { ReplyPreference } from "./profile.ts";
+
 export type ReviewReportReason = "SPAM" | "INAPPROPRIATE_CONTENT" | "BULLYING";
 
 export type CreateCommentResult = CommentResponse | null | "FORBIDDEN";
@@ -17,6 +19,7 @@ export interface ReviewFeedResponse {
 }
 
 export interface ReviewResponse {
+  replyPreference?: ReplyPreference | null;
   id: number;
   userId: number;
   username: string;
@@ -34,6 +37,7 @@ export interface ReviewPageResponse {
 }
 
 export interface ReviewDetailsResponse {
+  replyPreference?: ReplyPreference | null;
   id: number;
   content: string;
   rating: number | null;
@@ -65,4 +69,8 @@ export interface CommentPageResponse {
   number: number;
 }
 
-export interface ReviewMutationRequest { content?: string; rating?: number | null }
+export interface ReviewMutationRequest {
+  content?: string;
+  rating?: number | null;
+  replyPreference?: ReplyPreference | null;
+}

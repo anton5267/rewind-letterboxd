@@ -1,3 +1,4 @@
+import type { ReplyPreference } from "../contracts/profile.ts";
 import type { RewindApiRepository } from "../contracts/repository.ts";
 import type { CommentPageResponse, CommentResponse, CreateCommentResult, ReviewDetailsResponse, ReviewMutationRequest, ReviewPageResponse, ReviewReportReason, ReviewReportResponse, ReviewReportStatusResponse, ReviewResponse } from "../contracts/reviews.ts";
 import { PostgresError } from "@db/postgres";
@@ -18,11 +19,12 @@ import {
 
 function reviewResponse(row: {
   id: string; user_id: string; username: string; user_avatar_url: string | null;
-  content: string; rating: number | null; created_at: string;
+  content: string; rating: number | null; created_at: string; reply_preference: ReplyPreference | null;
 }): ReviewResponse {
   return {
     id: safeId(row.id, "Review ID"), userId: safeId(row.user_id, "User ID"), username: row.username,
     userAvatarUrl: row.user_avatar_url, content: row.content, rating: row.rating, createdAt: row.created_at,
+    replyPreference: row.reply_preference,
   };
 }
 
@@ -131,10 +133,10 @@ export const reviewsRepository: Pick<RewindApiRepository,
         }),
         connection.queryObject<{
           id: string; user_id: string; username: string; user_avatar_url: string | null;
-          content: string; rating: number | null; created_at: string;
+          content: string; rating: number | null; created_at: string; reply_preference: ReplyPreference | null;
         }>({
           text: `SELECT r.id::text AS id, author.id::text AS user_id, author.username,
-                        author.avatar_url AS user_avatar_url, r.content, r.rating, r.created_at::text AS created_at
+                        author.avatar_url AS user_avatar_url, r.content, r.rating, r.created_at::text AS created_at, r.reply_preference
                  FROM rewind.reviews r JOIN rewind.users author ON author.id = r.user_id
                  JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
                  WHERE r.movie_id = $1 AND r.is_hidden = FALSE AND author.is_active = TRUE
@@ -154,10 +156,10 @@ export const reviewsRepository: Pick<RewindApiRepository,
     try {
       const result = await connection.queryObject<{
         id: string; user_id: string; username: string; user_avatar_url: string | null;
-        content: string; rating: number | null; created_at: string;
+        content: string; rating: number | null; created_at: string; reply_preference: ReplyPreference | null;
       }>({
         text: `SELECT r.id::text AS id, author.id::text AS user_id, author.username,
-                      author.avatar_url AS user_avatar_url, r.content, r.rating, r.created_at::text AS created_at
+                      author.avatar_url AS user_avatar_url, r.content, r.rating, r.created_at::text AS created_at, r.reply_preference
                FROM rewind.reviews r JOIN rewind.users author ON author.id = r.user_id
                WHERE r.user_id = $1 AND r.movie_id = $2`,
         args: [userId, movieId],
@@ -170,15 +172,15 @@ export const reviewsRepository: Pick<RewindApiRepository,
     } finally { connection.release(); }
   },
 
-  async createReview(authUser, movieId, content, rating): Promise<ReviewResponse> {
+  async createReview(authUser, movieId, content, rating, replyPreference = null): Promise<ReviewResponse> {
     const { connection, userId } = await beginUserTransaction(authUser);
     try {
       const movie = await connection.queryObject({ text: "SELECT 1 FROM rewind.movies WHERE id = $1 AND is_published = TRUE", args: [movieId] });
       if (!movie.rows.length) throw new RewindApiError(400, "Movie not found");
       const inserted = await connection.queryObject<{ id: string }>(
-        { text: `INSERT INTO rewind.reviews (user_id, movie_id, content, rating)
-                 VALUES ($1, $2, $3, $4) ON CONFLICT (user_id, movie_id) DO NOTHING RETURNING id::text AS id`,
-          args: [userId, movieId, content, rating] },
+        { text: `INSERT INTO rewind.reviews (user_id, movie_id, content, rating, reply_preference)
+                 VALUES ($1, $2, $3, $4, $5) ON CONFLICT (user_id, movie_id) DO NOTHING RETURNING id::text AS id`,
+          args: [userId, movieId, content, rating, replyPreference] },
       );
       if (!inserted.rows[0]) throw new RewindApiError(409, "You already reviewed this movie");
       const reviewId = safeId(inserted.rows[0].id, "Review ID");
@@ -193,10 +195,10 @@ export const reviewsRepository: Pick<RewindApiRepository,
       });
       const saved = await connection.queryObject<{
         id: string; user_id: string; username: string; user_avatar_url: string | null;
-        content: string; rating: number | null; created_at: string;
+        content: string; rating: number | null; created_at: string; reply_preference: ReplyPreference | null;
       }>({
         text: `SELECT r.id::text AS id, author.id::text AS user_id, author.username,
-                      author.avatar_url AS user_avatar_url, r.content, r.rating, r.created_at::text AS created_at
+                      author.avatar_url AS user_avatar_url, r.content, r.rating, r.created_at::text AS created_at, r.reply_preference
                FROM rewind.reviews r JOIN rewind.users author ON author.id = r.user_id WHERE r.id = $1`,
         args: [reviewId],
       });
@@ -214,12 +216,12 @@ export const reviewsRepository: Pick<RewindApiRepository,
     try {
       await connection.queryObject("SET ROLE rewind_edge_app");
       const result = await connection.queryObject<{
-        id: string; content: string; rating: number | null; created_at: string;
+        id: string; content: string; rating: number | null; created_at: string; reply_preference: ReplyPreference | null;
         author_id: string; username: string; display_name: string | null; avatar_url: string | null;
         movie_id: string; title: string; release_date: string | null; duration_minutes: number | null;
         age_rating: string | null; photo_url: string | null; backdrop_url: string | null; trailer_url: string | null;
       }>({
-        text: `SELECT r.id::text AS id, r.content, r.rating, r.created_at::text AS created_at,
+        text: `SELECT r.id::text AS id, r.content, r.rating, r.created_at::text AS created_at, r.reply_preference,
                       author.id::text AS author_id, author.username, author.display_name, author.avatar_url,
                       m.id::text AS movie_id, m.title, m.release_date::text AS release_date,
                       m.duration_minutes, m.age_rating, m.photo_url, m.backdrop_url, m.trailer_url
@@ -247,7 +249,7 @@ export const reviewsRepository: Pick<RewindApiRepository,
       ]);
       return {
         id: safeId(review.id, "Review ID"), content: review.content, rating: review.rating,
-        createdAt: review.created_at,
+        createdAt: review.created_at, replyPreference: review.reply_preference,
         author: { id: safeId(review.author_id, "User ID"), username: review.username,
           displayName: review.display_name, avatarUrl: review.avatar_url },
         movie: { id: safeId(review.movie_id, "Movie ID"), title: review.title,
@@ -267,10 +269,12 @@ export const reviewsRepository: Pick<RewindApiRepository,
         { text: `UPDATE rewind.reviews SET
                    content = CASE WHEN $3 THEN $4 ELSE content END,
                    rating = CASE WHEN $5 THEN $6 ELSE rating END,
+                   reply_preference = CASE WHEN $7 THEN $8 ELSE reply_preference END,
                    updated_at = CURRENT_TIMESTAMP
                  WHERE id = $1 AND user_id = $2 RETURNING id::text AS id`,
           args: [reviewId, userId, Object.hasOwn(update, "content"), update.content ?? null,
-            Object.hasOwn(update, "rating") && update.rating !== null, update.rating ?? null] },
+            Object.hasOwn(update, "rating") && update.rating !== null, update.rating ?? null,
+            Object.hasOwn(update, "replyPreference"), update.replyPreference ?? null] },
       );
       if (!updated.rows[0]) throw new RewindApiError(400, "Review not found");
       if (update.rating !== undefined && update.rating !== null) {
@@ -285,10 +289,10 @@ export const reviewsRepository: Pick<RewindApiRepository,
       }
       const saved = await connection.queryObject<{
         id: string; user_id: string; username: string; user_avatar_url: string | null;
-        content: string; rating: number | null; created_at: string;
+        content: string; rating: number | null; created_at: string; reply_preference: ReplyPreference | null;
       }>({
         text: `SELECT r.id::text AS id, author.id::text AS user_id, author.username,
-                      author.avatar_url AS user_avatar_url, r.content, r.rating, r.created_at::text AS created_at
+                      author.avatar_url AS user_avatar_url, r.content, r.rating, r.created_at::text AS created_at, r.reply_preference
                FROM rewind.reviews r JOIN rewind.users author ON author.id = r.user_id WHERE r.id = $1`,
         args: [reviewId],
       });
@@ -432,8 +436,8 @@ export const reviewsRepository: Pick<RewindApiRepository,
                      WHERE (b.blocker_id = r.user_id AND b.blocked_id = $2)
                         OR (b.blocker_id = $2 AND b.blocked_id = r.user_id)
                    ) AND (
-                     author.reply_preference = 'ANYONE'
-                     OR (author.reply_preference = 'FOLLOWED' AND EXISTS (
+                     COALESCE(r.reply_preference, author.reply_preference) = 'ANYONE'
+                     OR (COALESCE(r.reply_preference, author.reply_preference) = 'FOLLOWED' AND EXISTS (
                        SELECT 1 FROM rewind.follows f
                        WHERE f.follower_id = r.user_id AND f.following_id = $2
                      ))

@@ -3,26 +3,35 @@ import { createPortal } from "react-dom";
 import { type ProfileReplyPreference } from "../api/profile.api";
 import { useDialogFocusTrap } from "../hooks/useDialogFocusTrap";
 import { useLocale } from "../i18n";
-import styles from "./ProfileReplyPreferenceField.module.css";
+import styles from "./ReplyPreferenceField.module.css";
 
 interface Props {
-  value: ProfileReplyPreference;
+  value: ProfileReplyPreference | null;
   disabled: boolean;
   onChange: (value: ProfileReplyPreference) => void;
+  onReset?: () => void;
+  hint?: string;
+  className?: string;
 }
 
-export default function ProfileReplyPreferenceField({ value, disabled, onChange }: Props) {
+export default function ReplyPreferenceField({ value, disabled, onChange, onReset, hint, className }: Props) {
   const { t } = useLocale();
   const id = useId();
   const [open, setOpen] = useState(false);
   const backButton = useRef<HTMLButtonElement>(null);
   const sheetRef = useDialogFocusTrap<HTMLElement>(open, () => setOpen(false), { initialFocusRef: backButton });
-  const options = [
+  const options: { value: ProfileReplyPreference | ""; label: string }[] = [
     { value: "ANYONE", label: t("profileRepliesAnyone") },
     { value: "FOLLOWED", label: t("profileRepliesFollowed") },
     { value: "SELF", label: t("profileRepliesSelf") },
-  ] as const;
-  const selectedLabel = options.find(option => option.value === value)?.label ?? options[0].label;
+  ];
+  if (onReset) options.unshift({ value: "", label: t("repliesProfileDefault") });
+  const description = hint ?? t("profileRepliesHint");
+  const selectPreference = (next: ProfileReplyPreference | "") => {
+    if (next === "") onReset?.();
+    else onChange(next);
+  };
+  const selectedLabel = options.find(option => option.value === (value ?? ""))?.label ?? options[0].label;
 
   useEffect(() => {
     if (!open) return;
@@ -32,19 +41,19 @@ export default function ProfileReplyPreferenceField({ value, disabled, onChange 
     return () => desktop.removeEventListener("change", closeOnDesktop);
   }, [open]);
 
-  return <div>
+  return <div className={className}>
     <label id={`${id}-label`} htmlFor={`${id}-select`}>{t("profileReplyPreference")}</label>
     <select
       className={styles.desktopSelect}
       id={`${id}-select`}
-      value={value}
+      value={value ?? ""}
       disabled={disabled}
       aria-describedby={`${id}-hint`}
-      onChange={event => onChange(event.target.value as ProfileReplyPreference)}
+      onChange={event => selectPreference(event.target.value as ProfileReplyPreference | "")}
     >
       {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
     </select>
-    <p className={styles.desktopHint} id={`${id}-hint`}>{t("profileRepliesHint")}</p>
+    <p className={styles.desktopHint} id={`${id}-hint`}>{description}</p>
     <button
       className={styles.mobileTrigger}
       type="button"
@@ -81,15 +90,15 @@ export default function ProfileReplyPreferenceField({ value, disabled, onChange 
             type="radio"
             name={`${id}-reply-preference`}
             value={option.value}
-            checked={value === option.value}
-            tabIndex={value === option.value ? 0 : -1}
-            onChange={() => onChange(option.value)}
+            checked={(value ?? "") === option.value}
+            tabIndex={(value ?? "") === option.value ? 0 : -1}
+            onChange={() => selectPreference(option.value)}
           />
           <span>{option.label}</span>
           <img src="/images/profile-pronoun-check.png" width={24} height={24} alt="" />
         </label>)}
       </fieldset>
-      <p className={styles.hint} id={`${id}-dialog-hint`}>{t("profileRepliesHint")}</p>
+      <p className={styles.hint} id={`${id}-dialog-hint`}>{description}</p>
     </section>, document.body)}
   </div>;
 }

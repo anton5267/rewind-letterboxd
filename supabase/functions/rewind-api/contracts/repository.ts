@@ -17,7 +17,7 @@ export interface RewindApiRepository {
   getPublicReviewFeed?(feed: "recent" | "popular", page: number, size: number): Promise<ReviewFeedResponse>;
   getMovieReviews?(movieId: number, page: number, size: number): Promise<ReviewPageResponse>;
   getMyMovieReview?(authUser: HostedAuthUser, movieId: number): Promise<ReviewResponse | null>;
-  createReview?(authUser: HostedAuthUser, movieId: number, content: string, rating: number): Promise<ReviewResponse>;
+  createReview?(authUser: HostedAuthUser, movieId: number, content: string, rating: number, replyPreference?: ReviewResponse["replyPreference"]): Promise<ReviewResponse>;
   getReviewDetails?(reviewId: number): Promise<ReviewDetailsResponse | null>;
   getMyReviewReport?(authUser: HostedAuthUser, reviewId: number): Promise<ReviewReportStatusResponse | null>;
   reportReview?(authUser: HostedAuthUser, reviewId: number, reason: ReviewReportReason): Promise<ReviewReportResponse | null>;

@@ -60,7 +60,7 @@ export async function handleReviewRoutes(context: HttpRouteContext): Promise<Res
         try { value = await request.json(); } catch { return json({ message: "Invalid request body" }, 400, corsHeaders); }
         const body = parseCreateReview(value);
         if (!body) return json({ message: "Invalid review details" }, 400, corsHeaders);
-        return json(await repository.createReview(authUser, movieId, body.content, body.rating), 200, corsHeaders);
+        return json(await repository.createReview(authUser, movieId, body.content, body.rating, body.replyPreference), 200, corsHeaders);
       } catch (error) {
         return repositoryFailure(error, "Unable to update review", corsHeaders);
       }

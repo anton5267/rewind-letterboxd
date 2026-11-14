@@ -1,7 +1,9 @@
+import type { ProfileReplyPreference } from "./profile.api";
 import api from "./axios";
 import type { NumberedPage } from "./types";
 
 export interface MovieReview {
+  replyPreference?: ProfileReplyPreference | null;
   id: number;
   userId: number;
   username: string;
@@ -28,6 +30,7 @@ export interface RecentReview {
 export type ReviewFeedPage = NumberedPage<RecentReview>;
 
 export interface ReviewDetails {
+  replyPreference?: ProfileReplyPreference | null;
   id: number;
   content: string;
   rating: number | null;
@@ -67,10 +70,10 @@ export const getMovieReviews = (movieId: number, page: number) =>
 export const getMyMovieReview = (movieId: number) =>
   api.get<MovieReview>(`/movies/${movieId}/reviews/me`);
 
-export const createMovieReview = (movieId: number, content: string, rating: number) =>
-  api.post<MovieReview>(`/movies/${movieId}/reviews`, { content, rating });
+export const createMovieReview = (movieId: number, content: string, rating: number, replyPreference?: ProfileReplyPreference | null) =>
+  api.post<MovieReview>(`/movies/${movieId}/reviews`, { content, rating, ...(replyPreference !== undefined ? { replyPreference } : {}) });
 
-export const updateReview = (reviewId: number, data: { content?: string; rating?: number | null }) =>
+export const updateReview = (reviewId: number, data: { content?: string; rating?: number | null; replyPreference?: ProfileReplyPreference | null }) =>
   api.patch<MovieReview>(`/reviews/${reviewId}`, data);
 
 export const deleteReview = (reviewId: number) =>

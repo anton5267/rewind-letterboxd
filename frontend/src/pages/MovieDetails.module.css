@@ -662,6 +662,11 @@
   border-top: 1px solid rgba(255, 255, 255, .14);
 }
 
+.reviewReplyPreference {
+  display: grid;
+  gap: 8px;
+}
+
 .reviewForm textarea {
   min-height: 150px;
   resize: vertical;

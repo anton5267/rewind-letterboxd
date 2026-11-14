@@ -1,3 +1,6 @@
+import ReplyPreferenceField from "../components/ReplyPreferenceField";
+import type { ProfileReplyPreference } from "../api/profile.api";
+import { usesHostedSupabaseAuth } from "../api/supabaseClient";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { clearMovieFlag, getMovieDetails, setMovieFlag, type MovieDetails as MovieDetailsResponse } from "../api/movies.api";
@@ -108,6 +111,7 @@ export default function MovieDetails() {
   const [ratingLoadError, setRatingLoadError] = useState(false);
   const [ratingAttempt, setRatingAttempt] = useState(0);
   const [reviewText, setReviewText] = useState("");
+  const [reviewReplyPreference, setReviewReplyPreference] = useState<ProfileReplyPreference | null>(null);
   const [error, setError] = useState("");
   const [loadError, setLoadError] = useState("");
   const [loadAttempt, setLoadAttempt] = useState(0);
@@ -127,6 +131,9 @@ export default function MovieDetails() {
   const mutationRequest = useRef(0);
   const currentMovieId = useRef(movieId);
   currentMovieId.current = movieId;
+  const currentActorId = useRef(user?.id ?? null);
+  currentActorId.current = user?.id ?? null;
+  const mutationActorId = useRef<number | null>(null);
   const movieStateRef = useRef<HTMLElement>(null);
   const movieTitleRef = useRef<HTMLHeadingElement>(null);
   const reviewsSectionRef = useRef<HTMLElement>(null);
@@ -264,6 +271,7 @@ export default function MovieDetails() {
     setMyReviewError(false);
     setEditingReview(false);
     setReviewText("");
+    setReviewReplyPreference(null);
     setReviewRating(0);
     setRating(0);
     setRatingLoadError(false);
@@ -278,7 +286,13 @@ export default function MovieDetails() {
     mutationRequest.current += 1;
     setMutationBusy(null);
     setMobileActionOpen(false);
-  }, [isAuth]);
+    setEditingReview(false);
+    setReviewText("");
+    setReviewReplyPreference(null);
+    setMyReview(null);
+    setMyReviewReady(false);
+    setMyReviewError(false);
+  }, [isAuth, user?.id]);
 
   const loadMovie = useCallback(async () => {
     if (!validMovieId || currentMovieId.current !== movieId) return;
@@ -323,21 +337,22 @@ export default function MovieDetails() {
   const loadMyReview = useCallback(async () => {
     if (!validMovieId || currentMovieId.current !== movieId) return;
     const requestId = ++myReviewRequest.current;
+    const actorId = user?.id ?? null;
     setMyReviewReady(false);
     setMyReviewError(false);
     try {
       const response = await getMyMovieReview(movieId);
-      if (requestId !== myReviewRequest.current || currentMovieId.current !== movieId) return;
+      if (requestId !== myReviewRequest.current || currentMovieId.current !== movieId || currentActorId.current !== actorId) return;
       setMyReview(response.status === 204 ? null : response.data);
       setMyReviewError(false);
       setMyReviewReady(true);
     } catch {
-      if (requestId === myReviewRequest.current && currentMovieId.current === movieId) {
+      if (requestId === myReviewRequest.current && currentMovieId.current === movieId && currentActorId.current === actorId) {
         setMyReviewError(true);
         setMyReviewReady(true);
       }
     }
-  }, [movieId, validMovieId]);
+  }, [movieId, validMovieId, user?.id]);
 
   useEffect(() => {
     let current = true;
@@ -428,12 +443,14 @@ export default function MovieDetails() {
   const startMutation = (kind: string) => {
     if (mutationBusy || currentMovieId.current !== movieId) return null;
     const requestId = ++mutationRequest.current;
+    mutationActorId.current = currentActorId.current;
     setMutationBusy(kind);
     return requestId;
   };
 
   const isCurrentMutation = (requestId: number) =>
-    requestId === mutationRequest.current && currentMovieId.current === movieId;
+    requestId === mutationRequest.current && currentMovieId.current === movieId
+      && mutationActorId.current === currentActorId.current;
 
   const toggle = async (kind: "watched" | "watchlist" | "favorite", enabled: boolean) => {
     const requestId = startMutation(kind);
@@ -487,13 +504,16 @@ export default function MovieDetails() {
     if (requestId === null) return;
     try {
       if (wasEditing && myReview) {
-        await updateReview(myReview.id, { content, rating: chosenRating });
+        await updateReview(myReview.id, { content, rating: chosenRating,
+          ...(usesHostedSupabaseAuth ? { replyPreference: reviewReplyPreference } : {}),
+        });
       } else {
-        await createMovieReview(movieId, content, chosenRating);
+        await createMovieReview(movieId, content, chosenRating, usesHostedSupabaseAuth ? reviewReplyPreference : undefined);
       }
       if (!isCurrentMutation(requestId)) return;
       setRating(chosenRating);
       setReviewText("");
+      setReviewReplyPreference(null);
       setEditingReview(false);
       setMessage(t(wasEditing ? "reviewUpdated" : "reviewPublished"));
       setError("");
@@ -515,6 +535,7 @@ export default function MovieDetails() {
       if (!isCurrentMutation(requestId)) return;
       setEditingReview(false);
       setReviewText("");
+      setReviewReplyPreference(null);
       setMessage(t("reviewDeleted"));
       setError("");
       await Promise.all([load(), loadMyReview()]);
@@ -743,7 +764,12 @@ export default function MovieDetails() {
           {isAuth && myReview && <article className={`${styles.review} ${styles.myReview}`}>
             <h3>{t("yourReview")} · {myReview.rating ?? "—"}/5</h3>
             {!editingReview && <><p><Link to={path(`/reviews/${myReview.id}`)}>{myReview.content}</Link></p>
-              <div className={styles.reviewActions}><button type="button" disabled={mutationBusy !== null} onClick={() => { setReviewText(myReview.content); setReviewRating(myReview.rating ?? rating); setEditingReview(true); }}>{t("editReview")}</button>
+              <div className={styles.reviewActions}><button type="button" disabled={mutationBusy !== null} onClick={() => {
+                setReviewText(myReview.content);
+                setReviewRating(myReview.rating ?? rating);
+                setReviewReplyPreference(myReview.replyPreference ?? null);
+                setEditingReview(true);
+              }}>{t("editReview")}</button>
                 <button type="button" disabled={mutationBusy !== null} onClick={event => setReviewDeleteTrigger(event.currentTarget)}>{mutationBusy === "delete-review" ? t("deleting") : t("deleteReview")}</button></div>
               <ReviewLikeButton reviewId={myReview.id} />
               <Comments reviewId={myReview.id} />
@@ -761,10 +787,19 @@ export default function MovieDetails() {
           {isAuth && myReviewReady && !myReviewError && (!myReview || editingReview) && <form className={styles.reviewForm} onSubmit={createReview}>
             <label htmlFor="review-content">{t("yourReview")}</label>
             <textarea id="review-content" required maxLength={5000} disabled={mutationBusy !== null} value={reviewText} onChange={event => setReviewText(event.target.value)} />
+            {usesHostedSupabaseAuth && <ReplyPreferenceField
+              key={`${user?.id}-${movieId}-${lang}`}
+              className={styles.reviewReplyPreference}
+              value={reviewReplyPreference}
+              disabled={mutationBusy !== null}
+              onChange={setReviewReplyPreference}
+              onReset={() => setReviewReplyPreference(null)}
+              hint={t("reviewRepliesHint")}
+            />}
             {editingReview && <label htmlFor="review-rating">{t("myRating")}</label>}
             {editingReview && <select id="review-rating" disabled={mutationBusy !== null} value={reviewRating} onChange={event => setReviewRating(Number(event.target.value))}>{[1, 2, 3, 4, 5].map(value => <option key={value} value={value}>{value}/5</option>)}</select>}
              <div className={styles.reviewFormActions}><button className={styles.primaryButton} type="submit" disabled={mutationBusy !== null || !reviewText.trim()} aria-busy={mutationBusy === "review"}>{mutationBusy === "review" ? t("saving") : t(editingReview ? "saveReview" : "publishReview")}</button>
-              {editingReview && <button type="button" disabled={mutationBusy !== null} onClick={() => { setEditingReview(false); setReviewText(""); }}>{t("cancel")}</button>}</div>
+              {editingReview && <button type="button" disabled={mutationBusy !== null} onClick={() => { setEditingReview(false); setReviewText(""); setReviewReplyPreference(null); }}>{t("cancel")}</button>}</div>
           </form>}
           {!isAuth && <p className={styles.signIn}><Link to={path("/login")}>{t("login")}</Link> {t("signInToReview")}</p>}
         </section>
