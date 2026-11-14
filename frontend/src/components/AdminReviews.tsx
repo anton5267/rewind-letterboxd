@@ -8,6 +8,7 @@ import RetryNotice from "./RetryNotice";
 import { editorialText, formatReviewDate, useLocale } from "../i18n";
 import { getUserName } from "../utils/userIdentity";
 import styles from "./AdminShared.module.css";
+import editorStyles from "./AdminReviewEditor.module.css";
 import dialogStyles from "./AdminConfirmDialog.module.css";
 
 type VisibilityFilter = "all" | "visible" | "hidden" | "reported";
@@ -382,7 +383,7 @@ export default function AdminReviews() {
               <span>{getUserName({ username: review.username }, t("someone"))}</span>
             </div>
             <p className={styles.reviewText}>{review.content}</p>
-            {editingReview?.rowKey === rowKey && <form className={styles.reviewEditor} onSubmit={event => { event.preventDefault(); void saveReviewContent(); }}>
+            {editingReview?.rowKey === rowKey && <form className={editorStyles.editor} onSubmit={event => { event.preventDefault(); void saveReviewContent(); }}>
               <label htmlFor={`admin-review-content-${rowKey}`}>{t("adminReviewContent")}</label>
               <textarea id={`admin-review-content-${rowKey}`} autoFocus required minLength={1} maxLength={5000} value={editDraft}
                 disabled={busyId !== null} onChange={event => setEditDraft(event.target.value)} />

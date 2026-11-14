@@ -42,9 +42,10 @@ test("editing a review preserves each duplicate report row in Ukrainian and Engl
 
   for (const locale of ["uk", "en"] as const) {
     review.content = "Original review text";
+    await page.setViewportSize(locale === "uk" ? { width: 1440, height: 1000 } : { width: 393, height: 852 });
     const labels = locale === "uk"
-      ? { section: "Огляди", filter: "Видимість", reported: "Лише зі скаргами", edit: "Редагувати текст", content: "Текст огляду", save: "Зберегти", spam: "Спам", bullying: "Булінг" }
-      : { section: "Reviews", filter: "Visibility", reported: "Reported only", edit: "Edit text", content: "Review text", save: "Save", spam: "Spam", bullying: "Bullying" };
+      ? { section: "Огляди", filter: "Видимість", reported: "Лише зі скаргами", edit: "Редагувати текст", content: "Текст огляду", save: "Зберегти", cancel: "Скасувати", spam: "Спам", bullying: "Булінг" }
+      : { section: "Reviews", filter: "Visibility", reported: "Reported only", edit: "Edit text", content: "Review text", save: "Save", cancel: "Cancel", spam: "Spam", bullying: "Bullying" };
     await page.goto(`${locale}/admin?view=reviews`);
     const section = page.getByRole("region", { name: labels.section });
     await section.getByRole("combobox", { name: labels.filter }).selectOption("reported");
@@ -59,6 +60,23 @@ test("editing a review preserves each duplicate report row in Ukrainian and Engl
     const editor = spamRow.getByRole("textbox", { name: labels.content });
     await expect(section.getByRole("textbox", { name: labels.content })).toHaveCount(1);
     await expect(bullyingRow.getByRole("textbox", { name: labels.content })).toHaveCount(0);
+    await expect(editor).toBeFocused();
+    await expect(spamRow.locator("form")).toHaveCSS("display", "grid");
+    await expect(editor).toHaveCSS("min-height", "180px");
+    await expect(editor).toHaveCSS("box-sizing", "border-box");
+    await expect(editor).toHaveCSS("outline-width", "2px");
+    const editorBounds = await editor.boundingBox();
+    const formBounds = await spamRow.locator("form").boundingBox();
+    expect(editorBounds).not.toBeNull();
+    expect(formBounds).not.toBeNull();
+    expect(editorBounds!.x + editorBounds!.width).toBeLessThanOrEqual(formBounds!.x + formBounds!.width + 1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
+    await editor.press("Tab");
+    await expect(spamRow.getByRole("button", { name: labels.cancel, exact: true })).toBeFocused();
+    await spamRow.getByRole("button", { name: labels.cancel, exact: true }).press("Enter");
+    await expect(editButton).toBeFocused();
+    await editButton.press("Enter");
+    await expect(editor).toBeFocused();
     await editor.fill("Edited review text");
     await spamRow.getByRole("button", { name: labels.save, exact: true }).click();
     await expect(spamRow.locator("p").first()).toContainText("Edited review text");

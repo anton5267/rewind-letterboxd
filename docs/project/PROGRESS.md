@@ -11,13 +11,13 @@
 - **Структура.** README англійською з трьома схемами. Edge розділений на contracts, HTTP, repositories і runtime. Власний/публічний React-профілі розділені на hooks, views і тематичні стилі. Докладна історія документації винесена в [архів](../archive/README.md).
 - **Локальна сумісність.** PostgreSQL baseline та MySQL→PostgreSQL rehearsal раніше пройшли на ізольованих копіях зі збереженням IDs/FK/NULL/sequences. Локальні й hosted записи мають відмінності, подальше перенесення очікує звірки.
 
-- **Звірка джерел.** Hosted міграції покривають 55/55 live версій. Favorites і Admin queries мають actor/request guards. Admin movie edit зберігає пропущену originalLanguage, nullable castOrder та порядок доданих акторів. Цільові cast-order fixtures пройшли 6/6 окремо в release й original checkout, обидва typecheck успішні. Supabase config явно задає public schemas, grants rewind для anon/authenticated лишаються забороненими.
+- **Звірка джерел.** Hosted міграції покривають 55/55 live версій. Favorites і Admin queries мають actor/request guards. Стилі review editor винесені в окремий модуль; UK desktop/EN phone редагування, Cancel/Save focus і delayed-error guard пройшли цільову перевірку. Admin movie edit зберігає пропущену originalLanguage, nullable castOrder та порядок доданих акторів. Цільові cast-order fixtures пройшли 6/6 окремо в release й original checkout, обидва typecheck успішні. Supabase config явно задає public schemas, grants rewind для anon/authenticated лишаються забороненими.
 
 - **Live списки.** Owner create/order/rank/reply, очищення опису, pin/save/reload та comment create/edit/reload/delete підтверджені через production UI і SQL. Приватизація автоматично зняла pin, анонімний GET повернув 404. Тестовий список/коментар очищені, початкові system lists і редаговані поля профілю звірені. Виправлені private-card links, UK/EN navigation 2/2 та попередній Retry/focus 1/1 пройшли.
 
 - **Live профіль.** UK save/reload та EN clear/reload підтвердили display name, owner names, bio, location, pronoun і три reply preferences. Публічна відповідь приховує names/email. Website link пройшов save/reload/public-read/clear, початковий стан відновлений. Media upload зупинений до передачі файла через відсутній дозвіл file URLs у Chrome extension.
 
-- **Live Journal.** Create/edit, rich/plain text, media clear, publish/unpublish і UK/EN reader прийняті. Тестова стаття очищена, аудит збережений. Фокус структурних дій редактора перевірений двома UK/EN fixtures.
+- **Live Journal.** Create/edit, rich/plain text, media clear, publish/unpublish і UK/EN reader прийняті. Тестова стаття очищена, аудит збережений. Фокус структурних дій редактора перевірений двома UK/EN fixtures і після публікації у Chrome.
 
 ## Залишилося
 
