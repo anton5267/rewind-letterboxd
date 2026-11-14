@@ -22,6 +22,8 @@ Spring Boot/MySQL/Redis/Mailpit мають окремий локальний ж�
 
 - [x] Live profile settings пройшли UK save/reload, EN clear/reload та SELF/FOLLOWED/ANYONE. Перевірено owner-only names і website save/reload/public-read/clear. Початкові поля й порожні social/name записи відновлені.
 
+- [x] Desktop profile settings мають дві колонки за Figma, окремий CSS-модуль і парні name inputs. UK/EN fixtures підтвердили геометрію, чернетки на 320–1440px, mobile focus та save/reload. Повна settings parity відкрита.
+
 ## Наступна робота
 
 Поки користувач відсутній, працювати над доступними пунктами 2 і 5. Пункти з відсутніми секретами, Docker або взаємодією власника відкласти до появи відповідних умов.

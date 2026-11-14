@@ -5,6 +5,7 @@ import { useLocale } from "../i18n";
 import styles from "./ProfilePinnedListField.module.css";
 
 interface Props {
+  className?: string;
   lists: ProfileList[];
   value: number | null;
   disabled: boolean;
@@ -12,7 +13,7 @@ interface Props {
 }
 
 export default function ProfilePinnedListField(
-  { lists, value, disabled, onChange }: Props,
+  { lists, value, disabled, onChange, className }: Props,
 ) {
   const id = useId();
   const { t, path } = useLocale();
@@ -20,7 +21,7 @@ export default function ProfilePinnedListField(
     list.listType === "CUSTOM" && list.isPublic
   );
   return (
-    <div>
+    <div className={className}>
       <label htmlFor={id}>{t("pinnedList")}</label>
       <select
         id={id}

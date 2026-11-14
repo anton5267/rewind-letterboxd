@@ -7,12 +7,13 @@ import styles from "./ProfilePronounField.module.css";
 const pronouns = ["They / their", "He / his", "He / their", "She / her", "She / their", "Xe / xyr", "Ze / hir", "Ze / zir", "It / its"] as const;
 
 interface Props {
+  className?: string;
   value: string;
   disabled: boolean;
   onChange: (value: string) => void;
 }
 
-export default function ProfilePronounField({ value, disabled, onChange }: Props) {
+export default function ProfilePronounField({ value, disabled, onChange, className }: Props) {
   const { t } = useLocale();
   const id = useId();
   const [open, setOpen] = useState(false);
@@ -27,7 +28,7 @@ export default function ProfilePronounField({ value, disabled, onChange }: Props
     return () => desktop.removeEventListener("change", closeOnDesktop);
   }, [open]);
 
-  return <div>
+  return <div className={className}>
     <label id={`${id}-label`} htmlFor={`${id}-select`}>{t("profilePronoun")}</label>
     <select className={styles.desktopSelect} id={`${id}-select`} value={value} disabled={disabled} onChange={event => onChange(event.target.value)}>
       <option value="">{t("profilePronounNone")}</option>

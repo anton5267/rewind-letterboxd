@@ -9,6 +9,7 @@ import { useLocale } from "../i18n";
 import styles from "./ProfileEmailField.module.css";
 
 interface Props {
+  className?: string;
   email: string;
   userId: number;
   disabled: boolean;
@@ -18,7 +19,7 @@ interface Props {
 type Feedback = "emailChangeSent" | "emailChangeRequestError" | "emailChangeRateLimit"
   | "emailChangeWaiting" | "emailChangeConfirmed" | "emailChangeCheckError";
 
-export default function ProfileEmailField({ email, userId, disabled, onConfirmed }: Props) {
+export default function ProfileEmailField({ email, userId, disabled, onConfirmed, className = "" }: Props) {
   const { t, lang } = useLocale();
   const id = useId();
   const [open, setOpen] = useState(false);
@@ -115,7 +116,7 @@ export default function ProfileEmailField({ email, userId, disabled, onConfirmed
   );
 
   return (
-    <div className={styles.field}>
+    <div className={`${styles.field} ${className}`}>
       <label htmlFor="settings-email">{t("email")}</label>
       <button
         id="settings-email"

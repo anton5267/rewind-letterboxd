@@ -50,3 +50,7 @@ backups/
 /artifacts/
 # Local Figma REST snapshots may contain proprietary design data and must never be committed.
 /figma/
+
+# Machine-local Supabase CLI state
+/supabase/.branches/
+/supabase/.temp/

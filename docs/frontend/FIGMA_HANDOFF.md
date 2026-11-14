@@ -71,6 +71,8 @@ Scoped geometry, legacy/safe media, language fallback, audio Retry and mobile er
 
 ### Profile settings
 
+Desktop `251:430` and phone `1043:2125` were refreshed with high-fidelity context and screenshots on 14 November. ProfileIdentityForm.module.css supplies a 1200px desktop rail, two 588px columns, 24px gutter, 290px paired name controls and a 588×255 biography field with 37px corners. Existing display-name and pinned-list controls retain dedicated positions. Website remains in the separately saved Connections flow. Phone dialogs and DOM order retain their current behavior. Two UK/EN fixtures cover 1440/1024/768/393/320px, drafts, focus and save/reload. Typography, remaining field geometry/order and full settings parity remain open. [Dated evidence](../archive/RELEASE_EVIDENCE_2026_11.md#profile-settings-desktop-columns--14112026).
+
 | Controls | Source | Implementation requirements |
 | --- | --- | --- |
 | Names, location, pronoun | `251:430`, `1043:2125`, `1043:2392` | Optional owner-only names use ProfileNameFields. ProfilePronounField retains nine values, a clearing option, original Back/Check assets and 45px phone rows. Changes join profile Save. |

@@ -5,12 +5,13 @@ import { useLocale } from "../i18n";
 import styles from "./ProfileBioField.module.css";
 
 interface Props {
+  className?: string;
   value: string;
   disabled: boolean;
   onChange: (value: string) => void;
 }
 
-export default function ProfileBioField({ value, disabled, onChange }: Props) {
+export default function ProfileBioField({ value, disabled, onChange, className }: Props) {
   const { t } = useLocale();
   const id = useId();
   const [open, setOpen] = useState(false);
@@ -26,7 +27,7 @@ export default function ProfileBioField({ value, disabled, onChange }: Props) {
     return () => desktop.removeEventListener("change", closeOnDesktop);
   }, [open]);
 
-  return <div>
+  return <div className={className}>
     <label className={styles.desktopLabel} htmlFor={`${id}-desktop`}>{t("bio")}</label>
     <textarea
       id={`${id}-desktop`}
