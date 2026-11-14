@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getGenres, type Genre } from "../api/search.api";
-import { useLocale } from "../i18n";
+import { localizeGenreName, useLocale } from "../i18n";
 import RetryNotice from "./RetryNotice";
 import styles from "./AdminMovieGenresField.module.css";
 
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function AdminMovieGenresField({ selectedIds, onChange }: Props) {
-  const { t } = useLocale();
+  const { lang, t } = useLocale();
   const [genres, setGenres] = useState<Genre[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -42,7 +42,7 @@ export default function AdminMovieGenresField({ selectedIds, onChange }: Props) 
       {!loading && !error && <div className={styles.options}>
         {genres.map(genre => <label className={styles.option} key={genre.id}>
           <input type="checkbox" checked={selectedIds.includes(genre.id)} onChange={event => toggle(genre.id, event.target.checked)} />
-          <span>{genre.name}</span>
+          <span>{localizeGenreName(genre.name, lang)}</span>
         </label>)}
       </div>}
     </fieldset>

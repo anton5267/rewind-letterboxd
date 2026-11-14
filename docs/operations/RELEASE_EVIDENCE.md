@@ -18,6 +18,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 
 | Block | Recorded checks and live boundary |
 | --- | --- |
+| Admin credit queries and genre labels | Four new fixtures cover late success/failure for all three person roles, failed-query editing and Ukrainian genre labels. Two existing credit/genre save flows passed. Shared test setup was extracted, and source typecheck passed. |
 | Source reconciliation / favorite isolation | Four restored SQL files match their live migration statements after newline normalization; Git versions/names cover 55/55 live entries. Cross-tab success/failure 4/4 and current-account removal/focus/reload 2/2 passed in UK/EN, plus source typecheck. |
 | Person biographies `645dbd7` / v59 | New provider/HTTP 7/7, existing TMDB 7/7, six scoped browser flows, targeted follow-up after phone CSS change. Four live API samples preserved prior fields and returned biographies. Actual Amanda Seyfried More/Less expanded and collapsed. |
 | Related filmographies `cf4373d` / v58 | Deno 3/3, isolated SQL 10 assertions, six browser flows. Four live responses preserved previous fields; Amanda showed separate acting/producing sections. Detailed job/written credits remain open. |

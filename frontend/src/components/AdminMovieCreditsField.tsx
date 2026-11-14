@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { searchPeople, type PersonSearchPage, type PersonType } from "../api/people.api";
 import { useLocale } from "../i18n";
 import RetryNotice from "./RetryNotice";
@@ -22,25 +22,40 @@ const selectedKey = { actor: "actors", director: "directors", producer: "produce
 
 export default function AdminMovieCreditsField({ value, onChange }: Props) {
   const { t } = useLocale();
+  const requestIds = useRef<Record<PersonType, number>>({ actor: 0, director: 0, producer: 0 });
   const [queries, setQueries] = useState<Record<PersonType, string>>({ actor: "", director: "", producer: "" });
   const [results, setResults] = useState<Record<PersonType, SearchPerson[] | null>>({ actor: null, director: null, producer: null });
   const [loading, setLoading] = useState<Record<PersonType, boolean>>({ actor: false, director: false, producer: false });
   const [errors, setErrors] = useState<Record<PersonType, boolean>>({ actor: false, director: false, producer: false });
 
+  useEffect(() => () => {
+    for (const type of personTypes) requestIds.current[type] += 1;
+  }, []);
+
   const labels: Record<PersonType, string> = { actor: t("actors"), director: t("directors"), producer: t("producers") };
   const search = async (type: PersonType) => {
     const query = queries[type].trim();
-    if (query.length < 2) return;
+    if (query.length < 2 || loading[type]) return;
+    const requestId = ++requestIds.current[type];
     setLoading(current => ({ ...current, [type]: true }));
     setErrors(current => ({ ...current, [type]: false }));
+    setResults(current => ({ ...current, [type]: null }));
     try {
       const response = await searchPeople(type, query, 0, 12);
-      setResults(current => ({ ...current, [type]: response.data.content }));
+      if (requestIds.current[type] === requestId) setResults(current => ({ ...current, [type]: response.data.content }));
     } catch {
-      setErrors(current => ({ ...current, [type]: true }));
+      if (requestIds.current[type] === requestId) setErrors(current => ({ ...current, [type]: true }));
     } finally {
-      setLoading(current => ({ ...current, [type]: false }));
+      if (requestIds.current[type] === requestId) setLoading(current => ({ ...current, [type]: false }));
     }
+  };
+
+  const changeQuery = (type: PersonType, query: string) => {
+    requestIds.current[type] += 1;
+    setQueries(current => ({ ...current, [type]: query }));
+    setResults(current => ({ ...current, [type]: null }));
+    setErrors(current => ({ ...current, [type]: false }));
+    setLoading(current => ({ ...current, [type]: false }));
   };
 
   const selected = (type: PersonType) => value[selectedKey[type]] as SelectedMoviePerson[];
@@ -69,13 +84,13 @@ export default function AdminMovieCreditsField({ value, onChange }: Props) {
 
   return <section className={styles.root} aria-labelledby="admin-movie-credits-title">
     <h3 id="admin-movie-credits-title">{t("castAndCrew")}</h3>
-    {personTypes.map(type => <fieldset className={styles.group} key={type} disabled={loading[type]} aria-busy={loading[type]}>
+    {personTypes.map(type => <fieldset className={styles.group} key={type} aria-busy={loading[type]}>
       <legend>{labels[type]}</legend>
       <div role="search" className={styles.search}>
         <label className={styles.searchField}>{t("adminMoviePeopleSearch")} · {labels[type]}
           <input value={queries[type]} minLength={2} maxLength={100} onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
             if (event.key === "Enter") { event.preventDefault(); void search(type); }
-          }} onChange={event => { setQueries(current => ({ ...current, [type]: event.target.value })); setResults(current => ({ ...current, [type]: null })); }} />
+          }} onChange={event => changeQuery(type, event.target.value)} />
         </label>
         <button type="button" disabled={loading[type] || queries[type].trim().length < 2} onClick={() => { void search(type); }}>{loading[type] ? t("loading") : t("search")}</button>
       </div>
