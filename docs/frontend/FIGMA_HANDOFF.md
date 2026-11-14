@@ -21,7 +21,9 @@ Reuse these existing building blocks where the design supports them:
 
 Desktop sources `251:612` and `251:625` were refreshed on 14 November. The existing 184×30 logo exactly matches both exports. Header uses the original search SVG in its 24px slot, a 47×44 bordered search target, 43px Lists slot and 70% default navigation opacity with full-opacity focus/hover feedback. Footer uses the original 125×24.3291 social group. Existing routes, actual TMDB attribution, dynamic year and legal links remain part of the product implementation. Social marks retain decorative semantics because destinations are unspecified.
 
-UK/EN geometry, image loading, search navigation and menu keyboard checks passed at 1440, 1024, 768, 393 and 320px. Inter differs from the source SF Pro Display. Full typography, background treatment, remaining mobile-header states/icons and complete shared-frame parity remain open. [Dated evidence](../archive/RELEASE_EVIDENCE_2026_11.md#shared-navigation-figma-assets--14112026).
+The desktop background uses a pointer-transparent layer with the source 5px backdrop and 50px blur. A fixed-header scroll state uses 85% black and removes the layer blur for readable navigation over bright controls. Top/scroll restoration, menu focus and mobile containing-block behavior have five focused scenarios. Lists discovery uses its dedicated header variant.
+
+UK/EN geometry, image loading, search navigation and menu keyboard checks passed at 1440, 1024, 768, 393 and 320px. Inter differs from the source SF Pro Display. Full typography, remaining mobile-header states/icons and complete shared-frame parity remain open. [Dated evidence](../archive/RELEASE_EVIDENCE_2026_11.md#shared-navigation-figma-assets--14112026).
 
 ### Mobile bottom navigation
 
