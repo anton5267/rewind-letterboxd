@@ -130,7 +130,7 @@ export default function ProfileSettingsShell({ activeTab, children, loading, loa
         {tabs.map(tab => <Link key={tab.id} to={`${path("/profile")}?settings=${tab.id}`} aria-current={activeTab === tab.id ? "page" : undefined}>{tab.label}</Link>)}
       </nav>
       <Link className={styles.back} to={path("/profile")} aria-label={t("backToProfile")}>
-        <i className="fa-solid fa-arrow-left" aria-hidden="true" />
+        <img src="/images/profile-pronoun-back.png" width={30} height={30} alt="" />
         <span>{t("backToProfile")}</span>
       </Link>
       <section className={styles.settingsSection} aria-label={tabs.find(tab => tab.id === activeTab)?.label}>

@@ -33,6 +33,18 @@ for (const language of ["uk", "en"] as const) {
     await page.goto(`/${language}/profile?settings=profile`);
     const form = page.locator("#settings-form-profile");
     await expect(form.locator("#profile-display-name")).toHaveValue(profile.displayName);
+    const back = page.getByRole("link", { name: language === "uk" ? "До профілю" : "Back to profile", exact: true });
+    await expect(back.locator("img")).toHaveAttribute("src", "/images/profile-pronoun-back.png");
+    await expect(back.locator("img")).toHaveJSProperty("naturalWidth", 96);
+    const backBox = await back.locator("img").boundingBox();
+    expect(backBox!.width).toBeCloseTo(30, 0);
+    expect(backBox!.height).toBeCloseTo(30, 0);
+    await expect(form.getByRole("heading")).toHaveCSS("font-weight", "700");
+    const settingsNavigation = page.getByRole("navigation", { name: language === "uk" ? "Налаштування акаунта" : "Account Settings", exact: true });
+    await expect(settingsNavigation.getByRole("link").first()).toHaveCSS("font-weight", "500");
+    const heroDescription = page.locator('main[aria-labelledby="account-settings-title"] > header > p');
+    await expect(heroDescription).toHaveCSS("font-weight", "500");
+    await expect(heroDescription).toHaveCSS("color", "rgb(126, 126, 126)");
     const geometry = await form.evaluate(form => {
       const rect = (element: Element | null) => {
         const box = element!.getBoundingClientRect();

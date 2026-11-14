@@ -4,7 +4,7 @@ import { installHostedAuthFixture, signInHostedFixture } from "./fixtures/hosted
 const favorite = { id: 980110, title: "Shared favorite", photoUrl: null, releaseDate: "2020-01-01", rating: 4 };
 const emptyPage = { content: [], number: 0, totalElements: 0, totalPages: 0 };
 
-async function installFixture(context: BrowserContext, delayed: boolean, fail = false) {
+async function installFixture(context: BrowserContext, delayed: boolean, fail = false, failCollectionOnce = false) {
   const favorites = new Set([6, 7]);
   const deletions: number[] = [];
   let release!: () => void;
@@ -27,6 +27,10 @@ async function installFixture(context: BrowserContext, delayed: boolean, fail = 
       } });
     }
     if (path === "/api/profile/me/favorites") {
+      if (failCollectionOnce) {
+        failCollectionOnce = false;
+        return route.fulfill({ status: 503, json: {} });
+      }
       return route.fulfill({ json: {
         ...emptyPage, content: favorites.has(actor) ? [favorite] : [],
         totalElements: favorites.has(actor) ? 1 : 0, totalPages: favorites.has(actor) ? 1 : 0,
@@ -93,10 +97,39 @@ for (const language of ["uk", "en"] as const) {
   }
 
   test(`current-account favorite removal still updates the profile in ${language}`, async ({ context, page }) => {
-    const state = await installFixture(context, false);
+    const state = await installFixture(context, false, false, language === "uk");
+    await page.setViewportSize({ width: language === "uk" ? 1440 : 393, height: 1000 });
     await login(page, language);
     const section = page.locator('section[aria-labelledby="settings-favorites-title"]');
-    await section.locator("[data-favorite-remove]").click();
+    if (language === "uk") {
+      const retry = section.locator("[data-retry-button]");
+      await expect(retry).toBeVisible();
+      await retry.click();
+      await expect(section.getByRole("heading")).toBeFocused();
+    }
+    const remove = section.locator("[data-favorite-remove]");
+    const icon = remove.locator("img");
+    await expect(icon).toHaveAttribute("src", "/images/profile-favorite-remove.png");
+    await expect(icon).toHaveJSProperty("naturalWidth", 96);
+    const targetBox = (await remove.boundingBox())!;
+    const badgeBox = (await remove.locator("span[aria-hidden]").boundingBox())!;
+    const iconBox = (await icon.boundingBox())!;
+    const posterBox = (await section.getByRole("link", { name: favorite.title, exact: true }).boundingBox())!;
+    expect(targetBox.width).toBeCloseTo(44, 0);
+    expect(targetBox.height).toBeCloseTo(44, 0);
+    expect(badgeBox.width).toBeCloseTo(16, 0);
+    expect(badgeBox.height).toBeCloseTo(16, 0);
+    expect(iconBox.width).toBeCloseTo(12, 0);
+    expect(iconBox.height).toBeCloseTo(12, 0);
+    expect(badgeBox.y - posterBox.y).toBeCloseTo(4, 0);
+    expect(posterBox.x + posterBox.width - badgeBox.x - badgeBox.width).toBeCloseTo(4, 0);
+    await remove.focus();
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Shift+Tab");
+    await expect(remove).toBeFocused();
+    await expect(remove).toHaveCSS("outline-style", "solid");
+    await page.screenshot({ path: test.info().outputPath("favorite-settings.png"), fullPage: true });
+    await remove.click();
     await expect(section.getByRole("link", { name: favorite.title, exact: true })).toHaveCount(0);
     await expect(section.getByRole("heading")).toBeFocused();
     await expect(page.locator('p[role="status"]')).toBeVisible();

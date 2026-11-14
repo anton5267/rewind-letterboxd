@@ -1,0 +1,57 @@
+.favorites { margin-top: 85px; border-top: 1px solid #4d4d4d; padding-top: 18px; }
+.favorites h2 { margin: 0 0 59px; font-size: 24px; font-weight: 700; line-height: 27px; }
+.favorites ul { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 46px; margin: 0; padding: 0; list-style: none; }
+.favorites li { position: relative; min-width: 0; }
+
+.poster, .poster > img, .poster > span {
+  display: grid;
+  width: 100%;
+  aspect-ratio: 265 / 395;
+  box-sizing: border-box;
+  place-items: center;
+  border-radius: 20px;
+  background: #282828;
+  color: #fff;
+  object-fit: cover;
+  text-decoration: none;
+}
+
+.remove {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 0;
+  padding: 14px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.removeMark {
+  display: grid;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  place-items: center;
+  border-radius: 8px;
+  padding: 2px;
+  background: #fff;
+}
+
+.removeMark img { display: block; }
+.remove:hover .removeMark { background: var(--rewind-gold); }
+.remove:disabled { cursor: wait; opacity: .55; }
+.remove[aria-busy="true"] .removeMark { background: var(--rewind-gold); }
+.favorites h2:focus { outline: 2px solid #d4a85f; outline-offset: 5px; }
+.manageLink { display: inline-flex; min-height: 44px; align-items: center; gap: 12px; margin-top: 12px; color: #b9b9b9; }
+.error { composes: error from "../../components/ProfileSettingsShell.module.css"; }
+
+@media (max-width: 767px) {
+  .favorites { margin-top: 35px; padding-top: 18px; }
+  .favorites h2 { margin-bottom: 24px; font-size: 14px; line-height: 16px; text-transform: uppercase; }
+  .favorites ul { gap: 3px; }
+  .poster, .poster > img, .poster > span { aspect-ratio: 79 / 116; border-radius: 10px; }
+}
