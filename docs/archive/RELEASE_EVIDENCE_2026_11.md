@@ -248,3 +248,11 @@ Migration `20261114002136` is applied and Edge v51 read-back exactly matches all
 ## History
 
 The complete dated release log, including the 1,450 original evidence sections and their anchors, is preserved in [RELEASE_EVIDENCE_2026.md](RELEASE_EVIDENCE_2026.md).
+
+## Source reconciliation and favorite account isolation — 14.11.2026
+
+- The initial source inventory compared 293 locally changed frontend/Edge/migration paths against GitHub source db539f6. After newline normalization, 266 matched, 20 differed, five were local-only and two deleted legacy Comments paths were absent from both current trees. Runtime, UI and fixture differences were reviewed separately.
+- Four historically applied migrations were missing from GitHub: 20261113052117, 20261113082125, 20261113082139 and 20261113182745. Read-only migration-history statements match their local SQL after newline normalization. Restored filenames cover all 55/55 live migration versions/names, with no extra version. These source files preserve extension registration, report tables/RLS, the publication INSERT grant and publication eligibility policies.
+- Earlier V32 reconciliation is already evidenced in the 2026 archive. Retain applied local V32 identity/V33 outbox and the guarded V36 original-language migration. Future publication of the optional Spring branches must preserve their applied histories.
+- On the published Profile hook, a held favorite DELETE followed by a cross-tab Auth change left the next account's removal control disabled. The corrected regression keeps the original Profile mounted; the older local test performed full navigations. The existing local request generation/actor guard was transferred. A normal last-item removal also exposed a focus-before-DOM-commit race. Removal focus now follows the committed list, respects request/account scope and preserves a user's new focus target.
+- Current code passed four cross-tab success/failure fixtures and two current-account removal/focus/reload fixtures in UK/EN, plus TypeScript checking. The first status locator also matched the nickname output and was narrowed to feedback paragraphs. The final two focus checks and four account checks cover the corrected source. Fixtures intercept Auth/API requests; real hosted cross-account mutation acceptance remains open.

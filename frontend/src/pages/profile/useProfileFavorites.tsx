@@ -1,6 +1,6 @@
 import { useAuth } from "../../context/AuthContext";
 import { useLocale } from "../../i18n";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useLayoutEffect, useEffect } from "react";
 import { type MoviePage } from "../../api/search.api";
 import { getProfileCollection } from "../../api/profile.api";
 import { clearMovieFlag } from "../../api/movies.api";
@@ -25,6 +25,8 @@ export function useProfileFavorites({ feedback, identity }: {
   const [favoritePreviewAttempt, setFavoritePreviewAttempt] = useState(0);
 
   const [favoriteRemovalId, setFavoriteRemovalId] = useState<number | null>(null);
+  const favoriteMutation = useRef(0);
+  const removalFocus = useRef<{ requestId: number; index: number; origin: Element | null } | null>(null);
 
   const favoriteSettingsRef = useRef<HTMLElement | null>(null);
 
@@ -33,6 +35,26 @@ export function useProfileFavorites({ feedback, identity }: {
   const favoriteOverviewHeadingRef = useRef<HTMLHeadingElement>(null);
 
   const favoriteRetryFocus = useRef<{ origin: HTMLElement | null; attempt: number; target: "overview" | "settings" } | null>(null);
+
+  const favoriteActorScope = isAuth && user ? user.id : null;
+  useLayoutEffect(() => {
+    favoriteMutation.current += 1;
+    removalFocus.current = null;
+    setFavoriteRemovalId(null);
+  }, [favoriteActorScope]);
+
+  useLayoutEffect(() => {
+    const pending = removalFocus.current;
+    if (!pending || favoriteRemovalId !== null) return;
+    removalFocus.current = null;
+    if (pending.requestId !== favoriteMutation.current) return;
+    const active = document.activeElement;
+    if (active !== document.body && active !== pending.origin) return;
+    const section = favoriteSettingsRef.current;
+    const buttons = section?.querySelectorAll<HTMLButtonElement>("[data-favorite-remove]");
+    const next = buttons?.item(Math.min(pending.index, (buttons?.length ?? 1) - 1));
+    (next ?? section?.querySelector<HTMLElement>("h2"))?.focus();
+  }, [favoritePreview, favoriteRemovalId]);
 
   useEffect(() => {
     setFavoritePreview(null);
@@ -74,11 +96,18 @@ export function useProfileFavorites({ feedback, identity }: {
 
   const removeFavorite = async (movieId: number, index: number) => {
     if (favoriteRemovalId !== null) return;
+    const requestId = ++favoriteMutation.current;
+    const requestUserId = activeUserId.current;
+    const isCurrentRequest = () => requestUserId !== null
+      && activeUserId.current === requestUserId && favoriteMutation.current === requestId;
+    const origin = document.activeElement;
     setFavoriteRemovalId(movieId);
     setError("");
     setMessage("");
     try {
       await clearMovieFlag(movieId, "favorite");
+      if (!isCurrentRequest()) return;
+      removalFocus.current = { requestId, index, origin };
       setFavoritePreview(current => current ? {
         ...current,
         content: current.content.filter(movie => movie.id !== movieId),
@@ -86,16 +115,10 @@ export function useProfileFavorites({ feedback, identity }: {
       } : current);
       setProfile(current => current ? { ...current, stats: { ...current.stats, favorites: Math.max(0, current.stats.favorites - 1) } } : current);
       setMessage(t("favoriteRemoved"));
-      requestAnimationFrame(() => {
-        const section = favoriteSettingsRef.current;
-        const buttons = section?.querySelectorAll<HTMLButtonElement>("[data-favorite-remove]");
-        const next = buttons?.item(Math.min(index, (buttons?.length ?? 1) - 1));
-        (next ?? section?.querySelector<HTMLElement>("h2"))?.focus();
-      });
     } catch {
-      setError(t("removeItemError"));
+      if (isCurrentRequest()) setError(t("removeItemError"));
     } finally {
-      setFavoriteRemovalId(null);
+      if (isCurrentRequest()) setFavoriteRemovalId(null);
     }
   };
 

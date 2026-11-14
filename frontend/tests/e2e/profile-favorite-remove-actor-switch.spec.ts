@@ -1,0 +1,122 @@
+import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+
+const favorite = { id: 980110, title: "Shared favorite", photoUrl: null, releaseDate: "2020-01-01", rating: 4 };
+const emptyPage = { content: [], number: 0, totalElements: 0, totalPages: 0 };
+
+async function installFixture(context: BrowserContext, delayed: boolean, fail = false) {
+  const favorites = new Set([6, 7]);
+  const deletions: number[] = [];
+  let release!: () => void;
+  const responseGate = new Promise<void>(resolve => { release = resolve; });
+  const session = (id: number) => ({
+    access_token: `fixture-access-${id}`, refresh_token: `fixture-refresh-${id}`,
+    token_type: "bearer", expires_in: 3600,
+    user: {
+      id: `b1f5872a-148b-4878-8581-06b809b2992${id}`, email: "fixture@example.invalid",
+      aud: "authenticated", role: "authenticated", app_metadata: { provider: "email" },
+      user_metadata: {}, created_at: "2026-11-14T00:00:00Z",
+    },
+  });
+  await context.route("**/auth/v1/**", route => route.fulfill({ status: 404, json: {} }));
+  await context.route("**/auth/v1/token**", route => route.fulfill({ json: session(7) }));
+  await context.route("**/auth/v1/verify**", route => route.fulfill({ json: session(6) }));
+  await context.route(url => url.pathname.startsWith("/api/"), async route => {
+    const request = route.request();
+    const path = new URL(request.url()).pathname;
+    const actor = request.headers().authorization?.endsWith("6") ? 6 : 7;
+    if (path === "/api/users/me") {
+      return route.fulfill({ json: { id: actor, username: `reader-${actor}`, role: "USER" } });
+    }
+    if (path === "/api/profile/me") {
+      return route.fulfill({ json: {
+        id: actor, username: `reader-${actor}`, displayName: `Reader ${actor}`,
+        email: "fixture@example.invalid", role: "USER", avatarUrl: null, bannerUrl: null,
+        bio: null, supabaseLinked: true, replyPreference: "ANYONE",
+        stats: { ratings: 0, reviews: 0, watched: 0, watchlist: 0, favorites: favorites.has(actor) ? 1 : 0 },
+        lists: [], recentRatings: [], recentReviews: [],
+      } });
+    }
+    if (path === "/api/profile/me/favorites") {
+      return route.fulfill({ json: {
+        ...emptyPage, content: favorites.has(actor) ? [favorite] : [],
+        totalElements: favorites.has(actor) ? 1 : 0, totalPages: favorites.has(actor) ? 1 : 0,
+      } });
+    }
+    if (path === `/api/movies/${favorite.id}/favorite` && request.method() === "DELETE") {
+      deletions.push(actor);
+      if (delayed) await responseGate;
+      if (fail) return route.fulfill({ status: 503, json: {} });
+      favorites.delete(actor);
+      return route.fulfill({ status: 204 });
+    }
+    if (path.includes("unread-count")) return route.fulfill({ json: { count: 0 } });
+    if (path.endsWith("social-links") || path === "/api/lists/my") return route.fulfill({ json: [] });
+    if (path === "/api/newsletter/subscription") return route.fulfill({ json: { subscribed: false } });
+    return route.fulfill({ json: emptyPage });
+  });
+  return { release, deletions };
+}
+
+async function login(page: Page, language: "uk" | "en") {
+  await page.goto(`/${language}/login`);
+  await page.getByLabel(language === "uk" ? "Електронна пошта" : "Email", { exact: true }).fill("fixture@example.invalid");
+  await page.getByLabel(language === "uk" ? "Пароль" : "Password", { exact: true }).fill("fixture-password-only");
+  await page.getByRole("button", { name: language === "uk" ? "Увійти" : "Log in", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/${language}/films/?$`));
+  await page.goto(`/${language}/profile?settings=profile`);
+  await expect(page.locator("#profile-display-name")).toHaveValue("Reader 7");
+}
+
+for (const language of ["uk", "en"] as const) {
+  for (const outcome of ["success", "failure"] as const) {
+    test(`late favorite removal ${outcome} stays with its original account in ${language}`, async ({ context, page }) => {
+      const state = await installFixture(context, true, outcome === "failure");
+      try {
+        await login(page, language);
+        const section = page.locator('section[aria-labelledby="settings-favorites-title"]');
+        await section.locator("[data-favorite-remove]").click();
+        await expect.poll(() => state.deletions).toEqual([7]);
+
+        // Cross-tab Auth keeps the original Profile mounted while its actor changes.
+        const other = await context.newPage();
+        await other.goto("/en/email-action/#rewind_action=signup&type=email&token_hash=fixture-next-account");
+        await other.getByRole("button", { name: "Confirm email", exact: true }).click();
+        await expect(other).toHaveURL(/\/en\/films\/?$/);
+        const draft = page.locator("#profile-display-name");
+        await expect(draft).toHaveValue("Reader 6");
+        await expect(section.getByRole("link", { name: favorite.title, exact: true })).toBeVisible();
+        await expect(section.locator("[data-favorite-remove]")).toBeEnabled();
+        await draft.fill("Current reader draft");
+        await draft.focus();
+
+        const response = page.waitForResponse(r => r.request().method() === "DELETE"
+          && new URL(r.url()).pathname === `/api/movies/${favorite.id}/favorite`);
+        state.release();
+        await (await response).finished();
+        await page.waitForLoadState("networkidle");
+        await expect(section.getByRole("link", { name: favorite.title, exact: true })).toBeVisible();
+        await expect(section.locator("[data-favorite-remove]")).toBeEnabled();
+        await expect(draft).toHaveValue("Current reader draft");
+        await expect(draft).toBeFocused();
+        await expect(page.locator("#profile-action-error")).toHaveCount(0);
+        await expect(page.locator('p[role="status"]')).toHaveCount(0);
+      } finally {
+        state.release();
+      }
+    });
+  }
+
+  test(`current-account favorite removal still updates the profile in ${language}`, async ({ context, page }) => {
+    const state = await installFixture(context, false);
+    await login(page, language);
+    const section = page.locator('section[aria-labelledby="settings-favorites-title"]');
+    await section.locator("[data-favorite-remove]").click();
+    await expect(section.getByRole("link", { name: favorite.title, exact: true })).toHaveCount(0);
+    await expect(section.getByRole("heading")).toBeFocused();
+    await expect(page.locator('p[role="status"]')).toBeVisible();
+    expect(state.deletions).toEqual([7]);
+    await page.reload();
+    await expect(page.locator("#profile-display-name")).toHaveValue("Reader 7");
+    await expect(section.getByRole("link", { name: favorite.title, exact: true })).toHaveCount(0);
+  });
+}

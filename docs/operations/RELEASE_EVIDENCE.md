@@ -18,6 +18,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 
 | Block | Recorded checks and live boundary |
 | --- | --- |
+| Source reconciliation / favorite isolation | Four restored SQL files match their live migration statements after newline normalization; Git versions/names cover 55/55 live entries. Cross-tab success/failure 4/4 and current-account removal/focus/reload 2/2 passed in UK/EN, plus source typecheck. |
 | Person biographies `645dbd7` / v59 | New provider/HTTP 7/7, existing TMDB 7/7, six scoped browser flows, targeted follow-up after phone CSS change. Four live API samples preserved prior fields and returned biographies. Actual Amanda Seyfried More/Less expanded and collapsed. |
 | Related filmographies `cf4373d` / v58 | Deno 3/3, isolated SQL 10 assertions, six browser flows. Four live responses preserved previous fields; Amanda showed separate acting/producing sections. Detailed job/written credits remain open. |
 | Person decades `3ea1218` | Two UK/EN flows and existing primary-grid geometry passed. Live David Bradley decade selection passed. Date-boundary coverage used fixtures. |
@@ -31,7 +32,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 ## Open release gates
 
 - Encrypted export, disposable restore and full Auth/Storage/settings/secrets recovery. Backup password and independent encryption passphrase remain missing. [Recovery procedure](DEPLOYMENT_POSTGRESQL.md#supabase-free-backup-and-recovery--not-yet-accepted).
-- Row-level reconciliation of local MySQL and hosted records, plus remaining local/upstream source review and Flyway V32 resolution. Production import awaits backup and rollback acceptance.
+- Row-level reconciliation of local MySQL and hosted records, plus remaining local/upstream source review. Preserve the verified local V32 identity/V33 outbox/V36 original-language lineage during future Spring integration. Production import awaits backup and rollback acceptance.
 - Controlled live save/comment/report/moderation, profile-media replacement/removal, list settings, email change, two-account messaging/notifications and editorial save. [Work order](../../PLAN.md#наступна-робота).
 - Remaining Figma/layout and product gaps. [Requirements](../project/PROJECT_REQUIREMENTS.md#implementation-status), [design handoff](../frontend/FIGMA_HANDOFF.md).
 - TMDB snapshot retains 20/49 missing original-language values and one unverified movie ID. The next eligible scheduled batch was recorded as 16 November 2026, 03:00 UTC. [Worker procedure](SUPABASE_OPERATIONS.md).
