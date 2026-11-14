@@ -17,6 +17,12 @@ Reuse these existing building blocks where the design supports them:
 - [Layout and shared header/footer](../../frontend/src/layout/Layout.tsx), [Header](../../frontend/src/components/Header.tsx), [Footer](../../frontend/src/components/Footer.tsx), and [service navigation](../../frontend/src/components/ServiceNavigation.tsx).
 - [Movie action sheet](../../frontend/src/components/MovieActionSheet.tsx), [rating sheet](../../frontend/src/components/RatingSheet.tsx), [pagination](../../frontend/src/components/Pagination.tsx), [retry button](../../frontend/src/components/RetryButton.tsx), [confirmation dialog](../../frontend/src/components/ConfirmDialog.tsx), and [content report action](../../frontend/src/components/ContentReportAction.tsx).
 
+### Shared Header and Footer
+
+Desktop sources `251:612` and `251:625` were refreshed on 14 November. The existing 184×30 logo exactly matches both exports. Header uses the original search SVG in its 24px slot, a 47×44 bordered search target, 43px Lists slot and 70% default navigation opacity with full-opacity focus/hover feedback. Footer uses the original 125×24.3291 social group. Existing routes, actual TMDB attribution, dynamic year and legal links remain part of the product implementation. Social marks retain decorative semantics because destinations are unspecified.
+
+UK/EN geometry, image loading, search navigation and menu keyboard checks passed at 1440, 1024, 768, 393 and 320px. Inter differs from the source SF Pro Display. Full typography, background treatment, mobile icon parity and complete shared-frame parity remain open. [Dated evidence](../archive/RELEASE_EVIDENCE_2026_11.md#shared-navigation-figma-assets--14112026).
+
 ## Current code tokens
 
 These are the active implementation tokens in [global.css](../../frontend/src/global.css), not a claim that every value matches Figma exactly.
@@ -69,13 +75,13 @@ Desktop `844:1547` defines a 1126×642 three-panel hero, 30px outer corners and 
 | Reply preferences | `1049:2075` | ReplyPreferenceField supports ANYONE/FOLLOWED/SELF. Individual reviews/lists add nullable inheritance. Preserve modal focus, cancellation and failed drafts. |
 | Email | `1043:2233`, `1043:2125` | 16px text, 34px row insets, 45px phone row. Existing focus hook, desktop dialog/phone sheet and UUID-bound confirmation flow. Two-address delivery acceptance remains open. |
 | Avatar/banner | `251:660`, `1043:2125` | Separate ProfileMediaSettings, previews and immediate-save feedback. Preserve JPEG/PNG 2 MB/4096px limits. Real upload/replace/remove remains open. |
-| Pinned list | `1162:2105`, `1480:6383`, `1480:9718` | PinnedProfileList reuses ListPosterStack and CommentThread. Five-poster source geometry is 446×260 desktop and 325×116 phone. All owners may pin an eligible own list. Real UI save remains open. |
+| Pinned list | `1162:2105`, `1480:6383`, `1480:9718` | PinnedProfileList reuses ListPosterStack and CommentThread. Five-poster source geometry is 446×260 desktop and 325×116 phone. All owners may pin an eligible own list. Production pin/save/reload and public→private automatic unpin passed on 14 November. |
 
 ## Source access and export workflow
 
 ### Fresh review — 13.11.2026
 
-Live access identified 167 top-level READY frames/states and refreshed the principal home, discovery, profile, film/person, search and community sources. The dated [November review](../archive/FIGMA_REVIEW_2026_11.md) records the compared controls and viewports. Remaining differences include design tokens, typography, shared header/footer, complete settings/article layout and unsupported states. A READY label establishes source coverage only.
+Live access identified 167 top-level READY frames/states and refreshed the principal home, discovery, profile, film/person, search and community sources. The dated [November review](../archive/FIGMA_REVIEW_2026_11.md) records the compared controls and viewports. Remaining differences include design tokens, typography, remaining shared header/footer parity, complete settings/article layout and unsupported states. A READY label establishes source coverage only.
 
 The optional external exporter and old local `.fig` archive are currently absent. Use the live Figma file and focused context/screenshots. If the exporter is restored, follow repository AGENTS instructions and verify provenance before using local snapshots. Keep proprietary exports and credentials outside Git.
 

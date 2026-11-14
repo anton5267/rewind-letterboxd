@@ -33,10 +33,8 @@ export default function Footer() {
       </div>
 
       {/* SOCIAL — */}
-      <div className={styles.socialCenter}>
-        <i className="fa-brands fa-x-twitter" aria-hidden="true"></i>
-        <i className="fa-brands fa-instagram" aria-hidden="true"></i>
-        <i className="fa-brands fa-linkedin" aria-hidden="true"></i>
+      <div className={styles.socialCenter} aria-hidden="true">
+        <img src={`${import.meta.env.BASE_URL}images/footer-social.svg`} alt="" />
       </div>
 
       {/* BOTTOM */}

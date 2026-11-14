@@ -18,6 +18,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 
 | Block | Recorded checks and live boundary |
 | --- | --- |
+| Shared navigation Figma assets | Original logo verified against both exports. Original search/social SVGs, desktop border, nav slots/opacity, search focus and legal links checked across 10 UK/EN viewport combinations. Typecheck passed. Inter/SF Pro Display and full-frame parity remain open. |
 | Admin queries and metadata compatibility | Request/role guards, localized genres and original-language omission have dated fixture coverage. New cast-order fixtures passed 6/6 in each checkout across sparse/removed/null/empty/boundary cases and native validation. Both source typechecks passed. TOML explicitly excludes rewind, matching the denied live anon/authenticated schema grants. Real catalogue mutations remain open. |
 | Profile settings and website link | Production UK save/reload and EN clear/reload passed for display name, names, bio, location, pronoun and all three reply preferences. Public reads omit names/email. Website save/reload/public-read/clear passed and baseline was restored. Media upload awaits Chrome extension file-URL permission. |
 | Owner lists and profile navigation | Production create/order/rank/reply, description clear, pin/save/reload, comment create/edit/reload/delete and public→private acceptance passed. Privacy removed the pin and anonymous reads returned 404. Temporary data was cleaned up. Two UK/EN navigation fixtures and the existing Retry/focus scenario passed. |

@@ -79,23 +79,10 @@
 
   display: flex;
   justify-content: center;
-  gap: 18px;
 }
 
-.socialCenter i {
-  width: 32px;
-  height: 32px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 50%;
-
-  font-size: 14px;
-  opacity: 0.75;
-  cursor: default;
+.socialCenter img {
+  display: block;
 }
 
 .secondaryNav { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 24px; margin-top: 12px; color: #aaa; font-size: 12px; line-height: 1.4; }
@@ -111,8 +98,7 @@
   .logo img { width: 184px; height: 30px; object-fit: contain; }
   .nav { flex: 1; min-width: 0; align-items: center; justify-content: space-between; gap: 12px 28px; color: #fff; font-size: 24px; font-weight: 700; line-height: 1; letter-spacing: 0; text-transform: uppercase; opacity: 1; }
   .nav a { min-height: 44px; overflow-wrap: anywhere; }
-  .socialCenter { gap: 26.33px; margin-top: 33px; }
-  .socialCenter i { width: 24.33px; height: 24.33px; border: 0; border-radius: 0; color: #7e7e7e; font-size: 24px; opacity: 1; }
+  .socialCenter { margin-top: 33px; }
   .bottom { max-width: 1200px; margin: 33.67px auto 0; color: #7e7e7e; font-size: 15px; line-height: 24px; opacity: 1; }
   .bottom a { color: inherit; }
   .secondaryNav { margin-top: 6px; }

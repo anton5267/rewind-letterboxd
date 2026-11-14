@@ -240,7 +240,9 @@ export default function Header() {
 
       {/* SEARCH */}
       <Link to={path("/search")} className={styles.search} aria-label={t("globalSearch")}>
-        <i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <span className={styles.searchIcon} aria-hidden="true">
+          <img src={`${import.meta.env.BASE_URL}images/header-search.svg`} alt="" />
+        </span>
       </Link>
 
       <button ref={menuToggleRef} className={styles.menuToggle} type="button" aria-expanded={mobileMenuOpen} aria-controls={mobileMenuOpen ? "mobile-more-menu" : undefined} aria-label={mobileMenuOpen ? t("closeMenu") : t("menu")} onClick={() => mobileMenuOpen ? closeMobileMenu() : setMobileMenuOpen(true)}>
