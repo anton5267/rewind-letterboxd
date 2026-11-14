@@ -36,9 +36,9 @@ export default function AdminMovieGenresField({ selectedIds, onChange }: Props) 
 
   return (
     <fieldset className={styles.fieldset} disabled={loading} aria-busy={loading}>
-      <legend>{t("genres")}</legend>
+      <legend>{t("adminMovieGenres")}</legend>
       {loading && <p role="status">{t("loading")}</p>}
-      {error && <RetryNotice className={styles.error} message={t("adminMovieDetailsError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => setRevision(value => value + 1)} />}
+      {error && <RetryNotice className={styles.error} message={t("loadGenresError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => setRevision(value => value + 1)} />}
       {!loading && !error && <div className={styles.options}>
         {genres.map(genre => <label className={styles.option} key={genre.id}>
           <input type="checkbox" checked={selectedIds.includes(genre.id)} onChange={event => toggle(genre.id, event.target.checked)} />

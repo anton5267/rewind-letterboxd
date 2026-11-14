@@ -106,18 +106,41 @@ test("editing a failed credit query clears its error and permits a new search", 
   }
 });
 
-test("Admin genre choices use Ukrainian labels with the existing genre IDs", async ({ page }) => {
-  await adminMovieFixture(page);
-  await page.goto("/uk/admin?view=movies");
-  const movies = page.getByRole("region", { name: "База фільмів", exact: true });
-  await expect(movies).toHaveAttribute("aria-busy", "false");
-  await movies.locator("details").first().locator(":scope > summary").click();
-  const drama = movies.getByRole("checkbox", { name: "Драма", exact: true });
-  const comedy = movies.getByRole("checkbox", { name: "Комедія", exact: true });
-  await expect(drama).toBeVisible();
-  await expect(comedy).toBeVisible();
-  await drama.check();
-  await comedy.check();
-  await expect(drama).toBeChecked();
-  await expect(comedy).toBeChecked();
-});
+for (const locale of ["uk", "en"] as const) {
+  test("Admin genre labels and recovery use the correct language in " + locale, async ({ page }) => {
+    await page.setViewportSize(locale === "uk" ? { width: 1440, height: 1000 } : { width: 393, height: 852 });
+    const { writes } = await adminMovieFixture(page);
+    let recovered = false;
+    let attempts = 0;
+    await page.route("**/api/genres", route => {
+      attempts++;
+      return recovered
+        ? route.fulfill({ json: [{ id: 7, name: "Drama" }, { id: 8, name: "Comedy" }] })
+        : route.fulfill({ status: 503, json: {} });
+    });
+    await page.goto("/" + locale + "/admin?view=movies");
+    const labels = locale === "uk"
+      ? { section: "База фільмів", genres: "Жанри", error: "Не вдалося завантажити жанри.", retry: "Спробувати ще", drama: "Драма", comedy: "Комедія" }
+      : { section: "Film database", genres: "Genres", error: "Could not load genres.", retry: "Retry", drama: "Drama", comedy: "Comedy" };
+    const movies = page.getByRole("region", { name: labels.section, exact: true });
+    await expect(movies).toHaveAttribute("aria-busy", "false");
+    await movies.locator("details").first().locator(":scope > summary").click();
+    const genres = movies.getByRole("group", { name: labels.genres, exact: true });
+    await expect(genres).toBeVisible();
+    await expect(genres.getByRole("alert")).toContainText(labels.error);
+    await expect(genres.getByRole("checkbox")).toHaveCount(0);
+    const attemptsBeforeRetry = attempts;
+    recovered = true;
+    await genres.getByRole("button", { name: labels.retry, exact: true }).click();
+    await expect(genres.getByRole("alert")).toHaveCount(0);
+    await expect.poll(() => attempts).toBeGreaterThan(attemptsBeforeRetry);
+    const drama = genres.getByRole("checkbox", { name: labels.drama, exact: true });
+    const comedy = genres.getByRole("checkbox", { name: labels.comedy, exact: true });
+    await drama.check();
+    await comedy.check();
+    await expect(drama).toBeChecked();
+    await expect(comedy).toBeChecked();
+    expect(writes).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
+  });
+}
