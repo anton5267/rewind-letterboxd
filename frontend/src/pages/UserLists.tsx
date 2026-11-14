@@ -1,3 +1,6 @@
+import { usesHostedSupabaseAuth } from "../api/supabaseClient";
+import type { ProfileReplyPreference } from "../api/profile.api";
+import ReplyPreferenceField from "../components/ReplyPreferenceField";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { addMovieToList, createList, deleteList, getListItems, getUserLists, getUserListsPage, removeMovieFromList, reorderListItems, updateList, type UserList, type UserListItem } from "../api/lists.api";
@@ -70,6 +73,8 @@ export default function UserLists() {
   const [description, setDescription] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [isRanked, setIsRanked] = useState(false);
+  const [replyPreference, setReplyPreference] = useState<ProfileReplyPreference | null>(null);
+  const [editReplyPreference, setEditReplyPreference] = useState<ProfileReplyPreference | null>(null);
   const [tags, setTags] = useState("");
   const [tagsEditing, setTagsEditing] = useState(true);
   const tagsCollapseTimer = useRef<number | null>(null);
@@ -167,6 +172,8 @@ export default function UserLists() {
     setTags("");
     setIsPublic(false);
     setIsRanked(false);
+    setReplyPreference(null);
+    setEditReplyPreference(null);
   }, [isAuth, user?.id]);
 
   useEffect(() => {
@@ -215,6 +222,7 @@ export default function UserLists() {
       setEditDescription(list.description ?? "");
       setEditPublic(list.isPublic);
       setEditRanked(list.isRanked !== false);
+      setEditReplyPreference(list.replyPreference ?? null);
       setEditTags(list.tags.join(", "));
     }).catch(() => { if (active) setLinkedError(true); })
       .finally(() => { if (active) setLinkedLoading(false); });
@@ -358,7 +366,7 @@ export default function UserLists() {
     setCreateBusy(true);
     setError("");
     try {
-      const { data } = await createList(name.trim(), description.trim(), isPublic, tags.split(",").map(tag => tag.trim()).filter(Boolean), draftFilms.map(film => film.id), isRanked);
+      const { data } = await createList(name.trim(), description.trim(), isPublic, tags.split(",").map(tag => tag.trim()).filter(Boolean), draftFilms.map(film => film.id), isRanked, usesHostedSupabaseAuth ? replyPreference : undefined);
       if (!isCurrentRequest()) return;
       const createdListId = data.id;
       setListPage(0);
@@ -367,6 +375,7 @@ export default function UserLists() {
       setDescription("");
       setIsPublic(false);
       setIsRanked(false);
+      setReplyPreference(null);
       setTags("");
       setDraftFilms([]);
       setFilmSearchOpen(false);
@@ -411,6 +420,7 @@ export default function UserLists() {
     setEditDescription(selectedList.description ?? "");
     setEditPublic(selectedList.isPublic);
     setEditRanked(selectedList.isRanked !== false);
+    setEditReplyPreference(selectedList.replyPreference ?? null);
     setEditTags(selectedList.tags.join(", "));
     setError("");
     setStatus("");
@@ -476,6 +486,7 @@ export default function UserLists() {
     setEditDescription(list.description ?? "");
     setEditPublic(list.isPublic);
     setEditRanked(list.isRanked !== false);
+    setEditReplyPreference(list.replyPreference ?? null);
     setEditTags(list.tags.join(", "));
   };
 
@@ -489,7 +500,7 @@ export default function UserLists() {
     setSaveBusy(true);
     setError("");
     try {
-      const { data } = await updateList(selectedList.id, editName.trim(), editDescription.trim(), editPublic, editTags.split(",").map(tag => tag.trim()).filter(Boolean), editRanked);
+      const { data } = await updateList(selectedList.id, editName.trim(), editDescription.trim(), editPublic, editTags.split(",").map(tag => tag.trim()).filter(Boolean), editRanked, usesHostedSupabaseAuth ? editReplyPreference : undefined);
       if (!isCurrentRequest()) return;
       setLists(current => current.map(list => list.id === data.id ? data : list));
       setLinkedList(current => current?.id === data.id ? data : current);
@@ -497,6 +508,7 @@ export default function UserLists() {
       setEditDescription(data.description ?? "");
       setEditPublic(data.isPublic);
       setEditRanked(data.isRanked !== false);
+      setEditReplyPreference(data.replyPreference ?? null);
       setEditTags(data.tags.join(", "));
       setError("");
       setStatus(t("saved"));
@@ -604,6 +616,7 @@ export default function UserLists() {
         <legend><span className={styles.settingsLegendMobile}>{t("settings")}</span><span className={styles.settingsLegendDesktop}>{t("whoCanView")}</span></legend>
         <label className={styles.checkboxLabel}><input type="checkbox" checked={isPublic} disabled={createBusy} onChange={e => setIsPublic(e.target.checked)} /><span className={styles.settingIcon}><img src="/images/list-create-public.svg" alt="" width="18" height="18" /></span> <span>{t("publicList")}</span></label>
         <ListRankingField checked={isRanked} disabled={createBusy} icon="/images/list-create-ranked.svg" onChange={setIsRanked} />
+        {usesHostedSupabaseAuth && <ReplyPreferenceField className={styles.replyPreferenceField} value={replyPreference} disabled={createBusy} onChange={setReplyPreference} onReset={() => setReplyPreference(null)} hint={t("listRepliesHint")} />}
       </fieldset>
       <section className={styles.draftFilms} aria-labelledby="draft-films-title">
         <div className={styles.draftFilmsHeading}><h2 id="draft-films-title">{t("films")}</h2><span>{draftFilms.length} {t("listEntries")}</span></div>
@@ -634,6 +647,7 @@ export default function UserLists() {
       {phoneCustomEditor && !mobileEntriesOpen && <MobileListSettings
         key={`${user?.id}:${selectedList.id}:${lang}`}
         name={editName} description={editDescription} tags={editTags} isPublic={editPublic} isRanked={editRanked}
+        replyPreference={editReplyPreference} onReplyPreference={setEditReplyPreference}
         items={items} itemsReady={!itemsLoading && !itemsLoadError} busy={listControlsBusy}
         nameRef={editorNameRef} entriesRef={mobileEntriesRef}
         initialTagsFocus={viewportEditorFocus.current?.field === "tags"}
@@ -670,7 +684,8 @@ export default function UserLists() {
         <label className={styles.descriptionField} htmlFor="edit-list-description">{t("description")} <textarea id="edit-list-description" data-list-field="description" rows={5} maxLength={5000} disabled={itemsBusy || saveBusy || deleting} value={editDescription} onChange={event => setEditDescription(event.target.value)} /></label>
         <label className={styles.tagsField} htmlFor="edit-list-tags">{t("tags")} <input id="edit-list-tags" data-list-field="tags" value={editTags} maxLength={509} disabled={itemsBusy || saveBusy || deleting} placeholder={t("tagsHint")} onChange={event => setEditTags(event.target.value)} /></label>
         <label className={styles.checkboxLabel}><input type="checkbox" data-list-field="visibility" checked={editPublic} disabled={itemsBusy || saveBusy || deleting} onChange={event => setEditPublic(event.target.checked)} /> <span>{t("publicList")}</span></label>
-        <div className={styles.rankingField}><ListRankingField checked={editRanked} disabled={listControlsBusy} onChange={setEditRanked} /></div>
+        <div className={styles.rankingField}><ListRankingField checked={editRanked} disabled={listControlsBusy} onChange={setEditRanked} />
+          {usesHostedSupabaseAuth && <ReplyPreferenceField className={styles.replyPreferenceField} value={editReplyPreference} disabled={listControlsBusy} onChange={setEditReplyPreference} onReset={() => setEditReplyPreference(null)} hint={t("listRepliesHint")} />}</div>
         <div className={styles.editActions}>
           <Link ref={editAddFilmsRef} className={styles.browseFilms} to={path("/films")} aria-disabled={listControlsBusy || undefined} onClick={event => { if (listControlsBusy) event.preventDefault(); }}>
             <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />

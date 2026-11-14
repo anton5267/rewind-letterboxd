@@ -17,12 +17,9 @@ function contentReportTable(target: ReportableContent) {
   return target === "comment"
     ? { reports: "rewind.comment_reports", targetColumn: "comment_id", targetTable: "rewind.comments", valid: `EXISTS (
         SELECT 1 FROM rewind.comments c
-        JOIN rewind.reviews r ON r.id=c.review_id
-        JOIN rewind.movies m ON m.id=r.movie_id AND m.is_published=TRUE
         JOIN rewind.users ca ON ca.id=c.user_id
-        JOIN rewind.users ra ON ra.id=r.user_id
-        WHERE c.id=t.id AND c.is_hidden=FALSE AND r.is_hidden=FALSE
-          AND c.user_id<>$2 AND ca.is_active=TRUE AND ra.is_active=TRUE
+        WHERE c.id=t.id AND NOT c.is_hidden AND c.user_id<>$2 AND ca.is_active
+          AND rewind.comment_target_is_visible(c.review_id, c.list_id)
       )` }
     : { reports: "rewind.list_reports", targetColumn: "list_id", targetTable: "rewind.lists", valid: `EXISTS (
         SELECT 1 FROM rewind.lists l JOIN rewind.users owner ON owner.id=l.user_id

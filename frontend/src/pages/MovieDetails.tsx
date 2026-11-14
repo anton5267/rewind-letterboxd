@@ -18,7 +18,7 @@ import Pagination from "../components/Pagination";
 import { safeHttpUrl } from "../utils/externalUrl";
 import { getLastPageIndex, isPageOutOfRange } from "../utils/pagination";
 import { getUserName } from "../utils/userIdentity";
-import Comments from "./Comments";
+import Comments from "../components/comments/CommentThread";
 import styles from "./MovieDetails.module.css";
 
 function ReviewLikeButton({ reviewId }: { reviewId: number }) {

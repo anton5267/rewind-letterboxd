@@ -53,7 +53,8 @@ export interface ReviewDetailsResponse {
 
 export interface CommentResponse {
   id: number;
-  reviewId: number;
+  reviewId: number | null;
+  listId?: number | null;
   userId: number;
   username: string;
   userAvatarUrl: string | null;

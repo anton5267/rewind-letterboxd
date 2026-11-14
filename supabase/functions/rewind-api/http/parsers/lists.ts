@@ -1,4 +1,5 @@
 import type { CreateMyListRequest, UpdateMyListRequest } from "../../contracts/lists.ts";
+import { isReplyPreference } from "./reply_preference.ts";
 import { parsePositiveId } from "./query.ts";
 
 export function parseCreateMyList(value: unknown): CreateMyListRequest | null {
@@ -9,6 +10,7 @@ export function parseCreateMyList(value: unknown): CreateMyListRequest | null {
     && (typeof body.description !== "string" || body.description.length > 5000)) return null;
   if (body.isPublic !== undefined && body.isPublic !== null && typeof body.isPublic !== "boolean") return null;
   if (body.isRanked !== undefined && body.isRanked !== null && typeof body.isRanked !== "boolean") return null;
+  if (body.replyPreference !== undefined && body.replyPreference !== null && !isReplyPreference(body.replyPreference)) return null;
   const tags = parseListTags(body.tags);
   if (tags === null) return null;
   if (!Array.isArray(body.movieIds) || body.movieIds.length < 1 || body.movieIds.length > 100) return null;
@@ -19,6 +21,7 @@ export function parseCreateMyList(value: unknown): CreateMyListRequest | null {
     description: typeof body.description === "string" ? body.description : null,
     isPublic: body.isPublic === true,
     isRanked: body.isRanked !== false,
+    ...(body.replyPreference === undefined ? {} : { replyPreference: body.replyPreference as CreateMyListRequest["replyPreference"] }),
     tags,
     movieIds: movieIds as number[],
   };
@@ -48,6 +51,10 @@ export function parseUpdateMyList(value: unknown): UpdateMyListRequest | null {
     const tags = parseListTags(body.tags);
     if (tags === null) return null;
     update.tags = tags;
+  }
+  if (body.replyPreference !== undefined) {
+    if (body.replyPreference !== null && !isReplyPreference(body.replyPreference)) return null;
+    update.replyPreference = body.replyPreference;
   }
   return update;
 }

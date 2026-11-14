@@ -1,3 +1,4 @@
+import { commentsRepository } from "./repositories/comments.ts";
 import "./runtime/database.ts";
 import { createRewindApiHandler, type RewindApiRepository } from "./handler.ts";
 import { allowedOrigins } from "./runtime/config.ts";
@@ -33,6 +34,7 @@ const repository: RewindApiRepository = {
   ...socialRepository,
   ...listsRepository,
   ...reviewsRepository,
+  ...commentsRepository,
   ...catalogueRepository,
   ...ratingsRepository,
 };

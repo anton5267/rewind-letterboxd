@@ -12,7 +12,7 @@ export interface AdminReportedReviewResponse extends AdminReviewResponse {
 }
 
 export interface AdminCommentResponse {
-  id: number; reviewId: number; userId: number; username: string; content: string; isHidden: boolean;
+  id: number; reviewId: number | null; listId?: number | null; userId: number; username: string; content: string; isHidden: boolean;
   moderatedReason: string | null; moderatedAt: string | null; createdAt: string;
 }
 

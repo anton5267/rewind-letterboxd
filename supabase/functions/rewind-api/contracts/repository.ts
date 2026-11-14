@@ -28,6 +28,8 @@ export interface RewindApiRepository {
   updateMyReview?(authUser: HostedAuthUser, reviewId: number, update: ReviewMutationRequest): Promise<ReviewResponse | null>;
   deleteMyReview?(authUser: HostedAuthUser, reviewId: number): Promise<boolean>;
   getReviewComments?(reviewId: number, page: number, size: number): Promise<CommentPageResponse>;
+  getListComments?(listId: number, page: number, size: number): Promise<CommentPageResponse>;
+  createListComment?(authUser: HostedAuthUser, listId: number, text: string): Promise<CreateCommentResult>;
   createReviewComment?(authUser: HostedAuthUser, reviewId: number, text: string): Promise<CreateCommentResult>;
   updateReviewComment?(authUser: HostedAuthUser, commentId: number, text: string): Promise<CommentResponse | null | "FORBIDDEN">;
   deleteReviewComment?(authUser: HostedAuthUser, commentId: number): Promise<"OK" | "NOT_FOUND" | "FORBIDDEN">;

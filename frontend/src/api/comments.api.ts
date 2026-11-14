@@ -4,7 +4,8 @@ import type { ReviewReportReason, ReviewReportStatus } from "./reviews.api";
 
 export interface Comment {
   id: number;
-  reviewId: number;
+  reviewId: number | null;
+  listId?: number | null;
   userId: number;
   username: string;
   userAvatarUrl: string | null;
@@ -20,6 +21,12 @@ export const getComments = (reviewId: number, page = 0, size = 20) =>
 
 export const addComment = (reviewId: number, text: string) =>
   api.post<Comment>(`/reviews/${reviewId}/comments`, { text });
+
+export const getListComments = (listId: number, page = 0, size = 20) =>
+  api.get<CommentPage>(`/lists/public/${listId}/comments`, { params: { page, size } });
+
+export const addListComment = (listId: number, text: string) =>
+  api.post<Comment>(`/lists/public/${listId}/comments`, { text });
 
 export const updateComment = (commentId: number, text: string) =>
   api.patch<Comment>(`/comments/${commentId}`, { text });

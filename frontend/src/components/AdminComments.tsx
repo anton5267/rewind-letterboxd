@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import AdminLoading from "./AdminLoading";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { deleteAdminComment, dismissAdminCommentReport, getAdminComments, getAdminReportedComments, setAdminCommentHidden, type AdminComment, type AdminReportedComment } from "../api/admin.api";
@@ -15,7 +16,7 @@ type CommentFilter = VisibilityFilter | "reported";
 
 const hiddenValue = (filter: CommentFilter) => filter === "all" || filter === "reported" ? undefined : filter === "hidden";
 export default function AdminComments() {
-  const { t, lang } = useLocale();
+  const { t, lang, path } = useLocale();
   const { user } = useAuth();
   const [data, setData] = useState<Page<AdminComment | AdminReportedComment> | null>(null);
   const [filter, setFilter] = useState<CommentFilter>("all");
@@ -270,6 +271,7 @@ export default function AdminComments() {
         <div className={styles.commentMain}>
           <strong className={styles.commentIdentity}>{getUserName({ username: comment.username }, t("someone"))}</strong>
           <p className={styles.commentText}>{comment.content}</p>
+          {comment.listId != null && <Link to={path(`/lists/public/${comment.listId}`)}>{t("viewList")} #{comment.listId}</Link>}
         </div>
         <div className={styles.commentSide}>
           <div className={styles.commentDate}>

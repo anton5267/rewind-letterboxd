@@ -1,14 +1,12 @@
 import type { HttpRouteContext } from "../context.ts";
 import { optionalInteger, parseRouteId } from "../parsers/query.ts";
-import { parseCommentText, parseCreateReview, parseReviewReportReason, parseReviewUpdate } from "../parsers/reviews.ts";
+import { parseCreateReview, parseReviewReportReason, parseReviewUpdate } from "../parsers/reviews.ts";
 import { confirmedAuthUser, json, repositoryFailure } from "../response.ts";
 
 const PUBLIC_REVIEW_FEED_PATTERN = /^\/api\/reviews\/(recent|popular)$/;
 const MOVIE_REVIEWS_PATTERN = /^\/api\/movies\/(\d+)\/reviews(?:\/(me))?$/;
 const REVIEW_DETAILS_PATTERN = /^\/api\/reviews\/(\d+)$/;
-const REVIEW_COMMENTS_PATTERN = /^\/api\/reviews\/(\d+)\/comments$/;
 const REVIEW_LIKES_PATTERN = /^\/api\/reviews\/(\d+)\/(likes|like-status)$/;
-const COMMENT_PATTERN = /^\/api\/comments\/(\d+)$/;
 const REVIEW_REPORT_PATTERN = /^\/api\/reviews\/(\d+)\/report$/;
 const COMMENT_REPORT_PATTERN = /^\/api\/comments\/(\d+)\/report$/;
 const PUBLIC_LIST_REPORT_PATTERN = /^\/api\/lists\/public\/(\d+)\/report$/;
@@ -153,74 +151,6 @@ export async function handleReviewRoutes(context: HttpRouteContext): Promise<Res
         : json({ message: "Review not found" }, 404, corsHeaders);
     } catch (error) {
       return repositoryFailure(error, "Unable to update review", corsHeaders);
-    }
-  }
-
-  const reviewCommentsMatch = path.match(REVIEW_COMMENTS_PATTERN);
-
-  if (reviewCommentsMatch) {
-    const reviewId = parseRouteId(reviewCommentsMatch[1]);
-    if (reviewId === null) return json({ message: "Invalid review ID" }, 400, corsHeaders);
-    if (request.method !== "GET" && request.method !== "POST") {
-      corsHeaders.set("Allow", "GET, POST, OPTIONS");
-      return json({ message: "Method not allowed" }, 405, corsHeaders);
-    }
-    if (request.method === "GET") {
-      if (!repository.getReviewComments) return json({ message: "Not found" }, 404, corsHeaders);
-      const query = new URL(request.url).searchParams;
-      const page = Math.max(0, optionalInteger(query.get("page"), 0));
-      const size = Math.max(1, Math.min(optionalInteger(query.get("size"), 20), 50));
-      try {
-        return json(await repository.getReviewComments(reviewId, page, size), 200, corsHeaders);
-      } catch (error) {
-        return repositoryFailure(error, "Unable to load comments", corsHeaders);
-      }
-    }
-    const authUser = await confirmedAuthUser(request, authVerifier);
-    if (!authUser) return json({ message: "Authentication required" }, 401, corsHeaders);
-    if (!repository.createReviewComment) return json({ message: "Not found" }, 404, corsHeaders);
-    let value: unknown;
-    try { value = await request.json(); } catch { return json({ message: "Invalid request body" }, 400, corsHeaders); }
-    const text = parseCommentText(value);
-    if (text === null) return json({ message: "Invalid comment details" }, 400, corsHeaders);
-    try {
-      const comment = await repository.createReviewComment(authUser, reviewId, text);
-      if (comment === "FORBIDDEN") return json({ message: "The review author does not allow this reply" }, 403, corsHeaders);
-      return comment ? json(comment, 200, corsHeaders) : json({ message: "Review not found" }, 404, corsHeaders);
-    } catch (error) {
-      return repositoryFailure(error, "Unable to create comment", corsHeaders);
-    }
-  }
-
-  const commentMatch = path.match(COMMENT_PATTERN);
-
-  if (commentMatch) {
-    const commentId = parseRouteId(commentMatch[1]);
-    if (commentId === null) return json({ message: "Invalid comment ID" }, 400, corsHeaders);
-    if (request.method !== "PATCH" && request.method !== "DELETE") {
-      corsHeaders.set("Allow", "PATCH, DELETE, OPTIONS");
-      return json({ message: "Method not allowed" }, 405, corsHeaders);
-    }
-    const authUser = await confirmedAuthUser(request, authVerifier);
-    if (!authUser) return json({ message: "Authentication required" }, 401, corsHeaders);
-    try {
-      if (request.method === "PATCH") {
-        if (!repository.updateReviewComment) return json({ message: "Not found" }, 404, corsHeaders);
-        let value: unknown;
-        try { value = await request.json(); } catch { return json({ message: "Invalid request body" }, 400, corsHeaders); }
-        const text = parseCommentText(value);
-        if (text === null) return json({ message: "Invalid comment details" }, 400, corsHeaders);
-        const comment = await repository.updateReviewComment(authUser, commentId, text);
-        if (comment === "FORBIDDEN") return json({ message: "You cannot change this comment" }, 403, corsHeaders);
-        return comment ? json(comment, 200, corsHeaders) : json({ message: "Comment not found" }, 404, corsHeaders);
-      }
-      if (!repository.deleteReviewComment) return json({ message: "Not found" }, 404, corsHeaders);
-      const result = await repository.deleteReviewComment(authUser, commentId);
-      if (result === "FORBIDDEN") return json({ message: "You cannot change this comment" }, 403, corsHeaders);
-      return result === "OK" ? new Response(null, { status: 204, headers: corsHeaders })
-        : json({ message: "Comment not found" }, 404, corsHeaders);
-    } catch (error) {
-      return repositoryFailure(error, "Unable to update comment", corsHeaders);
     }
   }
 

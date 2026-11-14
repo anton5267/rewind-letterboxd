@@ -1,3 +1,4 @@
+import type { ProfileReplyPreference } from "./profile.api";
 import api from "./axios";
 import type { NumberedPage, Page } from "./types";
 import type { ReviewReportReason, ReviewReportStatus } from "./reviews.api";
@@ -9,6 +10,7 @@ export interface UserList {
   listType: string;
   isPublic: boolean;
   isRanked?: boolean;
+  replyPreference?: ProfileReplyPreference | null;
   tags: string[];
 }
 
@@ -49,6 +51,7 @@ export interface PublicListDetails {
   tags: string[];
   likeCount: number;
   isRanked?: boolean;
+  replyPreference?: ProfileReplyPreference | null;
   movies: MoviePreview[];
 }
 
@@ -75,11 +78,11 @@ export const getMyListReport = (listId: string | number) => api.get<ReviewReport
 export const reportList = (listId: string | number, reason: ReviewReportReason) =>
   api.post<{ id: number; reason: ReviewReportReason; createdAt: string }>(`/lists/public/${listId}/report`, { reason });
 
-export const createList = (name: string, description: string, isPublic: boolean, tags: string[], movieIds: number[], isRanked?: boolean) =>
-  api.post<UserList>("/lists", { name, description: description || null, isPublic, tags, movieIds, isRanked });
+export const createList = (name: string, description: string, isPublic: boolean, tags: string[], movieIds: number[], isRanked?: boolean, replyPreference?: ProfileReplyPreference | null) =>
+  api.post<UserList>("/lists", { name, description: description || null, isPublic, tags, movieIds, isRanked, ...(replyPreference === undefined ? {} : { replyPreference }) });
 
-export const updateList = (listId: number, name: string, description: string, isPublic: boolean, tags: string[], isRanked?: boolean) =>
-  api.patch<UserList>(`/lists/${listId}`, { name, description: description || null, isPublic, tags, isRanked });
+export const updateList = (listId: number, name: string, description: string, isPublic: boolean, tags: string[], isRanked?: boolean, replyPreference?: ProfileReplyPreference | null) =>
+  api.patch<UserList>(`/lists/${listId}`, { name, description: description || null, isPublic, tags, isRanked, ...(replyPreference === undefined ? {} : { replyPreference }) });
 
 export const deleteList = (listId: number) => api.delete<void>(`/lists/${listId}`);
 

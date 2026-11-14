@@ -99,9 +99,9 @@ export const listsRepository: Pick<RewindApiRepository,
       });
       if (movies.rows.length !== movieIds.length) throw new RewindApiError(400, "One or more movies were not found");
       const inserted = await connection.queryObject<{ id: string }>({
-        text: `INSERT INTO rewind.lists (user_id, name, description, list_type, is_public, is_ranked)
-               VALUES ($1, $2, $3, 'CUSTOM', $4, $5) RETURNING id::text AS id`,
-        args: [userId, body.name, body.description, body.isPublic, body.isRanked ?? true],
+        text: `INSERT INTO rewind.lists (user_id, name, description, list_type, is_public, is_ranked, reply_preference)
+               VALUES ($1, $2, $3, 'CUSTOM', $4, $5, $6) RETURNING id::text AS id`,
+        args: [userId, body.name, body.description, body.isPublic, body.isRanked ?? true, body.replyPreference ?? null],
       });
       const listId = safeId(inserted.rows[0].id, "List ID");
       for (let index = 0; index < movieIds.length; index++) {
@@ -121,7 +121,7 @@ export const listsRepository: Pick<RewindApiRepository,
       }
       await connection.queryObject("COMMIT");
       return { id: listId, name: body.name, description: body.description,
-        listType: "CUSTOM", isPublic: body.isPublic, isRanked: body.isRanked ?? true, tags };
+        listType: "CUSTOM", isPublic: body.isPublic, isRanked: body.isRanked ?? true, replyPreference: body.replyPreference ?? null, tags };
     } catch (error) {
       try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
       throw error;
@@ -132,9 +132,9 @@ export const listsRepository: Pick<RewindApiRepository,
     const { connection, userId } = await beginUserTransaction(authUser);
     try {
       const selected = await connection.queryObject<{
-        name: string; description: string | null; list_type: MyListResponse["listType"]; is_public: boolean; is_ranked: boolean;
+        name: string; description: string | null; list_type: MyListResponse["listType"]; is_public: boolean; is_ranked: boolean; reply_preference: MyListResponse["replyPreference"];
       }>({
-        text: `SELECT name, description, list_type, is_public, is_ranked FROM rewind.lists
+        text: `SELECT name, description, list_type, is_public, is_ranked, reply_preference FROM rewind.lists
                WHERE id = $1 AND user_id = $2 FOR UPDATE`, args: [listId, userId],
       });
       const current = selected.rows[0];
@@ -146,11 +146,13 @@ export const listsRepository: Pick<RewindApiRepository,
                  name = CASE WHEN $3 THEN $4 ELSE name END,
                  description = CASE WHEN $5 THEN $6 ELSE description END,
                  is_public = CASE WHEN $7 THEN $8 ELSE is_public END,
-                 is_ranked = CASE WHEN $9 THEN $10 ELSE is_ranked END
+                 is_ranked = CASE WHEN $9 THEN $10 ELSE is_ranked END,
+                 reply_preference = CASE WHEN $11 THEN $12::VARCHAR ELSE reply_preference END
                WHERE id = $1 AND user_id = $2`,
         args: [listId, userId, body.name !== undefined, body.name ?? null,
           updateDescription, body.description ?? null, body.isPublic !== undefined, body.isPublic ?? false,
-          body.isRanked !== undefined, body.isRanked ?? true],
+          body.isRanked !== undefined, body.isRanked ?? true,
+          body.replyPreference !== undefined, body.replyPreference ?? null],
       });
       const tags = body.tags === undefined
         ? (await loadListTags(connection, [listId])).get(listId) ?? []
@@ -159,7 +161,8 @@ export const listsRepository: Pick<RewindApiRepository,
       return { id: listId, name: body.name ?? current.name,
         description: updateDescription ? body.description! : current.description,
         listType: "CUSTOM", isPublic: body.isPublic ?? current.is_public,
-        isRanked: body.isRanked ?? current.is_ranked, tags };
+        isRanked: body.isRanked ?? current.is_ranked,
+        replyPreference: body.replyPreference === undefined ? current.reply_preference : body.replyPreference, tags };
     } catch (error) {
       try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
       throw error;
@@ -422,10 +425,10 @@ export const listsRepository: Pick<RewindApiRepository,
       await connection.queryObject("SET ROLE rewind_edge_app");
       const listResult = await connection.queryObject<{
         id: string; name: string; description: string | null; owner_id: string;
-        owner_username: string; owner_avatar_url: string | null; is_ranked: boolean;
+        owner_username: string; owner_avatar_url: string | null; is_ranked: boolean; reply_preference: MyListResponse["replyPreference"];
       }>({
         text: `SELECT l.id::text AS id, l.name, l.description, owner.id::text AS owner_id,
-                      owner.username AS owner_username, owner.avatar_url AS owner_avatar_url, l.is_ranked
+                      owner.username AS owner_username, owner.avatar_url AS owner_avatar_url, l.is_ranked, l.reply_preference
                FROM rewind.lists l JOIN rewind.users owner ON owner.id = l.user_id
                WHERE l.id = $1 AND l.list_type = 'CUSTOM' AND l.is_public = TRUE AND owner.is_active = TRUE`,
         args: [listId],
@@ -459,7 +462,7 @@ export const listsRepository: Pick<RewindApiRepository,
         id: toId(list.id), name: list.name, description: list.description,
         ownerId: toId(list.owner_id), ownerUsername: list.owner_username,
         ownerAvatarUrl: list.owner_avatar_url, tags: tags.rows.map((row) => row.name),
-        likeCount: Number(likes.rows[0]?.total ?? "0"), isRanked: list.is_ranked,
+        likeCount: Number(likes.rows[0]?.total ?? "0"), isRanked: list.is_ranked, replyPreference: list.reply_preference,
         movies: movies.rows.map((movie) => ({
           id: toId(movie.id), title: movie.title, releaseDate: movie.release_date,
           rating: movie.rating === null ? null : Number(movie.rating), photoUrl: movie.photo_url,

@@ -1,7 +1,6 @@
 import type { ReplyPreference } from "../contracts/profile.ts";
 import type { RewindApiRepository } from "../contracts/repository.ts";
-import type { CommentPageResponse, CommentResponse, CreateCommentResult, ReviewDetailsResponse, ReviewMutationRequest, ReviewPageResponse, ReviewReportReason, ReviewReportResponse, ReviewReportStatusResponse, ReviewResponse } from "../contracts/reviews.ts";
-import { PostgresError } from "@db/postgres";
+import type { ReviewDetailsResponse, ReviewMutationRequest, ReviewPageResponse, ReviewReportReason, ReviewReportResponse, ReviewReportStatusResponse, ReviewResponse } from "../contracts/reviews.ts";
 import { RewindApiError } from "../http/errors.ts";
 import {
   pool,
@@ -28,17 +27,6 @@ function reviewResponse(row: {
   };
 }
 
-function commentResponse(row: {
-  id: string; review_id: string; user_id: string; username: string; user_avatar_url: string | null;
-  content: string; created_at: string; updated_at: string;
-}): CommentResponse {
-  return {
-    id: safeId(row.id, "Comment ID"), reviewId: safeId(row.review_id, "Review ID"),
-    userId: safeId(row.user_id, "User ID"), username: row.username, userAvatarUrl: row.user_avatar_url,
-    text: row.content, createdAt: row.created_at, updatedAt: row.updated_at,
-  };
-}
-
 export const reviewsRepository: Pick<RewindApiRepository,
   | "getPublicReviewFeed"
   | "getMovieReviews"
@@ -49,12 +37,6 @@ export const reviewsRepository: Pick<RewindApiRepository,
   | "deleteMyReview"
   | "getMyReviewReport"
   | "reportReview"
-  | "getMyCommentReport"
-  | "reportComment"
-  | "getReviewComments"
-  | "createReviewComment"
-  | "updateReviewComment"
-  | "deleteReviewComment"
   | "getReviewLikes"
   | "getReviewLikeStatus"
   | "likeReview"
@@ -377,151 +359,6 @@ export const reviewsRepository: Pick<RewindApiRepository,
       const row = inserted.rows[0] ?? (await findExisting()).rows[0];
       await connection.queryObject("COMMIT");
       return row ? { id: safeId(row.id, "Report ID"), reason: row.reason, createdAt: row.created_at } : null;
-    } catch (error) {
-      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
-      throw error;
-    } finally { connection.release(); }
-  },
-
-  async getMyCommentReport(authUser, commentId) {
-    return await getMyContentReport(authUser, "comment", commentId);
-  },
-
-  async reportComment(authUser, commentId, reason) {
-    return await submitContentReport(authUser, "comment", commentId, reason);
-  },
-
-  async getReviewComments(reviewId, page, size): Promise<CommentPageResponse> {
-    const connection = await pool.connect();
-    try {
-      await connection.queryObject("SET ROLE rewind_edge_app");
-      const visible = await connection.queryObject({
-        text: `SELECT 1 FROM rewind.reviews r JOIN rewind.users author ON author.id = r.user_id
-               JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
-               WHERE r.id = $1 AND r.is_hidden = FALSE AND author.is_active = TRUE`, args: [reviewId],
-      });
-      if (!visible.rows.length) throw new RewindApiError(404, "Review not found");
-      const [count, rows] = await Promise.all([
-        connection.queryObject<{ total: string }>({
-          text: `SELECT COUNT(*)::text AS total FROM rewind.comments c
-                 JOIN rewind.users author ON author.id = c.user_id
-                 WHERE c.review_id = $1 AND c.is_hidden = FALSE AND author.is_active = TRUE`, args: [reviewId],
-        }),
-        connection.queryObject<{
-          id: string; review_id: string; user_id: string; username: string; user_avatar_url: string | null;
-          content: string; created_at: string; updated_at: string;
-        }>({
-          text: `SELECT c.id::text AS id, c.review_id::text AS review_id, author.id::text AS user_id,
-                        author.username, author.avatar_url AS user_avatar_url, c.content,
-                        c.created_at::text AS created_at, c.updated_at::text AS updated_at
-                 FROM rewind.comments c JOIN rewind.users author ON author.id = c.user_id
-                 WHERE c.review_id = $1 AND c.is_hidden = FALSE AND author.is_active = TRUE
-                 ORDER BY c.created_at ASC, c.id ASC LIMIT $2 OFFSET $3`,
-          args: [reviewId, size, page * size],
-        }),
-      ]);
-      const totalElements = Number(count.rows[0]?.total ?? "0");
-      return { content: rows.rows.map(commentResponse), totalPages: Math.ceil(totalElements / size), totalElements, number: page };
-    } finally { connection.release(); }
-  },
-
-  async createReviewComment(authUser, reviewId, text): Promise<CreateCommentResult> {
-    const { connection, userId } = await beginUserTransaction(authUser);
-    try {
-      const review = await connection.queryObject<{ can_reply: boolean }>({
-        text: `SELECT (
-                 r.user_id = $2 OR (
-                   NOT EXISTS (
-                     SELECT 1 FROM rewind.user_blocks b
-                     WHERE (b.blocker_id = r.user_id AND b.blocked_id = $2)
-                        OR (b.blocker_id = $2 AND b.blocked_id = r.user_id)
-                   ) AND (
-                     COALESCE(r.reply_preference, author.reply_preference) = 'ANYONE'
-                     OR (COALESCE(r.reply_preference, author.reply_preference) = 'FOLLOWED' AND EXISTS (
-                       SELECT 1 FROM rewind.follows f
-                       WHERE f.follower_id = r.user_id AND f.following_id = $2
-                     ))
-                   )
-                 )
-               ) AS can_reply
-               FROM rewind.reviews r JOIN rewind.users author ON author.id = r.user_id
-               JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
-               WHERE r.id = $1 AND r.is_hidden = FALSE AND author.is_active = TRUE`, args: [reviewId, userId],
-      });
-      if (!review.rows.length) { await connection.queryObject("COMMIT"); return null; }
-      if (!review.rows[0].can_reply) { await connection.queryObject("COMMIT"); return "FORBIDDEN"; }
-      const inserted = await connection.queryObject<{ id: string }>({
-        text: "INSERT INTO rewind.comments (review_id, user_id, content) VALUES ($1, $2, $3) RETURNING id::text AS id",
-        args: [reviewId, userId, text.trim()],
-      });
-      const commentId = safeId(inserted.rows[0].id, "Comment ID");
-      const result = await connection.queryObject<{
-        id: string; review_id: string; user_id: string; username: string; user_avatar_url: string | null;
-        content: string; created_at: string; updated_at: string;
-      }>({
-        text: `SELECT c.id::text AS id, c.review_id::text AS review_id, author.id::text AS user_id,
-                      author.username, author.avatar_url AS user_avatar_url, c.content,
-                      c.created_at::text AS created_at, c.updated_at::text AS updated_at
-               FROM rewind.comments c JOIN rewind.users author ON author.id = c.user_id WHERE c.id = $1`,
-        args: [commentId],
-      });
-      await connection.queryObject("COMMIT");
-      return result.rows[0] ? commentResponse(result.rows[0]) : null;
-    } catch (error) {
-      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
-      if (error instanceof PostgresError && error.fields.code === "42501"
-        && error.fields.table === "comments" && error.message.includes("row-level security")) {
-        return "FORBIDDEN";
-      }
-      throw error;
-    } finally { connection.release(); }
-  },
-
-  async updateReviewComment(authUser, commentId, text): Promise<CommentResponse | null | "FORBIDDEN"> {
-    const { connection, userId } = await beginUserTransaction(authUser);
-    try {
-      const owner = await connection.queryObject<{ user_id: string }>(
-        { text: "SELECT user_id::text AS user_id FROM rewind.comments WHERE id = $1", args: [commentId] },
-      );
-      if (!owner.rows[0]) { await connection.queryObject("COMMIT"); return null; }
-      if (safeId(owner.rows[0].user_id, "User ID") !== userId) { await connection.queryObject("COMMIT"); return "FORBIDDEN"; }
-      await connection.queryObject({
-        text: "UPDATE rewind.comments SET content = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND user_id = $2",
-        args: [commentId, userId, text.trim()],
-      });
-      const result = await connection.queryObject<{
-        id: string; review_id: string; user_id: string; username: string; user_avatar_url: string | null;
-        content: string; created_at: string; updated_at: string;
-      }>({
-        text: `SELECT c.id::text AS id, c.review_id::text AS review_id, author.id::text AS user_id,
-                      author.username, author.avatar_url AS user_avatar_url, c.content,
-                      c.created_at::text AS created_at, c.updated_at::text AS updated_at
-               FROM rewind.comments c JOIN rewind.users author ON author.id = c.user_id WHERE c.id = $1`,
-        args: [commentId],
-      });
-      await connection.queryObject("COMMIT");
-      return result.rows[0] ? commentResponse(result.rows[0]) : null;
-    } catch (error) {
-      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
-      throw error;
-    } finally { connection.release(); }
-  },
-
-  async deleteReviewComment(authUser, commentId): Promise<"OK" | "NOT_FOUND" | "FORBIDDEN"> {
-    const { connection, userId } = await beginUserTransaction(authUser);
-    try {
-      const result = await connection.queryObject<{ user_id: string; role: string }>(
-        { text: `SELECT c.user_id::text AS user_id, actor.role FROM rewind.comments c
-                 CROSS JOIN rewind.users actor WHERE c.id = $1 AND actor.id = $2`, args: [commentId, userId] },
-      );
-      const row = result.rows[0];
-      if (!row) { await connection.queryObject("COMMIT"); return "NOT_FOUND"; }
-      if (safeId(row.user_id, "User ID") !== userId && row.role !== "ADMIN") {
-        await connection.queryObject("COMMIT"); return "FORBIDDEN";
-      }
-      await connection.queryObject({ text: "DELETE FROM rewind.comments WHERE id = $1", args: [commentId] });
-      await connection.queryObject("COMMIT");
-      return "OK";
     } catch (error) {
       try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
       throw error;

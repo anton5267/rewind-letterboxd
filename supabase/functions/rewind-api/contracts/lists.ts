@@ -1,3 +1,4 @@
+import type { ReplyPreference } from "./profile.ts";
 import type { MovieCardResponse } from "./catalog.ts";
 
 export interface PublicListCardResponse {
@@ -24,6 +25,7 @@ export interface PublicListDetailsResponse {
   tags: string[];
   likeCount: number;
   isRanked?: boolean;
+  replyPreference?: ReplyPreference | null;
   movies: MovieCardResponse[];
 }
 
@@ -45,6 +47,7 @@ export interface MyListResponse {
   listType: "CUSTOM" | "WATCHED" | "WATCHLIST" | "FAVORITES";
   isPublic: boolean;
   isRanked?: boolean;
+  replyPreference?: ReplyPreference | null;
   tags: string[];
 }
 
@@ -66,6 +69,7 @@ export interface CreateMyListRequest {
   description: string | null;
   isPublic: boolean;
   isRanked?: boolean;
+  replyPreference?: ReplyPreference | null;
   tags: string[];
   movieIds: number[];
 }
@@ -75,5 +79,6 @@ export interface UpdateMyListRequest {
   description?: string | null;
   isPublic?: boolean;
   isRanked?: boolean;
+  replyPreference?: ReplyPreference | null;
   tags?: string[];
 }

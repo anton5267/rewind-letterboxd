@@ -1,3 +1,4 @@
+import { handleCommentRoutes } from "./http/routes/comments.ts";
 import type { InternalWorkerHandler, RewindAuthVerifier } from "./contracts/auth.ts";
 import type { RewindApiRepository } from "./contracts/repository.ts";
 import { apiPath, json } from "./http/response.ts";
@@ -41,6 +42,7 @@ const routeHandlers = [
   handleSocialRoutes,
   handleListRoutes,
   handleReviewRoutes,
+  handleCommentRoutes,
   handleProfileRoutes,
   handleProfileEmailRoute,
   handleMovieStatusRoutes,

@@ -1,3 +1,6 @@
+import { usesHostedSupabaseAuth } from "../api/supabaseClient";
+import type { ProfileReplyPreference } from "../api/profile.api";
+import ReplyPreferenceField from "./ReplyPreferenceField";
 import { useId, useRef, useState, type FormEvent, type RefObject } from "react";
 import { Link } from "react-router-dom";
 import type { UserListItem } from "../api/lists.api";
@@ -12,6 +15,8 @@ interface Props {
   tags: string;
   isPublic: boolean;
   isRanked: boolean;
+  replyPreference: ProfileReplyPreference | null;
+  onReplyPreference: (value: ProfileReplyPreference | null) => void;
   items: UserListItem[];
   busy: boolean;
   itemsReady: boolean;
@@ -75,6 +80,7 @@ export default function MobileListSettings(props: Props) {
     </div>
     <div className={styles.ranking}>
       <ListRankingField checked={props.isRanked} disabled={props.busy} onChange={props.onRanked} />
+      {usesHostedSupabaseAuth && <ReplyPreferenceField className={styles.replyPreference} value={props.replyPreference} disabled={props.busy} onChange={props.onReplyPreference} onReset={() => props.onReplyPreference(null)} hint={t("listRepliesHint")} />}
     </div>
     <div className={styles.actions}>
       <button type="button" disabled={props.busy} onClick={props.onCancel}>{t("cancel")}</button>

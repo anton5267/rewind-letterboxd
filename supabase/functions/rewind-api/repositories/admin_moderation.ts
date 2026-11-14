@@ -59,11 +59,12 @@ function toAdminReview(row: {
 }
 
 function toAdminComment(row: {
-  id: string; review_id: string; user_id: string; username: string; content: string; is_hidden: boolean;
+  id: string; review_id: string | null; list_id: string | null; user_id: string; username: string; content: string; is_hidden: boolean;
   moderated_reason: string | null; moderated_at: string | null; created_at: string;
 }): AdminCommentResponse {
   return {
-    id: safeId(row.id, "Comment ID"), reviewId: safeId(row.review_id, "Review ID"),
+    id: safeId(row.id, "Comment ID"), reviewId: row.review_id === null ? null : safeId(row.review_id, "Review ID"),
+    ...(row.list_id === null ? {} : { listId: safeId(row.list_id, "List ID") }),
     userId: safeId(row.user_id, "User ID"), username: row.username, content: row.content,
     isHidden: row.is_hidden, moderatedReason: row.moderated_reason, moderatedAt: row.moderated_at, createdAt: row.created_at,
   };
@@ -75,7 +76,7 @@ function toAdminModerationQueueItem(row: {
 }): AdminModerationQueueItem {
   return {
     type: row.type, id: safeId(row.id, "Moderation item ID"),
-    parentId: row.parent_id === null ? null : safeId(row.parent_id, "Review ID"),
+    parentId: row.parent_id === null ? null : safeId(row.parent_id, "Parent ID"),
     movieId: row.movie_id === null ? null : safeId(row.movie_id, "Movie ID"), subject: row.subject,
     userId: safeId(row.user_id, "User ID"), username: row.username, content: row.content, createdAt: row.created_at,
   };
@@ -207,7 +208,7 @@ export const adminModerationRepository: Pick<RewindApiRepository,
         connection.queryObject<{ total: string }>({ text: "SELECT COUNT(*)::text AS total FROM rewind.comment_reports WHERE status='OPEN'" }),
         connection.queryObject<Parameters<typeof toAdminComment>[0] & { report_id: string; report_reason: ReviewReportReason; report_created_at: string }>({
           text: `SELECT cr.id::text AS report_id, cr.reason AS report_reason, cr.created_at::text AS report_created_at,
-                       c.id::text AS id, c.review_id::text AS review_id, c.user_id::text AS user_id,
+                       c.id::text AS id, c.review_id::text AS review_id, c.list_id::text AS list_id, c.user_id::text AS user_id,
                        u.username, c.content, c.is_hidden, c.moderated_reason,
                        c.moderated_at::text AS moderated_at, c.created_at::text AS created_at
                 FROM rewind.comment_reports cr
@@ -330,7 +331,7 @@ export const adminModerationRepository: Pick<RewindApiRepository,
       const [count, rows] = await Promise.all([
         connection.queryObject<{ total: string }>({ text: `SELECT COUNT(*)::text AS total FROM rewind.comments c${where}`, args }),
         connection.queryObject<Parameters<typeof toAdminComment>[0]>({
-          text: `SELECT c.id::text AS id, c.review_id::text AS review_id, c.user_id::text AS user_id,
+          text: `SELECT c.id::text AS id, c.review_id::text AS review_id, c.list_id::text AS list_id, c.user_id::text AS user_id,
                        u.username, c.content, c.is_hidden, c.moderated_reason,
                        c.moderated_at::text AS moderated_at, c.created_at::text AS created_at
                 FROM rewind.comments c JOIN rewind.users u ON u.id=c.user_id${where}
@@ -351,7 +352,7 @@ export const adminModerationRepository: Pick<RewindApiRepository,
     try {
       await setCommentModeration(connection, userId, id, hidden, reason);
       const result = await connection.queryObject<Parameters<typeof toAdminComment>[0]>({
-        text: `SELECT c.id::text AS id, c.review_id::text AS review_id, c.user_id::text AS user_id,
+        text: `SELECT c.id::text AS id, c.review_id::text AS review_id, c.list_id::text AS list_id, c.user_id::text AS user_id,
                      u.username, c.content, c.is_hidden, c.moderated_reason,
                      c.moderated_at::text AS moderated_at, c.created_at::text AS created_at
               FROM rewind.comments c JOIN rewind.users u ON u.id=c.user_id WHERE c.id=$1`, args: [id],
@@ -387,8 +388,8 @@ export const adminModerationRepository: Pick<RewindApiRepository,
         FROM rewind.reviews r JOIN rewind.users u ON u.id=r.user_id JOIN rewind.movies m ON m.id=r.movie_id
         WHERE r.moderated_at IS NULL
         UNION ALL
-        SELECT 'COMMENT'::text AS type, c.id, c.review_id AS parent_id, NULL::bigint AS movie_id,
-               ('Review #' || c.review_id)::text AS subject, c.user_id, u.username, c.content, c.created_at
+        SELECT 'COMMENT'::text AS type, c.id, COALESCE(c.review_id, c.list_id) AS parent_id, NULL::bigint AS movie_id,
+               (CASE WHEN c.review_id IS NOT NULL THEN 'Review #' || c.review_id ELSE 'List #' || c.list_id END)::text AS subject, c.user_id, u.username, c.content, c.created_at
         FROM rewind.comments c JOIN rewind.users u ON u.id=c.user_id
         WHERE c.moderated_at IS NULL`;
       const predicates = ["($1::text IS NULL OR queued.type=$1)",

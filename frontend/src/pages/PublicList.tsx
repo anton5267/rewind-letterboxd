@@ -1,3 +1,5 @@
+import { usesHostedSupabaseAuth } from "../api/supabaseClient";
+import CommentThread from "../components/comments/CommentThread";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getPublicList, getPublicListLikeStatus, likePublicList, unlikePublicList, type MoviePreview, type PublicListDetails, type PublicListLikeStatus } from "../api/lists.api";
@@ -255,6 +257,7 @@ export default function PublicList() {
         })}
       </div>}
     </section>
+    {usesHostedSupabaseAuth && <div className={styles.comments}><CommentThread listId={list.id} /></div>}
     </div>
     {infoOpen && <div className={styles.informationBackdrop} onMouseDown={event => { if (event.target === event.currentTarget) { event.preventDefault(); closeInformation(); } }}>
       <section id="public-list-information" ref={informationRef} className={styles.informationDialog} role="dialog" aria-modal="true" aria-labelledby="public-list-information-title">

@@ -1,18 +1,28 @@
 import { useEffect, useRef, useState } from "react";
 import { isAxiosError } from "axios";
-import { addComment, deleteComment, getComments, updateComment, type Comment } from "../api/comments.api";
-import Pagination from "../components/Pagination";
-import RetryNotice from "../components/RetryNotice";
-import ConfirmDialog from "../components/ConfirmDialog";
-import ContentReportAction from "../components/ContentReportAction";
-import { useAuth } from "../context/AuthContext";
-import { useLocale } from "../i18n";
-import { getUserName } from "../utils/userIdentity";
-import styles from "./Comments.module.css";
+import { addComment, addListComment, deleteComment, getComments, getListComments, updateComment, type Comment } from "../../api/comments.api";
+import Pagination from "../Pagination";
+import RetryNotice from "../RetryNotice";
+import ConfirmDialog from "../ConfirmDialog";
+import ContentReportAction from "../ContentReportAction";
+import { useAuth } from "../../context/AuthContext";
+import { useLocale } from "../../i18n";
+import { getUserName } from "../../utils/userIdentity";
+import styles from "./CommentThread.module.css";
 
 type CommentAction = { type: "save"; commentId: number | null; text: string } | { type: "delete"; id: number };
 
-export default function Comments({ reviewId }: { reviewId: number }) {
+type ThreadTarget = { reviewId: number; listId?: never } | { listId: number; reviewId?: never };
+
+export default function CommentThread(props: ThreadTarget) {
+  const { isAuth, user } = useAuth();
+  const target = props.listId === undefined ? `review:${props.reviewId}` : `list:${props.listId}`;
+  return <CommentThreadContent key={`${target}:${isAuth ? user?.id : "guest"}`} {...props} />;
+}
+
+function CommentThreadContent(props: ThreadTarget) {
+  const targetId = props.listId ?? props.reviewId;
+  const isList = props.listId !== undefined;
   const { isAuth, user } = useAuth();
   const { t } = useLocale();
   const [expanded, setExpanded] = useState(false);
@@ -26,14 +36,19 @@ export default function Comments({ reviewId }: { reviewId: number }) {
   const [mutationBusy, setMutationBusy] = useState<"save" | "delete" | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{ id: number; trigger: HTMLButtonElement } | null>(null);
   const requestId = useRef(0);
-  const pendingLoadFocus = useRef<{ reviewId: number; origin: HTMLElement | null } | null>(null);
-  const pendingActionFocus = useRef<{ reviewId: number; origin: HTMLElement | null } | null>(null);
+  const pendingLoadFocus = useRef<{ targetId: number; origin: HTMLElement | null } | null>(null);
+  const pendingActionFocus = useRef<{ targetId: number; origin: HTMLElement | null } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const mutationRequest = useRef(0);
-  const currentReviewId = useRef(reviewId);
-  currentReviewId.current = reviewId;
+  const currentReviewId = useRef(targetId);
+  currentReviewId.current = targetId;
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+
+  useEffect(() => () => {
+    requestId.current += 1;
+    mutationRequest.current += 1;
+  }, []);
 
   useEffect(() => {
     requestId.current += 1;
@@ -51,7 +66,7 @@ export default function Comments({ reviewId }: { reviewId: number }) {
     setTotalPages(0);
     pendingLoadFocus.current = null;
     pendingActionFocus.current = null;
-  }, [reviewId]);
+  }, [targetId]);
 
   useEffect(() => {
     const pending = pendingLoadFocus.current;
@@ -59,14 +74,14 @@ export default function Comments({ reviewId }: { reviewId: number }) {
     const frame = window.requestAnimationFrame(() => {
       if (pendingLoadFocus.current !== pending) return;
       pendingLoadFocus.current = null;
-      if (pending.reviewId !== currentReviewId.current) return;
+      if (pending.targetId !== currentReviewId.current) return;
       const active = document.activeElement;
       if (active !== document.body && active !== pending.origin) return;
       if (loadError) panelRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
       else panelRef.current?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [loading, loadError, comments, reviewId]);
+  }, [loading, loadError, comments, targetId]);
 
   useEffect(() => {
     const pending = pendingActionFocus.current;
@@ -74,17 +89,17 @@ export default function Comments({ reviewId }: { reviewId: number }) {
     const frame = window.requestAnimationFrame(() => {
       if (pendingActionFocus.current !== pending) return;
       pendingActionFocus.current = null;
-      if (pending.reviewId !== currentReviewId.current) return;
+      if (pending.targetId !== currentReviewId.current) return;
       const active = document.activeElement;
       if (active !== document.body && active !== pending.origin) return;
       if (actionError) panelRef.current?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
       else panelRef.current?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [actionError, comments, loading, mutationBusy, reviewId]);
+  }, [actionError, comments, loading, mutationBusy, targetId]);
 
   const retryLoad = () => {
-    pendingLoadFocus.current = { reviewId, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
+    pendingLoadFocus.current = { targetId, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
     void load();
   };
 
@@ -92,16 +107,16 @@ export default function Comments({ reviewId }: { reviewId: number }) {
     const currentRequest = ++requestId.current;
     setLoading(true);
     try {
-      const { data } = await getComments(reviewId, requestedPage);
-      if (currentRequest !== requestId.current || currentReviewId.current !== reviewId) return;
+      const { data } = await (isList ? getListComments(targetId, requestedPage) : getComments(targetId, requestedPage));
+      if (currentRequest !== requestId.current || currentReviewId.current !== targetId) return;
       setComments(data.content);
       setPage(data.number);
       setTotalPages(data.totalPages);
       setLoadError("");
     } catch {
-      if (currentRequest === requestId.current && currentReviewId.current === reviewId) setLoadError(t("loadCommentsError"));
+      if (currentRequest === requestId.current && currentReviewId.current === targetId) setLoadError(t("loadCommentsError"));
     } finally {
-      if (currentRequest === requestId.current && currentReviewId.current === reviewId) setLoading(false);
+      if (currentRequest === requestId.current && currentReviewId.current === targetId) setLoading(false);
     }
   };
 
@@ -112,14 +127,14 @@ export default function Comments({ reviewId }: { reviewId: number }) {
   };
 
   const startMutation = (kind: "save" | "delete") => {
-    if (mutationBusy || currentReviewId.current !== reviewId) return null;
+    if (mutationBusy || currentReviewId.current !== targetId) return null;
     const currentMutation = ++mutationRequest.current;
     setMutationBusy(kind);
     return currentMutation;
   };
 
   const isCurrentMutation = (currentMutation: number) =>
-    currentMutation === mutationRequest.current && currentReviewId.current === reviewId;
+    currentMutation === mutationRequest.current && currentReviewId.current === targetId;
 
   const saveComment = async (value: string, commentId: number | null) => {
     if (!value.trim()) return;
@@ -129,7 +144,8 @@ export default function Comments({ reviewId }: { reviewId: number }) {
     setPendingAction(null);
     try {
       if (commentId !== null) await updateComment(commentId, value);
-      else await addComment(reviewId, value);
+      else if (isList) await addListComment(targetId, value);
+      else await addComment(targetId, value);
       if (!isCurrentMutation(currentMutation)) return;
       setText("");
       setEditing(null);
@@ -139,7 +155,7 @@ export default function Comments({ reviewId }: { reviewId: number }) {
       if (!isCurrentMutation(currentMutation)) return;
       setPendingAction({ type: "save", commentId, text: value });
       const repliesRestricted = commentId === null && isAxiosError(error) && error.response?.status === 403;
-      const message = repliesRestricted ? t("commentRepliesRestricted")
+      const message = repliesRestricted ? t(isList ? "listCommentRepliesRestricted" : "commentRepliesRestricted")
         : commentId !== null ? t("updateCommentError") : t("createCommentError");
       setActionError(message);
     } finally {
@@ -178,7 +194,7 @@ export default function Comments({ reviewId }: { reviewId: number }) {
 
   const retryAction = () => {
     if (!pendingAction) return;
-    pendingActionFocus.current = { reviewId, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
+    pendingActionFocus.current = { targetId, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
     if (pendingAction.type === "save") void saveComment(pendingAction.text, pendingAction.commentId);
     else void deleteCommentAction(pendingAction.id);
   };
@@ -192,7 +208,8 @@ export default function Comments({ reviewId }: { reviewId: number }) {
       {!loading && !loadError && comments.length === 0 && <p>{t("noComments")}</p>}
       <ul className={styles.list}>
         {comments.map(comment => {
-          const canChange = isAuth && (comment.userId === user?.id || user?.role === "ADMIN");
+          const canEdit = isAuth && comment.userId === user?.id;
+          const canDelete = isAuth && (canEdit || user?.role === "ADMIN");
           const isEditing = editing === comment.id;
           return <li className={styles.item} key={comment.id}>
             <strong>{getUserName({ username: comment.username }, t("someone"))}</strong>{isEditing ? <form onSubmit={submit} aria-busy={mutationBusy === "save"}>
@@ -200,7 +217,7 @@ export default function Comments({ reviewId }: { reviewId: number }) {
               <button type="submit" aria-busy={mutationBusy === "save"} disabled={mutationBusy !== null || !text.trim()}>{mutationBusy === "save" ? t("saving") : t("save")}</button>{" "}
               <button type="button" disabled={mutationBusy !== null} onClick={() => { setEditing(null); setText(""); }}>{t("cancel")}</button>
             </form> : <p className={styles.itemText}>{comment.text}</p>}
-            {canChange && !isEditing && <><button type="button" disabled={mutationBusy !== null} onClick={() => { setEditing(comment.id); setText(comment.text); }}>{t("editComment")}</button>{" "}<button type="button" disabled={mutationBusy !== null} aria-busy={mutationBusy === "delete"} onClick={event => remove(comment.id, event.currentTarget)}>{mutationBusy === "delete" ? t("deleting") : t("deleteComment")}</button></>}
+            {canDelete && !isEditing && <>{canEdit && <button type="button" disabled={mutationBusy !== null} onClick={() => { setEditing(comment.id); setText(comment.text); }}>{t("editComment")}</button>}{" "}<button type="button" disabled={mutationBusy !== null} aria-busy={mutationBusy === "delete"} onClick={event => remove(comment.id, event.currentTarget)}>{mutationBusy === "delete" ? t("deleting") : t("deleteComment")}</button></>}
             {isAuth && comment.userId !== user?.id && <ContentReportAction key={`${user?.id}:${comment.id}`} type="comment" id={comment.id} />}
           </li>;
         })}

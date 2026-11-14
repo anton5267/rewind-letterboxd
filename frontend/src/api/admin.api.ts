@@ -8,7 +8,7 @@ export interface AdminUserOverview {
   adminHistory: AuditLog[];
 }
 export interface AuditLog { id: number; adminId: number; action: string; targetType: string; targetId: number | null; metadata: string | null; createdAt: string }
-export interface AdminComment { id: number; reviewId: number; userId: number; username: string; content: string; isHidden: boolean; moderatedReason: string | null; moderatedAt: string | null; createdAt: string }
+export interface AdminComment { id: number; reviewId: number | null; listId?: number | null; userId: number; username: string; content: string; isHidden: boolean; moderatedReason: string | null; moderatedAt: string | null; createdAt: string }
 export interface AdminArticle { id: number; slug: string; language: string; category: string; title: string; excerpt: string | null; content: string; coverUrl: string | null; audioUrl: string | null; publishedAt: string | null }
 export interface NewsletterDeliveryStatus { articleId: number; pending: number; sending: number; sent: number; failed: number; cancelled: number }
 export interface AdminReview { id: number; movieId: number; movieTitle: string; userId: number; username: string; content: string; rating: number | null; isHidden: boolean; moderatedReason: string | null; moderatedAt: string | null; createdAt: string }

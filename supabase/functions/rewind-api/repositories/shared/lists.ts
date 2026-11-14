@@ -88,9 +88,9 @@ export async function replaceListTags(connection: PgConnection, listId: number, 
 export async function fetchMyListRows(connection: PgConnection, userId: number, limit?: number, offset = 0): Promise<MyListResponse[]> {
   const paged = limit !== undefined;
   const rows = await connection.queryObject<{
-    id: string; name: string; description: string | null; list_type: MyListResponse["listType"]; is_public: boolean; is_ranked: boolean;
+    id: string; name: string; description: string | null; list_type: MyListResponse["listType"]; is_public: boolean; is_ranked: boolean; reply_preference: MyListResponse["replyPreference"];
   }>({
-    text: `SELECT id::text AS id, name, description, list_type, is_public, is_ranked FROM rewind.lists
+    text: `SELECT id::text AS id, name, description, list_type, is_public, is_ranked, reply_preference FROM rewind.lists
            WHERE user_id = $1 ORDER BY updated_at DESC, id DESC${paged ? " LIMIT $2 OFFSET $3" : ""}`,
     args: paged ? [userId, limit, offset] : [userId],
   });
@@ -99,6 +99,6 @@ export async function fetchMyListRows(connection: PgConnection, userId: number, 
   return rows.rows.map((row) => {
     const id = safeId(row.id, "List ID");
     return { id, name: row.name, description: row.description, listType: row.list_type,
-      isPublic: row.is_public, isRanked: row.is_ranked, tags: tags.get(id) ?? [] };
+      isPublic: row.is_public, isRanked: row.is_ranked, replyPreference: row.reply_preference, tags: tags.get(id) ?? [] };
   });
 }
