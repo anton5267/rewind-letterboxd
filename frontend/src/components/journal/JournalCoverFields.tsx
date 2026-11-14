@@ -9,6 +9,17 @@ export default function JournalCoverFields(
   },
 ) {
   const { t } = useLocale();
+  const removeCover = (index: number, trigger: HTMLButtonElement) => {
+    const group = trigger.closest("fieldset");
+    onChange(values.filter((_, position) => position !== index));
+    window.requestAnimationFrame(() => {
+      if (!group?.isConnected) return;
+      const active = document.activeElement;
+      if (active !== document.body && active !== trigger) return;
+      const inputs = group.querySelectorAll<HTMLInputElement>('input[type="url"]:not(:disabled)');
+      inputs[Math.min(index, inputs.length - 1)]?.focus();
+    });
+  };
   return (
     <fieldset className={styles.group} disabled={disabled}>
       <legend>{t("journalCoverImages")}</legend>
@@ -33,8 +44,7 @@ export default function JournalCoverFields(
           {values.length > 1 && (
             <button
               type="button"
-              onClick={() =>
-                onChange(values.filter((_, position) => position !== index))}
+              onClick={(event) => removeCover(index, event.currentTarget)}
             >
               {t("journalRemoveCover")}
             </button>

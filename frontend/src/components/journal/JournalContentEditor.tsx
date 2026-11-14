@@ -64,14 +64,40 @@ export default function JournalContentEditor(
       blocks.map((block, position) => position === index ? value : block),
     );
   };
-  const moveBlock = (index: number, offset: number) => {
+  const removeBlock = (index: number, trigger: HTMLButtonElement) => {
     if (!blocks) return;
+    const container = trigger.closest("fieldset")?.parentElement;
+    changeBlocks(blocks.filter((_, position) => position !== index));
+    window.requestAnimationFrame(() => {
+      if (!container?.isConnected) return;
+      const active = document.activeElement;
+      if (active !== document.body && active !== trigger) return;
+      const groups = container.querySelectorAll<HTMLFieldSetElement>(":scope > fieldset");
+      const group = groups[Math.min(index, groups.length - 1)];
+      group?.querySelector<HTMLElement>(
+        "input:not(:disabled), textarea:not(:disabled), select:not(:disabled), button:not(:disabled)",
+      )?.focus();
+    });
+  };
+  const moveBlock = (index: number, offset: number, trigger: HTMLButtonElement) => {
+    if (!blocks) return;
+    const group = trigger.closest("fieldset");
     const reordered = [...blocks];
     [reordered[index], reordered[index + offset]] = [
       reordered[index + offset],
       reordered[index],
     ];
     changeBlocks(reordered);
+    window.requestAnimationFrame(() => {
+      if (!group?.isConnected) return;
+      const active = document.activeElement;
+      if (active !== document.body && active !== trigger) return;
+      // A boundary move disables its trigger. Keep focus in the moved block.
+      const target = trigger.matches(":disabled")
+        ? group.querySelector<HTMLButtonElement>("button:not(:disabled)")
+        : trigger;
+      target?.focus();
+    });
   };
 
   return (
@@ -118,25 +144,22 @@ export default function JournalContentEditor(
                       <button
                         type="button"
                         disabled={disabled || index === 0}
-                        onClick={() =>
-                          moveBlock(index, -1)}
+                        onClick={(event) =>
+                          moveBlock(index, -1, event.currentTarget)}
                       >
                         {t("journalMoveUp")}
                       </button>
                       <button
                         type="button"
                         disabled={disabled || index === blocks.length - 1}
-                        onClick={() => moveBlock(index, 1)}
+                        onClick={(event) => moveBlock(index, 1, event.currentTarget)}
                       >
                         {t("journalMoveDown")}
                       </button>
                       <button
                         type="button"
                         disabled={disabled || blocks.length === 1}
-                        onClick={() =>
-                          changeBlocks(
-                            blocks.filter((_, position) => position !== index),
-                          )}
+                        onClick={(event) => removeBlock(index, event.currentTarget)}
                       >
                         {t("journalRemoveBlock")}
                       </button>

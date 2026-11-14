@@ -67,7 +67,7 @@ Frames `605:1112` / `1517:4931`. CommunityMemberCard composes UserFollowRow. Ava
 
 Desktop `844:1547` was refreshed on 14 November. [JournalArticleHeader](../../frontend/src/components/journal/JournalArticleHeader.tsx) owns the breadcrumb, metadata, cover and matching skeleton, reusing JournalCover. The existing background PNG exactly matches the source. Two original breadcrumb/divider SVGs are local assets. The source-sized 90px breadcrumb row keeps its visible pill clear of the fixed 106px navigation. Cover geometry is 1126×642 with 30px corners. JournalBody retains 174×140 aside images and separate reading-column styles.
 
-Scoped geometry, legacy/safe media, language fallback, audio Retry and mobile error/long-content checks passed. The 393px and 320px layouts remain implementation adaptations; `1480:8889` represents mobile search results. Article text and imagery stay API-driven. Inter differs from SF Pro Display, and source director-credit copy has no dedicated API field. Real editorial save and complete frame parity remain open.
+Scoped geometry, legacy/safe media, language fallback, audio Retry and mobile error/long-content checks passed. The 393px and 320px layouts remain implementation adaptations; `1480:8889` represents mobile search results. Article text and imagery stay API-driven. Inter differs from SF Pro Display, and source director-credit copy has no dedicated API field. Production authoring and reader acceptance are recorded in [release evidence](../operations/RELEASE_EVIDENCE.md). Complete frame parity remains open.
 
 ### Profile settings
 

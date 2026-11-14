@@ -6,7 +6,7 @@ Reviewed 14 November 2026. This page summarizes recorded production state and ac
 
 | Area | Last verified evidence |
 | --- | --- |
-| Frontend | Full UK/EN React application. List-description fix `798be84` passed [CI 43561364436](https://github.com/anton5267/rewind-letterboxd/actions/runs/43561364436) and [Pages 43561364447](https://github.com/anton5267/rewind-letterboxd/actions/runs/43561364447), followed by authenticated description-clear acceptance. Current publication is tracked by the [Pages workflow](https://github.com/anton5267/rewind-letterboxd/actions/workflows/deploy-pages.yml). |
+| Frontend | Full UK/EN React application. Dated release/acceptance proofs are retained in the November archive. Current publication is tracked by the [Pages workflow](https://github.com/anton5267/rewind-letterboxd/actions/workflows/deploy-pages.yml). |
 | Edge API | `rewind-api` v59 ACTIVE. All 71 deployed files matched the 85-file source/config package. Fourteen type-only modules were omitted by the provider. Git retains the full redeployable source. |
 | Database | Private `rewind` schema and RLS. The v55 inventory recorded 45/45 RLS-enabled application tables. Later Person releases added response enrichment without schema migrations. |
 | Auth | Confirmation, recovery/reset and sign-in exercised with disposable identities. Profiles map by Supabase UUID. The current `+rewindtest` ADMIN identity remains protected from automatic cleanup. |
@@ -18,7 +18,8 @@ Counts below belong to their recorded release and test scope. Full details, fail
 
 | Block | Recorded checks and live boundary |
 | --- | --- |
-| Journal article source alignment | Separate Header/Skeleton, exact existing background, original breadcrumb/divider SVGs, 1126×642 rounded cover and reader columns. Five reader/media/audio/error cases passed, followed by the updated header geometry/clearance case. Typecheck and 393/320px visual checks passed. Fonts, complete frame parity and live editorial save remain open. |
+| Live Journal authoring and reader | Production plain/rich create/edit/reload, media clear, publish/unpublish and UK/EN reader passed. Anonymous draft reads returned 404, published reads returned 200, and anonymous Admin access returned 401. QA article cleaned up, delivery count 0 and audit retained. Three structural-action focus losses fixed, two extended editor flows passed. |
+| Journal article source alignment | Separate Header/Skeleton, exact existing background, original breadcrumb/divider SVGs, 1126×642 rounded cover and reader columns. Five reader/media/audio/error cases passed, followed by the updated header geometry/clearance case. Typecheck and 393/320px visual checks passed. Fonts and complete frame parity remain open. |
 | Shared navigation Figma assets | Original logo verified against both exports. Original search/social SVGs, desktop border, nav slots/opacity, search focus and legal links checked across 10 UK/EN viewport combinations. Typecheck passed. Inter/SF Pro Display and full-frame parity remain open. |
 | Admin queries and metadata compatibility | Request/role guards, localized genres and original-language omission have dated fixture coverage. New cast-order fixtures passed 6/6 in each checkout across sparse/removed/null/empty/boundary cases and native validation. Both source typechecks passed. TOML explicitly excludes rewind, matching the denied live anon/authenticated schema grants. Real catalogue mutations remain open. |
 | Profile settings and website link | Production UK save/reload and EN clear/reload passed for display name, names, bio, location, pronoun and all three reply preferences. Public reads omit names/email. Website save/reload/public-read/clear passed and baseline was restored. Media upload awaits Chrome extension file-URL permission. |
@@ -30,7 +31,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 | Notifications `6fac660` | Six hosted and six local-Auth fixture flows passed. Live authenticated empty feed/preferences loaded. Real two-account delivery and local SSE reconnect remain open. |
 | Messages `9135406` | Six hosted and three existing send/Retry flows passed. Live authenticated empty page loaded. Real two-account delivery remains open. |
 | Community `abb7659`, `794ddf6` / v57 | Targeted API/SQL/UI and responsive geometry passed. Live public counts displayed; populated favorites remain open while public favorites are empty. |
-| Journal media `bfb8bbd` / v56 | Deno 6/6, SQL 34 assertions, four new and three existing browser flows. Live editor displayed new controls. Real editorial save remains open. |
+| Journal media `bfb8bbd` / v56 | Deno 6/6, SQL 34 assertions, four new and three existing browser flows. Live editor displayed new controls. Later production acceptance is recorded above. |
 | Profile/list settings / v49–55 | Targeted API, RLS/SQL, fixture and build checks recorded for reply rules, email change, comments, names, media and pin. Live forms loaded. Remaining mutations are listed in PLAN. |
 | Source organization and README | Published `176ae26`, `b2552db`, `3338691`. Structural/API/JSX/CSS comparison and 19 focused browser scenarios passed. README is English with three architecture diagrams. |
 
@@ -38,7 +39,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 
 - Encrypted export, disposable restore and full Auth/Storage/settings/secrets recovery. Backup password and independent encryption passphrase remain missing. [Recovery procedure](DEPLOYMENT_POSTGRESQL.md#supabase-free-backup-and-recovery--not-yet-accepted).
 - Row-level reconciliation of local MySQL and hosted records, plus remaining local/upstream source review. Preserve the verified local V32 identity/V33 outbox/V36 original-language lineage during future Spring integration. Production import awaits backup and rollback acceptance.
-- Controlled cross-account comment/report/moderation, profile-media upload/replacement/removal, cross-account list reply rules, email change, two-account messaging/notifications and editorial save. [Work order](../../PLAN.md#наступна-робота).
+- Controlled cross-account comment/report/moderation, profile-media upload/replacement/removal, cross-account list reply rules, email change, two-account messaging/notifications. [Work order](../../PLAN.md#наступна-робота).
 - Remaining Figma/layout and product gaps. [Requirements](../project/PROJECT_REQUIREMENTS.md#implementation-status), [design handoff](../frontend/FIGMA_HANDOFF.md).
 - TMDB snapshot retains 20/49 missing original-language values and one unverified movie ID. The next eligible scheduled batch was recorded as 16 November 2026, 03:00 UTC. [Worker procedure](SUPABASE_OPERATIONS.md).
 - The recorded security review retains the Free-plan leaked-password limitation and three private no-policy table notices with denied client/app/reader SELECT. Preserve the grants and review changes against actual workload. [Dated advisor evidence](../archive/RELEASE_EVIDENCE_2026.md#pg_net-extension-registration-migration-isolated-verification--13112026-0516-utc).
