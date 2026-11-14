@@ -65,7 +65,9 @@ Frames `605:1112` / `1517:4931`. CommunityMemberCard composes UserFollowRow. Ava
 
 ### Illustrated Journal article
 
-Desktop `844:1547` defines a 1126×642 three-panel hero, 30px outer corners and 174×140 side images with 20px corners. Reuse JournalCover, JournalBody and the separate Admin editors. Preserve legacy single-cover/plain-text content, alt text and captions. Mobile article layout is an implementation adaptation; `1480:8889` represents mobile search results. Real editorial save and full article parity remain open.
+Desktop `844:1547` was refreshed on 14 November. [JournalArticleHeader](../../frontend/src/components/journal/JournalArticleHeader.tsx) owns the breadcrumb, metadata, cover and matching skeleton, reusing JournalCover. The existing background PNG exactly matches the source. Two original breadcrumb/divider SVGs are local assets. The source-sized 90px breadcrumb row keeps its visible pill clear of the fixed 106px navigation. Cover geometry is 1126×642 with 30px corners. JournalBody retains 174×140 aside images and separate reading-column styles.
+
+Scoped geometry, legacy/safe media, language fallback, audio Retry and mobile error/long-content checks passed. The 393px and 320px layouts remain implementation adaptations; `1480:8889` represents mobile search results. Article text and imagery stay API-driven. Inter differs from SF Pro Display, and source director-credit copy has no dedicated API field. Real editorial save and complete frame parity remain open.
 
 ### Profile settings
 

@@ -1,11 +1,11 @@
-import JournalCover from "../components/journal/JournalCover";
+import JournalArticleHeader, { JournalArticleHeaderSkeleton } from "../components/journal/JournalArticleHeader";
 import JournalBody from "../components/journal/JournalBody";
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getJournalArticle, type JournalArticle as Article } from "../api/journal.api";
 import RetryButton from "../components/RetryButton";
 import RetryNotice from "../components/RetryNotice";
-import { editorialText, formatJournalDate, localizeJournalCategory, useLocale } from "../i18n";
+import { editorialText, useLocale } from "../i18n";
 import { safeHttpUrl } from "../utils/externalUrl";
 import styles from "./JournalArticle.module.css";
 
@@ -95,13 +95,8 @@ export default function JournalArticle() {
     return <main className={styles.page} aria-labelledby="journal-article-state-title" aria-busy={true}>
       <h1 id="journal-article-state-title" className="srOnly" ref={titleRef} tabIndex={-1}>{t("journal")}</h1>
       <p className="srOnly" role="status">{t("loading")}</p>
-      <div className={styles.article} aria-hidden="true">
-        <div className={styles.mobileToolbar}><span className={styles.skeletonLine} /></div>
-        <div className={styles.articleHeader}>
-          <div className={styles.articleLead}><div className={styles.skeletonLine} /><div className={`${styles.skeletonLine} ${styles.skeletonTitle}`} /><div className={styles.skeletonLine} /></div>
-          <div className={`${styles.coverHero} ${styles.skeleton}`} />
-        </div>
-      </div>
+      <div className={styles.backdrop} aria-hidden="true" />
+      <div className={styles.article} aria-hidden="true"><JournalArticleHeaderSkeleton /></div>
     </main>;
   }
 
@@ -117,28 +112,15 @@ export default function JournalArticle() {
 
   return (
     <main className={styles.page} aria-labelledby="journal-article-title" aria-busy={false}>
+      <div className={styles.backdrop} aria-hidden="true" />
       <article className={styles.article}>
-        <div className={styles.mobileToolbar}>
-          <Link className={styles.mobileBack} to={path("/journal")} aria-label={t("journal")}>←</Link>
-          <span>{t("journal")}</span>
-        </div>
-        <div className={styles.articleHeader}>
-          <div className={styles.articleLead}>
-            <Link className={styles.back} to={path("/journal")}>← {t("journal")}</Link>
-            <p className={styles.eyebrow}>
-              {localizeJournalCategory(article.category, t)}
-              {article.publishedAt && <><span aria-hidden="true"> · </span><time dateTime={article.publishedAt}>{formatJournalDate(article.publishedAt, lang)}</time></>}
-            </p>
-            <h1 id="journal-article-title" ref={titleRef} tabIndex={-1} lang={article.title?.trim() ? articleLang : lang}>{title}</h1>
-            {(article.publishedAt || article.authorName?.trim() || audioUrl) && <div className={styles.meta}>
-              {article.authorName?.trim() && <p className={styles.byline}>{article.authorName.trim()}</p>}
-              {audioUrl && <span>{t("podcastAudio")}</span>}
-            </div>}
-          </div>
-          <div className={styles.coverHero}>
-            <JournalCover className={styles.coverImage} coverUrl={article.coverUrl} images={article.coverImages} label={title} loading="eager" fallback={<span className={styles.coverFallback} aria-hidden="true">REWIND</span>} />
-          </div>
-        </div>
+        <JournalArticleHeader
+          article={article}
+          title={title}
+          articleLanguage={articleLang}
+          titleRef={titleRef}
+          hasAudio={Boolean(audioUrl)}
+        />
         <div className={styles.articleContent}>
           {article.excerpt?.trim() && <p className={styles.excerpt} lang={articleLang}>{article.excerpt.trim()}</p>}
           {audioUrl && <div className={styles.audioBlock} role="group" aria-label={t("podcastAudio")} aria-busy={audioLoading}>
