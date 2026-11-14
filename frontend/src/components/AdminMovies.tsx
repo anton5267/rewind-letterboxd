@@ -377,7 +377,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
         setMovieDraft({
           title: details.title,
           imdbId: details.imdbId ?? "",
-          originalLanguage: details.originalLanguage ?? "",
+          originalLanguage: details.originalLanguage === undefined ? undefined : details.originalLanguage ?? "",
           releaseDate: details.releaseDate ?? "",
           ageRating: details.ageRating ?? "",
           rating: movie.rating,
@@ -433,7 +433,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
     const wasEditing = editingMovieId !== null;
     try {
       const payload = { ...movieDraft, title: movieDraft.title.trim(), imdbId: movieDraft.imdbId || null,
-        originalLanguage: movieDraft.originalLanguage?.trim().toLowerCase() || null,
+        originalLanguage: movieDraft.originalLanguage === undefined ? undefined : movieDraft.originalLanguage?.trim().toLowerCase() || null,
         releaseDate: movieDraft.releaseDate || null, ageRating: movieDraft.ageRating || null, photoUrl: movieDraft.photoUrl || null, backdropUrl: movieDraft.backdropUrl || null, trailerUrl: movieDraft.trailerUrl || null };
       if (editingMovieId === null) {
         await createAdminMovie(payload);

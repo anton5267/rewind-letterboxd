@@ -18,6 +18,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 
 | Block | Recorded checks and live boundary |
 | --- | --- |
+| Admin original-language compatibility | A legacy-response fixture reproduced an unintended null field in an unrelated save. The editor now preserves omission while retaining explicit value/null clearing. Six desktop/phone fixtures, the existing credits/genres save and source typecheck passed. Production metadata mutation acceptance remains open. |
 | Profile settings and website link | Production UK save/reload and EN clear/reload passed for display name, names, bio, location, pronoun and all three reply preferences. Public reads omit names/email. Website save/reload/public-read/clear passed and baseline was restored. Media upload awaits Chrome extension file-URL permission. |
 | Owner lists and profile navigation | Production create/order/rank/reply, description clear, pin/save/reload, comment create/edit/reload/delete and public→private acceptance passed. Privacy removed the pin and anonymous reads returned 404. Temporary data was cleaned up. Two UK/EN navigation fixtures and the existing Retry/focus scenario passed. |
 | Admin credit queries and genre labels | Four new fixtures cover late success/failure for all three person roles, failed-query editing and Ukrainian genre labels. Two existing credit/genre save flows passed. Shared test setup was extracted, and source typecheck passed. |

@@ -5,7 +5,7 @@ export interface MovieDetails {
   id: number;
   title: string;
   imdbId: string | null;
-  originalLanguage: string | null;
+  originalLanguage?: string | null;
   shortPlot: string | null;
   photoUrl: string | null;
   backdropUrl: string | null;

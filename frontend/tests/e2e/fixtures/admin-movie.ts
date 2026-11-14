@@ -1,7 +1,8 @@
 import { expect, type Page } from "@playwright/test";
+import type { MovieDetails } from "../../../src/api/movies.api";
 
 // These controlled API responses test UI validation and focus, never TMDB or a database.
-export async function adminMovieFixture(page: Page, options: { candidateStatus?: number } = {}) {
+export async function adminMovieFixture(page: Page, options: { candidateStatus?: number; details?: Partial<MovieDetails> } = {}) {
   const movie = { id: 940001, tmdbId: null, title: "Strict ID film", releaseDate: "2026-10-01", rating: 4, photoUrl: null, durationMinutes: 123, ageRating: "12+", reviewCount: 0, published: true };
   const emptyPage = { content: [], totalPages: 0, totalElements: 0 };
   const writes: { path: string; data: unknown }[] = [];
@@ -51,7 +52,7 @@ export async function adminMovieFixture(page: Page, options: { candidateStatus?:
       ] });
     }
     if (url.pathname === "/api/admin/movies") return route.fulfill({ json: { content: [movie], totalPages: 1, totalElements: 1 } });
-    if (url.pathname === `/api/movies/${movie.id}/details`) return route.fulfill({ json: { ...movie, originalLanguage: "ja", genres: [{ id: 7, name: "Drama" }], directors: [], actors: [], producers: [], shortPlot: null, backdropUrl: null, trailerUrl: null, durationMinutes: null, ageRating: null } });
+    if (url.pathname === `/api/movies/${movie.id}/details`) return route.fulfill({ json: { ...movie, originalLanguage: "ja", genres: [{ id: 7, name: "Drama" }], directors: [], actors: [], producers: [], shortPlot: null, backdropUrl: null, trailerUrl: null, durationMinutes: null, ageRating: null, ...options.details } });
     return route.fulfill({ json: emptyPage });
   });
   await page.goto("/en/admin?view=movies");
