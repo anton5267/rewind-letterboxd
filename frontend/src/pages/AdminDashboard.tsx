@@ -289,7 +289,12 @@ export default function AdminDashboard() {
     </section>
   );
 
-  return <main className={`${styles.page} ${activeView === "settings" ? styles.settingsPage : ""} ${activeView === "user-profile" ? styles.userProfilePage : ""}`} aria-labelledby="admin-dashboard-title" aria-busy={pageBusy}>
+  return <main
+    className={`${styles.page} ${activeView === "settings" ? styles.settingsPage : ""} ${activeView === "user-profile" ? styles.userProfilePage : ""}`}
+    aria-labelledby="admin-dashboard-title"
+    data-document-title={t("adminDashboard")}
+    aria-busy={pageBusy}
+  >
     <header className={styles.hero}>
       <div className={styles.profileHeader}>
       <div className={styles.avatar} aria-hidden="true"><ResilientImage src={user.avatarUrl} alt="" fallback={user.username.slice(0, 1).toUpperCase()} /></div>
