@@ -1,4 +1,5 @@
 import styles from "./Header.module.css";
+import MobileNavIcon from "./MobileNavIcon";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
@@ -8,25 +9,6 @@ import { getUnreadNotificationCount } from "../api/notifications.api";
 import { UNREAD_COUNTS_CHANGED_EVENT } from "../utils/unreadEvents";
 import { isDocumentVisible } from "../utils/documentVisibility";
 import { toTagSlug } from "../utils/tagSlug";
-
-type MobileNavIconName = "home" | "search" | "add" | "journal" | "profile";
-
-function MobileNavIcon({ name }: { name: MobileNavIconName }) {
-  const common = { fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
-
-  switch (name) {
-    case "home":
-      return <svg viewBox="0 0 24 24" aria-hidden="true" {...common}><path d="m3 10 9-7 9 7" /><path d="M5.5 9v11h5v-6h3v6h5V9" /></svg>;
-    case "search":
-      return <svg viewBox="0 0 24 24" aria-hidden="true" {...common}><circle cx="10.8" cy="10.8" r="7.1" /><path d="m16 16 5 5" /></svg>;
-    case "add":
-      return <svg viewBox="0 0 24 24" aria-hidden="true" {...common}><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" /></svg>;
-    case "journal":
-      return <svg viewBox="0 0 24 24" aria-hidden="true" {...common}><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M9 8h7M9 12h7M9 16h7" /><circle cx="7" cy="8" r=".45" fill="currentColor" stroke="none" /><circle cx="7" cy="12" r=".45" fill="currentColor" stroke="none" /><circle cx="7" cy="16" r=".45" fill="currentColor" stroke="none" /></svg>;
-    case "profile":
-      return <svg viewBox="0 0 24 24" aria-hidden="true" {...common}><circle cx="12" cy="7.5" r="3.5" /><path d="M4.5 21v-1.4a7.5 7.5 0 0 1 15 0V21z" /></svg>;
-  }
-}
 
 export default function Header() {
   const { user } = useAuth();

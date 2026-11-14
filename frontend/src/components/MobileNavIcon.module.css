@@ -1,0 +1,22 @@
+.slot {
+  display: flex;
+  flex: none;
+  height: 19px;
+  align-items: center;
+  justify-content: center;
+}
+
+.slot img {
+  display: block;
+  max-width: none;
+  flex: none;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.slot[data-mobile-nav-icon="home"],
+.slot[data-mobile-nav-icon="profile"] { width: 30px; }
+.slot[data-mobile-nav-icon="search"] { width: 24px; overflow: hidden; padding-bottom: 2px; }
+.slot[data-mobile-nav-icon="add"] { width: 24px; padding-bottom: 3px; }
+.slot[data-mobile-nav-icon="journal"] { width: 24px; padding-bottom: 4px; }
+.slot[data-mobile-nav-icon="profile"] { padding-bottom: 5px; }

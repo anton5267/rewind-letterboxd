@@ -279,32 +279,35 @@
     display: grid;
     box-sizing: border-box;
     min-height: 92px;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    padding: 7px 8px calc(7px + env(safe-area-inset-bottom));
+    grid-template-columns: repeat(5, minmax(0, 70px));
+    align-items: start;
+    justify-content: center;
+    border-radius: 20px 20px 0 0;
+    padding: 5px 12px max(34px, env(safe-area-inset-bottom));
     background: #191919;
   }
 
   .mobileNav a {
     display: flex;
-    min-height: 56px;
+    min-height: 53px;
+    height: 53px;
     min-width: 0;
     align-items: center;
     justify-content: center;
     flex-direction: column;
     gap: 1px;
-    padding-inline: 2px;
+    padding: 9px 4px 6px;
     border-radius: 9px;
     color: #fff;
     font-size: 12px;
-    line-height: 14px;
+    font-weight: 400;
+    line-height: 1.194;
     text-decoration: none;
   }
 
-  .mobileNav a svg {
-    display: block;
-    width: 30px;
-    height: 30px;
-    color: #fff;
+  .mobileNav a:focus-visible {
+    outline: var(--rewind-focus-width) solid var(--rewind-cyan);
+    outline-offset: -3px;
   }
 
   .visuallyHidden {

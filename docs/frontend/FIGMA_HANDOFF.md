@@ -21,7 +21,11 @@ Reuse these existing building blocks where the design supports them:
 
 Desktop sources `251:612` and `251:625` were refreshed on 14 November. The existing 184×30 logo exactly matches both exports. Header uses the original search SVG in its 24px slot, a 47×44 bordered search target, 43px Lists slot and 70% default navigation opacity with full-opacity focus/hover feedback. Footer uses the original 125×24.3291 social group. Existing routes, actual TMDB attribution, dynamic year and legal links remain part of the product implementation. Social marks retain decorative semantics because destinations are unspecified.
 
-UK/EN geometry, image loading, search navigation and menu keyboard checks passed at 1440, 1024, 768, 393 and 320px. Inter differs from the source SF Pro Display. Full typography, background treatment, mobile icon parity and complete shared-frame parity remain open. [Dated evidence](../archive/RELEASE_EVIDENCE_2026_11.md#shared-navigation-figma-assets--14112026).
+UK/EN geometry, image loading, search navigation and menu keyboard checks passed at 1440, 1024, 768, 393 and 320px. Inter differs from the source SF Pro Display. Full typography, background treatment, remaining mobile-header states/icons and complete shared-frame parity remain open. [Dated evidence](../archive/RELEASE_EVIDENCE_2026_11.md#shared-navigation-figma-assets--14112026).
+
+### Mobile bottom navigation
+
+Fresh Home sources `1411:3473` / `1327:3210` and the visible navigation instance `1411:3497` share the five original Home/Search/Add/Journal/Profile assets. MobileNavIcon and its CSS own the 19px slots, 30×30 Home/Add/Profile images, 24×24 Search and 27×30 Journal. Header supplies the 92px rail, 20px top corners, centered 70px columns and 53px targets, shrinking columns at 320px. Safe-area padding uses max(34px, env(safe-area-inset-bottom)). The runtime rail spans the viewport from x0, adapting the frame instance’s x−3 offset. Existing UK/EN route labels and the profile/auth destination are retained. Four guest/member fixtures and two detail-navigation regressions passed. Inter differs from SF Pro Display. [Dated evidence](../archive/RELEASE_EVIDENCE_2026_11.md#mobile-navigation-source-assets--14112026).
 
 ## Current code tokens
 
