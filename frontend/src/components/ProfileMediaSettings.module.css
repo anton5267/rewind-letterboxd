@@ -18,7 +18,37 @@
 .privacy { margin: 30px 0 0; color: #aaa; font-size: 14px; line-height: 1.4; text-align: center; }
 .mobileOnly { display: none; }
 
-@media (max-width: 1024px) {
+.actions button:focus-visible {
+  outline: var(--rewind-focus-width) solid var(--rewind-cyan);
+  outline-offset: 4px;
+}
+
+/* Desktop media panels follow Figma 251:660 within the shared 1200px rail. */
+@media (min-width: 1024px) {
+  .panel h2 { margin-bottom: 54px; }
+  .panel + .panel { margin-top: 85px; padding-top: 17px; }
+  .preview { border-radius: 37px; }
+  .banner img { border-radius: inherit; }
+
+  .actions {
+    position: relative;
+    margin-top: 31px;
+  }
+
+  /* Keep the primary action centered when an existing image can be removed. */
+  .actions button.remove {
+    position: absolute;
+    top: 50%;
+    left: calc(50% + 165px);
+    max-width: calc(50% - 165px);
+    transform: translateY(-50%);
+  }
+
+  .hint { max-width: 418px; margin-top: 31px; }
+  .panel + .panel .hint { max-width: 437px; }
+}
+
+@media (max-width: 1023px) {
   .preview { min-height: 320px; }
   .banner img { height: 320px; }
   .preview img, .initial { width: 150px; height: 150px; }

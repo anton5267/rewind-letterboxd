@@ -82,7 +82,7 @@ Desktop `251:430` and phone `1043:2125` were refreshed with high-fidelity contex
 | Names, location, pronoun | `251:430`, `1043:2125`, `1043:2392` | Optional owner-only names use ProfileNameFields. ProfilePronounField retains nine values, a clearing option, original Back/Check assets and 45px phone rows. Changes join profile Save. |
 | Reply preferences | `1049:2075` | ReplyPreferenceField supports ANYONE/FOLLOWED/SELF. Individual reviews/lists add nullable inheritance. Preserve modal focus, cancellation and failed drafts. |
 | Email | `1043:2233`, `1043:2125` | 16px text, 34px row insets, 45px phone row. Existing focus hook, desktop dialog/phone sheet and UUID-bound confirmation flow. Two-address delivery acceptance remains open. |
-| Avatar/banner | `251:660`, `1043:2125` | Separate ProfileMediaSettings, previews and immediate-save feedback. Preserve JPEG/PNG 2 MB/4096px limits. Real upload/replace/remove remains open. |
+| Avatar/banner | `251:660`, `1043:2125` | Separate ProfileMediaSettings, previews and immediate-save feedback. Desktop previews use 37px corners, 543px height, 265px avatar and centered 282px primary actions with removal beside them. The shared desktop breakpoint starts at 1024px. Two UK/EN fixtures cover five widths, mocked upload/retry/reload/removal and keyboard focus. Longer localized labels wrap. Preserve JPEG/PNG 2 MB/4096px limits. Real upload/replace/remove remains open. |
 | Pinned list | `1162:2105`, `1480:6383`, `1480:9718` | PinnedProfileList reuses ListPosterStack and CommentThread. Five-poster source geometry is 446×260 desktop and 325×116 phone. All owners may pin an eligible own list. Production pin/save/reload and public→private automatic unpin passed on 14 November. |
 
 ## Source access and export workflow

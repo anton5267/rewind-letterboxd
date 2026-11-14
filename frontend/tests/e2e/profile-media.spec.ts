@@ -86,7 +86,43 @@ for (const lang of ["uk", "en"] as const) {
     await expect(removeBanner).toBeVisible();
     await expect.poll(() => page.locator('img[src="https://images.invalid/7/banner.png"]').evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(32);
     await page.reload(); await expect(removeAvatar).toBeVisible(); await expect(removeBanner).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    const avatarPanel = page.locator('section[aria-labelledby="settings-avatar-title"]');
+    const bannerPanel = page.locator('section[aria-labelledby="settings-banner-title"]');
+    const selectAvatar = avatarPanel.getByRole("button").first();
+    for (const width of [1440, 1024, 900, 393, 320]) {
+      await page.setViewportSize({ width, height: 900 });
+      const desktop = width >= 1024;
+      const phone = width <= 767;
+      const previewHeight = desktop ? 543 : phone ? 158 : 320;
+      const avatarSize = desktop ? 265 : phone ? 90 : 150;
+      const radius = desktop ? "37px" : phone ? "10px" : "20px";
+      for (const panel of [avatarPanel, bannerPanel]) {
+        const preview = panel.locator("div").first();
+        await expect(preview).toHaveCSS("border-radius", radius);
+        expect((await preview.boundingBox())!.height).toBeCloseTo(previewHeight, 0);
+        await expect(preview.locator("img")).toHaveCSS("object-fit", "cover");
+        if (desktop) {
+          const box = (await preview.boundingBox())!;
+          expect(box.width).toBeCloseTo(width === 1440 ? 1200 : 976, 0);
+          const select = (await panel.getByRole("button").first().boundingBox())!;
+          expect(select.width).toBeCloseTo(282, 0);
+          expect(select.height).toBeGreaterThanOrEqual(79);
+          if (lang === "en") expect(select.height).toBeCloseTo(79, 0);
+          expect(select.x + select.width / 2).toBeCloseTo(box.x + box.width / 2, 0);
+          expect(select.y - box.y - box.height).toBeCloseTo(31, 0);
+        }
+      }
+      await expect(avatarPanel.locator("img")).toHaveCSS("width", avatarSize + "px");
+      await expect(avatarPanel.locator("img")).toHaveCSS("height", avatarSize + "px");
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+      if (width === 1440 || width === 393) await page.screenshot({ path: test.info().outputPath(`media-layout-${lang}-${width}.png`), fullPage: true });
+    }
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await selectAvatar.focus();
+    await expect(selectAvatar).toHaveCSS("outline-style", "solid");
+    await page.keyboard.press("Tab");
+    await expect(removeAvatar).toBeFocused();
+    await expect(removeAvatar).toHaveCSS("outline-style", "solid");
     await page.screenshot({ path: test.info().outputPath(`profile-media-${lang}.png`), fullPage: true });
     await removeAvatar.click(); await expect(removeAvatar).toHaveCount(0);
     await removeBanner.click(); await expect(removeBanner).toHaveCount(0);
