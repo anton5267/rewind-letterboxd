@@ -1,6 +1,8 @@
 export type ReplyPreference = "ANYONE" | "FOLLOWED" | "SELF";
 
 export interface ProfileResponse {
+  givenName?: string | null;
+  familyName?: string | null;
   id: number;
   username: string;
   displayName: string;
@@ -26,6 +28,8 @@ export interface ProfileCollectionResult {
 }
 
 export interface ProfileUpdateRequest {
+  givenName?: string;
+  familyName?: string;
   displayName?: string;
   avatarUrl?: string;
   bio?: string;

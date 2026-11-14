@@ -1,0 +1,17 @@
+.fields .field {
+  display: grid;
+  min-width: 0;
+  gap: 17px;
+}
+
+@media (max-width: 1024px) {
+  .fields .field { gap: 12px; }
+}
+
+@media (max-width: 767px) {
+  .fields .field {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    align-items: center;
+    min-height: 45px;
+  }
+}

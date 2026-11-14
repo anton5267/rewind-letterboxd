@@ -1,3 +1,4 @@
+import { usesHostedSupabaseAuth } from "../../api/supabaseClient";
 import { useAuth } from "../../context/AuthContext";
 import { useLocation } from "react-router-dom";
 import { useLocale } from "../../i18n";
@@ -68,6 +69,9 @@ export function useProfileIdentity({ route, feedback }: {
 
   const [replyPreference, setReplyPreference] = useState<ProfileReplyPreference>("ANYONE");
 
+  const [givenName, setGivenName] = useState("");
+  const [familyName, setFamilyName] = useState("");
+
   const [nameBusy, setNameBusy] = useState(false);
 
   const identityMutation = useRef(0);
@@ -75,6 +79,8 @@ export function useProfileIdentity({ route, feedback }: {
   useEffect(() => {
     identityMutation.current += 1;
     setNameBusy(false);
+    setGivenName("");
+    setFamilyName("");
   }, [isAuth, user?.id]);
 
   useEffect(() => {
@@ -89,6 +95,8 @@ export function useProfileIdentity({ route, feedback }: {
       if (!isCurrentRequest()) return;
       setProfile(data);
       setDisplayName(data.displayName ?? "");
+      setGivenName(data.givenName ?? "");
+      setFamilyName(data.familyName ?? "");
       setAvatarUrl(data.avatarUrl ?? "");
       setBio(data.bio ?? "");
       setProfileLocation(data.location ?? "");
@@ -145,12 +153,15 @@ export function useProfileIdentity({ route, feedback }: {
         ...(fields !== "avatar" ? { displayName: displayName.trim() } : {}),
         ...(fields !== "name" ? { avatarUrl: normalizedAvatarUrl ?? "" } : {}),
         ...(fields !== "avatar" ? { bio: bio.trim(), location: profileLocation.trim(), pronoun, replyPreference } : {}),
+        ...(fields !== "avatar" && usesHostedSupabaseAuth ? { givenName: givenName.trim(), familyName: familyName.trim() } : {}),
       });
       if (!isCurrentRequest()) return;
       setProfile(data);
       if (fields !== "avatar") setDisplayName(data.displayName ?? "");
       if (fields !== "name") setAvatarUrl(data.avatarUrl ?? "");
       if (fields !== "avatar") {
+        setGivenName(data.givenName ?? "");
+        setFamilyName(data.familyName ?? "");
         setBio(data.bio ?? "");
         setProfileLocation(data.location ?? "");
         setPronoun(data.pronoun ?? "");
@@ -177,6 +188,10 @@ export function useProfileIdentity({ route, feedback }: {
     saveName,
     displayName,
     setDisplayName,
+    givenName,
+    setGivenName,
+    familyName,
+    setFamilyName,
     bio,
     setBio,
     profileLocation,

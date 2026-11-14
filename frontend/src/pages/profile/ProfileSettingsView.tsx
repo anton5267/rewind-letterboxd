@@ -1,6 +1,7 @@
 import { useLocale, editorialText } from "../../i18n";
 import { useAuth } from "../../context/AuthContext";
 import ProfileSettingsShell, { type ProfileSettingsTab } from "../../components/ProfileSettingsShell";
+import ProfileNameFields from "../../components/ProfileNameFields";
 import ProfileBioField from "../../components/ProfileBioField";
 import ProfilePronounField from "../../components/ProfilePronounField";
 import ReplyPreferenceField from "../../components/ReplyPreferenceField";
@@ -37,6 +38,10 @@ interface Props {
     | "saveName"
     | "displayName"
     | "setDisplayName"
+    | "givenName"
+    | "setGivenName"
+    | "familyName"
+    | "setFamilyName"
     | "bio"
     | "setBio"
     | "profileLocation"
@@ -101,6 +106,10 @@ export default function ProfileSettingsView({ settingsTab, identity, account, co
     saveName,
     displayName,
     setDisplayName,
+    givenName,
+    setGivenName,
+    familyName,
+    setFamilyName,
     bio,
     setBio,
     profileLocation,
@@ -162,6 +171,7 @@ export default function ProfileSettingsView({ settingsTab, identity, account, co
         <h2 id="profile-identity-form-title">{t("profileIdentity")}</h2>
         <div><label htmlFor="settings-username">{t("username")}</label><output id="settings-username">{profile.username}</output></div>
         <div><label htmlFor="profile-display-name">{t("displayName")}</label><input id="profile-display-name" value={displayName} disabled={nameBusy} minLength={displayName.trim() ? 2 : undefined} maxLength={60} autoComplete="nickname" onChange={event => setDisplayName(event.target.value)} /></div>
+        {usesHostedSupabaseAuth && <ProfileNameFields givenName={givenName} familyName={familyName} disabled={nameBusy} onGivenName={setGivenName} onFamilyName={setFamilyName} />}
         <ProfileBioField key={`${user?.id}-${lang}`} value={bio} disabled={nameBusy} onChange={setBio} />
         <div><label htmlFor="settings-profile-location">{t("profileLocation")}</label><input id="settings-profile-location" value={profileLocation} maxLength={80} disabled={nameBusy} onChange={event => setProfileLocation(event.target.value)} /></div>
         <ProfilePronounField key={`${user?.id}-${lang}`} value={pronoun} disabled={nameBusy} onChange={setPronoun} />

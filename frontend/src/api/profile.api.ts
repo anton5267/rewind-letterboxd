@@ -21,6 +21,8 @@ export interface ProfileList {
 export type ProfileReplyPreference = "ANYONE" | "FOLLOWED" | "SELF";
 
 export interface ProfileResponse {
+  givenName?: string | null;
+  familyName?: string | null;
   id: number;
   username: string;
   displayName: string | null;
@@ -41,6 +43,8 @@ export interface ProfileResponse {
 export const getProfile = () => api.get<ProfileResponse>("/profile/me");
 
 export const updateProfile = (data: {
+  givenName?: string;
+  familyName?: string;
   displayName?: string;
   avatarUrl?: string;
   bio?: string;

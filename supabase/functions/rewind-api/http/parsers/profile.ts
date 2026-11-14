@@ -41,5 +41,12 @@ export function parseProfileUpdate(value: unknown): ProfileUpdateRequest | null 
     if (!isReplyPreference(preference)) return null;
     update.replyPreference = preference;
   }
+  for (const field of ["givenName", "familyName"] as const) {
+    if (!Object.hasOwn(body, field)) continue;
+    if (body[field] !== null && typeof body[field] !== "string") return null;
+    const name = ((body[field] ?? "") as string).trim();
+    if (name.length > 80 || name.includes("\0")) return null;
+    update[field] = name;
+  }
   return update;
 }

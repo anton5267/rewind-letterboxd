@@ -1,3 +1,4 @@
+import { getProfileDetails, saveProfileDetails } from "./shared/profile_details.ts";
 import type { MovieCardResponse } from "../contracts/catalog.ts";
 import type { PublicListCardResponse } from "../contracts/lists.ts";
 import type { PublicProfileResponse, ReplyPreference } from "../contracts/profile.ts";
@@ -308,6 +309,7 @@ export const profileRepository: Pick<RewindApiRepository,
         args: [userId],
       });
       const user = userResult.rows[0];
+      const details = await getProfileDetails(connection, userId);
       if (!user) throw new Error("The REWIND profile is unavailable.");
       const [statsResult, listsResult, ratingsResult, reviewsResult] = await Promise.all([
         connection.queryObject<{
@@ -353,6 +355,7 @@ export const profileRepository: Pick<RewindApiRepository,
       };
       const stats = statsResult.rows[0];
       const response = {
+        ...details,
         id: numericId,
         username: user.username,
         displayName: user.display_name?.trim() || user.username,
@@ -415,6 +418,7 @@ export const profileRepository: Pick<RewindApiRepository,
           Object.hasOwn(update, "replyPreference"), update.replyPreference ?? null,
         ],
       });
+      await saveProfileDetails(connection, userId, update);
       await connection.queryObject("COMMIT");
     } catch (error) {
       try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
