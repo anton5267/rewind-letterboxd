@@ -84,7 +84,7 @@ test("favorite keyboard and mouse order persists with all hidden and trailing it
   await page.screenshot({ path: test.info().outputPath("favorite-order-desktop.png"), fullPage: true });
 });
 
-test("favorite touch drag saves on phone and retains the 44px controls in en", async ({ browser }) => {
+test("favorite touch drag starts on the poster and keeps keyboard controls in en", async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 393, height: 900 }, hasTouch: true, isMobile: true });
   try {
     const state = await installOrderFixture(context);
@@ -94,15 +94,14 @@ test("favorite touch drag saves on phone and retains the 44px controls in en", a
     const section = page.locator(sectionSelector);
     const handle = section.locator('[data-list-reorder-item="101"]');
     await handle.scrollIntoViewIfNeeded();
-    const from = (await handle.boundingBox())!;
+    await expect.poll(() => handle.evaluate(element => getComputedStyle(element).opacity)).toBe("0");
+    await handle.focus();
+    await expect.poll(() => handle.evaluate(element => getComputedStyle(element).opacity)).toBe("1");
+    await handle.evaluate(element => (element as HTMLButtonElement).blur());
+    const from = (await section.getByRole("link", { name: "Film 101", exact: true }).boundingBox())!;
     const to = (await section.locator('[data-list-item-id="103"]').boundingBox())!;
-    await expect(handle.locator("img")).toHaveAttribute("src", "/images/list-entry-drag.png");
-    await expect(handle.locator("img")).toHaveJSProperty("naturalWidth", 96);
-    const grip = (await handle.locator("img").boundingBox())!;
-    expect(grip.width).toBe(31);
-    expect(grip.height).toBe(31);
-    expect(from.width).toBe(44);
-    expect(from.height).toBe(44);
+    expect(from.width).toBeGreaterThan(70);
+    expect(from.height).toBeGreaterThan(100);
     const cdp = await context.newCDPSession(page);
     await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: from.x + 22, y: from.y + 22 }] });
     await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: to.x + to.width / 2, y: to.y + to.height / 2 }] });
@@ -115,6 +114,11 @@ test("favorite touch drag saves on phone and retains the 44px controls in en", a
     expect(await section.locator("li").evaluateAll(nodes => nodes.map(node => node.getAttribute("data-list-item-id")))).toEqual(visibleIds(state.orders.get(7)!));
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
     await page.screenshot({ path: test.info().outputPath("favorite-order-phone.png"), fullPage: true });
+    const tapPoster = (await section.getByRole("link", { name: "Film 101", exact: true }).boundingBox())!;
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: tapPoster.x + tapPoster.width / 2, y: tapPoster.y + tapPoster.height / 2 }] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await expect(page).toHaveURL(/\/en\/films\/101\/?$/);
+    expect(state.writes).toHaveLength(1);
   } finally { await context.close(); }
 });
 

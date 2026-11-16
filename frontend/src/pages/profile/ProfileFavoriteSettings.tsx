@@ -1,5 +1,6 @@
-import ListReorderHandle from "../../components/ListReorderHandle";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import ListReorderHandle from "../../components/ListReorderHandle";
 import ResilientImage from "../../components/ResilientImage";
 import RetryNotice from "../../components/RetryNotice";
 import { editorialText, useLocale } from "../../i18n";
@@ -26,6 +27,9 @@ export interface ProfileFavoriteSettingsProps {
 
 export default function ProfileFavoriteSettings({ favorites }: ProfileFavoriteSettingsProps) {
   const { t, path } = useLocale();
+  const touchGesture = useRef<{ pointerId: number; sourceId: number; startX: number; startY: number; dragging: boolean } | null>(null);
+  const suppressFavoriteClick = useRef<number | null>(null);
+  const [draggingMovieId, setDraggingMovieId] = useState<number | null>(null);
   const {
     favoriteOrder,
     favoriteSettingsRef,
@@ -65,7 +69,45 @@ export default function ProfileFavoriteSettings({ favorites }: ProfileFavoriteSe
           return <li
             key={movie.id}
             data-list-item-id={movie.id}
+            data-favorite-reordering={draggingMovieId === movie.id || undefined}
             draggable={favoriteOrder.available && !disabled}
+            onPointerDown={event => {
+              suppressFavoriteClick.current = null;
+              if (!favoriteOrder.available || disabled || event.pointerType === "mouse" || !event.isPrimary) return;
+              if (!(event.target instanceof Element) || !event.target.closest("[data-favorite-poster]")) return;
+              touchGesture.current = { pointerId: event.pointerId, sourceId: movie.id, startX: event.clientX, startY: event.clientY, dragging: false };
+            }}
+            onPointerMove={event => {
+              const gesture = touchGesture.current;
+              if (!gesture || gesture.pointerId !== event.pointerId || gesture.sourceId !== movie.id) return;
+              const deltaX = event.clientX - gesture.startX;
+              const deltaY = event.clientY - gesture.startY;
+              if (!gesture.dragging && (Math.abs(deltaX) < 8 || Math.abs(deltaX) <= Math.abs(deltaY))) return;
+              event.preventDefault();
+              if (!gesture.dragging) {
+                gesture.dragging = true;
+                event.currentTarget.setPointerCapture(event.pointerId);
+                setDraggingMovieId(movie.id);
+              }
+            }}
+            onPointerUp={event => {
+              const gesture = touchGesture.current;
+              if (!gesture || gesture.pointerId !== event.pointerId || gesture.sourceId !== movie.id) return;
+              touchGesture.current = null;
+              setDraggingMovieId(null);
+              if (!gesture.dragging || disabled) return;
+              event.preventDefault();
+              suppressFavoriteClick.current = movie.id;
+              const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-list-item-id]");
+              const targetMovieId = Number(target?.dataset.listItemId);
+              if (Number.isSafeInteger(targetMovieId) && targetMovieId !== movie.id && favoritePreview.content.slice(0, 4).some(item => item.id === targetMovieId)) {
+                void favoriteOrder.move(movie.id, targetMovieId);
+              }
+            }}
+            onPointerCancel={event => {
+              if (touchGesture.current?.pointerId === event.pointerId) touchGesture.current = null;
+              setDraggingMovieId(null);
+            }}
             onDragStart={event => {
               event.dataTransfer.effectAllowed = "move";
               event.dataTransfer.setData("text/plain", String(movie.id));
@@ -81,7 +123,11 @@ export default function ProfileFavoriteSettings({ favorites }: ProfileFavoriteSe
               }
             }}
           >
-            <Link className={styles.poster} to={path(`/films/${movie.id}`)} aria-label={title}>
+            <Link className={styles.poster} data-favorite-poster to={path(`/films/${movie.id}`)} aria-label={title} onClick={event => {
+              if (suppressFavoriteClick.current !== movie.id) return;
+              event.preventDefault();
+              suppressFavoriteClick.current = null;
+            }}>
               <ResilientImage
                 src={movie.photoUrl}
                 alt=""

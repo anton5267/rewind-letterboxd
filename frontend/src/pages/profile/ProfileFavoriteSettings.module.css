@@ -86,3 +86,11 @@
 @media (prefers-reduced-motion: reduce) {
   .reorder { transition: none; }
 }
+
+@media (max-width: 767px), (hover: none) {
+  .favorites li { touch-action: pan-y; }
+  .favorites li .reorder { opacity: 0; pointer-events: none; }
+  .favorites li:is(:hover, :focus-within) .reorder { opacity: 0; pointer-events: none; }
+  .favorites li .reorder:focus-visible { opacity: 1; pointer-events: auto; }
+  .favorites li[data-favorite-reordering] .poster { outline: 2px solid var(--rewind-gold); outline-offset: 2px; }
+}
