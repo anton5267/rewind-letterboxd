@@ -150,7 +150,10 @@ export default function ProfileSettingsView({ settingsTab, identity, account, co
     {settingsTab === "authentication" && <>{passwordForm}{supabaseLinkForm}</>}
     {settingsTab === "profile" && <>
       <form className={identityStyles.form} id="settings-form-profile" data-settings-form="profile" aria-labelledby="profile-identity-form-title" aria-busy={nameBusy} onSubmit={event => { void saveName(event, "name"); }}>
-        <h2 id="profile-identity-form-title">{t("profileIdentity")}</h2>
+        <h2 id="profile-identity-form-title">
+          <span className={identityStyles.desktopHeading}>{t("profileIdentity")}</span>
+          <span className={identityStyles.phoneHeading}>{t("profile")}</span>
+        </h2>
         <div className={identityStyles.username}><label htmlFor="settings-username">{t("username")}</label><output id="settings-username">{profile.username}</output></div>
         <div className={identityStyles.displayName}><label htmlFor="profile-display-name">{t("displayName")}</label><input id="profile-display-name" value={displayName} disabled={nameBusy} minLength={displayName.trim() ? 2 : undefined} maxLength={60} autoComplete="nickname" onChange={event => setDisplayName(event.target.value)} /></div>
         {usesHostedSupabaseAuth && <ProfileNameFields className={identityStyles.names} givenName={givenName} familyName={familyName} disabled={nameBusy} onGivenName={setGivenName} onFamilyName={setFamilyName} />}

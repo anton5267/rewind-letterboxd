@@ -168,7 +168,10 @@ export default function ProfileFavoriteSettings({ favorites }: ProfileFavoriteSe
           </li>;
         })}
       </ul>)}
-      {favoriteOrder.available && (favoritePreview?.content.length ?? 0) > 1 && <p id="favorite-reorder-instructions" className={styles.instructions}>{t("favoriteReorderHelp")}</p>}
+      {favoriteOrder.available && (favoritePreview?.content.length ?? 0) > 1 && <p id="favorite-reorder-instructions" className={styles.instructions}>
+        <span className={styles.desktopInstructions}>{t("favoriteReorderHelp")}</span>
+        <span className={styles.phoneInstructions}>{t("favoriteReorderPhoneHelp")}</span>
+      </p>}
       <Link className={styles.manageLink} to={`${path("/profile")}?view=collection&collection=favorites#profile-collections`}>{t("favoriteFilms")} <span aria-hidden="true">→</span></Link>
     </section>
   );

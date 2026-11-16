@@ -92,8 +92,15 @@ test("favorite touch drag starts on the poster and keeps keyboard controls in en
     await signInHostedFixture(page, "en");
     await page.goto("/en/profile?settings=profile");
     const section = page.locator(sectionSelector);
+    const phoneHeading = page.locator("#profile-identity-form-title span").nth(1);
+    await expect(phoneHeading).toHaveText("Profile");
+    await expect(phoneHeading).toBeVisible();
+    await expect(phoneHeading).toHaveCSS("color", "rgb(126, 126, 126)");
     const handle = section.locator('[data-list-reorder-item="101"]');
     await handle.scrollIntoViewIfNeeded();
+    const phoneHelp = section.locator("#favorite-reorder-instructions").getByText("Press and drag posters to change their order", { exact: true });
+    await expect(phoneHelp).toBeVisible();
+    await expect(handle).toHaveAccessibleDescription(/up and down arrow keys/i);
     await expect.poll(() => handle.evaluate(element => getComputedStyle(element).opacity)).toBe("0");
     await handle.focus();
     await expect.poll(() => handle.evaluate(element => getComputedStyle(element).opacity)).toBe("1");

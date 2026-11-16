@@ -1,3 +1,5 @@
+.phoneHeading { display: none; }
+
 @media (min-width: 1024px) {
   .form.form {
     width: 100%;
@@ -44,4 +46,9 @@
     font-size: 22px;
     line-height: 1.2;
   }
+}
+
+@media (max-width: 767px) {
+  .desktopHeading { display: none; }
+  .phoneHeading { display: inline; color: #7e7e7e; font-weight: 400; }
 }
