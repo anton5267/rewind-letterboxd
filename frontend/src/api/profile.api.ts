@@ -30,6 +30,7 @@ export interface ProfileResponse {
   email: string;
   role: string;
   avatarUrl: string | null;
+  website?: string | null;
   bannerUrl?: string | null;
   bio?: string | null;
   location?: string | null;
@@ -51,6 +52,7 @@ export const updateProfile = (data: {
   displayName?: string;
   avatarUrl?: string;
   bio?: string;
+  website?: string;
   location?: string;
   pronoun?: string;
   replyPreference?: ProfileReplyPreference;

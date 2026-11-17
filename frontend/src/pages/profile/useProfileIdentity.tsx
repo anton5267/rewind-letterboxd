@@ -64,6 +64,8 @@ export function useProfileIdentity({ route, feedback }: {
 
   const [bio, setBio] = useState("");
 
+  const [website, setWebsite] = useState("");
+
   const [profileLocation, setProfileLocation] = useState("");
 
   const [pronoun, setPronoun] = useState("");
@@ -86,6 +88,7 @@ export function useProfileIdentity({ route, feedback }: {
     setGivenName("");
     setFamilyName("");
     setPinnedListId(null);
+    setWebsite("");
   }, [isAuth, user?.id]);
 
   useEffect(() => {
@@ -105,6 +108,7 @@ export function useProfileIdentity({ route, feedback }: {
       setPinnedListId(data.pinnedListId ?? null);
       setAvatarUrl(data.avatarUrl ?? "");
       setBio(data.bio ?? "");
+      setWebsite(data.website ?? "");
       setProfileLocation(data.location ?? "");
       setPronoun(data.pronoun ?? "");
       setReplyPreference(data.replyPreference ?? "ANYONE");
@@ -176,10 +180,13 @@ export function useProfileIdentity({ route, feedback }: {
     try {
       const normalizedAvatarUrl = safeHttpUrl(avatarUrl);
       if (fields !== "name" && avatarUrl.trim() && !normalizedAvatarUrl) { report("error", t("invalidAvatarUrl")); return; }
+      const normalizedWebsite = safeHttpUrl(website);
+      if (fields !== "avatar" && website.trim() && !normalizedWebsite) { report("error", t("invalidSocialLinkUrl")); return; }
       const { data } = await updateProfile({
         ...(fields !== "avatar" ? { displayName: displayName.trim() } : {}),
         ...(fields !== "name" ? { avatarUrl: normalizedAvatarUrl ?? "" } : {}),
         ...(fields !== "avatar" ? { bio: bio.trim(), location: profileLocation.trim(), pronoun, replyPreference } : {}),
+        ...(fields !== "avatar" ? { website: normalizedWebsite ?? "" } : {}),
         ...(fields !== "avatar" && usesHostedSupabaseAuth ? { givenName: givenName.trim(), familyName: familyName.trim() } : {}),
         ...(fields !== "avatar" && usesHostedSupabaseAuth ? { pinnedListId } : {}),
       }, requestUserId);
@@ -192,6 +199,7 @@ export function useProfileIdentity({ route, feedback }: {
         setFamilyName(data.familyName ?? "");
         setPinnedListId(data.pinnedListId ?? null);
         setBio(data.bio ?? "");
+        setWebsite(data.website ?? "");
         setProfileLocation(data.location ?? "");
         setPronoun(data.pronoun ?? "");
         setReplyPreference(data.replyPreference ?? "ANYONE");
@@ -227,6 +235,8 @@ export function useProfileIdentity({ route, feedback }: {
     setFamilyName,
     bio,
     setBio,
+    website,
+    setWebsite,
     profileLocation,
     setProfileLocation,
     pronoun,

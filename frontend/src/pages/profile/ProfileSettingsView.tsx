@@ -20,6 +20,7 @@ import { type ProfileAccountModel } from "./useProfileAccount";
 import { type ProfileConnectionsModel } from "./useProfileConnections";
 import { type ProfileFeedbackModel } from "./useProfileFeedback";
 import ProfileFavoriteSettings, { type ProfileFavoriteSettingsProps } from "./ProfileFavoriteSettings";
+import ProfileWebsiteField from "./ProfileWebsiteField";
 
 interface Props {
   settingsTab: ProfileSettingsTab;
@@ -50,6 +51,8 @@ interface Props {
     | "setFamilyName"
     | "bio"
     | "setBio"
+    | "website"
+    | "setWebsite"
     | "profileLocation"
     | "setProfileLocation"
     | "pronoun"
@@ -107,6 +110,8 @@ export default function ProfileSettingsView({ settingsTab, identity, account, co
     setFamilyName,
     bio,
     setBio,
+    website,
+    setWebsite,
     profileLocation,
     setProfileLocation,
     pronoun,
@@ -169,7 +174,10 @@ export default function ProfileSettingsView({ settingsTab, identity, account, co
         ) : (
           <div className={identityStyles.email}><label htmlFor="settings-email">{t("email")}</label><output id="settings-email">{profile.email}</output></div>
         )}
-        <div className={identityStyles.location}><label htmlFor="settings-profile-location">{t("profileLocation")}</label><input id="settings-profile-location" value={profileLocation} maxLength={80} disabled={nameBusy} onChange={event => setProfileLocation(event.target.value)} /></div>
+        <div className={identityStyles.locationWebsite} data-profile-location-website>
+          <div className={identityStyles.location}><label htmlFor="settings-profile-location">{t("profileLocation")}</label><input id="settings-profile-location" value={profileLocation} maxLength={80} disabled={nameBusy} onChange={event => setProfileLocation(event.target.value)} /></div>
+          <ProfileWebsiteField value={website} disabled={nameBusy} onChange={setWebsite} />
+        </div>
         <ProfileBioField className={identityStyles.bio} key={`bio-${user?.id}-${lang}`} value={bio} disabled={nameBusy} onChange={setBio} />
         <ProfilePronounField
           className={identityStyles.pronoun}

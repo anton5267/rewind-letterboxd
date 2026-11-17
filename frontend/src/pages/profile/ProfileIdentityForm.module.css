@@ -1,5 +1,7 @@
 .phoneHeading { display: none; }
 
+.locationWebsite { display: grid; gap: 12px; }
+
 @media (min-width: 1024px) {
   .form.form {
     width: 100%;
@@ -14,7 +16,7 @@
   .displayName { grid-area: 2 / 2; }
   .names { grid-area: 3 / 1 / auto / span 2; }
   .form.form > .names { column-gap: 8px; }
-  .location { grid-area: 5 / 1 / auto / span 2; }
+  .locationWebsite { grid-area: 5 / 1 / auto / span 2; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 12px; }
   .pronoun { grid-area: 4 / 3 / auto / span 2; }
   .replies { grid-area: 5 / 3 / auto / span 2; }
   .email { grid-area: 4 / 1 / auto / span 2; }
