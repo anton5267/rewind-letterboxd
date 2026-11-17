@@ -19,7 +19,12 @@ export default defineConfig({
       if (publicBase === '/') return
       for (const output of Object.values(bundle)) {
         if (output.type === 'chunk') {
-          output.code = output.code.replace(/(["'])\/images\//g, `$1${publicBase}images/`)
+          output.code = output.code.replace(/(["'`])\/images\//g, `$1${publicBase}images/`)
+        } else if (output.type === 'asset' && output.fileName.endsWith('.css')) {
+          const css = typeof output.source === 'string'
+            ? output.source
+            : new TextDecoder().decode(output.source)
+          output.source = css.replace(/url\((["']?)\/images\//g, `url($1${publicBase}images/`)
         }
       }
     },
