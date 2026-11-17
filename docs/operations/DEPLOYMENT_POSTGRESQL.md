@@ -29,6 +29,8 @@ Local Spring/MySQL and hosted PostgreSQL have different records. Historical isol
 
 The manual workflow `.github/workflows/backup-supabase.yml` exports the `rewind` schema using PostgreSQL 17, checks the archive table of contents, encrypts it with GPG AES256, and uploads only ciphertext plus its SHA-256 checksum. Artifacts expire after 30 days. The hosted database reports PostgreSQL 17.11. The published workflow is available through manual dispatch. Its first production export and restore rehearsal remain pending.
 
+To verify an existing artifact without changing production, dispatch the workflow with `operation=restore` and the numeric `restore_run_id` of a non-expired backup (the first artifact is run `43932021794`, retained until 16 Dec 2026). The job downloads the encrypted artifact, validates its checksum, decrypts it only in the runner's temporary directory, and restores it into an ephemeral PostgreSQL 17 service. It scans all restored tables and checks that foreign keys and sequences exist; private row counts are not written to public Actions logs. The runner and disposable database are removed when the job ends. This verifies archive restoration, but does not reconcile the snapshot with current live rows or cover Auth, Storage, secrets, and settings.
+
 Configure repository Actions secrets at `https://github.com/anton5267/rewind-letterboxd/settings/secrets/actions` using the project's **session pooler** connection details, port 5432.
 
 - `SUPABASE_BACKUP_HOST` — session pooler hostname.

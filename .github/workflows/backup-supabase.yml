@@ -2,6 +2,19 @@ name: Encrypted Supabase application backup
 
 on:
   workflow_dispatch:
+    inputs:
+      operation:
+        description: Run a fresh encrypted backup or restore an existing encrypted artifact into a disposable PostgreSQL database
+        type: choice
+        required: true
+        default: backup
+        options:
+          - backup
+          - restore
+      restore_run_id:
+        description: Source workflow run ID for the encrypted artifact (required for restore)
+        type: string
+        required: false
 
 permissions:
   contents: read
@@ -12,6 +25,7 @@ concurrency:
 
 jobs:
   backup:
+    if: inputs.operation == 'backup'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -62,3 +76,53 @@ jobs:
             ${{ runner.temp }}/rewind-backup/rewind.dump.gpg.sha256
           retention-days: 30
           if-no-files-found: error
+
+  restore:
+    if: inputs.operation == 'restore'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: read
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: rewind_restore
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: rewind-restore-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d rewind_restore"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate restore run ID
+        shell: bash
+        env:
+          RESTORE_RUN_ID: ${{ inputs.restore_run_id }}
+        run: |
+          if [[ ! "$RESTORE_RUN_ID" =~ ^[0-9]+$ ]]; then
+            echo "::error::Choose restore and provide the numeric run ID of a non-expired encrypted backup."
+            exit 2
+          fi
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.restore_run_id }}
+          name: rewind-encrypted-backup-${{ inputs.restore_run_id }}
+          path: ${{ runner.temp }}/rewind-backup-artifact
+      - name: Restore verified archive into disposable PostgreSQL
+        shell: bash
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.REWIND_BACKUP_PASSPHRASE }}
+          RESTORE_RUN_ID: ${{ inputs.restore_run_id }}
+          PGHOST: 127.0.0.1
+          PGPORT: "5432"
+          PGDATABASE: rewind_restore
+          PGUSER: postgres
+          PGPASSWORD: rewind-restore-only
+          PGSSLMODE: disable
+        run: bash scripts/restore-supabase-backup.sh "$RUNNER_TEMP/rewind-backup-artifact"
