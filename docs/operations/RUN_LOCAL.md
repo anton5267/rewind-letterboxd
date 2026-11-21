@@ -1,6 +1,6 @@
 # Локальний запуск Rewind
 
-Усі команди починаються з кореня Git-репозиторію. Потрібні Docker Desktop; для dev frontend — Node.js 20 (від 20.19) або 22.12+. Локальний Java запуск потребує JDK 17. Секрети створюються у Git-ignored `.env`.
+Усі команди починаються з кореня Git-репозиторію. Потрібні Docker Desktop; для dev frontend — Node.js 20 (від 20.19) або 22.12+. Локальний Java запуск потребує JDK 25. Секрети створюються у Git-ignored `.env`.
 
 ## Docker Compose
 

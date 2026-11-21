@@ -56,6 +56,7 @@ A source comparison found differences between these code tokens and Figma's font
 | Admin Movies | `1260:3772`, `1260:4840`, `1494:6790` | Route/state is not settled by the frame labels: the latest review found profile-style content and no outgoing prototype link. Preserve supported `/admin?view=movies` behavior; do not claim parity or invent fields. |
 | Search and lists | See the [archived candidate snapshot](../archive/FIGMA_SCREEN_CANDIDATES_2026.md) | Candidate IDs are source pointers, not runtime acceptance. |
 | Own list settings/entries | `1033:6171`, `1034:6494` | `/lists?list=:id&mode=edit`. Phone settings show an eight-poster preview with the full count and open a separate entries view. Search/add is server-paginated, with retry and existing-item protection. Original Back/Remove/Public/Tag/Drag assets are used. Controlled metadata drafts and keyboard focus survive the 767/768 breakpoint. Transitions use 160ms opacity/translation with reduced-motion opt-out. Chromium touch/keyboard/mouse and API-fixture flows passed. Ranked/unranked uses the saved mode and retains item order. |
+| Films discovery | `1480:6235`, `1480:7843` | `/films/discover`. Popular films, recent reviews, popular reviews and the real team-list feed are API-backed, with localized loading, retry and empty states. The team feed uses existing `/lists/public/team` data and does not invent Crew Picks. |
 
 ### Person filmography filters
 

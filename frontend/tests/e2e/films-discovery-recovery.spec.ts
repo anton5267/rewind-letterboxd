@@ -15,6 +15,7 @@ const reviewPage = { content: [], totalPages: 0, totalElements: 0, number: 0, si
 test("Films Discovery recovers API failures, applies filters and keeps retry keyboard focus", async ({ page }, testInfo) => {
   let filmRequests = 0;
   let genreRequests = 0;
+  let crewRequests = 0;
 
   await page.route("**/api/users/me", route => route.fulfill({ status: 401, json: { message: "Unauthenticated" } }));
   await page.route("**/api/auth/csrf", route => route.fulfill({ json: { token: "films-discovery-recovery" } }));
@@ -33,6 +34,30 @@ test("Films Discovery recovers API failures, applies filters and keeps retry key
   });
   await page.route("**/api/reviews/recent**", route => route.fulfill({ json: reviewPage }));
   await page.route("**/api/reviews/popular**", route => route.fulfill({ json: reviewPage }));
+  await page.route("**/api/lists/public/team**", route => {
+    crewRequests += 1;
+    return crewRequests === 1
+      ? route.fulfill({ status: 503, json: { message: "Temporary failure" } })
+      : route.fulfill({
+          json: {
+            content: [{
+              id: 88501,
+              name: "Recovered crew choice",
+              description: "Team-curated films",
+              ownerId: 88502,
+              ownerUsername: "rewind",
+              tags: [],
+              likeCount: 2,
+              itemCount: 3,
+              previewMovies: [],
+            }],
+            totalPages: 1,
+            totalElements: 1,
+            number: 0,
+            size: 6,
+          },
+        });
+  });
 
   await page.setViewportSize({ width: 320, height: 900 });
   await page.goto("/uk/films/discover");
@@ -57,6 +82,12 @@ test("Films Discovery recovers API failures, applies filters and keeps retry key
   await page.screenshot({ path: resolve(captureDirectory, `${platform}-uk-phone-393.png`), fullPage: true });
 
   await page.setViewportSize({ width: 1440, height: 1000 });
+  const crew = page.getByRole("region", { name: "Добірки команди" });
+  const crewRetry = crew.getByRole("button", { name: "Спробувати ще" });
+  await expect(crewRetry).toBeVisible();
+  await crewRetry.click();
+  await expect(crew).toHaveAttribute("aria-busy", "false");
+  await expect(crew.getByRole("link", { name: "Recovered crew choice" })).toBeVisible();
   const genreRetry = page.getByRole("button", { name: "Спробувати ще" });
   await expect(genreRetry).toBeVisible();
   await genreRetry.click();

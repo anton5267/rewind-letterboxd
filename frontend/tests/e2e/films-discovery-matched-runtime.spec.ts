@@ -35,6 +35,24 @@ const makeReviews = (count: number) => ({
   size: count,
 });
 
+const makeCrewLists = () => ({
+  content: [{
+    id: 88401,
+    name: "Crew choice fixture",
+    description: "Team-curated films",
+    ownerId: 88402,
+    ownerUsername: "rewind",
+    tags: [],
+    likeCount: 3,
+    itemCount: 4,
+    previewMovies: [],
+  }],
+  totalPages: 1,
+  totalElements: 1,
+  number: 0,
+  size: 6,
+});
+
 const near = (actual: number | undefined, expected: number) => {
   expect(actual).toBeDefined();
   expect(Math.abs(actual! - expected)).toBeLessThan(1.1);
@@ -50,6 +68,7 @@ test("Films Discovery matches current desktop and phone READY anchors", async ({
   await page.route("**/api/genres", route => route.fulfill({ json: [{ id: 2, name: "Science Fiction" }] }));
   await page.route("**/api/reviews/recent**", route => route.fulfill({ json: makeReviews(8) }));
   await page.route("**/api/reviews/popular**", route => route.fulfill({ json: makeReviews(4) }));
+  await page.route("**/api/lists/public/team**", route => route.fulfill({ json: makeCrewLists() }));
 
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/uk/films/discover");
@@ -60,6 +79,8 @@ test("Films Discovery matches current desktop and phone READY anchors", async ({
     reviews: page.getByRole("heading", { level: 2, name: "Популярні огляди цього тижня" }),
   };
   await expect(page.getByRole("heading", { level: 2, name: "Вибір команди" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { level: 2, name: "Добірки команди" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Crew choice fixture" })).toBeVisible();
   await expect(page.locator('main header select[aria-label="Жанр"]')).toBeEnabled();
 
   const popularSection = headings.popular.locator("xpath=ancestor::section[1]");

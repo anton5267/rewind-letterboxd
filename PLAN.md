@@ -27,6 +27,7 @@ Spring Boot/MySQL/Redis/Mailpit мають окремий локальний ж�
 - [x] Test-fixture review охопив 16 файлів. Виправлені featured/team feeds, base-path navigation, Admin private/system assertions; signup включений у спільний набір. 17 цільових fixture-сценаріїв пройшли на root і project-prefix середовищах.
 
 - [x] Нижня мобільна навігація використовує п’ять оригінальних Figma assets та окремий MobileNavIcon зі стилями. Перевірені 92px rail, 53px targets, UK/EN guest/member, 320/393px та keyboard Search. Повна типографіка й решта shared-header states відкриті.
+- [x] Films discovery має реальну секцію Crew Picks із `/lists/public/team`, не вигаданими sample cards. Додані UK/EN loading/error/empty/retry стани та targeted Playwright fixtures. Повна frame parity решти discovery/states продовжує перевірятися.
 
 ## Наступна робота
 

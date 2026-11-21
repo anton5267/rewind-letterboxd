@@ -2,13 +2,15 @@ import { useEffect, useRef, useState, type FocusEvent } from "react";
 import { Link } from "react-router-dom";
 import { getGenres, searchMovies, type Genre, type MovieCard } from "../api/search.api";
 import { getPopularReviews, getRecentReviews, type RecentReview } from "../api/reviews.api";
+import { getPublicListFeed, type PublicList } from "../api/lists.api";
+import ListPosterStack from "../components/ListPosterStack";
 import ResilientImage from "../components/ResilientImage";
 import RetryNotice from "../components/RetryNotice";
 import { editorialText, formatReviewDate, formatMovieYear, localizeGenreName, useLocale } from "../i18n";
 import { getUserInitial, getUserName } from "../utils/userIdentity";
 import styles from "./FilmsDiscover.module.css";
 
-type FeedKey = "popular" | "recent" | "reviews";
+type FeedKey = "popular" | "recent" | "reviews" | "crew";
 
 function revealFocusedPoster(event: FocusEvent<HTMLAnchorElement>) {
   event.currentTarget.scrollIntoView({ block: "nearest", inline: "nearest" });
@@ -28,9 +30,10 @@ export default function FilmsDiscover() {
   const [genreId, setGenreId] = useState("");
   const [recent, setRecent] = useState<RecentReview[]>([]);
   const [reviews, setReviews] = useState<RecentReview[]>([]);
-  const [loading, setLoading] = useState<Record<FeedKey, boolean>>({ popular: true, recent: true, reviews: true });
+  const [crewPicks, setCrewPicks] = useState<PublicList[]>([]);
+  const [loading, setLoading] = useState<Record<FeedKey, boolean>>({ popular: true, recent: true, reviews: true, crew: true });
   const [errors, setErrors] = useState<Partial<Record<FeedKey, boolean>>>({});
-  const [retry, setRetry] = useState<Record<FeedKey, number>>({ popular: 0, recent: 0, reviews: 0 });
+  const [retry, setRetry] = useState<Record<FeedKey, number>>({ popular: 0, recent: 0, reviews: 0, crew: 0 });
   const retryFocus = useRef<Partial<Record<FeedKey, { origin: HTMLElement; lang: string }>>>({});
   const genreSelectRef = useRef<HTMLSelectElement>(null);
   const genreFeedbackRef = useRef<HTMLDivElement>(null);
@@ -107,6 +110,18 @@ export default function FilmsDiscover() {
   }, [lang, retry.reviews]);
 
   useEffect(() => {
+    let current = true;
+    setLoading(value => ({ ...value, crew: true }));
+    setErrors(value => { const next = { ...value }; delete next.crew; return next; });
+    setCrewPicks([]);
+    getPublicListFeed("team", 0, undefined, 6)
+      .then(({ data }) => { if (current) setCrewPicks(data.content); })
+      .catch(() => { if (current) setErrors(value => ({ ...value, crew: true })); })
+      .finally(() => { if (current) setLoading(value => ({ ...value, crew: false })); });
+    return () => { current = false; };
+  }, [lang, retry.crew]);
+
+  useEffect(() => {
     const readyKeys = (Object.keys(retryFocus.current) as FeedKey[]).filter(key => retryFocus.current[key] && !loading[key]);
     if (readyKeys.length === 0) return;
     const frame = window.requestAnimationFrame(() => {
@@ -120,7 +135,7 @@ export default function FilmsDiscover() {
         const section = document.querySelector<HTMLElement>(`[data-films-feed="${key}"]`);
         if (errors[key]) section?.querySelector<HTMLButtonElement>("[data-retry-button]")?.focus();
         else {
-          const headingId = key === "popular" ? "popular-films-title" : key === "recent" ? "recent-films-title" : "popular-reviews-title";
+          const headingId = key === "popular" ? "popular-films-title" : key === "recent" ? "recent-films-title" : key === "reviews" ? "popular-reviews-title" : "crew-picks-title";
           document.getElementById(headingId)?.focus();
         }
       });
@@ -229,6 +244,21 @@ export default function FilmsDiscover() {
               </div>
               {review.rating != null && <strong className={styles.reviewRating} role="img" aria-label={`${t("rating")}: ${review.rating}/5`}><img src="/images/movie-star.png" width={8} height={8} alt="" aria-hidden="true" />{review.rating.toFixed(1)}</strong>}
             </article>;
+          })}
+        </div>}
+      </section>
+
+      <section className={`${styles.section} ${styles.crewSection}`} data-films-feed="crew" aria-labelledby="crew-picks-title" aria-busy={loading.crew}>
+        <div className={styles.heading}><h2 id="crew-picks-title" tabIndex={-1}>{t("crewPicks")}</h2><Link to={path("/lists/discover?feed=team")}>{t("homeMore")}</Link></div>
+        {loading.crew && <><p className="srOnly" role="status">{t("loading")}</p><div className={styles.posterRail} aria-hidden="true">{[0, 1, 2, 3].map(item => <div className={`${styles.railPoster} ${styles.skeleton}`} key={item} />)}</div></>}
+        {errors.crew && <RetryNotice className={styles.status} message={t("loadCrewPicksError")} retryLabel={t("retry")} busy={loading.crew} onRetry={() => retryFeed("crew")} />}
+        {!loading.crew && !errors.crew && crewPicks.length === 0 && <p className={styles.empty}>{t("noCrewPicks")}</p>}
+        {!loading.crew && !errors.crew && crewPicks.length > 0 && <div className={styles.posterRail} role="group" aria-label={t("crewPicks")}>
+          {crewPicks.map(list => {
+            const name = editorialText(list.name, t("lists"));
+            return <Link className={styles.railPoster} key={list.id} to={path(`/lists/public/${list.id}`)} aria-label={name} title={name}>
+              <ListPosterStack movies={list.previewMovies ?? []} label={name} fallbackTitle={t("untitledFilm")} layout="strip" />
+            </Link>;
           })}
         </div>}
       </section>
