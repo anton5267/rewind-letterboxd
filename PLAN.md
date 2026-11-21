@@ -28,6 +28,7 @@ Spring Boot/MySQL/Redis/Mailpit мають окремий локальний ж�
 
 - [x] Нижня мобільна навігація використовує п’ять оригінальних Figma assets та окремий MobileNavIcon зі стилями. Перевірені 92px rail, 53px targets, UK/EN guest/member, 320/393px та keyboard Search. Повна типографіка й решта shared-header states відкриті.
 - [x] Films discovery має реальну секцію Crew Picks із `/lists/public/team`, не вигаданими sample cards. Додані UK/EN loading/error/empty/retry стани та targeted Playwright fixtures. Повна frame parity решти discovery/states продовжує перевірятися.
+- [x] Hosted Crew Picks deployment опубліковано в commit `ae7c2d8`; live admin/profile/settings/notifications/list routes і Admin Movies catalog перевірені read-only. Живий team feed порожній і збережений як real empty state.
 
 ## Наступна робота
 
