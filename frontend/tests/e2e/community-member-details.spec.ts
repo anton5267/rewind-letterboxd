@@ -24,6 +24,12 @@ for (const lang of ["uk", "en"] as const) {
     });
     await page.setViewportSize({ width: 1440, height: 1100 });
     await page.goto(`/${lang}/community`);
+    const heroBanner = page.locator('[class*="hero"] > p').last();
+    const heroBox = await heroBanner.boundingBox();
+    expect(heroBox?.x).toBe(120);
+    expect(heroBox?.y).toBe(316);
+    expect(heroBox?.width).toBe(1200);
+    expect(heroBox?.height).toBe(260);
     const showcase = page.locator('[data-community-section="hq"]');
     const directory = page.locator('[data-community-section="directory"]');
     const card = showcase.locator('[data-network-member-id="11"]');
