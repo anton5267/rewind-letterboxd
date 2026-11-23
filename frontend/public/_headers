@@ -1,0 +1,6 @@
+/*
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; frame-ancestors 'self'; object-src 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' data: blob: https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; media-src 'self' https: blob:; connect-src 'self' https://cuirmicbzspomijgkkwo.supabase.co wss://cuirmicbzspomijgkkwo.supabase.co https://raw.githubusercontent.com; upgrade-insecure-requests
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
