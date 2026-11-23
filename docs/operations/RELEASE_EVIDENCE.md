@@ -198,7 +198,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 
 ## Journal article desktop frame recheck — 23 November 2026
 
-- Re-read the current Figma desktop article frame `844:1547` and its rendered image. Re-ran `journal-design-flow.spec.ts` against the candidate: **3/3 passed**, including the article fixture's 1200px content frame, breadcrumb/divider, 1126×642 rounded hero, heading/byline order, reader-content flow and no horizontal overflow at 1440px; the phone adaptation also had no overflow at 393px.
+- Re-read the current Figma desktop article frame `844:1547` and its rendered image. Its excerpt starts at x137px while the reader rail starts at x133px. Added the source's 4px excerpt offset on desktop and kept the phone excerpt on its x16px content rail. `journal-design-flow.spec.ts` and `journal-media.spec.ts` then passed **7/7** together; assertions cover the 1200px article frame, breadcrumb/divider, 1126×642 rounded hero, three equal collage panels, heading/byline/excerpt positions, reader-content flow and no horizontal overflow at 1440px/393px.
 - This accepts the tested structural geometry and responsive fit only. Figma's article copy and collage are dynamic API content; the fixture does not prove same-content visual parity. No mobile article frame is confirmed, and typography/full-frame parity remain open. No Figma reference assets were copied into the product.
 
 ## Journal media/admin fixture recheck — 23 November 2026
