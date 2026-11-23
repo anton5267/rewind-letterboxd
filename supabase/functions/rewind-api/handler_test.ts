@@ -782,7 +782,7 @@ Deno.test("movie details include private flags for a verified user and are not c
         id, imdbId: null, tmdbId: null, originalLanguage: null, title: "Example", durationMinutes: null,
         releaseDate: null, ageRating: null, rating: null, shortPlot: null, photoUrl: null,
         backdropUrl: null, trailerUrl: null, genres: [], directors: [], producers: [], actors: [],
-        externalRatings: [], similarMovies: [], myFlags: null,
+        writers: [], externalRatings: [], similarMovies: [], myFlags: null,
       };
     },
     async getMyMovieStatus() { return { inWatchlist: true, watched: true, favorite: false, myRating: null }; },
@@ -1019,7 +1019,7 @@ Deno.test("movie detail returns the public fields and null user flags", async ()
         releaseDate: "2024-01-10", ageRating: null, rating: 4.5, shortPlot: null,
         photoUrl: "https://example.invalid/poster.jpg", backdropUrl: null, trailerUrl: null,
         genres: [{ id: 4, name: "Comedy" }], directors: [], producers: [{ id: 8, name: "Producer One", photoUrl: null }], actors: [],
-        externalRatings: [], similarMovies: [], myFlags: null,
+        writers: [], externalRatings: [], similarMovies: [], myFlags: null,
       };
     },
   });

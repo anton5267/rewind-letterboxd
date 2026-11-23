@@ -398,6 +398,41 @@ export const catalogueRepository: Pick<RewindApiRepository,
         if (!Number.isSafeInteger(numericId)) throw new Error(`${field} is outside the safe JSON integer range`);
         return numericId;
       };
+      const crewCreditsByMovie = new Map<number, { department: string; job: string }[]>();
+      const tmdbPersonId = Number(person.tmdb_id);
+      let careerJobs: string[] = [];
+      if (Number.isSafeInteger(tmdbPersonId) && tmdbPersonId > 0) {
+        const careerResult = await connection.queryObject<{ job: string }>({
+          text: `SELECT DISTINCT c.job
+                 FROM rewind.movie_crew_credits c
+                 JOIN rewind.movies m ON m.id = c.movie_id AND m.is_published = TRUE
+                 WHERE c.tmdb_person_id = $1
+                 ORDER BY c.job`,
+          args: [tmdbPersonId],
+        });
+        careerJobs = careerResult.rows.map((credit) => credit.job);
+        if (filmResult.rows.length > 0) {
+          const creditsResult = await connection.queryObject<{
+            movie_id: string;
+            department: string;
+            job: string;
+          }>({
+            text: `SELECT c.movie_id::text AS movie_id, c.department, c.job
+                   FROM rewind.movie_crew_credits c
+                   JOIN rewind.movies m ON m.id = c.movie_id AND m.is_published = TRUE
+                   WHERE c.tmdb_person_id = $1
+                     AND c.movie_id = ANY($2::bigint[])
+                   ORDER BY c.movie_id, c.department, c.job`,
+            args: [tmdbPersonId, filmResult.rows.map((film) => film.id)],
+          });
+          for (const credit of creditsResult.rows) {
+            const movieId = safeId(credit.movie_id, "Movie ID");
+            const existing = crewCreditsByMovie.get(movieId) ?? [];
+            existing.push({ department: credit.department, job: credit.job });
+            crewCreditsByMovie.set(movieId, existing);
+          }
+        }
+      }
       return {
         id: safeId(person.id, "Person ID"),
         name: person.name,
@@ -405,6 +440,7 @@ export const catalogueRepository: Pick<RewindApiRepository,
         type,
         relatedPeople: await findRelatedPersonRoles(connection, type, person.tmdb_id),
         tmdbId: Number.isSafeInteger(Number(person.tmdb_id)) && Number(person.tmdb_id) > 0 ? Number(person.tmdb_id) : null,
+        careerJobs,
         films: filmResult.rows.map((film) => ({
           id: safeId(film.id, "Movie ID"),
           title: film.title,
@@ -412,6 +448,7 @@ export const catalogueRepository: Pick<RewindApiRepository,
           rating: film.rating === null ? null : Number(film.rating),
           photoUrl: film.photo_url,
           characterName: film.character_name,
+          crewCredits: crewCreditsByMovie.get(safeId(film.id, "Movie ID")) ?? [],
         })),
       };
     } finally {

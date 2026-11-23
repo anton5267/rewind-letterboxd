@@ -23,11 +23,11 @@ Desktop sources `251:612` and `251:625` were refreshed on 14 November. The exist
 
 The desktop background uses a pointer-transparent layer with the source 5px backdrop and 50px blur. A fixed-header scroll state uses 85% black and removes the layer blur for readable navigation over bright controls. Top/scroll restoration, menu focus and mobile containing-block behavior have five focused scenarios. Lists discovery uses its dedicated header variant.
 
-UK/EN geometry, image loading, search navigation and menu keyboard checks passed at 1440, 1024, 768, 393 and 320px. Inter differs from the source SF Pro Display. Full typography, remaining mobile-header states/icons and complete shared-frame parity remain open. [Dated evidence](../archive/RELEASE_EVIDENCE_2026_11.md#shared-navigation-figma-assets--14112026).
+UK/EN geometry, image loading, search navigation and menu keyboard checks passed at 1440, 1024, 768, 393 and 320px. The font stack prefers SF Pro Display/system SF where available and falls back to bundled Inter elsewhere. Apple-device acceptance, remaining mobile-header states/icons and complete shared-frame parity remain open. [Dated evidence](../archive/RELEASE_EVIDENCE_2026_11.md#shared-navigation-figma-assets--14112026).
 
 ### Mobile bottom navigation
 
-Fresh Home sources `1411:3473` / `1327:3210` and the visible navigation instance `1411:3497` share the five original Home/Search/Add/Journal/Profile assets. MobileNavIcon and its CSS own the 19px slots, 30×30 Home/Add/Profile images, 24×24 Search and 27×30 Journal. Header supplies the 92px rail, 20px top corners, centered 70px columns and 53px targets, shrinking columns at 320px. Safe-area padding uses max(34px, env(safe-area-inset-bottom)). The runtime rail spans the viewport from x0, adapting the frame instance’s x−3 offset. Existing UK/EN route labels and the profile/auth destination are retained. Four guest/member fixtures and two detail-navigation regressions passed. Inter differs from SF Pro Display. [Dated evidence](../archive/RELEASE_EVIDENCE_2026_11.md#mobile-navigation-source-assets--14112026).
+Fresh Home sources `1411:3473` / `1327:3210` and the visible navigation instance `1411:3497` share the five original Home/Search/Add/Journal/Profile assets. MobileNavIcon and its CSS own the 19px slots, 30×30 Home/Add/Profile images, 24×24 Search and 27×30 Journal. Header supplies the 92px rail, 20px top corners, centered 70px columns and 53px targets, shrinking columns at 320px. Safe-area padding uses max(34px, env(safe-area-inset-bottom)). The runtime rail spans the viewport from x0, adapting the frame instance’s x−3 offset. Existing UK/EN route labels and the profile/auth destination are retained. Four guest/member fixtures and two detail-navigation regressions passed. The SF-first font stack has not had Apple-device visual acceptance. [Dated evidence](../archive/RELEASE_EVIDENCE_2026_11.md#mobile-navigation-source-assets--14112026).
 
 ## Current code tokens
 
@@ -35,14 +35,14 @@ These are the active implementation tokens in [global.css](../../frontend/src/gl
 
 | Group | Tokens |
 | --- | --- |
-| Font | `--rewind-font-sans: Inter, system-ui, sans-serif` (local variable font; weights 100–900) |
+| Font | `--rewind-font-sans: "SF Pro Display", -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif`; uses the platform SF font where available and the bundled Inter variable font elsewhere |
 | Base colors | `--rewind-black: #000000`; `--rewind-surface: #1f1f1f`; `--rewind-surface-raised: #282828`; `--rewind-line: rgba(255,255,255,.14)`; `--rewind-muted: #aaa6a1`; `--rewind-paper: #ffffff`; `--rewind-ink: #1a1e1f` |
 | Brand/accent | teal `#5a8a90`; stone `#938d7d`; amber `#d69251`; purple `#8a38f5`; cyan `#7bdff2`; gold `#d4a85f` |
 | Shape/layout | radii `3px / 12px / 20px / 37px`; content width `1200px`; focus width `3px` |
 | Type | display `58px`; title `24px`; section `22px`; body `20px`; caption `13px` |
 | Shadow | `0 18px 40px rgba(0,0,0,.18)` |
 
-A source comparison found differences between these code tokens and Figma's font, dark surfaces, generic radii, and content width. Keep the differences visible as a design-system gap; do not replace all page values with brand colors without a frame-specific decision.
+A source comparison found differences between these code tokens and Figma's dark surfaces, generic radii, and content width. The font stack now selects SF Pro Display on platforms that expose it, with bundled Inter retained as the cross-platform fallback; browser-specific rendering and full typography parity still need acceptance on supported devices. Keep the remaining token differences visible as a design-system gap; do not replace all page values with brand colors without a frame-specific decision.
 
 ## Frame and route anchors
 
@@ -60,7 +60,13 @@ A source comparison found differences between these code tokens and Figma's font
 
 ### Person filmography filters
 
-Desktop `545:676`, phone `721:1085`. Reuse PersonFilmographyFilters, PersonFilmographyGrid and PersonLoading. Decades filter the complete returned filmography before collapse, compose with genre/sort and retain an empty selection until reset. RelatedPersonFilmography owns independent state for each confirmed ACTOR/DIRECTOR/PRODUCER identity. Detailed Executive/job labels and written credits require data support.
+Desktop `545:676`, phone `721:1085`. Reuse PersonFilmographyFilters, PersonFilmographyGrid and PersonLoading. Decades filter the complete returned filmography before collapse, compose with genre/sort and retain an empty selection until reset. RelatedPersonFilmography owns independent state for each confirmed ACTOR/DIRECTOR/PRODUCER identity. Edge v66 stores TMDB crew credits and exposes writer filmographies, movie writer links and job labels; local React support is implemented. Person film cards are poster-only in the Figma source. Job credits and localized rating values remain in each card's clipped metadata and are included in the film link's accessible name. Focused Playwright checks cover UK/EN writer routes, movie-credit navigation, and a non-writer `Executive Producer`/`Unit Production Manager` example. The role summary now orders ACTOR/PRODUCER and adds the localized executive label when the source job is `Executive Producer`; the UK/EN test matches `Actor | Producer | Executive` in the confirmed example. No writer-specific source frame is identified here. Production UI acceptance, remaining role/job variations and full frame comparison remain open.
+
+Live review on 20 November 2026 reconfirmed both Person frames. Phone frame `721:1085` uses a photographic `Poster Back` fill behind the identity. Keep that raw Figma reference out of production assets. Hosted v66 returns the backdrop through the existing public Movie Details endpoint, so the local Person page requests details for its initial newest film; no Person API or Edge deployment change is needed. The request is fixed to that initial film, so sort/filter changes do not switch the hero image. The director page keeps its existing search-hero background. Live-backed local browser acceptance passes for Amanda Seyfried: the photo loads and displays behind the identity with a dark fade at 393×852. The published GitHub Pages build is still older: a read-only production screenshot shows the teal gradient and no executive summary. The design frame shows Brad Pitt, absent from the hosted actor catalogue, so same-state/same-viewport Figma comparison remains open; exact frame parity is not claimed. Production Pages publication and post-deploy acceptance remain open.
+
+The hero follows the confirmed Figma hierarchy: name, concise role summary, then biography. An aggregate career-job line was removed after a same-frame comparison showed it was absent from the reference; full TMDB jobs remain attached to each film card. Phone backdrop live rendering is verified, but same-state asset/content parity remains open because Brad Pitt is absent from the hosted catalogue.
+
+On 21 November, local Chrome acceptance against read-only hosted data covered four role/job variants in both UK and EN: a director with four crew jobs, a producer with producer/writer credits, an actor with no crew jobs, and a writer with a `Book` credit. Role summaries localized correctly; film link accessible names include their detailed source jobs at 320, 393, 768 and 1440px, without horizontal overflow. The posters remain the only visible card content, matching the Figma source. This does not establish full parity for all 451 distinct hosted job strings or the published Pages bundle.
 
 ### Person biography
 

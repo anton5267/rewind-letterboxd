@@ -24,6 +24,7 @@ import { reviewsRepository } from "./repositories/reviews.ts";
 import { catalogueRepository } from "./repositories/catalogue.ts";
 import { ratingsRepository } from "./repositories/ratings.ts";
 import { createTmdbPersonBiographyProvider } from "./tmdb_person.ts";
+import { writerFilmographyRepository } from "./repositories/writer_filmography.ts";
 
 const repository: RewindApiRepository = {
   ...journalRepository,
@@ -43,6 +44,7 @@ const repository: RewindApiRepository = {
   ...reviewsRepository,
   ...commentsRepository,
   ...catalogueRepository,
+  ...writerFilmographyRepository,
   ...ratingsRepository,
 };
 

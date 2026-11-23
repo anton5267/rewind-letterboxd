@@ -1,4 +1,5 @@
 import type { MovieDetailsResponse } from "../../contracts/catalog.ts";
+import { writingCreditPredicate } from "./writing_credit.ts";
 
 interface MovieDetailsQueryClient {
   queryObject<T>(query: { text: string; args: unknown[] }): Promise<{ rows: T[] }>;
@@ -9,7 +10,7 @@ export async function readMovieDetails(
   id: number,
   includeUnpublished = false,
 ): Promise<MovieDetailsResponse | null> {
-  const [movieResult, genreResult, directorResult, producerResult, actorResult, ratingResult, similarResult] = await Promise.all([
+  const [movieResult, genreResult, directorResult, producerResult, actorResult, ratingResult, similarResult, writerResult] = await Promise.all([
     connection.queryObject<{
       id: string;
       imdb_id: string | null;
@@ -88,6 +89,15 @@ export async function readMovieDetails(
              ORDER BY m.release_date DESC NULLS LAST, m.id DESC`,
       args: [id],
     }),
+    connection.queryObject<{ tmdb_id: string; name: string; photo_url: string | null }>({
+      text: `SELECT DISTINCT ON (c.tmdb_person_id) c.tmdb_person_id::text AS tmdb_id,
+                    c.person_name AS name, c.photo_url
+             FROM rewind.movie_crew_credits c
+             JOIN rewind.movies m ON m.id = c.movie_id AND (m.is_published = TRUE OR $2::boolean)
+             WHERE c.movie_id = $1 AND ${writingCreditPredicate("c")}
+             ORDER BY c.tmdb_person_id, c.person_name, c.photo_url NULLS LAST`,
+      args: [id, includeUnpublished],
+    }),
   ]);
   const first = movieResult.rows[0];
   if (!first) return null;
@@ -127,6 +137,11 @@ export async function readMovieDetails(
       photoUrl: row.photo_url,
       characterName: row.character_name,
       castOrder: nullableNumber(row.cast_order),
+    })),
+    writers: writerResult.rows.map(row => ({
+      tmdbId: safeId(row.tmdb_id, "TMDB person ID"),
+      name: row.name,
+      photoUrl: row.photo_url,
     })),
     externalRatings: ratingResult.rows.map(row => ({
       source: row.source,
