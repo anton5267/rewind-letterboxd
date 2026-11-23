@@ -23,7 +23,7 @@ BEGIN
     ORDER BY t.table_schema, t.table_name
   LOOP
     EXECUTE format(
-      'SELECT count(*)::bigint, md5(COALESCE(string_agg(md5(to_jsonb(row_value)::text), %L ORDER BY to_jsonb(row_value)::text), %L)) FROM %I.%I AS row_value',
+      'SELECT count(*)::bigint, md5(COALESCE(string_agg(md5(to_jsonb(row_value)::text), %L ORDER BY to_jsonb(row_value)::text COLLATE "C"), %L)) FROM %I.%I AS row_value',
       '', '', item.table_schema, item.table_name
     )
     INTO item_count, item_hash;
