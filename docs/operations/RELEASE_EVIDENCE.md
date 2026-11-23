@@ -196,6 +196,11 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - A GET to the public Supabase `/api/genres?language=en` endpoint with `Origin: https://anton5267.github.io` returned HTTP 200 and 17 rows, with the exact origin allowed. Its OPTIONS preflight returned HTTP 204 and allowed GET/POST/PUT/PATCH/DELETE/OPTIONS. This confirms the public GitHub Pages-to-Supabase cross-origin API path only; it does not verify Auth sign-in or private actions.
 - The API/Pages integration works for these public requests. The missing GitHub Pages response headers and the writer UI route remain separate website acceptance gaps. No production write, CORS change, or Auth setting change occurred.
 
+## GitHub Pages policy recheck — 23 November 2026
+
+- A fresh anonymous `GET` to the published root returned HTTP 200. The response still has no `Content-Security-Policy`, `Referrer-Policy`, `X-Frame-Options`, `X-Content-Type-Options`, or `Permissions-Policy` header.
+- The returned HTML contains CSP and referrer `<meta>` elements. The CSP meta content has no `frame-ancestors` directive, so the observed HTML does not establish an anti-framing policy; the missing response headers remain a host-level gap. The local `frontend/index.html` matches `master`, and no hosting or production configuration was changed.
+
 ## Writer frontend candidate verification — 23 November 2026
 
 - The current `master` `2c02384` contains the deployed writer API source, but its frontend still lacks the writer filmography route. A frontend-only candidate based on that master adds the writer route and localized movie-detail links, shows writing credits in accessible film cards, and includes responsive UK/EN and role-summary coverage. It carries over frontend changes from the previously reviewed candidate commit `319cd04`; no Edge or migration files are included.
