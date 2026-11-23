@@ -17,6 +17,7 @@
   .names { grid-area: 3 / 1 / auto / span 2; }
   .form.form > .names { column-gap: 8px; }
   .locationWebsite { grid-area: 5 / 1 / auto / span 2; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 12px; }
+  .location { display: grid; gap: 17px; }
   .pronoun { grid-area: 4 / 3 / auto / span 2; }
   .replies { grid-area: 5 / 3 / auto / span 2; }
   .email { grid-area: 4 / 1 / auto / span 2; }

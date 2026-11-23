@@ -263,6 +263,12 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - CI run [`45180339021`](https://github.com/anton5267/rewind-letterboxd/actions/runs/45180339021) completed the clean-baseline replay successfully. Pinned Supabase CLI 3.0.0 with `supabase/config.toml` `db.major_version = 17` reported **PostgreSQL 17.11**. The migration list returned **56/56 distinct local versions**, including reconstructed `20261116144505_movie_crew_credits`; `db reset` finished successfully. The migration-replay job conclusion is success.
 - This proves the full committed chain applies from an empty Supabase local baseline on the hosted project's PostgreSQL 17 minor version. It does not recover the original bytes of the reconstructed SQL or prove exact hosted/local catalog and data equality. No production data, migrations, settings or Edge functions were changed.
 
+## Profile Settings desktop alignment — 23 November 2026
+
+- The focused UK/EN layout fixture found the Location input 15.8px above the Replies control, although both labels belonged to the same Figma row. The desktop Location field now uses a 17px CSS grid gap, which aligns its control with the neighboring Replies select while leaving phone rules unchanged.
+- Re-ran `npm run test:e2e -- tests/e2e/profile-settings-layout.spec.ts` in the candidate worktree with its hosted-auth fixture harness: **2/2 passed**. This covers desktop column geometry, responsive draft/save behavior and keyboard order. The test now explicitly verifies Location → Website → Bio; the previous assertion skipped the Website input added to the form.
+- Removed temporary coordinate logging/selectors from the test. This closes the measured desktop row-alignment gap and fixes the fixture's tab-order expectation; full settings Figma parity remains open. No production data or deployment was touched.
+
 ## History
 
 - [Consolidated 2026 evidence](../archive/RELEASE_EVIDENCE_2026.md).
