@@ -8,6 +8,23 @@ permissions:
   contents: read
 
 jobs:
+  supabase-migration-replay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 3.3.0
+      - name: Start isolated Supabase stack
+        run: supabase start --exclude studio,edge-runtime,logflare,vector,supavisor,mailpit
+      - name: Replay all migrations from a clean baseline
+        run: supabase db reset --no-seed
+      - name: Verify migration history and PostgreSQL runtime
+        run: |
+          supabase migration list
+          supabase db query --read-only "select version() as server_version"
+
   verify:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
