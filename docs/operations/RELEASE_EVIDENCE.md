@@ -196,6 +196,11 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - The site root returned HTTP 200 and the writer deep link `/rewind-letterboxd/en/people/writer/82665` returned HTTP 404 with the SPA title and JS asset. The deployed bundle `index-DZzxK-6b.js` was fetched read-only (590,847 characters) and contains none of `/api/writers/`, `people/writer`, or `personExecutiveRole`. This confirms Pages is still serving a bundle predating the local Person writer/executive-summary candidate, even though the upstream Crew Picks deployment succeeded.
 - Both root and writer-route responses still lack `Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options`, and `Referrer-Policy` response headers. No Pages or hosting configuration was changed.
 
+## Mobile navigation frame check — 23 November 2026
+
+- Compared the current Figma Home/guest frame `1411:3473` navigation against the local component screenshot at 393×852. The five icon order, labels, dark surface and rounded upper corners match the visible source. CSS keeps the 92px viewport-wide rail, 5px top padding, 34px safe-area floor, 53px targets, 70px columns and 20px upper radius; at 320px the columns shrink evenly without horizontal overflow.
+- The existing `mobile-navigation.spec.ts` passed **4/4** UK/EN guest/member cases in 9.7s. It verified 393/320 geometry, all five loaded original image/SVG assets and their display sizes, route destinations, keyboard focus/Enter navigation, and no API writes. The screenshot stayed in ignored Playwright output; no Figma export or proprietary reference was added to Git. This accepts the bottom navigation only, not the remaining full-frame typography/mobile-header gaps.
+
 ## TMDB mapping read-back — 23 November 2026
 
 - Read-only SQL against the active REWIND Supabase project selected `rewind.movies` rows where `id = 36` or `tmdb_id = 1147411`. The sole result was REWIND #36, `Miraculous World: Tokyo, Stellar Force`, with `tmdb_id = NULL` and release date `2025-12-07`; no movie row currently uses candidate ID `1147411`.
