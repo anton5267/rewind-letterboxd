@@ -207,6 +207,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 ## Community favorite poster live-data check — 23 November 2026
 
 - Read-only `GET` requests to the public hosted community API returned HTTP 200. `/api/users/hq?page=0&size=12` returned one showcase member with zero favorite movies; `/api/users/popular-reviewers?size=6` returned an empty array. The public directory had only two members, so these live responses supplied no populated showcase to verify the API-fed poster row against the Figma frame. The check recorded counts only, not usernames or profile details.
+- The isolated fixture E2E `community-member-details.spec.ts` passed **2/2** in UK/EN against a separate local Vite server. It verifies four poster images, favorite-collection link/name, desktop row geometry, 768/393/320px responsive sizes and overflow, localized metrics, and empty/legacy data states. All API calls were intercepted; no live data was written. This accepts fixture rendering and geometry only.
 - The community card's populated favorite-poster state therefore remains unaccepted. Existing fixture coverage is not live-data evidence. No test account or favorite was created and no production write was made; accept this state when an authorized public profile with favorites is available.
 
 ## Journal article desktop frame recheck — 23 November 2026
