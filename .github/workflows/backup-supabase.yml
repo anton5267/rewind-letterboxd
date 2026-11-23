@@ -124,15 +124,16 @@ jobs:
               result = {}
               with open(path, encoding="utf-8") as manifest:
                   for line in manifest:
-                      schema, table, _row_count, _row_hash = line.rstrip("\n").split("|", 3)
-                      result[(schema, table)] = line.rstrip("\n")
+                      schema, table, row_count, row_hash = line.rstrip("\n").split("|", 3)
+                      result[(schema, table)] = (row_count, row_hash)
               return result
 
           source = read_manifest(sys.argv[1])
           restored = read_manifest(sys.argv[2])
           for key in sorted(source.keys() | restored.keys()):
               if source.get(key) != restored.get(key):
-                  print(f"Mismatching table: {key[0]}.{key[1]}")
+                  category = "row count differs" if source.get(key, (None,))[0] != restored.get(key, (None,))[0] else "content digest differs"
+                  print(f"Mismatching table ({category}): {key[0]}.{key[1]}")
           PY
             exit 1
           fi
