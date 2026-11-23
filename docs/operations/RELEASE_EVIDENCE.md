@@ -290,6 +290,12 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - Candidate `tmdb.ts` validates positive safe-integer person IDs and removes hosted v66's 500-crew-credit truncation; the 501-credit regression confirms the last credit survives mapping. Candidate `writing_credit.ts` excludes storyboard, script-supervisor and script-coordinator jobs from writer identity/filmography. Candidate `writer_filmography.ts` derives career jobs from all published credits without applying the selected genre filter; hosted v66 derives them from the genre-filtered writing-credit query. These are intentional candidate changes; they are not live yet.
 - No Edge deployment, database migration or production write occurred during this recheck. The other 77 hosted source files are byte-identical after newline normalization.
 
+## Hosted migration and crew table schema parity — 23 November 2026
+
+- Read-only Supabase migration metadata returned 56 applied migrations. The local `supabase/migrations` directory contains the same 56 `(version, name)` entries in the same sorted order, including latest `20261116144505_movie_crew_credits`.
+- Read-only verbose catalog metadata for `rewind.movie_crew_credits` matched the reconstructed migration's columns, defaults, checks, composite primary key, and `movie_id` foreign key. This is metadata-level confirmation only; it does not verify historical SQL bytes, the secondary index, RLS policy definitions, grants, or equality of the full database schema. The source SQL remains explicitly labeled reconstructed because the original applied SQL body was unavailable.
+- No production changes were made.
+
 ## History
 
 - [Consolidated 2026 evidence](../archive/RELEASE_EVIDENCE_2026.md).
