@@ -106,7 +106,7 @@
 
 <a id="implementation-status"></a>
 
-## 11. Відповідність реалізації — 21.11.2026
+## 11. Відповідність реалізації — 23.11.2026
 
 Надані вимоги вище збережені. Поточний стан і наступна робота — у [PROGRESS](PROGRESS.md) та [PLAN](../../PLAN.md), точні перевірки й межі — у [RELEASE_EVIDENCE](../operations/RELEASE_EVIDENCE.md). Докладні попередні матриці збережені в [архіві](../archive/IMPLEMENTATION_NOTES_2026_11.md).
 
@@ -120,5 +120,5 @@
 | Journal і службові сторінки | Feed/article/archive/audio/newsletter, author, cover collage/content blocks, Admin editor, help/legal/service routes. Live authoring, публікація та populated reader прийняті. | Повна layout parity. |
 | Admin | Movie CRUD/audit/publication, protected details і live hidden-film edit/reload, queues/filters, reports/dismissal, review editor з live UK/EN edit/cancel і hide/show прийманням, CUSTOM list controls | Authenticated report submit/status/dismiss, Figma navigation/parity. Feature/unfeature/hide/publish і перестановка двох добірок прийняті live; перевірені reload та boundary focus. |
 | UK/EN і доступність | Локалізовані маршрути, responsive UI, keyboard/focus/retry, reduced-motion і цільові browser scenarios | Решта states/layouts за Figma, фізичні OS keyboard/zoom/Share перевірки. |
-| Безпека й дані | Приватна rewind schema, RLS/обмежені grants, UUID mapping, guest/owner/Admin guards, ізольований PG rehearsal | Encrypted backup/restore, local/hosted row reconciliation, збереження обох Spring migration histories, capacity/recovery review. Free-plan leaked-password limitation зафіксована. |
-| Передача | Повний Pages frontend + Supabase API, англійський README, схеми, модульна структура, операційні runbooks | Підсумкове приймання всіх вимог і відтворюваний recovery. |
+| Безпека й дані | Приватна rewind schema, RLS/обмежені grants, UUID mapping, guest/owner/Admin guards, encrypted hosted backup і disposable PostgreSQL restore з manifest comparison | Local/hosted row reconciliation, Auth/Storage/settings/secrets recovery, збереження обох Spring migration histories, capacity/recovery review. Free-plan leaked-password limitation зафіксована; production Pages відповіді наразі не мають п’яти очікуваних security headers. |
+| Передача | Повний Pages frontend + Supabase API, англійський README, схеми, модульна структура, операційні runbooks | Віддалений Cloudflare Pages preview з Auth/CORS перевіркою, post-deploy acceptance та підсумкове приймання всіх вимог і відтворюваний recovery. |
