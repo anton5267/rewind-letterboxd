@@ -206,6 +206,12 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - Read-only SQL against the active REWIND Supabase project selected `rewind.movies` rows where `id = 36` or `tmdb_id = 1147411`. The sole result was REWIND #36, `Miraculous World: Tokyo, Stellar Force`, with `tmdb_id = NULL` and release date `2025-12-07`; no movie row currently uses candidate ID `1147411`.
 - This confirms the current catalog state only. It does not establish that `1147411` is the correct TMDB identity; leave #36 unmapped until verified from TMDB itself. No production data was changed.
 
+## Release candidate pull request — 23 November 2026
+
+- Opened draft PR [#3](https://github.com/anton5267/rewind-letterboxd/pull/3) from `codex/release-reconcile` at `c45ca82` to `master` at `74f8018`. GitHub's current PR read reports `mergeable: true`; its initial `mergeable: false` response was transient while GitHub calculated the merge result.
+- PR CI run [45176380213](https://github.com/anton5267/rewind-letterboxd/actions/runs/45176380213) completed successfully. The job covered Java 25/MySQL backend tests, Deno 2.9.6 Edge checks/tests, TMDB crosswalk, frontend build/typecheck and HTTPS proxy validation. The branch-push docs CI [45175943480](https://github.com/anton5267/rewind-letterboxd/actions/runs/45175943480) also completed successfully.
+- Confirmed `.github/workflows/deploy-pages.yml` triggers on `push` to `master`, not `pull_request`; creating the draft PR did not publish Pages. This PR has not been merged, and no Edge deployment, migration, or production data write was performed. Remaining release gates are listed in the PR body and this plan.
+
 ## Upstream master CI and Pages — 17 November 2026
 
 - GitHub Actions CI run [`44045725169`](https://github.com/anton5267/rewind-letterboxd/actions/runs/44045725169) for master `2e40ce394bb28c847c0501399682c972fa8e7779` completed successfully. Its `verify` job passed backend tests against the workflow's MySQL service, curated TMDB crosswalk validation, frontend build/typecheck and HTTPS proxy validation.
