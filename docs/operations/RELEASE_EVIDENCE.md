@@ -189,6 +189,13 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - Cloudflare's earlier `_headers` preflight remains historical candidate evidence only. It did not test the chosen GitHub Pages host, change Supabase Auth/CORS, or deploy anything. Current production remains GitHub Pages + Supabase; the separate response-header gap is documented as an existing full-website acceptance issue, not as a requirement to add Cloudflare.
 - The available GitHub Pages-to-Supabase acceptance remains positive: public writer GETs returned HTTP 200 and the exact Pages origin; CORS preflight returned HTTP 204. This does not imply acceptance of the missing HTTP security response headers.
 
+## GitHub Pages ↔ Supabase live recheck — 23 November 2026
+
+- The latest successful Pages deployment is run [`44911998564`](https://github.com/anton5267/rewind-letterboxd/actions/runs/44911998564), built from commit `ae7c2d80642d3f03b11b36be8ed5673c3f6674a4`. A source comparison from that commit through current `master` `eba89e2d442a3ada6c99ca32346afbb95378bfa0` found no frontend-file changes, so the published frontend source matches the current master frontend.
+- Read-only GETs to the published root, `/uk/home`, and `/en/home` returned HTTP 200 with localized page titles. The deployed writer deep link `/rewind-letterboxd/en/people/writer/82665` still returns HTTP 404; the live bundle lacks the writer-route code, so this is an unshipped frontend gap while its separate Supabase writer API remains available. No frontend change or Pages deploy was made.
+- A GET to the public Supabase `/api/genres?language=en` endpoint with `Origin: https://anton5267.github.io` returned HTTP 200 and 17 rows, with the exact origin allowed. Its OPTIONS preflight returned HTTP 204 and allowed GET/POST/PUT/PATCH/DELETE/OPTIONS. This confirms the public GitHub Pages-to-Supabase cross-origin API path only; it does not verify Auth sign-in or private actions.
+- The API/Pages integration works for these public requests. The missing GitHub Pages response headers and the writer UI route remain separate website acceptance gaps. No production write, CORS change, or Auth setting change occurred.
+
 ## Evidence rules
 
 - Identify source review, isolated SQL, fixture, CI, production read or authenticated live action explicitly.
