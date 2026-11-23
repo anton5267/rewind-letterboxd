@@ -28,6 +28,7 @@ export interface ActivityResponse {
   actor: PublicSocialUser | null; movie: { id: number; title: string } | null;
   relatedUser: { id: number; username: string; displayName: string } | null;
   list: { id: number; name: string } | null;
+  rating?: number | null;
 }
 
 export interface PopularReviewerResponse extends PublicSocialUser, CommunityDetails {

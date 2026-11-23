@@ -39,6 +39,7 @@ export interface MovieDetailsResponse {
   genres: { id: number; name: string }[];
   directors: { id: number; name: string; photoUrl: string | null }[];
   producers: { id: number; name: string; photoUrl: string | null }[];
+  writers: { tmdbId: number; name: string; photoUrl: string | null }[];
   actors: { id: number; name: string; photoUrl: string | null; characterName: string | null; castOrder: number | null }[];
   externalRatings: { source: string; rating: number; votesCount: number | null; lastUpdatedAt: string | null }[];
   similarMovies: MovieCardResponse[];
@@ -59,11 +60,12 @@ export interface PersonFilmographyResponse {
   id: number;
   name: string;
   photoUrl: string | null;
-  type: "ACTOR" | "DIRECTOR" | "PRODUCER";
+  type: "ACTOR" | "DIRECTOR" | "PRODUCER" | "WRITER";
   relatedPeople?: { id: number; type: "ACTOR" | "DIRECTOR" | "PRODUCER" }[];
   tmdbId?: number | null;
   biography?: string | null;
   biographyLanguage?: "uk" | "en" | null;
+  careerJobs?: string[];
   films: {
     id: number;
     title: string;
@@ -71,6 +73,7 @@ export interface PersonFilmographyResponse {
     rating: number | null;
     photoUrl: string | null;
     characterName: string | null;
+    crewCredits?: { department: string; job: string }[];
   }[];
 }
 

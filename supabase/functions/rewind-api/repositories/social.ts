@@ -23,7 +23,7 @@ function toActivity(row: {
   actor_id: string | null; actor_username: string | null; actor_display_name: string | null; actor_avatar_url: string | null;
   movie_id: string | null; movie_title: string | null;
   related_user_id: string | null; related_username: string | null; related_display_name: string | null;
-  list_id: string | null; list_name: string | null;
+  list_id: string | null; list_name: string | null; rating: number | null;
 }): ActivityResponse {
   const actor = row.actor_id && row.actor_username ? {
     id: safeId(row.actor_id, "User ID"), username: row.actor_username,
@@ -39,6 +39,7 @@ function toActivity(row: {
     movie: row.movie_id && row.movie_title ? { id: safeId(row.movie_id, "Movie ID"), title: row.movie_title } : null,
     relatedUser,
     list: row.list_id && row.list_name ? { id: safeId(row.list_id, "List ID"), name: row.list_name } : null,
+    rating: row.rating,
   };
 }
 
@@ -96,16 +97,23 @@ async function queryActivityPage(connection: PgConnection, predicate: string, pr
       actor_id: string | null; actor_username: string | null; actor_display_name: string | null; actor_avatar_url: string | null;
       movie_id: string | null; movie_title: string | null;
       related_user_id: string | null; related_username: string | null; related_display_name: string | null;
-      list_id: string | null; list_name: string | null;
+      list_id: string | null; list_name: string | null; rating: number | null;
     }>({
       text: `SELECT a.id::text AS id, a.activity_type, a.created_at::text AS created_at,
                     actor.id::text AS actor_id, actor.username AS actor_username, actor.display_name AS actor_display_name, actor.avatar_url AS actor_avatar_url,
                     m.id::text AS movie_id, m.title AS movie_title,
                     related.id::text AS related_user_id, related.username AS related_username, related.display_name AS related_display_name,
-                    l.id::text AS list_id, l.name AS list_name
+                    l.id::text AS list_id, l.name AS list_name,
+                    CASE WHEN a.activity_type = 'REVIEW' THEN review.rating
+                         WHEN a.activity_type = 'RATING' THEN rated.rating
+                         ELSE NULL END AS rating
              FROM rewind.user_activities a JOIN rewind.users actor ON actor.id = a.user_id AND actor.is_active
               LEFT JOIN rewind.movies m ON m.id = a.movie_id AND m.is_published = TRUE
              LEFT JOIN rewind.users related ON related.id = a.related_user_id AND related.is_active
+              LEFT JOIN rewind.reviews review ON review.id = a.review_id AND review.user_id = a.user_id
+                AND review.movie_id = a.movie_id AND review.is_hidden = FALSE AND a.activity_type = 'REVIEW'
+              LEFT JOIN rewind.ratings rated ON rated.user_id = a.user_id AND rated.movie_id = a.movie_id
+                AND a.activity_type = 'RATING'
               LEFT JOIN rewind.lists l ON l.id = a.list_id AND l.is_public
                 AND EXISTS (SELECT 1 FROM rewind.users list_owner WHERE list_owner.id = l.user_id AND list_owner.is_active = TRUE)
               WHERE ${predicate} AND (a.list_id IS NULL OR l.id IS NOT NULL)

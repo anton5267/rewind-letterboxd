@@ -6,6 +6,10 @@ schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
+[db]
+# Match the hosted Supabase PostgreSQL major version during local migration replay.
+major_version = 17
+
 # Auth templates are the version-controlled source of truth. Apply the same
 # subject/body in the hosted project's Authentication → Emails dashboard.
 [auth.email.template.confirmation]

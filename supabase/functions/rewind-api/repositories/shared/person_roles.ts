@@ -2,12 +2,12 @@ import type { PersonFilmographyResponse } from "../../contracts/catalog.ts";
 import type { PgConnection } from "../../runtime/database.ts";
 import { safeId } from "./results.ts";
 
-type PersonRole = PersonFilmographyResponse["type"];
+type PersonRole = "ACTOR" | "DIRECTOR" | "PRODUCER";
 
 /** Link catalogue roles only through an existing positive TMDB person ID. */
 export async function findRelatedPersonRoles(
   connection: PgConnection,
-  type: PersonRole,
+  type: PersonFilmographyResponse["type"],
   tmdbId: string | null,
 ): Promise<NonNullable<PersonFilmographyResponse["relatedPeople"]>> {
   if (tmdbId === null) return [];
