@@ -196,6 +196,11 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - The site root returned HTTP 200 and the writer deep link `/rewind-letterboxd/en/people/writer/82665` returned HTTP 404 with the SPA title and JS asset. The deployed bundle `index-DZzxK-6b.js` was fetched read-only (590,847 characters) and contains none of `/api/writers/`, `people/writer`, or `personExecutiveRole`. This confirms Pages is still serving a bundle predating the local Person writer/executive-summary candidate, even though the upstream Crew Picks deployment succeeded.
 - Both root and writer-route responses still lack `Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options`, and `Referrer-Policy` response headers. No Pages or hosting configuration was changed.
 
+## Journal article desktop frame recheck — 23 November 2026
+
+- Re-read the current Figma desktop article frame `844:1547` and its rendered image. Re-ran `journal-design-flow.spec.ts` against the candidate: **3/3 passed**, including the article fixture's 1200px content frame, breadcrumb/divider, 1126×642 rounded hero, heading/byline order, reader-content flow and no horizontal overflow at 1440px; the phone adaptation also had no overflow at 393px.
+- This accepts the tested structural geometry and responsive fit only. Figma's article copy and collage are dynamic API content; the fixture does not prove same-content visual parity. No mobile article frame is confirmed, and typography/full-frame parity remain open. No Figma reference assets were copied into the product.
+
 ## Mobile navigation frame check — 23 November 2026
 
 - Compared the current Figma Home/guest frame `1411:3473` navigation against the local component screenshot at 393×852. The five icon order, labels, dark surface and rounded upper corners match the visible source. CSS keeps the 92px viewport-wide rail, 5px top padding, 34px safe-area floor, 53px targets, 70px columns and 20px upper radius; at 320px the columns shrink evenly without horizontal overflow.
