@@ -293,7 +293,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 ## Hosted migration and crew table schema parity — 23 November 2026
 
 - Read-only Supabase migration metadata returned 56 applied migrations. The local `supabase/migrations` directory contains the same 56 `(version, name)` entries in the same sorted order, including latest `20261116144505_movie_crew_credits`.
-- Read-only verbose catalog metadata for `rewind.movie_crew_credits` matched the reconstructed migration's columns, defaults, checks, composite primary key, and `movie_id` foreign key. This is metadata-level confirmation only; it does not verify historical SQL bytes, the secondary index, RLS policy definitions, grants, or equality of the full database schema. The source SQL remains explicitly labeled reconstructed because the original applied SQL body was unavailable.
+- Read-only verbose catalog metadata for `rewind.movie_crew_credits` matched the reconstructed migration's columns, defaults, checks, composite primary key, and `movie_id` foreign key. A separate read-only catalog query confirmed `movie_crew_credits_person_movie_idx`, all four expected `edge_app_catalog_*` / `edge_reader_catalog_select` policies with their roles and predicates, and the expected SELECT/INSERT/DELETE grants for `rewind_edge_app` plus SELECT for `rewind_edge_reader`; no direct grants to `anon` or `authenticated` appeared. This is live catalog metadata confirmation, not proof of the original historical SQL bytes or equality of the full database schema. The source SQL remains explicitly labeled reconstructed because the original applied SQL body was unavailable.
 - No production changes were made.
 
 ## History
