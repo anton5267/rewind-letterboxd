@@ -55,7 +55,7 @@ a { color: inherit; }
 }
 
 :root {
-  --rewind-font-sans: "Inter", system-ui, sans-serif;
+  --rewind-font-sans: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif;
   --rewind-black: #000000;
   --rewind-surface: #1f1f1f;
   --rewind-surface-raised: #282828;

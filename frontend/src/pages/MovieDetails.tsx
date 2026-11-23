@@ -630,7 +630,8 @@ export default function MovieDetails() {
   const mobileCrew = movie ? [
     ...movie.actors.slice(0, 5).map(item => ({ id: `actor-${item.id}`, personId: item.id, name: editorialText(item.name, t("unknownPerson")), type: "actor" as const, role: t("actors") })),
     ...movie.directors.slice(0, 2).map(item => ({ id: `director-${item.id}`, personId: item.id, name: editorialText(item.name, t("unknownPerson")), type: "director" as const, role: t("directors") })),
-  ].slice(0, 7) : [];
+    ...(movie.writers ?? []).slice(0, 2).map(item => ({ id: `writer-${item.tmdbId}`, personId: item.tmdbId, name: editorialText(item.name, t("unknownPerson")), type: "writer" as const, role: t("writers") })),
+  ].slice(0, 9) : [];
   const movieTitle = movie ? editorialText(movie.title, t("untitledFilm")) : t("untitledFilm");
   const movieYear = formatMovieYear(movie?.releaseDate, "");
   const documentTitle = movieYear ? `${movieTitle} (${movieYear})` : movieTitle;
@@ -679,6 +680,7 @@ export default function MovieDetails() {
               <div className={styles.credits}>
                 <p><strong>{t("directors")}:</strong> {movie.directors.length ? movie.directors.map(item => <Link key={item.id} to={path(`/people/director/${item.id}`)}>{editorialText(item.name, t("unknownPerson"))}</Link>).reduce<React.ReactNode[]>((all, node, index) => index ? [...all, ", ", node] : [node], []) : "—"}</p>
                 <p><strong>{t("producers")}:</strong> {movie.producers.length ? movie.producers.map(item => <Link key={item.id} to={path(`/people/producer/${item.id}`)}>{editorialText(item.name, t("unknownPerson"))}</Link>).reduce<React.ReactNode[]>((all, node, index) => index ? [...all, ", ", node] : [node], []) : "—"}</p>
+                {movie.writers?.length ? <p><strong>{t("writers")}:</strong> {movie.writers.map(item => <Link key={item.tmdbId} to={path(`/people/writer/${item.tmdbId}`)}>{editorialText(item.name, t("unknownPerson"))}</Link>).reduce<React.ReactNode[]>((all, node, index) => index ? [...all, ", ", node] : [node], [])}</p> : null}
                 <p><strong>{t("actors")}:</strong> {movie.actors.length ? movie.actors.slice(0, 5).map(item => <Link key={item.id} to={path(`/people/actor/${item.id}`)}>{editorialText(item.name, t("unknownPerson"))}{item.characterName?.trim() ? ` (${item.characterName.trim()})` : ""}</Link>).reduce<React.ReactNode[]>((all, node, index) => index ? [...all, ", ", node] : [node], []) : "—"}</p>
               </div>
               <div className={styles.heroLinks}>

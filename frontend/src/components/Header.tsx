@@ -163,7 +163,7 @@ function HeaderContent() {
   const mobileSearchHeader = /^\/(uk|en)\/search\/?$/.test(location.pathname);
   const mobileHomeHeader = /^\/(uk|en)\/home\/?$/.test(location.pathname);
   const mobileCommunityHeader = /^\/(uk|en)\/community(?:\/reviewers)?\/?$/.test(location.pathname);
-  const mobilePersonHeader = /^\/(uk|en)\/people\/(actor|director|producer)\/[^/]+\/?$/.test(location.pathname);
+  const mobilePersonHeader = /^\/(uk|en)\/people\/(actor|director|producer|writer)\/[^/]+\/?$/.test(location.pathname);
   const mobilePublicProfileHeader = /^\/(uk|en)\/users\/\d+\/?$/.test(location.pathname);
   const mobileProfileHeader = /^\/(uk|en)\/profile\/?$/.test(location.pathname);
   const mobileUserListsHeader = /^\/(uk|en)\/lists\/?$/.test(location.pathname);
