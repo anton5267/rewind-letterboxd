@@ -218,6 +218,12 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - Footer measured 1440×265; its logo is x143 at 184×30 and its original social group is centered at x657.5 with size 125×24. The five 24px navigation labels and their 44px targets align closely. Fallback Inter yields small label-width/placement differences from Figma SF Pro. The footer retains dynamic year, correct TMDB attribution, Credits route and Privacy/Film data/Delete account destinations; Figma's old `2025` and IMDb copy were not reintroduced.
 - Responsive read-only browser measurements at 320, 393, 768, 1024 and 1440px showed no document overflow or nav/search overlap. The CSS change affects only the desktop shared Header, not mobile navigation or Lists discovery. No API writes were made. Local screenshots were kept outside the repository under `%TEMP%\rewind-release-review`.
 
+## Focused shared/mobile Header regression recheck — 23 November 2026
+
+- Re-ran `mobile-navigation.spec.ts`, `detail-header.spec.ts`, and `list-mobile-header.spec.ts` locally against the candidate: **21/21 passed**. Coverage includes UK/EN guest/member bottom navigation, original icon dimensions and routes, mobile list contextual controls at 320/393/600/720px, tablet transition at 768px, and desktop Header backdrop behavior.
+- The first combined run exposed a stale test fixture allowlist, not an application failure: Home requests the legitimate read-only `/api/lists/public/featured` and `/api/activity/following` resources when navigation returns there. Added those response-only endpoints to the fixture; the test continues to fail on any unapproved GET and aborts every write request. The final rerun passed all 21 scenarios. No production requests or writes were made.
+- Current Figma Home navigation instance `1411:3497` was re-read. Its 393px source render shows five icons with labels in Home/Search/Add/Journal/Profile order, consistent with the previously recorded local 393/320 asset-and-geometry acceptance. This does not close Apple-device typography, remaining route-state/icon parity, or full-frame parity.
+
 ## Upstream master CI and Pages — 17 November 2026
 
 - GitHub Actions CI run [`44045725169`](https://github.com/anton5267/rewind-letterboxd/actions/runs/44045725169) for master `2e40ce394bb28c847c0501399682c972fa8e7779` completed successfully. Its `verify` job passed backend tests against the workflow's MySQL service, curated TMDB crosswalk validation, frontend build/typecheck and HTTPS proxy validation.

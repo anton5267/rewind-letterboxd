@@ -21,8 +21,8 @@ async function listHeaderFixture(page: Page, details: { tags?: string[]; likeCou
       ownerUsername: "collection-reader", ownerAvatarUrl: null, tags: [], likeCount: 0, movies: [], ...details,
     } });
     if (endpoint === `/api/lists/public/${listId}/like-status`) return route.fulfill({ json: { liked: false, likes: 0 } });
-    if (/^\/api\/lists\/public(?:\/(?:popular|recently-liked|team))?$/.test(endpoint)
-      || ["/api/movies/search", "/api/reviews/popular", "/api/activity/recent-watched", "/api/journal/articles"].includes(endpoint)) return route.fulfill({ json: emptyPage });
+    if (/^\/api\/lists\/public(?:\/(?:featured|popular|recently-liked|team))?$/.test(endpoint)
+      || ["/api/movies/search", "/api/reviews/popular", "/api/activity/following", "/api/activity/recent-watched", "/api/journal/articles"].includes(endpoint)) return route.fulfill({ json: emptyPage });
     if (["/api/tags/popular", "/api/users/popular-reviewers"].includes(endpoint)) return route.fulfill({ json: [] });
     unexpectedGets.push(endpoint);
     return route.fulfill({ status: 404, json: {} });
