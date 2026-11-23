@@ -11,6 +11,14 @@ run_id="${RESTORE_RUN_ID:?RESTORE_RUN_ID is required}"
 : "${PGUSER:?PGUSER is required}"
 : "${PGPASSWORD:?PGPASSWORD is required}"
 
+# Restore is deliberately limited to the disposable PostgreSQL service in the
+# GitHub Actions workflow. Refuse remote hosts or differently named databases
+# so a misconfigured invocation cannot overwrite a hosted environment.
+if [[ "$PGHOST" != "127.0.0.1" || "$PGPORT" != "5432" || "$PGDATABASE" != "rewind_restore" ]]; then
+  echo "Refusing restore: target must be disposable PostgreSQL at 127.0.0.1:5432/rewind_restore" >&2
+  exit 2
+fi
+
 if [[ ! "$run_id" =~ ^[0-9]+$ ]]; then
   echo "RESTORE_RUN_ID must contain digits only" >&2
   exit 2
