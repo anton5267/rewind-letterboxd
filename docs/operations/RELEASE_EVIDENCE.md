@@ -297,6 +297,11 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - Read-only verbose catalog metadata for `rewind.movie_crew_credits` matched the reconstructed migration's columns, defaults, checks, composite primary key, and `movie_id` foreign key. A separate read-only catalog query confirmed `movie_crew_credits_person_movie_idx`, all four expected `edge_app_catalog_*` / `edge_reader_catalog_select` policies with their roles and predicates, and the expected SELECT/INSERT/DELETE grants for `rewind_edge_app` plus SELECT for `rewind_edge_reader`; no direct grants to `anon` or `authenticated` appeared. This is live catalog metadata confirmation, not proof of the original historical SQL bytes or equality of the full database schema. The source SQL remains explicitly labeled reconstructed because the original applied SQL body was unavailable.
 - No production changes were made.
 
+## Local MySQL recovery filename search — 23 November 2026
+
+- Expanded the read-only filename scan to `OneDrive`, `Documents`, `Downloads`, `DataGripProjects`, and `source` for SQL dumps, MySQL/PostgreSQL dump extensions, MySQL physical files (`.ibd`, `ibdata1`) and SQL Server physical files. Excluding repository/worktree source, the scan found no candidate backup or physical database files. It inspected filenames and file metadata only; it did not read arbitrary document/archive contents. The recovery ZIP and Docker WSL image were inspected separately as documented above.
+- The missing local MySQL dataset remains a hard reconciliation gate. No services were started and no filesystem artifacts were changed.
+
 ## History
 
 - [Consolidated 2026 evidence](../archive/RELEASE_EVIDENCE_2026.md).
