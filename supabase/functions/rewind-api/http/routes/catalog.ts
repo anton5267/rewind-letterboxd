@@ -9,6 +9,7 @@ const GLOBAL_SEARCH_PATH = "/api/search/global";
 const MOVIE_DETAILS_PATTERN = /^\/api\/movies\/(\d+)\/details$/;
 const PEOPLE_SEARCH_PATH = "/api/people/search";
 const PERSON_FILMOGRAPHY_PATTERN = /^\/api\/(actors|directors|producers)\/([^/]+)$/;
+const WRITER_FILMOGRAPHY_PATTERN = /^\/api\/writers\/([^/]+)$/;
 
 export async function handleCatalogRoutes(context: HttpRouteContext): Promise<Response | null> {
   const { request, path, query, corsHeaders, repository, authVerifier } = context;
@@ -172,6 +173,36 @@ export async function handleCatalogRoutes(context: HttpRouteContext): Promise<Re
     const type = personMatch[1] === "actors" ? "ACTOR" : personMatch[1] === "directors" ? "DIRECTOR" : "PRODUCER";
     try {
       const person = await repository.getPersonFilmography(type, personId, genreId, query.get("sort") ?? "newest");
+      if (!person) return json({ message: "Not found" }, 404, corsHeaders);
+      let biography: PersonBiography | null = null;
+      if (person.tmdbId && context.personBiographyProvider) {
+        try { biography = await context.personBiographyProvider(person.tmdbId, language); }
+        catch { /* Optional provider failure preserves the catalogue response. */ }
+      }
+      corsHeaders.set("Cache-Control", PUBLIC_CATALOG_CACHE);
+      return json({ ...person, biography: biography?.text ?? null, biographyLanguage: biography?.language ?? null }, 200, corsHeaders);
+    } catch {
+      return json({ message: "Internal server error" }, 500, corsHeaders);
+    }
+  }
+
+  const writerMatch = path.match(WRITER_FILMOGRAPHY_PATTERN);
+  if (writerMatch) {
+    if (request.method !== "GET") {
+      corsHeaders.set("Allow", "GET, OPTIONS");
+      return json({ message: "Method not allowed" }, 405, corsHeaders);
+    }
+    if (!/^\d+$/.test(writerMatch[1])) return json({ message: "Invalid person ID" }, 400, corsHeaders);
+    const tmdbPersonId = Number(writerMatch[1]);
+    if (!Number.isSafeInteger(tmdbPersonId) || tmdbPersonId <= 0) return json({ message: "Invalid person ID" }, 400, corsHeaders);
+    if (!repository.getWriterFilmography) return json({ message: "Not found" }, 404, corsHeaders);
+    const rawGenreId = query.get("genreId");
+    const genreId = rawGenreId === null ? null : optionalPositiveInteger(rawGenreId);
+    if (rawGenreId !== null && genreId === null) return json({ message: "Invalid genre ID" }, 400, corsHeaders);
+    const language = query.get("language") ?? "en";
+    if (language !== "uk" && language !== "en") return json({ message: "Invalid biography language" }, 400, corsHeaders);
+    try {
+      const person = await repository.getWriterFilmography(tmdbPersonId, genreId, query.get("sort") ?? "newest");
       if (!person) return json({ message: "Not found" }, 404, corsHeaders);
       let biography: PersonBiography | null = null;
       if (person.tmdbId && context.personBiographyProvider) {

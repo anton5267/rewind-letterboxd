@@ -23,6 +23,7 @@ import {
 import {
   recordAdminAudit,
 } from "./shared/admin_audit.ts";
+import { replaceTmdbCrewCredits } from "./shared/tmdb_crew_credits.ts";
 
 class TmdbProviderApiError extends RewindApiError {
   constructor(status: number, message: string, readonly providerStatus: number | null) {
@@ -99,6 +100,8 @@ async function applyTmdbMovie(connection: PgConnection, adminId: number, movieId
   for (const person of data.producers) producerIds.push(await resolveTmdbPerson(connection, "producers", person));
   await connection.queryObject({ text: "DELETE FROM rewind.movie_producers WHERE movie_id=$1", args: [movieId] });
   for (const id of producerIds) await connection.queryObject({ text: "INSERT INTO rewind.movie_producers(movie_id,producer_id) VALUES($1,$2)", args: [movieId, id] });
+
+  await replaceTmdbCrewCredits(connection, movieId, data.crewCredits ?? []);
 
   if (data.voteAverage !== null) await connection.queryObject({
     text: `INSERT INTO rewind.external_ratings(movie_id,source,rating,votes_count,last_updated_at) VALUES($1,'TMDB',$2,$3,CURRENT_TIMESTAMP)

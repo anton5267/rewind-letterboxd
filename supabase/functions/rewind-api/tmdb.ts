@@ -1,5 +1,6 @@
 export interface TmdbPerson { tmdbId: number; name: string; photoUrl: string | null }
 export interface TmdbCast extends TmdbPerson { characterName: string | null; castOrder: number | null }
+export interface TmdbCrewCredit extends TmdbPerson { department: string; job: string }
 export interface TmdbGenre { tmdbId: number; name: string }
 export interface TmdbMovieCandidate {
   tmdbId: number; title: string; releaseDate: string | null; overview: string | null; posterUrl: string | null;
@@ -9,6 +10,7 @@ export interface TmdbMovie {
   overview: string | null; posterUrl: string | null; backdropUrl: string | null; trailerUrl: string | null;
   voteAverage: number | null; voteCount: number | null; genres: TmdbGenre[]; cast: TmdbCast[];
   directors: TmdbPerson[]; producers: TmdbPerson[]; similarTmdbIds: number[];
+  crewCredits?: TmdbCrewCredit[];
 }
 export class TmdbError extends Error {
   constructor(readonly status: number, message: string, readonly providerStatus: number | null = null) { super(message); }
@@ -26,7 +28,9 @@ function image(path: unknown, size: string): string | null {
 }
 function person(value: Record<string, unknown>): TmdbPerson | null {
   const tmdbId = number(value.id), name = text(value.name)?.trim();
-  return tmdbId && name ? { tmdbId, name, photoUrl: image(value.profile_path, "w185") } : null;
+  return tmdbId !== null && Number.isSafeInteger(tmdbId) && tmdbId > 0 && name
+    ? { tmdbId, name, photoUrl: image(value.profile_path, "w185") }
+    : null;
 }
 
 export function mapTmdbMovie(value: unknown, requestedId?: number): TmdbMovie {
@@ -45,9 +49,21 @@ export function mapTmdbMovie(value: unknown, requestedId?: number): TmdbMovie {
     return p ? [{ ...p, characterName: text(entry.character)?.slice(0, 150) ?? null, castOrder: number(entry.order) }]: [];
   }).slice(0, 20);
   const directorMap = new Map<number, TmdbPerson>(), producerMap = new Map<number, TmdbPerson>();
+  const crewCreditMap = new Map<string, TmdbCrewCredit>();
   for (const entry of records(credits.crew)) {
     const p = person(entry); if (!p) continue;
-    const job = (text(entry.job) ?? "").toLowerCase();
+    const rawJob = text(entry.job)?.trim();
+    const rawDepartment = text(entry.department)?.trim();
+    const job = (rawJob ?? "").toLowerCase();
+    if (rawJob) {
+      const credit: TmdbCrewCredit = {
+        ...p,
+        department: rawDepartment ?? "",
+        job: rawJob,
+      };
+      const key = `${p.tmdbId}:${credit.department.toLowerCase()}:${credit.job.toLowerCase()}`;
+      if (!crewCreditMap.has(key)) crewCreditMap.set(key, credit);
+    }
     if (job === "director") directorMap.set(p.tmdbId, p);
     if (job.includes("producer") && !producerMap.has(p.tmdbId)) producerMap.set(p.tmdbId, p);
   }
@@ -67,7 +83,8 @@ export function mapTmdbMovie(value: unknown, requestedId?: number): TmdbMovie {
     title, runtime: number(body.runtime),
     releaseDate: text(body.release_date), overview: text(body.overview), posterUrl: image(body.poster_path, "w500"),
     backdropUrl: image(body.backdrop_path, "original"), trailerUrl, voteAverage: number(body.vote_average),
-    voteCount: number(body.vote_count), genres, cast, directors: [...directorMap.values()], producers: [...producerMap.values()], similarTmdbIds,
+    voteCount: number(body.vote_count), genres, cast, directors: [...directorMap.values()], producers: [...producerMap.values()],
+    crewCredits: [...crewCreditMap.values()], similarTmdbIds,
   };
 }
 
