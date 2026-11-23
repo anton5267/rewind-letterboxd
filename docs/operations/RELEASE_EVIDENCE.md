@@ -300,6 +300,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 ## Local MySQL recovery filename search — 23 November 2026
 
 - Expanded the read-only filename scan to `OneDrive`, `Documents`, `Downloads`, `DataGripProjects`, and `source` for SQL dumps, MySQL/PostgreSQL dump extensions, MySQL physical files (`.ibd`, `ibdata1`) and SQL Server physical files. Excluding repository/worktree source, the scan found no candidate backup or physical database files. It inspected filenames and file metadata only; it did not read arbitrary document/archive contents. The recovery ZIP and Docker WSL image were inspected separately as documented above.
+- Also scanned mounted `D:\` for the same database/dump extensions. Its only matching file was an unrelated Steam `dbghelp.bak`; no MySQL/PostgreSQL backup or physical database file was found.
 - The missing local MySQL dataset remains a hard reconciliation gate. No services were started and no filesystem artifacts were changed.
 
 ## History
