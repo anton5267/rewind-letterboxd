@@ -199,7 +199,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 ## GitHub Pages policy recheck — 23 November 2026
 
 - A fresh anonymous `GET` to the published root returned HTTP 200. The response still has no `Content-Security-Policy`, `Referrer-Policy`, `X-Frame-Options`, `X-Content-Type-Options`, or `Permissions-Policy` header.
-- The returned HTML contains CSP and referrer `<meta>` elements. The CSP meta content has no `frame-ancestors` directive, so the observed HTML does not establish an anti-framing policy; the missing response headers remain a host-level gap. The local `frontend/index.html` matches `master`, and no hosting or production configuration was changed.
+- The returned HTML contains CSP and referrer `<meta>` elements. The CSP meta content has no `frame-ancestors` directive; CSP Level 3 also disallows `frame-ancestors` in a `<meta>` policy ([W3C CSP3](https://www.w3.org/TR/CSP/#meta-element)). The observed HTML therefore does not establish an anti-framing policy; the missing response headers remain a host-level gap. The local `frontend/index.html` matches `master`, and no hosting or production configuration was changed.
 
 ## Writer frontend candidate verification — 23 November 2026
 
