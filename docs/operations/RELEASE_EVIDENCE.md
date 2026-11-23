@@ -201,6 +201,11 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - Re-read the current Figma desktop article frame `844:1547` and its rendered image. Re-ran `journal-design-flow.spec.ts` against the candidate: **3/3 passed**, including the article fixture's 1200px content frame, breadcrumb/divider, 1126×642 rounded hero, heading/byline order, reader-content flow and no horizontal overflow at 1440px; the phone adaptation also had no overflow at 393px.
 - This accepts the tested structural geometry and responsive fit only. Figma's article copy and collage are dynamic API content; the fixture does not prove same-content visual parity. No mobile article frame is confirmed, and typography/full-frame parity remain open. No Figma reference assets were copied into the product.
 
+## Journal media/admin fixture recheck — 23 November 2026
+
+- Re-read article hero layers from current Figma frame `844:1547`: three adjacent panels are each about 375px wide inside the 1126×642 rounded frame. `journal-media.spec.ts` passed **4/4** in UK/EN with isolated fixture routes, covering three-panel geometry, responsive fit, legacy single-cover content, safe rich text, aside image behavior, admin create/retry/reorder/clear, and expected payloads. All auth, media, and API routes were intercepted; the Supabase-auth UI mode used only a dummy test publishable key. No live account or production API was used.
+- The test intentionally exercises the hosted-auth Admin rich editor, so the first run in default Spring-auth mode failed to locate the hidden editor toggle. Rerunning in the workflow's hosted-auth build mode passed both locales. This was environment selection, not a product defect. It verifies the tested content structures but does not close full article-page visual parity or confirm that production authoring/uploads work for a real owner.
+
 ## Mobile navigation frame check — 23 November 2026
 
 - Compared the current Figma Home/guest frame `1411:3473` navigation against the local component screenshot at 393×852. The five icon order, labels, dark surface and rounded upper corners match the visible source. CSS keeps the 92px viewport-wide rail, 5px top padding, 34px safe-area floor, 53px targets, 70px columns and 20px upper radius; at 320px the columns shrink evenly without horizontal overflow.
