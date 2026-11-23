@@ -303,6 +303,12 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - Also scanned mounted `D:\` for the same database/dump extensions. Its only matching file was an unrelated Steam `dbghelp.bak`; no MySQL/PostgreSQL backup or physical database file was found.
 - The missing local MySQL dataset remains a hard reconciliation gate. No services were started and no filesystem artifacts were changed.
 
+## Hosted `rewind` schema privilege audit — 23 November 2026
+
+- Read-only effective-privilege checks on hosted PostgreSQL confirmed `anon` and `authenticated` have no `USAGE` or `CREATE` on schema `rewind`, no effective `SELECT`/`INSERT`/`UPDATE`/`DELETE` on its tables, and no sequence `USAGE`. This matches `supabase/config.toml`, whose Data API schemas are limited to `public` and `graphql_public`.
+- Both client roles report `EXECUTE` on one function in `rewind`: `rewind_full_touch_updated_at`, which returns `trigger` and is attached to enabled triggers. It is not an RPC-returning function, and the client roles lack `rewind` schema `USAGE`. The application roles `rewind_edge_app` / `rewind_edge_reader` have their intended schema/table privileges; this audit did not evaluate every RLS policy predicate or function behavior.
+- No production privileges or data were changed.
+
 ## History
 
 - [Consolidated 2026 evidence](../archive/RELEASE_EVIDENCE_2026.md).
