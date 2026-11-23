@@ -18,6 +18,7 @@ export interface MovieDetails {
   actors: { id: number; name: string; photoUrl?: string | null; characterName: string | null; castOrder?: number | null }[];
   directors: { id: number; name: string }[];
   producers: { id: number; name: string }[];
+  writers?: { tmdbId: number; name: string; photoUrl: string | null }[];
   externalRatings: { source: string; rating: number; votesCount?: number | null; lastUpdatedAt?: string | null }[];
   similarMovies: MovieCard[];
   myFlags: { watched: boolean; watchlist: boolean; favorites: boolean } | null;

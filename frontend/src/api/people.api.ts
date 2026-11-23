@@ -1,11 +1,13 @@
 import api from "./axios";
 
 export type PersonType = "actor" | "director" | "producer";
-export type PersonRole = "ACTOR" | "DIRECTOR" | "PRODUCER";
+export type FilmographyType = PersonType | "writer";
+export type PersonRole = "ACTOR" | "DIRECTOR" | "PRODUCER" | "WRITER";
+export type RelatedPersonType = Exclude<PersonRole, "WRITER">;
 
 export interface RelatedPersonRole {
   id: number;
-  type: PersonRole;
+  type: RelatedPersonType;
 }
 
 export interface PersonFilmography {
@@ -17,6 +19,7 @@ export interface PersonFilmography {
   tmdbId?: number | null;
   biography?: string | null;
   biographyLanguage?: "uk" | "en" | null;
+  careerJobs?: string[];
   films: {
     id: number;
     title: string;
@@ -24,6 +27,7 @@ export interface PersonFilmography {
     rating: number | null;
     photoUrl: string | null;
     characterName: string | null;
+    crewCredits?: { department: string; job: string }[];
   }[];
 }
 
@@ -34,7 +38,7 @@ export interface PersonSearchPage {
   number: number;
 }
 
-export const getPersonFilmography = (type: PersonType, id: string | number, sort: string, genreId: string, language?: "uk" | "en") =>
+export const getPersonFilmography = (type: FilmographyType, id: string | number, sort: string, genreId: string, language?: "uk" | "en") =>
   api.get<PersonFilmography>(`/${type}s/${id}`, { params: { sort, genreId: genreId || undefined, language } });
 
 export const searchPeople = (type: PersonType, q: string | undefined, page: number, size: number) =>

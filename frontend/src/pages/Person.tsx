@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { getPersonFilmography, type PersonFilmography, type PersonType } from "../api/people.api";
+import { getPersonFilmography, type FilmographyType, type PersonFilmography } from "../api/people.api";
+import { getMovieDetails } from "../api/movies.api";
 import ResilientImage from "../components/ResilientImage";
 import RetryButton from "../components/RetryButton";
 import RetryNotice from "../components/RetryNotice";
@@ -26,8 +27,10 @@ export default function Person() {
   const filmPath = (filmId: number) => publicCatalogOnly ? `/${lang}/films/${filmId}/` : path(`/films/${filmId}`);
   const personId = Number(id);
   const validPersonId = Number.isSafeInteger(personId) && personId > 0;
-  const validPersonType = type === "actor" || type === "director" || type === "producer";
+  const validPersonType = type === "actor" || type === "director" || type === "producer" || type === "writer";
   const [person, setPerson] = useState<PersonFilmography | null>(null);
+  const [backdropRequest, setBackdropRequest] = useState<{ personKey: string; movieId: number | null }>({ personKey: "", movieId: null });
+  const [personBackdrop, setPersonBackdrop] = useState<{ personKey: string; url: string | null }>({ personKey: "", url: null });
   const [sort, setSort] = useState("newest");
   const [genreId, setGenreId] = useState("");
   const [decade, setDecade] = useState("");
@@ -120,7 +123,7 @@ export default function Person() {
       setLoading(false);
       return;
     }
-    getPersonFilmography(type as PersonType, personId, sort, genreId, lang)
+    getPersonFilmography(type as FilmographyType, personId, sort, genreId, lang)
       .then(({ data }) => { if (current) setPerson(data); })
       .catch(() => { if (current) setError(true); })
       .finally(() => { if (current) setLoading(false); });
@@ -129,6 +132,25 @@ export default function Person() {
   const personMatchesRoute = person !== null
     && person.id === personId
     && person.type.toLowerCase() === type;
+  const personKey = `${type}:${personId}`;
+  const personFilmId = personMatchesRoute ? person.films[0]?.id ?? null : null;
+  useEffect(() => {
+    if (!personMatchesRoute) return;
+    setBackdropRequest(current => {
+      if (current.personKey === personKey && (current.movieId !== null || personFilmId === null)) return current;
+      return { personKey, movieId: personFilmId };
+    });
+  }, [personFilmId, personKey, personMatchesRoute]);
+  useEffect(() => {
+    if (backdropRequest.personKey !== personKey || backdropRequest.movieId === null) return;
+    let current = true;
+    setPersonBackdrop({ personKey, url: null });
+    getMovieDetails(backdropRequest.movieId)
+      .then(({ data }) => { if (current) setPersonBackdrop({ personKey, url: data.backdropUrl }); })
+      .catch(() => { if (current) setPersonBackdrop({ personKey, url: null }); });
+    return () => { current = false; };
+  }, [backdropRequest, personKey]);
+  const personBackdropUrl = personBackdrop.personKey === personKey ? personBackdrop.url : null;
   const personName = person && personMatchesRoute ? editorialText(person.name, t("unknownPerson")) : t("filmography");
   useEffect(() => {
     if (!publicCatalogOnly) return;
@@ -136,6 +158,8 @@ export default function Person() {
       ? (lang === "uk" ? "режисера" : "director")
       : type === "producer"
       ? (lang === "uk" ? "продюсера" : "producer")
+      : type === "writer"
+      ? (lang === "uk" ? "сценариста" : "writer")
       : (lang === "uk" ? "актора" : "actor");
     setPublicCatalogMetadata({
       language: lang,
@@ -149,9 +173,15 @@ export default function Person() {
   if (!person || !personMatchesRoute) return <main className={`${styles.page} ${error ? styles.statePage : ""} ${type === "director" ? styles.directorPage : ""}`} aria-labelledby="person-title" aria-busy={loading && !error}><div className={styles.stateBack}><Link className={styles.mobileBack} to={backPath} aria-label={t("search")}><img src="/images/help-icon-back.png" alt="" /></Link></div><h1 id="person-title" className={error ? styles.stateTitle : "srOnly"} ref={personHeadingRef} tabIndex={-1}>{t("filmography")}</h1>{error ? <p className={styles.error} role="alert">{!validPersonType || !validPersonId ? t("invalidPersonId") : t("loadPersonError")} {validPersonType && validPersonId && <RetryButton label={t("retry")} busy={loading} onClick={retryPerson} />}</p> : <PersonLoading identity />}</main>;
 
   const relatedPeople = person.relatedPeople ?? [];
-  const roleLabels = { ACTOR: t("personActorRole"), DIRECTOR: t("personDirectorRole"), PRODUCER: t("personProducerRole") };
-  const sectionTitles = { ACTOR: t("filmsStarring"), DIRECTOR: t("filmsDirected"), PRODUCER: t("filmsProduced") };
-  const personTypeLabel = [person.type, ...relatedPeople.map(related => related.type)].map(role => roleLabels[role]).join(" · ");
+  const roleLabels = { ACTOR: t("personActorRole"), DIRECTOR: t("personDirectorRole"), PRODUCER: t("personProducerRole"), WRITER: t("personWriterRole") };
+  const sectionTitles = { ACTOR: t("filmsStarring"), DIRECTOR: t("filmsDirected"), PRODUCER: t("filmsProduced"), WRITER: t("filmsWritten") };
+  const personRoleOrder: PersonFilmography["type"][] = ["ACTOR", "DIRECTOR", "PRODUCER", "WRITER"];
+  const personRoles = new Set<PersonFilmography["type"]>([person.type, ...relatedPeople.map(related => related.type)]);
+  const hasExecutiveProducerCredit = person.careerJobs?.some(job => job.trim().toLowerCase() === "executive producer") ?? false;
+  const personTypeLabel = [
+    ...personRoleOrder.filter(role => personRoles.has(role)).map(role => roleLabels[role]),
+    ...(hasExecutiveProducerCredit ? [t("personExecutiveRole")] : []),
+  ].join(" | ");
   const filmSectionTitle = sectionTitles[person.type];
   const relatedSectionIds = relatedPeople.map(related => `person-${related.type.toLowerCase()}-${related.id}`);
   const films = decade === ""
@@ -160,6 +190,7 @@ export default function Person() {
 
   return <main className={`${styles.page} ${type === "director" ? styles.directorPage : ""}`} aria-labelledby="person-title" aria-busy={loading || genresLoading} onKeyDown={event => { if (event.key === "Escape" && filtersOpen) { event.preventDefault(); setFiltersOpen(false); filterButton.current?.focus(); } }}>
     <section className={`${styles.hero} ${person.biography?.trim() ? styles.heroWithBiography : ""}`}>
+      {personBackdropUrl ? <ResilientImage className={styles.heroBackdrop} src={personBackdropUrl} alt="" aria-hidden="true" loading="eager" fallback={null} /> : null}
       <div className={styles.mobileToolbar}>
         <Link className={styles.mobileBack} to={backPath} aria-label={t("search")}><img src="/images/help-icon-back.png" alt="" /></Link>
         <span>{t("filmography")}</span>
@@ -168,7 +199,7 @@ export default function Person() {
       <div className={styles.heroIdentity}>
         <ResilientImage className={styles.avatar} src={person.photoUrl} alt={personName} fallback={<div className={styles.avatarFallback} aria-hidden="true">{personName.slice(0, 1).toUpperCase()}</div>} />
         <div className={styles.heroCopy}>
-          <p className={styles.eyebrow}>{personTypeLabel}</p>
+          <p className={styles.eyebrow} data-testid="person-role-summary">{personTypeLabel}</p>
           <h1 id="person-title" ref={personHeadingRef} tabIndex={-1}>{personName}</h1>
           <p className={styles.heroMeta}>{t("filmography")}</p>
         </div>

@@ -196,6 +196,19 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - A GET to the public Supabase `/api/genres?language=en` endpoint with `Origin: https://anton5267.github.io` returned HTTP 200 and 17 rows, with the exact origin allowed. Its OPTIONS preflight returned HTTP 204 and allowed GET/POST/PUT/PATCH/DELETE/OPTIONS. This confirms the public GitHub Pages-to-Supabase cross-origin API path only; it does not verify Auth sign-in or private actions.
 - The API/Pages integration works for these public requests. The missing GitHub Pages response headers and the writer UI route remain separate website acceptance gaps. No production write, CORS change, or Auth setting change occurred.
 
+## GitHub Pages policy recheck — 23 November 2026
+
+- A fresh anonymous `GET` to the published root returned HTTP 200. The response still has no `Content-Security-Policy`, `Referrer-Policy`, `X-Frame-Options`, `X-Content-Type-Options`, or `Permissions-Policy` header.
+- The returned HTML contains CSP and referrer `<meta>` elements. The CSP meta content has no `frame-ancestors` directive; CSP Level 3 also disallows `frame-ancestors` in a `<meta>` policy ([W3C CSP3](https://www.w3.org/TR/CSP/#meta-element)). The observed HTML therefore does not establish an anti-framing policy; the missing response headers remain a host-level gap. The local `frontend/index.html` matches `master`, and no hosting or production configuration was changed.
+
+## Writer frontend candidate verification — 23 November 2026
+
+- The current `master` `2c02384` contains the deployed writer API source, but its frontend still lacks the writer filmography route. A frontend-only candidate based on that master adds the writer route and localized movie-detail links, shows writing credits in accessible film cards, and includes responsive UK/EN and role-summary coverage. It carries over frontend changes from the previously reviewed candidate commit `319cd04`; no Edge or migration files are included.
+- `npm ci` completed from the committed lockfile with 0 reported vulnerabilities. `npm run verify:build` passed TypeScript and Vite (**407 modules**). All six `person-*.spec.ts` Playwright suites passed **15/15**, including writer navigation, UK/EN labels and narrow-screen overflow. These tests use intercepted API fixtures; they do not verify authenticated flows or deployed Pages behavior.
+- A separate local-browser acceptance used the real production Edge v67 public API, with Vite at `127.0.0.1:5173` and no Auth session. Writer ID `82665` returned HTTP 200 in EN/UK, rendered `Rebecca Sonnenshine` with the localized `Writer` / `Сценарист` summary, received the exact allowed localhost CORS origin, and had zero horizontal overflow at 393px. This was read-only; it did not test production Pages or private/authenticated actions.
+- Rebuilt with the Pages workflow's `/rewind-letterboxd/` base path and ran a local static-host simulation matching its `index.html` → `404.html` SPA fallback. Direct writer URLs in EN/UK returned the expected fallback HTTP 404 status, then loaded the app assets and rendered the writer page using the real production API (HTTP 200), localized role summaries, and zero overflow at 393px. This verifies candidate routing/fallback behavior under the production base path, but does not replace a post-deploy production Pages check; GitHub Pages will retain its 404 fallback status for ungenerated deep links.
+- This is local candidate evidence only. It has not been merged or deployed; the public writer deep link remains HTTP 404 until a Pages deployment includes the frontend. Production response headers, full Figma visual parity, private-action acceptance, and lost-MySQL reconciliation remain open. No production or Supabase write occurred.
+
 ## Evidence rules
 
 - Identify source review, isolated SQL, fixture, CI, production read or authenticated live action explicitly.

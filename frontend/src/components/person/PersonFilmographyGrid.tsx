@@ -14,19 +14,25 @@ interface Props {
 export default function PersonFilmographyGrid(
   { id, films, expanded, filmPath }: Props,
 ) {
-  const { t } = useLocale();
+  const { t, lang } = useLocale();
   const visibleFilms = expanded ? films : films.slice(0, 12);
   return (
     <div id={id} className={styles.grid}>
       {visibleFilms.map((film) => {
         const title = editorialText(film.title, t("untitledFilm"));
+        const accessibleDetails = [
+          formatMovieYear(film.releaseDate, t("unknownYear")),
+          film.characterName?.trim(),
+          film.crewCredits?.map((credit) => credit.job).join(", "),
+          film.rating === null
+            ? null
+            : `${t("rating")}: ${film.rating.toLocaleString(lang)}`,
+        ].filter(Boolean).join(" · ");
         return (
           <article className={styles.filmCard} key={film.id}>
             <Link
               to={filmPath(film.id)}
-              aria-label={`${title} — ${
-                formatMovieYear(film.releaseDate, t("unknownYear"))
-              }`}
+              aria-label={accessibleDetails ? `${title} — ${accessibleDetails}` : title}
             >
               <ResilientImage
                 className={styles.poster}
@@ -44,6 +50,9 @@ export default function PersonFilmographyGrid(
                   {formatMovieYear(film.releaseDate, t("unknownYear"))}
                   {film.characterName?.trim() &&
                     ` · ${film.characterName.trim()}`}
+                  {(film.crewCredits?.length ?? 0) > 0
+                    ? ` · ${film.crewCredits?.map(credit => credit.job).join(", ")}`
+                    : null}
                   {film.rating !== null && ` · ★ ${film.rating}`}
                 </p>
               </div>
