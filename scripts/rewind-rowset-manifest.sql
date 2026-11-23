@@ -37,4 +37,4 @@ $manifest$;
 
 SELECT table_schema, table_name, row_count, row_hash
 FROM pg_temp.rewind_backup_manifest
-ORDER BY table_schema, table_name;
+ORDER BY table_schema COLLATE "C", table_name COLLATE "C";
