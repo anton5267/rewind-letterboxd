@@ -76,7 +76,7 @@ Desktop `545:676`, phone `721:1085`, expanded director `736:1339`. PersonBiograp
 
 ### Community member details
 
-Frames `605:1112` / `1517:4931`. CommunityMemberCard composes UserFollowRow. Avatar sizes are 194px desktop and 78–79px phone; show public film/review totals and up to four API-fed favorites. Poster height is 68px desktop with 5px gaps, 43px phone with overlap and a 44px link target. Live populated favorites remain unaccepted.
+Frames `605:1112` / `1517:4931`. CommunityMemberCard composes UserFollowRow. Avatar sizes are 194px desktop and 78–79px phone; show public film/review totals and up to four API-fed favorites. Poster height is 68px desktop with 5px gaps, 43px phone with overlap and a 44px link target. A read-only production API check on 23 November found no live populated favorite posters to accept: the HQ showcase's only member returned an empty favorites array and the popular-reviewer endpoint was empty. Do not create production fixtures to fill this visual gap. The live media state remains open until an authorized public profile has favorite films.
 
 ### Illustrated Journal article
 
