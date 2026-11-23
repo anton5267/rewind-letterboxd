@@ -64,7 +64,16 @@ jobs:
           done
           work="$RUNNER_TEMP/rewind-backup"
           mkdir -p "$work"
-          trap 'rm -f "$work/rewind.dump" "$work/rewind-rowset.tsv"' EXIT
+          trap 'rm -f "$work/rewind.dump" "$work/rewind-rowset.tsv" "$work/source-rowset-after.tsv" "$work/restored-rowset.tsv"' EXIT
+          docker run --rm --network host \
+            -e PGHOST -e PGUSER -e PGPASSWORD -e PGPORT -e PGDATABASE \
+            -e PGSSLMODE -e PGCONNECT_TIMEOUT \
+            -v "$GITHUB_WORKSPACE/scripts/rewind-rowset-manifest.sql:/rewind-rowset-manifest.sql:ro" \
+            postgres:17.11 psql -X -q -A -t -F '|' -v ON_ERROR_STOP=1 \
+              --host="$PGHOST" --port="$PGPORT" --username="$PGUSER" \
+              --dbname="$PGDATABASE" --file=/rewind-rowset-manifest.sql \
+              > "$work/rewind-rowset.tsv"
+          test -s "$work/rewind-rowset.tsv"
           docker run --rm \
             -e PGHOST -e PGUSER -e PGPASSWORD -e PGPORT -e PGDATABASE \
             -e PGSSLMODE -e PGCONNECT_TIMEOUT \
@@ -73,6 +82,19 @@ jobs:
           test -s "$work/rewind.dump"
           docker run --rm -i postgres:17.11 pg_restore --list \
             < "$work/rewind.dump" > /dev/null
+
+          docker run --rm --network host \
+            -e PGHOST -e PGUSER -e PGPASSWORD -e PGPORT -e PGDATABASE \
+            -e PGSSLMODE -e PGCONNECT_TIMEOUT \
+            -v "$GITHUB_WORKSPACE/scripts/rewind-rowset-manifest.sql:/rewind-rowset-manifest.sql:ro" \
+            postgres:17.11 psql -X -q -A -t -F '|' -v ON_ERROR_STOP=1 \
+              --host="$PGHOST" --port="$PGPORT" --username="$PGUSER" \
+              --dbname="$PGDATABASE" --file=/rewind-rowset-manifest.sql \
+              > "$work/source-rowset-after.tsv"
+          if ! cmp --silent "$work/rewind-rowset.tsv" "$work/source-rowset-after.tsv"; then
+            echo "::error::Hosted rowsets changed during export; no backup artifact was created. Retry the backup."
+            exit 1
+          fi
 
           local_pg() {
             docker run --rm --network host \
@@ -92,8 +114,11 @@ jobs:
             --host=127.0.0.1 --port=5432 --username=postgres \
             --dbname=rewind_backup_verify \
             --file=/rewind-rowset-manifest.sql \
-            > "$work/rewind-rowset.tsv"
-          test -s "$work/rewind-rowset.tsv"
+            > "$work/restored-rowset.tsv"
+          if ! cmp --silent "$work/rewind-rowset.tsv" "$work/restored-rowset.tsv"; then
+            echo "::error::Hosted rowset manifest does not match the disposable restore; no backup artifact was created."
+            exit 1
+          fi
 
           printf '%s' "$BACKUP_PASSPHRASE" | gpg --batch --yes \
             --pinentry-mode loopback --passphrase-fd 0 --symmetric \
