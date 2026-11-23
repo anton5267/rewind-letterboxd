@@ -283,6 +283,13 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - Re-ran `npm run test:e2e -- tests/e2e/profile-settings-layout.spec.ts` in the candidate worktree with its hosted-auth fixture harness: **2/2 passed**. This covers desktop column geometry, responsive draft/save behavior and keyboard order. The test now explicitly verifies Location → Website → Bio; the previous assertion skipped the Website input added to the form.
 - Removed temporary coordinate logging/selectors from the test. This closes the measured desktop row-alignment gap and fixes the fixture's tab-order expectation; full settings Figma parity remains open. No production data or deployment was touched.
 
+## Supabase Edge v66 source parity recheck — 23 November 2026
+
+- Read-only Supabase function metadata and source read-back still report `rewind-api` **ACTIVE v66**, 80 files, source SHA-256 `d957d8851adf30cdd96500051bbf75dc77843c3371670d024ec9373c9604bcd3`.
+- Compared each hosted file with `supabase/functions/rewind-api/` using UTF-8 content hashes after normalizing CRLF/LF. All 80 hosted filenames exist locally; **77/80 contents match**. Only `tmdb.ts`, `repositories/shared/writing_credit.ts` and `repositories/shared/writer_filmography.ts` differ.
+- Candidate `tmdb.ts` validates positive safe-integer person IDs and caps persisted crew credits at 500 per movie. Candidate `writing_credit.ts` excludes storyboard, script-supervisor and script-coordinator jobs from writer identity/filmography. Candidate `writer_filmography.ts` derives career jobs from all published credits without applying the selected genre filter; hosted v66 derives them from the genre-filtered writing-credit query. These are intentional candidate changes; they are not live yet.
+- No Edge deployment, database migration or production write occurred during this recheck. The other 77 hosted source files are byte-identical after newline normalization.
+
 ## History
 
 - [Consolidated 2026 evidence](../archive/RELEASE_EVIDENCE_2026.md).
