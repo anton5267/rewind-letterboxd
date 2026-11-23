@@ -301,6 +301,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 
 - Expanded the read-only filename scan to `OneDrive`, `Documents`, `Downloads`, `DataGripProjects`, and `source` for SQL dumps, MySQL/PostgreSQL dump extensions, MySQL physical files (`.ibd`, `ibdata1`) and SQL Server physical files. Excluding repository/worktree source, the scan found no candidate backup or physical database files. It inspected filenames and file metadata only; it did not read arbitrary document/archive contents. The recovery ZIP and Docker WSL image were inspected separately as documented above.
 - Also scanned mounted `D:\` for the same database/dump extensions. Its only matching file was an unrelated Steam `dbghelp.bak`; no MySQL/PostgreSQL backup or physical database file was found.
+- A scoped metadata-only search of connected file storage for `rewind`, `mysql`, `mysqldump`, and database-dump terms returned no relevant backup candidate. File contents were not fetched or opened.
 - The missing local MySQL dataset remains a hard reconciliation gate. No services were started and no filesystem artifacts were changed.
 
 ## History
