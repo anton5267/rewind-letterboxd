@@ -312,6 +312,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - Supabase reports `rewind-api` **ACTIVE v67**, 80 files, SHA-256 `3b9fcc28a495d96c027da4d91b4c975faf1cea1f99c4b390c7cf94e10d2068c2`, `verify_jwt=false`. Post-deploy read-back confirms `tmdb.ts`, `repositories/shared/writing_credit.ts`, and `repositories/shared/writer_filmography.ts` exactly match the Git candidate after newline normalization.
 - Anonymous read-only GETs to `/api/writers/4858372?language=en` and `/api/writers/1293082?language=en` both returned HTTP 200, `type=WRITER`, matching TMDB IDs, career-job and film counts, and the expected public cache header. No database migration, Auth setting, privilege, or data change occurred.
 - For writer TMDB ID `1293082`, the unfiltered GET returned two films and two career jobs; `?genreId=18` returned zero films but the same two career jobs. This live check confirms career-job aggregation is independent of the selected genre filter.
+- Using the published app origin `https://anton5267.github.io`, preflight returned HTTP 204 with the exact `Access-Control-Allow-Origin`; the subsequent writer GET returned HTTP 200 with the same origin allowed.
 - This deploy reconciles the hosted Edge behavior with the candidate source, but the deployed code is still not merged into `master`; PR #3 remains draft. Local-to-hosted row reconciliation remains impossible because the local MySQL dataset is lost.
 
 ## Local MySQL recovery filename search — 23 November 2026
