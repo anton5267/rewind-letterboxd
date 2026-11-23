@@ -297,6 +297,14 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - Read-only verbose catalog metadata for `rewind.movie_crew_credits` matched the reconstructed migration's columns, defaults, checks, composite primary key, and `movie_id` foreign key. A separate read-only catalog query confirmed `movie_crew_credits_person_movie_idx`, all four expected `edge_app_catalog_*` / `edge_reader_catalog_select` policies with their roles and predicates, and the expected SELECT/INSERT/DELETE grants for `rewind_edge_app` plus SELECT for `rewind_edge_reader`; no direct grants to `anon` or `authenticated` appeared. This is live catalog metadata confirmation, not proof of the original historical SQL bytes or equality of the full database schema. The source SQL remains explicitly labeled reconstructed because the original applied SQL body was unavailable.
 - No production changes were made.
 
+## Git and Supabase release recheck — 23 November 2026
+
+- Scope clarification is committed in `f147558236b19aa38c20f5e5ae16d52f885cf86a`: current work is limited to Git and Supabase. The branch is pushed, worktree is clean, and `origin/master` remains `74f80187b5f53c5c25f80521081f5551cf1ddc55`.
+- CI run [`45220666026`](https://github.com/anton5267/rewind-letterboxd/actions/runs/45220666026) passed both `verify` and isolated Supabase migration replay on PostgreSQL 17.11 for the scope-note commit.
+- Fresh read-only Supabase metadata reports project `REWIND` as `ACTIVE_HEALTHY`, `rewind-api` ACTIVE v66 with 80 files, and 56 applied migrations. A fresh source comparison confirms the same 77/80 file parity and the same three intentional candidate differences recorded above.
+- Security advisors at 16:53 UTC still report three RLS-enabled private tables with no policies and leaked-password protection disabled; performance advisors still report three profile-media initplan findings and 20 unused-index notices; health advisors report no findings. No settings, schema, privileges, data, or Edge deployment were changed. Existing direct privilege evidence confirms the no-policy tables are not readable by the application/API roles.
+- PR #3 remains open, draft and unmerged. No production deployment or data reconciliation was performed.
+
 ## Local MySQL recovery filename search — 23 November 2026
 
 - Expanded the read-only filename scan to `OneDrive`, `Documents`, `Downloads`, `DataGripProjects`, and `source` for SQL dumps, MySQL/PostgreSQL dump extensions, MySQL physical files (`.ibd`, `ibdata1`) and SQL Server physical files. Excluding repository/worktree source, the scan found no candidate backup or physical database files. It inspected filenames and file metadata only; it did not read arbitrary document/archive contents. The recovery ZIP and Docker WSL image were inspected separately as documented above.
