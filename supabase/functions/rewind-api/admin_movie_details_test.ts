@@ -21,7 +21,7 @@ const details: MovieDetailsResponse = {
   id: 51, title: "Unpublished film", imdbId: null, tmdbId: null, originalLanguage: "uk",
   shortPlot: null, photoUrl: null, backdropUrl: null, releaseDate: null, durationMinutes: null,
   ageRating: null, rating: null, trailerUrl: null, genres: [], actors: [], directors: [],
-  producers: [], externalRatings: [], similarMovies: [], myFlags: null,
+  producers: [], writers: [], externalRatings: [], similarMovies: [], myFlags: null,
 };
 
 Deno.test("protected movie details requires confirmed Auth and propagates the repository Admin guard", async () => {

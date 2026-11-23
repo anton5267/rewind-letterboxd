@@ -120,6 +120,8 @@ for (const language of ["uk", "en"] as const) {
     await page.keyboard.press("Tab");
     await expect(form.locator("#settings-profile-location")).toBeFocused();
     await page.keyboard.press("Tab");
+    await expect(form.locator("#settings-profile-website")).toBeFocused();
+    await page.keyboard.press("Tab");
     await expect(form.locator("textarea")).toBeFocused();
     await expect(form.locator("textarea")).toHaveCSS("outline-style", "solid");
     await expect(form.locator("textarea")).toHaveCSS("outline-width", "2px");

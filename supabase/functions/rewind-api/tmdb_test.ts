@@ -2,6 +2,7 @@ import { discoverTmdbMovies, fetchTmdbMovie, findTmdbMoviesByImdbId, mapTmdbMovi
 function assertEquals(actual: unknown, expected: unknown) {
   if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error(`Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
 }
+const jsonResponse = (value: unknown): Promise<Response> => Promise.resolve(Response.json(value));
 async function assertTmdbError(run: () => Promise<unknown>, message: string) {
   try { await run(); } catch (error) {
     if (error instanceof TmdbError && error.message.includes(message)) return;
@@ -17,7 +18,10 @@ Deno.test("TMDB mapper keeps image, credit, trailer, rating, and similar contrac
     external_ids: { imdb_id: "tt20" }, genres: [{ id: 7, name: "Drama" }],
     credits: {
       cast: [{ id: 1, name: "Actor", profile_path: "/actor.jpg", character: "Lead", order: 0 }],
-      crew: [{ id: 2, name: "Director", job: "Director" }, { id: 3, name: "Producer", job: "Executive Producer" }],
+      crew: [
+        { id: 2, name: "Director", profile_path: "/director.jpg", department: "Directing", job: "Director" },
+        { id: 3, name: "Producer", department: "Production", job: "Executive Producer" },
+      ],
     },
     videos: { results: [
       { site: "YouTube", type: "Trailer", key: "teaser", official: false },
@@ -32,43 +36,78 @@ Deno.test("TMDB mapper keeps image, credit, trailer, rating, and similar contrac
   assertEquals(movie.cast[0]?.characterName, "Lead");
   assertEquals(movie.directors.map((x) => x.tmdbId), [2]);
   assertEquals(movie.producers.map((x) => x.tmdbId), [3]);
+  assertEquals(movie.crewCredits, [
+    { tmdbId: 2, name: "Director", photoUrl: "https://image.tmdb.org/t/p/w185/director.jpg", department: "Directing", job: "Director" },
+    { tmdbId: 3, name: "Producer", photoUrl: null, department: "Production", job: "Executive Producer" },
+  ]);
   assertEquals(movie.trailerUrl, "https://www.youtube.com/watch?v=official%20trailer");
   assertEquals(movie.similarTmdbIds, [21]);
 });
 
+Deno.test("TMDB mapper preserves crew credits beyond 500 entries", () => {
+  const crew = Array.from({ length: 501 }, (_, index) => ({
+    id: index + 1,
+    name: `Crew ${index + 1}`,
+    department: "Writing",
+    job: `Writer ${index + 1}`,
+  }));
+  const movie = mapTmdbMovie({ id: 20, title: "Large crew", credits: { crew } });
+  assertEquals(movie.crewCredits?.length, 501);
+  assertEquals(movie.crewCredits?.at(-1)?.job, "Writer 501");
+});
+
+Deno.test("TMDB mapper drops crew entries with invalid person IDs or blank names", () => {
+  const movie = mapTmdbMovie({
+    id: 20,
+    title: "Invalid crew",
+    credits: {
+      crew: [
+        { id: -1, name: "Negative", department: "Writing", job: "Screenplay" },
+        { id: 1.5, name: "Fractional", department: "Writing", job: "Screenplay" },
+        { id: 9007199254740992, name: "Unsafe", department: "Writing", job: "Screenplay" },
+        { id: 21, name: "   ", department: "Writing", job: "Screenplay" },
+        { id: 22, name: "Valid Writer", department: "Writing", job: "Screenplay" },
+      ],
+    },
+  });
+  assertEquals(movie.crewCredits?.map(({ tmdbId, name }) => ({ tmdbId, name })), [
+    { tmdbId: 22, name: "Valid Writer" },
+  ]);
+});
+
 Deno.test("TMDB movie fetch requires a server key and maps provider errors", async () => {
   await assertTmdbError(() => fetchTmdbMovie(1, undefined, fetch), "disabled");
-  await assertTmdbError(() => fetchTmdbMovie(1, "secret", async () => new Response("", { status: 404 })), "not found");
-  const movie = await fetchTmdbMovie(5, "fixture", async (input) => {
+  await assertTmdbError(() => fetchTmdbMovie(1, "secret", () => Promise.resolve(new Response("", { status: 404 }))), "not found");
+  const movie = await fetchTmdbMovie(5, "fixture", (input) => {
     const url = new URL(String(input));
     assertEquals(url.searchParams.get("api_key"), "fixture");
     assertEquals(url.searchParams.get("append_to_response"), "credits,videos,similar,external_ids");
-    return Response.json({ id: 5, title: "Fetched" });
+    return jsonResponse({ id: 5, title: "Fetched" });
   });
   assertEquals(movie.title, "Fetched");
 });
 
 Deno.test("TMDB discovery preserves supported filters and caps unique IDs", async () => {
-  const discovery = await discoverTmdbMovies({ page: 2, year: 2020, genreId: 18, minRating: 7.5, limit: 2 }, "fixture", async (input) => {
+  const discovery = await discoverTmdbMovies({ page: 2, year: 2020, genreId: 18, minRating: 7.5, limit: 2 }, "fixture", (input) => {
     const url = new URL(String(input));
     assertEquals(url.searchParams.get("page"), "2");
     assertEquals(url.searchParams.get("primary_release_year"), "2020");
     assertEquals(url.searchParams.get("with_genres"), "18");
     assertEquals(url.searchParams.get("vote_average.gte"), "7.5");
-    return Response.json({ page: 2, total_pages: 8, total_results: 4, results: [{ id: 3 }, { id: 3 }, { id: 4 }, { id: 5 }] });
+    return jsonResponse({ page: 2, total_pages: 8, total_results: 4, results: [{ id: 3 }, { id: 3 }, { id: 4 }, { id: 5 }] });
   });
   assertEquals(discovery, { page: 2, totalPages: 8, totalResults: 4, tmdbIds: [3, 4] });
 });
 
 Deno.test("TMDB title search returns bounded explicit candidates and applies year", async () => {
-  const candidates = await searchTmdbMovies("Alien", 1979, "fixture", async (input) => {
+  const candidates = await searchTmdbMovies("Alien", 1979, "fixture", (input) => {
     const url = new URL(String(input));
     assertEquals(url.pathname, "/3/search/movie");
     assertEquals(url.searchParams.get("query"), "Alien");
     assertEquals(url.searchParams.get("primary_release_year"), "1979");
     assertEquals(url.searchParams.get("include_adult"), "false");
     assertEquals(url.searchParams.get("api_key"), "fixture");
-    return Response.json({ results: [
+    return jsonResponse({ results: [
       { id: 1, title: "Alien", release_date: "1979-05-25", overview: "Sci-fi", poster_path: "/alien.jpg" },
       { id: 2, title: "Alien 3", release_date: "1992-05-22" },
       ...Array.from({ length: 10 }, (_, index) => ({ id: index + 3, title: `Candidate ${index}` })),
@@ -86,20 +125,20 @@ Deno.test("TMDB title search rejects short queries and requires the server key",
 
 Deno.test("TMDB IMDb lookup returns exact movie candidates and validates the external ID", async () => {
   let called = false;
-  const candidates = await findTmdbMoviesByImdbId(" tt1234567 ", "fixture", async (input) => {
+  const candidates = await findTmdbMoviesByImdbId(" tt1234567 ", "fixture", (input) => {
     called = true;
     const url = new URL(String(input));
     assertEquals(url.pathname, "/3/find/tt1234567");
     assertEquals(url.searchParams.get("external_source"), "imdb_id");
     assertEquals(url.searchParams.get("api_key"), "fixture");
-    return Response.json({ movie_results: [
+    return jsonResponse({ movie_results: [
       { id: 42, title: "Exact Match", release_date: "2025-01-02", overview: "Plot", poster_path: "/poster.jpg" },
       { title: "Invalid result" },
     ] });
   });
   assertEquals(called, true);
   assertEquals(candidates, [{ tmdbId: 42, title: "Exact Match", releaseDate: "2025-01-02", overview: "Plot", posterUrl: "https://image.tmdb.org/t/p/w185/poster.jpg" }]);
-  const empty = await findTmdbMoviesByImdbId("tt1234567", "fixture", async () => Response.json({ movie_results: [] }));
+  const empty = await findTmdbMoviesByImdbId("tt1234567", "fixture", () => jsonResponse({ movie_results: [] }));
   assertEquals(empty, []);
   await assertTmdbError(() => findTmdbMoviesByImdbId("not-an-imdb-id", "fixture"), "Invalid IMDb ID");
   await assertTmdbError(() => findTmdbMoviesByImdbId("tt1234567", undefined), "disabled");
@@ -107,10 +146,10 @@ Deno.test("TMDB IMDb lookup returns exact movie candidates and validates the ext
 
 Deno.test("Admin candidate search prefers IMDb matches and falls back to title and year only when unmatched", async () => {
   const calls: string[] = [];
-  const exact = await searchTmdbMovieCandidates({ imdbId: "tt1234567", title: "Wrong Local Title", year: 2025 }, "fixture", async (input) => {
+  const exact = await searchTmdbMovieCandidates({ imdbId: "tt1234567", title: "Wrong Local Title", year: 2025 }, "fixture", (input) => {
     const url = new URL(String(input));
     calls.push(url.pathname);
-    return Response.json(url.pathname.includes("/find/")
+    return jsonResponse(url.pathname.includes("/find/")
       ? { movie_results: [{ id: 17, title: "IMDb Exact", release_date: "2025-02-03" }] }
       : { results: [{ id: 18, title: "Text Search" }] });
   });
@@ -118,13 +157,13 @@ Deno.test("Admin candidate search prefers IMDb matches and falls back to title a
   assertEquals(calls, ["/3/find/tt1234567"]);
 
   calls.length = 0;
-  const fallback = await searchTmdbMovieCandidates({ imdbId: "tt1234567", title: "Local Title", year: 2025 }, "fixture", async (input) => {
+  const fallback = await searchTmdbMovieCandidates({ imdbId: "tt1234567", title: "Local Title", year: 2025 }, "fixture", (input) => {
     const url = new URL(String(input));
     calls.push(url.pathname);
-    if (url.pathname.includes("/find/")) return Response.json({ movie_results: [] });
+    if (url.pathname.includes("/find/")) return jsonResponse({ movie_results: [] });
     assertEquals(url.searchParams.get("query"), "Local Title");
     assertEquals(url.searchParams.get("primary_release_year"), "2025");
-    return Response.json({ results: [{ id: 18, title: "Text Search" }] });
+    return jsonResponse({ results: [{ id: 18, title: "Text Search" }] });
   });
   assertEquals(fallback.map(({ tmdbId, title }) => ({ tmdbId, title })), [{ tmdbId: 18, title: "Text Search" }]);
   assertEquals(calls, ["/3/find/tt1234567", "/3/search/movie"]);

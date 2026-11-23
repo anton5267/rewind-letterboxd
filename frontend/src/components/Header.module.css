@@ -123,6 +123,11 @@
     content: "";
   }
 
+  /* The live 1440px Figma header group sits 2px left of the frame center. */
+  .header:not(.listsLanding) > .logo,
+  .header:not(.listsLanding) > .desktopNav,
+  .header:not(.listsLanding) > .search { position: relative; left: -2px; }
+
   .header.scrolled:not(.listsLanding)::before {
     background: rgba(0, 0, 0, .85);
     filter: none;

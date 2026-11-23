@@ -27,8 +27,21 @@ jobs:
   backup:
     if: inputs.operation == 'backup'
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17.11
+        env:
+          POSTGRES_DB: rewind_backup_verify
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: rewind-restore-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d rewind_backup_verify"
+          --health-interval 5s --health-timeout 5s --health-retries 20
     steps:
+      - uses: actions/checkout@v6
       - name: Export and encrypt application schema
         shell: bash
         env:
@@ -51,29 +64,103 @@ jobs:
           done
           work="$RUNNER_TEMP/rewind-backup"
           mkdir -p "$work"
-          trap 'rm -f "$work/rewind.dump"' EXIT
+          trap 'rm -f "$work/rewind.dump" "$work/rewind-rowset.tsv" "$work/source-rowset-after.tsv" "$work/restored-rowset.tsv"' EXIT
+          docker run --rm --network host \
+            -e PGHOST -e PGUSER -e PGPASSWORD -e PGPORT -e PGDATABASE \
+            -e PGSSLMODE -e PGCONNECT_TIMEOUT \
+            -v "$GITHUB_WORKSPACE/scripts/rewind-rowset-manifest.sql:/rewind-rowset-manifest.sql:ro" \
+            postgres:17.11 psql -X -q -A -t -F '|' -v ON_ERROR_STOP=1 \
+              --host="$PGHOST" --port="$PGPORT" --username="$PGUSER" \
+              --dbname="$PGDATABASE" --file=/rewind-rowset-manifest.sql \
+              > "$work/rewind-rowset.tsv"
+          test -s "$work/rewind-rowset.tsv"
           docker run --rm \
             -e PGHOST -e PGUSER -e PGPASSWORD -e PGPORT -e PGDATABASE \
             -e PGSSLMODE -e PGCONNECT_TIMEOUT \
-            postgres:17 pg_dump --format=custom --schema=rewind --no-owner --no-acl \
+            postgres:17.11 pg_dump --format=custom --schema=rewind --no-owner --no-acl \
             > "$work/rewind.dump"
           test -s "$work/rewind.dump"
-          docker run --rm -i postgres:17 pg_restore --list \
+          docker run --rm -i postgres:17.11 pg_restore --list \
             < "$work/rewind.dump" > /dev/null
+
+          docker run --rm --network host \
+            -e PGHOST -e PGUSER -e PGPASSWORD -e PGPORT -e PGDATABASE \
+            -e PGSSLMODE -e PGCONNECT_TIMEOUT \
+            -v "$GITHUB_WORKSPACE/scripts/rewind-rowset-manifest.sql:/rewind-rowset-manifest.sql:ro" \
+            postgres:17.11 psql -X -q -A -t -F '|' -v ON_ERROR_STOP=1 \
+              --host="$PGHOST" --port="$PGPORT" --username="$PGUSER" \
+              --dbname="$PGDATABASE" --file=/rewind-rowset-manifest.sql \
+              > "$work/source-rowset-after.tsv"
+          if ! cmp --silent "$work/rewind-rowset.tsv" "$work/source-rowset-after.tsv"; then
+            echo "::error::Hosted rowsets changed during export; no backup artifact was created. Retry the backup."
+            exit 1
+          fi
+
+          local_pg() {
+            docker run --rm --network host \
+              -e PGPASSWORD=rewind-restore-only \
+              -v "$GITHUB_WORKSPACE/scripts/rewind-rowset-manifest.sql:/rewind-rowset-manifest.sql:ro" \
+              -v "$work/rewind.dump:/rewind.dump:ro" \
+              postgres:17.11 "$@"
+          }
+          local_pg psql -X -q -v ON_ERROR_STOP=1 \
+            --host=127.0.0.1 --port=5432 --username=postgres \
+            --dbname=rewind_backup_verify \
+            --command='CREATE ROLE rewind_edge_app NOLOGIN; CREATE ROLE rewind_edge_reader NOLOGIN;'
+          local_pg pg_restore --exit-on-error --single-transaction --no-owner --no-acl \
+            --host=127.0.0.1 --port=5432 --username=postgres \
+            --dbname=rewind_backup_verify /rewind.dump
+          local_pg psql -X -q -A -t -F '|' -v ON_ERROR_STOP=1 \
+            --host=127.0.0.1 --port=5432 --username=postgres \
+            --dbname=rewind_backup_verify \
+            --file=/rewind-rowset-manifest.sql \
+            > "$work/restored-rowset.tsv"
+          if ! cmp --silent "$work/rewind-rowset.tsv" "$work/restored-rowset.tsv"; then
+            echo "::error::Hosted rowset manifest does not match the disposable restore; no backup artifact was created."
+            python3 - "$work/rewind-rowset.tsv" "$work/restored-rowset.tsv" <<'PY'
+          import sys
+
+          def read_manifest(path):
+              result = {}
+              with open(path, encoding="utf-8") as manifest:
+                  for line in manifest:
+                      schema, table, row_count, row_hash = line.rstrip("\n").split("|", 3)
+                      result[(schema, table)] = (row_count, row_hash)
+              return result
+
+          source = read_manifest(sys.argv[1])
+          restored = read_manifest(sys.argv[2])
+          for key in sorted(source.keys() | restored.keys()):
+              if source.get(key) != restored.get(key):
+                  category = "row count differs" if source.get(key, (None,))[0] != restored.get(key, (None,))[0] else "content digest differs"
+                  print(f"Mismatching table ({category}): {key[0]}.{key[1]}")
+          PY
+            exit 1
+          fi
+
           printf '%s' "$BACKUP_PASSPHRASE" | gpg --batch --yes \
             --pinentry-mode loopback --passphrase-fd 0 --symmetric \
             --cipher-algo AES256 --output "$work/rewind.dump.gpg" "$work/rewind.dump"
           printf '%s' "$BACKUP_PASSPHRASE" | gpg --batch --quiet \
             --pinentry-mode loopback --passphrase-fd 0 --decrypt "$work/rewind.dump.gpg" \
             | cmp --silent "$work/rewind.dump" -
+          printf '%s' "$BACKUP_PASSPHRASE" | gpg --batch --yes \
+            --pinentry-mode loopback --passphrase-fd 0 --symmetric \
+            --cipher-algo AES256 --output "$work/rewind-rowset.tsv.gpg" "$work/rewind-rowset.tsv"
+          printf '%s' "$BACKUP_PASSPHRASE" | gpg --batch --quiet \
+            --pinentry-mode loopback --passphrase-fd 0 --decrypt "$work/rewind-rowset.tsv.gpg" \
+            | cmp --silent "$work/rewind-rowset.tsv" -
           cd "$work"
           sha256sum rewind.dump.gpg > rewind.dump.gpg.sha256
+          sha256sum rewind-rowset.tsv.gpg > rewind-rowset.tsv.gpg.sha256
       - uses: actions/upload-artifact@v4
         with:
           name: rewind-encrypted-backup-${{ github.run_id }}
           path: |
             ${{ runner.temp }}/rewind-backup/rewind.dump.gpg
             ${{ runner.temp }}/rewind-backup/rewind.dump.gpg.sha256
+            ${{ runner.temp }}/rewind-backup/rewind-rowset.tsv.gpg
+            ${{ runner.temp }}/rewind-backup/rewind-rowset.tsv.gpg.sha256
           retention-days: 30
           if-no-files-found: error
 
@@ -86,7 +173,7 @@ jobs:
       contents: read
     services:
       postgres:
-        image: postgres:17
+        image: postgres:17.11
         env:
           POSTGRES_DB: rewind_restore
           POSTGRES_USER: postgres

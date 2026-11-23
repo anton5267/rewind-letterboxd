@@ -20,11 +20,15 @@ Deno.test("shared movie details excludes unpublished records by default and pres
     const result = includeUnpublished
       ? await readMovieDetails(connection, 51, true)
       : await readMovieDetails(connection, 51);
-    if (queries.length !== 7 || JSON.stringify(queries[0].args) !== JSON.stringify([51, includeUnpublished])
+    if (queries.length !== 8 || JSON.stringify(queries[0].args) !== JSON.stringify([51, includeUnpublished])
       || !queries[0].text.includes("is_published = TRUE OR $2::boolean")
       || !queries[6].text.includes("m.is_published = TRUE")
+      || !queries[7].text.includes("LOWER(BTRIM(c.department)) = 'writing'")
+      || !queries[7].text.includes("NOT LIKE '%storyboard%'")
+      || !queries[7].text.includes("NOT LIKE '%script supervisor%'")
+      || !queries[7].text.includes("NOT LIKE '%script coordinator%'")
       || result?.id !== 51 || result.originalLanguage !== "uk" || result.actors[0].castOrder !== null
-      || result.actors[0].characterName !== null || result.myFlags !== null) {
+      || result.actors[0].characterName !== null || result.writers.length !== 0 || result.myFlags !== null) {
       throw new Error("Movie details visibility, parameters or existing response shape changed");
     }
   }

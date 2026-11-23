@@ -15,6 +15,7 @@ export interface RewindApiRepository {
   searchPeople(params: PersonSearchParams): Promise<PersonSearchResult>;
   searchGlobal?(query: string, language: string, size: number): Promise<GlobalSearchResponse>;
   getPersonFilmography(type: "ACTOR" | "DIRECTOR" | "PRODUCER", id: number, genreId: number | null, sort: string): Promise<PersonFilmographyResponse | null>;
+  getWriterFilmography?(tmdbPersonId: number, genreId: number | null, sort: string): Promise<PersonFilmographyResponse | null>;
   getPublicReviewFeed?(feed: "recent" | "popular", page: number, size: number): Promise<ReviewFeedResponse>;
   getMovieReviews?(movieId: number, page: number, size: number): Promise<ReviewPageResponse>;
   getMyMovieReview?(authUser: HostedAuthUser, movieId: number): Promise<ReviewResponse | null>;

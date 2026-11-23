@@ -60,6 +60,7 @@
 
 .excerpt {
   margin-top: 0;
+  margin-left: 4px;
   color: #fff;
   font-size: 22px;
   font-weight: 700;
@@ -154,6 +155,7 @@
     padding: 52px 16px 80px;
   }
   .excerpt {
+    margin-left: 0;
     font-size: 18px;
     line-height: 1.4;
   }

@@ -106,19 +106,19 @@
 
 <a id="implementation-status"></a>
 
-## 11. Відповідність реалізації — 14.11.2026
+## 11. Відповідність реалізації — 23.11.2026
 
 Надані вимоги вище збережені. Поточний стан і наступна робота — у [PROGRESS](PROGRESS.md) та [PLAN](../../PLAN.md), точні перевірки й межі — у [RELEASE_EVIDENCE](../operations/RELEASE_EVIDENCE.md). Докладні попередні матриці збережені в [архіві](../archive/IMPLEMENTATION_NOTES_2026_11.md).
 
 | Напрям | Реалізовано | Залишилося прийняти або допрацювати |
 | --- | --- | --- |
 | Акаунти | Hosted signup/confirmation, sign-in/out, recovery/reset, UUID-bound profile, deletion/outbox та email-change UI/callback | Контрольований двоадресний email change, решта token/deletion edge cases. Поточну ADMIN identity зберігати. |
-| Каталог і персоналії | Пошук/фільтри, metadata/credits, ACTOR/DIRECTOR/PRODUCER filmography, decade/genre/sort, біографії | TMDB language gaps та один непідтверджений ID, detailed job/written credits, повна visual parity. |
+| Каталог і персоналії | Пошук/фільтри, metadata/credits, ACTOR/DIRECTOR/PRODUCER filmography, writer pages, decade/genre/sort, біографії, TMDB job labels і written credits у локальному UI | Один фільм без підтвердженого TMDB ID, production acceptance для оновленого UI, повне покриття role/job варіантів і visual parity. |
 | Особисті дії й огляди | Watched/watchlist/favorites, ratings, review/comment CRUD, visibility/moderation, reply overrides | Решта production mutation/ownership flows і фізичний native Share. |
 | Списки | Private/public CUSTOM, системні колекції, reorder, ranked mode, feeds/tags/likes, comments, reply overrides, pin, Admin curation | Owner save/order/rank/pin/comment/cleanup пройшли live acceptance. Admin feature/unfeature/hide/publish і populated featured feed прийняті live. Перестановка двох featured списків прийнята через Admin, SQL, гостьовий API і public reader. Залишаються двоакаунтні reply/comments/reports. |
 | Профілі та social | Bio/links, location/pronoun, owner names, avatar/banner, follow/block, activity, public statistics, messages/notifications | Names/bio/location/pronoun/reply save/clear і website link прийняті live. Медіа upload/replace/clear, двоакаунтна доставка, local SSE reconnect відкриті. |
 | Journal і службові сторінки | Feed/article/archive/audio/newsletter, author, cover collage/content blocks, Admin editor, help/legal/service routes. Live authoring, публікація та populated reader прийняті. | Повна layout parity. |
 | Admin | Movie CRUD/audit/publication, protected details і live hidden-film edit/reload, queues/filters, reports/dismissal, review editor з live UK/EN edit/cancel і hide/show прийманням, CUSTOM list controls | Authenticated report submit/status/dismiss, Figma navigation/parity. Feature/unfeature/hide/publish і перестановка двох добірок прийняті live; перевірені reload та boundary focus. |
 | UK/EN і доступність | Локалізовані маршрути, responsive UI, keyboard/focus/retry, reduced-motion і цільові browser scenarios | Решта states/layouts за Figma, фізичні OS keyboard/zoom/Share перевірки. |
-| Безпека й дані | Приватна rewind schema, RLS/обмежені grants, UUID mapping, guest/owner/Admin guards, ізольований PG rehearsal | Encrypted backup/restore, local/hosted row reconciliation, збереження обох Spring migration histories, capacity/recovery review. Free-plan leaked-password limitation зафіксована. |
-| Передача | Повний Pages frontend + Supabase API, англійський README, схеми, модульна структура, операційні runbooks | Підсумкове приймання всіх вимог і відтворюваний recovery. |
+| Безпека й дані | Приватна rewind schema, RLS/обмежені grants, UUID mapping, guest/owner/Admin guards, encrypted hosted backup і disposable PostgreSQL restore з manifest comparison | Local/hosted row reconciliation, Auth/Storage/settings/secrets recovery, збереження обох Spring migration histories, capacity/recovery review. Free-plan leaked-password limitation зафіксована; production Pages відповіді наразі не мають п’яти очікуваних security headers. |
+| Передача | Повний Pages frontend + Supabase API, англійський README, схеми, модульна структура, операційні runbooks | Віддалений Cloudflare Pages preview з Auth/CORS перевіркою, post-deploy acceptance та підсумкове приймання всіх вимог і відтворюваний recovery. |

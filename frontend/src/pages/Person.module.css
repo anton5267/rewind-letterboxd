@@ -2,6 +2,7 @@
 .page { position: relative; min-height: 100vh; padding: 0 0 72px; background: #1f1f1f; color: #fff; }
 .stateBack { display: none; }
 .hero { position: relative; isolation: isolate; overflow: clip; min-height: 907px; box-sizing: border-box; padding: 234px 24px 80px; background: #000; }
+.heroBackdrop { display: none; }
 .hero::before { position: absolute; z-index: -2; inset: 0 0 auto; aspect-ratio: 1440 / 822; background: url("../assets/figma/home-person/actor-background-baked.png") center top / 100% 100% no-repeat; content: ""; }
 .hero::after { position: absolute; z-index: -1; inset: 0; background: linear-gradient(to top, #000 50%, rgba(0, 0, 0, .74) 116.5%) center 564px / calc(100% + 948px) 528px no-repeat, linear-gradient(to top, #000 50%, rgba(0, 0, 0, .74) 116.5%) center 782px / calc(100% + 948px) 528px no-repeat; filter: blur(112.4px); content: ""; pointer-events: none; }
 .directorPage .hero::before, .directorPage .hero::after { display: none; }
@@ -50,6 +51,9 @@
   .stateTitle { font-size: 28px; }
   .hero { min-height: 499px; padding: 50px 16px 48px; background: linear-gradient(180deg, #1f5c69, #24353b 50%, #1f1f1f); }
   .hero.heroWithBiography { padding-bottom: 14px; background: linear-gradient(180deg, #1f5c69, #24353b 250px, #000 390px); }
+  .heroBackdrop { display: block; position: absolute; z-index: 0; inset: 0 0 auto; width: 100%; height: 390px; object-fit: cover; object-position: center 30%; opacity: .58; }
+  .directorPage .heroBackdrop { display: none; }
+  .mobileToolbar, .heroIdentity { position: relative; z-index: 1; }
   .hero::before, .hero::after { display: none; }
   .directorPage .hero { background: linear-gradient(180deg, transparent, #000 64%), url("/images/search-hero-phone.jpg") center top / 533.444px 300.062px no-repeat, #000; }
   .mobileToolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 10px; min-height: 44px; margin-bottom: 96px; }

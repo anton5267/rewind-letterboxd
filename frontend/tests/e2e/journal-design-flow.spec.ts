@@ -104,6 +104,9 @@ test("journal article keeps its cover and content in the editorial frame", async
   expect(frameBox?.x).toBeCloseTo(120, 0);
   expect(frameBox?.y).toBe(0);
   expect(frameBox?.width).toBe(1200);
+  const excerptBox = await page.locator('[class*="excerpt"]').boundingBox();
+  expect(excerptBox?.x).toBeCloseTo(137, 0);
+  expect(excerptBox?.width).toBe(1126);
   const breadcrumb = frame.getByRole("link", { name: "Journal", exact: true });
   await expect(breadcrumb).toHaveAttribute("href", "/en/journal");
   const pill = await breadcrumb.locator("span").boundingBox();
@@ -132,6 +135,7 @@ test("journal article keeps its cover and content in the editorial frame", async
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
   await page.setViewportSize({ width: 393, height: 852 });
   await expect(page.getByText("Sulima Bohdan", { exact: true })).toBeVisible();
+  expect((await page.locator('[class*="excerpt"]').boundingBox())?.x).toBe(16);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
 
