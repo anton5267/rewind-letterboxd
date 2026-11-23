@@ -1,3 +1,8 @@
+SET TIME ZONE 'UTC';
+SET DateStyle = 'ISO, YMD';
+SET IntervalStyle = 'postgres';
+SET extra_float_digits = 3;
+
 CREATE TEMP TABLE rewind_backup_manifest (
   table_schema text NOT NULL,
   table_name text NOT NULL,
