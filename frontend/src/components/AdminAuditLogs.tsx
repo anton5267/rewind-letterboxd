@@ -11,7 +11,7 @@ import { formatDateTime, localizeAuditAction, localizeAuditTarget, localizeUserR
 import { getUserName } from "../utils/userIdentity";
 import styles from "./AdminShared.module.css";
 
-export default function AdminAuditLogs({ onOpenUserProfile }: { onOpenUserProfile: (adminId: number, logId: number) => void }) {
+export default function AdminAuditLogs({ onOpenUserProfile, className, rowClassName }: { onOpenUserProfile: (adminId: number, logId: number) => void; className?: string; rowClassName?: string }) {
   const { lang, t } = useLocale();
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -151,8 +151,9 @@ export default function AdminAuditLogs({ onOpenUserProfile }: { onOpenUserProfil
     return () => { current = false; };
   }, [page, revision, actor]);
 
-  return <section ref={sectionRef} className={`${styles.section} ${styles.auditSection}`} aria-label={t("moderatorLogs")} aria-busy={loading || actorsLoading}>
+  return <section ref={sectionRef} className={`${styles.section} ${styles.auditSection} ${className ?? ""}`} aria-label={t("moderatorLogs")} aria-busy={loading || actorsLoading}>
     <h2 className={styles.title} ref={heading} tabIndex={-1}>{t("moderatorLogs")}</h2>
+    <p className={styles.mobileLogDescription}>{t("moderatorLogsDescription")}</p>
     {loading && <AdminLoading label={t("loading")} layout="logs" />}
     {actorsLoading && <p className={styles.feedback} role="status">{t("loading")}</p>}
     {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => {
@@ -168,7 +169,7 @@ export default function AdminAuditLogs({ onOpenUserProfile }: { onOpenUserProfil
     }} />}
     {data && data.content.length === 0 && <p>{t("noAuditLogs")}</p>}
     {data && <>
-      <ul className={styles.list}>{data.content.map(log => <li className={`${styles.row} ${styles.auditRow}`} key={log.id}>
+      <ul className={styles.list}>{data.content.map(log => <li className={`${styles.row} ${styles.auditRow} ${rowClassName ?? ""}`} key={log.id}>
         <div className={styles.auditMain}>
           <span className={styles.auditGroupLabel}>{t("adminActivityHistory")}</span>
           <strong>{actors[log.adminId] ? getUserName(actors[log.adminId]!, `${t("adminActorId")} #${log.adminId}`) : `${t("adminActorId")} #${log.adminId}`}</strong>
@@ -177,7 +178,7 @@ export default function AdminAuditLogs({ onOpenUserProfile }: { onOpenUserProfil
             <span className={styles.auditActorRole}>{localizeUserRole(actors[log.adminId]!.role, t)}</span>
             <button className={styles.auditProfileButton} type="button" data-admin-log-profile={log.id} aria-label={`${t("viewUserProfile")}: ${getUserName(actors[log.adminId]!, t("someone"))}`} onClick={() => onOpenUserProfile(log.adminId, log.id)}>{t("viewUserProfile")}</button>
           </>}
-          <p>{localizeAuditTarget(log.targetType, lang)} #{log.targetId ?? "—"}</p>
+          <p className={`srOnly ${styles.auditTarget}`}>{localizeAuditTarget(log.targetType, lang)} #{log.targetId ?? "—"}</p>
         </div>
         <div className={styles.auditSide}>
           <div className={styles.auditMetaGroup}>

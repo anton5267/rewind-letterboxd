@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { installHostedAuthFixture, signInHostedFixture } from "./fixtures/hosted-auth";
+import { installHostedAuthFixture } from "./fixtures/hosted-auth";
 
 for (const [language, role] of [["uk", "ADMIN"], ["en", "USER"]] as const) {
   test(`expired stored session waits for the ${role} profile before routing in ${language}`, async ({ context, page }) => {
@@ -32,14 +32,17 @@ for (const [language, role] of [["uk", "ADMIN"], ["en", "USER"]] as const) {
     });
     try {
       await page.setViewportSize(language === "uk" ? { width: 1440, height: 1000 } : { width: 393, height: 852 });
-      await signInHostedFixture(page, language);
-      await page.evaluate(() => {
-        const key = Object.keys(localStorage).find(key => /^sb-.*-auth-token$/.test(key));
-        if (!key) throw new Error("The fixture did not establish its stored session");
-        const session = JSON.parse(localStorage.getItem(key)!);
-        if (!session.access_token.startsWith("fixture-access-")) throw new Error("Expected only the synthetic fixture session");
-        session.expires_at = Math.floor(Date.now() / 1000) - 3600;
-        localStorage.setItem(key, JSON.stringify(session));
+      await page.addInitScript(() => {
+        const session = {
+          access_token: "fixture-access-7", refresh_token: "fixture-refresh-7", token_type: "bearer",
+          expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) - 3600,
+          user: {
+            id: "b1f5872a-148b-4878-8581-06b809b29927", email: "fixture@example.invalid",
+            aud: "authenticated", role: "authenticated", app_metadata: { provider: "email" },
+            user_metadata: {}, created_at: "2026-11-14T00:00:00Z",
+          },
+        };
+        localStorage.setItem("sb-cuirmicbzspomijgkkwo-auth-token", JSON.stringify(session));
       });
       adminRequests.length = 0;
       holdProfile = true;

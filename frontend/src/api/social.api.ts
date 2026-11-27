@@ -7,6 +7,9 @@ export interface PublicNetworkUser {
   username: string;
   displayName: string;
   avatarUrl: string | null;
+  watchedCount?: number;
+  listCount?: number;
+  likes?: number;
 }
 
 export type NetworkPage = NumberedPage<PublicNetworkUser>;
@@ -27,6 +30,7 @@ export interface Activity {
   movie: { id: number; title: string } | null;
   relatedUser: { id: number; username: string; displayName: string } | null;
   list: { id: number; name: string } | null;
+  rating?: number | null;
 }
 
 export type ActivityPage = NumberedPage<Activity>;
@@ -48,6 +52,8 @@ export interface PopularReviewer extends PublicNetworkUser, CommunityDetails {
   listCount?: number;
 }
 
+export type PopularReviewerPage = NumberedPage<PopularReviewer> & { size: number };
+
 export interface CommunityUser extends CommunityDetails {
   id: number;
   username: string;
@@ -64,8 +70,8 @@ export interface RecentWatchedActivity {
   movie: { id: number; title: string } | null;
 }
 
-export const getFollowers = (userId: string | number, page = 0) => api.get<NetworkPage>(`/users/${userId}/followers`, { params: { page, size: 8 } });
-export const getFollowing = (userId: string | number, page = 0) => api.get<NetworkPage>(`/users/${userId}/following`, { params: { page, size: 8 } });
+export const getFollowers = (userId: string | number, page = 0, size = 8) => api.get<NetworkPage>(`/users/${userId}/followers`, { params: { page, size } });
+export const getFollowing = (userId: string | number, page = 0, size = 8) => api.get<NetworkPage>(`/users/${userId}/following`, { params: { page, size } });
 export const getFollowStatus = (userId: string | number) => api.get<FollowStatus>(`/users/${userId}/follow-status`);
 export const follow = (userId: string | number) => api.post<void>(`/users/${userId}/follow`);
 export const unfollow = (userId: string | number) => api.delete<void>(`/users/${userId}/follow`);
@@ -75,6 +81,7 @@ export const unblockUser = (userId: string | number) => api.delete<BlockStatus>(
 export const getUserActivity = (userId: string | number, page = 0) => api.get<ActivityPage>(`/users/${userId}/activity`, { params: { page, size: 10 } });
 export const getFollowingActivity = (page = 0) => api.get<ActivityPage>("/activity/following", { params: { page, size: 10 } });
 export const getPopularReviewers = (size = 6) => api.get<PopularReviewer[]>("/users/popular-reviewers", { params: { size } });
+export const getPopularReviewersPage = (page = 0, size = 10, query?: string) => api.get<PopularReviewerPage>("/users/popular-reviewers/page", { params: { page, size, q: query?.trim() || undefined } });
 export const getHqUsers = () => api.get<CommunityUserPage>("/users/hq", { params: { page: 0, size: 12 } });
-export const getDirectoryUsers = (query: string, page: number) => api.get<CommunityUserPage>("/users/directory", { params: { q: query || undefined, page, size: 12 } });
+export const getDirectoryUsers = (query: string, page: number, size = 16) => api.get<CommunityUserPage>("/users/directory", { params: { q: query || undefined, page, size } });
 export const getRecentWatched = (size = 6) => api.get<{ content: RecentWatchedActivity[] }>("/activity/recent-watched", { params: { size } });

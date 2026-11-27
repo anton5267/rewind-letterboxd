@@ -10,9 +10,46 @@
 .actions { display: grid; width: min(627px, 100%); gap: 15px; margin: 85px auto 0; }
 .button { composes: button from "./AuthShared.module.css"; min-height: 89px; padding-bottom: 17px; border: 0; position: relative; isolation: isolate; background: transparent; font-size: 24px; font-weight: 500; text-decoration: none; }
 .buttonLabel { opacity: .7; }
-.button::before, .button::after { position: absolute; z-index: -1; right: 0; left: 0; border-radius: 46px; content: ""; pointer-events: none; }
-.button::before { top: 0; bottom: 17px; border: 4px solid #b4b4b6; background: rgba(229,229,229,.2); backdrop-filter: blur(20px); }
-.button::after { z-index: -2; top: 17px; bottom: 0; background: #222; filter: blur(20px); }
+@property --auth-entry-border-alpha {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: .1;
+}
+@media (min-width: 768px) {
+  .page .button { transition: none; }
+  .page .button:hover:not(:disabled) { filter: none; transform: none; }
+  .buttonLabel { color: #7e7e7e; opacity: 1; transition: color .3s ease-out; }
+  .button:hover .buttonLabel { color: #fff; }
+  .buttonFace {
+    position: absolute;
+    z-index: -1;
+    inset: 0 0 17px;
+    box-sizing: border-box;
+    border: 4px solid transparent;
+    border-radius: 46px;
+    background:
+      linear-gradient(rgba(229, 229, 229, .2), rgba(229, 229, 229, .2)) padding-box,
+      linear-gradient(90deg, rgba(180, 180, 182, var(--auth-entry-border-alpha)) 0%, rgba(224, 224, 224, var(--auth-entry-border-alpha)) 4%, rgba(255, 255, 255, var(--auth-entry-border-alpha)) 31%, rgba(255, 255, 255, var(--auth-entry-border-alpha)) 60%, rgba(245, 245, 245, var(--auth-entry-border-alpha)) 85%, rgba(219, 219, 221, var(--auth-entry-border-alpha)) 100%) border-box;
+    backdrop-filter: blur(40px);
+    transition: --auth-entry-border-alpha .3s ease-out;
+    pointer-events: none;
+  }
+  .button:hover .buttonFace { --auth-entry-border-alpha: .25; }
+  .buttonBacking {
+    position: absolute;
+    z-index: -2;
+    right: 0;
+    left: 0;
+    border-radius: 46px;
+    background: #222;
+    filter: blur(40px);
+    transition: background-color .3s ease-out;
+    pointer-events: none;
+  }
+  .button[data-auth-entry-action="create-account"] .buttonBacking { top: 17px; height: 72px; }
+  .button[data-auth-entry-action="login"] .buttonBacking { top: 27px; height: 62px; }
+  .button:hover .buttonBacking { background: #353535; }
+}
 .mobileLogo { display: none; }
   .card a.button { color: #fff; }
 .card a.mobileBack { color: #fff; }
@@ -24,8 +61,11 @@
   .mobileLogo { display: flex; justify-content: center; }
   .actions { width: 100%; gap: 18px; margin-top: 95px; }
   .button { min-height: 56px; padding-bottom: 11px; font-size: 14px; }
-  .button::before { bottom: 11px; border-width: 2px; }
-  .button::after { top: 11px; }
+  .page .button { font-weight: 500; }
+  .buttonBacking, .buttonFace { display: none; }
+  .button::before, .button::after { position: absolute; z-index: -1; right: 0; left: 0; border-radius: 46px; content: ""; pointer-events: none; }
+  .button::before { top: 0; bottom: 11px; box-sizing: border-box; border: 2px solid #b4b4b6; background: rgba(229,229,229,.2); backdrop-filter: blur(20px); }
+  .button::after { z-index: -2; top: 11px; bottom: 0; background: rgba(34,34,34,.66); filter: blur(20px); }
   .mobileBack { display: grid; position: absolute; top: 45px; left: 25px; width: 44px; height: 44px; place-items: center; border-radius: 50%; color: #fff; font-size: 13px; }
   .mobileBack::before { position: absolute; inset: 7px; border: 1px solid #ffffff70; border-radius: 50%; content: ""; }
 }

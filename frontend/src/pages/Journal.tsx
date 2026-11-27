@@ -5,7 +5,7 @@ import Pagination from "../components/Pagination";
 import ResilientImage from "../components/ResilientImage";
 import JournalCover from "../components/journal/JournalCover";
 import RetryNotice from "../components/RetryNotice";
-import { editorialText, formatArchiveMonth, formatDateTime, localizeJournalCategory, useLocale } from "../i18n";
+import { editorialText, formatArchiveMonth, formatJournalFeedDate, localizeJournalCategory, useLocale } from "../i18n";
 import { safeHttpUrl } from "../utils/externalUrl";
 import { getLastPageIndex, isPageOutOfRange } from "../utils/pagination";
 import { journalCategories } from "../utils/journalCategories";
@@ -147,10 +147,10 @@ export default function Journal() {
           <h2 id="journal-content-title" className="srOnly">{t("journal")}</h2>
           {loading && <>
             <p className="srOnly" role="status">{t("loading")}</p>
-            <div className={styles.grid} aria-hidden="true">
-              {[0, 1].map(index => <div className={`${styles.card} ${index === 0 ? styles.feature : ""}`} key={index}>
+            <div className={`${styles.grid} ${styles.loadingGrid}`} aria-hidden="true">
+              {[0, 1].map(index => <div className={`${styles.card} ${styles.loadingCard} ${index === 0 ? styles.feature : ""}`} key={index}>
                 <div className={`${styles.cover} ${styles.skeleton}`} />
-                <div className={styles.cardBody}>{[0, 1, 2, 3].map(line => <div className={styles.skeletonLine} key={line} />)}</div>
+                <div className={styles.cardBody}>{Array.from({ length: index === 0 ? 4 : 3 }, (_, line) => <div className={styles.skeletonLine} key={line} />)}</div>
                 <div className={`${styles.thumb} ${styles.skeleton}`} />
               </div>)}
             </div>
@@ -184,12 +184,12 @@ export default function Journal() {
                 <div className={styles.cardBody}>
                   <div className={styles.cardMeta}>
                     <span>{localizeJournalCategory(article.category, t)}</span>
-                    {article.publishedAt && <time dateTime={article.publishedAt}>{formatDateTime(article.publishedAt, lang)}</time>}
+                    {article.publishedAt && <time dateTime={article.publishedAt}>{formatJournalFeedDate(article.publishedAt, lang)}</time>}
                   </div>
                   <h3 lang={titleLang}><Link to={articlePath}>{title}</Link></h3>
                   {article.excerpt?.trim() && <p lang={articleLang}>{article.excerpt.trim()}</p>}
                   <div className={styles.cardFooter}>
-                    <Link className={styles.readLink} to={articlePath}>{t("journalRead")}</Link>
+                    <Link className={styles.readLink} to={articlePath}><span className={styles.desktopReadText}>{t("journalRead")}</span><span className={styles.mobileReadText}>{t("journalReadStory")}</span></Link>
                     <span className={styles.byline}>{article.authorName?.trim() || (audioUrl ? t("podcastAudio") : t("journalEyebrow"))}</span>
                   </div>
                 </div>
@@ -203,7 +203,7 @@ export default function Journal() {
           {!loading && !error && <Pagination className={styles.pagination} page={page} totalPages={totalPages} label={t("journalPagination")} busy={loading} onPageChange={nextPage => { focusFeedAfterRetry.current = false; setPage(nextPage); }} />}
         </section>
 
-        {!entirelyEmpty && <aside ref={archiveRef} className={styles.archive} aria-labelledby="journal-archive-title" aria-busy={archiveLoading}>
+        {!entirelyEmpty && (archiveLoading || archiveError || archive.length > 0) && <aside ref={archiveRef} className={styles.archive} aria-labelledby="journal-archive-title" aria-busy={archiveLoading}>
           <h2 id="journal-archive-title" ref={archiveTitleRef} tabIndex={-1}>{t("journalArchive")}</h2>
           {archiveLoading ? <p className={styles.status} role="status">{t("loading")}</p> : archiveError ? (
             <RetryNotice className={styles.error} message={t("journalArchiveError")} retryLabel={t("retry")} onRetry={() => { retryOrigin.current.archive = document.activeElement; focusArchiveAfterRetry.current = true; setArchiveAttempt(value => value + 1); }} />

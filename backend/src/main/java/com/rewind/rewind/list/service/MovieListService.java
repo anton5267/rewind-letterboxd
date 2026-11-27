@@ -324,7 +324,7 @@ public class MovieListService {
         for (ListItem item : items.findAllByListIdsForPreview(listIds)) {
             Long listId = item.getList().getId();
             List<MovieCardResponse> listPreview = previews.computeIfAbsent(listId, ignored -> new java.util.ArrayList<>());
-            if (listPreview.size() < 3) {
+            if (listPreview.size() < 5) {
                 var movie = item.getMovie();
                 listPreview.add(new MovieCardResponse(movie.getId(), movie.getTitle(), movie.getReleaseDate(), movie.getRating(), movie.getPhotoUrl()));
             }

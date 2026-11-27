@@ -1,7 +1,8 @@
 import { enrichCommunityUsers } from "./shared/community.ts";
 import type { RewindApiRepository } from "../contracts/repository.ts";
-import type { ActivityResponse, FollowStatusResponse, PopularReviewerResponse, PublicSocialUser } from "../contracts/social.ts";
+import type { ActivityResponse, FollowStatusResponse, PopularReviewerPageResponse, PopularReviewerResponse, PublicSocialUser } from "../contracts/social.ts";
 import { RewindApiError } from "../http/errors.ts";
+import { parseSafeCount } from "../http/parsers/query.ts";
 import {
   pool,
   type PgConnection,
@@ -77,7 +78,8 @@ async function readFollowPage(userId: number, page: number, size: number, outgoi
                WHERE ${ownerColumn} = $1 ORDER BY f.created_at DESC, f.id DESC LIMIT $2 OFFSET $3`, args: [userId, size, page * size],
       }),
     ]);
-    return pageResult(rows.rows.map(toPublicUser), count.rows[0]?.total ?? "0", page, size);
+    const enriched = await enrichCommunityUsers(connection, rows.rows.map(toPublicUser), { includeFavoriteMovies: false });
+    return pageResult(enriched, count.rows[0]?.total ?? "0", page, size);
   } finally { connection.release(); }
 }
 
@@ -142,6 +144,7 @@ export const socialRepository: Pick<RewindApiRepository,
   | "getFollowingActivity"
   | "getRecentWatched"
   | "getPopularReviewers"
+  | "getPopularReviewersPage"
   | "getHqUsers"
   | "getDirectoryUsers"
   | "getPublicUser"
@@ -219,6 +222,45 @@ export const socialRepository: Pick<RewindApiRepository,
                ORDER BY COUNT(rl.id) DESC, u.id DESC LIMIT $1`, args: [size],
       });
       return enrichCommunityUsers(connection, rows.rows.map((row) => ({ ...toPublicUser(row), likes: Number(row.likes) })));
+    } finally { connection.release(); }
+  },
+
+  async getPopularReviewersPage(page, size, query = null): Promise<PopularReviewerPageResponse> {
+    const connection = await pool.connect();
+    try {
+      await connection.queryObject("SET ROLE rewind_edge_app");
+      const count = await connection.queryObject<{ total: string }>({
+        text: `SELECT COUNT(*)::text AS total
+               FROM (
+                 SELECT u.id
+                 FROM rewind.review_likes rl JOIN rewind.reviews r ON r.id = rl.review_id AND NOT r.is_hidden
+                 JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
+                 JOIN rewind.users u ON u.id = r.user_id AND u.is_active
+                 JOIN rewind.users liker ON liker.id = rl.user_id AND liker.is_active
+                 WHERE ($1::text IS NULL OR POSITION(LOWER($1) IN LOWER(u.username)) > 0
+                   OR POSITION(LOWER($1) IN LOWER(COALESCE(u.display_name, ''))) > 0)
+                 GROUP BY u.id
+               ) reviewer_counts`, args: [query],
+      });
+      const totalElements = parseSafeCount(count.rows[0]?.total ?? "0");
+      const rows = await connection.queryObject<{
+        id: string; username: string; display_name: string | null; avatar_url: string | null; likes: string;
+      }>({
+        text: `SELECT u.id::text AS id, u.username, u.display_name, u.avatar_url, COUNT(rl.id)::text AS likes
+               FROM rewind.review_likes rl JOIN rewind.reviews r ON r.id = rl.review_id AND NOT r.is_hidden
+               JOIN rewind.movies m ON m.id = r.movie_id AND m.is_published = TRUE
+               JOIN rewind.users u ON u.id = r.user_id AND u.is_active
+               JOIN rewind.users liker ON liker.id = rl.user_id AND liker.is_active
+               WHERE ($1::text IS NULL OR POSITION(LOWER($1) IN LOWER(u.username)) > 0
+                 OR POSITION(LOWER($1) IN LOWER(COALESCE(u.display_name, ''))) > 0)
+               GROUP BY u.id, u.username, u.display_name, u.avatar_url
+               ORDER BY COUNT(rl.id) DESC, u.id DESC LIMIT $2 OFFSET $3`,
+        args: [query, size, page * size],
+      });
+      return {
+        content: await enrichCommunityUsers(connection, rows.rows.map((row) => ({ ...toPublicUser(row), likes: Number(row.likes) }))),
+        totalPages: Math.ceil(totalElements / size), totalElements, number: page, size,
+      };
     } finally { connection.release(); }
   },
 

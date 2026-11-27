@@ -6,6 +6,24 @@
   color: #fff;
 }
 
+/* READY Admin Films `1260:3772`: centered profile hero and icon dock. */
+@media (min-width: 1200px) {
+  .moviePage > .hero { position: relative; height: 1020px; min-height: 1020px; padding: 0; background: #141717 url("/images/admin-users-figma-hero.png") center top / 100% auto no-repeat; }
+  .moviePage .profileHeader { position: absolute; top: 293px; left: 50%; display: grid; justify-items: center; gap: 12px; width: 100%; min-height: 0; margin: 0; transform: translateX(-50%); text-align: center; }
+  .moviePage .avatar { width: 272px; height: 277px; flex-basis: 277px; font-size: 80px; }
+  .moviePage .hero .title { font-size: 56px; line-height: 1.12; }
+  .moviePage .adminNav { position: absolute; top: 772px; left: 50%; display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; width: min(752px, calc(100% - 48px)); min-height: 96px; margin: 0; padding: 8px; border-radius: 20px; background: #1f1f1f; transform: translateX(calc(-50% - 9px)); }
+  .moviePage .adminNav a { width: 56px; height: 56px; min-height: 56px; justify-content: center; padding: 0; border-radius: 50%; }
+  .moviePage .adminNav a:nth-child(8), .moviePage .adminNav a:nth-child(9), .moviePage .adminNav a:nth-child(10) { display: none; }
+  .moviePage .adminNav a:nth-child(7) { order: 8; width: 146px; border-radius: 37px; }
+  .moviePage .adminNav a:nth-child(11) { order: 7; }
+  .moviePage .adminNav a:nth-child(12) { order: 9; }
+  .moviePage .adminNav .navLabel { display: none; }
+  .moviePage .adminNav a:nth-child(7) .navLabel { display: inline; font-size: 10px; }
+  .moviePage .adminNav a[aria-current="page"] { width: 132px; height: 76px; border-radius: 37px; }
+  .moviePage .adminNav a[aria-current="page"] .navLabel { display: inline; }
+}
+
 .page > section {
   width: min(1200px, calc(100% - 48px));
   margin: 32px auto 0;
@@ -69,6 +87,7 @@
 .adminNav img { display: block; flex-shrink: 0; }
 .adminNav i { display: grid; flex: 0 0 20px; width: 20px; height: 20px; place-items: center; font-size: 20px; }
 .navLabel { font-size: 13px; line-height: 1.4; font-weight: 500; }
+.mobileNavLabel { display: none; }
 .adminNav a[aria-current="page"] .navLabel { font-weight: 600; }
 .workspaceTitle { width: min(1200px, calc(100% - 48px)); margin: 0 auto; color: #fff; font-size: 32px; line-height: 1.2; text-align: center; overflow-wrap: anywhere; }
 .platformTitle { margin: 40px 24px 0; font-size: 24px; text-align: center; }
@@ -100,6 +119,27 @@
 
 .feedback {
   color: var(--rewind-muted);
+}
+
+/* READY Dashboard `1178:2466`: keep the measured hero, metric grid and footer
+   anchors while leaving the live platform totals available on demand. */
+.platformDetails { min-height: 47px; }
+.platformSummary { display: flex; min-height: 47px; align-items: center; justify-content: center; cursor: pointer; list-style: none; }
+.platformSummary::-webkit-details-marker { display: none; }
+.platformSummary::before { content: "＋"; margin-right: 8px; color: #aaa; font-size: 16px; }
+.platformDetails[open] .platformSummary::before { content: "−"; }
+.platformSummary:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: -2px; }
+.platformTitle { margin: 0; font-size: 18px; text-align: center; }
+.platformTitle:focus { outline: 3px solid var(--rewind-cyan); outline-offset: 4px; }
+
+@media (min-width: 1200px) {
+  .dashboardPage .hero { min-height: 390px; padding-bottom: 44px; }
+  .dashboardPage .adminNav { flex-wrap: nowrap; gap: 4px; }
+  .dashboardPage .adminNav a { gap: 4px; min-height: 40px; padding: 6px; }
+  .dashboardPage .adminNav img,
+  .dashboardPage .adminNav i { width: 16px; height: 16px; flex-basis: 16px; font-size: 16px; }
+  .dashboardPage .adminNav .navLabel { font-size: 10px; line-height: 1.1; }
+  .dashboardPage > .dashboardMetrics { margin-top: 12px; }
 }
 
 .error {
@@ -186,6 +226,8 @@
 }
 
 @media (max-width: 767px) {
+  .settingsPage { padding-bottom: 160px; }
+
   .page {
     padding: 0 0 32px;
   }
@@ -204,9 +246,207 @@
   .settings {
     padding: 16px;
   }
+
+  .settingsPage > .hero,
+  .moderatorLogsPage > .hero {
+    padding: 88px 16px 28px;
+  }
+
+  .moderatorLogsPage > .hero {
+    height: 248px;
+  }
+
+  .settingsPage .profileHeader,
+  .moderatorLogsPage .profileHeader {
+    min-height: 64px;
+  }
+
+  .settingsPage .adminNav,
+  .moderatorLogsPage .adminNav {
+    justify-content: center;
+    width: max-content;
+    max-width: 100%;
+    margin-top: 24px;
+    padding: 0;
+    overflow: visible;
+    scrollbar-width: none;
+    transform: translateX(-4px);
+  }
+
+  /* Mobile Settings uses the compact two-link Figma header and card spacing. */
+  .settingsPage .adminNav a:nth-child(-n+10) {
+    display: none;
+  }
+
+  .settingsPage .adminNav a:nth-child(11),
+  .moderatorLogsPage .adminNav a:nth-child(7) {
+    width: 145px;
+  }
+
+  .settingsPage .adminNav a:nth-child(12),
+  .moderatorLogsPage .adminNav a:nth-child(12) {
+    width: 196px;
+  }
+
+  .settingsPage .adminNav a:nth-child(11) i,
+  .moderatorLogsPage .adminNav a:nth-child(7) i,
+  .settingsPage .adminNav a:nth-child(12) img,
+  .moderatorLogsPage .adminNav a:nth-child(12) img {
+    width: 20px;
+    height: 20px;
+    box-sizing: border-box;
+    padding: 4px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .16);
+  }
+
+  .settingsPage .adminNav a:nth-child(11) i,
+  .moderatorLogsPage .adminNav a:nth-child(7) i {
+    flex-basis: 20px;
+    font-size: 11px;
+  }
+
+  .moderatorLogsPage .adminNav a:nth-child(-n+6),
+  .moderatorLogsPage .adminNav a:nth-child(n+8):nth-child(-n+11) {
+    display: none;
+  }
+
+  .moderatorLogsPage .adminNav .navLabel {
+    display: none;
+  }
+
+  .moderatorLogsPage .adminNav a {
+    height: 44px;
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 0 12px;
+  }
+
+  .moderatorLogsPage .adminNav a:nth-child(12) .navLabel {
+    display: inline;
+  }
+
+  .moderatorLogsPage .adminNav .mobileNavLabel {
+    display: inline;
+    white-space: nowrap;
+  }
+
+  .moderatorLogsPage > .logFrameSection {
+    margin-top: 24px;
+  }
+
+  .moderatorLogsPage .logFrameSection > h2 {
+    margin: 0 0 4px;
+    font-size: 24px;
+    line-height: 1.2;
+  }
+
+  .moderatorLogsPage .logFrameSection > ul {
+    gap: 54px;
+    margin-top: 17px;
+  }
+
+  .moderatorLogsPage .logFrameCard {
+    min-height: 326px;
+    box-sizing: border-box;
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+
+  .page.settingsPage > .settings {
+    padding: 16px 15px 15px;
+  }
+
+  .settingsPage .settingsWorkspace {
+    min-height: 480px;
+  }
+
+  .settingsPage .settingsTitle {
+    margin-bottom: 7px;
+  }
+
+  .settingsPage .settingsWorkspace > [role="status"] {
+    margin-top: 21px;
+  }
+
+  .settingsPage .settingsWorkspace [data-layout="settings"] > [class*="row"] {
+    min-height: 253px;
+    height: 253px;
+    box-sizing: border-box;
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  .settingsPage .settingsWorkspace > .settingsLoadError {
+    margin-top: 19px;
+  }
+
+  .settingsPage .settingsWorkspace > .settingsLoadError button {
+    display: block;
+    min-width: 83px;
+    margin-top: 36px;
+    margin-left: 0;
+    color: var(--rewind-paper);
+    font-size: 14px;
+    padding-inline: 9px;
+  }
+
+  .settingsPage .settingToggle {
+    min-height: 30px;
+  }
+
+  .settingsPage .settingsList > .settingRow:nth-child(3) {
+    margin-bottom: 8px;
+  }
+
+  .settingsPage .settingsList > .settingRow:nth-child(4) {
+    row-gap: 19px;
+  }
+
+  .settingsPage .settingsWorkspace > .settingsSaveError {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 4px;
+    margin-top: 12px;
+    margin-bottom: 23px;
+  }
+
+  .settingsPage .settingsWorkspace > .settingsSaveError button {
+    margin-top: 0;
+    min-width: 83px;
+    margin-left: 0;
+    margin-right: 10px;
+    color: var(--rewind-paper);
+    font-size: 14px;
+    padding-inline: 9px;
+  }
 }
 
 @media (max-width: 520px) {
+  :global(html[lang="en"]) .settingsPage .settingsWorkspace > .settingsSaveError {
+    margin-bottom: 50px;
+  }
+
+  :global(html[lang="en"]) .settingsPage .settingsWorkspace > .settingsSaveError button {
+    transform: translateY(-14px);
+  }
+}
+
+@media (max-width: 520px) {
+  .settingsPage .settingRow {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .settingsPage .settingRow > button {
+    width: 100%;
+  }
+
   .settingRow {
     align-items: stretch;
     flex-direction: column;
@@ -228,8 +468,12 @@
 /* Compact shared Admin shell follows refreshed Dashboard `1178:2466`. */
 @media (min-width: 768px) {
   .page { padding-top: 0; }
+  .userListPage { padding-bottom: 92px; }
   /* Settings frame: workspace ends at1948, footer begins at2113. */
-  .settingsPage { padding-bottom: 165px; }
+  .settingsPage { padding-bottom: 160px; }
+  .logsPage { padding-bottom: 157px; }
+  .moderationPage { padding-bottom: 0; }
+  .activityPage { padding-bottom: 0; }
   .userProfilePage { padding-bottom: 160px; }
 
   .page > section,
@@ -248,6 +492,74 @@
     min-height: 126px;
   }
 
+  /* READY Admin Users `1222:3530`: retain the profile-banner hero and
+     compact icon navigation while keeping the live API-backed table. */
+  .userListPage > .hero {
+    position: relative;
+    height: 1020px;
+    min-height: 1020px;
+    padding: 0;
+    background: #141717 url("/images/admin-users-figma-hero.png") center top / 100% auto no-repeat;
+  }
+
+  .userListPage .profileHeader {
+    position: absolute;
+    top: 293px;
+    left: 50%;
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 0;
+    margin: 0;
+    transform: translateX(-50%);
+    text-align: center;
+  }
+
+  .userListPage .avatar {
+    width: 272px;
+    height: 277px;
+    flex-basis: 277px;
+    font-size: 80px;
+  }
+
+  .userListPage .hero .title { font-size: 56px; line-height: 1.12; }
+
+  .userListPage .adminNav {
+    position: absolute;
+    top: 772px;
+    left: 50%;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    width: min(762px, calc(100% - 48px));
+    min-height: 96px;
+    margin: 0;
+    padding: 8px;
+    border-radius: 20px;
+    background: #1f1f1f;
+    transform: translateX(-50%);
+  }
+
+  .userListPage .adminNav a { width: 56px; height: 56px; min-height: 56px; justify-content: center; padding: 0; border-radius: 50%; }
+  .userListPage .adminNav a:nth-child(8),
+  .userListPage .adminNav a:nth-child(9),
+  .userListPage .adminNav a:nth-child(10) { display: none; }
+  .userListPage .adminNav a:nth-child(7) { order: 8; width: 146px; border-radius: 37px; }
+  .userListPage .adminNav a:nth-child(11) { order: 7; }
+  .userListPage .adminNav a:nth-child(12) { order: 9; }
+  .userListPage .adminNav .navLabel { display: none; }
+  .userListPage .adminNav a:nth-child(7) .navLabel { display: inline; font-size: 10px; }
+  .userListPage .adminNav a[aria-current="page"] { width: 138px; border-radius: 37px; }
+  .userListPage .adminNav a[aria-current="page"] .navLabel { display: inline; font-size: 10px; }
+
+  :global(main[data-admin-user-list-page="true"]) > section {
+    width: min(1200px, calc(100% - 48px));
+    margin: 0 auto;
+    padding: 58px 0 0;
+  }
+
   /* Figma Settings frame `1404:4076` uses a 1200×734 translucent workspace
      at x=120 with a 38 px radius. Keep the API-backed rows flexible inside it. */
   .page > .settings {
@@ -256,6 +568,267 @@
     border: 0;
     background: transparent;
   }
+
+  /* READY Settings `1404:4076` keeps the full editorial profile hero that
+     introduces this admin workspace. The other admin views stay compact. */
+  .settingsPage > .hero {
+    min-height: 1020px;
+    padding-top: 294px;
+    background: #141717 url("/images/search-hero-desktop.png") center 43.3755% / 100% 140.138% no-repeat;
+  }
+
+  .settingsPage .profileHeader {
+    display: grid;
+    justify-items: center;
+    gap: 16px;
+    min-height: 0;
+    text-align: center;
+  }
+
+  .settingsPage .avatar {
+    width: 280px;
+    height: 280px;
+    flex-basis: 280px;
+    font-size: 80px;
+  }
+
+  .settingsPage .hero .title { font-size: 56px; line-height: 1.12; }
+
+  .settingsPage .adminNav {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    width: min(762px, 100%);
+    min-height: 96px;
+    margin-top: 92px;
+    padding: 8px;
+    border-radius: 20px;
+    background: #1f1f1f;
+  }
+
+  .settingsPage .adminNav a {
+    width: 56px;
+    height: 56px;
+    min-height: 56px;
+    justify-content: center;
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  .settingsPage .adminNav a:nth-child(8),
+  .settingsPage .adminNav a:nth-child(9),
+  .settingsPage .adminNav a:nth-child(10) { display: none; }
+
+  .settingsPage .adminNav a:nth-child(7) { order: 8; width: 146px; border-radius: 37px; }
+  .settingsPage .adminNav a:nth-child(11) { order: 7; }
+  .settingsPage .adminNav a:nth-child(12) { order: 9; }
+  .settingsPage .adminNav .navLabel { display: none; }
+  .settingsPage .adminNav a:nth-child(7) .navLabel { display: inline; font-size: 10px; }
+  .settingsPage .adminNav a[aria-current="page"] { width: 138px; border-radius: 37px; }
+  .settingsPage .adminNav a[aria-current="page"] .navLabel { display: inline; font-size: 10px; }
+
+  .logsPage > .hero {
+    min-height: 1020px;
+    padding-top: 294px;
+    background: #141717 url("/images/search-hero-desktop.png") center 43.3755% / 100% 140.138% no-repeat;
+  }
+
+  .logsPage .profileHeader { display: grid; justify-items: center; gap: 16px; min-height: 0; text-align: center; }
+  .logsPage .avatar { width: 280px; height: 280px; flex-basis: 280px; font-size: 80px; }
+  .logsPage .hero .title { font-size: 56px; line-height: 1.12; }
+
+  .logsPage .adminNav {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    width: min(762px, 100%);
+    min-height: 96px;
+    margin-top: 92px;
+    padding: 8px;
+    border-radius: 20px;
+    background: #1f1f1f;
+  }
+
+  .logsPage .adminNav a { width: 56px; height: 56px; min-height: 56px; justify-content: center; padding: 0; border-radius: 50%; }
+  .logsPage .adminNav a:nth-child(8),
+  .logsPage .adminNav a:nth-child(9),
+  .logsPage .adminNav a:nth-child(10) { display: none; }
+  .logsPage .adminNav a:nth-child(7) { order: 8; width: 146px; border-radius: 37px; }
+  .logsPage .adminNav a:nth-child(11) { order: 7; }
+  .logsPage .adminNav a:nth-child(12) { order: 9; }
+  .logsPage .adminNav .navLabel { display: none; }
+  .logsPage .adminNav a:nth-child(7) .navLabel { display: inline; font-size: 10px; }
+  .logsPage .adminNav a[aria-current="page"] { width: 138px; border-radius: 37px; }
+  .logsPage .adminNav a[aria-current="page"] .navLabel { display: inline; font-size: 10px; }
+
+  .page.logsPage > section[class*="reviewsSection"],
+  .page.logsPage > section[class*="commentsSection"] { margin-top: 53px; }
+
+  .page.logsPage > section[class*="reviewsSection"] > nav[class*="pagination"],
+  .page.logsPage > section[class*="commentsSection"] > nav[class*="pagination"] {
+    justify-content: center;
+    gap: 8px;
+    margin-top: 84px;
+  }
+
+  .page.logsPage > section[class*="reviewsSection"] > nav[class*="pagination"] button:not([data-retry-button]),
+  .page.logsPage > section[class*="commentsSection"] > nav[class*="pagination"] button:not([data-retry-button]) {
+    width: 32px;
+    min-height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #aaa;
+    font-size: 15px;
+  }
+
+  .page.logsPage > section[class*="reviewsSection"] > nav[class*="pagination"] button[aria-current="page"],
+  .page.logsPage > section[class*="commentsSection"] > nav[class*="pagination"] button[aria-current="page"] { color: #fff; }
+  .page.logsPage > section[class*="reviewsSection"] > nav[class*="pagination"] > span,
+  .page.logsPage > section[class*="commentsSection"] > nav[class*="pagination"] > span { color: #aaa; }
+
+  .activityPage > .hero {
+    min-height: 1020px;
+    padding-top: 294px;
+    background: #141717 url("/images/search-hero-desktop.png") center 43.3755% / 100% 140.138% no-repeat;
+  }
+
+  .activityPage .profileHeader { display: grid; justify-items: center; gap: 16px; min-height: 0; text-align: center; }
+  .activityPage .avatar { width: 280px; height: 280px; flex-basis: 280px; font-size: 80px; }
+  .activityPage .hero .title { font-size: 56px; line-height: 1.12; }
+
+  .activityPage .adminNav {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    width: min(762px, 100%);
+    min-height: 96px;
+    margin-top: 92px;
+    padding: 8px;
+    border-radius: 20px;
+    background: #1f1f1f;
+  }
+
+  .activityPage .adminNav a { width: 56px; height: 56px; min-height: 56px; justify-content: center; padding: 0; border-radius: 50%; }
+  .activityPage .adminNav a:nth-child(8),
+  .activityPage .adminNav a:nth-child(9),
+  .activityPage .adminNav a:nth-child(10) { display: none; }
+  .activityPage .adminNav a:nth-child(7) { order: 8; width: 146px; border-radius: 37px; }
+  .activityPage .adminNav a:nth-child(11) { order: 7; width: 138px; border-radius: 37px; }
+  .activityPage .adminNav a:nth-child(12) { order: 9; }
+  .activityPage .adminNav .navLabel { display: none; }
+  .activityPage .adminNav a:nth-child(11) .navLabel,
+  .activityPage .adminNav a:nth-child(7) .navLabel { display: inline; font-size: 10px; }
+
+  .page.activityPage > section[class*="workspace"] {
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+    background: #1f1f1f;
+  }
+
+  .page.reportedCommentPage > section[class*="workspace"] {
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+    background: #1f1f1f;
+  }
+  .reportedCommentPage { padding-bottom: 0; }
+  .reportedCommentPage > section[class*="workspace"] { padding-bottom: 123px; }
+  .page.reportedCommentPage > section[class*="receiptWorkspace"] { padding-bottom: 0; }
+
+  .page.activityPage > section[class*="activityUsersSection"] {
+    width: 100%;
+    margin: 0;
+    padding: 53px 0 160px;
+    box-sizing: border-box;
+    background: #1f1f1f;
+  }
+  .activityPage > section[class*="activityUsersSection"] > h2 { margin-bottom: 109px; text-align: center; }
+  .activityPage > section[class*="activityUsersSection"] > form { margin-bottom: 34px; }
+
+  /* Figma Moderation `1399:3300`: same full-height admin identity shell,
+     followed by a charcoal workspace that runs directly into the footer. */
+  .moderationPage > .hero {
+    min-height: 1020px;
+    padding-top: 294px;
+    background: #141717 url("/images/search-hero-desktop.png") center 43.3755% / 100% 140.138% no-repeat;
+  }
+
+  .moderationPage .profileHeader { display: grid; justify-items: center; gap: 16px; min-height: 0; text-align: center; }
+  .moderationPage .avatar { width: 280px; height: 280px; flex-basis: 280px; font-size: 80px; }
+  .moderationPage .hero .title { font-size: 56px; line-height: 1.12; }
+
+  .moderationPage .adminNav {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    width: min(834px, 100%);
+    min-height: 96px;
+    margin-top: 92px;
+    padding: 8px;
+    border-radius: 37px;
+    background: rgba(255, 255, 255, .05);
+  }
+
+  .moderationPage .adminNav a { width: 74px; height: 76px; min-height: 76px; justify-content: center; padding: 0; border-radius: 37px; }
+  .moderationPage .adminNav a:nth-child(8),
+  .moderationPage .adminNav a:nth-child(9),
+  .moderationPage .adminNav a:nth-child(10) { display: none; }
+  .moderationPage .adminNav a:nth-child(7) { order: 8; width: 214px; border-radius: 37px; }
+  .moderationPage .adminNav a:nth-child(11) { order: 7; }
+  .moderationPage .adminNav a:nth-child(12) { order: 9; }
+  .moderationPage .adminNav .navLabel { display: none; }
+  .moderationPage .adminNav a:nth-child(7) .navLabel,
+  .moderationPage .adminNav a[aria-current="page"] .navLabel { display: inline; font-size: 10px; }
+  .moderationPage .adminNav a[aria-current="page"] { width: 214px; border-radius: 37px; }
+
+  .page.moderationPage > .moderationFrameSection {
+    width: 100%;
+    min-height: 873px;
+    margin: 0;
+    padding: 53px 24px 60px;
+    border: 0;
+    border-radius: 0;
+    background: #1f1f1f;
+    backdrop-filter: none;
+    box-sizing: border-box;
+  }
+
+  .moderationPage .moderationFrameSection > h2 {
+    margin: 0 auto 117px;
+    font-size: 24px;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  .moderationPage .moderationFrameSection > form { width: min(834px, 100%); margin: 0 auto 12px; }
+  .moderationPage .moderationFrameSection > form :global(.filterset) { justify-content: center; margin: 0; }
+  .moderationPage .moderationFrameSection > form :global(.filterset) :global(.control),
+  .moderationPage .moderationFrameSection > form :global(.filterset) button { min-height: 40px; border-radius: 38px; }
+  .moderationPage .moderationFrameSection :global(.moderationLogsLink) { margin: 0 auto 80px; }
+  .moderationPage .moderationFrameSection > ul {
+    width: min(1200px, 100%);
+    margin: 0 auto;
+    padding: 14px 24px;
+    border: 1px solid rgba(255, 255, 255, .07);
+    border-radius: 38px;
+    background: linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.035));
+    box-sizing: border-box;
+  }
+
+  .page.logsPage > .logFrameSection { margin-top: 53px; }
+  .page.logsPage .logFrameSection > h2 { margin: 0 0 117px; font-size: 24px; line-height: 1.2; }
+  .page.logsPage .logFrameSection > ul { gap: 85px; }
+  .page.page.logsPage .logFrameCard { padding-block: 34px; }
+
+  .page.settingsPage > .settings { margin-top: 61px; }
+  .settingsPage .settingsWorkspace { margin-top: 109px; }
 
   .settingsTitle {
     margin: 0;
@@ -295,5 +868,96 @@
   .settingToggle {
     min-height: 44px;
   }
+
+}
+
+/* Figma READY User Profile `1237:4369`: centered admin identity in the hero,
+   compact icon rail at y=772, then the user detail/history workspace. */
+@media (min-width: 1024px) {
+  .userProfilePage .hero {
+    position: relative;
+    height: 1020px;
+    min-height: 1020px;
+    padding: 0 24px;
+    background:
+      linear-gradient(180deg, rgb(0 0 0 / 0%) 40%, #000 100%),
+      linear-gradient(100deg, #111719 2%, #356c70 51%, #8f6239 100%);
+  }
+
+  .userProfilePage .profileHeader {
+    position: absolute;
+    top: 292px;
+    left: 0;
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0;
+    text-align: center;
+  }
+
+  .userProfilePage .avatar {
+    width: 272px;
+    height: 277px;
+    flex-basis: 277px;
+  }
+
+  .userProfilePage .identity {
+    justify-items: center;
+    gap: 4px;
+  }
+
+  .userProfilePage .hero .title {
+    font-size: 58px;
+    line-height: 1.12;
+  }
+
+  .userProfilePage .hero .identity p {
+    font-size: 24px;
+    line-height: 1.2;
+  }
+
+  .userProfilePage .adminNav {
+    position: absolute;
+    top: 772px;
+    left: 50%;
+    display: flex;
+    width: min(752px, calc(100% - 48px));
+    height: 96px;
+    box-sizing: border-box;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0;
+    margin: 0;
+    padding: 10px 12px;
+    overflow-x: auto;
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 38px;
+    background: rgba(255, 255, 255, .05);
+    backdrop-filter: blur(4px);
+    scrollbar-width: none;
+    transform: translateX(-50%);
+  }
+
+  .userProfilePage .adminNav::-webkit-scrollbar { display: none; }
+
+  .userProfilePage .adminNav a {
+    width: 74px;
+    height: 76px;
+    min-height: 76px;
+    flex: 0 0 74px;
+    justify-content: center;
+    padding: 0;
+    border-radius: 37px;
+  }
+
+  .userProfilePage .adminNav a[aria-current="page"] {
+    width: 132px;
+    flex-basis: 132px;
+  }
+
+  .userProfilePage .adminNav .navLabel { display: none; }
+  .userProfilePage .adminNav a[aria-current="page"] .navLabel { display: inline; }
 
 }

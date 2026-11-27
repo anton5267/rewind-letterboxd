@@ -93,7 +93,15 @@ test("public routes expose complete landmarks and image alternatives", async ({ 
     await expect(page.locator("main h1").first(), route).toBeVisible();
     await expect(page.locator('main[aria-busy="true"], main [aria-busy="true"]'), route).toHaveCount(0, { timeout: 15_000 });
     const audit = await page.evaluate(() => {
-      const headings = [...document.querySelectorAll("h1, h2, h3, h4, h5, h6")].map(element => Number(element.tagName.slice(1)));
+      const headings = [...document.querySelectorAll("h1, h2, h3, h4, h5, h6")]
+        .filter(element => {
+          const style = window.getComputedStyle(element);
+          const bounds = element.getBoundingClientRect();
+          return !element.closest('[aria-hidden="true"], [hidden], [inert]')
+            && style.display !== "none" && style.visibility !== "hidden"
+            && bounds.width > 0 && bounds.height > 0;
+        })
+        .map(element => Number(element.tagName.slice(1)));
       const imagesWithoutAlt = [...document.images]
         .filter(image => !image.hasAttribute("alt"))
         .map(image => image.outerHTML.slice(0, 120));

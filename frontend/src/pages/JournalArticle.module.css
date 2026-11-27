@@ -98,6 +98,16 @@
   font-size: clamp(32px, 5vw, 48px);
 }
 
+.errorBack {
+  display: block;
+  width: max-content;
+  margin: 18px 0 0 18px;
+  color: var(--rewind-cyan);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 24px;
+}
+
 .status, .error {
   width: min(100%, 900px);
   margin: 0 auto;
@@ -115,6 +125,8 @@
   background: #4a1f24;
   color: #ffd2d2;
 }
+
+.error p { margin: 0; line-height: normal; }
 
 .error button:not([class]) {
   display: inline-flex;
@@ -141,12 +153,36 @@
 }
 
 @media (max-width: 767px) {
+  .page:has(.article[aria-hidden="true"]),
+  .page:has(.error) { background: #121212; }
   .page {
     padding: 80px 0 calc(96px + env(safe-area-inset-bottom));
   }
   .page.statePage {
     padding: 80px 16px 110px;
   }
+  .stateTitle { margin-bottom: 22px; line-height: 40px; }
+  .error {
+    box-sizing: border-box;
+    height: 168px;
+    padding: 17px;
+    border-color: #702e36;
+    border-radius: 12px;
+  }
+  .error button[class] {
+    box-sizing: border-box;
+    width: 138px;
+    height: 44px;
+    min-height: 44px;
+    margin: 32px 0 0;
+    padding: 0;
+    border: 1px solid #b2858a;
+    border-radius: 10px;
+    background: #57292e;
+    font-size: 14px;
+    line-height: 22px;
+  }
+  .errorBack { margin-top: 19px; }
   .backdrop {
     display: none;
   }
@@ -165,8 +201,5 @@
     font-size: 16px;
     font-weight: 400;
     line-height: 1.72;
-  }
-  .error button[class] {
-    margin: 12px 0 0;
   }
 }

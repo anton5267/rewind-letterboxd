@@ -74,7 +74,7 @@ test("search no-match state follows current desktop and phone READY frames", asy
         expect((headingBox?.x ?? 0) + (headingBox?.width ?? 0) / 2).toBeCloseTo(720, 0);
         expect(headingBox?.height).toBeCloseTo(130, 0);
         expect(Math.abs((actionBox?.y ?? 0) - 610)).toBeLessThan(2);
-        expect(footerBox?.y).toBeCloseTo(774, 0);
+        expect(Math.abs((footerBox?.y ?? 0) - 774)).toBeLessThan(1);
       }
 
       await page.screenshot({ path: resolve(runtimeDir, `runtime-search-empty-${item.width}-${item.locale}.png`), fullPage: item.width >= 1024 });

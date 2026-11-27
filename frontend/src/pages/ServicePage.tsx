@@ -1,6 +1,7 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useLocale, type TranslationKey } from "../i18n";
 import ServiceNavigation from "../components/ServiceNavigation";
+import { useLocale, type TranslationKey } from "../i18n";
 import styles from "./ServicePage.module.css";
 
 type ServiceKind = "help" | "faq" | "contact" | "rules" | "privacy" | "film-data" | "important-data" | "delete-account" | "terms" | "conditions" | "safety-notice" | "hq-accounts";
@@ -11,6 +12,7 @@ type ServiceCopy = {
   hero: { uk: string; en: string };
   intro?: { uk: string; en: string };
   sections: { uk: ServiceSection[]; en: ServiceSection[] };
+  desktopSections?: { uk: ServiceSection[]; en: ServiceSection[] };
 };
 
 const content: Record<ServiceKind, ServiceCopy> = {
@@ -68,14 +70,14 @@ const content: Record<ServiceKind, ServiceCopy> = {
         { heading: "Призначення", body: "Ця пам’ятка пояснює чинні засоби захисту та дії, які допомагають безпечно користуватися спільнотою." },
         { heading: "Захист даних", body: "Паролі зберігаються як хеші, а дані авторизованої сесії використовують HttpOnly cookies. Email не показується в публічному профілі. Не публікуйте паролі й особисті контактні дані." },
         { heading: "Контент і взаємодія", body: "Уникайте погроз, переслідування й поширення чужих приватних даних. Модератори можуть приховувати огляди й коментарі, що порушують правила." },
-        { heading: "Безпека спільноти", body: "Керуйте своїми підписками й за потреби використовуйте блокування учасника. Про проблему можна повідомити команді; не додавайте пароль або токени сесії.", contactLink: true },
+        { heading: "Безпека спільноти", body: "Керуйте своїми підписками й за потреби використовуйте блокування учасника. Про проблему можна повідомити команді; не додавайте пароль або токени сесії." },
         { heading: "Актуальна інформація", body: "Ця сторінка описує поточні можливості Rewind. Додаткові відомості про дані й видалення акаунта наведено в сусідніх розділах." },
       ],
       en: [
         { heading: "Purpose", body: "This notice describes current safeguards and steps that help you use the community safely." },
         { heading: "Data Protection", body: "Passwords are stored as hashes, and authenticated sessions use HttpOnly cookies. Public profiles do not display email addresses. Do not publish passwords or personal contact details." },
         { heading: "Content and Interaction", body: "Avoid threats, harassment, and sharing private information about others. Moderators can hide reviews and comments that violate the rules." },
-        { heading: "Community Safety", body: "Manage your follows and use member blocking when needed. Contact the team about a problem without including passwords or session tokens.", contactLink: true },
+        { heading: "Community Safety", body: "Manage your follows and use member blocking when needed. Contact the team about a problem without including passwords or session tokens." },
         { heading: "Current Information", body: "This page describes current Rewind capabilities. See the neighbouring sections for information about data and account deletion." },
       ],
     },
@@ -83,21 +85,29 @@ const content: Record<ServiceKind, ServiceCopy> = {
   "hq-accounts": {
     title: "hqAccountsTitle", body: "hqAccountsBody",
     hero: { uk: "HQ — позначка профілю в спільноті Rewind. Вона допомагає впізнати відповідний акаунт серед інших учасників.", en: "HQ is a profile badge in the Rewind community, helping members recognise the account." },
+    intro: {
+      uk: "Позначка HQ відображається в публічному профілі та керується адміністраторами. Вона не є платною підпискою й не надає адміністративних прав.",
+      en: "The HQ badge appears on a public profile and is managed by administrators. It is not a paid subscription and does not grant administrative permissions.",
+    },
     sections: {
       uk: [
         { heading: "Що означає HQ", body: "Позначка HQ відображається в публічному профілі та керується адміністраторами. Вона не є платною підпискою й не надає адміністративних прав." },
         { heading: "Доступні можливості", body: "Акаунт використовує наявні можливості профілю: списки фільмів, огляди, оцінки та взаємодію зі спільнотою. Видимість списків залежить від налаштувань їхнього власника." },
         { heading: "Зображення й закріплений список", body: "У публічній версії власники профілів можуть завантажувати аватар і банер та закріпити один власний публічний список із коментарями. Ці можливості доступні всім профілям." },
         { heading: "Межі поточної реалізації", body: "Інструменти аналітики показів і керування командою заплановані окремо. Позначка HQ сама по собі не змінює правила розрахунку оцінок фільмів." },
-        { heading: "Питання про акаунт", body: "З питаннями про позначку HQ звертайтеся до команди й додайте посилання на профіль.", contactLink: true },
+        { heading: "Питання про акаунт", body: "З питаннями про позначку HQ звертайтеся до команди й додайте посилання на профіль." },
       ],
       en: [
         { heading: "What HQ Means", body: "The HQ badge appears on a public profile and is managed by administrators. It is not a paid subscription and does not grant administrative permissions." },
         { heading: "Available Features", body: "The account uses existing profile features: film lists, reviews, ratings, and community interaction. List visibility depends on the owner’s settings." },
-        { heading: "Images and a Pinned List", body: "Profile owners in the public application can upload an avatar and banner and pin one of their public lists with its comments. These features are available to all profiles." },
-        { heading: "Current Limitations", body: "Impression analytics and team management tools are planned separately. The HQ badge itself does not change how film ratings are calculated." },
-        { heading: "Account Questions", body: "Contact the team about the HQ badge and include the profile address.", contactLink: true },
+        { heading: "Images and a Pinned List", body: "Profile owners can upload an avatar and banner and pin one of their public lists with its comments. These features are available to all profiles." },
+        { heading: "Current Limitations", body: "Impression analytics and team-management tools are not currently available. The HQ badge itself does not change how film ratings are calculated." },
+        { heading: "Account Questions", body: "Contact the team about the HQ badge and include the profile address." },
       ],
+    },
+    desktopSections: {
+      uk: [{ heading: "Можливості профілю та обмеження", body: "Усі профілі можуть створювати списки, писати огляди, оцінювати фільми, взаємодіяти зі спільнотою, завантажувати аватар і банер та закріплювати один публічний список із коментарями. Видимість списку залежить від налаштувань власника. Аналітика показів і керування командою поки недоступні. Позначка HQ не змінює оцінки фільмів. Із запитаннями звертайтеся до команди та додайте адресу профілю." }],
+      en: [{ heading: "Profile Features and Limitations", body: "Available to all profiles: film lists, reviews, ratings, community interaction, avatar and banner uploads, and one pinned public list with its comments. List visibility depends on the owner’s settings. Impression analytics and team-management tools are not available yet. HQ status does not change how film ratings are calculated. For questions, contact the team with the profile address." }],
     },
   },
   help: {
@@ -252,7 +262,7 @@ const content: Record<ServiceKind, ServiceCopy> = {
     title: "importantDataTitle", body: "importantDataBody",
     hero: {
       uk: "Дані фільмів Rewind допомагають підтримувати точність, послідовність і довіру до каталогу.",
-      en: "Important Data is Rewind’s source of truth, ensuring accuracy, consistency, and credibility in every film we share with our community.",
+      en: "Important Data explains where Rewind’s film information comes from and how to report an issue.",
     },
     intro: {
       uk: "Усі метадані фільмів у Rewind — імена акторів, режисерів і студій, синопсиси, дати виходу, трейлери та постери — надходять із The Movie Database (TMDB). Rewind використовує TMDB API, але не схвалений і не сертифікований TMDB.",
@@ -265,28 +275,28 @@ const content: Record<ServiceKind, ServiceCopy> = {
       ],
       en: [
         { heading: "Sources and Updates", body: "Film data comes from TMDB, including cast, directors, studios, synopses, release dates, trailers, and posters. Rewind records may be refreshed from this source; there is no fixed update interval." },
-        { heading: "Duplicates", body: "If you find multiple pages for the same film, send the team a link to each page. Automatic merging and transfer of activity are not currently supported.", contactLink: true },
+        { heading: "Duplicates", body: "If you find multiple pages for the same film, send the team a link to each page. Automatic merging and transfer of activity are not currently supported." },
       ],
     },
   },
   "delete-account": {
     title: "deleteAccountTitle", body: "deleteAccountBody",
     hero: {
-      uk: "Видалення акаунта Rewind дає кожному учаснику контроль і право залишити спільноту з гідністю та приватністю.",
-      en: "Account Deletion is Rewind’s assurance of control, giving every member the right to leave with dignity and privacy.",
+      uk: "Видалення акаунта прибирає ваш профіль і пов’язану активність. Перед підтвердженням збережіть усе потрібне.",
+      en: "Account deletion removes your profile and related activity. Save anything you need before confirming.",
     },
     sections: {
       uk: [
         { heading: "Призначення", body: "Видалення акаунта — остаточний крок, який прибирає профіль і пов’язану активність із платформи. Перед підтвердженням збережіть потрібну інформацію." },
-        { heading: "Що станеться після видалення", items: ["Ваш профіль більше не буде видимий іншим учасникам.", "Пов’язані з акаунтом огляди, вподобання та коментарі буде видалено.", "Ваші підписки й активні сесії буде завершено.", "Відновити видалений акаунт неможливо."], body: "" },
+        { heading: "Що станеться після видалення", items: ["Ваш профіль більше не буде видимий іншим учасникам.", "Ваші списки, оцінки, огляди, коментарі та вподобання буде видалено.", "Підписки буде видалено, а активні сесії завершено.", "Видалений акаунт не можна відновити."], body: "" },
         { heading: "Безпека та приватність", body: "Щоб подати запит, підтвердьте його поточним паролем. Видалення акаунта відбувається через форму в налаштуваннях профілю." },
-        { heading: "Оновлення політики", body: "Опис на цій сторінці стосується поточного процесу в Rewind. Перед відправленням запиту збережіть інформацію, яка може знадобитися вам пізніше." },
+        { heading: "Оновлення політики", body: "Ця сторінка описує поточний процес у Rewind. Перед поданням запиту збережіть інформацію, яка може знадобитися пізніше." },
       ],
       en: [
         { heading: "Purpose", body: "Account deletion is a final step that removes your profile and related activity from the platform. Save anything you need before confirming." },
-        { heading: "What happens after deletion", items: ["Your profile will no longer be visible to other members.", "Reviews, likes, and comments associated with your account will be deleted.", "Your follows and active sessions will end.", "Once deleted, your account cannot be restored."], body: "" },
+        { heading: "What happens after deletion", items: ["Your profile will no longer be visible to other members.", "Your lists, ratings, reviews, comments, and likes will be deleted.", "Your follows will be removed and active sessions revoked.", "A deleted account cannot be restored."], body: "" },
         { heading: "Security and Privacy", body: "To submit a request, confirm it with your current password. Account deletion is handled through the form in Profile settings." },
-        { heading: "Policy Updates", body: "This page describes the current Rewind process. Before submitting a request, save any information you may need later." },
+        { heading: "Policy Updates", body: "This page describes the current Rewind process. Save any information you may need before submitting a request." },
       ],
     },
   },
@@ -295,12 +305,12 @@ const content: Record<ServiceKind, ServiceCopy> = {
 // Original image nodes in Help 1062:1993; the first slot is composed below
 // from the visible children of 1064:2191 rather than a screenshot of the frame.
 const helpIllustrations = [
-  { className: "watchedIllustration", src: null, href: "/films", label: "films" },
-  { className: "browseIllustration", src: "/images/help-browse-films.png", href: "/profile", label: "profile" },
-  { className: "watchlistIllustration", src: "/images/help-watchlist.png", href: "/films", label: "films" },
-  { className: "settingsIllustration", src: "/images/help-account-settings.png", href: "/profile?settings=authentication", label: "accountSettings" },
-  { className: "activityIllustration", src: "/images/help-following-activity.png", href: "/community", label: "community" },
-  { className: "listsIllustration", src: "/images/help-share-lists.png", href: "/lists", label: "lists" },
+  { className: "watchedIllustration", src: null },
+  { className: "browseIllustration", src: "/images/help-browse-films.png" },
+  { className: "watchlistIllustration", src: "/images/help-watchlist.png" },
+  { className: "settingsIllustration", src: "/images/help-account-settings.png" },
+  { className: "activityIllustration", src: "/images/help-following-activity.png" },
+  { className: "listsIllustration", src: "/images/help-share-lists.png" },
 ] as const;
 
 function WatchedIllustration() {
@@ -324,20 +334,32 @@ function WatchedIllustration() {
 
 const helpGuides = [
   {
-    image: "/images/help-film-actions.png", className: "filmActionsGuide", href: "/films", link: "films",
+    image: "/images/help-film-actions.png", className: "filmActionsGuide",
+    action: { href: "/films", uk: "Фільми →", en: "Browse Films →" },
     uk: { heading: "Дії з фільмами", body: "На сторінці фільму можна позначити перегляд, додати стрічку до улюблених і поставити оцінку. Збережіть майбутній перегляд у своєму списку або додайте фільм до тематичної добірки. Ці дії формують ваш профіль і зберігають історію кінематографічних відкриттів." },
     en: { heading: "Film actions", body: "On a film page, you can mark a title as watched, add it to your favorites, and rate it. If you plan to see it later, add it to your Watchlist or include it in a themed list. These actions personalize your profile and track your viewing journey." },
   },
   {
-    image: "/images/help-list-tags.png", className: "tagsGuide", href: "/lists", link: "lists",
+    image: "/images/help-list-tags.png", className: "tagsGuide",
+    action: { href: "/lists", uk: "Мої списки →", en: "Open Lists →" },
     uk: { heading: "Теги списків", body: "Теги допомагають упорядковувати ваші добірки. Додавайте їх під час створення або редагування списку: зазначайте жанр, тему чи настрій. Публічні списки з тегами можна знайти в каталозі добірок, щоб інші учасники відкривали ваші рекомендації." },
     en: { heading: "Tagging lists", body: "Tags help organize your collections. Add them when creating or editing a list to describe its genre, theme, or mood. Tagged public lists can be found through the lists catalog, helping other members discover your recommendations." },
   },
   {
-    image: "/images/help-lists-guide.png", className: "listsGuide", href: "/lists/discover", link: "discoverLists",
-    uk: { heading: "Списки", body: "Збирайте фільми за темою, жанром, режисером чи настроєм і діліться ними. Теги допомагають знаходити ваші публічні добірки. Список із тегом «Французька нова хвиля» або «Лауреати Оскара» поєднує ваш погляд зі спільнотою." },
-    en: { heading: "Lists", body: "Lists let you collect and share films by theme, genre, director, or mood. With tags, public lists become searchable, so others can find them through browsing. A list tagged “French New Wave” or “Oscar Winners” connects your curation with the community." },
+    image: "/images/help-lists-guide.png", className: "listsGuide",
+    action: { href: "/lists/discover", uk: "Добірки →", en: "Discover Lists →" },
+    uk: { heading: "Списки", body: "Збирайте й поширюйте фільми за темою, жанром, режисером або настроєм. Завдяки тегам інші учасники можуть знаходити ваші публічні добірки під час перегляду каталогу." },
+    en: { heading: "Lists", body: "Lists let you collect and share films by theme, genre, director, or mood. With tags, public lists become searchable, so others can find them through browsing." },
   },
+] as const;
+
+const helpActions = [
+  { href: "/films", uk: "Фільми →", en: "Open Films →" },
+  { href: "/profile", uk: "Профіль →", en: "Open your Profile →" },
+  { href: "/films", uk: "Фільми →", en: "Browse Films →" },
+  { href: "/profile?settings=profile", uk: "Налаштування акаунта →", en: "Open Profile Settings →" },
+  { href: "/community", uk: "Спільнота →", en: "Explore Community →" },
+  { href: "/lists", uk: "Мої списки →", en: "Open Lists →" },
 ] as const;
 
 interface ServicePageProps {
@@ -346,26 +368,35 @@ interface ServicePageProps {
 
 export default function ServicePage({ kind }: ServicePageProps) {
   const { lang, path, t } = useLocale();
+  const [mobileViewport, setMobileViewport] = useState(() => window.matchMedia("(max-width: 767px)").matches);
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const syncViewport = () => setMobileViewport(media.matches);
+    syncViewport();
+    media.addEventListener("change", syncViewport);
+    return () => media.removeEventListener("change", syncViewport);
+  }, []);
   const copy = content[kind];
-  const sections = copy.sections[lang];
+  const sections = kind === "hq-accounts" && !mobileViewport && copy.desktopSections ? copy.desktopSections[lang] : copy.sections[lang];
 
   return (
-    <main className={`${styles.page} ${kind === "privacy" ? styles.privacyPage : ""}`} aria-labelledby="service-page-title">
+    <main className={`${styles.page} ${lang === "en" ? styles.enServicePage : ""} ${kind === "faq" ? styles.faqPage : ""} ${kind === "privacy" ? styles.privacyPage : ""} ${kind === "privacy" && lang === "en" ? styles.enPrivacy : ""} ${kind === "important-data" ? styles.importantDataPage : ""} ${kind === "hq-accounts" ? styles.hqAccountsPage : ""} ${kind === "hq-accounts" && lang === "en" ? styles.enHqAccounts : ""} ${kind === "contact" ? styles.contactPage : ""} ${kind === "terms" ? styles.termsPage : ""} ${kind === "safety-notice" ? styles.safetyNoticePage : ""} ${kind === "conditions" ? styles.conditionsPage : ""} ${kind === "rules" ? styles.rulesPage : ""}`} aria-labelledby="service-page-title">
       <div className={`${styles.hero} ${kind === "help" ? styles.helpHero : ""}`}>
-        <ServiceNavigation className={styles.serviceNav} />
+        {(kind === "faq" || mobileViewport) && <ServiceNavigation className={`${styles.serviceNav} ${kind === "faq" ? styles.faqNavigation : ""}`} includeTerms={mobileViewport} mobileDraft={mobileViewport} />}
         <div className={styles.heroCopy}>
-          <p className={styles.eyebrow}>REWIND / {t(copy.title)}</p>
+          <p className={styles.eyebrow}>REWIND  /  {t(copy.title)}</p>
           <h1 className={`${styles.title} ${kind === "faq" ? styles.faqTitle : ""}`} id="service-page-title">{t(copy.title)}</h1>
           <p className={styles.lead}>{copy.hero[lang]}</p>
         </div>
       </div>
-      <article className={[styles.content, kind === "help" ? styles.helpContent : styles.editorialContent, kind !== "help" && kind !== "contact" ? styles.documentContent : "", kind === "delete-account" ? styles.deletionContent : "", kind === "film-data" ? styles.filmDataContent : "", kind === "privacy" ? styles.privacyContent : "", kind === "faq" ? styles.faqContent : ""].filter(Boolean).join(" ")} aria-labelledby="service-details-title">
+      <article className={[styles.content, kind === "help" ? styles.helpContent : styles.editorialContent, kind !== "help" && kind !== "contact" ? styles.documentContent : "", kind === "delete-account" ? styles.deletionContent : "", kind === "film-data" ? styles.filmDataContent : "", kind === "important-data" ? styles.importantDataContent : "", kind === "safety-notice" ? styles.safetyNoticeContent : "", kind === "conditions" ? styles.conditionsContent : "", kind === "rules" ? styles.rulesContent : "", kind === "privacy" ? styles.privacyContent : "", kind === "faq" ? styles.faqContent : "", kind === "hq-accounts" ? styles.hqAccountsContent : "", kind === "contact" ? styles.contactContent : "", kind === "terms" ? styles.termsContent : ""].filter(Boolean).join(" ")} aria-labelledby="service-details-title">
         <h2 id="service-details-title" className="srOnly">{t(copy.title)}</h2>
         {kind === "help" ? <>
           <div className={styles.helpSteps}>{sections.map((section, index) => {
             const illustration = helpIllustrations[index];
+            const action = helpActions[index];
             return <section className={styles.helpStep} key={section.heading}>
-              <div className={styles.helpCopy}><h3>{section.heading}</h3><p>{section.body}</p><Link className={styles.guideLink} to={path(illustration.href)}>{t(illustration.label)} <span aria-hidden="true">→</span></Link></div>
+              <div className={styles.helpCopy}><h3>{section.heading}</h3><p>{section.body}</p>{mobileViewport && action && <Link className={styles.guideLink} to={path(action.href)}>{action[lang]}</Link>}</div>
               <div className={`${styles.helpIllustration} ${styles[illustration.className]}`} aria-hidden="true">
                 {illustration.src ? <img src={illustration.src} alt="" loading="lazy" /> : <WatchedIllustration />}
               </div>
@@ -373,7 +404,7 @@ export default function ServicePage({ kind }: ServicePageProps) {
           })}</div>
           <div className={styles.helpGuides}>{helpGuides.map(guide => <section className={`${styles.helpGuide} ${styles[guide.className]}`} key={guide.image}>
             <div className={styles.guideImage} aria-hidden="true"><img src={guide.image} alt="" loading="lazy" /></div>
-            <h3>{guide[lang].heading}</h3><p>{guide[lang].body}</p><Link className={styles.guideLink} to={path(guide.href)}>{t(guide.link)} <span aria-hidden="true">→</span></Link>
+            <h3>{guide[lang].heading}</h3><p>{guide[lang].body}</p>{mobileViewport && <Link className={styles.guideLink} to={path(guide.action.href)}>{guide.action[lang]}</Link>}
           </section>)}</div>
         </> : kind === "contact" ? <div className={styles.editorialBody}>
           <div className={styles.editorialIntro}>
@@ -397,12 +428,13 @@ export default function ServicePage({ kind }: ServicePageProps) {
             </p> : <p>
               {lang === "uk" ? "Якщо ви знайшли кілька сторінок одного фільму, підготуйте посилання на кожну з них для команди підтримки. Доступні контактні канали наведено на " : "If you find multiple pages for the same film, collect their addresses for the support team. Available contact channels are listed on the "}
               <Link to={path("/contact")}>{lang === "uk" ? "сторінці контактів" : "Contacts page"}</Link>.
-            </p> : section.items ? <ol>{section.items.map(item => <li key={item}>{item}</li>)}</ol> : kind === "privacy" && index === sections.length - 1 ? <p>
+            </p> : section.items ? kind === "privacy" ? <ul>{section.items.map(item => <li key={item}>{item}</li>)}</ul> : <ol>{section.items.map(item => <li key={item}>{item}</li>)}</ol> : kind === "privacy" && index === sections.length - 1 ? <p>
               {lang === "uk" ? "У профілі можна " : "You can "}
               <Link to={path("/profile#profile-identity-form-title")}>{lang === "uk" ? "переглянути й оновити дані" : "view and update your profile details"}</Link>
               {lang === "uk" ? ", а для видалення акаунта скористайтеся " : ", and to delete your account use the "}
               <Link to={path("/profile#profile-delete-form-title")}>{lang === "uk" ? "формою видалення акаунта" : "account deletion form"}</Link>.
-            </p> : <p>{section.body}{section.contactLink && <> {lang === "uk" ? "Зв’яжіться з командою через " : "Contact the team through "}<Link to={path("/contact")}>{lang === "uk" ? "Контакти" : "Contacts"}</Link>.</>}</p>}
+            </p> : <p>{section.body}{section.contactLink && !(kind === "terms" && mobileViewport) && <> {lang === "uk" ? "Зв’яжіться з командою через " : "Contact the team through "}<Link to={path("/contact")}>{lang === "uk" ? "Контакти" : "Contacts"}</Link>.</>}</p>}
+            {kind === "delete-account" && index === 2 && <Link className={styles.deletionLink} to={path("/profile#profile-delete-form-title")}>{lang === "uk" ? "Відкрити форму видалення акаунта" : "Open account deletion form"}<span aria-hidden="true"> →</span></Link>}
           </section>)}
         </div>}
       </article>

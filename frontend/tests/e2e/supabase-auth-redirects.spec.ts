@@ -31,7 +31,7 @@ test("English registration keeps English locale for the provider confirmation ca
   await page.locator("#register-username").fill("newmemberen");
   await page.locator("#register-email").fill("newmemberen@example.invalid");
   await page.locator("#register-password").fill("A-long-password-123!");
-  await page.getByRole("button", { name: "Create your account" }).click();
+  await page.getByRole("button", { name: "Create Account" }).click();
   await expect(page.getByRole("status")).toContainText(/email/i);
   expect(locale).toBe("en");
 });

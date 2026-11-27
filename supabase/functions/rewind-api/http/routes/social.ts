@@ -2,10 +2,11 @@ import type { HttpRouteContext } from "../context.ts";
 import { parseSocialPage } from "../parsers/query.ts";
 import { confirmedAuthUser, json, repositoryFailure } from "../response.ts";
 
-const PUBLIC_PROFILE_PATTERN = /^\/api\/users\/(\d+)\/(profile|followers|following|follow-status|follow|block-status|block|activity|collections\/(watched|watchlist|favorites)|lists|liked-reviews)$/;
+const PUBLIC_PROFILE_PATTERN = /^\/api\/users\/(\d+)\/(profile|followers|following|follow-status|follow|block-status|block|activity|collections\/(watched|watchlist|favorites|liked-lists)|lists|liked-reviews)$/;
 const FOLLOWING_ACTIVITY_PATH = "/api/activity/following";
 const RECENT_WATCHED_PATH = "/api/activity/recent-watched";
 const POPULAR_REVIEWERS_PATH = "/api/users/popular-reviewers";
+const POPULAR_REVIEWERS_PAGE_PATH = "/api/users/popular-reviewers/page";
 const HQ_USERS_PATH = "/api/users/hq";
 const USER_DIRECTORY_PATH = "/api/users/directory";
 const PUBLIC_USER_PATTERN = /^\/api\/users\/(\d+)$/;
@@ -17,7 +18,7 @@ export async function handleSocialRoutes(context: HttpRouteContext): Promise<Res
 
   const socialProfileMatch = path.match(PUBLIC_PROFILE_PATTERN);
 
-  if (path === HQ_USERS_PATH || path === USER_DIRECTORY_PATH || path === POPULAR_REVIEWERS_PATH) {
+  if (path === HQ_USERS_PATH || path === USER_DIRECTORY_PATH || path === POPULAR_REVIEWERS_PATH || path === POPULAR_REVIEWERS_PAGE_PATH) {
     if (request.method !== "GET") {
       corsHeaders.set("Allow", "GET, OPTIONS");
       return json({ message: "Method not allowed" }, 405, corsHeaders);
@@ -26,7 +27,13 @@ export async function handleSocialRoutes(context: HttpRouteContext): Promise<Res
     try {
       if (path === POPULAR_REVIEWERS_PATH) {
         if (!repository.getPopularReviewers) return json({ message: "Not found" }, 404, corsHeaders);
-        return json(await repository.getPopularReviewers(Math.min(size, 20)), 200, corsHeaders);
+        return json(await repository.getPopularReviewers(Math.min(size, 24)), 200, corsHeaders);
+      }
+      if (path === POPULAR_REVIEWERS_PAGE_PATH) {
+        if (!repository.getPopularReviewersPage) return json({ message: "Not found" }, 404, corsHeaders);
+        const reviewerQuery = query.get("q")?.trim() || null;
+        if (reviewerQuery && reviewerQuery.length > 80) return json({ message: "Reviewer search is too long" }, 400, corsHeaders);
+        return json(await repository.getPopularReviewersPage(page, size, reviewerQuery), 200, corsHeaders);
       }
       const result = path === HQ_USERS_PATH
         ? await repository.getHqUsers?.(page, size)
@@ -107,6 +114,7 @@ export async function handleSocialRoutes(context: HttpRouteContext): Promise<Res
       else if (route === "following") result = await repository.getFollowing?.(userId, page, size);
       else if (route === "activity") result = await repository.getUserActivity?.(userId, page, size);
       else if (route === "lists") result = await repository.getPublicProfileLists?.(userId, page, size);
+      else if (route === "collections/liked-lists") result = await repository.getPublicProfileLikedLists?.(userId, page, size);
       else if (route === "liked-reviews") result = await repository.getPublicProfileLikedReviews?.(userId, page, size);
       else if (route.startsWith("collections/")) {
         result = await repository.getPublicProfileCollection?.(userId, socialProfileMatch![3] as "watched" | "watchlist" | "favorites", page, size);

@@ -9,6 +9,7 @@ import {
   safeId,
 } from "./shared/results.ts";
 import { findRelatedPersonRoles } from "./shared/person_roles.ts";
+import { enrichNetworkCounts } from "./shared/community.ts";
 
 export const catalogueRepository: Pick<RewindApiRepository,
   | "listGenres"
@@ -209,6 +210,9 @@ export const catalogueRepository: Pick<RewindApiRepository,
         }),
       ]);
       const listIds = lists.rows.map((row) => safeId(row.id, "List ID"));
+      const searchUsers = await enrichNetworkCounts(connection, users.rows.map((row) => ({
+        id: safeId(row.id, "User ID"), username: row.username, displayName: row.display_name, avatarUrl: row.avatar_url,
+      })));
       const [listTags, listPreviews] = listIds.length === 0 ? [{ rows: [] as { list_id: string; name: string }[] },
         { rows: [] as { list_id: string; movie_id: string; title: string; release_date: string | null; rating: string | null; photo_url: string | null }[] }]
         : await Promise.all([
@@ -222,7 +226,7 @@ export const catalogueRepository: Pick<RewindApiRepository,
                             m.rating::text AS rating, m.photo_url,
                             ROW_NUMBER() OVER (PARTITION BY li.list_id ORDER BY li.position ASC NULLS LAST, li.id ASC) AS rn
                       FROM rewind.list_items li JOIN rewind.movies m ON m.id = li.movie_id AND m.is_published = TRUE WHERE li.list_id = ANY($1::bigint[])
-                   ) ranked WHERE rn <= 3 ORDER BY list_id, rn`, args: [listIds],
+                   ) ranked WHERE rn <= 5 ORDER BY list_id, rn`, args: [listIds],
           }),
         ]);
       const tagMap = new Map<number, string[]>();
@@ -248,15 +252,13 @@ export const catalogueRepository: Pick<RewindApiRepository,
           id: safeId(row.id, "Movie ID"), title: row.title, releaseDate: row.release_date,
           rating: row.rating === null ? null : Number(row.rating), photoUrl: row.photo_url,
         })), filmCount.rows[0]?.total ?? "0"),
-        users: toPage(users.rows.map((row) => ({
-          id: safeId(row.id, "User ID"), username: row.username, displayName: row.display_name, avatarUrl: row.avatar_url,
-        })), userCount.rows[0]?.total ?? "0"),
+        users: toPage(searchUsers, userCount.rows[0]?.total ?? "0"),
         lists: toPage(lists.rows.map((row) => {
           const id = safeId(row.id, "List ID");
           return { id, name: row.name, description: row.description, isPublic: true,
             ownerId: safeId(row.owner_id, "User ID"), ownerUsername: row.owner_username, ownerAvatarUrl: row.owner_avatar_url,
             tags: tagMap.get(id) ?? [], likeCount: Number(row.like_count), itemCount: Number(row.item_count),
-            previewMovies: previewMap.get(id) ?? [] };
+            previewMovies: previewMap.get(id) ?? [], featuredCategory: null };
         }), listCount.rows[0]?.total ?? "0"),
         tags: tags.rows.map((row) => ({ id: safeId(row.id, "Tag ID"), name: row.name, slug: row.slug })),
         people: people.rows.map((row) => ({ id: safeId(row.id, "Person ID"), name: row.name, photoUrl: row.photo_url, type: row.type })),

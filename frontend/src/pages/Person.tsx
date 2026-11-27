@@ -175,8 +175,15 @@ export default function Person() {
   const relatedPeople = person.relatedPeople ?? [];
   const roleLabels = { ACTOR: t("personActorRole"), DIRECTOR: t("personDirectorRole"), PRODUCER: t("personProducerRole"), WRITER: t("personWriterRole") };
   const sectionTitles = { ACTOR: t("filmsStarring"), DIRECTOR: t("filmsDirected"), PRODUCER: t("filmsProduced"), WRITER: t("filmsWritten") };
-  const personRoleOrder: PersonFilmography["type"][] = ["ACTOR", "DIRECTOR", "PRODUCER", "WRITER"];
-  const personRoles = new Set<PersonFilmography["type"]>([person.type, ...relatedPeople.map(related => related.type)]);
+  const personRoleOrder: PersonFilmography["type"][] = person.type === "DIRECTOR"
+    ? ["WRITER", "PRODUCER", "DIRECTOR", "ACTOR"]
+    : ["ACTOR", "DIRECTOR", "PRODUCER", "WRITER"];
+  const hasProducerCredit = person.careerJobs?.some(job => job.trim().toLowerCase() === "producer") ?? false;
+  const personRoles = new Set<PersonFilmography["type"]>([
+    person.type,
+    ...relatedPeople.map(related => related.type),
+    ...(hasProducerCredit ? ["PRODUCER" as const] : []),
+  ]);
   const hasExecutiveProducerCredit = person.careerJobs?.some(job => job.trim().toLowerCase() === "executive producer") ?? false;
   const personTypeLabel = [
     ...personRoleOrder.filter(role => personRoles.has(role)).map(role => roleLabels[role]),

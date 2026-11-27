@@ -1,4 +1,6 @@
 import { type BrowserContext, expect, type Page, test } from "@playwright/test";
+import { mkdir } from "node:fs/promises";
+import { resolve } from "node:path";
 import type { NotificationItem } from "../../src/api/notifications.api";
 
 type PollingWindow = Window & {
@@ -31,6 +33,7 @@ async function fixture(context: BrowserContext) {
     countRequests: 0,
     failFeed: false,
     failCount: false,
+    failMark: false,
     hold: false,
     holdMark: false,
     actor: 7,
@@ -161,6 +164,11 @@ async function fixture(context: BrowserContext) {
         state.unread = 0;
         return route.fulfill({ status: 204, body: "" });
       }
+      if (/^\/api\/notifications\/\d+\/read$/.test(url.pathname)) {
+        return state.failMark
+          ? route.fulfill({ status: 503, json: {} })
+          : route.fulfill({ status: 204, body: "" });
+      }
       return route.fulfill({
         json: { content: [], totalPages: 0, totalElements: 0, number: 0 },
       });
@@ -191,6 +199,27 @@ async function openNotifications(page: Page, lang: "uk" | "en") {
 
 const tick = (page: Page) =>
   page.evaluate(() => (window as PollingWindow).tickNotificationPolling());
+
+for (const lang of ["uk", "en"] as const) {
+  test(`notification action failure matches the mobile Figma card (${lang})`, async ({ context, page }) => {
+    const { state } = await fixture(context);
+    await page.setViewportSize({ width: 393, height: 852 });
+    await openNotifications(page, lang);
+    state.failMark = true;
+    await page.locator("button[data-notification-mark-unread]").first().click();
+    const actionAlert = page.getByRole("alert").filter({ hasText: lang === "uk" ? "Не вдалося змінити стан сповіщення." : "Could not update the notification state." });
+    await expect(actionAlert).toBeVisible();
+    await expect.poll(async () => actionAlert.boundingBox()).toMatchObject({ x: 12, y: 362, width: 369, height: lang === "uk" ? 116 : 72 });
+    const retry = actionAlert.getByRole("button");
+    await expect(retry).toHaveCSS("height", "44px");
+    await expect.poll(async () => retry.boundingBox()).toMatchObject(lang === "uk"
+      ? { x: 28, y: 420, width: 132, height: 44 }
+      : { x: 252, y: 376, width: 81, height: 44 });
+    const captureDirectory = resolve(process.cwd(), "../artifacts/visual-audit-20261124/notifications");
+    await mkdir(captureDirectory, { recursive: true });
+    await page.screenshot({ path: resolve(captureDirectory, `rewind-notification-action-error-${lang}-mobile-393.png`) });
+  });
+}
 
 for (const lang of ["uk", "en"] as const) {
   test(`incoming notifications update the feed and unread heading in ${lang}`, async ({ context, page }) => {
@@ -245,26 +274,35 @@ test("notification polling pauses while hidden and resumes immediately", async (
     .toBeVisible();
 });
 
-test("notification background failures retain the feed and recover through Retry", async ({ context, page }) => {
-  const { state } = await fixture(context);
-  await openNotifications(page, "en");
-  state.failFeed = true;
-  state.failCount = true;
-  await tick(page);
-  const alert = page.getByRole("alert");
-  await expect(alert).toContainText("Could not refresh notifications.");
-  await expect(page.getByRole("link", { name: "Alice", exact: true }))
-    .toBeVisible();
-  state.failFeed = false;
-  state.failCount = false;
-  state.items.unshift(notification(2, "Bob"));
-  state.unread = 2;
-  await alert.getByRole("button").click();
-  await expect(alert).toHaveCount(0);
-  await expect(page.locator("#notifications-title")).toBeFocused();
-  await expect(page.getByRole("link", { name: "Bob", exact: true }))
-    .toBeVisible();
-});
+for (const lang of ["uk", "en"] as const) {
+  test(`notification refresh failure matches the mobile Figma card and recovers (${lang})`, async ({ context, page }) => {
+    const { state } = await fixture(context);
+    await page.setViewportSize({ width: 393, height: 852 });
+    await openNotifications(page, lang);
+    state.failFeed = true;
+    state.failCount = true;
+    await tick(page);
+    const alert = page.locator('[data-notification-retry="refresh"]');
+    await expect(alert).toContainText(lang === "uk" ? "Не вдалося оновити сповіщення." : "Could not refresh notifications.");
+    await expect.poll(async () => alert.boundingBox()).toMatchObject({ x: 12, y: 362, width: 369, height: lang === "uk" ? 116 : 72 });
+    await expect(page.getByRole("link", { name: "Alice", exact: true })).toBeVisible();
+    const retry = alert.getByRole("button");
+    await expect.poll(async () => retry.boundingBox()).toMatchObject(lang === "uk"
+      ? { x: 28, y: 420, width: 132, height: 44 }
+      : { x: 252, y: 376, width: 81, height: 44 });
+    const captureDirectory = resolve(process.cwd(), "../artifacts/visual-audit-20261124/notifications");
+    await mkdir(captureDirectory, { recursive: true });
+    await page.screenshot({ path: resolve(captureDirectory, `rewind-notification-refresh-error-${lang}-mobile-393.png`) });
+    state.failFeed = false;
+    state.failCount = false;
+    state.items.unshift(notification(2, "Bob"));
+    state.unread = 2;
+    await retry.click();
+    await expect(alert).toHaveCount(0);
+    await expect(page.locator("#notifications-title")).toBeFocused();
+    await expect(page.getByRole("link", { name: "Bob", exact: true })).toBeVisible();
+  });
+}
 
 test("pending notification polls serialize and cannot undo marking all read", async ({ context, page }) => {
   const { state, release, releaseMark } = await fixture(context);

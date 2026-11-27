@@ -9,10 +9,12 @@ const roles = [
 
 async function editor(page: Page) {
   const state = await adminMovieFixture(page);
-  await page.route(`**/api/admin/movies/${state.movie.id}`, route => route.fulfill({ json: {
-    ...state.movie, originalLanguage: "ja", genres: [], actors: [], directors: [], producers: [],
-    shortPlot: null, backdropUrl: null, trailerUrl: null,
-  } }));
+  await page.route(`**/api/admin/movies/${state.movie.id}`, route => route.request().method() === "GET"
+    ? route.fulfill({ json: {
+      ...state.movie, originalLanguage: "ja", genres: [], actors: [], directors: [], producers: [],
+      shortPlot: null, backdropUrl: null, trailerUrl: null,
+    } })
+    : route.fallback());
   const row = state.movies.getByRole("listitem").filter({ hasText: state.movie.title });
   await row.getByRole("button", { name: "Edit", exact: true }).click();
   await expect(state.movies.getByRole("region", { name: "Cast & Crew" })).toBeVisible();

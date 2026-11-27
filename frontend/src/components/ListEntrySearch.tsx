@@ -10,9 +10,10 @@ interface Props {
   existingIds: number[];
   busy: boolean;
   onAdd: (movieId: number) => Promise<boolean>;
+  embedded?: boolean;
 }
 
-export default function ListEntrySearch({ existingIds, busy, onAdd }: Props) {
+export default function ListEntrySearch({ existingIds, busy, onAdd, embedded = false }: Props) {
   const { t } = useLocale();
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
@@ -44,11 +45,13 @@ export default function ListEntrySearch({ existingIds, busy, onAdd }: Props) {
     return () => { active = false; window.clearTimeout(timer); };
   }, [query, page, retry]);
 
-  return <div className={styles.search} role="search" aria-label={t("addFilm")}>
-    <form onSubmit={event => event.preventDefault()}>
-      <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
-      <input ref={queryRef} type="search" aria-label={t("addFilm")} placeholder={t("addFilm")} value={query} onChange={event => { setQuery(event.target.value); setPage(0); }} />
-    </form>
+  const searchField = <>
+    <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
+    <input ref={queryRef} type="search" aria-label={t("addFilm")} placeholder={embedded ? t("listFilmSearchPlaceholder") : t("addFilm")} value={query} onChange={event => { setQuery(event.target.value); setPage(0); }} />
+  </>;
+
+  return <div className={`${styles.search} ${embedded ? styles.embedded : ""}`} role="search" aria-label={t("addFilm")} data-list-editor-film-search={embedded || undefined}>
+    {embedded ? <div className={styles.embeddedField}>{searchField}</div> : <form onSubmit={event => event.preventDefault()}>{searchField}</form>}
     {loading && <p role="status">{t("loading")}</p>}
     {error && <p role="alert">{t("loadFilmsError")} <RetryButton label={t("retry")} onClick={() => { setRetry(value => value + 1); queryRef.current?.focus(); }} /></p>}
     {!loading && !error && data && <>

@@ -173,6 +173,10 @@ for (const width of [393, 1440]) {
 }
 
 test("mobile film filters return focus to the trigger after Escape", async ({ page }) => {
+  await page.route("**/api/genres", route => route.fulfill({ json: [{ id: 18, name: "Drama" }] }));
+  await page.route("**/api/movies/search**", route => route.fulfill({ json: {
+    content: [], number: 0, size: 12, totalElements: 0, totalPages: 0,
+  } }));
   await page.setViewportSize({ width: 393, height: 852 });
   await page.goto("/uk/films");
 

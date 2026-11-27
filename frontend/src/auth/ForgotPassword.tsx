@@ -88,7 +88,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <main className={`${styles.page} ${styles.forgotPage}`} data-rewind-auth-page aria-labelledby="forgot-password-title" aria-busy={loading}>
+    <main className={`${styles.page} ${styles.forgotPage}`} data-rewind-auth-page data-auth-language={lang} data-auth-state={loading ? "loading" : error ? "error" : message ? "sent" : "default"} aria-labelledby="forgot-password-title" aria-busy={loading}>
       <div className={styles.card}>
 
         <button
@@ -109,7 +109,7 @@ export default function ForgotPassword() {
         <h1 className={styles.title} id="forgot-password-title">{t("forgotTitle")}</h1>
 
         <p className={styles.text}>
-          {t("forgotDescription")}
+          {lang === "en" ? "Enter your email address and we’ll send you a password reset link." : t("forgotDescription")}
         </p>
 
         <form className={styles.form} onSubmit={submit} onInvalidCapture={validation.onInvalid} aria-busy={loading}>
@@ -119,7 +119,7 @@ export default function ForgotPassword() {
             name="email"
             className={styles.input}
             type="email"
-            placeholder={t("email")}
+            placeholder={lang === "en" ? "Enter email" : t("email")}
             value={email}
             disabled={loading}
             onChange={(e) => { setEmail(e.target.value); validation.onInput(e.currentTarget); }}
@@ -142,7 +142,7 @@ export default function ForgotPassword() {
         <div className={styles.divider} aria-hidden="true"><span>{t("dividerOr")}</span></div>
 
         {/* → REGISTER */}
-        <Link className={styles.create} to={path("/register")} state={returnLocation ? { returnTo: returnLocation } : undefined}>{t("createAccount")}</Link>
+        <Link className={styles.create} to={path("/register")} state={returnLocation ? { returnTo: returnLocation } : undefined}>{lang === "en" ? "Create new account" : t("createAccount")}</Link>
 
       </div>
     </main>

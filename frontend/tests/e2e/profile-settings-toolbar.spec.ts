@@ -9,7 +9,7 @@ for (const language of ["uk", "en"] as const) {
     await context.route(url => url.pathname.startsWith("/api/"), route => {
       const request = route.request();
       const path = new URL(request.url()).pathname;
-      if (request.method() !== "GET") {
+      if (request.method() !== "GET" && !path.startsWith("/api/auth/")) {
         writes.push(request.method() + " " + path);
         return route.abort();
       }
@@ -52,21 +52,39 @@ for (const language of ["uk", "en"] as const) {
           };
         });
         expect(geometry.title.left - geometry.cancel.right).toBeGreaterThanOrEqual(8);
-        expect(geometry.action.left - geometry.title.right).toBeGreaterThanOrEqual(8);
         expect(geometry.title.left - geometry.cancelTargetRight).toBeGreaterThanOrEqual(8);
-        expect(geometry.actionTargetLeft - geometry.title.right).toBeGreaterThanOrEqual(8);
         expect(geometry.title.center).toBeCloseTo(width / 2, 0);
-        expect(geometry.action.right).toBeCloseTo(width - 16, 0);
-        expect(geometry.actionHeight).toBeGreaterThanOrEqual(44);
+        if (tab === "authentication") {
+          await expect(toolbar.locator(":scope > :last-child")).toHaveCSS("visibility", "hidden");
+        } else {
+          expect(geometry.action.left - geometry.title.right).toBeGreaterThanOrEqual(8);
+          expect(geometry.actionTargetLeft - geometry.title.right).toBeGreaterThanOrEqual(8);
+          expect(geometry.action.right).toBeCloseTo(width - 16, 0);
+          expect(geometry.actionHeight).toBeGreaterThanOrEqual(44);
+        }
         expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
       }
       const action = toolbar.locator(":scope > :last-child");
-      if (tab === "avatar") await expect(action).toHaveAttribute("href", `/${language}/profile`);
-      else await expect(action).toHaveAttribute("form", `settings-form-${tab}`);
-      await toolbar.getByRole("link").first().focus();
-      await page.keyboard.press("Tab");
-      await expect(action).toBeFocused();
-      await expect(action).toHaveCSS("outline-style", "solid");
+      if (tab === "authentication") {
+        await expect(action).toHaveCSS("visibility", "hidden");
+      } else if (tab === "avatar") {
+        const actionHref = await action.getAttribute("href");
+        if (actionHref) {
+          await expect(action).toHaveRole("link");
+          await expect(action).toHaveAttribute("href", `/${language}/profile`);
+        } else {
+          await expect(action).toHaveAttribute("form", "settings-form-avatar");
+        }
+        await toolbar.getByRole("link").first().focus();
+        await page.keyboard.press("Tab");
+        await expect(action).toBeFocused();
+      } else {
+        await expect(action).toHaveAttribute("form", `settings-form-${tab}`);
+        await toolbar.getByRole("link").first().focus();
+        await page.keyboard.press("Tab");
+        await expect(action).toBeFocused();
+      }
+      if (tab !== "authentication") await expect(action).toHaveCSS("outline-style", "solid");
       if (tab === "avatar") {
         await page.setViewportSize({ width: 393, height: 852 });
         await page.screenshot({ path: test.info().outputPath(`toolbar-${language}.png`) });

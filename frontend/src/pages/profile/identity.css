@@ -70,6 +70,12 @@
   cursor: pointer;
 }
 
+.collectionMobileFilter,
+.collectionMobileGear,
+.listsMobileGear { display: none; }
+.collectionDesktopBack { display: inline; }
+.mobileProfileSettingsIcon { display: none; }
+
 .heroEdit:hover,
 .heroEdit:focus-visible,
 .heroAction:hover,
@@ -117,6 +123,20 @@
   min-width: 0;
   gap: 4px;
   padding-right: 102px;
+}
+
+.heroHandle {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.heroHandle > nav a {
+  width: 20px;
+  min-height: 20px;
+  font-size: 14px;
 }
 
 .eyebrow {

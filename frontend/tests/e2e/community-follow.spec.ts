@@ -78,6 +78,12 @@ async function communityFixture(page: Page) {
     } else if (path === "/api/auth/login") {
       state.actor = state.nextActor;
       await respond({ status: 204 });
+    } else if (path === "/api/users/popular-reviewers/page") {
+      const query = url.searchParams.get("q")?.toLowerCase() ?? "";
+      const reviewers = state.reviewers
+        .filter(user => user.displayName.toLowerCase().includes(query))
+        .map((user, index) => ({ ...user, likes: 30 + index, reviewCount: 12 + index, watchedCount: 80 + index, listCount: 4 + index }));
+      await respond({ status: 200, json: pageOf(reviewers) });
     } else if (path === "/api/users/popular-reviewers") {
       await respond({ status: 200, json: state.reviewers.map((user, index) => ({ ...user, likes: 30 + index, reviewCount: 12 + index, watchedCount: 80 + index, listCount: 4 + index })) });
     } else if (path === "/api/users/hq") {
@@ -305,6 +311,7 @@ test("community directory changes keep pending mutations attached to the correct
     await followAda.first().click();
     await expectControls(page, "Loading...: Ada Finch", 1, true);
     const directory = page.locator('section[aria-labelledby="community-directory"]');
+    await directory.getByRole("button", { name: "Search users", exact: true }).click();
     await directory.getByLabel("Search users", { exact: true }).fill("Bo");
     await directory.getByRole("button", { name: "Search", exact: true }).click();
     await expect(page.getByRole("button", { name: /: Ada Finch$/ })).toHaveCount(0);

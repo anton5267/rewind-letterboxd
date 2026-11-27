@@ -16,9 +16,6 @@ test("About follows the measured Figma editorial shell", async ({ page }) => {
   const contentBox = await content.boundingBox();
   expect(contentBox?.x).toBe(120);
   expect(contentBox?.width).toBe(1200);
-  const tmdbLogo = page.getByRole("img", { name: "TMDB" });
-  await expect(tmdbLogo).toBeVisible();
-  await expect.poll(() => tmdbLogo.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
   const firstHeading = content.locator("h2").first();
   await expect(firstHeading).toBeVisible();
   const headingBox = await firstHeading.boundingBox();
@@ -32,6 +29,7 @@ test("About follows the measured Figma editorial shell", async ({ page }) => {
 });
 
 test("About attributes TMDB in UK and EN", async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 852 });
   const copy = {
     uk: "Цей продукт використовує TMDB API, але не схвалений і не сертифікований TMDB.",
     en: "This product uses the TMDB API but is not endorsed or certified by TMDB.",
@@ -39,8 +37,6 @@ test("About attributes TMDB in UK and EN", async ({ page }) => {
   for (const locale of ["uk", "en"] as const) {
     await page.goto(`${locale}/about`);
     await expect(page.getByText(copy[locale], { exact: true })).toBeVisible();
-    const logo = page.getByRole("img", { name: "TMDB" });
-    await expect(logo).toBeVisible();
-    await expect.poll(() => logo.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
+    await expect(page.getByText("TMDB API", { exact: true })).toBeVisible();
   }
 });

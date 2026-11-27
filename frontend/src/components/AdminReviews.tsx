@@ -1,4 +1,5 @@
 import AdminLoading from "./AdminLoading";
+import { Link } from "react-router-dom";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { deleteAdminReview, dismissAdminReviewReport, getAdminReportedReviews, getAdminReviews, setAdminReviewHidden, updateAdminReviewContent, type AdminReportedReview, type AdminReview } from "../api/admin.api";
 import type { Page } from "../api/types";
@@ -15,7 +16,7 @@ type VisibilityFilter = "all" | "visible" | "hidden" | "reported";
 
 const hiddenValue = (filter: VisibilityFilter) => filter === "all" ? undefined : filter === "hidden";
 export default function AdminReviews() {
-  const { t, lang } = useLocale();
+  const { t, lang, path } = useLocale();
   const { user } = useAuth();
   const [data, setData] = useState<Page<AdminReview> | null>(null);
   const [filter, setFilter] = useState<VisibilityFilter>("all");
@@ -357,14 +358,17 @@ export default function AdminReviews() {
     <h2 className={styles.title} ref={headingRef} tabIndex={-1}>{t("adminReviewsTitle")}</h2>
     {dismissedReports > 0 && <p className={styles.reviewStatus} role="status">{t("adminReviewReportDismissedSuccess")} ({dismissedReports})</p>}
     {actionError && <p className={styles.error} role="alert">{t(actionError === "delete" ? "adminReviewDeleteError" : actionError === "report" ? "adminReviewReportDismissError" : actionError === "edit" ? "adminReviewEditError" : "adminReviewModerationError")}</p>}
-    <label className={styles.filter}>{t("adminVisibilityFilter")}{" "}
-      <select className={styles.control} value={filter} onChange={event => changeFilter(event.target.value as VisibilityFilter)}>
-        <option value="all">{t("allVisibilityStates")}</option>
-        <option value="visible">{t("visibleOnly")}</option>
-        <option value="hidden">{t("hiddenOnly")}</option>
-        <option value="reported">{t("reportedOnly")}</option>
-      </select>
-    </label>
+    <div className={styles.reviewToolbar}>
+      <Link className={styles.reportedReviewsLink} to={`${path("/admin")}?view=reported-reviews`}>{t("viewReportedReviews")}</Link>
+      <label className={styles.filter}>{t("adminVisibilityFilter")}{" "}
+        <select className={styles.control} value={filter} onChange={event => changeFilter(event.target.value as VisibilityFilter)}>
+          <option value="all">{t("allVisibilityStates")}</option>
+          <option value="visible">{t("visibleOnly")}</option>
+          <option value="hidden">{t("hiddenOnly")}</option>
+          <option value="reported">{t("reportedOnly")}</option>
+        </select>
+      </label>
+    </div>
     {loading && <AdminLoading label={t("loading")} layout="reviews" />}
     {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => { reloadFocusOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; retryReload.current = true; focusAfterReload.current = true; setRevision(value => value + 1); }} />}
     {data && data.content.length === 0 && <p>{t("noAdminReviews")}</p>}
@@ -379,7 +383,7 @@ export default function AdminReviews() {
         return <li className={styles.row} key={rowKey}>
           <div className={styles.reviewMain}>
             <div className={styles.reviewIdentity}>
-              <strong>{movieTitle}</strong>
+              <strong><Link className={styles.reviewDetailLink} to={`${path("/admin")}?view=${report ? "reported-review" : "review-detail"}&${report ? "reportId" : "reviewId"}=${report ? report.reportId : review.id}`}>{movieTitle}</Link></strong>
               <span>{getUserName({ username: review.username }, t("someone"))}</span>
             </div>
             <p className={styles.reviewText}>{review.content}</p>
@@ -405,8 +409,11 @@ export default function AdminReviews() {
               <span>{report ? t("reportedOn") : t("year")}</span>
               <time dateTime={report?.reportCreatedAt ?? review.createdAt}>{formatReviewDate(report?.reportCreatedAt ?? review.createdAt, lang)}</time>
             </div>
-            <p className={styles.reviewStatus}>{review.isHidden ? t("hiddenReview") : t("visibleReview")}</p>
-            {report && <p className={styles.reviewStatus}>{t("likes")}: {report.likesCount} · {t("reportCommentsCount")}: {report.commentsCount}</p>}
+            <div className={styles.reviewEngagement}>
+              <div><span>{t("likes")}</span><strong>{review.likesCount}</strong></div>
+              <div><span>{t("reportCommentsCount")}</span><strong>{review.commentsCount}</strong></div>
+            </div>
+            {report && <p className={styles.reviewStatus}>{t("reportedReason")}: {reportReasonKey ? t(reportReasonKey) : report.reportReason}</p>}
             <div className={styles.rowActions}>
               <button type="button" data-admin-review-edit={rowKey} aria-busy={busyId === review.id} disabled={busyId !== null || editingReview?.rowKey === rowKey}
                 aria-label={`${t("adminEditReview")}: ${movieTitle}`} onClick={event => { setEditingReview({ id: review.id, rowKey, trigger: event.currentTarget }); setEditDraft(review.content); setActionError(false); }}>
@@ -419,7 +426,7 @@ export default function AdminReviews() {
           </div>
       </li>;
       })}</ul>
-      <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminReviewsPagination")} busy={loading} statusSuffix={data.totalElements} onPageChange={nextPage => { focusAfterReload.current = false; reloadFocusOrigin.current = null; setPage(nextPage); }} />
+      <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminReviewsPagination")} variant="numbers" busy={loading} statusSuffix={data.totalElements} onPageChange={nextPage => { focusAfterReload.current = false; reloadFocusOrigin.current = null; setPage(nextPage); }} />
     </>}
     <dialog className={dialogStyles.deleteDialog} ref={deleteDialog} role="alertdialog" aria-labelledby="admin-review-delete-title" aria-describedby="admin-review-delete-description" onCancel={event => { event.preventDefault(); cancelDelete(); }}>
       <h3 id="admin-review-delete-title">{t("deleteReview")}</h3>

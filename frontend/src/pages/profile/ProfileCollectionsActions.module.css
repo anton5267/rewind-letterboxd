@@ -1,0 +1,124 @@
+.actions {
+  order: 4;
+  width: min(1200px, calc(100% - 48px));
+  margin: 58px auto 0;
+  padding: 20px 24px 0;
+  border-top: 0;
+  color: #fff;
+  text-align: center;
+}
+
+.actions h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.actions > p:not(.status) {
+  max-width: 790px;
+  margin: 21px auto 28px;
+  color: #b8b8b8;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.buttons,
+.dialogButtons {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+
+.buttons button {
+  width: 304px;
+  min-height: 79px;
+  padding: 16px 24px;
+  border: 1px solid #aaa;
+  border-radius: 40px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.buttons button:hover,
+.buttons button:focus-visible {
+  border-color: #fff;
+  background: #252525;
+}
+
+.buttons button:disabled,
+.dialog button:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+
+.status {
+  min-height: 24px;
+  margin: 12px 0 0;
+  color: #d2d2d2;
+}
+
+.dialog {
+  width: min(480px, calc(100% - 32px));
+  padding: 28px;
+  border: 1px solid #555;
+  border-radius: 12px;
+  background: #181818;
+  color: #fff;
+}
+
+.dialog::backdrop {
+  background: rgb(0 0 0 / 70%);
+}
+
+.dialog h3 {
+  margin: 0;
+  font-size: 21px;
+}
+
+.dialog p {
+  color: #ccc;
+  line-height: 1.5;
+}
+
+.dialogButtons {
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.dialogButtons button {
+  min-height: 42px;
+  padding: 8px 16px;
+  border: 1px solid #777;
+  border-radius: 22px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.dialogButtons button:last-child {
+  border-color: #fff;
+  background: #fff;
+  color: #111;
+}
+
+@media (max-width: 900px) {
+  .actions {
+    display: none;
+  }
+}
+
+@media (max-width: 680px) {
+  .buttons {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .buttons button {
+    width: 100%;
+    min-height: 56px;
+  }
+}

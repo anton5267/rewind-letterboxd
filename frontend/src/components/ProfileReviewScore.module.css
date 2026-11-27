@@ -3,3 +3,11 @@
   outline: 3px solid var(--rewind-cyan);
   outline-offset: 4px;
 }
+
+.compact {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.12;
+  white-space: nowrap;
+}

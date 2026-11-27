@@ -27,4 +27,7 @@
   .body { grid-column: 1; grid-row: 3; padding-top: 0; }
   .card .body .description { font-size: 12px; }
   .tags { margin-top: 8px; }
+  /* The READY own-profile mobile Lists frame shows compact poster cards only;
+     descriptions and tags are part of the desktop presentation. */
+  :global(#profile-lists[data-profile-list-view="lists"]) .card .body { display: none; }
 }

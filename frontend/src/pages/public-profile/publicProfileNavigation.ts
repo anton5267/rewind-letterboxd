@@ -1,9 +1,9 @@
-import { type PublicCollection } from "../../api/profile.api";
+import { type PublicCollection, type PublicProfileCollectionKind } from "../../api/profile.api";
 import { type TranslationKey } from "../../i18n";
 
 export type PublicProfileView = "collection" | "lists" | "following" | "followers" | null;
 
-export const publicCollectionKinds = ["watched", "watchlist", "favorites"] as const;
+export const publicCollectionKinds = ["watched", "watchlist", "favorites", "liked-lists"] as const satisfies readonly PublicProfileCollectionKind[];
 
 export const publicProfileNavigation = [
   { id: "public-profile-overview", label: "profile", collectionKind: null },

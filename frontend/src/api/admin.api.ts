@@ -1,21 +1,26 @@
 import type { MovieDetails } from "./movies.api";
 import type { JournalArticle } from "./journal.api";
 import api from "./axios";
+import type { FeaturedListCategory } from "./lists.api";
 import type { Page } from "./types";
 
 export interface AdminDashboard { users: number; activeUsers: number; hqUsers: number; movies: number; reviews: number; hiddenReviews: number }
-export interface AdminUser { id: number; username: string; displayName: string | null; email: string; role: string; avatarUrl: string | null; isActive: boolean; isHq: boolean; createdAt: string | null }
+export interface AdminActivityOverview {
+  users: { id: number; username: string; displayName: string | null; email: string; followerCount: number; isActive: boolean }[];
+  metrics: { averageWatched: number; averageReviews: number; averageAllLists: number; averageCustomLists: number; averageSessionMinutes: number | null; averageWatchlist: number };
+}
+export interface AdminUser { id: number; username: string; displayName: string | null; email: string; role: string; avatarUrl: string | null; isActive: boolean; isHq: boolean; createdAt: string | null; followerCount?: number }
 export interface AdminUserOverview {
   stats: { watched: number; reviews: number; ratings: number; watchlist: number; favorites: number; comments: number; likesReceived: number; followers: number; customLists: number };
   adminHistory: AuditLog[];
 }
 export interface AuditLog { id: number; adminId: number; action: string; targetType: string; targetId: number | null; metadata: string | null; createdAt: string }
-export interface AdminComment { id: number; reviewId: number | null; listId?: number | null; userId: number; username: string; content: string; isHidden: boolean; moderatedReason: string | null; moderatedAt: string | null; createdAt: string }
+export interface AdminComment { id: number; reviewId: number | null; listId?: number | null; userId: number; username: string; content: string; isHidden: boolean; moderatedReason: string | null; moderatedAt: string | null; createdAt: string; parentLikesCount: number; parentRepliesCount: number }
 export type AdminArticle = JournalArticle;
 export interface NewsletterDeliveryStatus { articleId: number; pending: number; sending: number; sent: number; failed: number; cancelled: number }
-export interface AdminReview { id: number; movieId: number; movieTitle: string; userId: number; username: string; content: string; rating: number | null; isHidden: boolean; moderatedReason: string | null; moderatedAt: string | null; createdAt: string }
-export interface AdminReportedReview extends AdminReview { reportId: number; reportReason: "SPAM" | "INAPPROPRIATE_CONTENT" | "BULLYING"; reportCreatedAt: string; likesCount: number; commentsCount: number }
-export interface AdminReportedComment extends AdminComment { reportId: number; reportReason: "SPAM" | "INAPPROPRIATE_CONTENT" | "BULLYING"; reportCreatedAt: string }
+export interface AdminReview { id: number; movieId: number; movieTitle: string; userId: number; username: string; content: string; rating: number | null; isHidden: boolean; moderatedReason: string | null; moderatedAt: string | null; createdAt: string; likesCount: number; commentsCount: number }
+export interface AdminReportedReview extends AdminReview { email: string; reportId: number; reportReason: "SPAM" | "INAPPROPRIATE_CONTENT" | "BULLYING"; reportCreatedAt: string; likesCount: number; commentsCount: number }
+export interface AdminReportedComment extends AdminComment { email: string; reportId: number; reportReason: "SPAM" | "INAPPROPRIATE_CONTENT" | "BULLYING"; reportCreatedAt: string; relatedTitle: string | null; parentLikesCount: number; parentRepliesCount: number }
 export interface AdminMovie { id: number; tmdbId: number | null; title: string; releaseDate: string | null; rating: number | null; photoUrl: string | null; published: boolean }
 export interface AdminMovieCatalog extends AdminMovie { durationMinutes: number | null; ageRating: string | null; reviewCount: number }
 export interface AdminTmdbMovieCandidate { tmdbId: number; title: string; releaseDate: string | null; overview: string | null; posterUrl: string | null }
@@ -45,8 +50,14 @@ export interface TmdbSyncBatchResponse { requested: number; succeeded: number; f
 export interface TmdbDiscoveryRequest { page: number; year?: number; genreId?: number; minRating?: number; limit: number; syncSimilar?: boolean }
 export interface TmdbDiscoveryImportResponse { page: number; totalPages: number; totalResults: number; discovered: number; imports: TmdbBatchSyncResponse }
 export interface TmdbQualityReport { totalMovies: number; tmdbLinkedMovies: number; completeTmdbMovies: number; missingPoster: number; missingBackdrop: number; missingPlot: number; missingRuntime: number; missingTrailer: number; missingTmdbRating: number; missingOriginalLanguage: number; linkedCoveragePercent: number; metadataCompletenessPercent: number }
-export interface AdminList { id: number; userId: number; username: string; name: string; description: string | null; listType: string; isPublic: boolean; itemCount: number; createdAt: string; updatedAt: string; featuredPosition: number | null }
-export interface AdminReportedList extends AdminList { reportId: number; reportReason: "SPAM" | "INAPPROPRIATE_CONTENT" | "BULLYING"; reportCreatedAt: string }
+export interface AdminList { id: number; userId: number; username: string; name: string; description: string | null; listType: string; isPublic: boolean; itemCount: number; createdAt: string; updatedAt: string; featuredPosition: number | null; featuredCategory?: FeaturedListCategory | null }
+export interface AdminReportedList extends AdminList { email: string; reportId: number; reportReason: "SPAM" | "INAPPROPRIATE_CONTENT" | "BULLYING"; reportCreatedAt: string; likeCount: number }
+export interface AdminListDetails extends AdminList {
+  email: string; ownerIsActive: boolean; likeCount: number; reportCount: number;
+  report: { id: number; reason: AdminReportedList["reportReason"]; createdAt: string } | null;
+  films: { id: number; title: string; releaseDate: string | null; rating: number | null; photoUrl: string | null }[];
+  history: AuditLog[];
+}
 export interface AdminConversation { id: number; userOneId: number; userTwoId: number; messageCount: number; createdAt: string; updatedAt: string; lastMessageAt: string | null }
 export interface AdminNotification { id: number; recipientId: number; actorId: number | null; type: string; reviewId: number | null; createdAt: string; readAt: string | null }
 export interface AdminNotificationWrite { recipientId: number; type: "FOLLOW" | "REVIEW_LIKED"; actorId?: number | null; relatedUserId?: number | null; reviewId?: number | null }
@@ -55,7 +66,8 @@ export interface AdminModerationQueueItem { type: "REVIEW" | "COMMENT"; id: numb
 export interface AdminModerationFilters { type?: AdminModerationQueueItem["type"]; query?: string }
 export interface AdminSetting { key: string; value: string; updatedBy: number | null; updatedAt: string }
 export const getAdminDashboard = () => api.get<AdminDashboard>("/admin/dashboard");
-export const getAdminUsers = (q = "", page = 0) => api.get<Page<AdminUser>>("/admin/users", { params: { size: 50, page, ...(q.trim() ? { q: q.trim() } : {}) } });
+export const getAdminActivityOverview = () => api.get<AdminActivityOverview>("/admin/activity");
+export const getAdminUsers = (q = "", page = 0, size = 50) => api.get<Page<AdminUser>>("/admin/users", { params: { size, page, ...(q.trim() ? { q: q.trim() } : {}) } });
 export const getAdminUser = (id: number) => api.get<AdminUser>(`/admin/users/${id}`);
 export const getAdminUserOverview = (id: number) => api.get<AdminUserOverview>(`/admin/users/${id}/overview`);
 export const updateAdminUser = (id: number, update: Partial<Pick<AdminUser, "username" | "displayName" | "avatarUrl" | "role">>) => api.patch<AdminUser>(`/admin/users/${id}`, update);
@@ -65,6 +77,8 @@ export const getAuditLogs = (page = 0) => api.get<Page<AuditLog>>("/admin/audit-
 export const getAdminComments = (page = 0, hidden?: boolean) => api.get<Page<AdminComment>>("/admin/comments", { params: { size: 50, page, ...(hidden === undefined ? {} : { hidden }) } });
 export const setAdminCommentHidden = (id: number, hidden: boolean, reason = "") => api.post<AdminComment>(`/admin/comments/${id}/${hidden ? "hide" : "unhide"}`, { reason });
 export const deleteAdminComment = (id: number) => api.delete<void>(`/admin/comments/${id}`);
+export const updateAdminCommentContent = (id: number, content: string) => api.patch<AdminComment>(`/admin/comments/${id}`, { content });
+export const getAdminCommentHistory = (id: number) => api.get<AuditLog[]>(`/admin/comments/${id}/history`);
 export const getAdminArticles = (page = 0) => api.get<Page<AdminArticle>>("/admin/journal/articles", { params: { size: 50, page } });
 export type AdminArticleWrite = Omit<AdminArticle, "id" | "publishedAt" | "authorName"> & { published: boolean };
 export const createAdminArticle = (article: AdminArticleWrite) => api.post<AdminArticle>("/admin/journal/articles", article);
@@ -74,11 +88,15 @@ export const getAdminNewsletterStatus = (articleId: number) => api.get<Newslette
 export const getAdminReviews = (page = 0, hidden?: boolean) => api.get<Page<AdminReview>>("/admin/reviews", { params: { size: 50, page, ...(hidden === undefined ? {} : { hidden }) } });
 export const updateAdminReviewContent = (id: number, content: string) =>
   api.patch<AdminReview>(`/admin/reviews/${id}`, { content });
+export const getAdminReviewHistory = (id: number) => api.get<AuditLog[]>(`/admin/reviews/${id}/history`);
 export const getAdminReportedReviews = (page = 0) => api.get<Page<AdminReportedReview>>("/admin/reported-reviews", { params: { size: 50, page } });
 export const dismissAdminReviewReport = (reportId: number) => api.post<void>(`/admin/reported-reviews/${reportId}/dismiss`);
 export const getAdminReportedComments = (page = 0) => api.get<Page<AdminReportedComment>>("/admin/reported-comments", { params: { size: 50, page } });
 export const dismissAdminCommentReport = (reportId: number) => api.post<void>(`/admin/reported-comments/${reportId}/dismiss`);
 export const getAdminReportedLists = (page = 0) => api.get<Page<AdminReportedList>>("/admin/reported-lists", { params: { size: 50, page } });
+export const getAdminListDetails = (id: number, reportId?: number) => api.get<AdminListDetails>(`/admin/lists/${id}`, { params: reportId ? { reportId } : undefined });
+export const updateAdminListDetails = (id: number, update: { name?: string; description?: string | null }) => api.patch<AdminListDetails>(`/admin/lists/${id}`, update);
+export const addAdminListMovie = (id: number, movieId: number) => api.post<AdminListDetails>(`/admin/lists/${id}/items`, { movieId });
 export const dismissAdminListReport = (reportId: number) => api.post<void>(`/admin/reported-lists/${reportId}/dismiss`);
 export const setAdminReviewHidden = (id: number, hidden: boolean, reason = "") => api.post<AdminReview>(`/admin/reviews/${id}/${hidden ? "hide" : "unhide"}`, { reason });
 export const deleteAdminReview = (id: number) => api.delete<void>(`/admin/reviews/${id}`);
@@ -95,7 +113,7 @@ export const discoverAndImportAdminTmdb = (request: TmdbDiscoveryRequest) => api
 export const getAdminTmdbQuality = () => api.get<TmdbQualityReport>("/admin/movies/tmdb-quality");
 export const getAdminLists = (page = 0) => api.get<Page<AdminList>>("/admin/lists", { params: { size: 50, page } });
 export const setAdminListVisibility = (id: number, visible: boolean) => api.put<AdminList>(`/admin/lists/${id}/visibility`, null, { params: { visible } });
-export const setAdminListFeatured = (id: number, featured: boolean) => api.put<AdminList>(`/admin/lists/${id}/featured`, null, { params: { featured } });
+export const setAdminListFeatured = (id: number, featured: boolean, category?: FeaturedListCategory) => api.put<AdminList>(`/admin/lists/${id}/featured`, null, { params: { featured, ...(category ? { category } : {}) } });
 export const moveAdminListFeatured = (id: number, direction: "up" | "down") =>
   api.put<void>(`/admin/lists/${id}/featured-position`, null, { params: { direction } });
 export const deleteAdminList = (id: number) => api.delete<void>(`/admin/lists/${id}`);

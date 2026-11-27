@@ -1,23 +1,27 @@
 import type { ReviewReportReason } from "./reviews.ts";
+import type { MovieCardResponse } from "./catalog.ts";
+import type { FeaturedListCategory } from "./lists.ts";
 
 export interface AdminReviewResponse {
   id: number; movieId: number; movieTitle: string; userId: number; username: string; content: string;
   rating: number | null; isHidden: boolean; moderatedReason: string | null; moderatedAt: string | null; createdAt: string;
+  likesCount: number; commentsCount: number;
 }
 
 export interface AdminReviewContentUpdate { content: string }
 
 export interface AdminReportedReviewResponse extends AdminReviewResponse {
-  reportId: number; reportReason: ReviewReportReason; reportCreatedAt: string; likesCount: number; commentsCount: number;
+  email: string; reportId: number; reportReason: ReviewReportReason; reportCreatedAt: string;
 }
 
 export interface AdminCommentResponse {
   id: number; reviewId: number | null; listId?: number | null; userId: number; username: string; content: string; isHidden: boolean;
-  moderatedReason: string | null; moderatedAt: string | null; createdAt: string;
+  moderatedReason: string | null; moderatedAt: string | null; createdAt: string; parentLikesCount: number; parentRepliesCount: number;
 }
 
 export interface AdminReportedCommentResponse extends AdminCommentResponse {
-  reportId: number; reportReason: ReviewReportReason; reportCreatedAt: string;
+  email: string; reportId: number; reportReason: ReviewReportReason; reportCreatedAt: string;
+  relatedTitle: string | null;
 }
 
 export interface AdminModerationQueueItem {
@@ -44,7 +48,7 @@ export interface AdminCreateNotificationRequest {
 
 export interface AdminUserResponse {
   id: number; username: string; displayName: string | null; email: string; role: string;
-  avatarUrl: string | null; isActive: boolean; isHq: boolean; createdAt: string | null;
+  avatarUrl: string | null; isActive: boolean; isHq: boolean; createdAt: string | null; followerCount?: number;
 }
 
 export interface AdminUserUpdateRequest {
@@ -60,17 +64,38 @@ export interface AdminListResponse {
   id: number; userId: number; username: string; name: string; description: string | null;
   listType: "CUSTOM" | "WATCHED" | "WATCHLIST" | "FAVORITES"; isPublic: boolean; itemCount: number;
   createdAt: string; updatedAt: string; featuredPosition: number | null;
+  featuredCategory: FeaturedListCategory | null;
 }
 
 export interface AdminReportedListResponse extends AdminListResponse {
-  reportId: number; reportReason: ReviewReportReason; reportCreatedAt: string;
+  email: string; reportId: number; reportReason: ReviewReportReason; reportCreatedAt: string; likeCount: number;
 }
+
+export interface AdminListDetailsResponse extends AdminListResponse {
+  email: string;
+  ownerIsActive: boolean;
+  likeCount: number;
+  reportCount: number;
+  report: { id: number; reason: ReviewReportReason; createdAt: string } | null;
+  films: MovieCardResponse[];
+  history: AdminAuditLogResponse[];
+}
+
+export interface AdminListTextUpdateRequest { name?: string; description?: string | null }
 
 export interface AdminAuditLogResponse {
   id: number; adminId: number; action: string; targetType: string; targetId: number | null; metadata: string | null; createdAt: string;
 }
 
 export interface AdminDashboardResponse { users: number; activeUsers: number; hqUsers: number; movies: number; reviews: number; hiddenReviews: number }
+
+export interface AdminActivityOverviewResponse {
+  users: { id: number; username: string; displayName: string | null; email: string; followerCount: number; isActive: boolean }[];
+  metrics: {
+    averageWatched: number; averageReviews: number; averageAllLists: number;
+    averageCustomLists: number; averageSessionMinutes: number | null; averageWatchlist: number;
+  };
+}
 
 export interface AdminSettingResponse { key: string; value: string; updatedBy: number | null; updatedAt: string }
 

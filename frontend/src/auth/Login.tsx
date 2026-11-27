@@ -135,7 +135,7 @@ export default function Login() {
             id="login-email"
             name="email"
             type="email"
-            placeholder={t("email")}
+            placeholder={lang === "en" ? "Enter email" : t("email")}
             className={styles.input}
             value={email}
             disabled={loading}

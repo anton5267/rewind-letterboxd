@@ -15,12 +15,56 @@ interface CommunityDetailsRow {
   favorite_movies: MovieCardResponse[] | string;
 }
 
+interface PublicNetworkCountsRow {
+  id: string;
+  follower_count: string;
+  following_count: string;
+}
+
+/** Add public follow counts to a bounded result set in one query. */
+export async function enrichNetworkCounts<T extends PublicSocialUser>(
+  connection: PgConnection,
+  users: T[],
+): Promise<Array<T & Required<Pick<CommunityDetails, "followerCount" | "followingCount">>>> {
+  if (!users.length) return [];
+  const result = await connection.queryObject<PublicNetworkCountsRow>({
+    text: `SELECT u.id::text AS id,
+      (SELECT COUNT(*) FROM rewind.follows f
+        JOIN rewind.users follower ON follower.id=f.follower_id AND follower.is_active
+        WHERE f.following_id=u.id)::text AS follower_count,
+      (SELECT COUNT(*) FROM rewind.follows f
+        JOIN rewind.users followed ON followed.id=f.following_id AND followed.is_active
+        WHERE f.follower_id=u.id)::text AS following_count
+      FROM rewind.users u WHERE u.is_active AND u.id=ANY($1::bigint[])`,
+    args: [users.map((user) => user.id)],
+  });
+  const counts = new Map(result.rows.map((row) => [safeId(row.id, "User ID"), {
+    followerCount: Number(row.follower_count),
+    followingCount: Number(row.following_count),
+  }]));
+  return users.flatMap((user) => {
+    const networkCounts = counts.get(user.id);
+    return networkCounts ? [{ ...user, ...networkCounts }] : [];
+  });
+}
+
 /** Enrich one bounded page in a single query, using only publicly visible records. */
 export async function enrichCommunityUsers<T extends PublicSocialUser>(
   connection: PgConnection,
   users: T[],
+  options: { includeFavoriteMovies?: boolean } = {},
 ): Promise<Array<T & Required<CommunityDetails>>> {
   if (!users.length) return [];
+  const favoriteMovies = options.includeFavoriteMovies === false ? "'[]'::jsonb" : `COALESCE((SELECT jsonb_agg(jsonb_build_object(
+        'id', favorites.id::text, 'title', favorites.title, 'photoUrl', favorites.photo_url,
+        'releaseDate', favorites.release_date::text, 'rating', favorites.rating)
+        ORDER BY favorites.position NULLS LAST, favorites.item_id)
+        FROM (SELECT m.id,m.title,m.photo_url,m.release_date,m.rating,i.position,i.id AS item_id
+          FROM rewind.list_items i
+          JOIN rewind.lists l ON l.id=i.list_id AND l.is_public AND l.list_type='FAVORITES'
+          JOIN rewind.movies m ON m.id=i.movie_id AND m.is_published
+          WHERE l.user_id=u.id ORDER BY i.position NULLS LAST,i.id LIMIT 4
+        ) favorites), '[]'::jsonb)`;
   const result = await connection.queryObject<CommunityDetailsRow>({
     text: `SELECT u.id::text AS id,
       (SELECT COUNT(*) FROM rewind.list_items i
@@ -43,16 +87,7 @@ export async function enrichCommunityUsers<T extends PublicSocialUser>(
       (SELECT COUNT(*) FROM rewind.follows f
         JOIN rewind.users followed ON followed.id=f.following_id AND followed.is_active
         WHERE f.follower_id=u.id)::text AS following_count,
-      COALESCE((SELECT jsonb_agg(jsonb_build_object(
-        'id', favorites.id::text, 'title', favorites.title, 'photoUrl', favorites.photo_url,
-        'releaseDate', favorites.release_date::text, 'rating', favorites.rating)
-        ORDER BY favorites.position NULLS LAST, favorites.item_id)
-        FROM (SELECT m.id,m.title,m.photo_url,m.release_date,m.rating,i.position,i.id AS item_id
-          FROM rewind.list_items i
-          JOIN rewind.lists l ON l.id=i.list_id AND l.is_public AND l.list_type='FAVORITES'
-          JOIN rewind.movies m ON m.id=i.movie_id AND m.is_published
-          WHERE l.user_id=u.id ORDER BY i.position NULLS LAST,i.id LIMIT 4
-        ) favorites), '[]'::jsonb) AS favorite_movies
+      ${favoriteMovies} AS favorite_movies
       FROM rewind.users u WHERE u.is_active AND u.id=ANY($1::bigint[])`,
     args: [users.map((user) => user.id)],
   });

@@ -45,7 +45,7 @@ export default function Notifications() {
   const activeUserId = useRef<number | null>(null);
   const notificationHeadingRef = useRef<HTMLHeadingElement>(null);
   const markAllButtonRef = useRef<HTMLButtonElement>(null);
-  const actionErrorRef = useRef<HTMLParagraphElement>(null);
+  const actionErrorRef = useRef<HTMLDivElement>(null);
   const pendingPreferenceFocus = useRef<HTMLInputElement | null>(null);
   const lastPreferenceInput = useRef<HTMLInputElement | null>(null);
   const pendingPreferenceRetryFocus = useRef<{ origin: HTMLElement | null; input: HTMLInputElement | null } | null>(null);
@@ -319,36 +319,36 @@ export default function Notifications() {
       </section>
 
       {unreadError && <div data-notification-retry="unread"><RetryNotice className={styles.error} message={t("loadNotificationsError")} retryLabel={t("retry")} onRetry={() => retryNotificationRead("unread")} /></div>}
-      {updates.error && <div data-notification-retry="refresh"><RetryNotice className={styles.error} message={t("refreshNotificationsError")} retryLabel={t("retry")} disabled={pageBusy || updates.refreshing} busy={updates.refreshing} onRetry={() => retryNotificationRead("refresh")} /></div>}
-      {actionError && <p ref={actionErrorRef} className={styles.error} role="alert">{t("notificationActionError")} <RetryButton label={t("retry")} disabled={busyId !== null || markAllBusy} onClick={() => {
+      {updates.error && <div className={`${styles.stateError} ${lang === "en" ? styles.stateErrorEn : ""}`} role="alert" data-notification-retry="refresh"><p>{t("refreshNotificationsError")}</p><RetryButton label={t("retry")} disabled={pageBusy || updates.refreshing} busy={updates.refreshing} onClick={() => retryNotificationRead("refresh")} /></div>}
+      {actionError && <div ref={actionErrorRef} className={`${styles.stateError} ${lang === "en" ? styles.stateErrorEn : ""}`} role="alert"><p>{t("notificationActionError")}</p><RetryButton label={t("retry")} disabled={busyId !== null || markAllBusy} onClick={() => {
         if (actionError.type === "all") {
           void markAllRead();
           return;
         }
         const failedItem = data?.content.find(item => item.id === actionError.id);
         if (failedItem) void markRead(failedItem);
-      }} /></p>}
-      <section className={styles.card} aria-labelledby="notification-preferences" aria-busy={preferencesLoading || preferencesBusy} data-notification-retry="preferences">
+      }} /></div>}
+      <section className={`${styles.card} ${preferencesLoading ? styles.preferencesLoadingCard : ""} ${preferencesError ? `${styles.preferencesLoadErrorCard} ${lang === "en" ? styles.preferencesLoadErrorCardEn : ""}` : ""} ${preferencesMessage ? `${styles.preferencesSaveCard} ${preferencesSaveError ? styles.preferencesSaveErrorCard : ""}` : ""}`} aria-labelledby="notification-preferences" aria-busy={preferencesLoading || preferencesBusy} data-notification-retry="preferences">
         <h2 id="notification-preferences" tabIndex={-1}>{t("notificationPreferences")}</h2>
-        {preferencesLoading && <p className={styles.notice} role="status">{t("loading")}</p>}
-        {preferencesError && <RetryNotice className={styles.error} message={t("loadNotificationPreferencesError")} retryLabel={t("retry")} onRetry={() => retryNotificationRead("preferences")} />}
+        {preferencesLoading && <p data-notification-preferences-loading className={`${styles.notice} ${styles.preferencesLoadingNotice}`} role="status">{t("loading")}</p>}
+        {preferencesError && <RetryNotice className={`${styles.preferencesLoadError} ${lang === "en" ? styles.preferencesLoadErrorEn : ""}`} messageClassName={styles.preferencesLoadMessage} message={t("loadNotificationPreferencesError")} retryLabel={t("retry")} onRetry={() => retryNotificationRead("preferences")} />}
         {!preferencesLoading && !preferencesError && preferences && <div className={styles.preferences}>
           <label className={styles.preference}><input type="checkbox" aria-busy={preferencesBusy} checked={preferences.followsEnabled} disabled={preferencesBusy} onChange={event => { pendingPreferenceFocus.current = event.currentTarget; lastPreferenceInput.current = event.currentTarget; void savePreferences({ ...preferences, followsEnabled: event.currentTarget.checked }); }} /> {t("notifyOnFollow")}</label>
           <label className={styles.preference}><input type="checkbox" aria-busy={preferencesBusy} checked={preferences.reviewLikesEnabled} disabled={preferencesBusy} onChange={event => { pendingPreferenceFocus.current = event.currentTarget; lastPreferenceInput.current = event.currentTarget; void savePreferences({ ...preferences, reviewLikesEnabled: event.currentTarget.checked }); }} /> {t("notifyOnReviewLike")}</label>
         </div>}
-        {preferencesMessage && <div data-notification-preferences-save-retry className={preferencesSaveError ? styles.error : styles.notice}><p role={preferencesSaveError ? "alert" : "status"}>{preferencesMessage}</p>{preferencesSaveError && preferencesRetry && <RetryButton label={t("retry")} disabled={preferencesBusy} busy={preferencesBusy} onClick={retryPreferences} />}</div>}
+        {preferencesMessage && <div data-notification-preferences-save-retry className={`${styles.preferencesSaveNotice} ${preferencesSaveError ? `${styles.preferencesSaveError} ${lang === "en" ? styles.preferencesSaveErrorEn : ""}` : styles.preferencesSaveSuccess}`}><p role={preferencesSaveError ? "alert" : "status"}>{preferencesMessage}</p>{preferencesSaveError && preferencesRetry && <RetryButton label={t("retry")} disabled={preferencesBusy} busy={preferencesBusy} onClick={retryPreferences} />}</div>}
       </section>
 
-      <section className={styles.card} aria-label={t("notifications")} aria-busy={loading} data-notification-retry="feed">
-        {loading && <p className={styles.notice} role="status">{t("loading")}</p>}
-        {error && <RetryNotice className={styles.error} message={t("loadNotificationsError")} retryLabel={t("retry")} onRetry={() => retryNotificationRead("feed")} />}
-        {!loading && !error && data && (data.content.length === 0 ? <p className={styles.empty}>{t("noNotifications")}</p> : <ul className={styles.list}>
+      <section className={`${styles.card} ${loading ? styles.notificationFeedLoading : ""} ${error ? `${styles.notificationFeedError} ${lang === "en" ? styles.notificationFeedErrorEn : ""}` : ""} ${!loading && !error && data?.content.length === 0 ? styles.notificationFeedEmpty : ""}`} aria-label={t("notifications")} aria-busy={loading} data-notification-retry="feed">
+        {loading && <p className={`${styles.notice} ${styles.notificationFeedNotice}`} role="status">{t("loading")}</p>}
+        {error && <RetryNotice className={`${styles.notificationFeedErrorNotice} ${lang === "en" ? styles.notificationFeedErrorNoticeEn : ""}`} messageClassName={styles.notificationFeedErrorMessage} message={t("loadNotificationsError")} retryLabel={t("retry")} onRetry={() => retryNotificationRead("feed")} />}
+        {!loading && !error && data && (data.content.length === 0 ? <p className={`${styles.empty} ${styles.notificationFeedNotice}`}>{t("noNotifications")}</p> : <ul className={styles.list}>
           {data.content.map(item => <li className={`${styles.item} ${item.readAt ? "" : styles.itemUnread}`} key={item.id}>
-            <div className={styles.itemBody}>
-              {item.actor ? <Link to={path(`/users/${item.actor.id}`)} onClick={() => { void markRead(item); }}>{getUserIdentity(item.actor, t("someone"))}</Link> : t("someone")}
-              {" "}{item.type === "REVIEW_LIKED" && item.reviewId
+            <div className={`${styles.itemBody} ${lang === "en" ? item.readAt ? styles.itemBodyEnRead : styles.itemBodyEnUnread : ""}`} data-notification-item-body>
+              {item.actor ? <Link className={styles.actorName} data-notification-actor to={path(`/users/${item.actor.id}`)} onClick={() => { void markRead(item); }}>{getUserIdentity(item.actor, t("someone"))}</Link> : <span className={styles.actorName} data-notification-actor>{t("someone")}</span>}
+              <span className={styles.itemAction} data-notification-action>{item.type === "REVIEW_LIKED" && item.reviewId
                 ? <Link to={path(`/reviews/${item.reviewId}`)} onClick={() => { void markRead(item); }}>{label(item, t)}</Link>
-                : label(item, t)}
+                : label(item, t)}</span>
             </div>
             <small className={styles.meta}>{formatDateTime(item.createdAt, lang)}</small>
             {!item.readAt && <button className={styles.markButton} type="button" data-notification-mark-unread={item.id} aria-busy={busyId === item.id} disabled={busyId !== null || markAllBusy} onClick={() => { void markRead(item); }}>{busyId === item.id ? t("loading") : t("markRead")}</button>}

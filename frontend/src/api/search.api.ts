@@ -34,6 +34,8 @@ export interface PublicUserSearchResult {
   username: string;
   displayName: string | null;
   avatarUrl: string | null;
+  followerCount?: number;
+  followingCount?: number;
 }
 
 export interface SearchArticle {

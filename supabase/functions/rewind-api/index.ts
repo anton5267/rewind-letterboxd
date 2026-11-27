@@ -25,6 +25,7 @@ import { catalogueRepository } from "./repositories/catalogue.ts";
 import { ratingsRepository } from "./repositories/ratings.ts";
 import { createTmdbPersonBiographyProvider } from "./tmdb_person.ts";
 import { writerFilmographyRepository } from "./repositories/writer_filmography.ts";
+import { publicStatsRepository } from "./repositories/public_stats.ts";
 
 const repository: RewindApiRepository = {
   ...journalRepository,
@@ -46,6 +47,7 @@ const repository: RewindApiRepository = {
   ...catalogueRepository,
   ...writerFilmographyRepository,
   ...ratingsRepository,
+  ...publicStatsRepository,
 };
 
 const personBiographyProvider = createTmdbPersonBiographyProvider(Deno.env.get("TMDB_API_KEY"));

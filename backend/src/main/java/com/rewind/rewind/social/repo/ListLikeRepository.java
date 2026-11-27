@@ -2,6 +2,7 @@ package com.rewind.rewind.social.repo;
 
 import com.rewind.rewind.social.entity.ListLike;
 import com.rewind.rewind.list.entity.MovieList;
+import com.rewind.rewind.list.entity.ListType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,6 +30,15 @@ public interface ListLikeRepository extends JpaRepository<ListLike, Long> {
                     + "WHERE l.is_public = true AND l.list_type = :listType AND owner.is_active = true AND liker.is_active = true",
             nativeQuery = true)
     Page<MovieList> findRecentlyLikedPublic(@Param("listType") String listType, Pageable pageable);
+
+    @Query(value = "select ll.list from ListLike ll where ll.user.id = :userId and ll.user.isActive = true "
+            + "and ll.list.isPublic = true and ll.list.listType = :listType and ll.list.user.isActive = true "
+            + "order by ll.createdAt desc, ll.id desc",
+            countQuery = "select count(ll.id) from ListLike ll where ll.user.id = :userId and ll.user.isActive = true "
+                    + "and ll.list.isPublic = true and ll.list.listType = :listType and ll.list.user.isActive = true")
+    Page<MovieList> findLikedPublicByUserIdAndListType(@Param("userId") Long userId,
+                                                       @Param("listType") ListType listType,
+                                                       Pageable pageable);
 
     @Query("select ll.list.id as listId, count(ll.id) as likes from ListLike ll where ll.list.id in :listIds and ll.user.isActive = true group by ll.list.id")
     List<ListLikeCountRow> countByListIds(@Param("listIds") Collection<Long> listIds);

@@ -16,7 +16,7 @@ export interface MovieDetails {
   trailerUrl: string | null;
   genres: { id: number; name: string }[];
   actors: { id: number; name: string; photoUrl?: string | null; characterName: string | null; castOrder?: number | null }[];
-  directors: { id: number; name: string }[];
+  directors: { id: number; name: string; photoUrl?: string | null }[];
   producers: { id: number; name: string }[];
   writers?: { tmdbId: number; name: string; photoUrl: string | null }[];
   externalRatings: { source: string; rating: number; votesCount?: number | null; lastUpdatedAt?: string | null }[];

@@ -33,6 +33,8 @@ test("profile social links save, reload, and clear through the live API", async 
     await page.goto("/uk/profile?settings=connections");
     const form = page.locator("form#settings-form-connections");
     await expect(form).toBeVisible();
+    await form.getByText("Інші посилання", { exact: true }).click();
+    await form.getByRole("button", { name: "Підключити Instagram" }).click();
     await form.locator("#social-link-website").fill(website);
     await form.locator("#social-link-instagram").fill(instagram);
     const saveLinks = page.waitForResponse(response => new URL(response.url()).pathname === "/api/profile/me/social-links" && response.request().method() === "PUT");
@@ -53,6 +55,8 @@ test("profile social links save, reload, and clear through the live API", async 
     ]);
 
     await page.reload();
+    await form.getByText("Інші посилання", { exact: true }).click();
+    await form.getByRole("button", { name: /Змінити посилання/ }).click();
     await expect(form.locator("#social-link-website")).toHaveValue(website);
     await expect(form.locator("#social-link-instagram")).toHaveValue(instagram);
     await form.locator("#social-link-website").fill("");

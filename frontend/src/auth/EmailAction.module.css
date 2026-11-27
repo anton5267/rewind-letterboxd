@@ -7,8 +7,285 @@
 .footer { margin: 0; text-align: center; }
 .footer a { display: inline-flex; min-height: 44px; align-items: center; color: var(--rewind-cyan); }
 
+.recoveryBack,
+.lockIllustration, .lockDesktop { display: none; }
+
+@media (min-width: 768px) {
+  .page.recoveryPage {
+    display: block;
+    width: 100%;
+    height: 1349px;
+    min-height: 1349px;
+    padding: 316px 0 160px;
+    overflow: hidden;
+    background: #1f1f1f url("../assets/figma/auth-desktop.png") top center / 100% 501px no-repeat;
+  }
+
+  .recoveryPage .recoveryCard {
+    position: relative;
+    display: block;
+    width: min(1198px, calc(100% - 32px));
+    height: 873px;
+    min-height: 873px;
+    margin: 0 auto;
+    padding: 0;
+    border-radius: 50px;
+    background: #282828;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, .13);
+  }
+
+  .recoveryPage .recoveryBack {
+    position: absolute;
+    top: 43px;
+    left: 57px;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    width: auto;
+    height: 32px;
+    color: #828282;
+    font-size: 24px;
+    line-height: 29px;
+    text-decoration: none;
+  }
+  .recoveryPage .recoveryBack svg { width: 32px; height: 32px; fill: none; stroke: currentColor; stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; }
+  .recoveryPage .recoveryBack span { display: inline; }
+  .recoveryPage .eyebrow { display: none; }
+  .recoveryPage .lockIllustration {
+    position: absolute;
+    top: 85px;
+    left: 50%;
+    display: block;
+    width: 104px;
+    height: 120px;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+  .recoveryPage .lockDesktop { position: absolute; top: 0; left: 0; display: block; max-width: none; }
+  .recoveryPage .lockBack,
+  .recoveryPage .lockFront { display: none; }
+  .recoveryPage .title {
+    position: absolute;
+    top: 260px;
+    left: 50%;
+    width: 600px;
+    max-width: calc(100% - 64px);
+    margin: 0;
+    transform: translateX(-50%);
+    font-size: 36px;
+    line-height: normal;
+    letter-spacing: 0;
+  }
+  .recoveryPage .description {
+    position: absolute;
+    top: 321px;
+    left: 50%;
+    width: 700px;
+    max-width: calc(100% - 80px);
+    margin: 0;
+    transform: translateX(-50%);
+    font-size: 20px;
+    line-height: normal;
+  }
+  .recoveryPage .button {
+    position: absolute;
+    top: 458px;
+    left: 50%;
+    width: 627px;
+    height: 89px;
+    min-height: 89px;
+    margin: 0;
+    padding: 0 0 17px;
+    transform: translateX(-50%);
+    border: 0;
+    border-radius: 46px;
+    background: transparent;
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .recoveryPage .button::before,
+  .recoveryPage .button::after {
+    position: absolute;
+    z-index: -1;
+    right: 0;
+    left: 0;
+    border-radius: 46px;
+    content: "";
+    pointer-events: none;
+  }
+  .recoveryPage .button::before {
+    top: 0;
+    bottom: 17px;
+    border: 4px solid #b4b4b6;
+    background: rgba(229, 229, 229, .2);
+    backdrop-filter: blur(20px);
+  }
+  .recoveryPage .button::after {
+    z-index: -2;
+    top: 17px;
+    bottom: 0;
+    background: #222;
+    filter: blur(20px);
+  }
+  .recoveryPage .button:hover:not(:disabled) { transform: translateX(-50%); }
+  .recoveryPage .footer {
+    position: absolute;
+    top: 666px;
+    left: 50%;
+    width: 120px;
+    margin: 0;
+    transform: translateX(-50%);
+    font-size: 24px;
+    line-height: 29px;
+  }
+  .recoveryPage .footer a {
+    display: inline-flex;
+    min-height: 29px;
+    color: #7e7e7e;
+    text-decoration: none;
+  }
+
+  .recoveryPage[data-email-state="profile-error"] .title { top: 260px; }
+}
+
 @media (max-width: 767px) {
   .page { min-height: 100dvh; padding-top: 36px; padding-bottom: 36px; }
   .card { min-height: min(640px, calc(100dvh - 72px)); align-content: center; gap: 20px; }
   .description { font-size: 15px; }
+
+  .page.recoveryPage {
+    display: block;
+    width: 100%;
+    height: max(895px, 100dvh);
+    min-height: 895px;
+    padding: 0;
+    overflow: hidden;
+    background-color: #1f1f1f;
+    background-image: url("../assets/figma/auth-mobile.png");
+    background-position: top center;
+    background-size: 100% 378px;
+  }
+
+  .recoveryPage .recoveryCard {
+    position: relative;
+    display: block;
+    width: min(393px, 100%);
+    height: 100%;
+    min-height: 0;
+    margin: 0 auto;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .recoveryBack {
+    position: absolute;
+    top: 54px;
+    left: 20px;
+    z-index: 1;
+    display: grid;
+    width: 27px;
+    height: 27px;
+    place-items: center;
+    color: rgba(255, 255, 255, .62);
+  }
+  .recoveryBack span { display: none; }
+  .recoveryPage .recoveryBack { color: rgba(255, 255, 255, .62); }
+  .recoveryBack svg { width: 27px; height: 27px; fill: none; stroke: currentColor; stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; }
+
+  .lockIllustration {
+    position: absolute;
+    top: 223px;
+    left: calc(50% - 2px);
+    display: block;
+    width: 89px;
+    height: 102px;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+  .lockIllustration img { position: absolute; display: block; width: 89px; height: 102px; max-width: none; }
+  .lockBack { top: 0; left: 0; }
+  .lockFront { top: 7.3px; left: 0; }
+
+  .recoveryPage .eyebrow {
+    position: absolute;
+    top: 350px;
+    left: 50%;
+    width: 297px;
+    margin: 0;
+    transform: translateX(-50%);
+    font-size: 11px;
+    line-height: 14px;
+    letter-spacing: .16em;
+    text-align: center;
+  }
+  .recoveryPage .title {
+    position: absolute;
+    top: 380px;
+    left: 32px;
+    width: calc(100% - 64px);
+    max-width: none;
+    margin: 0;
+    font-size: 24px;
+    line-height: 28.8px;
+    letter-spacing: 0;
+    text-align: center;
+  }
+  .recoveryPage .description {
+    position: absolute;
+    top: 425px;
+    left: 42px;
+    width: calc(100% - 84px);
+    max-width: none;
+    margin: 0;
+    font-size: 15px;
+    line-height: 22px;
+  }
+  .recoveryPage .button {
+    position: absolute;
+    top: 548px;
+    left: 50%;
+    width: min(290px, calc(100% - 64px));
+    height: 59px;
+    min-height: 59px;
+    margin: 0;
+    padding: 0;
+    transform: translateX(-50%);
+    border: 2px solid rgba(255, 255, 255, .55);
+    border-radius: 46px;
+    background: rgba(229, 229, 229, .2);
+    box-shadow: 0 0 28px rgba(255, 255, 255, .14);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.2;
+    transition: none;
+  }
+  .recoveryPage .button:hover:not(:disabled) { transform: translateX(-50%); }
+  .recoveryPage .footer {
+    position: absolute;
+    top: 646px;
+    left: 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    font-size: 14px;
+    line-height: 20px;
+  }
+  .recoveryPage .footer a { min-height: 20px; color: #a3a3a3; font-weight: 600; text-decoration: none; }
+
+  .recoveryPage[data-email-action="recovery"][data-auth-language="en"] .description { top: 449px; }
+
+  .recoveryPage[data-email-action="email_change"] .footer { top: 660px; }
+  .recoveryPage[data-email-action="email_change"][data-email-state="pending"] .button { top: 568px; }
+  .recoveryPage[data-email-action="email_change"][data-email-state="pending"][data-auth-language="uk"] .footer { top: 680px; }
+
+  .recoveryPage[data-email-state="expired"] .title { font-size: 22px; }
+  .recoveryPage[data-email-state="expired"] .description { top: 440px; }
+  .recoveryPage[data-email-state="expired"] .button { top: 585px; }
+  .recoveryPage[data-email-state="expired"][data-auth-language="en"] .button { top: 575px; }
+  .recoveryPage[data-email-state="expired"] .footer { top: 697px; }
+  .recoveryPage[data-email-state="expired"][data-auth-language="en"] .footer { top: 687px; }
 }

@@ -2,8 +2,8 @@ import { type TranslationKey } from "../../i18n";
 import { type ProfileCollection } from "../../api/profile.api";
 
 export const collectionKinds = ["watched", "watchlist", "favorites"] as const;
-export type SocialLinkPlatform = "website" | "instagram" | "tiktok" | "letterboxd";
-export const socialLinkPlatforms = ["website", "instagram", "tiktok", "letterboxd"] as const satisfies readonly SocialLinkPlatform[];
+export type SocialLinkPlatform = "website" | "instagram" | "tiktok" | "letterboxd" | "x";
+export const socialLinkPlatforms = ["website", "instagram", "tiktok", "letterboxd", "x"] as const satisfies readonly SocialLinkPlatform[];
 export const profileNavigation = [
   { id: "profile-overview", label: "profile", collectionKind: null },
   { id: "profile-collections", label: "films", collectionKind: "watched" },

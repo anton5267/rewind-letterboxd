@@ -1,8 +1,27 @@
 import { expect, test, type Page } from "@playwright/test";
+import { mkdirSync } from "node:fs";
+import path from "node:path";
+
+const sourcePosterUrls = Array.from({ length: 20 }, (_, index) =>
+  `https://fixtures.rewind.invalid/tagged-lists/poster-${String(index + 1).padStart(2, "0")}.jpg`,
+);
+const sourceListTitles = [
+  "Top 250 Narrative Feature Films",
+  "Definition of girly classics",
+  "Feeling lost in your 20’s",
+  "Classic movies for beginners.",
+];
+
+async function expectSourcePosterStack(card: ReturnType<Page["locator"]>, listIndex: number) {
+  const posters = card.locator('[role="img"] img');
+  await expect(posters).toHaveCount(5);
+  await expect.poll(() => posters.evaluateAll(images => images.map(image => image.getAttribute("src")))).toEqual(sourcePosterUrls.slice(listIndex * 5, listIndex * 5 + 5));
+  await expect.poll(() => posters.evaluateAll(images => images.every(image => (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
+}
 
 const createLists = (count: number) => Array.from({ length: count }, (_, index) => ({
   id: 991100 + index,
-  name: index === 0 ? "Top 250 Narrative Feature Films" : index === 1 ? "A long list title that remains readable on narrow screens" : `Tagged list ${index + 1}`,
+  name: sourceListTitles[index] ?? `Tagged list ${index + 1}`,
   description: "A long description that confirms the desktop card can grow with its content while keeping the poster rail and real metadata in place.",
   ownerId: 991200 + index,
   ownerUsername: `tagged-member-${index}`,
@@ -12,13 +31,21 @@ const createLists = (count: number) => Array.from({ length: count }, (_, index) 
   previewMovies: Array.from({ length: 5 }, (_, movieIndex) => ({
     id: 991300 + index * 10 + movieIndex,
     title: `Preview film ${movieIndex + 1}`,
-    photoUrl: null,
+    photoUrl: sourcePosterUrls[index * 5 + movieIndex] ?? null,
     releaseDate: null,
     rating: null,
   })),
 }));
 
 async function mockTaggedLists(page: Page) {
+  await page.route(/^https:\/\/fixtures\.rewind\.invalid\/tagged-lists\/poster-\d+\.jpg$/, route => {
+    const filename = new URL(route.request().url()).pathname.split("/").at(-1)!;
+    const index = Number(filename.match(/poster-(\d+)/)?.[1] ?? 0);
+    return index >= 1 && index <= 20 ? route.fulfill({
+      path: path.resolve(process.cwd(), `tests/e2e/fixtures/popular-lists-figma/desktop/${String(index).padStart(2, "0")}.jpg`),
+      contentType: "image/jpeg",
+    }) : route.abort();
+  });
   await page.route(/^https?:\/\/[^/]+\/api\//, async route => {
     const url = new URL(route.request().url());
     if (url.pathname === "/api/users/me") return route.fulfill({ status: 401, json: {} });
@@ -55,11 +82,13 @@ test("tagged Lists follows the desktop READY hero and card anchors", async ({ pa
 
   const cards = main.locator('section[aria-labelledby="lists-grid-heading"] article');
   await expect(cards).toHaveCount(4);
+  for (let index = 0; index < 4; index += 1) await expectSourcePosterStack(cards.nth(index), index);
   const cardBox = await cards.first().boundingBox();
   expect(cardBox?.x).toBeCloseTo(120, 0);
-  expect(cardBox?.y).toBeCloseTo(379, 0);
+  expect(cardBox?.y).toBeCloseTo(380, 0);
   expect(cardBox?.width).toBeCloseTo(1200, 0);
   expect(cardBox?.height).toBeCloseTo(339, 0);
+  expect((await cards.nth(1).boundingBox())?.y).toBeCloseTo(756, 0);
   const posterBox = await cards.first().locator('a[class*="taggedPosterLink"]').boundingBox();
   expect(posterBox?.x).toBeCloseTo(154, 0);
   expect(posterBox?.width).toBeCloseTo(446, 0);
@@ -67,6 +96,16 @@ test("tagged Lists follows the desktop READY hero and card anchors", async ({ pa
   await expect(cards.first().locator('a[class*="taggedPosterLink"] > div > div')).toHaveCount(5);
   await expect(cards.first().locator('p[class*="taggedMeta"]')).toContainText("tagged-member-0");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1440);
+  const sourceFooterY = await page.locator("footer").evaluate(element => element.getBoundingClientRect().top + window.scrollY);
+  const sourcePaginationY = await page.locator('nav[aria-label="Public list pages"]').evaluate(element => element.getBoundingClientRect().top + window.scrollY);
+  const sourcePageHeight = await page.evaluate(() => document.documentElement.scrollHeight);
+  console.log(`TAGGED_PAGE_BOTTOM ${JSON.stringify({ sourcePaginationY, sourceFooterY, sourcePageHeight })}`);
+  expect(sourcePaginationY).toBeCloseTo(1934, 0);
+  expect(sourceFooterY).toBeCloseTo(2123, 0);
+  expect(sourcePageHeight).toBe(2388);
+  const captureDir = path.resolve(process.cwd(), "../artifacts/visual-audit-20261127/tagged-lists-desktop");
+  mkdirSync(captureDir, { recursive: true });
+  await page.screenshot({ path: path.join(captureDir, "rewind-tagged-lists-en-desktop-1440.png"), fullPage: true });
 });
 
 test("tagged Lists follows the phone READY toolbar, card and bottom navigation anchors", async ({ page }) => {
@@ -98,18 +137,19 @@ test("tagged Lists follows the phone READY toolbar, card and bottom navigation a
 
   const cards = main.locator('section[aria-labelledby="lists-grid-heading"] article');
   await expect(cards).toHaveCount(3);
+  for (let index = 0; index < 3; index += 1) await expectSourcePosterStack(cards.nth(index), index);
   const cardBox = await cards.first().boundingBox();
   expect(cardBox?.x).toBeCloseTo(10, 0);
-  expect(cardBox?.y).toBeCloseTo(247, 0);
+  expect(cardBox?.y).toBeCloseTo(270, 0);
   expect(cardBox?.width).toBeCloseTo(361, 0);
-  expect(cardBox?.height).toBeCloseTo(188, 0);
+  expect(cardBox?.height).toBeCloseTo(189, 0);
   const posterBox = await cards.first().locator('a[class*="taggedPosterLink"]').boundingBox();
   expect(posterBox?.x).toBeCloseTo(28, 0);
   expect(posterBox?.width).toBeCloseTo(325, 0);
   expect(posterBox?.height).toBeCloseTo(116, 0);
   await expect(cards.first().locator('a[class*="taggedPosterLink"] > div > div')).toHaveCount(5);
-  const longTitleBox = await cards.nth(1).boundingBox();
-  expect(longTitleBox?.height).toBeGreaterThan(188);
+  const sourceTitleCardBox = await cards.nth(1).boundingBox();
+  expect(sourceTitleCardBox?.height).toBeCloseTo(189, 0);
   await expect(main.locator("#lists-grid-heading")).toContainText("api");
   await expect(main.locator('nav[class*="pagination"]')).toBeVisible();
   const back = toolbar.locator('a[class*="taggedBack"]');

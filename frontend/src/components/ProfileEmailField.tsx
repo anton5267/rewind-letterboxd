@@ -116,7 +116,7 @@ export default function ProfileEmailField({ email, userId, disabled, onConfirmed
   );
 
   return (
-    <div className={`${styles.field} ${className}`}>
+    <div className={`${styles.field} ${className}`} data-profile-email>
       <label htmlFor="settings-email">{t("email")}</label>
       <button
         id="settings-email"
@@ -148,7 +148,7 @@ export default function ProfileEmailField({ email, userId, disabled, onConfirmed
             <header className={styles.toolbar}>
               <button type="button" onClick={() => setOpen(false)}>
                 <img src="/images/profile-pronoun-back.png" width={22} height={22} alt="" />
-                {t("return")}
+                {t("back")}
               </button>
               <h2 id={`${id}-title`}>{t("settings")}</h2>
               <button
@@ -162,7 +162,7 @@ export default function ProfileEmailField({ email, userId, disabled, onConfirmed
             </header>
             <form id={`${id}-form`} onSubmit={submit}>
               <div className={styles.emailRow}>
-                <label htmlFor={`${id}-email`}>{t("email")}</label>
+                <label htmlFor={`${id}-email`}>{t("emailAddress")}</label>
                 <input
                   ref={input}
                   id={`${id}-email`}
@@ -173,10 +173,10 @@ export default function ProfileEmailField({ email, userId, disabled, onConfirmed
                   value={draft}
                   readOnly={busy}
                   onChange={event => setDraft(event.target.value)}
-                  aria-describedby={`${id}-hint`}
+                  aria-describedby={draft.trim().toLowerCase() !== email.toLowerCase() ? `${id}-hint` : undefined}
                 />
               </div>
-              <p id={`${id}-hint`} className={styles.hint}>{t("emailChangeHint")}</p>
+              {draft.trim().toLowerCase() !== email.toLowerCase() && <p id={`${id}-hint`} className={styles.hint}>{t("emailChangeHint")}</p>}
               {notice}{checkButton}
             </form>
           </section>

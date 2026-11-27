@@ -6,16 +6,19 @@ interface Props {
   checked: boolean;
   disabled: boolean;
   icon?: string;
+  compact?: boolean;
+  compactLabel?: string;
+  label?: string;
   onChange: (value: boolean) => void;
 }
 
-export default function ListRankingField({ checked, disabled, icon, onChange }: Props) {
+export default function ListRankingField({ checked, disabled, icon, compact = false, compactLabel, label, onChange }: Props) {
   const { t } = useLocale();
   const hintId = useId();
-  return <label className={styles.field}>
-    <input type="checkbox" data-list-field="ranking" aria-label={t("rankedList")} checked={checked} disabled={disabled} aria-describedby={hintId} onChange={event => onChange(event.target.checked)} />
+  return <label className={`${styles.field} ${compact ? styles.compactField : ""}`}>
+    <input className={compact ? "srOnly" : undefined} type="checkbox" data-list-field="ranking" aria-label={t("rankedList")} checked={checked} disabled={disabled} aria-describedby={hintId} onChange={event => onChange(event.target.checked)} />
     {icon && <img src={icon} alt="" width={18} height={18} />}
-    <span>{t("rankedList")}</span>
-    <span id={hintId} className={styles.hint}>{t("rankedListHint")}</span>
+    <span>{compact ? compactLabel ?? t("rankedList") : label ?? t("rankedList")}</span>
+    <span id={hintId} className={compact ? "srOnly" : styles.hint}>{t("rankedListHint")}</span>
   </label>;
 }

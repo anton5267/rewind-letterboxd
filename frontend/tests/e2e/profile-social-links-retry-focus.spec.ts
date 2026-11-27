@@ -59,6 +59,7 @@ for (const { lang, width, settings, label } of [
     const heading = page.locator("#social-links-settings");
     await expect(heading).toBeFocused();
     await expect(heading).toHaveCSS("outline-style", "solid");
+    if (settings) await root.getByText("Other links", { exact: true }).click();
     await expect(page.locator("#social-link-website")).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
 
@@ -91,3 +92,52 @@ for (const { width, label } of [
     await expect.poll(async () => page.evaluate(() => document.activeElement?.id || document.activeElement?.getAttribute("aria-label") || document.activeElement?.tagName)).toBe(manualFocus);
   });
 }
+
+test("an initial hash focus cannot steal focus from a retry control", async ({ page }) => {
+  await page.addInitScript(() => {
+    const callbacks: Array<{ id: number; callback: FrameRequestCallback }> = [];
+    let nextId = 0;
+    window.requestAnimationFrame = callback => {
+      const id = ++nextId;
+      callbacks.push({ id, callback });
+      return id;
+    };
+    window.cancelAnimationFrame = id => {
+      const pending = callbacks.find(item => item.id === id);
+      if (pending) pending.callback = () => {};
+    };
+    (window as Window & { flushPendingAnimationFrames?: () => void }).flushPendingAnimationFrames = () => {
+      const pending = callbacks.splice(0);
+      for (const item of pending) item.callback(performance.now());
+    };
+  });
+  const getAttempts = await installFixture(page);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/uk/profile#social-links-settings");
+  const section = page.locator("section[aria-labelledby='social-links-settings']");
+  const retry = section.getByRole("button", { name: /retry|try again|спробувати/i });
+  await expect(retry).toBeVisible();
+  await retry.focus();
+  await retry.press("Enter");
+  await expect.poll(getAttempts).toBe(2);
+  const retryAfterFailure = section.getByRole("button", { name: /retry|try again|спробувати/i });
+  await expect(retryAfterFailure).toBeVisible();
+  await retryAfterFailure.focus();
+  await page.evaluate(() => (window as Window & { flushPendingAnimationFrames?: () => void }).flushPendingAnimationFrames?.());
+  await expect(retryAfterFailure).toBeFocused();
+});
+
+test("mobile Social Links load-error card follows the Figma dimensions", async ({ page }) => {
+  await installFixture(page);
+  await page.setViewportSize({ width: 393, height: 844 });
+  await page.goto("/uk/profile#social-links-settings");
+  const section = page.locator("section[aria-labelledby='social-links-settings']");
+  const notice = section.locator("[role='alert']");
+  await expect(notice.getByRole("button", { name: /спробувати/i })).toBeVisible();
+  await expect(notice).toHaveCSS("width", "333px");
+  await expect(notice).toHaveCSS("height", "112px");
+  await expect(notice).toHaveCSS("border-radius", "8px");
+  await expect(notice).toHaveCSS("background-color", "rgb(74, 31, 36)");
+  await expect(notice.locator("span")).toHaveCSS("width", "305px");
+  await expect(notice.getByRole("button", { name: /спробувати/i })).toHaveCSS("min-height", "44px");
+});

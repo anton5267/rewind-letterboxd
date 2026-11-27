@@ -19,6 +19,8 @@ const ADMIN_REPORTED_LIST_DISMISS_PATTERN = /^\/api\/admin\/reported-lists\/(\d+
 const ADMIN_REVIEW_PATTERN = /^\/api\/admin\/reviews(?:\/(\d+)(?:\/(hide|unhide))?)?$/;
 
 const ADMIN_COMMENT_PATTERN = /^\/api\/admin\/comments(?:\/(\d+)(?:\/(hide|unhide))?)?$/;
+const ADMIN_COMMENT_HISTORY_PATTERN = /^\/api\/admin\/comments\/(\d+)\/history$/;
+const ADMIN_REVIEW_HISTORY_PATTERN = /^\/api\/admin\/reviews\/(\d+)\/history$/;
 
 export async function handleAdminReviewRoutes(context: HttpRouteContext): Promise<Response | null> {
   const { request, path, query, corsHeaders, repository, authVerifier } = context;
@@ -26,6 +28,8 @@ export async function handleAdminReviewRoutes(context: HttpRouteContext): Promis
   const adminReviewMatch = path.match(ADMIN_REVIEW_PATTERN);
 
   const adminCommentMatch = path.match(ADMIN_COMMENT_PATTERN);
+  const adminCommentHistoryMatch = path.match(ADMIN_COMMENT_HISTORY_PATTERN);
+  const adminReviewHistoryMatch = path.match(ADMIN_REVIEW_HISTORY_PATTERN);
 
   const dismissReviewReportMatch = path.match(ADMIN_REPORTED_REVIEW_DISMISS_PATTERN);
 
@@ -80,13 +84,32 @@ export async function handleAdminReviewRoutes(context: HttpRouteContext): Promis
     }
   }
 
+  if (adminCommentHistoryMatch || adminReviewHistoryMatch) {
+    if (request.method !== "GET") {
+      corsHeaders.set("Allow", "GET, OPTIONS");
+      return json({ message: "Method not allowed" }, 405, corsHeaders);
+    }
+    const authUser = await confirmedAuthUser(request, authVerifier);
+    if (!authUser) return json({ message: "Authentication required" }, 401, corsHeaders);
+    const isReviewHistory = adminReviewHistoryMatch !== null;
+    const id = parseRouteId((adminReviewHistoryMatch ?? adminCommentHistoryMatch)![1]);
+    if (id === null) return json({ message: `Invalid ${isReviewHistory ? "review" : "comment"} ID` }, 400, corsHeaders);
+    const loadHistory = isReviewHistory ? repository.getAdminReviewHistory : repository.getAdminCommentHistory;
+    if (!loadHistory) return json({ message: "Not found" }, 404, corsHeaders);
+    try {
+      return json(await loadHistory(authUser, id), 200, corsHeaders);
+    } catch (error) {
+      return repositoryFailure(error, `Unable to load ${isReviewHistory ? "review" : "comment"} history`, corsHeaders);
+    }
+  }
+
   if (adminReviewMatch || adminCommentMatch) {
     const isReview = adminReviewMatch !== null;
     const match = (adminReviewMatch ?? adminCommentMatch)!;
     const rootPath = isReview ? "/api/admin/reviews" : "/api/admin/comments";
     const idText = match[1] ?? null;
     const action = match[2] ?? null;
-    const allowed = idText === null ? ["GET"] : action ? ["POST"] : isReview ? ["PATCH", "DELETE"] : ["DELETE"];
+    const allowed = idText === null ? ["GET"] : action ? ["POST"] : ["PATCH", "DELETE"];
     if (!allowed.includes(request.method)) {
       corsHeaders.set("Allow", `${allowed.join(", ")}, OPTIONS`);
       return json({ message: "Method not allowed" }, 405, corsHeaders);
@@ -129,14 +152,15 @@ export async function handleAdminReviewRoutes(context: HttpRouteContext): Promis
         return json(result, 200, corsHeaders);
       }
       if (request.method === "PATCH") {
-        if (!isReview) return json({ message: "Not found" }, 404, corsHeaders);
-        if (!repository.updateAdminReviewContent) return json({ message: "Not found" }, 404, corsHeaders);
+        if (isReview ? !repository.updateAdminReviewContent : !repository.updateAdminCommentContent) return json({ message: "Not found" }, 404, corsHeaders);
         let body: unknown;
         try { body = await request.json(); } catch { return json({ message: "Invalid request body" }, 400, corsHeaders); }
         const content = parseAdminReviewContentUpdate(body);
-        if (content === null) return json({ message: "Invalid review content" }, 400, corsHeaders);
-        const updated = await repository.updateAdminReviewContent(authUser, id, content);
-        return updated ? json(updated, 200, corsHeaders) : json({ message: "Review not found" }, 404, corsHeaders);
+        if (content === null) return json({ message: `Invalid ${isReview ? "review" : "comment"} content` }, 400, corsHeaders);
+        const updated = isReview
+          ? await repository.updateAdminReviewContent!(authUser, id, content)
+          : await repository.updateAdminCommentContent!(authUser, id, content);
+        return updated ? json(updated, 200, corsHeaders) : json({ message: `${isReview ? "Review" : "Comment"} not found` }, 404, corsHeaders);
       }
       const deleted = isReview
         ? await repository.deleteAdminReview?.(authUser, id)

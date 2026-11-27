@@ -2,7 +2,7 @@ import PinnedProfileList from "../components/PinnedProfileList";
 import ProfileLoading from "../components/ProfileLoading";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { type PublicCollection } from "../api/profile.api";
+import { type PublicCollection, type PublicProfileCollectionKind } from "../api/profile.api";
 import ResilientImage from "../components/ResilientImage";
 import Pagination from "../components/Pagination";
 import RetryButton from "../components/RetryButton";
@@ -12,7 +12,7 @@ import PublicProfileReviewCard from "../components/PublicProfileReviewCard";
 import UserFollowRow from "../components/UserFollowRow";
 import { FollowActionsProvider } from "../context/FollowActionsContext";
 import { useAuth } from "../context/AuthContext";
-import { editorialText, formatDateTime, formatMovieCount, formatMovieYear, localizeActivityType, useLocale, type TranslationKey } from "../i18n";
+import { editorialText, formatCompactCount, formatDateTime, formatMovieCount, formatMovieYear, localizeActivityType, useLocale, type TranslationKey } from "../i18n";
 import ListPosterStack from "../components/ListPosterStack";
 import { toTagSlug } from "../utils/tagSlug";
 import { safeHttpUrl } from "../utils/externalUrl";
@@ -22,6 +22,7 @@ import { useActiveSection } from "../hooks/useActiveSection";
 import styles from "./PublicProfile.module.css";
 import { usePublicProfileIdentity } from "./public-profile/usePublicProfileIdentity";
 import { usePublicProfileCollection } from "./public-profile/usePublicProfileCollection";
+import { usePublicProfileLikedLists } from "./public-profile/usePublicProfileLikedLists";
 import { usePublicProfileNetwork } from "./public-profile/usePublicProfileNetwork";
 import { usePublicRelationships } from "./public-profile/usePublicRelationships";
 import { usePublicProfileContent } from "./public-profile/usePublicProfileContent";
@@ -35,6 +36,13 @@ const socialLinkLabelKeys: Record<string, TranslationKey> = {
   tiktok: "socialTiktok",
   letterboxd: "socialLetterboxd",
 };
+
+function getPublicListPageItems(totalPages: number, currentPage: number): Array<number | "ellipsis"> {
+  if (totalPages <= 5) return Array.from({ length: totalPages }, (_, index) => index);
+  if (currentPage <= 2) return [0, 1, 2, "ellipsis", totalPages - 1];
+  if (currentPage >= totalPages - 3) return [0, "ellipsis", totalPages - 3, totalPages - 2, totalPages - 1];
+  return [0, "ellipsis", currentPage, currentPage + 1, "ellipsis", totalPages - 1];
+}
 
 export default function PublicProfile() {
   const { id } = useParams();
@@ -55,7 +63,8 @@ export default function PublicProfile() {
 
   const requestedCollection = new URLSearchParams(location.search).get("collection");
 
-  const collectionKind: PublicCollection = requestedCollection === "watchlist" || requestedCollection === "favorites" ? requestedCollection : "watched";
+  const collectionKind: PublicProfileCollectionKind = requestedCollection === "watchlist" || requestedCollection === "favorites" || requestedCollection === "liked-lists" ? requestedCollection : "watched";
+  const movieCollectionKind: PublicCollection = collectionKind === "liked-lists" ? "favorites" : collectionKind;
 
   const profileId = Number(id);
 
@@ -70,7 +79,8 @@ export default function PublicProfile() {
   const {
     collection, collectionPage, collectionLoading, collectionError, collectionHeadingRef,
     setCollectionPage, changeCollectionPage, retryCollection,
-  } = usePublicProfileCollection(profileId, profile, profileView, collectionKind);
+  } = usePublicProfileCollection(profileId, profile, collectionKind === "liked-lists" ? null : profileView, movieCollectionKind);
+  const { likedLists, likedListsPage, likedListsLoading, likedListsError, setLikedListsPage, retryLikedLists } = usePublicProfileLikedLists(profileId, profile, profileView === "collection" && collectionKind === "liked-lists");
 
   const network = usePublicProfileNetwork(profileId, profile, profileView);
 
@@ -145,8 +155,9 @@ export default function PublicProfile() {
     }
   };
 
-  const chooseCollection = (kind: PublicCollection) => {
+  const chooseCollection = (kind: PublicProfileCollectionKind) => {
     setCollectionPage(0);
+    setCollectionFiltersOpen(false);
     const search = new URLSearchParams(location.search);
     search.set("collection", kind);
     navigate({ search: `?${search}`, hash: "#public-profile-collections" }, { preventScrollReset: true });
@@ -159,7 +170,7 @@ export default function PublicProfile() {
     requestAnimationFrame(() => collectionFiltersButtonRef.current?.focus());
   };
 
-  const sectionTarget = (sectionId: string, kind: PublicCollection | null) => {
+  const sectionTarget = (sectionId: string, kind: PublicProfileCollectionKind | null) => {
     const search = new URLSearchParams(location.search);
     if (kind !== null) {
       search.set("collection", kind);
@@ -195,7 +206,7 @@ export default function PublicProfile() {
     return () => window.cancelAnimationFrame(frame);
   }, [location.hash, location.key, profile?.id, profileView]);
 
-  const pageBusy = !profile || favoritePreviewLoading || collectionLoading || followersLoading || followingLoading || followStatusLoading || blockStatusLoading || activityLoading || publicListsLoading || likedReviewsLoading || followBusy || blockBusy;
+  const pageBusy = !profile || favoritePreviewLoading || collectionLoading || likedListsLoading || followersLoading || followingLoading || followStatusLoading || blockStatusLoading || activityLoading || publicListsLoading || likedReviewsLoading || followBusy || blockBusy;
 
   if (error) return <main className={styles.state} aria-labelledby="public-profile-state-title" aria-busy={false}><div className={styles.shell}><h1 id="public-profile-state-title" className="srOnly">{t("profile")}</h1><p className={styles.alert} ref={profileRetryAlertRef} tabIndex={-1} role="alert">{!validProfileId ? t("invalidProfileId") : notFound ? t("profileNotFound") : t("loadPublicProfileError")} {validProfileId && !notFound && <RetryButton label={t("retry")} onClick={() => { retryProfile(); }} />}</p></div></main>;
 
@@ -216,11 +227,11 @@ export default function PublicProfile() {
 
   favoritesSearch.set("view", "collection");
 
-  const collectionHeading = collectionKind === "watched" ? t("watched") : collectionKind === "watchlist" ? t("wantsToSee") : t("likedCollection");
+  const collectionHeading = collectionKind === "watched" ? t("watched") : collectionKind === "watchlist" ? t("wantsToSee") : collectionKind === "liked-lists" ? t("searchLists") : t("likedCollection");
 
-  const viewTitle = networkView ? t(profileView === "following" ? "following" : "followers") : profileView === "lists" ? t("searchLists") : collectionKind === "watched" ? t("films") : collectionKind === "favorites" ? t("likes") : t("watchlist");
+  const viewTitle = networkView ? t(profileView === "following" ? "following" : "followers") : profileView === "lists" ? t("searchLists") : collectionKind === "watched" ? t("films") : collectionKind === "liked-lists" || collectionKind === "favorites" ? t("likes") : t("watchlist");
 
-  return <FollowActionsProvider><main className={styles.page} data-profile-view={profileView ?? undefined} data-network-view={networkView || undefined} onFocusCapture={event => { const target = event.target; if (target instanceof HTMLElement && !target.closest('[role="dialog"]')) networkFocusOrigin.current = target.matches("[data-network-action]") ? target : null; }} aria-labelledby={profileView ? "public-profile-view-title public-profile-title" : "public-profile-title"} aria-busy={profileView === "collection" ? collectionLoading : profileView === "lists" ? publicListsLoading : networkView ? (profileView === "following" ? followingLoading : followersLoading) : pageBusy}>
+  return <FollowActionsProvider><main className={styles.page} data-profile-view={profileView ?? undefined} data-collection-kind={profileView === "collection" ? collectionKind : undefined} data-profile-hq={profile.hq ? "true" : undefined} data-network-view={networkView || undefined} onFocusCapture={event => { const target = event.target; if (target instanceof HTMLElement && !target.closest('[role="dialog"]')) networkFocusOrigin.current = target.matches("[data-network-action]") ? target : null; }} aria-labelledby={profileView ? "public-profile-view-title public-profile-title" : "public-profile-title"} aria-busy={profileView === "collection" ? collectionKind === "liked-lists" ? likedListsLoading : collectionLoading : profileView === "lists" ? publicListsLoading : networkView ? (profileView === "following" ? followingLoading : followersLoading) : pageBusy}>
     <div className={styles.shell}>
       {profileView && <div className={styles.collectionToolbar}>
         <Link to={sectionTarget("public-profile-overview", null)} aria-label={t("profile")}>←</Link>
@@ -231,7 +242,7 @@ export default function PublicProfile() {
     <nav className={styles.profileRail} aria-label={t("profile")}>
       {publicProfileNavigation.map(({ id: sectionId, label, collectionKind: kind }) => {
         const visibleSection = profileView === "collection" ? "public-profile-collections" : profileView === "lists" ? "public-profile-lists" : networkView ? "public-profile-overview" : activeProfileSection;
-        const active = (visibleSection === sectionId || (sectionId === "public-profile-overview" && visibleSection === "public-profile-stats")) && (kind === null || collectionKind === kind);
+        const active = (visibleSection === sectionId || (sectionId === "public-profile-overview" && visibleSection === "public-profile-stats")) && (kind === null || collectionKind === kind || (kind === "favorites" && collectionKind === "liked-lists"));
         return <Link
           className={`${styles.profileRailLink} ${active ? styles.profileRailLinkActive : ""}`}
           key={label}
@@ -270,8 +281,17 @@ export default function PublicProfile() {
           const movieTitle = item.movie ? editorialText(item.movie.title, t("untitledFilm")) : null;
           const relatedName = item.relatedUser ? getUserName(item.relatedUser, t("someone")) : null;
           const title = movieTitle ?? relatedName ?? (item.list ? editorialText(item.list.name, t("lists")) : localizeActivityType(item.type, t));
-          return <li key={item.id}>
+          return <li key={item.id} data-activity-rated={item.rating != null ? "true" : undefined}>
             {item.movie && movieTitle ? <PublicProfilePoster movieId={item.movie.id} title={movieTitle} /> : item.type === "FOLLOW" && item.relatedUser ? <Link className={styles.previewPosterLink} to={path(`/users/${item.relatedUser.id}`)} aria-label={title}><span className={styles.previewPosterFallback} aria-hidden="true">{title.slice(0, 1).toUpperCase()}</span></Link> : <div className={styles.activityPlaceholder} aria-hidden="true">{title.slice(0, 1).toUpperCase()}</div>}
+            {item.rating != null && <div className={styles.mobileActivityRating} role="img" aria-label={`${item.rating} / 5`}>
+              {Array.from({ length: 5 }, (_, index) => {
+                const fill = Math.max(0, Math.min(1, item.rating! - index));
+                return <span className={styles.mobileActivityRatingStar} key={index}>
+                  <img src="/images/review-star-empty.svg" alt="" />
+                  {fill > 0 && <img className={styles.mobileActivityRatingFill} style={{ clipPath: `inset(0 ${(1 - fill) * 100}% 0 0)` }} src="/images/review-star-active.svg" alt="" />}
+                </span>;
+              })}
+            </div>}
             <p className={styles.activityCaption}><span>{localizeActivityType(item.type, t)}</span><strong>{title}</strong><time dateTime={item.createdAt}>{formatDateTime(item.createdAt, lang)}</time></p>
           </li>;
         })}</ul>
@@ -279,14 +299,14 @@ export default function PublicProfile() {
         {expandedActivity && <Pagination className={styles.pagination} page={activityPage} totalPages={activity.totalPages} label={t("activityPagination")} busy={activityLoading} onPageChange={setActivityPage} />}
       </>)}
     </section>
-    <section className={`${styles.section} ${styles.overviewSection}`} aria-labelledby="public-profile-reviews">
+    <section className={`${styles.section} ${styles.overviewSection} ${styles.reviewsOverview}`} aria-labelledby="public-profile-reviews">
       <h2 id="public-profile-reviews">{t("recentReviews")}</h2>
       {profile.recentReviews.length === 0 ? <p>{t("noReviews")}</p> : <>
         <ul className={styles.reviewCards} id="public-profile-reviews-content">{(expandedReviews ? profile.recentReviews : profile.recentReviews.slice(0, 2)).map(review => <PublicProfileReviewCard key={review.id} review={review} profile={profile} />)}</ul>
         {profile.recentReviews.length > 2 && <button className={styles.overviewAction} type="button" aria-expanded={expandedReviews} aria-controls="public-profile-reviews-content" onClick={() => setExpandedReviews(value => !value)}>{expandedReviews ? t("close") : t("viewAll")}<span className="srOnly">: {t("recentReviews")}</span></button>}
       </>}
     </section>
-    <section className={`${styles.section} ${styles.overviewSection}`} aria-labelledby="public-profile-following-preview-title" aria-busy={followingLoading} data-retry-focus-section="following-preview">
+    <section className={`${styles.section} ${styles.overviewSection} ${styles.followingOverview}`} aria-labelledby="public-profile-following-preview-title" aria-busy={followingLoading} data-retry-focus-section="following-preview">
       <h2 id="public-profile-following-preview-title" tabIndex={-1}><Link to={sectionTarget("public-profile-following", null)}>{t("following")}</Link></h2>
       {followingLoading && <ProfileLoading label={t("loading")} layout="rows" />}
       {followingError && <RetryNotice className={styles.alert} message={t("loadNetworkError")} retryLabel={t("retry")} onRetry={() => retryPublicSection("following-preview")} />}
@@ -294,13 +314,13 @@ export default function PublicProfile() {
         <ul className={styles.followingRail}>{following.content.map(networkUser => {
           const name = getUserName(networkUser, t("someone"));
           return <li key={networkUser.id}><Link to={path(`/users/${networkUser.id}`)} aria-label={`${name} ${getUserHandle(networkUser, t("someone"))}`} title={name}>
-            <ResilientImage src={networkUser.avatarUrl} alt="" width={80} height={80} loading="lazy" fallback={<span className={styles.followingAvatarFallback} aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>} />
+            <ResilientImage src={networkUser.avatarUrl} alt="" width={80} height={80} loading="lazy" fallback={<span className={styles.followingAvatarFallback} aria-hidden="true" />} />
           </Link></li>;
         })}</ul>
       </>)}
     </section>
     <section className={`${styles.section} ${styles.overviewSection} ${styles.listsOverview}`} id="public-profile-lists" aria-labelledby="public-profile-lists-title" aria-busy={publicListsLoading} data-retry-focus-section="public-lists">
-      <h2 id="public-profile-lists-title" tabIndex={-1}>{profileView === "lists" ? t("publicLists") : <Link to={sectionTarget("public-profile-lists", null)}>{t("searchLists")}</Link>}</h2>
+      <h2 id="public-profile-lists-title" tabIndex={-1}>{profileView === "lists" ? t("searchLists") : <Link to={sectionTarget("public-profile-lists", null)}>{t("searchLists")}</Link>}</h2>
       {publicListsLoading && <ProfileLoading label={t("loading")} layout="lists" />}
       {publicListsError && <RetryNotice className={styles.alert} message={t("loadPublicListError")} retryLabel={t("retry")} onRetry={() => retryPublicSection("public-lists")} />}
       {!publicListsLoading && !publicListsError && publicLists && (publicLists.content.length === 0 ? <p>{t("noPublicLists")}</p> : <>
@@ -310,7 +330,13 @@ export default function PublicProfile() {
             return <article className={styles.publicListCard} key={list.id}>
               <div className={styles.publicListHeading}>
                 <h3 className={styles.publicListTitle}><Link to={path(`/lists/public/${list.id}`)}>{listName}</Link></h3>
-                {list.itemCount != null && <span className={styles.publicListCount}>{formatMovieCount(list.itemCount, lang)}</span>}
+                {(list.itemCount != null || list.likeCount != null) && <span className={styles.publicListCount}>
+                  {list.itemCount != null && formatMovieCount(list.itemCount, lang)}
+                  {list.likeCount != null && <span className={styles.publicListLikeCount} aria-label={`${formatCompactCount(list.likeCount, lang)} ${t("likes")}`}>
+                    {list.itemCount != null && <span aria-hidden="true">·</span>}
+                    <img src="/images/profile-likes-heart.svg" width="16" height="16" alt="" />{formatCompactCount(list.likeCount, lang)}<span className="srOnly"> {t("likes")}</span>
+                  </span>}
+                </span>}
               </div>
               <Link className={styles.publicListPoster} to={path(`/lists/public/${list.id}`)} aria-label={listName}>
                 <ListPosterStack movies={list.previewMovies ?? []} label={listName} fallbackTitle={t("untitledFilm")} layout="catalog" />
@@ -325,13 +351,18 @@ export default function PublicProfile() {
           })}
         </div>
         {profileView === "lists" && <Pagination className={styles.pagination} page={publicListsPage} totalPages={publicLists.totalPages} label={t("publicProfileListsPagination")} busy={publicListsLoading} onPageChange={setPublicListsPage} />}
+        {profileView === "lists" && publicLists.totalPages > 1 && <nav className={styles.publicListPageNumbers} aria-label={t("publicProfileListsPagination")}>
+          {getPublicListPageItems(publicLists.totalPages, publicListsPage).map((item, index) => item === "ellipsis"
+            ? <span key={`ellipsis-${index}`} aria-hidden="true">…</span>
+            : <button key={item} type="button" aria-label={`${t("page")} ${item + 1}`} aria-current={item === publicListsPage ? "page" : undefined} disabled={publicListsLoading} onClick={() => setPublicListsPage(item)}>{item + 1}</button>)}
+        </nav>}
         {profileView === "lists" && currentPublicListTags.length > 0 && <section className={styles.profileListTagCloud} aria-labelledby="public-profile-list-tags-title">
           <div className={styles.profileListTagHeading}>
             <h3 id="public-profile-list-tags-title">{t("profileListTags")}</h3>
             {currentPublicListTags.length > 3 && <button className={styles.profileListTagMore} type="button" aria-expanded={profileListTagsExpanded} aria-controls="public-profile-list-tags" onClick={() => setExpandedProfileListTagsKey(profileListTagsExpanded ? null : profileListTagsKey)}>{t(profileListTagsExpanded ? "lessTags" : "moreTags")}</button>}
           </div>
-          <div className={styles.profileListTagChips} id="public-profile-list-tags">
-            {(profileListTagsExpanded ? currentPublicListTags : currentPublicListTags.slice(0, 3)).map(tag => <Link className={styles.profileListTagChip} key={toTagSlug(tag)} to={path(`/lists/discover?feed=recent&tag=${encodeURIComponent(toTagSlug(tag))}`)}>{tag}</Link>)}
+          <div className={styles.profileListTagChips} id="public-profile-list-tags" data-expanded={profileListTagsExpanded}>
+            {currentPublicListTags.map(tag => <Link className={styles.profileListTagChip} key={toTagSlug(tag)} to={path(`/lists/discover?feed=recent&tag=${encodeURIComponent(toTagSlug(tag))}`)}>{tag}</Link>)}
           </div>
         </section>}
       </>)}
@@ -360,9 +391,29 @@ export default function PublicProfile() {
           aria-controls="public-profile-collection-content"
           onClick={() => chooseCollection(kind)}
           onKeyDown={event => handleKeyDown(event, kind)}
-        >{kind === "favorites" ? t("favorite") : t(kind)}</button>)}
+        >{kind === "favorites" ? t("favorite") : kind === "liked-lists" ? t("searchLists") : t(kind)}</button>)}
       </div>
       <div id="public-profile-collection-content" role="tabpanel" tabIndex={0} aria-labelledby={`public-profile-collection-tab-${collectionKind}`}>
+        {collectionKind === "liked-lists" ? <>
+          {likedListsLoading && <ProfileLoading label={t("loading")} layout="lists" />}
+          {likedListsError && <RetryNotice className={styles.alert} message={t("loadPublicListError")} retryLabel={t("retry")} onRetry={retryLikedLists} />}
+          {!likedListsLoading && !likedListsError && likedLists && (likedLists.content.length === 0 ? <p>{t("noLikedLists")}</p> : <div className={styles.publicListGrid}>
+            {likedLists.content.map(list => {
+              const listName = editorialText(list.name, t("lists"));
+              return <article className={styles.publicListCard} key={list.id}>
+                <Link className={styles.publicListPoster} to={path(`/lists/public/${list.id}`)} aria-label={listName}>
+                  <ListPosterStack movies={list.previewMovies ?? []} label={listName} fallbackTitle={t("untitledFilm")} layout="catalog" />
+                </Link>
+                <div className={styles.publicListBody}>
+                  <div className={styles.publicListHeading}><h3 className={styles.publicListTitle}><Link to={path(`/lists/public/${list.id}`)}>{listName}</Link></h3>
+                    {list.itemCount != null && <span className={styles.publicListCount}>{formatMovieCount(list.itemCount, lang)}</span>}
+                  </div>
+                </div>
+              </article>;
+            })}
+          </div>)}
+          {likedLists && <Pagination className={styles.pagination} page={likedListsPage} totalPages={likedLists.totalPages} label={t("publicProfileListsPagination")} busy={likedListsLoading} onPageChange={setLikedListsPage} />}
+        </> : <>
         {collectionLoading && <ProfileLoading label={t("loading")} layout="films" />}
         {collectionError && <RetryNotice className={styles.alert} message={t("loadCollectionError")} retryLabel={t("retry")} onRetry={retryCollection} />}
         {!collectionLoading && !collectionError && collection && <>
@@ -372,11 +423,15 @@ export default function PublicProfile() {
               <Link className={styles.collectionPosterLink} to={path(`/films/${movie.id}`)} aria-label={`${movieTitle} ${t("poster")}`}>
                 <ResilientImage className={styles.collectionPoster} src={movie.photoUrl} alt="" loading="lazy" fallback={<span className={styles.collectionPosterFallback}>{movieTitle.slice(0, 1).toUpperCase()}</span>} />
               </Link>
+              <div className={styles.collectionRating} role="img" aria-label={movie.rating === null ? `${movieTitle}: ${t("rating")}: —` : `${movieTitle}: ${t("rating")}: ${movie.rating} / 5`}>
+                <span aria-hidden="true" style={{ "--rating-fill": `${Math.max(0, Math.min(5, movie.rating ?? 0)) * 20}%` } as React.CSSProperties}>★★★★★</span>
+              </div>
               <h3><Link to={path(`/films/${movie.id}`)}>{movieTitle}</Link></h3>
               <p>{formatMovieYear(movie.releaseDate, t("unknownYear"))}{movie.rating !== null ? ` · ★ ${movie.rating}` : ""}</p>
             </article>;
           })}</div>}
           <Pagination className={styles.pagination} page={collectionPage} totalPages={collection.totalPages} label={t("profileCollectionPagination")} busy={collectionLoading} onPageChange={changeCollectionPage} />
+        </>}
         </>}
       </div>
     </section>

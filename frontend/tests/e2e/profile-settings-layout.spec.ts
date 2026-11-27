@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { installHostedAuthFixture, signInHostedFixture } from "./fixtures/hosted-auth";
+import { installHostedAuthFixture } from "./fixtures/hosted-auth";
 
 for (const language of ["uk", "en"] as const) {
   test(`profile settings use source desktop columns and preserve phone drafts in ${language}`, async ({ context, page }) => {
@@ -28,8 +28,19 @@ for (const language of ["uk", "en"] as const) {
       if (path.endsWith("/social-links") || path === "/api/lists/my") return route.fulfill({ json: [] });
       return route.fulfill({ json: { content: [], totalElements: 0, totalPages: 0, number: 0 } });
     });
+    await page.addInitScript(() => {
+      const session = {
+        access_token: "fixture-access-7", refresh_token: "fixture-refresh-7", token_type: "bearer",
+        expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600,
+        user: {
+          id: "b1f5872a-148b-4878-8581-06b809b29927", email: "fixture@example.invalid",
+          aud: "authenticated", role: "authenticated", app_metadata: { provider: "email" },
+          user_metadata: {}, created_at: "2026-11-14T00:00:00Z",
+        },
+      };
+      localStorage.setItem("sb-cuirmicbzspomijgkkwo-auth-token", JSON.stringify(session));
+    });
     await page.setViewportSize({ width: 1440, height: 1000 });
-    await signInHostedFixture(page, language);
     await page.goto(`/${language}/profile?settings=profile`);
     const form = page.locator("#settings-form-profile");
     await expect(form.locator("#profile-display-name")).toHaveValue(profile.displayName);
@@ -61,6 +72,8 @@ for (const language of ["uk", "en"] as const) {
         replies: rect(form.querySelectorAll("select")[1]),
         pronounHint: rect(form.querySelector("select")!.parentElement!.querySelector("p")),
         repliesHint: rect(form.querySelectorAll("select")[1].parentElement!.querySelector("p")),
+        locationWebsite: rect(form.querySelector("[data-profile-location-website]")),
+        repliesSection: rect(form.querySelectorAll("select")[1].parentElement),
         save: rect(form.querySelector('button[type="submit"]')),
         givenName: rect(form.querySelector('input[autocomplete="given-name"]')),
         familyName: rect(form.querySelector('input[autocomplete="family-name"]')),
@@ -68,11 +81,9 @@ for (const language of ["uk", "en"] as const) {
       };
     });
     expect(geometry.form.width).toBeCloseTo(1200, 0);
-    expect(geometry.username.x).toBeCloseTo(120, 0);
-    expect(geometry.username.width).toBeCloseTo(282, 0);
-    expect(geometry.displayName.width).toBeCloseTo(282, 0);
-    expect(geometry.displayName.x - geometry.username.x - geometry.username.width).toBeCloseTo(24, 0);
-    expect(geometry.displayName.y).toBeCloseTo(geometry.username.y, 0);
+    expect(geometry.username.width).toBe(0);
+    expect(geometry.displayName.x).toBeCloseTo(120, 0);
+    expect(geometry.displayName.width).toBeCloseTo(588, 0);
     expect(geometry.email.height).toBeCloseTo(79, 0);
     expect(geometry.pronoun.width).toBeCloseTo(300, 0);
     expect(geometry.replies.width).toBeCloseTo(300, 0);
@@ -83,7 +94,7 @@ for (const language of ["uk", "en"] as const) {
     expect(geometry.pronounHint.y).toBeGreaterThanOrEqual(geometry.pronoun.y);
     expect(geometry.repliesHint.y).toBeGreaterThanOrEqual(geometry.replies.y);
     expect(geometry.email.y).toBeCloseTo(geometry.pronoun.y, 0);
-    expect(geometry.location.y).toBeCloseTo(geometry.replies.y, 0);
+    expect(geometry.locationWebsite.y).toBeCloseTo(geometry.repliesSection.y, 0);
     expect(geometry.givenName.y).toBeLessThan(geometry.email.y);
     expect(geometry.email.y).toBeLessThan(geometry.location.y);
     expect(geometry.save.y).toBeGreaterThan(geometry.location.y + geometry.location.height);
@@ -92,7 +103,7 @@ for (const language of ["uk", "en"] as const) {
     expect(geometry.bio.x).toBeCloseTo(732, 0);
     expect(geometry.bio.width).toBeCloseTo(588, 0);
     expect(geometry.bio.height).toBeCloseTo(255, 0);
-    expect(geometry.bio.y).toBeCloseTo(geometry.username.y, 0);
+    expect(geometry.bio.y).toBeCloseTo(geometry.displayName.y, 0);
     expect(geometry.biography).toEqual({ radius: "37px", padding: "20px 30px", fontSize: "22px" });
     const pronoun = form.locator("select").nth(0);
     const replies = form.locator("select").nth(1);
@@ -119,6 +130,8 @@ for (const language of ["uk", "en"] as const) {
     await expect(form.locator("#settings-email")).toBeFocused();
     await page.keyboard.press("Tab");
     await expect(form.locator("#settings-profile-location")).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(form.locator("#settings-profile-website")).toBeFocused();
     await page.keyboard.press("Tab");
     await expect(form.locator("textarea")).toBeFocused();
     await expect(form.locator("textarea")).toHaveCSS("outline-style", "solid");
@@ -155,6 +168,7 @@ for (const language of ["uk", "en"] as const) {
       }
       expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
     }
+    await pronoun.selectOption("She / her");
     for (const width of [393, 320]) {
       await page.setViewportSize({ width, height: 900 });
       await expect(form.locator("#profile-display-name")).toHaveValue("Updated reader");
@@ -169,12 +183,29 @@ for (const language of ["uk", "en"] as const) {
       await expect(page.getByRole("dialog").getByRole("textbox")).toHaveValue("Saved across viewport changes");
       await page.keyboard.press("Escape");
       await expect(bioTrigger).toBeFocused();
+      if (width === 393) {
+        const pronounTrigger = form.getByRole("button", { name: language === "uk" ? "Займенник" : "Pronoun", exact: true });
+        await pronounTrigger.click();
+        const pronounDialog = page.getByRole("dialog", { name: language === "uk" ? "Займенник" : "Pronoun", exact: true });
+        await expect(pronounDialog).toBeVisible();
+        const options = pronounDialog.locator('label[class*="option"]');
+        await expect(options).toHaveCount(10);
+        await expect(options).toContainText([
+          "They / their", "He / his", "He / their", "She / her", "She / their",
+          "Xe / xyr", "Ze / hir", "Ze / zir", "It / its", language === "uk" ? "Не вказано" : "Not specified",
+        ]);
+        await expect(pronounDialog.getByRole("radio", { name: "She / her", exact: true })).toBeChecked();
+        const sourceRows = options.evaluateAll(rows => rows.slice(0, 9).map(row => row.getBoundingClientRect().height));
+        expect((await sourceRows).every(height => height >= 45)).toBe(true);
+        await page.keyboard.press("Escape");
+        await expect(pronounTrigger).toBeFocused();
+      }
       if (width === 393) await page.screenshot({ path: test.info().outputPath("phone-settings.png"), fullPage: true });
       expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
     }
     await page.locator('button[form="settings-form-profile"]').click();
     await expect.poll(() => writes.length).toBe(1);
-    expect(writes[0]).toMatchObject({ displayName: "Updated reader", givenName: "Updated given name", familyName: "Fixture", bio: "Saved across viewport changes", location: "Berlin", pronoun: "They / their", replyPreference: "ANYONE" });
+    expect(writes[0]).toMatchObject({ displayName: "Updated reader", givenName: "Updated given name", familyName: "Fixture", bio: "Saved across viewport changes", location: "Berlin", pronoun: "She / her", replyPreference: "ANYONE" });
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.reload();
     await expect(form.locator("#profile-display-name")).toHaveValue("Updated reader");

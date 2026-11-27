@@ -4,6 +4,7 @@ import { authRedirectUrl, getSupabaseClient, usesHostedSupabaseAuth } from "./su
 export interface CurrentUser {
   id: number;
   username: string;
+  displayName?: string | null;
   role: string;
   avatarUrl?: string | null;
 }

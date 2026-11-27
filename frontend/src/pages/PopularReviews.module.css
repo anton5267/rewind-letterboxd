@@ -80,7 +80,16 @@
 .reviewerMore { flex: 0 0 auto; color: #9f9ca4; font-size: 12px; text-decoration: none; }
 .reviewerMore:hover { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
 .reviewerMore:focus-visible { outline: 2px solid #64dbe2; outline-offset: 3px; }
-.sortLabel { color: #9f9ca4; font-size: 12px; }
+.sortControl { position: relative; z-index: 2; flex: 0 0 auto; }
+.sortLabel { display: inline-flex; align-items: center; gap: 5px; border: 0; padding: 0; background: transparent; color: #9f9ca4; cursor: pointer; font: inherit; font-size: 12px; }
+.sortLabel span { font-size: 14px; line-height: 1; }
+.sortLabel:hover { color: #fff; }
+.sortLabel:focus-visible,
+.sortMenu button:focus-visible { outline: 2px solid #64dbe2; outline-offset: 3px; }
+.sortMenu { position: absolute; z-index: 4; top: calc(100% + 8px); right: 0; display: grid; min-width: 150px; gap: 2px; padding: 5px; border: 1px solid #474747; border-radius: 8px; background: #252525; box-shadow: 0 8px 24px rgba(0, 0, 0, .32); }
+.sortMenu button { border: 0; border-radius: 5px; padding: 9px 10px; background: transparent; color: #d2d0d4; cursor: pointer; text-align: left; font: inherit; font-size: 13px; }
+.sortMenu button[aria-checked="true"],
+.sortMenu button:hover { background: #383838; color: #fff; }
 
 .reviewerRail {
   display: flex;
@@ -164,23 +173,242 @@
 .reviewText a:focus-visible { outline: 3px solid #64dbe2; outline-offset: 3px; }
 
 @media (max-width: 767px) {
-  .page { padding-top: 64px; }
-  .hero { min-height: 150px; padding: 18px 14px 22px; }
-  .toolbar { grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 10px; }
-  .toolbar h1 { font-size: 22px; }
-  .toolbarButton { font-size: 21px; }
-  .toolbarButton::before { inset: 4px; }
-  .shell { width: calc(100% - 28px); margin-top: -18px; }
-  .reviewerSection { padding: 18px 14px 16px; }
-  .reviewsSection { padding: 18px 14px; }
-  .sectionHeading { align-items: flex-start; flex-direction: column; gap: 6px; }
-  .reviewerSection .sectionHeading { align-items: center; flex-direction: row; }
-  .sectionHeading h2 { font-size: 20px; }
-  .reviewCard { grid-template-columns: 58px minmax(0, 1fr); gap: 12px; padding: 10px; }
-  .poster { width: 58px; }
-  .reviewHeader h3 { font-size: 15px; }
-  .reviewHeader strong { font-size: 12px; }
-  .reviewText { margin-top: 10px; font-size: 13px; }
+  /* Figma frame 1480:9087. The mobile design is a compact phone surface with
+     a poster backdrop, two horizontal rails, 168px review cards and app nav. */
+  .page {
+    position: relative;
+    box-sizing: border-box;
+    min-height: max(1265px, 100dvh);
+    padding: 0 0 92px;
+    overflow: clip;
+    background: #1f1f1f;
+  }
+
+  .page::after {
+    position: fixed;
+    z-index: 32;
+    bottom: 14px;
+    left: 50%;
+    width: 134px;
+    height: 5px;
+    transform: translateX(-50%);
+    border-radius: 100px;
+    background: #fff;
+    content: "";
+    pointer-events: none;
+  }
+
+  .hero {
+    position: absolute;
+    z-index: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 300.062px;
+    min-height: 0;
+    padding: 0;
+    transform: none;
+    background: linear-gradient(180deg, rgba(0, 0, 0, .12), rgba(0, 0, 0, .84) 78%, #1f1f1f 100%), url("/images/search-hero-phone.jpg") center / 533.444px 300.062px no-repeat;
+  }
+
+  .toolbar {
+    position: absolute;
+    z-index: 2;
+    top: 50px;
+    left: 0;
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: space-between;
+    padding: 0 16px;
+    pointer-events: none;
+  }
+
+  .toolbar h1 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .toolbarButton {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: #1f1f1f;
+    font-size: 20px;
+    pointer-events: auto;
+  }
+
+  .toolbarButton::before { display: none; }
+  .toolbarFilter { font-size: 0; }
+  .filterGlyph { display: grid; width: 16px; gap: 3px; }
+  .filterGlyph i { position: relative; display: block; height: 1px; background: #fff; }
+  .filterGlyph i::after { position: absolute; top: -2px; left: 4px; width: 5px; height: 5px; border-radius: 50%; background: #fff; content: ""; }
+  .filterGlyph i:nth-child(2)::after { left: 9px; }
+
+  .shell {
+    position: relative;
+    z-index: 1;
+    display: flow-root;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .reviewerSection,
+  .reviewsSection {
+    border: 0;
+    background: transparent;
+  }
+
+  .reviewerSection {
+    height: 88px;
+    box-sizing: content-box;
+    margin: 120px 16px 0;
+    padding: 0;
+  }
+
+  .reviewsSection {
+    margin: 71px 16px 0;
+    padding: 0 0 35px;
+  }
+
+  .sectionHeading {
+    position: relative;
+    display: flex;
+    height: 24px;
+    box-sizing: border-box;
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 0 0 24px;
+    padding-top: 8px;
+  }
+
+  .sectionHeading::before {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    border-top: 1px solid #7e7e7e;
+    content: "";
+  }
+
+  .sectionHeading h2 {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    padding-right: 8px;
+    font-size: 14px;
+    line-height: 1.12;
+  }
+
+  .reviewerMore {
+    position: relative;
+    z-index: 1;
+    margin-left: auto;
+    margin-right: -10px;
+    padding: 0 0 0 8px;
+    color: #7e7e7e;
+  }
+
+  .reviewerRail {
+    gap: 6px;
+    overflow-x: auto;
+    padding: 0;
+    scrollbar-width: none;
+  }
+  .reviewerRail::-webkit-scrollbar { display: none; }
+  .reviewerAvatar { width: 40px; height: 40px; flex-basis: 40px; border: 0; }
+
+  .reviewsSection .sectionHeading { margin-bottom: 24px; }
+  .reviewsSection .sectionHeading h2 { padding-right: 8px; }
+  .sortControl { margin-left: auto; }
+  .sortLabel { color: #7e7e7e; font-size: 11px; line-height: 1.12; white-space: nowrap; }
+  .sortLabel span { display: inline-block; transform: rotate(-90deg); font-size: 12px; }
+
+  .reviewList { gap: 24px; }
+
+  .reviewCard {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 168px;
+    min-height: 0;
+    box-sizing: border-box;
+    padding: 0;
+    border: 0;
+    border-radius: 20px;
+    background: #282828;
+  }
+
+  .poster {
+    position: absolute;
+    top: 26px;
+    left: 18px;
+    width: 79px;
+    height: 116px;
+    border-radius: 10px;
+    aspect-ratio: auto;
+  }
+
+  .reviewCopy {
+    position: absolute;
+    top: 26px;
+    right: 18px;
+    left: 111px;
+    min-width: 0;
+    padding: 0;
+    opacity: .85;
+  }
+
+  .reviewHeader { display: block; }
+  .reviewHeader > div { display: block; }
+  .reviewHeader h3 { display: flex; min-width: 0; align-items: flex-start; justify-content: space-between; gap: 6px; margin: 0; font-size: 13px; line-height: 1.12; }
+  .reviewHeader h3 > a { display: block; min-width: 0; width: 139px; flex: 0 0 139px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .reviewHeader p { display: flex; gap: 5px; margin: 3px 0 0; font-size: 10px; line-height: 1.12; white-space: nowrap; }
+  .reviewHeader p a { overflow: hidden; color: #fff; text-overflow: ellipsis; }
+  .reviewHeader strong { gap: 2px; font-size: 13px; line-height: 1.12; }
+  .reviewHeader strong img { width: 8px; height: 8px; }
+  .reviewText {
+    display: -webkit-box;
+    height: 77px;
+    overflow: hidden;
+    margin: 10px 0 0;
+    color: #7e7e7e;
+    font-size: 11px;
+    line-height: 1.2;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 6;
+  }
+
+  .pagination {
+    display: flex;
+    height: 32px;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 35px;
+  }
+  .pagination span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .pagination button {
+    display: inline-flex;
+    height: 32px;
+    align-items: center;
+    gap: 5px;
+    border: 0;
+    border-radius: 37px;
+    padding: 0 15px;
+    background: #282828;
+    color: #fff;
+    font: inherit;
+    font-size: 11px;
+  }
+  .pagination button:disabled { opacity: .45; }
+  .pagination button:first-of-type::before { content: "‹"; }
+  .pagination button:last-of-type::after { content: "›"; }
 }
 
 @media (max-width: 340px) {
@@ -197,7 +425,7 @@
 @media (min-width: 768px) {
   .page {
     min-height: 100vh;
-    padding: 0 0 72px;
+    padding: 0 0 167px;
     background: #171719;
   }
 
@@ -276,6 +504,8 @@
   .reviewList {
     gap: 38px;
   }
+
+  .reviewsSection .pagination { margin-top: 93px; }
 
   .reviewCard {
     min-height: 315px;

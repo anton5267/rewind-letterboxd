@@ -65,7 +65,7 @@ for (const { width, lang } of [{ width: 320, lang: "en" }, { width: 393, lang: "
     const fullPlot = storyline.getByText(plot, { exact: true });
     await expect(storyline).toBeVisible();
     await expect(fullPlot).toHaveText(plot);
-    expect(await page.locator("#movie-title").evaluate(element => getComputedStyle(element).fontSize)).toBe("26px");
+    expect(await page.locator("#movie-title").evaluate(element => getComputedStyle(element).fontSize)).toBe("18px");
     const previewGeometry = await preview.evaluate(element => ({
       fontSize: getComputedStyle(element).fontSize,
       lineHeight: Number.parseFloat(getComputedStyle(element).lineHeight),

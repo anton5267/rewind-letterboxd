@@ -18,6 +18,7 @@ import com.rewind.rewind.rating.entity.Rating;
 import com.rewind.rewind.review.repo.ReviewRepository;
 import com.rewind.rewind.review.entity.Review;
 import com.rewind.rewind.social.repo.ReviewLikeRepository;
+import com.rewind.rewind.social.repo.ListLikeRepository;
 import com.rewind.rewind.profile.dto.SocialLinkRequest;
 import com.rewind.rewind.profile.dto.SocialLinkResponse;
 import com.rewind.rewind.profile.entity.UserSocialLink;
@@ -42,7 +43,7 @@ import java.util.Set;
 
 @Service
 public class ProfileService {
-    private static final Set<String> SUPPORTED_SOCIAL_PLATFORMS = Set.of("website", "instagram", "tiktok", "letterboxd");
+    private static final Set<String> SUPPORTED_SOCIAL_PLATFORMS = Set.of("website", "instagram", "tiktok", "letterboxd", "x");
 
     private final UserRepository users;
     private final MovieRepository movies;
@@ -56,6 +57,7 @@ public class ProfileService {
     private final EntityManager entityManager;
     private final ReviewLikeRepository reviewLikes;
     private final UserSocialLinkRepository socialLinks;
+    private final ListLikeRepository listLikes;
 
     public ProfileService(
             UserRepository users,
@@ -69,7 +71,8 @@ public class ProfileService {
             RefreshSessionService sessions,
             EntityManager entityManager,
             ReviewLikeRepository reviewLikes,
-            UserSocialLinkRepository socialLinks
+            UserSocialLinkRepository socialLinks,
+            ListLikeRepository listLikes
     ) {
         this.users = users;
         this.movies = movies;
@@ -83,6 +86,7 @@ public class ProfileService {
         this.entityManager = entityManager;
         this.reviewLikes = reviewLikes;
         this.socialLinks = socialLinks;
+        this.listLikes = listLikes;
     }
 
     @Transactional(readOnly = true)
@@ -215,8 +219,7 @@ public class ProfileService {
         for (MovieList list : source.getContent()) {
             listIds.add(list.getId());
         }
-        Map<Long, List<MovieCardResponse>> previews = previewMovies(
-                listIds);
+        Map<Long, List<MovieCardResponse>> previews = previewMovies(listIds, 5);
         Map<Long, Long> itemCounts = new HashMap<>();
         if (!listIds.isEmpty()) {
             listItems.countByListIds(listIds).forEach(row -> itemCounts.put((Long) row[0], (Long) row[1]));
@@ -229,14 +232,38 @@ public class ProfileService {
                 previews.getOrDefault(list.getId(), List.of())));
     }
 
+    @Transactional(readOnly = true)
+    public Page<PublicListCardResponse> publicLikedLists(Long userId, int page, int size) {
+        findActivePublicUser(userId);
+        Page<MovieList> source = listLikes.findLikedPublicByUserIdAndListType(
+                userId, ListType.CUSTOM, pageRequest(page, size));
+        List<Long> listIds = source.getContent().stream().map(MovieList::getId).toList();
+        Map<Long, List<MovieCardResponse>> previews = previewMovies(listIds, 5);
+        Map<Long, Long> likeCounts = new HashMap<>();
+        Map<Long, Long> itemCounts = new HashMap<>();
+        if (!listIds.isEmpty()) {
+            listLikes.countByListIds(listIds).forEach(row -> likeCounts.put(row.getListId(), row.getLikes()));
+            listItems.countByListIds(listIds).forEach(row -> itemCounts.put((Long) row[0], (Long) row[1]));
+        }
+        return source.map(list -> new PublicListCardResponse(
+                list.getId(), list.getName(), list.getDescription(), list.getIsPublic(),
+                list.getUser().getId(), list.getUser().getUsername(), list.getUser().getAvatarUrl(),
+                list.getTags().stream().map(tag -> tag.getName()).toList(), likeCounts.getOrDefault(list.getId(), 0L),
+                itemCounts.getOrDefault(list.getId(), 0L), previews.getOrDefault(list.getId(), List.of())));
+    }
+
     private Map<Long, List<MovieCardResponse>> previewMovies(List<Long> listIds) {
+        return previewMovies(listIds, 3);
+    }
+
+    private Map<Long, List<MovieCardResponse>> previewMovies(List<Long> listIds, int maxPerList) {
         Map<Long, List<MovieCardResponse>> previews = new HashMap<>();
         if (listIds.isEmpty()) return previews;
 
         for (var item : listItems.findAllByListIdsForPreview(listIds)) {
             Long listId = item.getList().getId();
             List<MovieCardResponse> listPreview = previews.computeIfAbsent(listId, ignored -> new ArrayList<>());
-            if (listPreview.size() < 3) {
+            if (listPreview.size() < maxPerList) {
                 var movie = item.getMovie();
                 listPreview.add(new MovieCardResponse(movie.getId(), movie.getTitle(), movie.getReleaseDate(),
                         movie.getRating(), movie.getPhotoUrl()));

@@ -17,7 +17,7 @@ const searchShortcuts = [
   { href: "/films?sort=rating_desc", label: "popularFilms" },
   { href: "/lists/discover", label: "searchLists" },
   { href: "/community", label: "searchMembers" },
-  { href: "/community/reviewers", label: "popularReviewers" },
+  { href: "/community/reviewers", label: "searchReviewers" },
 ] as const;
 
 function Poster({ src, alt, fallback }: { src: string | null; alt: string; fallback: string }) {
@@ -174,7 +174,7 @@ export default function GlobalSearch() {
     {searchTabs.map(item => <option value={item} key={item}>{tabLabel(item)}{item !== "all" && resultCounts ? ` (${resultCounts[item]})` : ""}</option>)}
   </select>;
 
-  return <main className={`${styles.page} ${tab === "films" ? styles.filmsOnly : ""}`} data-global-search-empty={isEmptyState ? "true" : undefined} aria-labelledby="global-search-title" aria-busy={loading}>
+  return <main className={`${styles.page} ${tab === "films" ? styles.filmsOnly : ""} ${tab === "reviews" ? styles.reviewsOnly : ""} ${tab === "lists" ? styles.listsOnly : ""}`} data-global-search-empty={isEmptyState ? "true" : undefined} aria-labelledby="global-search-title" aria-busy={loading}>
     <div className={styles.shell}>
       <section className={styles.hero}>
         <div className={styles.heroHeading}>
@@ -230,7 +230,7 @@ export default function GlobalSearch() {
           </Link>)}
         </nav>
       </>}
-      {query && <div ref={resultsPanelRef} id="global-search-results" className={`${styles.results} ${collapsedAllPreview ? styles.allPreview : ""}`} role="tabpanel" tabIndex={0} aria-busy={loading} aria-labelledby={`global-search-tab-${tab}`}>
+      {query && <div ref={resultsPanelRef} id="global-search-results" className={`${styles.results} ${collapsedAllPreview ? styles.allPreview : ""} ${tab === "all" && expandedResults ? styles.allExpanded : ""}`} role="tabpanel" tabIndex={0} aria-busy={loading} aria-labelledby={`global-search-tab-${tab}`}>
       {loading && <>
         <p className="srOnly" role="status">{t("loadingSearch")}</p>
         <div className={`${styles.loadingResults} ${tab === "all" ? styles.allPreview : ""}`} aria-hidden="true">
@@ -308,7 +308,9 @@ export default function GlobalSearch() {
           <div className={styles.sectionHeading}><div><p className={styles.sectionKicker}>02 / {t("users")}</p><h2 id="global-search-users-heading" tabIndex={-1}>{t("searchUsers")}</h2></div><span>{results.users.totalElements}</span></div>
           <div className={styles.userGrid}>{results.users.content.map(user => <Link className={styles.userCard} to={path(`/users/${user.id}`)} key={user.id}>
             <ResilientImage src={user.avatarUrl} alt="" fallback={<span className={styles.avatarFallback}>{getUserInitial(user)}</span>} />
-            <span><strong>{getUserName(user, t("someone"))}</strong><small>{getUserHandle(user, t("someone"))}</small></span>
+            <span><strong>{getUserName(user, t("someone"))}</strong><small>{user.followerCount != null && user.followingCount != null
+              ? t(user.followerCount === 1 ? "networkStatsOne" : "networkStats").replace("{followers}", String(user.followerCount)).replace("{following}", String(user.followingCount))
+              : getUserHandle(user, t("someone"))}</small></span>
           </Link>)}</div>
         </section>}
 
@@ -327,7 +329,7 @@ export default function GlobalSearch() {
           <div className={styles.sectionHeading}><div><p className={styles.sectionKicker}>04 / {t("tags")}</p><h2 id="global-search-tags-heading" tabIndex={-1}>{t("searchTags")}</h2></div><span>{results.tags.length}</span></div>
           <div className={styles.tagGrid} onFocusCapture={event => {
             if (event.target instanceof HTMLElement) event.target.scrollIntoView({ block: "nearest", inline: "nearest" });
-          }}>{results.tags.map(tag => <Link className={styles.tag} to={path(`/lists/discover?tag=${encodeURIComponent(tag.slug)}`)} key={tag.id}>#{tag.name}</Link>)}</div>
+          }}>{results.tags.map(tag => <Link className={styles.tag} to={path(`/lists/discover?tag=${encodeURIComponent(tag.slug)}`)} key={tag.id}>{tag.name}</Link>)}</div>
         </section>}
 
         {(tab === "all" || tab === "lists") && results.lists.content.length > 0 && <section id="lists" className={`${styles.section} ${tab === "all" ? styles.expandedOnly : ""}`} aria-labelledby="global-search-lists-heading" tabIndex={-1}>

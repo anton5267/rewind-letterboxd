@@ -9,6 +9,7 @@
 
 .hero {
   position: relative;
+  z-index: 2;
   display: flex;
   min-height: 356px;
   align-items: flex-end;
@@ -26,18 +27,31 @@
 .filterControls select option { background: #282828; color: #fff; }
 .filterControls label::after { position: absolute; right: 9px; color: #aaa; content: "⌄"; pointer-events: none; }
 .filterControls select:disabled { cursor: not-allowed; opacity: .55; }
-.movieSearch { position: relative; width: 251px; height: 49px; flex: 0 1 251px; }
-.movieSearch input { width: 100%; height: 100%; border: 0; border-radius: 37px; padding: 0 48px 0 21px; background: #282828; color: #fff; font: inherit; font-size: 14px; }
+.movieSearch { position: relative; z-index: 2; width: 251px; height: 49px; flex: 0 1 251px; }
+.movieSearch input { box-sizing: border-box; width: 100%; height: 100%; border: 0; border-radius: 37px; padding: 0 48px 0 21px; background: #282828; color: #fff; font: inherit; font-size: 18px; }
 .movieSearch input::placeholder { color: #fff; opacity: 1; }
 .movieSearch input:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: 2px; }
 .movieSearch button { position: absolute; top: 4px; right: 5px; display: grid; width: 40px; height: 40px; place-items: center; border: 0; border-radius: 50%; background: transparent; color: #fff; cursor: pointer; }
+.movieSearch button img { display: block; width: 31px; height: 31px; }
 .movieSearch button:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: 1px; }
+.movieSuggestions { position: absolute; top: 53px; right: 0; left: 0; display: grid; height: 136px; grid-template-rows: 48px 39px 49px; overflow: hidden; margin: 0; padding: 0; border-radius: 37px; background: #282828; list-style: none; }
+.movieSuggestions li { min-width: 0; }
+.movieSuggestions li + li { background: url("/images/figma-movie-search-divider.svg") center top / 100% 1px no-repeat; }
+.movieSuggestions a { display: flex; width: 100%; height: 100%; box-sizing: border-box; align-items: center; overflow: hidden; padding: 0 20px; color: #7e7e7e; font-size: 18px; line-height: 20px; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; }
+.movieSuggestions li:first-child a { padding-top: 10px; }
+.movieSuggestions a[aria-selected="true"],
+.movieSuggestions a:hover { color: #f5f2ed; }
+.movieSuggestions a:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: -3px; }
+.movieSearchStatus { position: absolute; z-index: 1; top: 53px; right: 0; left: 0; box-sizing: border-box; max-height: 136px; overflow: auto; margin: 0; border-radius: 26px; padding: 16px 20px; background: #282828; color: #aaa; font-size: 14px; }
+.movieSearchStatus button { position: static; display: inline; width: auto; height: auto; color: inherit; text-decoration: underline; }
 .genreRetry { position: absolute; right: max(5vw, calc((100vw - 1200px) / 2)); bottom: 4px; left: max(5vw, calc((100vw - 1200px) / 2)); }
 .content { display: flex; width: min(100%, 1200px); flex-direction: column; gap: 0; margin: 0 auto; }
 .section { min-width: 0; border-top: 1px solid var(--rewind-line); padding-top: 17px; }
 .heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 14px; margin-bottom: 56px; }
+.recentHeading { position: relative; }
 .heading h2 { position: relative; z-index: 1; display: block; margin: 0; color: #f5f5f5; font-size: 21px; line-height: 27px; letter-spacing: -.02em; visibility: visible; opacity: 1; }
 .heading > a { position: relative; z-index: 1; min-height: 44px; display: inline-flex; align-items: center; color: #f4d28c; font-size: 14px; visibility: visible; opacity: 1; }
+.watchedFilmCount { position: absolute; top: 0; right: 0; color: #7e7e7e; font-size: 20px; line-height: 1.12; white-space: nowrap; }
 .popularGrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 26px 31px; margin: 0; padding: 0; list-style: none; }
 .popularGrid li { position: relative; min-width: 0; }
 .poster,
@@ -86,15 +100,15 @@
 .excerpt { display: -webkit-box; overflow: hidden; margin: 0; color: #ddd; font-size: 14px; line-height: 1.45; line-clamp: 4; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
 .status,
 .empty { margin: 0; padding: 20px; color: var(--rewind-muted); }
-.crewSection { margin-top: 85px; }
-.crewSection .heading { margin-bottom: 0; }
+.crewSection { margin-top: 79px; }
+.crewSection .heading { margin-bottom: 42px; }
 .crewSection .empty { border: 1px dashed var(--rewind-line); border-radius: 12px; }
 
 @media (min-width: 821px) {
   .popularHeading { margin-bottom: 44px; }
-  .section:nth-child(2) { padding-top: 11px; }
-  .section:nth-child(2) .heading { margin-bottom: 42px; }
-  .section:nth-child(3) { margin-top: 74px; padding-top: 11px; }
+  .section:nth-child(2) { padding-top: 18px; }
+  .section:nth-child(2) .heading { margin-bottom: 53px; }
+  .section:nth-child(3) { margin-top: 72.75px; padding-top: 11px; }
   .section:nth-child(3) .heading { margin-bottom: 44px; }
 }
 
@@ -145,6 +159,9 @@
   .mobileToolbar a:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 3px; }
   .content { gap: 0; }
   .section { border-top: 0; padding-top: 0; }
+  .content > .section:nth-child(2)[data-empty-feed="true"],
+  .content > .section:nth-child(3)[data-empty-feed="true"] { border-top: 1px solid var(--rewind-line); padding: 7px 0 2px; }
+  .content > .section:nth-child(2)[data-empty-feed="true"] { padding-bottom: 5px; }
   .section:nth-child(2),
   .section:nth-child(3),
   .crewSection { margin-top: 0; }
@@ -155,10 +172,18 @@
   .popularHeading > a { display: none; }
   .content > .section:nth-child(2) { margin-top: 71px; }
   .content > .section:nth-child(2) .heading { min-height: 44px; align-items: flex-start; margin-bottom: 4px; }
+  .recentHeading .watchedFilmCount { display: none; }
   .content > .section:nth-child(3) { margin-top: 35px; }
-  .content > .section:nth-child(3) .heading { min-height: 44px; align-items: flex-start; margin-bottom: 4px; }
-  .content > .section:nth-child(3) .heading h2 { max-width: 270px; font-size: 16px; line-height: 27px; }
-  .content > .section:nth-child(4) { margin-top: 35px; }
+  .content > .section:nth-child(3) .heading { min-height: 44px; align-items: flex-start; gap: 7px; margin-bottom: 4px; }
+  .content > .section:nth-child(2)[data-empty-feed="true"] .heading h2 { font-size: 14px; line-height: 20px; }
+  .content > .section:nth-child(3) .heading h2 { width: 250px; max-width: 250px; flex: 0 0 250px; font-size: 16px; line-height: 22px; }
+  .content > .section:nth-child(2) .empty,
+  .content > .section:nth-child(3) .empty { padding-block: 14px; color: #aaa6a1; font-size: 16px; line-height: 22px; }
+  .content > .section:nth-child(2)[data-empty-feed="true"] .heading > a { display: none; }
+  .content > .section:nth-child(3) .heading > a { width: 56px; height: 44px; box-sizing: border-box; flex-basis: 56px; align-self: flex-start; align-items: flex-start; margin-top: 0; padding-top: 5px; text-align: left; }
+  :global(html[lang="uk"]) .content > .section:nth-child(3) .heading > a { width: 104px; flex-basis: 104px; }
+  .content > .section:nth-child(4) { margin-top: 33px; }
+  .content > .section:nth-child(4)[data-after-empty-reviews="true"] { margin-top: 118px; }
   .popularGrid { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 0; scroll-snap-type: x proximity; scrollbar-width: none; }
   .popularGrid::-webkit-scrollbar { display: none; }
   .popularGrid:focus-within,
@@ -189,4 +214,5 @@
   .byline time { font-size: 12px; overflow-wrap: anywhere; }
   .excerpt { font-size: 12px; line-height: 1.4; line-clamp: 3; -webkit-line-clamp: 3; }
   .crewSection { border-top: 0; padding-top: 0; }
+  .crewSection .heading { margin-bottom: 6px; }
 }

@@ -13,6 +13,7 @@ import {
 } from "./shared/content_reports.ts";
 import {
   fetchMyListRows,
+  loadPublicListPreviewRows,
   loadListTags,
   replaceListTags,
 } from "./shared/lists.ts";
@@ -325,7 +326,8 @@ export const listsRepository: Pick<RewindApiRepository,
         args: filterArgs,
       });
       const orderBy = feed === "featured"
-        ? `l.featured_position ASC, l.id DESC`
+        ? `CASE l.featured_category WHEN 'REWIND_COMMUNITY' THEN 0 WHEN 'OTHER_TOP_FILM_LISTS' THEN 1 ELSE 2 END,
+           l.featured_position ASC, l.id DESC`
         : feed === "popular"
         ? `likes DESC, l.updated_at DESC, l.id DESC`
         : feed === "recently-liked"
@@ -347,10 +349,11 @@ export const listsRepository: Pick<RewindApiRepository,
       const listArgs = tagFilter ? [tag, size, page * size] : [size, page * size];
       const rows = await connection.queryObject<{
         id: string; name: string; description: string | null; is_public: boolean;
+        featured_category: PublicListCardResponse["featuredCategory"];
         owner_id: string; owner_username: string; owner_avatar_url: string | null;
         like_count: string; item_count: string;
       }>({
-        text: `SELECT l.id::text AS id, l.name, l.description, l.is_public,
+        text: `SELECT l.id::text AS id, l.name, l.description, l.is_public, l.featured_category,
                       owner.id::text AS owner_id, owner.username AS owner_username, owner.avatar_url AS owner_avatar_url,
                       (SELECT COUNT(*)::text FROM rewind.list_likes ll JOIN rewind.users liker
                         ON liker.id = ll.user_id AND liker.is_active = TRUE WHERE ll.list_id = l.id) AS like_count,
@@ -371,18 +374,7 @@ export const listsRepository: Pick<RewindApiRepository,
                    JOIN rewind.tags t ON t.id = lt.tag_id WHERE lt.list_id = ANY($1::bigint[])
                    ORDER BY lt.list_id, t.name`, args: [ids],
           }),
-          connection.queryObject<{
-            list_id: string; movie_id: string; title: string; release_date: string | null;
-            rating: string | null; photo_url: string | null;
-          }>({
-            text: `SELECT list_id::text AS list_id, movie_id::text AS movie_id, title, release_date, rating, photo_url
-                   FROM (SELECT li.list_id, li.id, li.position, m.id AS movie_id, m.title,
-                                m.release_date::text AS release_date, m.rating::text AS rating, m.photo_url,
-                                ROW_NUMBER() OVER (PARTITION BY li.list_id ORDER BY li.position ASC NULLS LAST, li.id ASC) AS rn
-                          FROM rewind.list_items li JOIN rewind.movies m ON m.id = li.movie_id AND m.is_published = TRUE
-                          WHERE li.list_id = ANY($1::bigint[])) ranked WHERE rn <= 3
-                   ORDER BY list_id, rn`, args: [ids],
-          }),
+          loadPublicListPreviewRows(connection, ids),
         ]);
         for (const row of tagsResult.rows) {
           const id = Number(row.list_id);
@@ -390,7 +382,7 @@ export const listsRepository: Pick<RewindApiRepository,
           values.push(row.name);
           tagsByList.set(id, values);
         }
-        for (const row of previewsResult.rows) {
+        for (const row of previewsResult) {
           const id = Number(row.list_id);
           const values = previewsByList.get(id) ?? [];
           values.push({ id: Number(row.movie_id), title: row.title,
@@ -407,6 +399,7 @@ export const listsRepository: Pick<RewindApiRepository,
         const id = toId(row.id);
         return {
           id, name: row.name, description: row.description, isPublic: row.is_public,
+          featuredCategory: row.featured_category,
           ownerId: toId(row.owner_id), ownerUsername: row.owner_username, ownerAvatarUrl: row.owner_avatar_url,
           tags: tagsByList.get(id) ?? [], likeCount: Number(row.like_count), itemCount: Number(row.item_count),
           previewMovies: previewsByList.get(id) ?? [],

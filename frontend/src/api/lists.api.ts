@@ -3,6 +3,8 @@ import api from "./axios";
 import type { NumberedPage, Page } from "./types";
 import type { ReviewReportReason, ReviewReportStatus } from "./reviews.api";
 
+export type FeaturedListCategory = "REWIND_COMMUNITY" | "OTHER_TOP_FILM_LISTS" | "FILMMAKER_RECOMMENDATIONS";
+
 export interface UserList {
   id: number;
   name: string;
@@ -27,6 +29,7 @@ export interface MoviePreview {
   releaseDate: string | null;
   rating: number | null;
   photoUrl: string | null;
+  backdropUrl?: string | null;
 }
 
 export interface PublicList {
@@ -35,10 +38,12 @@ export interface PublicList {
   description: string | null;
   ownerId: number;
   ownerUsername: string;
+  ownerAvatarUrl?: string | null;
   tags: string[];
   likeCount?: number | null;
   itemCount?: number | null;
   previewMovies: MoviePreview[];
+  featuredCategory?: FeaturedListCategory | null;
 }
 
 export interface PublicListDetails {

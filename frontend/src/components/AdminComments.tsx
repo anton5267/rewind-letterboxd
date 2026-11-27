@@ -254,14 +254,17 @@ export default function AdminComments() {
   return <section ref={sectionRef} className={`${styles.section} ${styles.commentsSection}`} aria-label={t("adminComments")} aria-busy={loading || busyId !== null}>
     <h2 className={styles.title} ref={headingRef} tabIndex={-1}>{t("adminCommentsTitle")}</h2>
     {actionError && <p className={styles.error} role="alert">{t(actionError === "delete" ? "adminCommentDeleteError" : actionError === "report" ? "adminReviewReportDismissError" : "adminCommentModerationError")}</p>}
-    <label className={styles.filter}>{t("adminVisibilityFilter")}{" "}
-      <select className={styles.control} value={filter} onChange={event => changeFilter(event.target.value as CommentFilter)}>
-        <option value="all">{t("allVisibilityStates")}</option>
-        <option value="visible">{t("visibleOnly")}</option>
-        <option value="hidden">{t("hiddenOnly")}</option>
-        <option value="reported">{t("reportedOnly")}</option>
-      </select>
-    </label>
+    <div className={styles.commentsToolbar}>
+      <Link className={styles.reportedCommentsLink} to={`${path("/admin")}?view=reported-comments`}>{t("viewReportedComments")}</Link>
+      <label className={styles.filter}>{t("adminVisibilityFilter")}{" "}
+        <select className={styles.control} value={filter} onChange={event => changeFilter(event.target.value as CommentFilter)}>
+          <option value="all">{t("allVisibilityStates")}</option>
+          <option value="visible">{t("visibleOnly")}</option>
+          <option value="hidden">{t("hiddenOnly")}</option>
+          <option value="reported">{t("reportedOnly")}</option>
+        </select>
+      </label>
+    </div>
     {loading && <AdminLoading label={t("loading")} layout="comments" />}
     {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => { reloadFocusOrigin.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; retryReload.current = true; focusAfterReload.current = true; setRevision(value => value + 1); }} />}
     {data && data.content.length === 0 && <p>{t("noAdminComments")}</p>}
@@ -278,7 +281,15 @@ export default function AdminComments() {
             <span>{t("year")}</span>
             <time dateTime={comment.createdAt}>{formatReviewDate(comment.createdAt, lang)}</time>
           </div>
-          <p className={styles.commentStatus}>{comment.isHidden ? t("hiddenComment") : t("visibleComment")}</p>
+          <div className={styles.commentMetric}>
+            <span>{t("likes")}</span>
+            <strong>{comment.parentLikesCount}</strong>
+          </div>
+          <div className={styles.commentMetric}>
+            <span>{t("adminReportedCommentsReplies")}</span>
+            <strong>{comment.parentRepliesCount}</strong>
+          </div>
+          <p className={`srOnly ${styles.commentStatus}`}>{comment.isHidden ? t("hiddenComment") : t("visibleComment")}</p>
           {filter === "reported" && "reportId" in comment && <p className={styles.commentDate}>{t("reportedReason")}: {t(`reviewReportReason_${comment.reportReason}`)} · {formatReviewDate(comment.reportCreatedAt, lang)}</p>}
           <div className={styles.rowActions}>
             {filter === "reported" && "reportId" in comment && <button type="button" aria-busy={busyId === comment.id} disabled={busyId !== null} onClick={event => void dismissReport(comment, event.currentTarget)}>{busyId === comment.id ? t("loading") : t("dismissReport")}</button>}
@@ -288,7 +299,7 @@ export default function AdminComments() {
         </div>
       </li>;
       })}</ul>
-      <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminCommentsPagination")} busy={loading} statusSuffix={data.totalElements} onPageChange={nextPage => { focusAfterReload.current = false; reloadFocusOrigin.current = null; setPage(nextPage); }} />
+      <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminCommentsPagination")} variant="numbers" busy={loading} statusSuffix={data.totalElements} onPageChange={nextPage => { focusAfterReload.current = false; reloadFocusOrigin.current = null; setPage(nextPage); }} />
     </>}
     <dialog className={dialogStyles.deleteDialog} ref={deleteDialog} role="alertdialog" aria-labelledby="admin-comment-delete-title" aria-describedby="admin-comment-delete-description" onCancel={event => {
       event.preventDefault();

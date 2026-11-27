@@ -6,8 +6,9 @@ import { getReviewDetails, getReviewLikeStatus, likeReview, type ReviewDetails a
 import RatingSheet from "../components/RatingSheet";
 import ResilientImage from "../components/ResilientImage";
 import RetryButton from "../components/RetryButton";
+import Comments from "../components/comments/CommentThread";
 import { useAuth } from "../context/AuthContext";
-import { editorialText, formatMovieYear, formatRelativeTime, useLocale } from "../i18n";
+import { editorialText, formatMovieDuration, formatMovieYear, formatRelativeTime, useLocale } from "../i18n";
 import { safeHttpUrl } from "../utils/externalUrl";
 import { getUserName } from "../utils/userIdentity";
 import styles from "./ReviewDetails.module.css";
@@ -210,7 +211,7 @@ export default function ReviewDetails() {
   const authorName = getUserName(review.author, t("someone"));
   const movieTitle = editorialText(review.movie.title, t("untitledFilm"));
   const year = formatMovieYear(review.movie.releaseDate, t("unknownYear"));
-  const metaItems = [year, review.movie.durationMinutes ? `${review.movie.durationMinutes} ${t("minutes")}` : null, review.movie.ageRating].filter((item): item is string => Boolean(item));
+  const metaItems = [year, review.movie.durationMinutes ? formatMovieDuration(review.movie.durationMinutes, lang) : null, review.movie.ageRating].filter((item): item is string => Boolean(item));
   const trailerUrl = safeHttpUrl(review.movie.trailerUrl);
 
   return <main className={styles.page} aria-labelledby="review-title" aria-busy={likeStatusLoading || likeBusy}>
@@ -276,6 +277,9 @@ export default function ReviewDetails() {
             <ResilientImage src={user.avatarUrl} alt={getUserName(user, t("someone"))} fallback={<Initial value={getUserName(user, t("someone"))} />} />
           </Link>)}
         </div> : <p className={styles.noLikes}>{t("noReviewLikes")}</p>}
+      <div className={styles.commentsSection}>
+        <Comments reviewId={review.id} />
+      </div>
     </section>
         {ratingSheetOpen && isAuth && createPortal(<RatingSheet
       movieId={review.movie.id}

@@ -3,10 +3,13 @@ import { RewindApiError } from "../http/errors.ts";
 import {
   beginUserTransaction,
 } from "../runtime/transactions.ts";
+import { getMyWatchedOn, setMyWatchedOn } from "./shared/watched_date.ts";
 
 export const ratingsRepository: Pick<RewindApiRepository,
   | "getMyRating"
   | "getMyMovieStatus"
+  | "getMyWatchedDate"
+  | "setMyWatchedDate"
   | "setMyMovieFlag"
   | "deleteMyMovieFlag"
   | "setMyRating"
@@ -58,6 +61,29 @@ export const ratingsRepository: Pick<RewindApiRepository,
     }
   },
 
+  async getMyWatchedDate(authUser, movieId) {
+    const { connection, userId } = await beginUserTransaction(authUser);
+    try {
+      const watchedOn = await getMyWatchedOn(connection, userId, movieId);
+      await connection.queryObject("COMMIT");
+      return watchedOn;
+    } catch (error) {
+      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+      throw error;
+    } finally { connection.release(); }
+  },
+
+  async setMyWatchedDate(authUser, movieId, watchedOn) {
+    const { connection, userId } = await beginUserTransaction(authUser);
+    try {
+      await setMyWatchedOn(connection, userId, movieId, watchedOn);
+      await connection.queryObject("COMMIT");
+    } catch (error) {
+      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+      throw error;
+    } finally { connection.release(); }
+  },
+
   async setMyMovieFlag(authUser, movieId, flag) {
     const { connection, userId } = await beginUserTransaction(authUser);
     try {
@@ -70,8 +96,11 @@ export const ratingsRepository: Pick<RewindApiRepository,
       });
       if (!list.rows[0]) throw new Error("System list is unavailable.");
       const inserted = await connection.queryObject({
-        text: `INSERT INTO rewind.list_items (list_id, movie_id)
-               VALUES ($1, $2) ON CONFLICT (list_id, movie_id) DO NOTHING RETURNING id`,
+        text: flag === "watched"
+          ? `INSERT INTO rewind.list_items (list_id, movie_id, watched_on)
+             VALUES ($1, $2, CURRENT_DATE) ON CONFLICT (list_id, movie_id) DO NOTHING RETURNING id`
+          : `INSERT INTO rewind.list_items (list_id, movie_id)
+             VALUES ($1, $2) ON CONFLICT (list_id, movie_id) DO NOTHING RETURNING id`,
         args: [Number(list.rows[0].id), movieId],
       });
       if (flag === "watched" && inserted.rows.length > 0) {

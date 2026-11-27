@@ -16,12 +16,12 @@
 .retry { display: flex; justify-content: center; margin-top: 8px; }
 @media (max-width: 1023px) { .card { gap: 24px; } .card .copy .content { font-size: 16px; } }
 @media (max-width: 620px) {
-  .card { grid-template-columns: 79px minmax(0, 1fr); gap: 14px; min-height: 221px; padding: 26px 18px; border-radius: 10px; }
+  .card { grid-template-columns: 79px minmax(0, 1fr); gap: 14px; height: 234px; min-height: 234px; padding: 26px 18px; overflow: hidden; border-radius: 10px; }
   .posterLink, .poster, .fallback { aspect-ratio: 79 / 116; border-radius: 10px; }
   .copy { padding-top: 0; }
   .copy h3 { font-size: 13px; line-height: 1.3; }
   .meta { gap: 4px 8px; margin-top: 5px; font-size: 10px; line-height: 1.35; }
-  .card .copy .content { margin-top: 12px; font-size: 12px; line-height: 1.5; }
+  .card .copy .content { display: -webkit-box; margin-top: 12px; overflow: hidden; font-size: 12px; line-height: 1.12; -webkit-box-orient: vertical; -webkit-line-clamp: 4; }
   .fallback { font-size: 24px; }
 }
 @media (max-width: 350px) { .card { grid-template-columns: 64px minmax(0, 1fr); gap: 10px; padding: 20px 12px; } }

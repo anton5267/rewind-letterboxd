@@ -1,5 +1,5 @@
 /* READY545:676/551:705 and731:1085/736:1339. API imagery stays dynamic. */
-.page { position: relative; min-height: 100vh; padding: 0 0 72px; background: #1f1f1f; color: #fff; }
+.page { position: relative; min-height: 100vh; padding: 0 0 90px; background: #1f1f1f; color: #fff; }
 .stateBack { display: none; }
 .hero { position: relative; isolation: isolate; overflow: clip; min-height: 907px; box-sizing: border-box; padding: 234px 24px 80px; background: #000; }
 .heroBackdrop { display: none; }
@@ -17,6 +17,10 @@
 .mobileToolbar { display: none; }
 .content { width: min(1200px, calc(100% - 48px)); margin-inline: auto; padding-top: 85px; }
 .content.relatedContent { padding-top: 16px; }
+@media (min-width: 768px) {
+  .directorPage { padding-bottom: 158px; }
+  .directorPage .content.relatedContent { padding-top: 85px; }
+}
 .filmographyHeader { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 38px; border-top: 1px solid #4d4d4d; padding-top: 17px; }
 .sectionHeading { display: flex; align-items: center; min-height: 44px; min-width: 0; }
 .sectionHeading h2 { margin: 0; overflow-wrap: anywhere; font-size: 24px; line-height: 1.4; }
@@ -45,7 +49,7 @@
 @media (min-width: 768px) and (max-width: 1023px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px 24px; } }
 @media (min-width: 1024px) and (max-width: 1199px) { .grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 32px 24px; } }
 @media (max-width: 767px) {
-  .page { padding-bottom: calc(48px + env(safe-area-inset-bottom)); }
+  .page { padding-bottom: env(safe-area-inset-bottom); }
   .page.statePage { padding: 120px 16px 64px; }
   .stateBack { display: block; position: absolute; z-index: 2; top: 50px; left: 16px; }
   .stateTitle { font-size: 28px; }
@@ -69,10 +73,12 @@
   .heroCopy h1 { font-size: 26px; line-height: 1.12; }
   .eyebrow { margin-top: 4px; font-size: 12px; }
   .content { width: calc(100% - 32px); padding-top: 35px; }
+  .content.relatedContent { padding-top: 33px; }
   .filmographyHeader { display: flex; flex-direction: column; align-items: stretch; gap: 12px; margin-bottom: 20px; padding-top: 7px; }
   .sectionHeading { min-height: 0; }
   .sectionHeading h2 { font-size: 14px; line-height: 1.4; }
   .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 15px; }
+  .expandFilms { min-height: 32px; margin-top: 24px; padding: 6px 15px; font-size: 11px; }
   .poster, .posterFallback { aspect-ratio: 79 / 116; border-radius: 10px; }
   .posterFallback { padding: 8px; font-size: 12px; }
   .skeletonTitle { width: min(220px, 100%); height: 30px; }

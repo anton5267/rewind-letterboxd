@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { getPopularReviews, type RecentReview } from "../api/reviews.api";
+import { getPopularReviews, getRecentReviews, type RecentReview } from "../api/reviews.api";
 import { getPopularReviewers, type PopularReviewer } from "../api/social.api";
 import Pagination from "../components/Pagination";
 import ResilientImage from "../components/ResilientImage";
@@ -35,12 +35,16 @@ export default function PopularReviews() {
   const [reviewersRetry, setReviewersRetry] = useState(0);
   const [reviews, setReviews] = useState<RecentReview[]>([]);
   const [reviewsPage, setReviewsPage] = useState(0);
+  const [sortMode, setSortMode] = useState<"popular" | "recent">("popular");
+  const [sortOpen, setSortOpen] = useState(false);
   const [reviewsTotalPages, setReviewsTotalPages] = useState(0);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [reviewsError, setReviewsError] = useState(false);
   const [reviewsRetry, setReviewsRetry] = useState(0);
   const reviewersSectionRef = useRef<HTMLElement>(null);
   const reviewsSectionRef = useRef<HTMLElement>(null);
+  const sortControlRef = useRef<HTMLDivElement>(null);
+  const sortButtonRef = useRef<HTMLButtonElement>(null);
   const retryFocus = useRef<Partial<Record<"reviewers" | "reviews", { origin: HTMLElement; lang: string }>>>({});
 
   useEffect(() => {
@@ -94,7 +98,7 @@ export default function PopularReviews() {
     let current = true;
     setReviewersLoading(true);
     setReviewersError(false);
-    getPopularReviewers()
+    getPopularReviewers(14)
       .then(({ data }) => { if (current) setReviewers(data); })
       .catch(() => {
         if (!current) return;
@@ -109,7 +113,7 @@ export default function PopularReviews() {
     let current = true;
     setReviewsLoading(true);
     setReviewsError(false);
-    getPopularReviews(reviewsPage, PAGE_SIZE)
+    (sortMode === "popular" ? getPopularReviews(reviewsPage, PAGE_SIZE) : getRecentReviews(reviewsPage, PAGE_SIZE))
       .then(({ data }) => {
         if (!current) return;
         if (isPageOutOfRange(reviewsPage, data.totalPages)) {
@@ -128,16 +132,34 @@ export default function PopularReviews() {
       })
       .finally(() => { if (current) setReviewsLoading(false); });
     return () => { current = false; };
-  }, [lang, reviewsPage, reviewsRetry]);
+  }, [lang, reviewsPage, reviewsRetry, sortMode]);
+
+  useEffect(() => {
+    if (!sortOpen) return;
+    const closeOnOutsidePress = (event: PointerEvent) => {
+      if (event.target instanceof Node && !sortControlRef.current?.contains(event.target)) setSortOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setSortOpen(false);
+      sortButtonRef.current?.focus();
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePress);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePress);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [sortOpen]);
 
   const pageBusy = reviewersLoading || reviewsLoading;
 
-  return <main className={styles.page} aria-labelledby="popular-reviews-title" aria-busy={pageBusy}>
+  return <main className={styles.page} data-popular-reviews aria-labelledby="popular-reviews-title" aria-busy={pageBusy}>
     <section className={styles.hero}>
       <div className={styles.toolbar}>
         <Link className={styles.toolbarButton} to={path("/home")} aria-label={t("home")}><span aria-hidden="true">←</span></Link>
         <h1 id="popular-reviews-title">{t("homePopularReviews")}</h1>
-        <Link className={styles.toolbarButton} to={path("/search")} aria-label={t("globalSearch")}><span aria-hidden="true">⌕</span></Link>
+        <Link className={`${styles.toolbarButton} ${styles.toolbarFilter}`} to={path("/search")} aria-label={t("filters")}><span className={styles.filterGlyph} aria-hidden="true"><i /><i /><i /></span></Link>
       </div>
     </section>
 
@@ -158,7 +180,15 @@ export default function PopularReviews() {
       <section ref={reviewsSectionRef} className={styles.reviewsSection} aria-labelledby="reviews-title" aria-busy={reviewsLoading} tabIndex={-1}>
         <div className={styles.sectionHeading}>
           <h2 id="reviews-title">{t("homePopularReviews")}</h2>
-          <span className={styles.sortLabel}>{t("sortBy")}: {t("sortPopularReviews")}</span>
+          <div className={styles.sortControl} ref={sortControlRef}>
+            <button ref={sortButtonRef} className={styles.sortLabel} type="button" aria-haspopup="menu" aria-expanded={sortOpen} aria-controls={sortOpen ? "popular-reviews-sort-menu" : undefined} onClick={() => setSortOpen(value => !value)}>
+              {t("sortBy")} {t(sortMode === "popular" ? "sortPopularReviews" : "sortNewest")} <span aria-hidden="true">⌄</span>
+            </button>
+            {sortOpen && <div id="popular-reviews-sort-menu" className={styles.sortMenu} role="menu" aria-label={t("sortBy")}>
+              <button type="button" role="menuitemradio" aria-checked={sortMode === "popular"} onClick={() => { setSortMode("popular"); setReviewsPage(0); setSortOpen(false); }}>{t("sortPopularReviews")}</button>
+              <button type="button" role="menuitemradio" aria-checked={sortMode === "recent"} onClick={() => { setSortMode("recent"); setReviewsPage(0); setSortOpen(false); }}>{t("sortNewest")}</button>
+            </div>}
+          </div>
         </div>
         {reviewsLoading && <><p className="srOnly" role="status">{t("loading")}</p><div className={styles.reviewList} aria-hidden="true">{[0, 1, 2, 3].map(item => <div className={styles.reviewCard} key={item}><div className={`${styles.poster} ${styles.skeleton}`} /><div className={styles.reviewCopy}><div className={styles.skeletonLine} /><div className={styles.skeletonLine} /><div className={styles.skeletonLine} /></div></div>)}</div></>}
         {reviewsError && <RetryNotice className={styles.status} message={t("loadReviewsError")} retryLabel={t("retry")} busy={reviewsLoading} onRetry={() => retrySection("reviews")} />}

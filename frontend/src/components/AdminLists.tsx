@@ -1,6 +1,8 @@
 import AdminLoading from "./AdminLoading";
+import { Link } from "react-router-dom";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { deleteAdminList, dismissAdminListReport, getAdminLists, getAdminReportedLists, moveAdminListFeatured, setAdminListFeatured, setAdminListVisibility, type AdminList, type AdminReportedList } from "../api/admin.api";
+import type { FeaturedListCategory } from "../api/lists.api";
 import type { Page } from "../api/types";
 import { useAuth } from "../context/AuthContext";
 import Pagination from "./Pagination";
@@ -11,7 +13,7 @@ import styles from "./AdminShared.module.css";
 import dialogStyles from "./AdminConfirmDialog.module.css";
 
 export default function AdminLists() {
-  const { lang, t } = useLocale();
+  const { lang, path, t } = useLocale();
   const { user } = useAuth();
   const [data, setData] = useState<Page<AdminList | AdminReportedList> | null>(null);
   const [page, setPage] = useState(0);
@@ -157,7 +159,8 @@ export default function AdminLists() {
     setBusyId(list.id);
     setActionError(null);
     try {
-      const { data: updated } = await setAdminListFeatured(list.id, list.featuredPosition === null);
+      const becomingFeatured = list.featuredPosition === null;
+      const { data: updated } = await setAdminListFeatured(list.id, becomingFeatured, becomingFeatured ? "REWIND_COMMUNITY" : undefined);
       if (!sameActor()) return;
       if (!sameQuery()) { setRevision(value => value + 1); return; }
       setData(current => current ? { ...current, content: current.content.map(item => item.id === updated.id ? { ...item, ...updated } : item) } : current);
@@ -167,6 +170,29 @@ export default function AdminLists() {
       if (!sameQuery()) { setRevision(value => value + 1); return; }
       setActionError("featured");
       pendingFocus.current = { scope, origin, target: "error" };
+    } finally {
+      if (sameActor()) { mutationToken.current = null; setBusyId(null); }
+    }
+  };
+
+  const changeFeaturedCategory = async (list: AdminList, category: FeaturedListCategory) => {
+    if (list.featuredPosition === null || mutationToken.current !== null) return;
+    const token = {};
+    mutationToken.current = token;
+    const scope = scopeGeneration.current;
+    const sameActor = () => mounted.current && currentActor.current === actor && mutationToken.current === token;
+    const sameQuery = () => sameActor() && scopeGeneration.current === scope;
+    setBusyId(list.id);
+    setActionError(null);
+    try {
+      const { data: updated } = await setAdminListFeatured(list.id, true, category);
+      if (!sameActor()) return;
+      if (!sameQuery()) { setRevision(value => value + 1); return; }
+      setData(current => current ? { ...current, content: current.content.map(item => item.id === updated.id ? { ...item, ...updated } : item) } : current);
+    } catch {
+      if (!sameActor()) return;
+      if (!sameQuery()) { setRevision(value => value + 1); return; }
+      setActionError("featured");
     } finally {
       if (sameActor()) { mutationToken.current = null; setBusyId(null); }
     }
@@ -288,22 +314,59 @@ export default function AdminLists() {
     }} />}
     {data && data.content.length === 0 && <p>{t("noAdminLists")}</p>}
     {data && <>
-      <ul className={styles.list}>{data.content.map(list => <li className={styles.row} key={"reportId" in list ? list.reportId : list.id}>
+      <ul className={`${styles.list} ${reportedOnly ? styles.reportedList : ""}`}>{data.content.map(list => <li className={`${styles.row} ${reportedOnly && "reportId" in list ? styles.reportedListRow : ""}`} key={"reportId" in list ? list.reportId : list.id}>
         <div className={styles.listMain}>
           <strong className={styles.listIdentity}>{editorialText(list.name, t("lists"))}</strong>
           <p className={styles.listMeta}>{getUserName({ username: list.username }, t("someone"))} · {formatMovieCount(list.itemCount, lang)}</p>
           {list.description?.trim() && <p className={styles.listDescription}>{list.description}</p>}
-          {reportedOnly && "reportId" in list && <p className={styles.listDescription}>{t("reportedReason")}: {t(`reviewReportReason_${list.reportReason}`)} · {formatReviewDate(list.reportCreatedAt, lang)}</p>}
         </div>
-        <div className={styles.listSide}>
+        {reportedOnly && "reportId" in list ? <>
+          <div className={styles.reportedListDate} data-testid="reported-list-date">
+            <span>{t("adminListCreatedDate")}</span>
+            <time dateTime={list.createdAt}>{formatReviewDate(list.createdAt, lang)}</time>
+            <Link to={`${path("/admin")}?view=list-detail&listId=${list.id}&reportId=${list.reportId}`}>{t("adminListOpenEditor")}</Link>
+          </div>
+          <div className={styles.reportedListMetrics} data-testid="reported-list-metrics">
+            <div className={styles.reportedLikeCount}>
+              <span>{t("adminListLikes")}</span>
+              <strong data-testid="reported-list-like-count">{list.likeCount}</strong>
+            </div>
+            <div className={styles.reportedListReason} data-testid="reported-list-reason">
+              <span>{t("reportedReason")}</span>
+              <strong>{t(`reviewReportReason_${list.reportReason}`)}</strong>
+              <time dateTime={list.reportCreatedAt}>{formatReviewDate(list.reportCreatedAt, lang)}</time>
+            </div>
+          </div>
+          <details className={styles.reportedListMoreActions}>
+            <summary>{t("moreActions")}</summary>
+            <div className={styles.rowActions}>
+              <button type="button" aria-busy={busyId === list.id} disabled={busyId !== null} onClick={event => void dismissReport(list, event.currentTarget)}>{busyId === list.id ? t("loading") : t("dismissReport")}</button>
+              {list.listType === "CUSTOM" && <button ref={button => { if (button) visibilityButtons.current.set(list.id, button); else visibilityButtons.current.delete(list.id); }} type="button" aria-busy={busyId === list.id} disabled={busyId !== null} onClick={event => void toggleVisibility(list, event.currentTarget)}>{busyId === list.id ? t("loading") : list.isPublic ? t("hideList") : t("publishList")}</button>}
+              {list.listType === "CUSTOM" && <button ref={button => { if (button) featuredButtons.current.set(list.id, button); else featuredButtons.current.delete(list.id); }} type="button" aria-busy={busyId === list.id} disabled={busyId !== null || (!list.isPublic && list.featuredPosition === null)} onClick={event => void toggleFeatured(list, event.currentTarget)}>{busyId === list.id ? t("loading") : t(list.featuredPosition === null ? "featureList" : "unfeatureList")}</button>}
+              {list.listType === "CUSTOM" && list.featuredPosition !== null && <>
+                <button type="button" aria-busy={busyId === list.id} disabled={busyId !== null || list.featuredPosition === 0} aria-label={`${t("moveFeaturedUp")} ${editorialText(list.name, t("lists"))}`} onClick={event => void moveFeatured(list, "up", event.currentTarget)}>↑</button>
+                <button type="button" aria-busy={busyId === list.id} disabled={busyId !== null} aria-label={`${t("moveFeaturedDown")} ${editorialText(list.name, t("lists"))}`} onClick={event => void moveFeatured(list, "down", event.currentTarget)}>↓</button>
+              </>}
+              {list.listType === "CUSTOM" && <button type="button" aria-busy={busyId === list.id} disabled={busyId !== null} onClick={event => requestDelete(list, event.currentTarget)}>{busyId === list.id ? t("loading") : t("deleteList")}</button>}
+            </div>
+          </details>
+        </> : <div className={styles.listSide}>
           <div className={styles.listCreated}>
             <span>{t("adminListCreatedDate")}</span>
             <time dateTime={list.createdAt}>{formatReviewDate(list.createdAt, lang)}</time>
           </div>
           <p className={styles.listStatus}>{list.isPublic ? t("publicList") : t("hiddenList")}</p>
           {list.featuredPosition !== null && <p className={styles.listStatus}>{t("featuredPositionLabel")} {list.featuredPosition + 1}</p>}
+          {list.listType === "CUSTOM" && list.featuredPosition !== null && <label className={styles.featuredCategoryControl}>
+            <span>{t("featuredCategory")}</span>
+            <select aria-label={`${t("featuredCategory")} ${editorialText(list.name, t("lists"))}`} value={list.featuredCategory ?? "REWIND_COMMUNITY"} disabled={busyId !== null} onChange={event => void changeFeaturedCategory(list, event.currentTarget.value as FeaturedListCategory)}>
+              <option value="REWIND_COMMUNITY">{t("featuredCategoryRewindCommunity")}</option>
+              <option value="OTHER_TOP_FILM_LISTS">{t("featuredCategoryOtherTopFilmLists")}</option>
+              <option value="FILMMAKER_RECOMMENDATIONS">{t("featuredCategoryFilmmakerRecommendations")}</option>
+            </select>
+          </label>}
           <div className={styles.rowActions}>
-            {reportedOnly && "reportId" in list && <button type="button" aria-busy={busyId === list.id} disabled={busyId !== null} onClick={event => void dismissReport(list, event.currentTarget)}>{busyId === list.id ? t("loading") : t("dismissReport")}</button>}
+            {list.listType === "CUSTOM" && <Link to={`${path("/admin")}?view=list-detail&listId=${list.id}`}>{t("adminListOpenEditor")}</Link>}
             {list.listType === "CUSTOM" && <button ref={button => { if (button) visibilityButtons.current.set(list.id, button); else visibilityButtons.current.delete(list.id); }} type="button" aria-busy={busyId === list.id} disabled={busyId !== null} onClick={event => void toggleVisibility(list, event.currentTarget)}>{busyId === list.id ? t("loading") : list.isPublic ? t("hideList") : t("publishList")}</button>}
             {list.listType === "CUSTOM" && <button ref={button => { if (button) featuredButtons.current.set(list.id, button); else featuredButtons.current.delete(list.id); }} type="button" aria-busy={busyId === list.id} disabled={busyId !== null || (!list.isPublic && list.featuredPosition === null)} onClick={event => void toggleFeatured(list, event.currentTarget)}>{busyId === list.id ? t("loading") : t(list.featuredPosition === null ? "featureList" : "unfeatureList")}</button>}
             {list.listType === "CUSTOM" && list.featuredPosition !== null && <>
@@ -312,9 +375,9 @@ export default function AdminLists() {
             </>}
             {list.listType === "CUSTOM" && <button type="button" aria-busy={busyId === list.id} disabled={busyId !== null} onClick={event => requestDelete(list, event.currentTarget)}>{busyId === list.id ? t("loading") : t("deleteList")}</button>}
           </div>
-        </div>
+        </div>}
       </li>)}</ul>
-      <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminListsPagination")} busy={loading} statusSuffix={data.totalElements} onPageChange={nextPage => {
+      <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminListsPagination")} busy={loading} statusSuffix={data.totalElements} variant={reportedOnly ? "numbers" : "standard"} onPageChange={nextPage => {
         if (nextPage === page) return;
         const focus = { scope: scopeGeneration.current, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, target: "heading" as const };
         pendingFocus.current = focus;

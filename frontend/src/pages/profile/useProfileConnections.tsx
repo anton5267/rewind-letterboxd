@@ -35,7 +35,7 @@ export function useProfileConnections({ route, feedback }: {
     settingsFeedbackSequence,
   } = feedback;
 
-  const [socialLinkValues, setSocialLinkValues] = useState<Record<SocialLinkPlatform, string>>({ website: "", instagram: "", tiktok: "", letterboxd: "" });
+  const [socialLinkValues, setSocialLinkValues] = useState<Record<SocialLinkPlatform, string>>({ website: "", instagram: "", tiktok: "", letterboxd: "", x: "" });
 
   const [savedSocialLinks, setSavedSocialLinks] = useState<{ userId: number | null; links: SocialLink[] } | null>(null);
 
@@ -63,7 +63,7 @@ export function useProfileConnections({ route, feedback }: {
 
   const socialLinksMutation = useRef(0);
 
-  const socialLinkLabelKeys: Record<SocialLinkPlatform, TranslationKey> = { website: "socialWebsite", instagram: "socialInstagram", tiktok: "socialTiktok", letterboxd: "socialLetterboxd" };
+  const socialLinkLabelKeys: Record<SocialLinkPlatform, TranslationKey> = { website: "socialWebsite", instagram: "socialInstagram", tiktok: "socialTiktok", letterboxd: "socialLetterboxd", x: "socialX" };
 
   const applySocialLinks = (data: SocialLink[]) => {
     setSavedSocialLinks({ userId: user?.id ?? null, links: data });
@@ -72,6 +72,7 @@ export function useProfileConnections({ route, feedback }: {
       instagram: data.find(link => link.platform === "instagram")?.url ?? "",
       tiktok: data.find(link => link.platform === "tiktok")?.url ?? "",
       letterboxd: data.find(link => link.platform === "letterboxd")?.url ?? "",
+      x: data.find(link => link.platform === "x")?.url ?? "",
     });
   };
 
@@ -103,7 +104,8 @@ export function useProfileConnections({ route, feedback }: {
       pendingSocialLinksFocus.current = null;
       if (pending.scope !== currentSocialLinksFocusScope.current || pending.request !== socialLinksRequest.current) return;
       const active = document.activeElement;
-      if (active !== document.body && active !== pending.origin) return;
+      const sectionHeading = document.getElementById("social-links-settings");
+      if (active !== document.body && active !== pending.origin && !(socialLinksError && active === sectionHeading)) return;
       if (socialLinksError) {
         const root = settingsTab ? '[aria-labelledby="account-settings-title"]' : '[aria-labelledby="social-links-settings"]';
         document.querySelector<HTMLElement>(`${root} [data-retry-button]:not(:disabled)`)?.focus();
@@ -127,7 +129,7 @@ export function useProfileConnections({ route, feedback }: {
       if (!isCurrentRequest() || settingsFeedbackGeneration.current !== scope) return;
       if (kind === "success") { setError(""); setMessage(text); }
       else { setMessage(""); setError(text); }
-      setSettingsFeedback({ id: ++settingsFeedbackSequence.current, origin, kind });
+      setSettingsFeedback({ id: ++settingsFeedbackSequence.current, origin, kind, source: "socialLinks" });
     };
     setSocialLinksBusy(true);
     setSettingsFeedback(null);

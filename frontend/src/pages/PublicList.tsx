@@ -1,4 +1,3 @@
-import { usesHostedSupabaseAuth } from "../api/supabaseClient";
 import CommentThread from "../components/comments/CommentThread";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -36,7 +35,7 @@ export default function PublicList() {
   const [attempt, setAttempt] = useState(0);
   const [infoOpen, setInfoOpen] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const errorRef = useRef<HTMLParagraphElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
   const heroActionsRef = useRef<HTMLDivElement>(null);
   const likeActionRef = useRef<HTMLButtonElement>(null);
   const informationLikeRef = useRef<HTMLButtonElement>(null);
@@ -188,18 +187,19 @@ export default function PublicList() {
     void toggleLike();
   };
 
-  if (error) return <main className={styles.statePage} aria-labelledby="public-list-state-title" aria-busy={false}><h1 id="public-list-state-title" className="srOnly">{t("lists")}</h1><p ref={errorRef} tabIndex={-1} className={styles.stateError} role="alert">{!validListId ? t("invalidListId") : t("loadPublicListError")} {validListId && <RetryButton label={t("retry")} onClick={() => {
+  if (error) return <main className={styles.statePage} aria-labelledby="public-list-state-title" aria-busy={false}><h1 id="public-list-state-title" className="srOnly">{t("lists")}</h1><div ref={errorRef} tabIndex={-1} className={`${styles.stateError} ${lang === "en" ? styles.stateErrorEn : ""}`} role="alert"><p>{!validListId ? t("invalidListId") : t("loadPublicListError")}</p>{validListId && <RetryButton label={t("retry")} onClick={() => {
     retryFocus.current = { listId, lang, origin: document.activeElement };
     setAttempt(value => value + 1);
-  }} />}</p></main>;
+  }} />}</div></main>;
   if (loading || !list) return <main className={styles.page} aria-labelledby="public-list-state-title" aria-busy={true}>
     <h1 id="public-list-state-title" className="srOnly">{t("lists")}</h1><p className="srOnly" role="status">{t("loading")}</p>
-    <div aria-hidden="true"><div className={styles.hero}><div className={styles.heroInner}><div className={styles.skeletonTitle} /><div className={styles.skeletonLine} /></div></div>
-      <div className={styles.content}><div className={styles.movieGrid}>{[0, 1, 2, 3, 4, 5].map(item => <div className={styles.skeletonPoster} key={item} />)}</div></div>
+    <div aria-hidden="true"><div className={styles.hero}><div className={styles.heroInner}><div className={styles.skeletonTitle} data-public-list-skeleton-title /><div className={styles.skeletonLine} data-public-list-skeleton-metadata /></div></div>
+      <div className={styles.content}><div className={styles.movieGrid}>{[0, 1, 2, 3, 4, 5].map(item => <div className={styles.skeletonPoster} data-public-list-skeleton-poster={item + 1} key={item} />)}</div></div>
     </div>
   </main>;
 
-  const heroImage = list.movies.find(movie => movie.photoUrl)?.photoUrl;
+  const heroImage = list.movies.find(movie => movie.backdropUrl)?.backdropUrl ?? list.movies.find(movie => movie.photoUrl)?.photoUrl ?? null;
+  const canReport = isAuth && user?.id !== list.ownerId;
   const listName = editorialText(list.name, t("lists"));
   const ownerName = getUserName({ username: list.ownerUsername }, t("someone"));
   const likeControls = <>
@@ -209,10 +209,12 @@ export default function PublicList() {
     {likeError && <span className={styles.inlineError} data-list-like-mutation-error role="alert">{t("listLikeError")} <RetryButton label={t("retry")} disabled={likeBusy || likeStatusLoading} busy={likeBusy} onClick={() => retryLikeMutation(false)} /></span>}
   </>;
 
-  return <main className={styles.page} aria-labelledby="public-list-heading" aria-busy={likeStatusLoading || likeBusy}>
+  return <main className={styles.page} data-list-ranked={list.isRanked === false ? "false" : "true"} data-list-empty={list.movies.length === 0 ? "true" : "false"} aria-labelledby="public-list-heading" aria-busy={likeStatusLoading || likeBusy}>
     <div aria-hidden={infoOpen || undefined}>
     <section className={styles.hero} aria-labelledby="public-list-heading">
-      <ResilientImage className={styles.heroBackdrop} src={heroImage} alt="" aria-hidden="true" loading="eager" fallback={null} />
+      {list.movies.length === 0
+        ? <img className={styles.heroBackdrop} src="/images/public-list-empty-backdrop.png" alt="" aria-hidden="true" />
+        : <ResilientImage className={styles.heroBackdrop} src={heroImage} alt="" aria-hidden="true" loading="eager" fallback={null} />}
       <div className={styles.mobileToolbar}>
         <Link className={styles.mobileBack} to={path("/lists/discover")} aria-label={t("lists")}><img src="/images/help-icon-back.png" width={25} height={25} alt="" aria-hidden="true" /></Link>
         <span>{t("publicLists")}</span>
@@ -228,12 +230,14 @@ export default function PublicList() {
         </p>
         {list.description && <p className={styles.description}>{list.description}</p>}
         {list.tags.length > 0 && <div className={styles.tags} role="group" aria-label={t("tags")}>
-          {list.tags.map(tag => <Link key={tag} to={path(`/lists/discover?feed=recent&tag=${encodeURIComponent(toTagSlug(tag))}`)}>#{tag}</Link>)}
+          <span className={styles.tagsHeading}>{t("listTagged")}</span>
+          {list.tags.map(tag => <Link key={tag} to={path(`/lists/discover?feed=recent&tag=${encodeURIComponent(toTagSlug(tag))}`)}>{tag}</Link>)}
         </div>}
         <div ref={heroActionsRef} data-public-list-actions className={styles.heroActions}>
-          <span className={styles.likeCount}>{list.likeCount ?? 0} {t("likes").toLocaleLowerCase(lang)}</span>
+          {!isAuth && <img className={styles.listLikeIcon} src="/images/movie-action-favorite.png" width={28} height={28} alt="" aria-hidden="true" />}
+          {isAuth ? <span className={styles.likeCount}>{list.likeCount ?? 0} {t("likes").toLocaleLowerCase(lang)}</span> : <span className={styles.listLikeCount}>{list.likeCount ?? 0}</span>}
           {likeControls}
-          {isAuth && user?.id !== list.ownerId && <ContentReportAction key={`${user?.id}:${list.id}`} type="list" id={list.id} />}
+          {canReport && <div className={styles.heroReport}><ContentReportAction key={`${user?.id}:${list.id}`} type="list" id={list.id} /></div>}
         </div>
       </div>
     </section>
@@ -257,7 +261,7 @@ export default function PublicList() {
         })}
       </div>}
     </section>
-    {usesHostedSupabaseAuth && <div className={styles.comments}><CommentThread listId={list.id} /></div>}
+    <div className={styles.comments}><CommentThread listId={list.id} presentation="public-list" /></div>
     </div>
     {infoOpen && <div className={styles.informationBackdrop} onMouseDown={event => { if (event.target === event.currentTarget) { event.preventDefault(); closeInformation(); } }}>
       <section id="public-list-information" ref={informationRef} className={styles.informationDialog} role="dialog" aria-modal="true" aria-labelledby="public-list-information-title">
@@ -284,13 +288,14 @@ export default function PublicList() {
             {likeError && <span className={styles.inlineError} data-list-like-mutation-error role="alert">{t("listLikeError")} <RetryButton label={t("retry")} disabled={likeBusy || likeStatusLoading} busy={likeBusy} onClick={() => retryLikeMutation(true)} /></span>}
           </div>
           <div className={styles.informationTags}>
-            <p>{t("tags")}</p>
+            <p>{t("listTagged")}</p>
             {list.tags.length > 0 ? <div className={styles.informationTagLinks}>
-              {list.tags.map(tag => <Link key={tag} to={path(`/lists/discover?feed=recent&tag=${encodeURIComponent(toTagSlug(tag))}`)}>#{tag}</Link>)}
+              {list.tags.map(tag => <Link key={tag} to={path(`/lists/discover?feed=recent&tag=${encodeURIComponent(toTagSlug(tag))}`)}>{tag}</Link>)}
             </div> : <p className={styles.noTags}>{t("noTags")}</p>}
           </div>
         </div>
         <button ref={doneRef} type="button" className={styles.informationDone} onClick={closeInformation}>{t("done")}</button>
+        {canReport && <div className={styles.informationReport}><ContentReportAction key={`${user?.id}:${list.id}`} type="list" id={list.id} /></div>}
       </section>
     </div>}
   </main>;

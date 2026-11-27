@@ -1,14 +1,24 @@
 /* Own overview238:865 /896:1838: four favorites, poster activity, two
    review previews, following avatars, one list and six phone links. */
 .content > section.section.previewSection { width: 100%; max-width: 100%; box-sizing: border-box; margin: 60px 0 0; padding: 18px 0 0; border: 0; border-top: 1px solid #4d4d4d; border-radius: 0; background: transparent; box-shadow: none; }
+.content > section.previewSection > .previewHeading { display: flex; min-height: 27px; align-items: flex-start; justify-content: space-between; gap: 12px; margin: 0 0 40px; }
+.content > section.previewSection > .previewHeading h2 { min-width: 0; margin: 0; color: #fff; font-size: 22px; font-weight: 500; line-height: 27px; text-align: left; }
 .content > section.previewSection > h2 { margin: 0 0 40px; color: #fff; font-size: 22px; font-weight: 500; line-height: 27px; text-align: left; }
 .content > section.previewSection > h2 a { color: inherit; font: inherit; text-decoration: none; }
 .content > section.previewSection > h2 a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.previewHeading h2 a { color: inherit; font: inherit; text-decoration: none; }
+.previewHeading h2 a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.previewAll { display: inline-flex; width: 52px; min-height: 28px; flex: 0 0 52px; align-items: center; justify-content: center; box-sizing: border-box; padding: 0 4px; border: 1px solid #7e7e7e; border-radius: 37px; background: transparent; color: #7e7e7e; font: inherit; font-size: 18px; line-height: 1.12; text-decoration: none; cursor: pointer; }
+.previewAll:hover { border-color: #fff; color: #fff; }
 .overviewPosterGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; margin: 0; padding: 0; list-style: none; }
 .overviewPosterGrid > li { min-width: 0; }
 .overviewPosterGrid :is(.railPosterLink, .railPoster, .railPosterFallback) { aspect-ratio: 265 / 395; border-radius: 20px; }
 .previewSection .activityCaption { display: flex; flex-direction: column; gap: 4px; margin: 12px 0 0; color: #aaa; font-size: 14px; line-height: 1.4; }
 .activityCaption time { font-size: 12px; }
+.activityRating { display: flex; height: 19px; align-items: center; gap: 2px; margin-top: 18px; }
+.activityRatingStar { position: relative; display: block; width: 20px; height: 19px; }
+.activityRatingStar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: .42; }
+.activityRatingStar .activityRatingFill { opacity: .8; }
 .previewAction { display: table; min-height: 44px; max-width: 100%; box-sizing: border-box; margin: 12px 0 0 auto; padding: 11px 18px; border: 1px solid #5a5a5a; border-radius: 999px; background: transparent; color: #ddd; font: inherit; font-size: 12px; line-height: 20px; text-align: center; overflow-wrap: anywhere; cursor: pointer; }
 .previewAction:hover { border-color: var(--rewind-cyan); color: #fff; }
 .previewSection .reviewCards { margin-top: 0; }
@@ -41,8 +51,18 @@
   .page[data-profile-view="collection"] .tabs { display: none; }
 }
 @media (min-width: 1024px) {
+  .page:not([data-profile-view]) :global(#profile-statistics) { display: none; }
+  :global(#profile-activity) li[data-activity-rated="true"] .activityCaption { display: none; }
+  :global(#profile-review-preview) > .previewHeading,
+  :global(#profile-lists) > .previewHeading { margin-bottom: 55px; }
+  :global(#profile-following-preview) > .previewHeading { margin-bottom: 54px; }
+  :global(#profile-lists) .previewAll { margin-top: -4px; }
+  .page:not([data-profile-view]):not([data-network-view]) :global(#profile-review-preview) .reviewCard { height: 315px; min-height: 315px; box-sizing: border-box; overflow: hidden; }
   .content > section.section.previewSection { margin-top: 85px; }
+  .content > section.previewSection > .previewHeading { margin-bottom: 58px; }
+  .content > section.previewSection > .previewHeading h2 { font-size: 24px; }
   .content > section.previewSection > h2 { margin-bottom: 59px; font-size: 24px; }
+  .content > section.previewSection:global(#profile-lists) { margin-top: 83px; }
   .overviewPosterGrid { gap: 46px; }
   .reviewCard { grid-template-columns: 175px minmax(0, 1fr); gap: 40px; }
   .reviewCopy h3 { font-size: 24px; }
@@ -51,12 +71,47 @@
   .previewSection .reviewCards { gap: 36px; }
 }
 @media (max-width: 767px) {
+  .previewAll { display: none; }
+  .content > section.section.previewSection.emptyPreviewSection { display: flex; height: 92px; min-height: 92px; box-sizing: border-box; flex-direction: column; gap: 10px; padding: 10px 0 33px; }
+  .content > section.previewSection.emptyPreviewSection > .previewHeading { min-height: 18px; margin: 0; }
+  .content > section.previewSection.emptyPreviewSection > .previewHeading h2 { font-size: 16px; font-weight: 600; line-height: normal; }
+  .content > section.previewSection.emptyPreviewSection > .empty { margin: 0; font-size: 12px; line-height: normal; }
   .profileNav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin: 35px 0 0; padding: 0; overflow: visible; border: 0; border-radius: 0; background: transparent; }
   .profileNav a { min-width: 0; min-height: 44px; justify-content: center; padding: 8px 4px; font-size: 12px; line-height: 1.3; text-align: center; white-space: normal; overflow-wrap: anywhere; }
-  .profileNav a[data-collection-kind="watched"] { display: none; }
+  .profileNav a[data-collection-kind="watched"] [data-desktop-label] { display: none; }
+  .profileNav a[data-collection-kind="watched"] [data-mobile-label] { display: inline; }
+  .profileNav a[data-collection-kind="watchlist"] { display: none; }
+  .page:not([data-profile-view]):not([data-network-view]):not([data-films-view]) .heroCopy > .username:not([aria-label]) { display: none; }
+  .page:not([data-profile-view]):not([data-network-view]):not([data-films-view]) .heroCopy .bio { margin-top: 0; }
+  .page:not([data-profile-view]):not([data-network-view]):not([data-films-view]) .heroMetrics { margin-top: 0; }
+  .content > section.section.previewSection[id="profile-overview"] > h2 { margin: 0 0 24px; font-size: 14px; font-weight: 600; line-height: 16px; }
+  :global(#profile-activity) { display: flex; flex-direction: column; }
+  :global(#profile-activity) > .previewHeading { display: contents; }
+  :global(#profile-activity) > .previewHeading > h2 { order: 1; margin: 0 0 24px; font-size: 14px; font-weight: 600; line-height: 16px; }
+  :global(#profile-activity) > ul { order: 2; }
+  :global(#profile-activity) li[data-activity-rated="true"] .activityCaption { display: none; }
+  :global(#profile-activity) .activityRating { height: 11px; gap: 2px; margin-top: 9px; }
+  :global(#profile-activity) .activityRatingStar { width: 7px; height: 11px; }
+  :global(#profile-activity) > .previewHeading > .previewAll { display: inline-flex; order: 3; align-self: flex-end; width: auto; min-width: 52px; min-height: 35px; flex-basis: auto; margin: 35px 0 0; padding: 10px 15px; border: 0; background: #282828; color: #fff; font-size: 11px; }
+  :global(#profile-activity) > .previewHeading > .previewAll::after { margin-left: 5px; content: "›"; font-size: 16px; line-height: 1; }
+  .content > section.section.previewSection[id="profile-overview"] + section.previewSection { margin-top: 34px; }
+  .content > section.section.previewSection[id="profile-activity"] + section.previewSection { margin-top: 30px; }
+  .content > section.section.previewSection[id="profile-review-preview"] > .previewHeading { margin-bottom: 23px; }
+  .content > section.section.previewSection[id="profile-review-preview"] + section.previewSection { margin-top: 34px; }
+  .content > section.section.previewSection[id="profile-following-preview"] + section.previewSection { margin-top: 31px; }
+  .content > section.section.previewSection[id="profile-lists"] > .previewHeading { margin-bottom: 23px; }
+  .content > section.section.previewSection[id="profile-lists"] { padding-top: 7px; }
+  :global(#profile-review-preview) .reviewCard { overflow: hidden; }
+  :global(#profile-review-preview) .reviewCopy time { margin-top: 2px; font-size: 10px; line-height: 1.2; }
+  :global(#profile-review-preview) .reviewCopy .reviewContent { margin-top: 8px; color: #999; font-size: 10px; line-height: 1.2; }
+  :global(#profile-review-preview) .reviewCard:nth-child(1) { height: 208px; min-height: 208px; }
+  :global(#profile-review-preview) .reviewCard:nth-child(2) { height: 195px; min-height: 195px; }
+  :global(#profile-lists) [data-profile-list-body],
+  :global(#profile-statistics) { display: none; }
   .content > section.section.previewSection { margin-top: 35px; padding-top: 8px; }
-  .content > section.section.previewSection[id="profile-overview"] { margin-top: 23px; }
-  .content > section.previewSection > h2 { margin-bottom: 24px; font-size: 14px; line-height: 16px; }
+  .content > section.section.previewSection[id="profile-overview"] { margin-top: 22px; }
+  .content > section.previewSection > .previewHeading { min-height: 16px; margin-bottom: 24px; }
+  .content > section.previewSection > .previewHeading h2 { font-size: 14px; line-height: 16px; }
   .overviewPosterGrid { gap: 15px; }
   .overviewPosterGrid :is(.railPosterLink, .railPoster, .railPosterFallback) { aspect-ratio: 79 / 116; border-radius: 10px; }
   .previewSection .activityCaption { margin-top: 9px; font-size: 12px; line-height: 1.4; }
@@ -64,12 +119,14 @@
   .previewSection .reviewCard { min-height: 208px; box-sizing: border-box; padding: 26px 18px; }
   .followingPreview a { width: 44px; min-height: 44px; }
   .followingPreview img, .followingInitial { width: 40px; height: 40px; }
-  .followingInitial { font-size: 18px; }
+  .followingInitial { color: #aaa; font-size: 16px; }
   .overviewLinks { display: grid; gap: 5px; margin-top: 35px; }
   .overviewLinks a { display: flex; min-width: 0; min-height: 44px; align-items: center; justify-content: space-between; gap: 16px; box-sizing: border-box; padding: 10px 15px; border-radius: 37px; background: #282828; color: #fff; font-size: 12px; line-height: 1.4; text-decoration: none; overflow-wrap: anywhere; }
   .overviewLinks a > span { font-size: 20px; line-height: 1; }
   .overviewLinks a:focus-visible { outline-offset: -3px; }
 }
+
+.profileNav a[data-collection-kind="watched"] [data-mobile-label] { display: none; }
 
 @media (max-width: 360px) {
   .profileNav { display: flex; justify-content: space-between; gap: 2px; overflow-x: auto; }
@@ -81,9 +138,9 @@
 }
 
 @media (max-width: 560px) {
-  .page[data-profile-view="reviews"] .reviewHeading { flex-wrap: wrap; }
-  .page[data-profile-view="reviews"] .reviewHeading h3 { flex-basis: 100%; }
-  .page[data-profile-view="reviews"] .reviewHeadingActions { width: 100%; min-width: 0; flex-wrap: wrap; align-items: flex-start; gap: 8px; }
+  .page[data-profile-view="reviews"] .reviewHeading { flex-wrap: nowrap; }
+  .page[data-profile-view="reviews"] .reviewHeading h3 { flex-basis: auto; }
+  .page[data-profile-view="reviews"] .reviewHeadingActions { width: auto; min-width: 0; flex-wrap: nowrap; align-items: flex-start; gap: 0; }
   .page[data-profile-view="reviews"] .reviewActions { max-width: 100%; flex-wrap: wrap; gap: 4px; }
   .page[data-profile-view="reviews"] .reviewActions button { display: inline-flex; width: auto; min-width: 44px; height: 44px; align-items: center; justify-content: center; gap: 6px; padding: 0 6px; border: 0; border-radius: 0; font-size: 12px; white-space: nowrap; }
   .page[data-profile-view="reviews"] .reviewActions button::before { display: none; }
@@ -91,6 +148,10 @@
   .page[data-profile-view="reviews"] .reviewActions button:first-child { flex-direction: row-reverse; }
   .page[data-profile-view="reviews"] .reviewActions button:last-child i { display: none; }
   .reviewEditorActions button { min-width: 0; padding-inline: 12px; font-size: 12px; }
+}
+
+@media (max-width: 767px) {
+  .page[data-profile-view="reviews"] .reviewCopy .reviewContent { font-size: 10px; }
 }
 
 @media (max-width: 400px) {
@@ -136,18 +197,25 @@
   .reviewActionIcon { width: 13px; height: 13px; }
   .reviewLoading > div { padding: 16px; }
   .page[data-review-detail] .hero, .page[data-review-detail] .profileNav, .page[data-review-detail] .reviewsBack { display: none; }
-  .reviewDetailToolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 8px; width: 100%; padding-top: 44px; margin-bottom: 28px; text-align: center; }
+  .reviewDetailToolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 8px; width: 100%; padding-top: 44px; margin-bottom: 26px; text-align: center; }
   .reviewDetailToolbar a { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 50%; background: #282828; color: #fff; font-size: 24px; text-decoration: none; }
   .reviewDetailToolbar > h2 { min-width: 0; margin: 0; overflow-wrap: anywhere; font-size: 14px; font-weight: 500; line-height: 1.4; }
   .reviewDetailToolbar > h2:focus { outline: 3px solid var(--rewind-cyan); outline-offset: 4px; }
   .page[data-review-detail] { min-height: calc(100dvh - 70px); }
   .page[data-review-detail] .content > section[id="profile-reviews"] { margin: 0; padding: 0; border: 0; }
   .page[data-review-detail] .content > section[id="profile-reviews"] > h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-  .page[data-review-detail] .reviewCard { position: relative; margin-bottom: 72px; }
-  .page[data-review-detail] .reviewCopy .reviewContent { font-size: 14px; line-height: 1.5; }
+  .page[data-review-detail] .reviewCard { position: relative; min-height: 208px; margin-bottom: 72px; }
+  .page[data-review-detail] .reviewHeading { flex-wrap: nowrap; }
+  .page[data-review-detail] .reviewHeading h3 { flex-basis: auto; }
+  .page[data-review-detail] .reviewHeadingActions { width: auto; flex: 0 0 auto; }
+  .page[data-review-detail] .reviewCopy time { margin-top: 2px; font-size: 10px; line-height: 1.2; }
+  .page[data-review-detail] .reviewCopy .reviewContent { margin-top: 8px; font-size: 10px; line-height: 1.2; -webkit-line-clamp: 10; line-clamp: 10; }
+  .page[data-review-detail] .globalReviewLink { display: none; }
   .page[data-review-detail] .reviewHeadingActions { width: auto; }
-  .page[data-review-detail] .reviewActions { position: absolute; top: calc(100% + 16px); right: 0; }
-  .page[data-review-detail] .reviewActions button { min-height: 44px; border-radius: 24px; padding-inline: 12px; background: #282828; font-size: 12px; }
+  .page[data-review-detail] .reviewActions { position: absolute; top: calc(100% + 19px); right: 0; }
+  .page[data-review-detail] .reviewActions button { min-height: 34px; height: 34px; box-sizing: border-box; border-radius: 24px; padding-inline: 12px; background: #282828; font-size: 11px; }
+  .page[data-review-detail] .reviewActions button:first-child { width: 96px; }
+  .page[data-review-detail] .reviewActions button:last-child { width: 113px; }
   .page[data-review-detail] .reviewEditorActions { align-items: stretch; }
   .page[data-review-detail] .reviewEditor textarea { min-height: 280px; }
 }

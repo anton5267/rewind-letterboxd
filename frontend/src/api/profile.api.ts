@@ -93,6 +93,12 @@ export type ProfilePage<T> = NumberedPage<T>;
 export const getProfileCollection = (collection: ProfileCollection, page: number) =>
   api.get<MoviePage>(`/profile/me/${collection}`, { params: { page, size: 24 } });
 
+export const setMyWatchlistVisibility = (isPublic: boolean) =>
+  api.put<{ isPublic: boolean }>("/profile/me/watchlist/visibility", { isPublic });
+
+export const clearMyWatchlist = () =>
+  api.delete<{ removed: number }>("/profile/me/watchlist");
+
 export const getProfileRatings = (page: number) =>
   api.get<ProfilePage<ProfileRating>>("/profile/me/ratings", { params: { page, size: 12 } });
 
@@ -100,6 +106,7 @@ export const getProfileReviews = (page: number) =>
   api.get<ProfilePage<ProfileReview>>("/profile/me/reviews", { params: { page, size: 12 } });
 
 export type PublicCollection = "watched" | "watchlist" | "favorites";
+export type PublicProfileCollectionKind = PublicCollection | "liked-lists";
 
 export interface PublicProfileReview {
   id: number;
@@ -135,6 +142,7 @@ export interface PublicProfileList {
   ownerId: number;
   ownerUsername: string;
   tags: string[];
+  likeCount?: number | null;
   itemCount?: number | null;
   previewMovies: MoviePreview[];
 }
@@ -150,6 +158,9 @@ export const getPublicProfileCollection = (userId: string | number, collection: 
 
 export const getPublicProfileLists = (userId: string | number, page: number) =>
   api.get<PublicProfileListPage>(`/users/${userId}/lists`, { params: { page, size: 12 } });
+
+export const getPublicProfileLikedLists = (userId: string | number, page: number) =>
+  api.get<PublicProfileListPage>(`/users/${userId}/collections/liked-lists`, { params: { page, size: 12 } });
 
 export const getPublicProfileLikedReviews = (userId: string | number, page: number) =>
   api.get<PublicProfileReviewPage>(`/users/${userId}/liked-reviews`, { params: { page, size: 10 } });

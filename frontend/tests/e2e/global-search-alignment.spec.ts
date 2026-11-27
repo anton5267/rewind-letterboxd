@@ -74,11 +74,11 @@ for (const locale of ["uk", "en"] as const) {
     const main = page.getByRole("main");
     const shortcuts = main.getByRole("navigation", { name: locale === "uk" ? "Швидкі переходи пошуку" : "Search shortcuts" });
     const expected = locale === "uk"
-      ? ["Фільми", "Вибрані добірки", "Популярні фільми", "Списки", "Учасники", "Популярні рецензенти"]
-      : ["Films", "Featured lists", "Popular films", "Lists", "Members", "Popular reviewers"];
+      ? ["Фільми", "Вибрані добірки", "Популярні фільми", "Списки", "Учасники", "Рецензенти"]
+      : ["Films", "Featured lists", "Popular films", "Lists", "Members", "Reviewers"];
     await expect(shortcuts.getByRole("link")).toHaveCount(6);
     for (const label of expected) await expect(shortcuts.getByRole("link", { name: label, exact: true })).toBeVisible();
-    await expect(shortcuts.getByRole("link", { name: expected[1], exact: true })).toHaveAttribute("href", `/${locale}/lists/discover?feed=team`);
+    await expect(shortcuts.getByRole("link", { name: expected[1], exact: true })).toHaveAttribute("href", `/${locale}/lists/discover?feed=featured`);
     await expect(shortcuts.getByRole("link", { name: expected[2], exact: true })).toHaveAttribute("href", `/${locale}/films?sort=rating_desc`);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
 

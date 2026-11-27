@@ -1,4 +1,4 @@
-import type { AdminAuditLogResponse, AdminDashboardResponse, AdminSettingResponse } from "../contracts/admin.ts";
+import type { AdminActivityOverviewResponse, AdminAuditLogResponse, AdminDashboardResponse, AdminSettingResponse } from "../contracts/admin.ts";
 import type { RewindApiRepository } from "../contracts/repository.ts";
 import {
   beginAdminTransaction,
@@ -24,6 +24,7 @@ function toAdminAuditLog(row: {
 
 export const adminOperationsRepository: Pick<RewindApiRepository,
   | "getAdminDashboard"
+  | "getAdminActivityOverview"
   | "getAdminAuditLogs"
   | "getAdminSettings"
   | "updateAdminSetting"
@@ -48,6 +49,83 @@ export const adminOperationsRepository: Pick<RewindApiRepository,
         users: Number(row.users), activeUsers: Number(row.active_users), hqUsers: Number(row.hq_users),
         movies: Number(row.movies), reviews: Number(row.reviews), hiddenReviews: Number(row.hidden_reviews),
       } satisfies AdminDashboardResponse;
+    } catch (error) {
+      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+      throw error;
+    } finally { connection.release(); }
+  },
+
+  async getAdminActivityOverview(authUser) {
+    const { connection } = await beginAdminTransaction(authUser);
+    try {
+      const [metrics, users] = await Promise.all([
+        connection.queryObject<{
+          average_watched: string; average_reviews: string; average_all_lists: string;
+          average_custom_lists: string; average_watchlist: string;
+        }>({
+          text: `WITH per_user AS (
+                   SELECT u.id,
+                          COALESCE(w.watched, 0)::numeric AS watched,
+                          COALESCE(r.reviews, 0)::numeric AS reviews,
+                          COALESCE(all_lists.list_count, 0)::numeric AS all_lists,
+                          COALESCE(custom_lists.list_count, 0)::numeric AS custom_lists,
+                          COALESCE(watchlist.items, 0)::numeric AS watchlist
+                   FROM rewind.users u
+                   LEFT JOIN (
+                     SELECT l.user_id, COUNT(li.id) AS watched
+                     FROM rewind.lists l LEFT JOIN rewind.list_items li ON li.list_id=l.id
+                     WHERE l.list_type='WATCHED' GROUP BY l.user_id
+                   ) w ON w.user_id=u.id
+                   LEFT JOIN (
+                     SELECT user_id, COUNT(*) AS reviews FROM rewind.reviews GROUP BY user_id
+                   ) r ON r.user_id=u.id
+                   LEFT JOIN (
+                     SELECT user_id, COUNT(*) AS list_count FROM rewind.lists GROUP BY user_id
+                   ) all_lists ON all_lists.user_id=u.id
+                   LEFT JOIN (
+                     SELECT user_id, COUNT(*) AS list_count FROM rewind.lists WHERE list_type='CUSTOM' GROUP BY user_id
+                   ) custom_lists ON custom_lists.user_id=u.id
+                   LEFT JOIN (
+                     SELECT l.user_id, COUNT(li.id) AS items
+                     FROM rewind.lists l LEFT JOIN rewind.list_items li ON li.list_id=l.id
+                     WHERE l.list_type='WATCHLIST' GROUP BY l.user_id
+                   ) watchlist ON watchlist.user_id=u.id
+                 )
+                 SELECT ROUND(COALESCE(AVG(watched), 0), 1)::text AS average_watched,
+                        ROUND(COALESCE(AVG(reviews), 0), 1)::text AS average_reviews,
+                        ROUND(COALESCE(AVG(all_lists), 0), 1)::text AS average_all_lists,
+                        ROUND(COALESCE(AVG(custom_lists), 0), 1)::text AS average_custom_lists,
+                        ROUND(COALESCE(AVG(watchlist), 0), 1)::text AS average_watchlist
+                 FROM per_user`,
+        }),
+        connection.queryObject<{
+          id: string; username: string; display_name: string | null; email: string;
+          follower_count: string; is_active: boolean;
+        }>({
+          text: `SELECT u.id::text AS id, u.username, u.display_name, u.email, u.is_active,
+                        COALESCE(follower_counts.total, 0)::text AS follower_count
+                 FROM rewind.users u
+                 LEFT JOIN LATERAL (
+                   SELECT COUNT(*) AS total FROM rewind.follows f
+                   JOIN rewind.users follower ON follower.id=f.follower_id AND follower.is_active
+                   WHERE f.following_id=u.id
+                 ) follower_counts ON TRUE
+                 ORDER BY u.created_at DESC NULLS LAST, u.id DESC LIMIT 4`,
+        }),
+      ]);
+      await connection.queryObject("COMMIT");
+      const aggregate = metrics.rows[0];
+      return {
+        users: users.rows.map(row => ({
+          id: safeId(row.id, "User ID"), username: row.username, displayName: row.display_name,
+          email: row.email, followerCount: Number(row.follower_count), isActive: row.is_active,
+        })),
+        metrics: {
+          averageWatched: Number(aggregate?.average_watched ?? 0), averageReviews: Number(aggregate?.average_reviews ?? 0),
+          averageAllLists: Number(aggregate?.average_all_lists ?? 0), averageCustomLists: Number(aggregate?.average_custom_lists ?? 0),
+          averageSessionMinutes: null, averageWatchlist: Number(aggregate?.average_watchlist ?? 0),
+        },
+      } satisfies AdminActivityOverviewResponse;
     } catch (error) {
       try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
       throw error;

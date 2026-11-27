@@ -61,6 +61,39 @@
   font-size: 12px;
 }
 
+.listCreateAction {
+  display: flex;
+  width: max-content;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  margin: 42px auto 0;
+  border-radius: 24px;
+  padding: 0 24px;
+  background: #282828;
+  color: #fff;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.page .listCreateAction { color: #fff; }
+.listCreateAction:hover,
+.listCreateAction:focus-visible { background: #3a3a3a; text-decoration: underline; text-underline-offset: 3px; }
+
+.profileListTags { margin-top: 40px; border-top: 1px solid #4d4d4d; padding-top: 24px; }
+.profileListTags h3 { margin: 0 0 24px; font-size: 18px; font-weight: 500; }
+.profileListTags > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.profileListTags a { display: inline-flex; min-height: 30px; align-items: center; border: 1px solid #555; border-radius: 18px; padding: 0 12px; color: #ddd; font-size: 12px; text-decoration: none; }
+.profileListTags a:hover,
+.profileListTags a:focus-visible { border-color: #fff; color: #fff; }
+.page .profileListTags a { color: #ddd; }
+
+@media (max-width: 767px) {
+  .listCreateAction,
+  .profileListTags { display: none; }
+}
+
 @media (max-width: 767px) {
   .page {
     padding: 88px 16px 32px;
@@ -281,6 +314,81 @@
   color: #999;
   font-size: 12px;
 }
+
+.collectionRating {
+  margin-top: 4px;
+  color: #777;
+  font-size: 12px;
+  letter-spacing: .4px;
+  line-height: 14px;
+}
+
+.collectionRating span {
+  color: transparent;
+  background: linear-gradient(90deg, #8f8f8f var(--rating-fill), #4b4b4b var(--rating-fill));
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+.collectionLikeMeta {
+  display: flex;
+  width: 79px;
+  height: 11px;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.collectionLikeMeta img:first-child { width: 51.96px; height: 8.97px; }
+.collectionLikeMeta img:last-child { width: 8px; height: 8px; }
+
+.filmsPagination {
+  position: relative;
+  display: flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.filmsPaginationPages {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #888;
+  font-size: 16px;
+}
+
+.filmsPaginationPages button {
+  min-width: 20px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.filmsPaginationPages button[aria-current="page"] {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.filmsOlder {
+  position: absolute;
+  right: 0;
+  min-height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: #292929;
+  color: #aaa;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.filmsPagination button:disabled { cursor: not-allowed; opacity: .55; }
 
 .posterRail {
   display: grid;

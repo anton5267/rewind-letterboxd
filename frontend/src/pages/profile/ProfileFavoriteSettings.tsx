@@ -57,12 +57,12 @@ export default function ProfileFavoriteSettings({ favorites }: ProfileFavoriteSe
   };
 
   return (
-    <section ref={favoriteSettingsRef} className={styles.favorites} aria-labelledby="settings-favorites-title" aria-busy={favoritePreviewLoading || favoriteRemovalId !== null || favoriteOrder.busy}>
+    <section ref={favoriteSettingsRef} className={styles.favorites} data-profile-favorites aria-labelledby="settings-favorites-title" aria-busy={favoritePreviewLoading || favoriteRemovalId !== null || favoriteOrder.busy}>
       <h2 id="settings-favorites-title" tabIndex={-1}>{t("favoriteFilms")}</h2>
       {favoritePreviewLoading && <p role="status">{t("loading")}</p>}
       {favoriteOrder.busy && <p role="status">{t("saving")}</p>}
       {favoritePreviewError && <RetryNotice className={styles.error} message={t("loadCollectionError")} retryLabel={t("retry")} onRetry={retry} />}
-      {!favoritePreviewLoading && !favoritePreviewError && favoritePreview && (favoritePreview.content.length === 0 ? <p>{t("noCollectionFilms")}</p> : <ul>
+      {!favoritePreviewLoading && !favoritePreviewError && favoritePreview && (favoritePreview.content.length === 0 ? <p>{t("noCollectionFilms")}</p> : <ul data-profile-favorite-posters>
         {favoritePreview.content.slice(0, 4).map((movie, index) => {
           const title = editorialText(movie.title, t("untitledFilm"));
           const disabled = favoriteRemovalId !== null || favoriteOrder.busy;
@@ -168,7 +168,7 @@ export default function ProfileFavoriteSettings({ favorites }: ProfileFavoriteSe
           </li>;
         })}
       </ul>)}
-      {favoriteOrder.available && (favoritePreview?.content.length ?? 0) > 1 && <p id="favorite-reorder-instructions" className={styles.instructions}>
+      {favoriteOrder.available && (favoritePreview?.content.length ?? 0) > 1 && <p id="favorite-reorder-instructions" className={styles.instructions} data-profile-favorite-instructions>
         <span className={styles.desktopInstructions}>{t("favoriteReorderHelp")}</span>
         <span className={styles.phoneInstructions}>{t("favoriteReorderPhoneHelp")}</span>
       </p>}

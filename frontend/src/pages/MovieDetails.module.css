@@ -603,6 +603,9 @@
   font-size: 13px;
 }
 
+.similarTitle,
+.similarMeta { display: none; }
+
 .review {
   margin-top: 16px;
   padding: 20px;
@@ -610,6 +613,8 @@
   border-radius: var(--rewind-radius-lg);
   background: var(--rewind-surface-raised);
 }
+
+.crewAvatar img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 
 .myReview {
   border-color: var(--rewind-brand-amber);
@@ -763,21 +768,23 @@
     grid-template-columns: minmax(0, 1fr);
     align-items: start;
     align-content: start;
-    gap: 24px;
+    gap: 161px;
     min-height: 0;
-    padding: calc(165px + env(safe-area-inset-top)) 16px 40px;
+    padding: calc(76px + env(safe-area-inset-top)) 16px 40px;
   }
 
   .state { background: var(--rewind-surface); color: #f5f5f5; }
   .posterFrame { grid-column: 1; grid-row: 2; justify-self: center; width: 120px; }
   .poster, .posterFallback { border-radius: 10px; }
-  .heroCopy { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; gap: 12px; }
-  .mobileTitleControls { display: flex; min-width: 0; min-height: 27px; align-items: center; justify-content: space-between; gap: 16px; }
+  .heroCopy { position: relative; grid-column: 1; grid-row: 1; display: flex; flex-direction: column; gap: 0; padding-top: 20px; }
+  .mobileTitleControls { position: absolute; inset: 0 0 auto; display: flex; min-width: 0; min-height: 0; align-items: center; justify-content: space-between; gap: 16px; }
+  .mobileTitleControls { align-items: flex-start; }
   .mobileAgeRating { border: 1px solid var(--rewind-muted); border-radius: 37px; padding: 2px 6px; color: var(--rewind-muted); font-size: 12px; white-space: nowrap; }
-  .mobileTitleControls a { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; margin: -8.5px 0 -8.5px auto; padding: 8px 12px; border-radius: 37px; background: #fff; color: #000; font-size: 12px; text-decoration: none; }
+  .mobileAgeRating { padding: 0 4px; font-size: 10px; line-height: 12px; }
+  .mobileTitleControls a { display: inline-flex; min-height: 30px; align-items: center; justify-content: center; margin: 0 0 0 auto; padding: 6px 12px; border-radius: 37px; background: #fff; color: #000; font-size: 12px; text-decoration: none; }
   .mobileTitleControls a:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 3px; }
   .mobileTrailerUnavailable { margin-left: auto; color: var(--rewind-muted); font-size: 12px; text-align: right; }
-  .heroCopy h1 { margin: 0; overflow-wrap: anywhere; font-size: 26px; line-height: 1.12; letter-spacing: 0; }
+  .heroCopy h1 { margin: 0; overflow-wrap: anywhere; font-size: 18px; line-height: 1.12; letter-spacing: 0; }
   .meta { margin: 0; color: var(--rewind-muted); font-size: 12px; line-height: 1.2; }
   .meta .desktopMeta { display: none; }
   .meta li + li::before { margin: 0 5px; }
@@ -825,16 +832,17 @@
     color: #fff;
   }
   .mobileSectionHeading h2 { margin: 0 0 16px; font-size: 14px; line-height: 1.12; }
+  .mobileDetailSection[aria-labelledby="mobile-crew-title"] { padding-top: 26px; }
   .ratingSummaryRow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: #bcb8c1; font-size: 12px; }
   .movieRating { display: inline-flex; align-items: center; gap: 8px; color: #fff; font-size: 24px; white-space: nowrap; }
-  .externalRatingPill { padding: 4px 7px; border: 1px solid rgba(255, 255, 255, .2); border-radius: 999px; }
-  .crewRail { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px 4px; padding-bottom: 0; }
-  .crewCard { display: grid; min-width: 0; justify-items: center; align-content: start; gap: 8px; color: #fff; text-align: center; text-decoration: none; }
-  .crewAvatar { display: grid; width: min(69.21px, 100%); aspect-ratio: 1; place-items: center; border-radius: 50%; background: #333; color: #fff; font-weight: 800; }
+  .externalRatingPill { padding: 5px 8px; border: 1px solid #555; border-radius: 999px; background: #000; font-size: 10px; line-height: normal; }
+  .crewRail { display: flex; gap: 0; overflow-x: auto; overscroll-behavior-inline: contain; padding: 0 0 2px; scroll-snap-type: x proximity; }
+  .crewCard { display: grid; min-width: 0; flex: 0 0 90px; justify-items: center; align-content: start; gap: 8px; color: #fff; text-align: center; text-decoration: none; scroll-snap-align: start; }
+  .crewAvatar { display: grid; width: 68px; aspect-ratio: 1; place-items: center; border-radius: 50%; background: #333; color: #fff; font-weight: 800; }
   .crewCard strong,
-  .crewCard small { max-width: 76px; overflow-wrap: anywhere; }
-  .crewCard strong { font-size: 12px; line-height: 1.2; }
-  .crewCard small { color: var(--rewind-muted); font-size: 12px; line-height: 1.2; }
+  .crewCard small { max-width: 90px; overflow-wrap: anywhere; }
+  .crewCard strong { font-size: 11px; line-height: 1.2; }
+  .crewCard small { color: var(--rewind-muted); font-size: 11px; line-height: 1.2; }
   .section { border-color: #36363a; background: #242426; color: #fff; box-shadow: none; }
   .similarSection,
   .reviewsSection { background: #1f1f1f; }
@@ -903,6 +911,11 @@
   }
   .reviewsSection[data-reviews-expanded="false"] .additionalReviews,
   .reviewsSection[data-reviews-expanded="false"] .pagination { display: none; }
+  .reviewsSection .review > p + p,
+  .reviewsSection .review > section[aria-label],
+  .reviewsSection .signIn { display: none; }
+  .reviewsSection > .sectionHeading { margin-bottom: 18px; }
+  .reviewsSection { padding-bottom: 7px; }
   .allReviewsButton { display: flex; }
   .reviewActions button,
   .reviewFormActions button,
@@ -913,7 +926,7 @@
     gap: 8px;
     overflow-x: auto;
     overscroll-behavior-inline: contain;
-    padding: 3px 3px 6px;
+    padding: 0 3px 0;
     scroll-padding-inline: 3px;
     scroll-snap-type: x proximity;
     scrollbar-width: thin;
@@ -924,10 +937,29 @@
   .similarFallback { aspect-ratio: 100 / 149; border-radius: 10px; }
   .storylineSection { display: block; }
   .storylineCard { padding: 20px; border-radius: 20px; background: #282828; }
-  .storylineCard h3 { margin: 0 0 16px; font-size: 14px; line-height: 1.12; overflow-wrap: anywhere; }
+  .storylineTitleRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .storylineCard h3 { margin: 0; font-size: 14px; line-height: 1.12; overflow-wrap: anywhere; }
+  .storylineDesktopCategory { display: none; }
+  .storylineCard h4.storylineMobileCategory { display: block; flex: none; margin: 0; color: var(--rewind-muted); font-size: 11px; font-weight: 500; line-height: 13px; }
+  .storylineCard .storylineTitleRow + p { margin-top: 16px; }
   .storylineCard p { margin: 0; color: var(--rewind-muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; white-space: pre-line; }
   .actionSection,
   .section { margin-top: 0; border: 0; border-top: 1px solid #4d4d4d; border-radius: 0; padding: 32px 0; background: #1f1f1f; }
+  section.reviewsSection { padding-bottom: 30px; }
+  section.reviewsSection > .sectionHeading { margin-bottom: 18px; }
+  section.reviewsSection[data-empty-reviews="true"] {
+    width: calc(100% + 32px);
+    margin-inline: -16px;
+    padding: 16px 16px 28px;
+    box-sizing: border-box;
+  }
+  section.reviewsSection[data-empty-reviews="true"] > .sectionHeading { margin-bottom: 20px; }
+  section.reviewsSection[data-empty-reviews="true"] > .empty {
+    height: 24px;
+    color: #aaa6a1;
+    font-size: 16px;
+    line-height: 22px;
+  }
   .section .sectionHeading { margin-bottom: 16px; }
   .section .sectionHeading h2 { font-size: 14px; line-height: 1.12; }
   .section .eyebrow { display: none; }
@@ -937,7 +969,7 @@
   .ratingRow { align-items: flex-start; flex-direction: column; gap: 10px; }
   .ratingButtons { width: 100%; }
   .ratingButtons button { flex: 1 1 0; min-width: 0; padding-inline: 6px; }
-  .review { padding: 18px; border: 0; border-radius: 20px; background: #282828; }
+  .review { padding: 17px; border: 0; border-radius: 20px; background: #282828; }
   .review > p { font-size: 12px; line-height: 1.6; white-space: pre-line; }
   .reviewActions,
   .reviewFormActions { align-items: stretch; flex-direction: column; }
@@ -955,7 +987,7 @@
    backdrop, a 275 px poster, and a 1200 px content rail below it. */
 @media (min-width: 768px) {
   .page {
-    padding: 80px 0 72px;
+    padding: 0 0 160px;
     background: #1f1f1f;
     color: #fff;
   }
@@ -982,7 +1014,7 @@
   }
 
   .heroGrid {
-    grid-template-columns: 275px minmax(0, 581px) minmax(205px, 1fr);
+    grid-template-columns: 275px minmax(0, 581px) 234px;
     gap: 55px;
     width: min(var(--rewind-content-width), calc(100% - 48px));
     min-height: 1118px;
@@ -1000,13 +1032,19 @@
   .heroCopy {
     align-self: start;
     padding-top: 63px;
+    display: flex;
+    flex-direction: column;
   }
 
   .heroActions {
     grid-column: 3;
     align-self: start;
-    margin: 84px 0 0;
-    padding: 18px 14px;
+    width: 251px;
+    height: 170px;
+    box-sizing: border-box;
+    margin: 115px 0 0 -17px;
+    overflow: visible;
+    padding: 12px 12px 10px;
     border: 0;
     border-radius: 20px;
     background: #282828;
@@ -1047,7 +1085,7 @@
   .heroActions .ratingRow {
     display: grid;
     gap: 6px;
-    margin-top: 7px;
+    margin-top: 2px;
     color: #fff;
   }
 
@@ -1058,33 +1096,54 @@
   .heroActions .ratingButtons .ratingActive { background: #f2c777; color: #1b191c; }
 
   .heroActions .listPicker {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 3;
+    box-sizing: border-box;
+    width: 100%;
     grid-template-columns: 1fr;
     gap: 7px;
-    margin-top: 10px;
+    margin: 0;
+    padding: 14px;
+    border-radius: 20px;
+    background: #282828;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
     color: #fff;
     font-size: 12px;
   }
 
+  .heroActions .listPicker[hidden] { display: none; }
+
   .heroActions .listPicker select { min-height: 40px; border-radius: 12px; }
   .heroActions .listPicker .primaryButton { min-height: 40px; border-radius: 999px; }
+  .heroActionListToggle,
   .heroActionReview {
+    position: absolute;
+    left: 0;
     width: 100%;
-    min-height: 44px;
-    margin-top: 10px;
+    min-height: 59px;
+    margin: 0;
     border: 0;
-    border-radius: 999px;
-    background: #fff;
-    color: #171717;
+    border-radius: 37px;
+    background: #282828;
+    color: #fff;
     cursor: pointer;
     font: inherit;
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 500;
   }
 
-  .heroActionReview:hover { background: #e9e6e3; }
+  .heroActionListToggle { top: 178px; }
+  .heroActionReview { top: 245px; }
+
+  .heroActionListToggle:hover,
+  .heroActionReview:hover { background: #343434; }
+  .heroActionListToggle:focus-visible,
   .heroActionReview:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 3px; }
 
   .heroCopy h1 {
+    order: 0;
     max-width: 525px;
     font-size: 58px;
     line-height: 1.12;
@@ -1092,15 +1151,18 @@
   }
 
   .meta {
-    margin: 11px 0 23px;
+    order: 1;
+    margin: 11px 0 39px;
     color: #fff;
     font-size: 20px;
   }
+  .desktopRating { display: none !important; }
 
-  .genres { gap: 8px; margin-bottom: 24px; }
+  .genres { order: 3; gap: 8px; margin: 89px 0 0; }
   .genres span { padding: 17px 22px; border-radius: 999px; font-size: 16px; }
 
   .plot {
+    order: 2;
     max-width: 581px;
     margin-bottom: 0;
     color: #fff;
@@ -1110,13 +1172,13 @@
 
   /* Keep the API-backed director/producer/actor links available on desktop;
      the dedicated Cast & Crew rail below supplies the compact visual summary. */
-  .heroCopy .credits { display: grid; margin-top: 28px; }
+  .heroCopy .credits { display: none; }
 
   .heroLinks {
     display: none;
   }
   .posterTrailer { display: block; margin-top: 24px; text-align: center; }
-  .posterTrailer .textLink { display: flex; min-height: 44px; align-items: center; justify-content: center; border-radius: 999px; padding: 8px 16px; background: #fff; color: #111; font-size: 14px; text-decoration: none; }
+  .posterTrailer .textLink { display: flex; min-height: 59px; align-items: center; justify-content: center; border-radius: 999px; padding: 8px 16px; background: #fff; color: #111; font-size: 14px; text-decoration: none; }
   .posterTrailer p { margin: 0; color: var(--rewind-muted); font-size: 14px; line-height: 1.4; }
 
   .mobileDetailSection {
@@ -1131,7 +1193,9 @@
     color: #fff;
   }
 
-  .mobileRatingSummary { padding-top: 80px; }
+  .mobileDetailSection[aria-labelledby="mobile-crew-title"] { padding-top: 103px; }
+
+  .mobileRatingSummary { padding-top: 84px; }
 
   .mobileSectionHeading h2 {
     margin: 0 0 18px;
@@ -1201,26 +1265,65 @@
   .section .sectionHeading h2 { font-size: 24px; }
   .reviewsSection {
     display: grid;
+    margin-top: 116px;
+    margin-bottom: 85px;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px 24px;
+    gap: 19.5px 32px;
     background: transparent;
   }
+  /* READY Dune `61:244` retains its own two-column 590px/20px review grid;
+     the newer Oppenheimer source `39:2` uses 584px cards with a 32px gap. */
+  .page[data-movie-id="35"] .reviewsSection { column-gap: 20px; margin-top: 97px; }
+  .page[data-movie-id="35"] .mobileDetailSection[aria-labelledby="mobile-crew-title"] .crewRail {
+    width: 1198px;
+    max-width: 100%;
+    grid-template-columns: repeat(7, 160px);
+    margin-top: 54.6px;
+  }
+  .page[data-movie-id="35"] .mobileDetailSection[aria-labelledby="mobile-crew-title"] .crewCard { height: 197px; }
+  .page[data-movie-id="35"] .reviewsSection { margin-top: 66.3px; }
   .reviewsSection > :not(.review) { grid-column: 1 / -1; }
-  .reviewsSection > .sectionHeading { margin-bottom: 0; }
+  .reviewsSection > .sectionHeading { margin-bottom: 55px; }
   .reviewsSection .review {
     margin-top: 0;
+    min-height: 315px;
+    box-sizing: border-box;
     border-color: rgba(255, 255, 255, .12);
     background: #2b2b2d;
     color: #fff;
   }
+  .reviewsSection > .sectionHeading .desktopReviewTitle { display: inline; }
+  .reviewsSection > .review .desktopReviewTitle { display: none; }
+  .reviewsSection .mobileReviewHeading { display: flex; min-width: 0; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .reviewsSection .mobileReviewAvatar { display: grid; width: 40px; height: 40px; flex: none; place-items: center; border-radius: 50%; background: linear-gradient(135deg, #355761, #886746); color: #fff; font-size: 15px; font-weight: 800; }
+  .reviewsSection .mobileReviewByline { display: grid; min-width: 0; gap: 3px; }
+  .reviewsSection .mobileReviewByline a { overflow: hidden; color: #fff; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+  .reviewsSection .mobileReviewByline time { color: var(--rewind-muted); font-size: 12px; }
+  .reviewsSection .mobileReviewRating { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; color: #f1ece4; white-space: nowrap; }
+  .reviewsSection .review > p + p,
+  .reviewsSection .review > section[aria-label] { display: none; }
+  .reviewsSection .signIn { display: none; }
   .reviewsSection .review h3,
   .reviewsSection .review h3 a { color: #fff; }
   .reviewsSection .review p { color: #d8d5da; }
-  .similarSection { background: transparent; }
+  .similarSection { margin-top: 0; background: transparent; }
+  .similarSection .sectionHeading { margin-bottom: 56px; }
+  .similarGrid { gap: 31.2px; }
+  .similarPoster,
+  .similarFallback { aspect-ratio: 174 / 260; }
   .storylineSection { display: block; }
-  .storylineCard { border-radius: 20px; padding: 32px; background: #282828; }
+  .storylineSection { margin-top: 84.5px; }
+  .storylineSection .sectionHeading { margin-bottom: 56px; }
+  .storylineCard { min-height: 356px; box-sizing: border-box; border-radius: 20px; padding: 32px; background: #282828; }
+  .storylineTitleRow { display: block; }
+  .storylineDesktopCategory { display: block; }
   .storylineCard h3 { margin: 0 0 16px; font-size: 20px; overflow-wrap: anywhere; }
+  .storylineCard h4.storylineDesktopCategory { margin: 0 0 36px; color: var(--rewind-muted); font-size: 14px; font-weight: 500; line-height: 17px; }
+  .storylineCard h4.storylineMobileCategory { display: none; }
   .storylineCard p { margin: 0; color: var(--rewind-muted); font-size: 16px; line-height: 1.6; white-space: pre-line; overflow-wrap: anywhere; }
+  .page[data-movie-id="35"] .storylineCard { min-height: 283px; padding: 32px 64px 32px 55px; }
+  .page[data-movie-id="35"] .storylineCard h3 { margin-bottom: 6px; }
+  .page[data-movie-id="35"] .storylineCard h4.storylineDesktopCategory { margin-bottom: 36px; }
   .similarCard { color: #fff; }
   .similarMeta { color: #aaa6ad; }
   .similarPoster,
@@ -1235,6 +1338,9 @@
   }
 
   .heroActions {
+    width: auto;
+    height: auto;
+    margin-left: 0;
     grid-column: 1 / -1;
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(180px, 1fr) minmax(170px, .8fr) 140px;
@@ -1243,6 +1349,10 @@
     margin-top: 0;
   }
 
+  .heroActions .heroActionListToggle,
+  .heroActions .heroActionReview { position: static; width: auto; min-height: 44px; }
+  .heroActions .listPicker:not([hidden]) { position: static; width: auto; padding: 0; border-radius: 0; background: transparent; box-shadow: none; }
+  .heroActions .listPicker[hidden] { display: none; }
   .heroActions .actionButtons { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .heroActions .ratingRow,
   .heroActions .listPicker { margin-top: 0; }

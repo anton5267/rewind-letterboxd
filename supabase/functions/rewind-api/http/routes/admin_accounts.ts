@@ -6,6 +6,7 @@ import { confirmedAuthUser, json, repositoryFailure } from "../response.ts";
 const ADMIN_USERS_PATH = "/api/admin/users";
 const ADMIN_USER_PATTERN = /^\/api\/admin\/users\/(\d+)(?:\/(overview|activate|deactivate|hq))?$/;
 const ADMIN_DASHBOARD_PATH = "/api/admin/dashboard";
+const ADMIN_ACTIVITY_PATH = "/api/admin/activity";
 const ADMIN_AUDIT_LOGS_PATH = "/api/admin/audit-logs";
 const ADMIN_SETTINGS_PATH = "/api/admin/settings";
 const ADMIN_SETTING_PATTERN = /^\/api\/admin\/settings\/([^/]+)$/;
@@ -15,8 +16,8 @@ export async function handleAdminAccountRoutes(context: HttpRouteContext): Promi
 
   const adminSettingMatch = path.match(ADMIN_SETTING_PATTERN);
 
-  if (path === ADMIN_DASHBOARD_PATH || path === ADMIN_AUDIT_LOGS_PATH || path === ADMIN_SETTINGS_PATH || adminSettingMatch) {
-    const allowed = path === ADMIN_DASHBOARD_PATH ? ["GET"]
+  if (path === ADMIN_DASHBOARD_PATH || path === ADMIN_ACTIVITY_PATH || path === ADMIN_AUDIT_LOGS_PATH || path === ADMIN_SETTINGS_PATH || adminSettingMatch) {
+    const allowed = path === ADMIN_DASHBOARD_PATH || path === ADMIN_ACTIVITY_PATH ? ["GET"]
       : path === ADMIN_AUDIT_LOGS_PATH ? ["GET"]
       : path === ADMIN_SETTINGS_PATH ? ["GET"] : ["PUT"];
     if (!allowed.includes(request.method)) {
@@ -29,6 +30,10 @@ export async function handleAdminAccountRoutes(context: HttpRouteContext): Promi
       if (path === ADMIN_DASHBOARD_PATH) {
         if (!repository.getAdminDashboard) return json({ message: "Not found" }, 404, corsHeaders);
         return json(await repository.getAdminDashboard(authUser), 200, corsHeaders);
+      }
+      if (path === ADMIN_ACTIVITY_PATH) {
+        if (!repository.getAdminActivityOverview) return json({ message: "Not found" }, 404, corsHeaders);
+        return json(await repository.getAdminActivityOverview(authUser), 200, corsHeaders);
       }
       if (path === ADMIN_AUDIT_LOGS_PATH) {
         const page = parseAdminPage(query, 100, 50);

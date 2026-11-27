@@ -5,10 +5,49 @@ import { RewindApiError } from "../errors.ts";
 
 const MOVIE_RATING_PATTERN = /^\/api\/movies\/(\d+)\/rating(?:\/(me))?$/;
 const MOVIE_STATUS_PATTERN = /^\/api\/movies\/(\d+)\/status\/me$/;
+const MOVIE_WATCHED_DATE_PATTERN = /^\/api\/movies\/(\d+)\/watched-date$/;
 const MOVIE_FLAG_PATTERN = /^\/api\/movies\/(\d+)\/(watched|watchlist|favorite)$/;
+
+function parseWatchedOn(body: unknown): string | null {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) return null;
+  const record = body as Record<string, unknown>;
+  if (Object.keys(record).length !== 1 || typeof record.watchedOn !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(record.watchedOn)) return null;
+  const date = new Date(`${record.watchedOn}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== record.watchedOn || record.watchedOn > new Date().toISOString().slice(0, 10)) return null;
+  return record.watchedOn;
+}
 
 export async function handleMovieStatusRoutes(context: HttpRouteContext): Promise<Response | null> {
   const { request, path, corsHeaders, repository, authVerifier } = context;
+
+  const watchedDateMatch = path.match(MOVIE_WATCHED_DATE_PATTERN);
+  if (watchedDateMatch) {
+    const movieId = Number(watchedDateMatch[1]);
+    if (!Number.isSafeInteger(movieId) || movieId <= 0) return json({ message: "Invalid movie ID" }, 400, corsHeaders);
+    if (request.method !== "GET" && request.method !== "PUT") {
+      corsHeaders.set("Allow", "GET, PUT, OPTIONS");
+      return json({ message: "Method not allowed" }, 405, corsHeaders);
+    }
+    const bearer = request.headers.get("Authorization")?.match(/^Bearer\s+(.+)$/i)?.[1];
+    if (!bearer || !authVerifier) return json({ message: "Authentication required" }, 401, corsHeaders);
+    try {
+      const authUser = await authVerifier.verifyAccessToken(bearer);
+      if (!authUser || !authUser.emailConfirmed) return json({ message: "Authentication required" }, 401, corsHeaders);
+      if (request.method === "GET") {
+        if (!repository.getMyWatchedDate) return json({ message: "Watched dates are unavailable" }, 503, corsHeaders);
+        return json({ watchedOn: await repository.getMyWatchedDate(authUser, movieId) }, 200, corsHeaders);
+      }
+      if (!repository.setMyWatchedDate) return json({ message: "Watched dates are unavailable" }, 503, corsHeaders);
+      let body: unknown;
+      try { body = await request.json(); } catch { return json({ message: "Invalid request body" }, 400, corsHeaders); }
+      const watchedOn = parseWatchedOn(body);
+      if (!watchedOn) return json({ message: "Watched date must be a valid date no later than today" }, 400, corsHeaders);
+      await repository.setMyWatchedDate(authUser, movieId, watchedOn);
+      return new Response(null, { status: 204, headers: corsHeaders });
+    } catch (error) {
+      return repositoryFailure(error, "Unable to update watched date", corsHeaders);
+    }
+  }
 
   const statusMatch = path.match(MOVIE_STATUS_PATTERN);
 

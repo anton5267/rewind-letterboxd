@@ -10,7 +10,7 @@ test("admin review delete can be cancelled, retried after failure, and recover f
   let deleteRequests = 0;
   const reviewPages: number[] = [];
 
-  await page.route(/\/api\//, route => route.fulfill({ json: { content: [], totalPages: 0, totalElements: 0 } }));
+  await page.route(/^https?:\/\/[^/]+\/api\//, route => route.fulfill({ json: { content: [], totalPages: 0, totalElements: 0 } }));
   await page.route("**/api/users/me", route => route.fulfill({ json: {
     id: 99010, username: "admin-fixture", role: "ADMIN", displayName: "Admin Fixture",
     email: "admin@example.invalid", avatarUrl: null, isActive: true, isHq: false,
@@ -36,7 +36,7 @@ test("admin review delete can be cancelled, retried after failure, and recover f
   await page.goto("/uk/admin?view=reviews");
   const reviews = page.getByRole("region", { name: "Огляди" });
   await expect(reviews).toHaveAttribute("aria-busy", "false");
-  await reviews.getByRole("button", { name: "Далі" }).click();
+  await reviews.getByRole("button", { name: "Сторінка 2" }).click();
   const row = reviews.getByRole("listitem").filter({ hasText: review.content });
   await expect(row).toBeVisible();
 
@@ -58,7 +58,7 @@ test("admin review delete can be cancelled, retried after failure, and recover f
   await expect(reviews.getByRole("status")).toContainText("успішно видалено");
   await reviews.getByRole("button", { name: "Повернутися до рецензій" }).click();
   await expect(reviews.getByRole("heading", { name: "Усі огляди" })).toBeFocused();
-  await expect(reviews.getByRole("button", { name: "Далі" })).toHaveCount(0);
+  await expect(reviews.getByRole("navigation", { name: "Сторінки оглядів" })).toHaveCount(0);
   expect(deleteRequests).toBe(2);
   expect(reviewPages).toContain(0);
 });
