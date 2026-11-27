@@ -14,7 +14,7 @@ test("mobile film discovery empty review feeds match Figma", async ({ page }) =>
   await page.route("**/api/auth/refresh", route => route.fulfill({ status: 401, json: { message: "Unauthenticated" } }));
   await page.route("**/api/*/unread-count", route => route.fulfill({ json: { count: 0 } }));
   await page.route("**/api/movies/search**", route => route.fulfill({ json: films }));
-  await page.route("**/api/genres", route => route.fulfill({ json: [] }));
+  await page.route("**/api/genres", route => route.fulfill({ json: [{ id: 2, name: "Science Fiction" }] }));
   await page.route("**/api/reviews/recent**", route => route.fulfill({ json: emptyPage }));
   await page.route("**/api/reviews/popular**", route => route.fulfill({ json: emptyPage }));
   await page.route("**/api/lists/public/team**", route => route.fulfill({ json: emptyPage }));
@@ -59,7 +59,6 @@ test("mobile film discovery empty review feeds match Figma", async ({ page }) =>
         popularViewAllText: textRect(document.querySelector('[data-films-feed="reviews"] [class*="heading"] > a')),
         popularEmpty: rect(document.querySelector('[data-films-feed="reviews"] [class*="empty_"]')),
         popularEmptyText: textRect(document.querySelector('[data-films-feed="reviews"] [class*="empty_"]')),
-        recentMore: rect(document.querySelector('[data-films-feed="recent"] [class*="heading"] > a')),
         crewHeading: rect(document.querySelector('[data-films-feed="crew"] h2')),
         mobileNav: rect(document.querySelector('header nav[class*="mobileNav"]')),
       };
@@ -80,7 +79,7 @@ test("mobile film discovery empty review feeds match Figma", async ({ page }) =>
     expect(geometry.popularEmptyText?.x).toBe(36);
     expect(geometry.popularEmptyText?.y).toBeGreaterThanOrEqual(604);
     expect(geometry.popularEmptyText?.y).toBeLessThanOrEqual(607);
-    expect(geometry.recentMore?.width).toBe(0);
+    await expect(recent.locator('[class*="heading"] > a')).toHaveCount(0);
     expect(geometry.crewHeading?.y).toBeGreaterThanOrEqual(760);
     expect(geometry.mobileNav).toMatchObject({ y: 760, height: 92 });
     const captureDirectory = resolve(process.cwd(), "../artifacts/visual-audit-20261125/films");

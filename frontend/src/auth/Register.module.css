@@ -15,16 +15,16 @@
 .mobileBack { composes: mobileBack from "./AuthShared.module.css"; }
 .registerPage {
   composes: page from "./AuthShared.module.css";
-  min-height: calc(100dvh - 80px);
+  min-height: calc(100dvh - 265px);
 }
 
 .registerPage .card {
-  min-height: 873px;
+  min-height: 1011px;
   animation: register-arrive 480ms cubic-bezier(.2, .75, .25, 1) both;
 }
 
-.registerPage .form { gap: 20px; margin-top: 42px; }
-.registerPage .button { min-height: 72px; margin-top: 8px; }
+.registerPage .form { gap: 36px; margin-top: 58.4px; }
+.registerPage .button { min-height: 89px; margin-top: 63px; }
 .registerPage .passwordHint {
   position: absolute;
   width: 1px;

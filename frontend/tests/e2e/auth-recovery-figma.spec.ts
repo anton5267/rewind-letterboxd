@@ -31,6 +31,45 @@ async function installApi(page: Page, authenticated = false) {
   await mkdir(evidenceDir, { recursive: true });
 }
 
+test("desktop Forgot Password follows READY frame 605:2174 geometry", async ({ page }) => {
+  await installApi(page);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 1440, height: 1614 });
+  await page.goto("/en/forgot-password");
+  await expect(page.getByRole("heading", { name: "Forgot your password?" })).toBeVisible();
+  const geometry = await page.evaluate(() => {
+    const box = (selector: string) => {
+      const rect = document.querySelector<HTMLElement>(selector)?.getBoundingClientRect();
+      return rect && { x: rect.x + scrollX, y: rect.y + scrollY, width: rect.width, height: rect.height };
+    };
+    return {
+      card: box("main [class*=card]"),
+      title: box("#forgot-password-title"),
+      description: box("main p[class*=text]"),
+      email: box("#forgot-password-email"),
+      submit: box("main form button[type=submit]"),
+      footer: box("footer"),
+      pageHeight: document.documentElement.scrollHeight,
+    };
+  });
+  expect(geometry.card).toMatchObject({ x: 121, y: 316, width: 1198 });
+  expect(geometry.card?.height).toBeCloseTo(873, 0);
+  expect(geometry.title).toMatchObject({ y: 576, height: 43 });
+  expect(Math.abs(geometry.title!.x + geometry.title!.width / 2 - 720)).toBeLessThanOrEqual(1);
+  expect(Math.abs(geometry.title!.width - 363)).toBeLessThan(8);
+  expect(geometry.description).toMatchObject({ y: 637, width: 625, height: 24 });
+  expect(Math.abs(geometry.description!.x - 405)).toBeLessThanOrEqual(3);
+  expect(geometry.email).toMatchObject({ y: 740, width: 627, height: 72 });
+  expect(Math.abs(geometry.email!.x - 407)).toBeLessThanOrEqual(1);
+  expect(geometry.submit).toMatchObject({ y: 867, width: 627, height: 89 });
+  expect(Math.abs(geometry.submit!.x - 407)).toBeLessThanOrEqual(1);
+  expect(geometry.footer).toMatchObject({ width: 1440, height: 265 });
+  expect(geometry.footer?.y).toBeCloseTo(1349, 0);
+  expect(geometry.pageHeight).toBe(1614);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(1440);
+  await page.screenshot({ path: resolve(evidenceDir, "rewind-forgot-password-en-desktop-1440.png"), fullPage: true });
+});
+
 test("desktop expired recovery-link state matches the Figma frame", async ({ page }) => {
   await installHostedAuthFixture(page.context());
   await installApi(page);
@@ -74,6 +113,7 @@ test("desktop password-reset default state matches the Figma frame", async ({ pa
   await page.setViewportSize({ width: 1440, height: 1614 });
   await signInHostedFixture(page, "en");
   await page.goto("/en/reset-password?token=fixture-access-7");
+  await expect(page.getByRole("heading", { name: "Set a new password" })).toBeVisible();
   await expect(page.locator("#reset-password-error")).toHaveCount(0);
   const geometry = await page.evaluate(() => {
     const rect = (selector: string) => {

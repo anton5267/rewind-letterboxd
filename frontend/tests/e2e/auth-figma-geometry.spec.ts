@@ -2,7 +2,8 @@ import { expect, test } from "@playwright/test";
 
 const near = (actual: number, expected: number, tolerance = 4) => expect(Math.abs(actual - expected)).toBeLessThan(tolerance);
 
-test("READY auth entry and mobile forms match their Figma anchors", async ({ page }) => {
+test("auth entry and mobile forms match their Figma anchors", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.route("**/api/users/me", route => route.fulfill({ status: 401, json: {} }));
   await page.route("**/api/auth/refresh", route => route.fulfill({ status: 401, json: {} }));
   for (const [route, height] of [["auth", 852], ["register", 852], ["login", 852], ["forgot-password", 874]] as const) {
@@ -45,7 +46,8 @@ test("READY auth entry and mobile forms match their Figma anchors", async ({ pag
   }
 });
 
-test("READY auth screens match their desktop Figma frame anchors", async ({ page }) => {
+test("auth shells and implementation-created desktop registration match their design anchors", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.route("**/api/users/me", route => route.fulfill({ status: 401, json: {} }));
   await page.route("**/api/auth/refresh", route => route.fulfill({ status: 401, json: {} }));
   for (const route of ["auth", "register", "login", "forgot-password"]) {
@@ -101,6 +103,6 @@ test("READY auth screens match their desktop Figma frame anchors", async ({ page
       expect(loginStyles.promptFontSize).toBe("24px");
       await expect(page.locator('footer nav[aria-label*="information" i]')).toBeHidden();
     }
-    await page.screenshot({ path: `../artifacts/visual-audit-20261124/auth/rewind-${route}-en-desktop-1440.png`, fullPage: true });
+    await page.screenshot({ path: `../artifacts/visual-audit-20261127/auth-register-implementation/rewind-${route}-en-desktop-1440.png`, fullPage: true });
   }
 });

@@ -448,7 +448,11 @@ test("admin shares the compact shell and keeps personal and platform metrics sep
     } });
   });
   await page.route("**/api/admin/users/900010/overview", route => route.fulfill({ json: { stats: { watched: 8, customLists: 3, reviews: 4, likesReceived: 5, watchlist: 6 } } }));
-  await page.route("**/api/users/900010/profile", route => route.fulfill({ json: { id: 900010, ratingDistribution: [{ rating: 2, count: 1 }, { rating: 4, count: 1 }] } }));
+  await page.route("**/api/users/900010/profile", route => route.fulfill({ json: {
+    id: 900010, username: "admin-fixture", displayName: "Lola James", avatarUrl: null, hq: true,
+    stats: { ratings: 2, reviews: 4, watched: 8, watchlist: 6, favorites: 3 },
+    ratingDistribution: [{ rating: 2, count: 1 }, { rating: 4, count: 1 }], socialLinks: [], lists: [], recentReviews: [],
+  } }));
   await page.goto("/uk/admin");
   const hero = page.locator('main > header');
   await expect(hero).toHaveCSS("min-height", "390px");
@@ -460,6 +464,9 @@ test("admin shares the compact shell and keeps personal and platform metrics sep
   await expect(navigation.getByRole("link")).toHaveCount(12);
   const personal = page.locator('section[aria-labelledby="admin-personal-metrics"]');
   await expect(personal.getByText("Створені списки", { exact: true })).toHaveCount(1);
+  const platformDisclosure = page.locator("main details");
+  await expect(platformDisclosure).not.toHaveAttribute("open", "");
+  await platformDisclosure.locator("summary").click();
   const platform = page.getByRole("region", { name: "Статистика платформи" });
   await expect(platform.locator('[class*="summaryCard"]')).toHaveCount(6);
   expect((await platform.boundingBox())?.width).toBe(1200);

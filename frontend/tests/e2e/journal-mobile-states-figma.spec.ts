@@ -43,7 +43,7 @@ test("mobile Journal error state matches the UK and EN Figma drafts", async ({ p
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
 
-test("mobile Journal loading skeleton follows the Figma article rhythm", async ({ page }) => {
+test("mobile Journal loading skeleton matches the implementation-created one-cover layout", async ({ page }) => {
   await page.setViewportSize({ width: 393, height: 852 });
   await page.route("**/api/journal/articles/archive?*", route => route.fulfill({ json: [] }));
   let releaseFeed!: () => void;
@@ -81,18 +81,20 @@ test("mobile Journal loading skeleton follows the Figma article rhythm", async (
   expect(geometry.firstLines.map(item => item && [Math.round(item.x), Math.round(item.y), Math.round(item.width), Math.round(item.height)])).toEqual([
     [16, 253, 178, 12], [16, 276, 282, 24], [16, 311, 352, 14], [16, 334, 234, 14],
   ]);
-  expect(geometry.firstCover).toMatchObject({ x: 16, width: 241, height: 150 });
+  expect(geometry.firstCover).toMatchObject({ x: 16, width: 361 });
+  expect(Math.abs(geometry.firstCover!.height - 203)).toBeLessThanOrEqual(1);
   expect(Math.abs(geometry.firstCover!.y - 366)).toBeLessThanOrEqual(1);
-  expect(geometry.firstThumb).toMatchObject({ x: 273, width: 104, height: 150 });
-  expect(Math.abs(geometry.firstThumb!.y - 366)).toBeLessThanOrEqual(1);
-  expect(geometry.secondFirstLine && Math.round(geometry.secondFirstLine.y)).toBe(556);
-  expect(Math.abs((geometry.secondCover?.y ?? -1) - 650)).toBeLessThanOrEqual(1);
-  await page.screenshot({ path: "../artifacts/visual-audit-20261124/journal/rewind-journal-loading-uk-mobile-393.png" });
+  expect(geometry.firstThumb).toMatchObject({ x: 0, y: 0, width: 0, height: 0 });
+  expect(geometry.secondFirstLine && Math.round(geometry.secondFirstLine.y)).toBe(609);
+  expect(geometry.secondCover).toMatchObject({ x: 16, width: 361 });
+  expect(Math.abs(geometry.secondCover!.height - 203)).toBeLessThanOrEqual(1);
+  expect(Math.abs((geometry.secondCover?.y ?? -1) - 703)).toBeLessThanOrEqual(1);
+  await page.screenshot({ path: "../artifacts/visual-audit-20261127/mobile-journal-implementation/rewind-journal-loading-uk-mobile-393.png" });
   releaseFeed();
   await expect(page.getByText("Опублікованих статей поки немає.", { exact: true })).toBeVisible();
 });
 
-test("English mobile Journal loading skeleton matches Figma geometry", async ({ page }) => {
+test("English mobile Journal loading skeleton uses one full-width cover", async ({ page }) => {
   await page.setViewportSize({ width: 393, height: 852 });
   await page.route("**/api/journal/articles/archive?*", route => route.fulfill({ json: [] }));
   let releaseFeed!: () => void;
@@ -116,17 +118,18 @@ test("English mobile Journal loading skeleton matches Figma geometry", async ({ 
     return [Math.round(box.x), Math.round(box.y + window.scrollY), Math.round(box.width), Math.round(box.height)];
   }));
   expect(boxes.slice(0, 4)).toEqual([[16, 253, 178, 12], [16, 276, 282, 24], [16, 311, 352, 14], [16, 334, 234, 14]]);
-  const covers = await firstCard.locator("[class*='cover'], [class*='thumb']").evaluateAll(elements => elements.map(element => {
+  const covers = await firstCard.locator("[class*='cover']").evaluateAll(elements => elements.map(element => {
     const box = element.getBoundingClientRect();
     return [Math.round(box.x), Math.round(box.y + window.scrollY), Math.round(box.width), Math.round(box.height)];
   }));
-  expect(covers).toEqual([[16, 366, 241, 150], [273, 366, 104, 150]]);
-  await page.screenshot({ path: "../artifacts/visual-audit-20261124/journal/rewind-journal-loading-en-mobile-393.png" });
+  expect(covers).toEqual([[16, 366, 361, 203]]);
+  await expect(firstCard.locator("[class*='thumb']")).toBeHidden();
+  await page.screenshot({ path: "../artifacts/visual-audit-20261127/mobile-journal-implementation/rewind-journal-loading-en-mobile-393.png" });
   releaseFeed();
   await expect(page.getByText("No published articles yet.", { exact: true })).toBeVisible();
 });
 
-test("mobile Journal populated feature and next card match UK and EN Figma drafts", async ({ page }) => {
+test("mobile populated Journal uses its implementation-created editorial card design", async ({ page }) => {
   await page.setViewportSize({ width: 393, height: 852 });
   const coverUrls = [1, 2, 3].map(index => `https://journal-fixture.invalid/cover-${index}.jpg`);
   await page.route("https://journal-fixture.invalid/**", route => route.fulfill({
@@ -192,25 +195,27 @@ test("mobile Journal populated feature and next card match UK and EN Figma draft
     expect(geometry.featureTitle).toMatchObject({ x: 16, width: 361, height: 24 });
     expect(Math.abs(geometry.featureTitle!.y - 274)).toBeLessThanOrEqual(1);
     expect(geometry.featureExcerpt && Math.abs(geometry.featureExcerpt.y - 326)).toBeLessThanOrEqual(1);
-    expect(geometry.featureByline).toMatchObject({ x: 16 });
-    expect(geometry.featureButton).toMatchObject({ x: 250, width: 127, height: 40 });
-    expect(geometry.collage).toMatchObject({ x: 16, width: 241, height: 138 });
+    expect(geometry.featureByline!.x).toBeGreaterThanOrEqual(250);
+    expect(geometry.featureButton).toMatchObject({ x: 16, width: 127, height: 40 });
+    expect(geometry.collage).toMatchObject({ x: 16, width: 361 });
+    expect(Math.abs(geometry.collage!.height - 203)).toBeLessThanOrEqual(1);
     expect(Math.abs(geometry.collage!.y - 423)).toBeLessThanOrEqual(1);
-    expect(geometry.coverLink).toMatchObject({ x: 16, width: 241, height: 138 });
-    expect(geometry.poster).toMatchObject({ x: 273, width: 104, height: 150 });
-    expect(Math.abs(geometry.poster!.y - 423)).toBeLessThanOrEqual(1);
+    expect(geometry.coverLink).toMatchObject({ x: 16, width: 361 });
+    expect(Math.abs(geometry.coverLink!.height - 203)).toBeLessThanOrEqual(1);
+    expect(geometry.poster).toMatchObject({ x: 0, y: 0, width: 0, height: 0 });
     expect(geometry.secondMeta).toMatchObject({ x: 16, width: 361 });
-    expect(Math.abs(geometry.secondMeta!.y - 625)).toBeLessThanOrEqual(1);
+    expect(Math.abs(geometry.secondMeta!.y - 678)).toBeLessThanOrEqual(1);
     expect(geometry.secondTitle).toMatchObject({ x: 16, width: 361, height: 24 });
-    expect(Math.abs(geometry.secondTitle!.y - 646)).toBeLessThanOrEqual(1);
+    expect(Math.abs(geometry.secondTitle!.y - 699)).toBeLessThanOrEqual(1);
     expect(geometry.secondExcerpt).toMatchObject({ x: 16, width: 361 });
-    expect(Math.abs(geometry.secondExcerpt!.y - 679)).toBeLessThanOrEqual(1);
-    expect(geometry.secondCover).toMatchObject({ x: 16, width: 241, height: 150 });
-    expect(Math.abs(geometry.secondCover!.y - 720)).toBeLessThanOrEqual(1);
-    expect(geometry.secondPoster).toMatchObject({ x: 273, width: 104, height: 150 });
-    expect(Math.abs(geometry.secondPoster!.y - 720)).toBeLessThanOrEqual(1);
+    expect(Math.abs(geometry.secondExcerpt!.y - 732)).toBeLessThanOrEqual(1);
+    expect(geometry.secondCover).toMatchObject({ x: 16, width: 361 });
+    expect(Math.abs(geometry.secondCover!.height - 203)).toBeLessThanOrEqual(1);
+    expect(Math.abs(geometry.secondCover!.y - 774)).toBeLessThanOrEqual(1);
+    expect(geometry.secondPoster).toMatchObject({ x: 0, y: 0, width: 0, height: 0 });
+    await expect(page.getByRole("link", { name: english ? "Read story" : "Читати статтю" })).toHaveCount(1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
-    await page.screenshot({ path: `../artifacts/visual-audit-20261124/journal/rewind-journal-populated-${locale}-mobile-393.png` });
+    await page.screenshot({ path: `../artifacts/visual-audit-20261127/mobile-journal-implementation/rewind-journal-populated-${locale}-mobile-393.png` });
   }
   await page.setViewportSize({ width: 320, height: 852 });
   await page.goto("/uk/journal");

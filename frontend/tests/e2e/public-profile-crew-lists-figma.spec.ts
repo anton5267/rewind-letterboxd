@@ -5,35 +5,30 @@ import { resolve, join } from "node:path";
 const profileId = 978001;
 const emptyPage = { content: [], totalPages: 0, totalElements: 0, number: 0, size: 12 };
 const lists = [
-  { id: 978101, name: "The 2026 Popcorn List", description: "Introducing the 2026 Popcorn List, an annual survey of acclaimed feature films without US wide release as recommended by festival programmers across the country.\n\nGet more details on The Popcorn List via their Instagram and Substack.", itemCount: 25, likeCount: 54, tags: ["top2025", "cinema"], movieStart: 978200 },
-  { id: 978102, name: "Remembering Rob Reiner", description: "Rob Reiner was always due for a reevaluation. As a director, he created works beloved by audiences for decades, while delivering one of the most memorable runs of classic films out of post-war Hollywood.", itemCount: 10, likeCount: 213, tags: ["top", "drama"], movieStart: 978210 },
-  { id: 978103, name: "Love Triangles Starter Pack", description: "The only thing more enjoyable than watching a love story play out on screen is seeing a love triangle come to life. All the tension, excitement, anticipation and yearning, with the additional chaos of a third prospect in the mix.", itemCount: 20, likeCount: 154, tags: ["list", "comedy", "christmas", "watchlist", "marvel", "2025", "best", "trends", "pixar", "oscars"], movieStart: 978220 },
+  { id: 978101, name: "The 2026 Popcorn List", description: "Introducing the 2026 Popcorn List, an annual survey of acclaimed feature films without US wide release as recommended by festival programmers across the country.\n\nGet more details on The Popcorn List via their Instagram and Substack.", itemCount: 25, likeCount: 54, tags: ["top2025", "cinema"], movieStart: 978200, previews: [{ title: "Been Here Stay Here", image: "popcorn-01.png" }, { title: "Burt", image: "popcorn-02.png" }, { title: "Creede, USA", image: "popcorn-03.png" }, { title: "Crystal Cross", image: "popcorn-04.png" }, { title: "Adult Children", image: "popcorn-05.png" }] },
+  { id: 978102, name: "Remembering Rob Reiner", description: "Rob Reiner was always due for a reevaluation. As a director, he created works beloved by audiences for decades, while delivering one of the most memorable runs of classic films out of post-war Hollywood.", itemCount: 10, likeCount: 213, tags: ["top", "drama"], movieStart: 978210, previews: [{ title: "When Harry Met Sally…", image: "reiner-01.png" }, { title: "Misery", image: "reiner-02.png" }, { title: "The Princess Bride", image: "reiner-03.png" }, { title: "Stand by Me", image: "reiner-04.png" }, { title: "A Few Good Men", image: "reiner-05.png" }] },
+  { id: 978103, name: "Love Triangles Starter Pack", description: "The only thing more enjoyable than watching a love story play out on screen is seeing a love triangle come to life. All the tension, excitement, anticipation and yearning, with the additional chaos of a third prospect in the mix.", itemCount: 20, likeCount: 154, tags: ["list", "comedy", "christmas", "watchlist", "marvel", "2025", "best", "trends", "pixar", "oscars"], movieStart: 978220, previews: [{ title: "Design for Living", image: "triangles-01.png" }, { title: "The Philadelphia Story", image: "triangles-02.png" }, { title: "Jules and Jim", image: "triangles-03.png" }, { title: "Sunday Bloody Sunday", image: "triangles-04.png" }, { title: "She's Gotta Have It", image: "triangles-05.png" }] },
 ].map(list => ({
   ...list,
   ownerId: profileId,
   ownerUsername: "rewind",
-  previewMovies: Array.from({ length: 5 }, (_, index) => ({
+  previewMovies: list.previews.map(({ title, image }, index) => ({
     id: list.movieStart + index,
-    title: `${list.name} film ${index + 1}`,
+    title,
     releaseDate: "2026-01-01",
     rating: null,
-    photoUrl: null,
+    photoUrl: `https://profile-lists-figma.invalid/${image}`,
   })),
 }));
 
 test("Rewind HQ mobile Lists tab follows the READY Figma composition", async ({ page }) => {
   const pageErrors: string[] = [];
   page.on("pageerror", error => pageErrors.push(error.message));
-  const posterFixtureRoot = resolve(process.cwd(), "tests/e2e/fixtures/popular-lists-figma");
   const profileFixtureRoot = resolve(process.cwd(), "tests/e2e/fixtures/public-profile-lists-figma");
   await page.route("https://profile-lists-figma.invalid/**", async route => {
     const name = new URL(route.request().url()).pathname.slice(1);
-    if (name !== "hero.png" && name !== "avatar.png") return route.fulfill({ status: 404 });
+    if (!/^(hero|avatar|popcorn-0[1-5]|reiner-0[1-5]|triangles-0[1-5])\.png$/.test(name)) return route.fulfill({ status: 404 });
     return route.fulfill({ contentType: "image/png", body: await readFile(join(profileFixtureRoot, name)) });
-  });
-  await page.route(/^https:\/\/fixtures\.rewind\.invalid\/crew\//, route => {
-    const file = new URL(route.request().url()).pathname.split("/").at(-1)!;
-    return route.fulfill({ path: join(posterFixtureRoot, file), contentType: "image/jpeg" });
   });
   await page.route(url => url.pathname.startsWith("/api/"), async route => {
     const { pathname } = new URL(route.request().url());
@@ -56,14 +51,7 @@ test("Rewind HQ mobile Lists tab follows the READY Figma composition", async ({ 
       recentReviews: [],
     } });
     if (pathname === `/api/users/${profileId}/lists`) {
-      const content = lists.map((list, listIndex) => ({
-        ...list,
-        previewMovies: list.previewMovies.map((movie, movieIndex) => ({
-          ...movie,
-          photoUrl: `https://fixtures.rewind.invalid/crew/${String(6 + listIndex * 5 + movieIndex).padStart(2, "0")}.jpg`,
-        })),
-      }));
-      return route.fulfill({ json: { content, totalPages: 12, totalElements: 144, number: Number(new URL(route.request().url()).searchParams.get("page") ?? 0), size: 12 } });
+      return route.fulfill({ json: { content: lists, totalPages: 12, totalElements: 144, number: Number(new URL(route.request().url()).searchParams.get("page") ?? 0), size: 12 } });
     }
     if (pathname === `/api/users/${profileId}/collections/favorites`) return route.fulfill({ json: emptyPage });
     if (pathname === `/api/users/${profileId}/following`) return route.fulfill({ json: { ...emptyPage, totalElements: 8, totalPages: 1, size: 8 } });
@@ -81,6 +69,7 @@ test("Rewind HQ mobile Lists tab follows the READY Figma composition", async ({ 
   await expect(page.getByRole("heading", { level: 2, name: "Lists" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Lists", exact: true }).last()).toHaveAttribute("aria-current", "location");
   await expect(page.locator('[class*="publicListCard"]')).toHaveCount(3);
+  await expect(page.locator('[class*="publicListTitle"]').allTextContents()).resolves.toEqual(["The 2026 Popcorn List", "Remembering Rob Reiner", "Love Triangles Starter Pack"]);
   await expect(page.locator('[class*="publicListPageNumbers"]')).toBeHidden();
   await expect(page.getByRole("heading", { level: 3, name: "Lists tags" })).toBeVisible();
   await expect(page.locator('[aria-labelledby="public-profile-list-tags-title"] a').filter({ visible: true })).toHaveCount(3);
@@ -110,7 +99,7 @@ test("Rewind HQ mobile Lists tab follows the READY Figma composition", async ({ 
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(393);
   expect(pageErrors).toEqual([]);
 
-  const captureDirectory = resolve(process.cwd(), "../artifacts/visual-audit-20261124/crew-profile-lists");
+  const captureDirectory = resolve(process.cwd(), "../artifacts/visual-audit-20261127/crew-profile-lists-source-art");
   await mkdir(captureDirectory, { recursive: true });
   await page.screenshot({ path: resolve(captureDirectory, "rewind-hq-en-phone-393x1674.png"), fullPage: false });
 
@@ -119,11 +108,16 @@ test("Rewind HQ mobile Lists tab follows the READY Figma composition", async ({ 
   await expect(page.locator("main")).toHaveAttribute("aria-busy", "false");
   await expect(page.getByRole("heading", { level: 1, name: "Rewind" })).toBeVisible();
   await expect(page.locator('[class*="publicListCard"]')).toHaveCount(3);
+  await expect(page.locator('[class*="publicListTitle"]').allTextContents()).resolves.toEqual(["The 2026 Popcorn List", "Remembering Rob Reiner", "Love Triangles Starter Pack"]);
   const posterImages = page.locator('[class*="publicListCard"] a[class*="publicListPoster"] img');
   await expect(posterImages).toHaveCount(15);
   await expect.poll(() => posterImages.evaluateAll(images => images.every(image => (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
   const loadedPosterFiles = await posterImages.evaluateAll(images => images.map(image => new URL((image as HTMLImageElement).src).pathname.split("/").at(-1)));
-  expect(loadedPosterFiles).toEqual(Array.from({ length: 15 }, (_, index) => `${String(index + 6).padStart(2, "0")}.jpg`));
+  expect(loadedPosterFiles).toEqual([
+    "popcorn-01.png", "popcorn-02.png", "popcorn-03.png", "popcorn-04.png", "popcorn-05.png",
+    "reiner-01.png", "reiner-02.png", "reiner-03.png", "reiner-04.png", "reiner-05.png",
+    "triangles-01.png", "triangles-02.png", "triangles-03.png", "triangles-04.png", "triangles-05.png",
+  ]);
   await expect(page.getByRole("button", { name: "Page 1", exact: true })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("button", { name: "Page 12" })).toBeVisible();
   await expect(page.locator('[aria-labelledby="public-profile-list-tags-title"] a').filter({ visible: true })).toHaveCount(9);

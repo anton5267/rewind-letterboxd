@@ -123,7 +123,7 @@
 
 /* READY Dashboard `1178:2466`: keep the measured hero, metric grid and footer
    anchors while leaving the live platform totals available on demand. */
-.platformDetails { min-height: 47px; }
+.platformDetails { width: min(1200px, calc(100% - 48px)); min-height: 47px; margin-inline: auto; }
 .platformSummary { display: flex; min-height: 47px; align-items: center; justify-content: center; cursor: pointer; list-style: none; }
 .platformSummary::-webkit-details-marker { display: none; }
 .platformSummary::before { content: "＋"; margin-right: 8px; color: #aaa; font-size: 16px; }
