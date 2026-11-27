@@ -35,6 +35,7 @@ import jakarta.persistence.EntityManager;
 
 import java.util.stream.Collectors;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -162,14 +163,20 @@ public class ProfileService {
         return new PublicProfileResponse(user.getId(), user.getUsername(), displayName, user.getAvatarUrl(), user.getIsHq(),
                 new PublicProfileResponse.Stats(ratings.countByUserId(userId), reviews.countByUserIdAndIsHiddenFalse(userId), watched, watchlist, favorites),
                 ratingDistribution,
-                socialLinks.findAllByUserIdOrderByPlatformAsc(userId).stream().map(link -> new SocialLinkResponse(link.getPlatform(), link.getUrl())).toList(),
+                orderedSocialLinks(userId),
                 publicLists, publicReviews);
     }
 
     @Transactional(readOnly = true)
     public List<SocialLinkResponse> mySocialLinks(String email) {
         var user = users.findByEmail(email).orElseThrow();
-        return socialLinks.findAllByUserIdOrderByPlatformAsc(user.getId()).stream()
+        return orderedSocialLinks(user.getId());
+    }
+
+    private List<SocialLinkResponse> orderedSocialLinks(Long userId) {
+        return socialLinks.findAllByUserIdOrderByPlatformAsc(userId).stream()
+                .sorted(Comparator.comparingInt((UserSocialLink link) -> "x".equals(link.getPlatform()) ? 0 : 1)
+                        .thenComparing(UserSocialLink::getPlatform))
                 .map(link -> new SocialLinkResponse(link.getPlatform(), link.getUrl())).toList();
     }
 
