@@ -28,14 +28,14 @@ import RetryNotice from "./RetryNotice";
 import ResilientImage from "./ResilientImage";
 import AdminMovieGenresField from "./AdminMovieGenresField";
 import AdminMovieCreditsField, { type AdminMovieCreditsDraft } from "./AdminMovieCreditsField";
-import { editorialText, useLocale } from "../i18n";
+import { editorialText, formatMovieDuration, useLocale } from "../i18n";
 import styles from "./AdminMovies.module.css";
 
 interface Props {
   onTotalChange: (total: number) => void;
 }
 
-const emptyMovie: AdminMovieWrite = { title: "", imdbId: "", originalLanguage: "", releaseDate: "", ageRating: "", rating: null, photoUrl: "", backdropUrl: "", trailerUrl: "", durationMinutes: null, shortPlot: "", genreIds: [], actorCredits: [], directorIds: [], producerIds: [] };
+const emptyMovie: AdminMovieWrite = { title: "", imdbId: "", originalLanguage: "", releaseDate: "", ageRating: "", rating: null, photoUrl: "", backdropUrl: "", trailerUrl: "", durationMinutes: null, shortPlot: "", published: false, genreIds: [], actorCredits: [], directorIds: [], producerIds: [] };
 const emptyMovieCredits: AdminMovieCreditsDraft = { actors: [], directors: [], producers: [] };
 const verifiedTmdbCrosswalkUrl = "https://raw.githubusercontent.com/anton5267/rewind-letterboxd/master/docs/project/TMDB_VERIFIED_CROSSWALK.csv";
 
@@ -143,6 +143,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
     return () => window.cancelAnimationFrame(frame);
   }, [qualityError, qualityLoading, qualityFocusScope]);
   const movieTitleInput = useRef<HTMLInputElement>(null);
+  const moviePosterUrlInput = useRef<HTMLInputElement>(null);
   const catalogTitle = useRef<HTMLHeadingElement>(null);
   const catalogSection = useRef<HTMLElement>(null);
   const catalogFocus = useRef<{ page: number; origin: HTMLElement | null } | null>(null);
@@ -364,7 +365,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
     setEditorLoading(true);
     setEditorDetailsFailed(false);
     setMoviePeople(emptyMovieCredits);
-    setMovieDraft({ ...emptyMovie, title: movie.title, releaseDate: movie.releaseDate ?? "", rating: movie.rating, photoUrl: movie.photoUrl ?? "" });
+    setMovieDraft({ ...emptyMovie, title: movie.title, releaseDate: movie.releaseDate ?? "", rating: movie.rating, photoUrl: movie.photoUrl ?? "", published: movie.published });
     try {
       const { data: details } = await getAdminMovieDetails(movie.id);
       if (isCurrent()) {
@@ -376,6 +377,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
         setMoviePeople(credits);
         setMovieDraft({
           title: details.title,
+          published: movie.published,
           imdbId: details.imdbId ?? "",
           originalLanguage: details.originalLanguage === undefined ? undefined : details.originalLanguage ?? "",
           releaseDate: details.releaseDate ?? "",
@@ -771,29 +773,45 @@ export default function AdminMovies({ onTotalChange }: Props) {
             }} /></div> : <form className={styles.movieForm} onSubmit={saveMovie} aria-busy={mutationBusy}>
               <div className={styles.editorPoster} aria-hidden="true"><ResilientImage src={movieDraft.photoUrl} alt="" fallback={<span>{editorialText(movieDraft.title, t("untitledFilm"))}</span>} /></div>
               <div className={styles.editorFields}>
-                <label className={`${styles.field} ${styles.editorWideField}`}>{t("movieTitle")}<input ref={movieTitleInput} required maxLength={255} value={movieDraft.title} onChange={event => setMovieDraft({ ...movieDraft, title: event.target.value })} /></label>
-                <label className={`${styles.field} ${styles.durationField}`}>{t("movieDurationMinutes")}<input type="number" min="1" max="1000" value={movieDraft.durationMinutes ?? ""} onChange={event => setMovieDraft({ ...movieDraft, durationMinutes: event.target.value === "" ? null : Number(event.target.value) })} /></label>
+                <label className={`${styles.field} ${styles.movieNameField}`}>{t("movieTitle")}<input ref={movieTitleInput} required maxLength={255} value={movieDraft.title} onChange={event => setMovieDraft({ ...movieDraft, title: event.target.value })} /></label>
+                <label className={`${styles.field} ${styles.durationField}`}>{editingMovieId !== null ? t("adminMovieDuration") : t("movieDurationMinutes")}<input type="number" min="1" max="1000" value={movieDraft.durationMinutes ?? ""} onChange={event => setMovieDraft({ ...movieDraft, durationMinutes: event.target.value === "" ? null : Number(event.target.value) })} /></label>
+                {editingMovieId !== null && <label className={`${styles.field} ${styles.statusField}`}>{t("adminMovieStatus")}<select value={movieDraft.published ? "true" : "false"} onChange={event => setMovieDraft({ ...movieDraft, published: event.target.value === "true" })}><option value="true">{t("moviePublished")}</option><option value="false">{t("adminMovieHidden")}</option></select></label>}
+                <label className={`${styles.field} ${styles.languageField}`}>{t("originalLanguage")}<input maxLength={2} pattern="[A-Za-z]{2}" autoCapitalize="none" value={movieDraft.originalLanguage ?? ""} onChange={event => setMovieDraft({ ...movieDraft, originalLanguage: event.target.value })} /></label>
                 {editingMovieId === null && <label className={styles.field}>{t("releaseDate")}<input type="date" value={movieDraft.releaseDate ?? ""} onChange={event => setMovieDraft({ ...movieDraft, releaseDate: event.target.value })} /></label>}
+              </div>
+              {editingMovieId !== null && <div className={styles.posterChange}>
+                <label className={styles.field}>{t("adminMovieChangePoster")}<span className={styles.posterChangeTiles}>
+                  <span className={styles.posterThumbnail}><ResilientImage src={movieDraft.photoUrl} alt={t("adminMoviePosterPreview")} fallback={<span>{editorialText(movieDraft.title, t("untitledFilm"))}</span>} /></span>
+                  <details className={styles.posterUrlEditor}><summary className={styles.posterUrlAction}><i className="fa-solid fa-camera" aria-hidden="true" /><span>{t("adminMovieChangePosterUrl")}</span></summary><label className={styles.field}>{t("posterUrl")}<input ref={moviePosterUrlInput} type="url" maxLength={255} value={movieDraft.photoUrl ?? ""} onChange={event => setMovieDraft({ ...movieDraft, photoUrl: event.target.value })} /></label></details>
+                </span></label>
+              </div>}
+              {editingMovieId !== null && <label className={`${styles.field} ${styles.releaseDateField}`}>{t("releaseDate")}<input type="date" value={movieDraft.releaseDate ?? ""} onChange={event => setMovieDraft({ ...movieDraft, releaseDate: event.target.value })} /></label>}
+              <AdminMovieGenresField compact={editingMovieId !== null} selectedIds={movieDraft.genreIds ?? []} onChange={genreIds => setMovieDraft(current => ({ ...current, genreIds }))} />
+              <label className={`${styles.field} ${styles.plotField}`}>{t("description")}<textarea maxLength={10000} rows={5} value={movieDraft.shortPlot ?? ""} onChange={event => setMovieDraft({ ...movieDraft, shortPlot: event.target.value })} /></label>
+              <div className={styles.editorCreditsSummary}>
+                <div><strong>{t("directors")}</strong><span className={styles.creditValue}>{moviePeople.directors.map(person => person.name).join(" · ") || "—"}</span></div>
+                <div><strong>{t("actors")}</strong><span className={styles.creditValue}><span>{moviePeople.actors.map(person => person.name).join(" · ") || "—"}</span><details className={styles.creditsEditor}><summary>{t("adminMovieChangeCredits")}</summary><AdminMovieCreditsField value={moviePeople} onChange={credits => {
+                  setMoviePeople(credits);
+                  setMovieDraft(current => ({ ...current,
+                    actorCredits: credits.actors.map(({ id, characterName, castOrder }) => ({ actorId: id, characterName, castOrder })),
+                    directorIds: credits.directors.map(person => person.id),
+                    producerIds: credits.producers.map(person => person.id),
+                  }));
+                }} /></details></span></div>
+              </div>
+              {editingMovie && <dl className={styles.editorMetadata}>
+                <div><dt>{t("adminMovieAverageRating")}</dt><dd>★ {editingMovie.rating?.toFixed(1) ?? "—"}</dd></div>
+                <div><dt>{t("adminMovieReviewCount")}</dt><dd>{new Intl.NumberFormat(lang === "uk" ? "uk-UA" : "en-US", { notation: "compact", maximumFractionDigits: 1 }).format(editingMovie.reviewCount)}</dd></div>
+                <div><dt>{t("adminMoviePopularityDynamics")}</dt><dd><span aria-hidden="true">—</span><span className="srOnly">{t("adminMoviePopularityUnavailable")}</span></dd></div>
+              </dl>}
+              <div className={styles.actions}><button type="submit" aria-busy={mutationBusy} disabled={mutationBusy || !movieDraft.title.trim()}>{mutationBusy ? t("saving") : editingMovieId === null ? t("create") : t("save")}</button>{editingMovieId !== null && <button type="button" disabled={mutationBusy} onClick={cancelEdit}>{t("cancel")}</button>}{editingMovie && <button type="button" className={styles.deleteAction} disabled={mutationBusy} onClick={event => requestMovieDelete(editingMovie, event.currentTarget)}>{t("deleteMovie")}</button>}</div>
+              <details className={styles.additionalMetadata}><summary>{t("adminMovieAdditionalMetadata")}</summary><div className={styles.additionalMetadataFields}>
                 <label className={styles.field}>{t("imdbId")}<input maxLength={20} value={movieDraft.imdbId ?? ""} onChange={event => setMovieDraft({ ...movieDraft, imdbId: event.target.value })} /></label>
-                <label className={styles.field}>{t("originalLanguage")}<input maxLength={2} pattern="[A-Za-z]{2}" autoCapitalize="none" value={movieDraft.originalLanguage ?? ""} onChange={event => setMovieDraft({ ...movieDraft, originalLanguage: event.target.value })} /></label>
                 <label className={styles.field}>{t("ageRating")}<input maxLength={10} value={movieDraft.ageRating ?? ""} onChange={event => setMovieDraft({ ...movieDraft, ageRating: event.target.value })} /></label>
                 <label className={styles.field}>{t("rating")}<input type="number" min="0" max="10" step="0.1" value={movieDraft.rating ?? ""} onChange={event => setMovieDraft({ ...movieDraft, rating: event.target.value === "" ? null : Number(event.target.value) })} /></label>
-                <label className={styles.field}>{t("posterUrl")}<input type="url" maxLength={255} value={movieDraft.photoUrl ?? ""} onChange={event => setMovieDraft({ ...movieDraft, photoUrl: event.target.value })} /></label>
                 <label className={styles.field}>{t("backdropUrl")}<input type="url" maxLength={255} value={movieDraft.backdropUrl ?? ""} onChange={event => setMovieDraft({ ...movieDraft, backdropUrl: event.target.value })} /></label>
                 <label className={styles.field}>{t("trailerUrl")}<input type="url" maxLength={255} value={movieDraft.trailerUrl ?? ""} onChange={event => setMovieDraft({ ...movieDraft, trailerUrl: event.target.value })} /></label>
-              </div>
-              {editingMovieId !== null && <label className={`${styles.field} ${styles.releaseDateField}`}>{t("releaseDate")}<input type="date" value={movieDraft.releaseDate ?? ""} onChange={event => setMovieDraft({ ...movieDraft, releaseDate: event.target.value })} /></label>}
-              <AdminMovieGenresField selectedIds={movieDraft.genreIds ?? []} onChange={genreIds => setMovieDraft(current => ({ ...current, genreIds }))} />
-              <AdminMovieCreditsField value={moviePeople} onChange={credits => {
-                setMoviePeople(credits);
-                setMovieDraft(current => ({ ...current,
-                  actorCredits: credits.actors.map(({ id, characterName, castOrder }) => ({ actorId: id, characterName, castOrder })),
-                  directorIds: credits.directors.map(person => person.id),
-                  producerIds: credits.producers.map(person => person.id),
-                }));
-              }} />
-              <label className={`${styles.field} ${styles.plotField}`}>{t("description")}<textarea maxLength={10000} rows={5} value={movieDraft.shortPlot ?? ""} onChange={event => setMovieDraft({ ...movieDraft, shortPlot: event.target.value })} /></label>
-              <div className={styles.actions}><button type="submit" aria-busy={mutationBusy} disabled={mutationBusy || !movieDraft.title.trim()}>{mutationBusy ? t("saving") : editingMovieId === null ? t("create") : t("save")}</button>{editingMovieId !== null && <button type="button" disabled={mutationBusy} onClick={cancelEdit}>{t("cancel")}</button>}{editingMovie && <button type="button" className={styles.deleteAction} disabled={mutationBusy} onClick={event => requestMovieDelete(editingMovie, event.currentTarget)}>{t("deleteMovie")}</button>}</div>
+              </div></details>
             </form>}
             {editingMovieId !== null && (editorLoading || editorDetailsFailed) && <div className={styles.actions}><button type="button" onClick={cancelEdit}>{t("cancel")}</button></div>}
             {editingMovieId === null && <div className={styles.tmdbPanel}>
@@ -834,8 +852,8 @@ export default function AdminMovies({ onTotalChange }: Props) {
         </details>
       </div>
       {editingMovieId === null && <form className={styles.catalogSearch} role="search" aria-label={t("adminMovieSearch")} onSubmit={submitCatalogSearch}>
-        <label className={styles.catalogSearchField}>{t("adminMovieSearch")}<input maxLength={120} value={searchDraft} onChange={event => setSearchDraft(event.target.value)} /></label>
-        <button type="submit" disabled={loading || mutationBusy}>{t("search")}</button>
+        <label className={styles.catalogSearchField}><span className="srOnly">{t("adminMovieSearch")}</span><input maxLength={120} placeholder={t("adminMovieSearch")} value={searchDraft} onChange={event => setSearchDraft(event.target.value)} /></label>
+        <button type="submit" aria-label={t("search")} disabled={loading || mutationBusy}><i className="fa-solid fa-magnifying-glass" aria-hidden="true" /><span className="srOnly">{t("search")}</span></button>
         {(searchDraft || searchQuery) && <button type="button" disabled={loading || mutationBusy} onClick={clearCatalogSearch}>{t("clearSearch")}</button>}
       </form>}
       {actionError && <p className={styles.error} role="alert" ref={movieActionAlert} tabIndex={-1}>{actionError}</p>}
@@ -858,24 +876,27 @@ export default function AdminMovies({ onTotalChange }: Props) {
         <ul className={styles.movieList} aria-label={t("adminMovieResults")}>{data.content.map(movie => {
           const movieTitle = editorialText(movie.title, t("untitledFilm"));
           return <li className={styles.movieRow} key={movie.id}>
-            <div className={styles.poster}><ResilientImage src={movie.photoUrl} alt="" loading="lazy" fallback={<span>{movieTitle}</span>} /></div>
+            <div className={styles.posterColumn}>
+              <div className={styles.poster}><ResilientImage src={movie.photoUrl} alt="" loading="lazy" fallback={<span>{movieTitle}</span>} /></div>
+              <button type="button" data-admin-movie-edit-id={movie.id} disabled={mutationBusy} onClick={event => editMovie(movie, event.currentTarget)}>{t("editMovie")}</button>
+            </div>
             <div className={styles.movieCardContent}>
-              <div className={styles.movieCardHeading}>
-                <div><h3>{movieTitle}</h3><p>{movie.releaseDate || "—"}</p></div>
-                <span className={styles.movieRating} aria-label={`${t("rating")}: ${movie.rating ?? "—"}`}>★ {movie.rating ?? "—"}</span>
-              </div>
+              <div className={styles.movieCardHeading}><h3>{movieTitle}</h3></div>
               <div className={styles.movieMetadata} aria-label={t("adminMovieMetadata")}>
-                <span>{t(movie.published ? "moviePublished" : "movieUnpublished")}</span>
-                {movie.ageRating && <span>{t("ageRating")}: {movie.ageRating}</span>}
-                {movie.durationMinutes !== null && <span>{t("movieDurationMinutes")}: {movie.durationMinutes}</span>}
-                <span>{t("adminMovieVisibleReviews")}: {movie.reviewCount}</span>
+                <span>{movie.releaseDate?.slice(0, 4) || "—"}</span>
+                <span>{movie.ageRating || "—"}</span>
+                <span>{movie.durationMinutes === null ? "—" : formatMovieDuration(movie.durationMinutes, lang)}</span>
+              </div>
+              <div className={styles.movieStats} aria-label={t("adminMovieMetadata")}>
+                <div className={styles.movieStat}><span>{t("adminMovieUserReviews")}</span><strong>{new Intl.NumberFormat(lang === "uk" ? "uk-UA" : "en-US", { notation: "compact", maximumFractionDigits: 1 }).format(movie.reviewCount)}</strong></div>
+                <div className={styles.movieStat}><span>{t("rating")}</span><strong className={styles.movieRating}>★ {movie.rating === null ? "—" : movie.rating.toFixed(1)}</strong></div>
+                <div className={styles.movieStat}><span>{t("adminMovieStatus")}</span><strong className={movie.published ? styles.published : styles.unpublished}>{t(movie.published ? "moviePublished" : "movieUnpublished")}</strong></div>
               </div>
               <div className={styles.movieCardActions}>
-                <button type="button" data-admin-movie-edit-id={movie.id} disabled={mutationBusy} onClick={event => editMovie(movie, event.currentTarget)}>{t("editMovie")}</button>
-                <button type="button" data-admin-movie-publication-id={movie.id} disabled={mutationBusy} onClick={() => void toggleMoviePublication(movie)}>{t("changeMoviePublication")}</button>
                 <details className={styles.movieActions}>
                   <summary aria-label={`${t("moreActions")} · ${movieTitle}`}>{t("moreActions")}</summary>
                   <div className={styles.movieActionsPanel}>
+                    <button type="button" data-admin-movie-publication-id={movie.id} disabled={mutationBusy} onClick={() => void toggleMoviePublication(movie)}>{t("changeMoviePublication")}</button>
                     <button type="button" disabled={mutationBusy} onClick={event => requestMovieDelete(movie, event.currentTarget)}>{t("deleteMovie")}</button>
                     <div className={styles.syncControls}><label className={styles.inlineField}>{t("tmdbId")}<input className={styles.tmdbIdInput} inputMode="numeric" pattern="[0-9]*" aria-label={`${t("tmdbId")} ${movieTitle}`} value={tmdbIds[movie.id] ?? ""} onChange={event => setTmdbIds(current => ({ ...current, [movie.id]: event.target.value }))} /></label><button type="button" disabled={tmdbCandidatesBusy || syncingMovieId !== null} onClick={() => void searchMovieTmdbCandidates(movie)}>{tmdbCandidatesBusy && tmdbCandidateMovieId === movie.id ? t("loading") : t("findTmdbCandidates")}</button><a className={styles.tmdbSearchLink} href={tmdbSearchHref(movie)} target="_blank" rel="noopener noreferrer">{t("searchTmdb")}</a><button type="button" disabled={syncingMovieId !== null} onClick={() => void syncMovie(movie)}>{syncingMovieId === movie.id ? t("loading") : t("syncTmdb")}</button></div>
                     {tmdbCandidateMovieId === movie.id && <section className={styles.tmdbCandidates} aria-label={t("tmdbCandidates") }>
@@ -898,7 +919,7 @@ export default function AdminMovies({ onTotalChange }: Props) {
             </div>
           </li>;
         })}</ul>
-        <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminMoviesPagination")} busy={loading || mutationBusy} statusSuffix={data.totalElements} onPageChange={nextPage => {
+        <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminMoviesPagination")} variant="numbers" busy={loading || mutationBusy} statusSuffix={data.totalElements} onPageChange={nextPage => {
           if (loading || mutationBusy) return;
           catalogFocus.current = { page: nextPage, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
           setLoading(true);

@@ -84,9 +84,10 @@ export default function JournalArticle() {
       <main className={`${styles.page} ${styles.statePage}`} aria-labelledby="journal-article-state-title" aria-busy={false}>
         <h1 id="journal-article-state-title" className={styles.stateTitle} ref={titleRef} tabIndex={-1}>{t("journal")}</h1>
         <div ref={errorPanelRef} className={styles.error} role="alert">
-          {t("journalLoadError")} <RetryButton label={t("retry")} size="large" onClick={retryArticle} />
-          <div><Link to={path("/journal")}>{t("journal")}</Link></div>
+          <p>{t("journalLoadError")}</p>
+          <RetryButton label={t("retry")} size="large" onClick={retryArticle} />
         </div>
+        <Link className={styles.errorBack} to={path("/journal")}>{t("journal")}</Link>
       </main>
     );
   }

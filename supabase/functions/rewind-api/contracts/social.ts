@@ -35,4 +35,8 @@ export interface PopularReviewerResponse extends PublicSocialUser, CommunityDeta
   likes: number; reviewCount: number; watchedCount: number; listCount: number;
 }
 
+export interface PopularReviewerPageResponse {
+  content: PopularReviewerResponse[]; totalPages: number; totalElements: number; number: number; size: number;
+}
+
 export interface CommunityUserResponse extends PublicSocialUser, CommunityDetails {}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { MovieDetails } from "../api/movies.api";
 import type { UserList } from "../api/lists.api";
+import { getWatchedDate, setWatchedDate } from "../api/ratings.api";
 import RetryButton from "./RetryButton";
 import { editorialText, formatMovieYear, useLocale } from "../i18n";
 import { useDialogFocusTrap } from "../hooks/useDialogFocusTrap";
@@ -28,6 +29,7 @@ interface MovieActionSheetProps {
   onRetryLists: () => void;
   onReview: () => void;
   onShare: () => void;
+  onWatchedDateSaved: () => void;
   onClose: () => void;
 }
 
@@ -51,21 +53,65 @@ export default function MovieActionSheet({
   onRetryLists,
   onReview,
   onShare,
+  onWatchedDateSaved,
   onClose,
 }: MovieActionSheetProps) {
-  const { t } = useLocale();
+  const { lang, t } = useLocale();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const sheetRef = useDialogFocusTrap<HTMLElement>(open, onClose, { initialFocusRef: closeButtonRef });
   const [listPickerOpen, setListPickerOpen] = useState(false);
+  const [watchedOn, setWatchedOn] = useState<string | null>(null);
+  const [watchedOnDraft, setWatchedOnDraft] = useState("");
+  const [watchedDateLoading, setWatchedDateLoading] = useState(false);
+  const [watchedDateError, setWatchedDateError] = useState(false);
+  const [watchedDateSaving, setWatchedDateSaving] = useState(false);
+  const [dateEditorOpen, setDateEditorOpen] = useState(false);
+  const [watchedDateAttempt, setWatchedDateAttempt] = useState(0);
 
   useEffect(() => {
-    if (!open) setListPickerOpen(false);
+    if (!open) {
+      setListPickerOpen(false);
+      setDateEditorOpen(false);
+    }
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !movie.myFlags?.watched) {
+      setWatchedOn(null);
+      setWatchedOnDraft("");
+      setWatchedDateError(false);
+      setWatchedDateLoading(false);
+      return;
+    }
+    let current = true;
+    setWatchedDateLoading(true); setWatchedDateError(false);
+    getWatchedDate(movie.id).then(({ data }) => {
+      if (!current) return;
+      setWatchedOn(data.watchedOn); setWatchedOnDraft(data.watchedOn ?? "");
+    }).catch(() => { if (current) setWatchedDateError(true); })
+      .finally(() => { if (current) setWatchedDateLoading(false); });
+    return () => { current = false; };
+  }, [open, movie.id, movie.myFlags?.watched, watchedDateAttempt]);
 
   if (!open) return null;
 
   const busy = mutationBusy !== null;
   const movieTitle = editorialText(movie.title, t("untitledFilm"));
+  const localToday = new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+  const displayWatchedDate = (value: string | null) => {
+    if (!value) return t("watchedDatePlaceholder");
+    const date = new Date(`${value}T00:00:00.000Z`);
+    return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat(lang === "uk" ? "uk-UA" : "en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(date);
+  };
+  const saveWatchedDate = async () => {
+    if (!watchedOnDraft || watchedDateSaving || busy) return;
+    setWatchedDateSaving(true); setWatchedDateError(false);
+    try {
+      await setWatchedDate(movie.id, watchedOnDraft);
+      setWatchedOn(watchedOnDraft); onWatchedDateSaved(); onClose();
+    } catch { setWatchedDateError(true); }
+    finally { setWatchedDateSaving(false); }
+  };
   const flagActions: { kind: MovieFlag; label: string; icon: string; enabled: boolean }[] = [
     { kind: "watched", label: t("watched"), icon: "/images/movie-action-eye.png", enabled: movie.myFlags?.watched ?? false },
     { kind: "favorite", label: t("favorite"), icon: "/images/movie-action-favorite.png", enabled: movie.myFlags?.favorites ?? false },
@@ -73,7 +119,21 @@ export default function MovieActionSheet({
   ];
 
   return <div className={styles.backdrop} role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
-    <section id="movie-action-sheet" ref={sheetRef} className={styles.sheet} role="dialog" aria-modal="true" aria-labelledby="movie-action-title">
+    <section id="movie-action-sheet" ref={sheetRef} className={`${styles.sheet} ${dateEditorOpen ? styles.dateEditor : ""}`} role="dialog" aria-modal="true" aria-labelledby="movie-action-title">
+      {dateEditorOpen ? <>
+      <div className={styles.dateEditorHeading}><h2 id="movie-action-title">{movieTitle}</h2><p>{formatMovieYear(movie.releaseDate, t("unknownYear"))}</p></div>
+      <div className={styles.dateEditorContent}>
+        <label className={styles.dateRow}><span>{t("watchedDateLabel")}</span><span className={styles.dateRowValue}>{displayWatchedDate(watchedOnDraft || null)}</span><input type="date" aria-label={t("watchedDateLabel")} value={watchedOnDraft} max={localToday} disabled={watchedDateLoading || watchedDateSaving} onChange={event => setWatchedOnDraft(event.target.value)} /></label>
+        <div className={styles.dateRatingRow}>
+          <div className={styles.dateRating}><span>{t("rated")}</span><div role="group" aria-label={t("myRating")}>{[1,2,3,4,5].map(value => <button className={value <= rating ? styles.dateRatingActive : ""} key={value} type="button" aria-label={`${t("rateAs")} ${value}`} aria-pressed={rating === value} disabled={ratingLoading || busy} onClick={() => onSaveRating(value)}>★</button>)}</div></div>
+          <div className={styles.dateLike}><span>{t("like")}</span><button type="button" aria-label={`${movie.myFlags?.favorites ? t("unlike") : t("like")} ${movieTitle}`} aria-pressed={movie.myFlags?.favorites ?? false} disabled={busy} onClick={() => onToggle("favorite", movie.myFlags?.favorites ?? false)}>{movie.myFlags?.favorites ? "♥" : "♡"}</button></div>
+        </div>
+        <p className={styles.dateSynopsis}>{movie.shortPlot ?? ""}</p>
+        {watchedDateLoading && <p className={styles.inlineStatus} role="status">{t("loading")}</p>}
+        {watchedDateError && <p className={styles.inlineError} role="alert">{t(watchedOn ? "watchedDateSaveError" : "watchedDateLoadError")} <RetryButton label={t("watchedDateRetry")} onClick={() => setWatchedDateAttempt(value => value + 1)} /></p>}
+      </div>
+      <div className={styles.dateEditorActions}><button type="button" onClick={onClose}>{t("cancel")}</button><button type="button" disabled={!watchedOnDraft || watchedDateLoading || watchedDateSaving || busy} aria-busy={watchedDateSaving} onClick={() => void saveWatchedDate()}>{watchedDateSaving ? t("saving") : t("saveSetting")}</button></div>
+      </> : <>
       <div className={styles.heading}>
         <div>
           <h2 id="movie-action-title">{movieTitle}</h2>
@@ -82,6 +142,12 @@ export default function MovieActionSheet({
       </div>
 
       <div className={styles.actionPanel}>
+        {movie.myFlags?.watched && <>
+        <button className={styles.watchedDateRow} type="button" aria-label={`${t("watchedDateEdit")}: ${displayWatchedDate(watchedOn)}`} onClick={() => { setWatchedOnDraft(watchedOn ?? ""); setDateEditorOpen(true); }}>
+          <span>{t("watchedDateLabel")}</span><span>{watchedDateLoading ? t("loading") : displayWatchedDate(watchedOn)}</span>
+        </button>
+        {watchedDateError && <p className={styles.inlineError} role="alert">{t("watchedDateLoadError")} <RetryButton label={t("watchedDateRetry")} onClick={() => setWatchedDateAttempt(value => value + 1)} /></p>}
+        </>}
         <div className={styles.flagGrid}>
           {flagActions.map(action => <button
             className={`${styles.flagButton} ${action.enabled ? styles.active : ""}`}
@@ -147,6 +213,7 @@ export default function MovieActionSheet({
       </div>
 
       <button className={styles.doneButton} ref={closeButtonRef} type="button" onClick={onClose}>{t("done")}</button>
+      </>}
     </section>
   </div>;
 }

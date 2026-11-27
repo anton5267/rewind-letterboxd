@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
+import { installHostedAuthFixture, signInHostedFixture } from "./fixtures/hosted-auth";
 
 const user = { id: 987001, username: "password-fixture-owner", role: "USER" };
 const profile = {
@@ -13,6 +14,10 @@ const emptyPage = { content: [], number: 0, size: 12, totalPages: 0, totalElemen
 
 async function installFixture(page: Page, onPassword: (route: Route) => Promise<void>) {
   let logoutCalls = 0;
+  await page.context().route("**/auth/v1/logout**", route => {
+    logoutCalls += 1;
+    return route.fulfill({ json: {} });
+  });
   await page.route(url => url.pathname.startsWith("/api/"), async route => {
     const pathname = new URL(route.request().url()).pathname;
     if (pathname === "/api/profile/me/password") return onPassword(route);
@@ -41,6 +46,7 @@ for (const lang of ["uk", "en"] as const) {
     : { change: "Change password", error: "Check your current and new passwords.", changed: "Password changed. Please log in again." };
 
   test(`password settings retry focuses action error and signs out after success in ${lang}`, async ({ page }) => {
+    await installHostedAuthFixture(page.context());
     const passwordBodies: Record<string, unknown>[] = [];
     const logoutCalls = await installFixture(page, async route => {
       passwordBodies.push(route.request().postDataJSON());
@@ -49,6 +55,7 @@ for (const lang of ["uk", "en"] as const) {
         : route.fulfill({ status: 200, body: "Password updated" });
     });
     await page.setViewportSize({ width: 1440, height: 1000 });
+    await signInHostedFixture(page, lang);
     await page.goto(`/${lang}/profile?settings=authentication`);
     const form = page.locator("#settings-form-authentication");
     await form.locator("#profile-current-password").fill(currentPassword);
@@ -76,6 +83,7 @@ for (const lang of ["uk", "en"] as const) {
   });
 
   test(`password settings delayed failure stays scoped after switching tabs in ${lang}`, async ({ page }) => {
+    await installHostedAuthFixture(page.context());
     let releaseFailure!: () => void;
     const responseGate = new Promise<void>(resolve => { releaseFailure = resolve; });
     const logoutCalls = await installFixture(page, async route => {
@@ -83,6 +91,7 @@ for (const lang of ["uk", "en"] as const) {
       await route.fulfill({ status: 503, json: { message: "Delayed fixture password failure" } });
     });
     await page.setViewportSize({ width: 1440, height: 1000 });
+    await signInHostedFixture(page, lang);
     await page.goto(`/${lang}/profile?settings=authentication`);
     const form = page.locator("#settings-form-authentication");
     await form.locator("#profile-current-password").fill(currentPassword);

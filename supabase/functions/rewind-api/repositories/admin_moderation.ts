@@ -1,4 +1,4 @@
-import type { AdminCommentResponse, AdminModerationQueueItem, AdminModerationTarget, AdminReportedReviewResponse, AdminReviewResponse } from "../contracts/admin.ts";
+import type { AdminAuditLogResponse, AdminCommentResponse, AdminModerationQueueItem, AdminModerationTarget, AdminReportedReviewResponse, AdminReviewResponse } from "../contracts/admin.ts";
 import type { RewindApiRepository } from "../contracts/repository.ts";
 import type { ReviewReportReason } from "../contracts/reviews.ts";
 import { RewindApiError } from "../http/errors.ts";
@@ -50,24 +50,45 @@ async function setCommentModeration(connection: PgConnection, userId: number, id
 function toAdminReview(row: {
   id: string; movie_id: string; movie_title: string; user_id: string; username: string; content: string;
   rating: number | null; is_hidden: boolean; moderated_reason: string | null; moderated_at: string | null; created_at: string;
+  likes_count: string; comments_count: string;
 }): AdminReviewResponse {
   return {
     id: safeId(row.id, "Review ID"), movieId: safeId(row.movie_id, "Movie ID"), movieTitle: row.movie_title,
     userId: safeId(row.user_id, "User ID"), username: row.username, content: row.content, rating: row.rating,
     isHidden: row.is_hidden, moderatedReason: row.moderated_reason, moderatedAt: row.moderated_at, createdAt: row.created_at,
+    likesCount: safeCount(row.likes_count, "Review likes count"), commentsCount: safeCount(row.comments_count, "Review comments count"),
   };
 }
 
 function toAdminComment(row: {
   id: string; review_id: string | null; list_id: string | null; user_id: string; username: string; content: string; is_hidden: boolean;
-  moderated_reason: string | null; moderated_at: string | null; created_at: string;
+  moderated_reason: string | null; moderated_at: string | null; created_at: string; parent_likes_count: string; parent_replies_count: string;
 }): AdminCommentResponse {
   return {
     id: safeId(row.id, "Comment ID"), reviewId: row.review_id === null ? null : safeId(row.review_id, "Review ID"),
     ...(row.list_id === null ? {} : { listId: safeId(row.list_id, "List ID") }),
     userId: safeId(row.user_id, "User ID"), username: row.username, content: row.content,
     isHidden: row.is_hidden, moderatedReason: row.moderated_reason, moderatedAt: row.moderated_at, createdAt: row.created_at,
+    parentLikesCount: safeCount(row.parent_likes_count, "Comment parent likes count"), parentRepliesCount: safeCount(row.parent_replies_count, "Comment parent replies count"),
   };
+}
+
+const commentParentCountsSql = `
+  CASE WHEN c.review_id IS NOT NULL
+       THEN COALESCE((SELECT COUNT(*)::text FROM rewind.review_likes rl WHERE rl.review_id=c.review_id), '0')
+       WHEN c.list_id IS NOT NULL
+       THEN COALESCE((SELECT COUNT(*)::text FROM rewind.list_likes ll WHERE ll.list_id=c.list_id), '0')
+       ELSE '0' END AS parent_likes_count,
+  CASE WHEN c.review_id IS NOT NULL
+       THEN COALESCE((SELECT COUNT(*)::text FROM rewind.comments replies WHERE replies.review_id=c.review_id AND replies.is_hidden=FALSE), '0')
+       WHEN c.list_id IS NOT NULL
+       THEN COALESCE((SELECT COUNT(*)::text FROM rewind.comments replies WHERE replies.list_id=c.list_id AND replies.is_hidden=FALSE), '0')
+       ELSE '0' END AS parent_replies_count`;
+
+function safeCount(value: string, label: string): number {
+  const count = Number(value);
+  if (!Number.isSafeInteger(count) || count < 0) throw new Error(`${label} is outside the safe JSON integer range.`);
+  return count;
 }
 
 function toAdminModerationQueueItem(row: {
@@ -82,16 +103,43 @@ function toAdminModerationQueueItem(row: {
   };
 }
 
+async function getAdminContentHistory(authUser: Parameters<typeof beginAdminTransaction>[0], targetType: "REVIEW" | "COMMENT", id: number): Promise<AdminAuditLogResponse[]> {
+  const { connection } = await beginAdminTransaction(authUser);
+  try {
+    const rows = await connection.queryObject<{
+      id: string; admin_id: string; action: string; target_type: string; target_id: string | null;
+      metadata: string | null; created_at: string;
+    }>({
+      text: `SELECT id::text AS id, admin_id::text AS admin_id, action, target_type, target_id::text AS target_id,
+                    metadata, created_at::text AS created_at
+             FROM rewind.admin_audit_logs WHERE target_type=$1 AND target_id=$2
+             ORDER BY created_at DESC, id DESC LIMIT 20`, args: [targetType, id],
+    });
+    await connection.queryObject("COMMIT");
+    return rows.rows.map(row => ({
+      id: safeId(row.id, "Audit log ID"), adminId: safeId(row.admin_id, "Admin ID"), action: row.action,
+      targetType: row.target_type, targetId: row.target_id === null ? null : safeId(row.target_id, "Target ID"),
+      metadata: row.metadata, createdAt: row.created_at,
+    }));
+  } catch (error) {
+    try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+    throw error;
+  } finally { connection.release(); }
+}
+
 export const adminModerationRepository: Pick<RewindApiRepository,
   | "getAdminReviews"
   | "getAdminReportedReviews"
+  | "getAdminReviewHistory"
   | "dismissAdminReviewReport"
   | "getAdminReportedComments"
+  | "getAdminCommentHistory"
   | "dismissAdminCommentReport"
   | "getAdminReportedLists"
   | "dismissAdminListReport"
   | "setAdminReviewHidden"
   | "updateAdminReviewContent"
+  | "updateAdminCommentContent"
   | "deleteAdminReview"
   | "getAdminComments"
   | "setAdminCommentHidden"
@@ -128,7 +176,9 @@ export const adminModerationRepository: Pick<RewindApiRepository,
         connection.queryObject<Parameters<typeof toAdminReview>[0]>({
           text: `SELECT r.id::text AS id, r.movie_id::text AS movie_id, m.title AS movie_title,
                        r.user_id::text AS user_id, u.username, r.content, r.rating::int AS rating, r.is_hidden,
-                       r.moderated_reason, r.moderated_at::text AS moderated_at, r.created_at::text AS created_at
+                       r.moderated_reason, r.moderated_at::text AS moderated_at, r.created_at::text AS created_at,
+                       COALESCE((SELECT COUNT(*)::text FROM rewind.review_likes rl WHERE rl.review_id=r.id), '0') AS likes_count,
+                       COALESCE((SELECT COUNT(*)::text FROM rewind.comments c WHERE c.review_id=r.id AND c.is_hidden=FALSE), '0') AS comments_count
                 FROM rewind.reviews r JOIN rewind.movies m ON m.id=r.movie_id JOIN rewind.users u ON u.id=r.user_id${where}
                 ORDER BY r.id DESC LIMIT $${args.length + 1} OFFSET $${args.length + 2}`,
           args: [...args, size, page * size],
@@ -149,13 +199,13 @@ export const adminModerationRepository: Pick<RewindApiRepository,
         connection.queryObject<{ total: string }>({ text: "SELECT COUNT(*)::text AS total FROM rewind.review_reports WHERE status='OPEN'" }),
         connection.queryObject<{
           report_id: string; report_reason: string; report_created_at: string;
-          id: string; movie_id: string; movie_title: string; user_id: string; username: string; content: string;
+          id: string; movie_id: string; movie_title: string; user_id: string; username: string; email: string; content: string;
           rating: number | null; is_hidden: boolean; moderated_reason: string | null; moderated_at: string | null; created_at: string;
           likes_count: string; comments_count: string;
         }>({
           text: `SELECT rr.id::text AS report_id, rr.reason AS report_reason, rr.created_at::text AS report_created_at,
                        r.id::text AS id, r.movie_id::text AS movie_id, m.title AS movie_title,
-                       r.user_id::text AS user_id, u.username, r.content, r.rating::int AS rating, r.is_hidden,
+                       r.user_id::text AS user_id, u.username, u.email, r.content, r.rating::int AS rating, r.is_hidden,
                        r.moderated_reason, r.moderated_at::text AS moderated_at, r.created_at::text AS created_at,
                        (SELECT COUNT(*)::text FROM rewind.review_likes rl WHERE rl.review_id=r.id) AS likes_count,
                        (SELECT COUNT(*)::text FROM rewind.comments c WHERE c.review_id=r.id AND c.is_hidden=FALSE) AS comments_count
@@ -169,9 +219,8 @@ export const adminModerationRepository: Pick<RewindApiRepository,
         }),
       ]);
       const content = rows.rows.map(row => ({
-        ...toAdminReview(row), reportId: safeId(row.report_id, "Report ID"),
+        ...toAdminReview(row), email: row.email, reportId: safeId(row.report_id, "Report ID"),
         reportReason: row.report_reason as ReviewReportReason, reportCreatedAt: row.report_created_at,
-        likesCount: Number(row.likes_count), commentsCount: Number(row.comments_count),
       }));
       await connection.queryObject("COMMIT");
       return pageResult(content, count.rows[0]?.total ?? "0", page, size);
@@ -206,21 +255,26 @@ export const adminModerationRepository: Pick<RewindApiRepository,
     try {
       const [count, rows] = await Promise.all([
         connection.queryObject<{ total: string }>({ text: "SELECT COUNT(*)::text AS total FROM rewind.comment_reports WHERE status='OPEN'" }),
-        connection.queryObject<Parameters<typeof toAdminComment>[0] & { report_id: string; report_reason: ReviewReportReason; report_created_at: string }>({
+        connection.queryObject<Parameters<typeof toAdminComment>[0] & { email: string; report_id: string; report_reason: ReviewReportReason; report_created_at: string; related_title: string | null; parent_likes_count: string; parent_replies_count: string }>({
           text: `SELECT cr.id::text AS report_id, cr.reason AS report_reason, cr.created_at::text AS report_created_at,
                        c.id::text AS id, c.review_id::text AS review_id, c.list_id::text AS list_id, c.user_id::text AS user_id,
-                       u.username, c.content, c.is_hidden, c.moderated_reason,
-                       c.moderated_at::text AS moderated_at, c.created_at::text AS created_at
+                       u.username, u.email, c.content, c.is_hidden, c.moderated_reason,
+                       c.moderated_at::text AS moderated_at, c.created_at::text AS created_at,
+                       COALESCE(m.title, l.name) AS related_title,
+                       ${commentParentCountsSql}
                 FROM rewind.comment_reports cr
                 JOIN rewind.comments c ON c.id=cr.comment_id
                 JOIN rewind.users u ON u.id=c.user_id
+                LEFT JOIN rewind.reviews r ON r.id=c.review_id
+                LEFT JOIN rewind.movies m ON m.id=r.movie_id
+                LEFT JOIN rewind.lists l ON l.id=c.list_id
                 WHERE cr.status='OPEN'
                 ORDER BY cr.created_at DESC, cr.id DESC LIMIT $1 OFFSET $2`, args: [size, page * size],
         }),
       ]);
       const content = rows.rows.map(row => ({
-        ...toAdminComment(row), reportId: safeId(row.report_id, "Report ID"),
-        reportReason: row.report_reason, reportCreatedAt: row.report_created_at,
+        ...toAdminComment(row), email: row.email, reportId: safeId(row.report_id, "Report ID"),
+        reportReason: row.report_reason, reportCreatedAt: row.report_created_at, relatedTitle: row.related_title,
       }));
       await connection.queryObject("COMMIT");
       return pageResult(content, count.rows[0]?.total ?? "0", page, size);
@@ -228,6 +282,14 @@ export const adminModerationRepository: Pick<RewindApiRepository,
       try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
       throw error;
     } finally { connection.release(); }
+  },
+
+  async getAdminReviewHistory(authUser, id) {
+    return await getAdminContentHistory(authUser, "REVIEW", id);
+  },
+
+  async getAdminCommentHistory(authUser, id) {
+    return await getAdminContentHistory(authUser, "COMMENT", id);
   },
 
   async dismissAdminCommentReport(authUser, reportId) {
@@ -239,18 +301,20 @@ export const adminModerationRepository: Pick<RewindApiRepository,
     try {
       const [count, rows] = await Promise.all([
         connection.queryObject<{ total: string }>({ text: "SELECT COUNT(*)::text AS total FROM rewind.list_reports WHERE status='OPEN'" }),
-        connection.queryObject<Parameters<typeof toAdminList>[0] & { report_id: string; report_reason: ReviewReportReason; report_created_at: string }>({
+        connection.queryObject<Parameters<typeof toAdminList>[0] & { email: string; report_id: string; report_reason: ReviewReportReason; report_created_at: string; like_count: string }>({
           text: `SELECT lr.id::text AS report_id, lr.reason AS report_reason, lr.created_at::text AS report_created_at,
-                       l.id::text AS id, l.user_id::text AS user_id, u.username, l.name, l.description,
+                       l.id::text AS id, l.user_id::text AS user_id, u.username, u.email, l.name, l.description,
                        l.list_type, l.is_public, (SELECT COUNT(*)::text FROM rewind.list_items li WHERE li.list_id=l.id) AS item_count,
-                       l.created_at::text AS created_at, l.updated_at::text AS updated_at, l.featured_position
+                       (SELECT COUNT(*)::text FROM rewind.list_likes ll WHERE ll.list_id=l.id) AS like_count,
+                       l.created_at::text AS created_at, l.updated_at::text AS updated_at, l.featured_position, l.featured_category
                 FROM rewind.list_reports lr JOIN rewind.lists l ON l.id=lr.list_id JOIN rewind.users u ON u.id=l.user_id
                 WHERE lr.status='OPEN' ORDER BY lr.created_at DESC, lr.id DESC LIMIT $1 OFFSET $2`, args: [size, page * size],
         }),
       ]);
       const content = rows.rows.map(row => ({
-        ...toAdminList(row), reportId: safeId(row.report_id, "Report ID"),
+        ...toAdminList(row), email: row.email, reportId: safeId(row.report_id, "Report ID"),
         reportReason: row.report_reason, reportCreatedAt: row.report_created_at,
+        likeCount: safeCount(row.like_count, "Reported list likes count"),
       }));
       await connection.queryObject("COMMIT");
       return pageResult(content, count.rows[0]?.total ?? "0", page, size);
@@ -310,6 +374,33 @@ export const adminModerationRepository: Pick<RewindApiRepository,
     } finally { connection.release(); }
   },
 
+  async updateAdminCommentContent(authUser, id, content) {
+    const { connection, userId } = await beginAdminTransaction(authUser);
+    try {
+      const updated = await connection.queryObject<{ id: string }>({
+        text: "UPDATE rewind.comments SET content=$2, updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING id::text AS id",
+        args: [id, content],
+      });
+      if (updated.rows.length === 0) {
+        await connection.queryObject("COMMIT");
+        return null;
+      }
+      await recordAdminAudit(connection, userId, "COMMENT_CONTENT_EDITED", "COMMENT", id, "content edited by administrator");
+      const result = await connection.queryObject<Parameters<typeof toAdminComment>[0]>({
+        text: `SELECT c.id::text AS id, c.review_id::text AS review_id, c.list_id::text AS list_id,
+                     c.user_id::text AS user_id, u.username, c.content, c.is_hidden, c.moderated_reason,
+                     c.moderated_at::text AS moderated_at, c.created_at::text AS created_at,
+                     ${commentParentCountsSql}
+              FROM rewind.comments c JOIN rewind.users u ON u.id=c.user_id WHERE c.id=$1`, args: [id],
+      });
+      await connection.queryObject("COMMIT");
+      return result.rows[0] ? toAdminComment(result.rows[0]) : null;
+    } catch (error) {
+      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+      throw error;
+    } finally { connection.release(); }
+  },
+
   async deleteAdminReview(authUser, id) {
     const { connection, userId } = await beginAdminTransaction(authUser);
     try {
@@ -333,7 +424,8 @@ export const adminModerationRepository: Pick<RewindApiRepository,
         connection.queryObject<Parameters<typeof toAdminComment>[0]>({
           text: `SELECT c.id::text AS id, c.review_id::text AS review_id, c.list_id::text AS list_id, c.user_id::text AS user_id,
                        u.username, c.content, c.is_hidden, c.moderated_reason,
-                       c.moderated_at::text AS moderated_at, c.created_at::text AS created_at
+                       c.moderated_at::text AS moderated_at, c.created_at::text AS created_at,
+                       ${commentParentCountsSql}
                 FROM rewind.comments c JOIN rewind.users u ON u.id=c.user_id${where}
                 ORDER BY c.id DESC LIMIT $${args.length + 1} OFFSET $${args.length + 2}`,
           args: [...args, size, page * size],
@@ -354,7 +446,8 @@ export const adminModerationRepository: Pick<RewindApiRepository,
       const result = await connection.queryObject<Parameters<typeof toAdminComment>[0]>({
         text: `SELECT c.id::text AS id, c.review_id::text AS review_id, c.list_id::text AS list_id, c.user_id::text AS user_id,
                      u.username, c.content, c.is_hidden, c.moderated_reason,
-                     c.moderated_at::text AS moderated_at, c.created_at::text AS created_at
+                     c.moderated_at::text AS moderated_at, c.created_at::text AS created_at,
+                     ${commentParentCountsSql}
               FROM rewind.comments c JOIN rewind.users u ON u.id=c.user_id WHERE c.id=$1`, args: [id],
       });
       await connection.queryObject("COMMIT");

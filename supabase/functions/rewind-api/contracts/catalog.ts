@@ -118,9 +118,14 @@ export interface GlobalSearchArticleResponse {
   coverUrl: string | null; publishedAt: string | null;
 }
 
+export interface GlobalSearchUserResponse extends PublicSocialUser {
+  followerCount: number;
+  followingCount: number;
+}
+
 export interface GlobalSearchResponse {
   films: MovieSearchResult;
-  users: { content: PublicSocialUser[]; totalPages: number; totalElements: number; number: number };
+  users: { content: GlobalSearchUserResponse[]; totalPages: number; totalElements: number; number: number };
   lists: PublicListPageResponse;
   tags: PopularTagResponse[];
   people: { id: number; name: string; photoUrl: string | null; type: "ACTOR" | "DIRECTOR" | "PRODUCER" }[];

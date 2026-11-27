@@ -20,6 +20,7 @@ import { handleCurrentUserRoute, handleProfileRoutes } from "./http/routes/profi
 import { handleProfileEmailRoute } from "./http/routes/profile_email.ts";
 import { handleMovieRatingRoutes, handleMovieStatusRoutes } from "./http/routes/movie_actions.ts";
 import { handleCatalogRoutes } from "./http/routes/catalog.ts";
+import { handlePublicStatsRoutes } from "./http/routes/public_stats.ts";
 
 export type * from "./contracts/catalog.ts";
 export type * from "./contracts/auth.ts";
@@ -53,6 +54,7 @@ const routeHandlers = [
   handleMovieStatusRoutes,
   handleCurrentUserRoute,
   handleMovieRatingRoutes,
+  handlePublicStatsRoutes,
   handleCatalogRoutes,
 ];
 

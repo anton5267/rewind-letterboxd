@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { isAxiosError } from "axios";
 import { addComment, addListComment, deleteComment, getComments, getListComments, updateComment, type Comment } from "../../api/comments.api";
 import Pagination from "../Pagination";
-import RetryNotice from "../RetryNotice";
+import RetryButton from "../RetryButton";
 import ConfirmDialog from "../ConfirmDialog";
 import ContentReportAction from "../ContentReportAction";
 import { useAuth } from "../../context/AuthContext";
@@ -12,7 +12,18 @@ import styles from "./CommentThread.module.css";
 
 type CommentAction = { type: "save"; commentId: number | null; text: string } | { type: "delete"; id: number };
 
-type ThreadTarget = { reviewId: number; listId?: never } | { listId: number; reviewId?: never };
+type ThreadTarget = ({ reviewId: number; listId?: never } | { listId: number; reviewId?: never }) & { presentation?: "public-list" };
+
+function CommentErrorNotice({ message, retryLabel, onRetry, disabled = false, busy = false, compactType }: {
+  message: string;
+  retryLabel: string;
+  onRetry: () => void;
+  disabled?: boolean;
+  busy?: boolean;
+  compactType?: "add" | "load";
+}) {
+  return <div className={`${styles.error} ${compactType ? styles.errorCompact : ""} ${compactType === "load" ? styles.errorCompactLoad : ""}`} role="alert"><p>{message}</p><RetryButton label={retryLabel} disabled={disabled} busy={busy} onClick={onRetry} /></div>;
+}
 
 export default function CommentThread(props: ThreadTarget) {
   const { isAuth, user } = useAuth();
@@ -24,7 +35,7 @@ function CommentThreadContent(props: ThreadTarget) {
   const targetId = props.listId ?? props.reviewId;
   const isList = props.listId !== undefined;
   const { isAuth, user } = useAuth();
-  const { t } = useLocale();
+  const { lang, t } = useLocale();
   const [expanded, setExpanded] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [text, setText] = useState("");
@@ -106,6 +117,7 @@ function CommentThreadContent(props: ThreadTarget) {
   const load = async (requestedPage = page) => {
     const currentRequest = ++requestId.current;
     setLoading(true);
+    setLoadError("");
     try {
       const { data } = await (isList ? getListComments(targetId, requestedPage) : getComments(targetId, requestedPage));
       if (currentRequest !== requestId.current || currentReviewId.current !== targetId) return;
@@ -199,12 +211,12 @@ function CommentThreadContent(props: ThreadTarget) {
     else void deleteCommentAction(pendingAction.id);
   };
 
-  return <section className={styles.section} aria-label={t("commentsSection")} aria-busy={loading || mutationBusy !== null}>
+  return <section className={`${styles.section} ${isList && props.presentation === "public-list" ? styles.publicList : ""}`} aria-label={t("commentsSection")} aria-busy={loading || mutationBusy !== null}>
     <button type="button" onClick={toggle} aria-expanded={expanded}>{expanded ? t("hideComments") : t("showComments")}</button>
     {expanded && <div className={styles.panel} ref={panelRef} tabIndex={-1} data-comments-panel>
       {loading && <p className={styles.loading} role="status">{t("loading")}</p>}
-      {loadError && <RetryNotice className={styles.error} message={loadError} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={retryLoad} />}
-      {actionError && <RetryNotice className={styles.error} message={actionError} retryLabel={mutationBusy ? t("loading") : t("retry")} disabled={mutationBusy !== null} busy={mutationBusy !== null} onRetry={retryAction} />}
+      {loadError && <CommentErrorNotice message={loadError} compactType={lang === "en" ? "load" : undefined} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={retryLoad} />}
+      {actionError && <CommentErrorNotice message={actionError} compactType={lang === "en" && actionError !== t("listCommentRepliesRestricted") ? "add" : undefined} retryLabel={mutationBusy ? t("loading") : t("retry")} disabled={mutationBusy !== null} busy={mutationBusy !== null} onRetry={retryAction} />}
       {!loading && !loadError && comments.length === 0 && <p>{t("noComments")}</p>}
       <ul className={styles.list}>
         {comments.map(comment => {
@@ -226,7 +238,13 @@ function CommentThreadContent(props: ThreadTarget) {
       {isAuth ? <form className={styles.form} onSubmit={submit}>
         <label className={styles.field}>{t("yourComment")}<textarea className={styles.textarea} required maxLength={2000} value={editing === null ? text : ""} disabled={editing !== null || mutationBusy !== null} onChange={event => setText(event.target.value)} /></label>
         {editing === null && <button type="submit" aria-busy={mutationBusy === "save"} disabled={mutationBusy !== null || !text.trim()}>{mutationBusy === "save" ? t("saving") : t("sendComment")}</button>}
-      </form> : <p>{t("loginToComment")}</p>}
+      </form> : isList && props.presentation === "public-list" ? <>
+        <form className={styles.form} onSubmit={event => event.preventDefault()}>
+          <label className={styles.field}>{t("yourComment")}<textarea className={styles.textarea} disabled aria-label={t("yourComment")} /></label>
+          <button type="button" disabled>{t("sendComment")}</button>
+        </form>
+        <p>{t("loginToComment")}</p>
+      </> : <p>{t("loginToComment")}</p>}
     </div>}
     <ConfirmDialog open={pendingDelete !== null} title={t("deleteComment")} description={t("deleteCommentConfirm")} cancelLabel={t("cancel")} confirmLabel={t("deleteComment")} trigger={pendingDelete?.trigger ?? null} onCancel={() => setPendingDelete(null)} onConfirm={() => { const id = pendingDelete?.id; setPendingDelete(null); if (id !== undefined) void deleteCommentAction(id); }} />
   </section>;

@@ -1,6 +1,6 @@
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { useLocale, editorialText, formatDateTime } from "../../i18n";
+import { useLocale, editorialText, formatReviewDate } from "../../i18n";
 import { useState, useRef, useLayoutEffect, useEffect } from "react";
 import { getProfileReviews, type ProfileReview, type ProfilePage } from "../../api/profile.api";
 import { getReviewDetails, updateReview, deleteReview as deleteReviewRequest } from "../../api/reviews.api";
@@ -208,14 +208,14 @@ export function useProfileReviews({ route, identity }: {
         <div className={styles.reviewHeading}>
           <h3><Link data-profile-review-title={item.movieId} to={path(`/films/${item.movieId}`)}>{title}</Link></h3>
           <div className={styles.reviewHeadingActions}>
-            {withScore && profile && <ProfileReviewScore movieId={item.movieId} ownerId={profile.id} title={title} />}
+            {withScore && profile && <ProfileReviewScore movieId={item.movieId} ownerId={profile.id} title={title} compact={!profileView || profileView === "reviews" && requestedReviewValue === null} />}
             {editable && profileView === "reviews" && !isEditing && <div className={styles.reviewActions}>
-              <button ref={button => { if (button) reviewEditButtonRefs.current.set(item.reviewId, button); else reviewEditButtonRefs.current.delete(item.reviewId); }} type="button" disabled={reviewActionBusy !== null} aria-label={`${t("editReview")}: ${title}`} title={t("editReview")} onClick={() => { pendingReviewFocus.current = null; setReviewDraft(item.content); setEditingReviewId(item.reviewId); setReviewActionMessage(null); setReviewActionError(null); }}><picture><source media="(max-width: 767px)" srcSet="/images/profile-review-edit-phone.png" /><img className={styles.reviewActionIcon} src="/images/profile-review-edit.png" alt="" /></picture><span className={styles.mobileReviewActionLabel}>{t("editReview")}</span></button>
+              <button ref={button => { if (button) reviewEditButtonRefs.current.set(item.reviewId, button); else reviewEditButtonRefs.current.delete(item.reviewId); }} type="button" disabled={reviewActionBusy !== null} aria-label={`${t("editProfileReview")}: ${title}`} title={t("editProfileReview")} onClick={() => { pendingReviewFocus.current = null; setReviewDraft(item.content); setEditingReviewId(item.reviewId); setReviewActionMessage(null); setReviewActionError(null); }}><picture><source media="(max-width: 767px)" srcSet="/images/profile-review-edit-phone.png" /><img className={styles.reviewActionIcon} src="/images/profile-review-edit.png" alt="" /></picture><span className={styles.mobileReviewActionLabel}>{t("editProfileReview")}</span></button>
               <button type="button" disabled={reviewActionBusy !== null} aria-label={`${t("deleteReview")}: ${title}`} title={t("deleteReview")} onClick={event => requestProfileReviewDelete(item, event.currentTarget)}><picture><source media="(max-width: 767px)" srcSet="/images/profile-review-delete-phone.png" /><img className={styles.reviewActionIcon} src="/images/profile-review-delete.png" alt="" /></picture><span className={styles.mobileReviewActionLabel}>{t("deleteReview")}</span></button>
             </div>}
           </div>
         </div>
-        <time dateTime={item.updatedAt}>{formatDateTime(item.updatedAt, lang)}</time>
+        <time dateTime={item.updatedAt}>{formatReviewDate(item.updatedAt, lang)}</time>
         {isEditing ? <form className={styles.reviewEditor} onSubmit={event => { void saveProfileReview(event, item); }} aria-busy={reviewActionBusy === "save"}>
           <label className="srOnly" htmlFor={`profile-review-content-${item.reviewId}`}>{t("review")}</label>
           <textarea id={`profile-review-content-${item.reviewId}`} aria-label={t("review")} autoFocus required minLength={1} maxLength={5000} disabled={reviewActionBusy !== null} value={reviewDraft} onChange={event => setReviewDraft(event.target.value)} onKeyDown={event => { if (event.key === "Escape" && reviewActionBusy === null) { event.preventDefault(); pendingReviewFocus.current = { scope: reviewScopeGeneration.current, request: reviewsRequest.current, origin: event.currentTarget, target: "edit", id: item.reviewId }; setEditingReviewId(null); setReviewDraft(""); } }} />

@@ -94,6 +94,7 @@ test("Admin Movies TMDB quality Retry returns focus after repeated failure and r
     if (url.pathname === "/api/auth/csrf") return route.fulfill({ json: { token: "admin-quality-retry" } });
     if (url.pathname === "/api/auth/refresh") return route.fulfill({ status: 401, json: {} });
     if (url.pathname.includes("unread-count")) return route.fulfill({ json: { count: 0 } });
+    if (url.pathname === "/api/genres" || url.pathname === "/api/admin/settings") return route.fulfill({ json: [] });
     if (url.pathname === "/api/admin/movies/tmdb-quality") {
       attempts++;
       if (attempts < 3) return route.fulfill({ status: 503, json: {} });

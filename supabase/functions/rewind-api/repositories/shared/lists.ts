@@ -13,14 +13,14 @@ export async function ensureSystemLists(connection: Awaited<ReturnType<typeof po
   // Serialize first-login requests for the same profile so each system list is
   // created once even when the browser fires multiple API calls concurrently.
   await connection.queryObject({ text: "SELECT pg_advisory_xact_lock($1::bigint)", args: [userId] });
-  for (const [type, name] of [["WATCHLIST", "Watchlist"], ["WATCHED", "Watched"], ["FAVORITES", "Favorites"]] as const) {
+  for (const [type, name, isPublic] of [["WATCHLIST", "Watchlist", true], ["WATCHED", "Watched", false], ["FAVORITES", "Favorites", false]] as const) {
     await connection.queryObject({
       text: `INSERT INTO rewind.lists (user_id, name, list_type, is_public)
-             SELECT $1::BIGINT, $2::VARCHAR, $3::VARCHAR, FALSE
+             SELECT $1::BIGINT, $2::VARCHAR, $3::VARCHAR, $4::BOOLEAN
              WHERE NOT EXISTS (
                SELECT 1 FROM rewind.lists WHERE user_id = $1::BIGINT AND list_type = $3::VARCHAR
              )`,
-      args: [userId, name, type],
+      args: [userId, name, type, isPublic],
     });
   }
 }
@@ -29,12 +29,14 @@ export function toAdminList(row: {
   id: string; user_id: string; username: string; name: string; description: string | null;
   list_type: AdminListResponse["listType"]; is_public: boolean; item_count: string;
   created_at: string; updated_at: string; featured_position: number | null;
+  featured_category: AdminListResponse["featuredCategory"];
 }): AdminListResponse {
   return {
     id: safeId(row.id, "List ID"), userId: safeId(row.user_id, "User ID"), username: row.username,
     name: row.name, description: row.description, listType: row.list_type, isPublic: row.is_public,
     itemCount: Number(row.item_count), createdAt: row.created_at, updatedAt: row.updated_at,
     featuredPosition: row.featured_position,
+    featuredCategory: row.featured_category,
   };
 }
 
@@ -54,6 +56,27 @@ export async function loadListTags(connection: PgConnection, listIds: number[]):
     result.set(id, list);
   }
   return result;
+}
+
+export async function loadPublicListPreviewRows(connection: PgConnection, listIds: number[]): Promise<{
+  list_id: string; movie_id: string; title: string; release_date: string | null;
+  rating: string | null; photo_url: string | null;
+}[]> {
+  if (listIds.length === 0) return [];
+  const result = await connection.queryObject<{
+    list_id: string; movie_id: string; title: string; release_date: string | null;
+    rating: string | null; photo_url: string | null;
+  }>({
+    text: `SELECT list_id::text AS list_id, movie_id::text AS movie_id, title, release_date, rating, photo_url
+           FROM (SELECT li.list_id, li.id, li.position, m.id AS movie_id, m.title,
+                        m.release_date::text AS release_date, m.rating::text AS rating, m.photo_url,
+                        ROW_NUMBER() OVER (PARTITION BY li.list_id ORDER BY li.position ASC NULLS LAST, li.id ASC) AS rn
+                  FROM rewind.list_items li JOIN rewind.movies m ON m.id = li.movie_id AND m.is_published = TRUE
+                  WHERE li.list_id = ANY($1::bigint[])) ranked WHERE rn <= $2
+           ORDER BY list_id, rn`,
+    args: [listIds, 5],
+  });
+  return result.rows;
 }
 
 export async function replaceListTags(connection: PgConnection, listId: number, values: string[]): Promise<string[]> {

@@ -75,6 +75,10 @@
 .shell > section.overviewSection .activityCaption { display: flex; flex-direction: column; gap: 7px; margin: 16px 0 0; color: #aaa; font-size: 14px; line-height: 1.4; }
 .activityCaption strong { color: #fff; font-size: 16px; font-weight: 500; }
 .activityCaption time { font-size: 12px; }
+.mobileActivityRating { display: none; }
+.mobileActivityRatingStar { position: relative; display: block; width: 20px; height: 19px; }
+.mobileActivityRatingStar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: .42; }
+.mobileActivityRatingStar .mobileActivityRatingFill { opacity: .8; }
 
 .reviewCards { display: grid; gap: 36px; margin: 0; padding: 0; list-style: none; }
 
@@ -83,6 +87,9 @@
 .followingRail a { display: grid; width: 80px; min-height: 80px; place-items: center; border-radius: 50%; text-decoration: none; }
 .followingRail img, .followingAvatarFallback { display: block; width: 80px; height: 80px; border-radius: 50%; object-fit: cover; }
 .followingAvatarFallback { display: grid; place-items: center; background: #343434; color: #fff; font-size: 26px; }
+.followingAvatarFallback { position: relative; overflow: hidden; background: #fff; color: transparent; }
+.followingAvatarFallback::before { position: absolute; top: 15%; left: 30%; width: 40%; aspect-ratio: 1; border-radius: 50%; background: #908e89; content: ""; }
+.followingAvatarFallback::after { position: absolute; top: 67.5%; left: -25%; width: 150%; height: 150%; border-radius: 50% 50% 0 0; background: #908e89; content: ""; }
 
 .shell > section.overviewSection .overviewAction {
   display: table;
@@ -118,6 +125,10 @@
   .shell > section.networkSection > h2 { margin-bottom: 59px; font-size: 24px; line-height: 27px; }
 }
 @media (max-width: 767px) {
+  :global(#public-profile-overview) .overviewAction { display: none; }
+  .mobileActivityRating { display: flex; height: 11px; align-items: center; gap: 2px; margin-top: 9px; }
+  .mobileActivityRatingStar { width: 7px; height: 11px; }
+  .shell > section.overviewSection .activityPreview li[data-activity-rated="true"] .activityCaption { display: none; }
   .page[data-network-view="true"] { padding-top: 0; }
   .page[data-network-view="true"] .hero, .page[data-network-view="true"] .profileRail, .page[data-network-view="true"] .shell > p { display: none; }
   .page[data-network-view="true"] .collectionToolbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 10px; padding-top: 50px; margin-bottom: 29px; }
@@ -127,19 +138,52 @@
   .page[data-network-view="true"] .shell > section.networkSection > h2 { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 
-.listsOverview .publicListGrid { gap: 35px; }
+@media (min-width: 768px) {
+  .page[data-profile-view="collection"][data-collection-kind="watched"],
+  .page[data-profile-view="collection"][data-collection-kind="favorites"] { padding-bottom: 229px; }
+  .page[data-profile-view="collection"][data-collection-kind="watchlist"] { padding-bottom: 207px; }
+  .page[data-profile-view="collection"][data-collection-kind="watched"] .collectionGrid,
+  .page[data-profile-view="collection"][data-collection-kind="favorites"] .collectionGrid { row-gap: 56px; }
+  .page[data-profile-view="collection"][data-collection-kind="watchlist"] .collectionGrid { row-gap: 50px; }
+  .page[data-profile-view="collection"][data-collection-kind="watched"] #public-profile-collection-content .collectionGrid,
+  .page[data-profile-view="collection"][data-collection-kind="favorites"] #public-profile-collection-content .collectionGrid { width: 1199px; margin-left: 1px; }
+  .page[data-profile-view="collection"][data-collection-kind="watchlist"] #public-profile-collection-content .collectionGrid { width: 1199px; margin-left: 1px; }
+  .page[data-profile-view="collection"][data-collection-kind="watched"] .collectionCard h3,
+  .page[data-profile-view="collection"][data-collection-kind="watched"] .collectionCard p,
+  .page[data-profile-view="collection"][data-collection-kind="favorites"] .collectionCard h3,
+  .page[data-profile-view="collection"][data-collection-kind="favorites"] .collectionCard p { display: none; }
+  .page[data-profile-view="collection"][data-collection-kind="watchlist"] .collectionCard h3,
+  .page[data-profile-view="collection"][data-collection-kind="watchlist"] .collectionCard p { display: none; }
+  .page[data-profile-view="collection"][data-collection-kind="watched"] .collectionRating,
+  .page[data-profile-view="collection"][data-collection-kind="favorites"] .collectionRating { display: block; margin-top: 6px; margin-left: 3px; }
+}
+
+.listsOverview .publicListGrid { gap: 37px; }
 .listsOverview .publicListCard { grid-template-columns: minmax(0, 40%) minmax(0, 1fr); grid-template-rows: max-content 1fr; min-height: 339px; border: 0; border-radius: 20px; background: #282828; }
 .listsOverview .publicListPoster { grid-column: 1; grid-row: 1 / 3; min-width: 0; min-height: 0; box-sizing: border-box; padding: 38px 16px 39px 28px; background: transparent; --catalog-poster-height: 262px; }
 .listsOverview .publicListBody { grid-column: 2; grid-row: 2; justify-content: flex-start; padding: 16px 50px 35px 28px; }
 .listsOverview .publicListHeading { grid-column: 2; grid-row: 1; align-items: flex-start; flex-direction: column; gap: 13px; padding: 59px 50px 0 28px; }
 .listsOverview .publicListTitle { font-size: 24px; font-weight: 600; line-height: 1.2; }
-.listsOverview .publicListCount { font-size: 16px; white-space: normal; }
+.listsOverview .publicListCount { display: inline-flex; align-items: center; gap: 4px; font-size: 18px; white-space: normal; }
 .listsOverview .publicListDescription { display: block; margin: 0; overflow: visible; font-size: 18px; line-height: 1.5; -webkit-line-clamp: unset; }
 .listsOverview .publicListTags a { font-size: 14px; }
+
+@media (min-width: 768px) {
+  .page[data-profile-view="lists"] .listsOverview .pagination { display: none; }
+  .page[data-profile-view="lists"] .listsOverview .profileListTagCloud { margin-top: 85px; padding-top: 0; border-top: 1px solid #4d4d4d; }
+  .page[data-profile-view="lists"] .listsOverview .profileListTagHeading { min-height: 44px; margin-bottom: 48px; }
+  .page[data-profile-view="lists"][data-profile-hq="true"] .listsOverview .profileListTagChips[data-expanded="false"] a:nth-child(n + 10) { display: none; }
+  .page[data-profile-view="lists"]:not([data-profile-hq="true"]) .listsOverview .profileListTagMore { display: none; }
+  .page[data-profile-view="lists"] .listsOverview .profileListTagChip { height: 49px; min-height: 49px; box-sizing: border-box; padding: 0 25px; font-size: 20px; }
+  .page[data-profile-view="lists"]:not([data-profile-hq="true"]) .listsOverview .profileListTagHeading { margin-bottom: 8px; }
+  .page[data-profile-view="lists"]:not([data-profile-hq="true"]) .listsOverview .profileListTagChip { height: 31px; min-height: 31px; padding: 0 10px; font-size: 12px; }
+  .page[data-profile-view="lists"]:not([data-profile-hq="true"]) .listsOverview .profileListTagChips { display: grid; width: max-content; max-width: 100%; grid-template-columns: repeat(10, max-content); }
+}
 
 @media (min-width: 1024px) {
   .hero { gap: 0; }
   .heroMetrics { margin-top: 64px; }
+  .page[data-profile-view="lists"]:not([data-profile-hq="true"]) .heroMetrics { margin-top: 36px; }
   .heroMetrics dd { font-size: 36px; }
   .heroMetrics dt { font-size: 24px; }
   .shell > section.section.overviewSection { margin-top: 85px; }
@@ -168,10 +212,18 @@
   .collectionToolbar > button { font-size: 16px; }
   .page[data-profile-view] .shell > section.section[id] { position: relative; width: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
   .page[data-profile-view] .shell > section.section > h2 { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .page[data-profile-view="collection"] .collectionCard h3,
+  .page[data-profile-view="collection"] .collectionCard p,
+  .page[data-profile-view="collection"] .pagination { display: none; }
+  :global(body:has(main[data-profile-view="collection"]) footer) { display: none; }
   .page[data-profile-view="collection"] .tabs[data-filters-open="false"] { display: none; }
   .page[data-profile-view="collection"] .tabs[data-filters-open="true"] { margin: 0 0 20px; }
   .page[data-profile-view="collection"] .tabs button { min-height: 44px; }
   .page[data-profile-view="collection"] .collectionGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 19px 15px; }
+  .page[data-profile-view="collection"][data-collection-kind="watched"] .collectionGrid { row-gap: 7px; }
+  .page[data-profile-view="collection"][data-collection-kind="favorites"] .collectionGrid { row-gap: 7px; }
+  .page[data-profile-view="collection"][data-collection-kind="watched"] .collectionRating { display: block; width: 43px; height: 11px; margin-top: 2px; font-size: 8.5px; letter-spacing: .7px; line-height: 11px; }
+  .page[data-profile-view="collection"][data-collection-kind="favorites"] .collectionRating { display: block; width: 52px; height: 11px; margin-top: 2px; font-size: 8.5px; letter-spacing: 1px; line-height: 11px; }
   .page[data-profile-view="collection"] .collectionPosterLink,
   .page[data-profile-view="collection"] .collectionPoster,
   .page[data-profile-view="collection"] .collectionPosterFallback { aspect-ratio: 79 / 116; border-radius: 10px; }
@@ -179,15 +231,22 @@
   .page[data-profile-view="collection"] .collectionCard > p { display: none; }
   /* 831:1568 has six361px links. Keep44px targets instead of its32px. */
   .mobileCollectionNavigation { display: grid; gap: 5px; margin-top: 35px; }
+  .page:not([data-profile-view]) .mobileCollectionNavigation { display: none; }
   .mobileCollectionNavigation a { display: flex; min-width: 0; min-height: 44px; box-sizing: border-box; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 15px; border-radius: 37px; background: #282828; color: #fff; font-size: 12px; font-weight: 500; line-height: 1.4; text-decoration: none; overflow-wrap: anywhere; }
   .mobileCollectionNavigation a:hover { background: #343434; }
   .mobileCollectionNavigation a:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: 2px; }
   .mobileCollectionNavigation a > span { font-size: 20px; line-height: 1; }
-  .heroMetrics { width: min(100%, 300px); gap: 12px; margin-top: 20px; }
+  .heroMetrics { width: min(100%, 257px); gap: 16px; margin-top: 16px; }
   .heroMetrics > div { gap: 5px; }
   .heroMetrics dt { font-size: 12px; line-height: 1.4; }
-  .heroMetrics dd { font-size: 22px; }
+  .heroMetrics dd { font-size: 15px; line-height: 1.15; }
+  .heroMetrics dd a { min-width: 0; min-height: 0; }
   .shell > section.section.overviewSection { margin-top: 35px; padding-top: 8px; }
+  .shell > section.section.overviewSection.reviewsOverview { margin-top: 42px; }
+  .shell > section.section.overviewSection.followingOverview { margin-top: 21px; }
+  .shell > section.section.overviewSection.followingOverview > h2 { margin-bottom: 2px; }
+  .shell > section.section.overviewSection.followingOverview + section.section.overviewSection { margin-top: 24px; }
+  .shell > section.section.overviewSection.listsOverview > h2 { margin-bottom: -4px; }
   .shell > section.section.overviewSection > h2 { margin-bottom: 24px; font-size: 14px; line-height: 16px; }
   .previewGrid { gap: 15px; }
   .previewPosterLink, .previewPoster, .previewPosterFallback, .activityPlaceholder { aspect-ratio: 79 / 116; border-radius: 10px; }
@@ -215,6 +274,109 @@
   .listsOverview .publicListDescription { display: none; }
   .listsOverview .profileListTagChips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .listsOverview .profileListTagChip { min-width: 0; min-height: 44px; padding: 3px 8px; font-size: 12px; }
+
+  /* READY HQ Lists source `1480:9718` keeps the profile identity and the
+     four collection tabs above the selected list feed on mobile. */
+  .page[data-profile-view="lists"] .hero,
+  .page[data-profile-view="lists"] .profileRail { display: flex; }
+  .page[data-profile-view="lists"] .collectionToolbar { display: none; }
+  .page[data-profile-view="lists"][data-profile-hq="true"] .hero .profileActions { display: none; }
+  .page[data-profile-view="lists"][data-profile-hq="true"] .hero {
+    background: linear-gradient(180deg, rgba(0, 0, 0, .24), rgba(0, 0, 0, .88)), #111 var(--rewind-profile-banner, url("/images/public-profile-hero.jpg")) center / cover no-repeat;
+  }
+  .page[data-profile-view="lists"][data-profile-hq="true"] .hero .username:not([aria-label]) { display: none; }
+  .page[data-profile-view="lists"][data-profile-hq="true"] .hero .mobileToolbar { margin-bottom: 104px; }
+  .page[data-profile-view="lists"][data-profile-hq="true"] .hero .identityCopy nav[aria-label] a { width: 28px; min-height: 28px; }
+  .page[data-profile-view="lists"] .heroMetrics { margin-top: 1px; }
+  .page[data-profile-view="lists"] .profileRail {
+    display: grid;
+    width: calc(100% - 22px);
+    max-width: 361px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    margin: -16px auto 23px;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  .page[data-profile-view="lists"] .profileRailLink {
+    min-width: 0;
+    min-height: 44px;
+    padding: 8px 6px;
+    border: 0;
+    border-radius: 999px;
+    background: #282828;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .page[data-profile-view="lists"] .profileRailLink:nth-child(2) { display: none; }
+  .page[data-profile-view="lists"] .profileRailLinkActive { background: #fff; color: #171717; }
+  .page[data-profile-view="lists"] .shell > section.section[id="public-profile-lists"] {
+    margin: 0;
+    padding: 7px 16px 0;
+    border-top: 1px solid #4d4d4d;
+  }
+  .page[data-profile-view="lists"] .shell > section.section[id="public-profile-lists"] > h2 {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    margin: 0 0 24px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 16px;
+    white-space: normal;
+  }
+  .page[data-profile-view="lists"] .listsOverview .publicListGrid { gap: 37px; }
+  .page[data-profile-view="lists"] .listsOverview .publicListCard {
+    min-height: 164px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 37px 116px 11px;
+    border-radius: 20px;
+  }
+  .page[data-profile-view="lists"] .listsOverview .publicListHeading {
+    grid-row: 1;
+    align-items: baseline;
+    padding: 22px 18px 0;
+  }
+  .page[data-profile-view="lists"] .listsOverview .publicListTitle { font-size: 13px; line-height: 15px; }
+  .page[data-profile-view="lists"] .listsOverview .publicListCount { font-size: 10px; }
+  .page[data-profile-view="lists"] .listsOverview .publicListLikeCount { display: none; }
+  .page[data-profile-view="lists"] .listsOverview .publicListPoster {
+    grid-row: 2;
+    height: 116px;
+    padding: 0 18px;
+    --catalog-poster-height: 116px;
+  }
+  .page[data-profile-view="lists"] .listsOverview .publicListBody { display: none; }
+  .page[data-profile-view="lists"] .listsOverview .pagination { margin-top: 60px; }
+  .page[data-profile-view="lists"] .listsOverview .profileListTagCloud {
+    position: relative;
+    margin-top: 11px;
+    padding-top: 7px;
+    border-top: 0;
+  }
+  .page[data-profile-view="lists"] .listsOverview .profileListTagCloud::before { position: absolute; top: 12px; right: 0; left: 0; border-top: 1px solid #4d4d4d; content: ""; }
+  .page[data-profile-view="lists"] .listsOverview .profileListTagHeading { min-height: 44px; margin-bottom: 10px; }
+  .page[data-profile-view="lists"] .listsOverview .profileListTagHeading h3 { font-size: 14px; }
+  .page[data-profile-view="lists"] .listsOverview .profileListTagChips { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .page[data-profile-view="lists"] .listsOverview .profileListTagChip { min-height: 31px; padding: 3px 8px; }
+  .page[data-profile-view="lists"] .listsOverview .profileListTagChips[data-expanded="false"] a:nth-child(n + 4) { display: none; }
+}
+
+@media (min-width: 768px) {
+  .page[data-profile-view="lists"] { min-height: auto; padding-bottom: 160px; }
+  .page[data-profile-view="lists"]:not([data-profile-hq="true"]) { padding-bottom: 248px; }
+  .page[data-profile-view="lists"] .shell > section.section[id="public-profile-lists"] > h2 { margin-bottom: 54px; }
+  .page[data-profile-view="lists"][data-profile-hq="true"] .hero { padding-bottom: 40px; }
+  .page[data-profile-view="lists"][data-profile-hq="true"] .hero .username:not([aria-label]) { display: none; }
+  .page[data-profile-view="lists"][data-profile-hq="true"] .heroMetrics { margin-top: 38px; }
 }
 
 .collectionToolbar h1:focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }

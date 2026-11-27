@@ -13,7 +13,7 @@ import styles from "./UserFollowRow.module.css";
 
 type ReviewerMetrics = { watched: number; lists: number; likes: number };
 
-export default function UserFollowRow({ user, href, meta, subtitle, label, reviewerMetrics, presentation, showMobileMoreAction = false, hideMobileNetworkStats = false, onFollowSettled, children }: { user: CommunityUser; href: string; meta?: string; subtitle?: string; label?: string; reviewerMetrics?: ReviewerMetrics; presentation?: "communityShowcase" | "communityDirectory" | "profileNetwork"; showMobileMoreAction?: boolean; hideMobileNetworkStats?: boolean; onFollowSettled?: () => void; children?: ReactNode }) {
+export default function UserFollowRow({ user, href, meta, subtitle, label, reviewerMetrics, presentation, showMobileMoreAction = false, hideMobileNetworkStats = false, avatarFallback = "initial", figmaReviewerActions = false, onFollowSettled, children }: { user: CommunityUser; href: string; meta?: string; subtitle?: string; label?: string; reviewerMetrics?: ReviewerMetrics; presentation?: "communityShowcase" | "communityDirectory" | "profileNetwork"; showMobileMoreAction?: boolean; hideMobileNetworkStats?: boolean; avatarFallback?: "initial" | "silhouette"; figmaReviewerActions?: boolean; onFollowSettled?: () => void; children?: ReactNode }) {
   const { t, path } = useLocale();
   const { actorId, authReady, state, retry, toggle } = useFollowAction(user.id);
   const [memberSheetOpen, setMemberSheetOpen] = useState(false);
@@ -173,7 +173,7 @@ export default function UserFollowRow({ user, href, meta, subtitle, label, revie
   return <li data-network-member-id={user.id} className={`${styles.row} ${reviewerMetrics || presentation === "communityDirectory" ? styles.reviewerRow : ""} ${presentation ? styles[presentation] : ""} ${hideMobileNetworkStats ? styles.hideMobileNetworkStats : ""}`}>
     <Link className={styles.userLink} to={href} aria-label={label ?? `${identity} ${getUserHandle(user)}`}>
       <ResilientImage className={styles.avatar} src={user.avatarUrl} alt="" width={44} height={44}
-        fallback={<span className={styles.avatarFallback} aria-hidden="true">{getUserInitial(user)}</span>} />
+        fallback={<span className={`${styles.avatarFallback} ${presentation === "profileNetwork" ? styles.profileAvatarFallback : ""} ${avatarFallback === "silhouette" ? styles.silhouetteFallback : ""}`} aria-hidden="true">{avatarFallback === "silhouette" ? null : getUserInitial(user)}</span>} />
       <span className={styles.userCopy}>
         <strong>{identity}</strong>
         {secondaryText && <span>{secondaryText}</span>}
@@ -189,8 +189,8 @@ export default function UserFollowRow({ user, href, meta, subtitle, label, revie
         <img src={icon} alt="" width="35" height="35" /><span className={styles.metricValue}>{value}</span><span className={styles.metricLabel}>{metricLabel}</span>
       </span>)}
     </div>}
-    {(presentation === "profileNetwork" || showMobileMoreAction) && authReady && !self && <button data-network-action="more" className={`${styles.action} ${styles.moreAction}`} type="button" aria-label={`${t("moreActions")}: ${identity}`} aria-haspopup="dialog" aria-expanded={memberSheetOpen} disabled={state.busy || blockBusy} onClick={openMemberSheet}><span className={styles.glyph} aria-hidden="true">•••</span></button>}
-    {!self && (guest ? <Link className={styles.action} to={path("/login")} aria-label={`${t("follow")}: ${identity}`} title={`${t("follow")}: ${identity}`}><span className={styles.glyph} aria-hidden="true">＋</span></Link> :
+    {(presentation === "profileNetwork" || showMobileMoreAction) && authReady && !self && <button data-network-action="more" className={`${styles.action} ${styles.moreAction}`} type="button" aria-label={`${t("moreActions")}: ${identity}`} aria-haspopup="dialog" aria-expanded={memberSheetOpen} disabled={state.busy || blockBusy} onClick={openMemberSheet}>{figmaReviewerActions ? <img className={styles.figmaMoreIcon} src="/images/popular-reviewers-more.png" alt="" /> : <span className={styles.glyph} aria-hidden="true">•••</span>}</button>}
+    {!self && (guest ? <Link className={styles.action} to={path("/login")} aria-label={`${t("follow")}: ${identity}`} title={`${t("follow")}: ${identity}`}>{figmaReviewerActions ? <img className={styles.figmaFollowIcon} src="/images/popular-reviewers-follow.svg" alt="" /> : <span className={styles.glyph} aria-hidden="true">＋</span>}</Link> :
       <button ref={followActionRef} data-network-action="follow" className={styles.action} type="button" aria-label={actionLabel} title={actionLabel}
         aria-pressed={state.phase === "ready" ? state.following : undefined} aria-busy={loading}
         aria-describedby={state.phase === "error" || state.blocked ? feedbackId : undefined}

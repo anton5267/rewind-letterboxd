@@ -1,6 +1,7 @@
 .page { position: relative; min-height: 100vh; padding: 0 0 160px; background: #1f1f1f; color: #fff; }
 .retryFocusHeading:focus { outline: 3px solid var(--rewind-cyan); outline-offset: 4px; border-radius: 4px; }
 .mobileSettingLink { display: none !important; }
+.mobileAuthHeading { display: none; }
 .hero {
   display: grid;
   min-height: 818px;
@@ -39,6 +40,14 @@
 .error, .message, .feedback { margin: 0 0 24px; padding: 16px; line-height: 1.5; overflow-wrap: anywhere; }
 .error { background: #4a1f24; color: #ffd2d2; }
 .message { background: #1d4728; color: #d8ffd8; }
+@media (max-width: 767px) {
+  .socialLinksRetry { display: flex; width: calc(100% + 8px); min-height: 112px; box-sizing: border-box; flex-direction: column; align-items: flex-start; gap: 10px; margin: 0 0 24px -4px; border: 0; border-radius: 8px; padding: 12px 14px; }
+  .socialLinksRetryMessage { display: block; width: 100%; font-size: 14px; line-height: 17px; }
+  .socialLinksRetry [data-retry-button] { margin: 0; }
+}
+.socialLinkFeedback { width: 100%; min-height: 41px; box-sizing: border-box; margin: 12px 0 0; padding: 10px 14px; border-radius: 0; font-size: 14px; line-height: 21px; }
+.settingsSection > form > p.message.socialLinkFeedback { color: #d8ffd8; }
+.settingsSection > form > p.error.socialLinkFeedback { color: #ffd2d2; }
 .settingsSection :is(.error, .message):focus { outline: 2px solid var(--rewind-cyan); outline-offset: 4px; scroll-margin-block: 120px; }
 .page :is(a, button, input, select):focus-visible { outline: 2px solid #d4a85f; outline-offset: 4px; scroll-margin-block: 120px; }
 .hero h1:focus:not(.retryFocusHeading) { outline: none; }
@@ -53,6 +62,16 @@
   /* The image slot extends to 817 px, while Figma 251:566 covers it
      with the page color from y=628. Keep the navigation on that flat layer. */
   .hero { background-image: linear-gradient(180deg, rgba(0, 0, 0, .1), #000 628px, #1f1f1f 628px), url("/images/profile-settings-hero.jpg"); }
+  .page { padding-bottom: 0; }
+  .accountLinks { display: none; }
+  .page[data-settings-tab="authentication"] { padding-bottom: 158px; }
+  .page[data-settings-tab="avatar"] { padding-bottom: 112.5px; }
+  .page[data-settings-tab="profile"] { padding-bottom: 7.125px; }
+  .page[data-settings-tab="authentication"] .settingsSection > :global(section[aria-labelledby="supabase-link-title"]) { display: none; }
+  .page[data-settings-tab="authentication"] .settingsSection > form:global(#settings-form-authentication) > :global(#profile-password-hint) {
+    position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden;
+    clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; padding: 0;
+  }
 }
 
 @media (max-width: 1023px) {
@@ -103,8 +122,24 @@
   .back { display: none; }
   .back span { display: none; }
   .settingsSection { margin-top: 18px; padding: 0 18px; border: 0; }
-  .settingsSection > .mobileOnly { display: block; margin-top: 35px; border-top: 1px solid #4d4d4d; padding-top: 18px; }
+  .settingsSection > .mobileOnly { display: block; border-top: 1px solid #4d4d4d; padding-top: 18px; }
+  .settingsSection > :global([data-profile-media-settings]) { margin-top: 23.6px; }
   .settingsSection > form.mobileOnly { display: grid; }
+  .settingsSection > form.mobileOnly[aria-labelledby="social-links-settings"] { margin-top: 31px; padding-top: 22px; }
+  .settingsSection > form.mobileOnly > [data-social-platform="website"] { display: none; }
+  .settingsSection > form[data-settings-form="profile"] > :global([data-profile-pinned-list]) { display: none; }
+  .settingsSection > form[data-settings-form="profile"] > :global([data-profile-mobile-pinned-list]) { display: none; }
+  .settingsSection > form[data-settings-form="profile"] > h2 { margin-bottom: 17px; }
+  .settingsSection > form[data-settings-form="profile"] > [data-profile-location-website] { display: contents; }
+  .settingsSection > form[data-settings-form="profile"] > [data-profile-location-website] > div { grid-column: 1 / -1; }
+  .settingsSection > form[data-settings-form="profile"] > [data-profile-location-website] > div > :is(input, label) { min-width: 0; }
+  .settingsSection > form.mobileOnly[aria-labelledby="social-links-settings"] > h2 { margin: 0 0 21.3px; font-size: 22px; line-height: 30px; text-transform: none; }
+  .settingsSection > form.mobileOnly[aria-labelledby="social-links-settings"] > div:not(:last-of-type) { margin-bottom: 27.2px; }
+  .settingsSection > form.mobileOnly[aria-labelledby="social-links-settings"] > div > label > input { box-sizing: border-box; height: 44px; min-height: 44px; }
+  .settingsSection > form.mobileOnly[aria-labelledby="social-links-settings"] > div:last-of-type { margin-bottom: 0; }
+  .settingsSection > form.mobileOnly[aria-labelledby="social-links-settings"] > button { height: 44px; min-height: 44px; }
+  .settingsSection > form[data-settings-form="profile"] > :global([data-profile-email]) > label { font-size: 14px; white-space: nowrap; }
+  .settingsSection > form[data-settings-form="profile"] > :global([data-profile-email]) :global(#settings-email) { min-height: 45px; border: 0; padding: 0; background: transparent; font-size: 14px; line-height: 1.2; text-align: right; white-space: nowrap; }
   .settingsSection > form > h2 { margin-bottom: 24px; font-size: 14px; line-height: 16px; text-transform: uppercase; }
   .settingsSection > form > div { gap: 12px; margin-bottom: 24px; }
   .settingsSection label { font-size: 16px; line-height: 1.3; }
@@ -120,6 +155,171 @@
   .accountLinks { display: grid; gap: 0; margin-top: 35px; padding: 0 18px; border-top: 1px solid #4d4d4d; }
   .accountLinks a { min-height: 44px; justify-content: space-between; gap: 16px; border-bottom: 1px solid #4d4d4d; text-decoration: none; }
   .accountLinks .mobileSettingLink { display: flex !important; }
+
+  .page[data-settings-tab="authentication"] { min-height: 852px; padding-bottom: 0; }
+  .page[data-settings-tab="authentication"] .hero { padding: 85px 0 0; }
+  .page[data-settings-tab="authentication"] .content { width: 100%; margin: 0; }
+  .page[data-settings-tab="authentication"] .mobileToolbar { top: calc(37px + env(safe-area-inset-top)); padding-inline: 18px; border-bottom: 0; }
+  .page[data-settings-tab="authentication"] .mobileToolbar a { gap: 3px; color: #a8a8a8; font-size: 15px; font-weight: 500; }
+  .page[data-settings-tab="authentication"] .mobileToolbar h2 { width: 105px; color: #f5f2ed; font-size: 16px; font-weight: 700; text-align: center; }
+  .page[data-settings-tab="authentication"] .mobileToolbar > :last-child { visibility: hidden; }
+  .page[data-settings-tab="authentication"] .settingsSection { box-sizing: border-box; width: 100%; margin: 17px 0 0; padding: 0 24px; border: 0; }
+  .page[data-settings-tab="authentication"] .mobileAuthHeading { display: block; height: 44px; box-sizing: border-box; border-bottom: 1px solid #4d4d4d; }
+  .page[data-settings-tab="authentication"] .mobileAuthHeading h2 { margin: 0; color: #f5f2ed; font-size: 24px; font-weight: 700; line-height: 29px; text-align: left; }
+  .page[data-settings-tab="authentication"] .settingsSection > .error,
+  .page[data-settings-tab="authentication"] .settingsSection > .message {
+    width: 100%;
+    min-height: 68px;
+    box-sizing: border-box;
+    margin: 0 0 24px;
+    border: 1px solid;
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 14px;
+    line-height: 16px;
+  }
+  .page[data-settings-tab="authentication"] .settingsSection > .error { border-color: #704047; background: #4a1f24; color: #ffd1d1; }
+  .page[data-settings-tab="authentication"] .settingsSection > .message { border-color: #4f9463; background: #1c4729; color: #d9ffd9; }
+  .page[data-settings-tab="authentication"] .settingsSection > form:global(#settings-form-authentication) {
+    display: grid;
+    width: 100%;
+    gap: 0;
+    margin: 23px 0 0;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .page[data-settings-tab="authentication"] .settingsSection > form:global(#settings-form-authentication) > h2 {
+    margin: 0 0 17px;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 22px;
+    text-transform: none;
+  }
+  .page[data-settings-tab="authentication"] .settingsSection > form:global(#settings-form-authentication) > div {
+    display: grid;
+    gap: 8px;
+    margin: 0 0 14px;
+  }
+  .page[data-settings-tab="authentication"] .settingsSection > form:global(#settings-form-authentication) > div:nth-of-type(2) { margin-bottom: 18px; }
+  .page[data-settings-tab="authentication"] .settingsSection > form:global(#settings-form-authentication) > div:nth-of-type(3) { gap: 4px; margin-bottom: 0; }
+  .page[data-settings-tab="authentication"] .settingsSection > form:global(#settings-form-authentication) > div label {
+    display: block;
+    color: #f5f2ed;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 17px;
+  }
+  .page[data-settings-tab="authentication"] .settingsSection > form:global(#settings-form-authentication) > div input {
+    width: 100%;
+    height: 48px;
+    min-height: 48px;
+    box-sizing: border-box;
+    border: 1px solid #4d4d4d;
+    border-radius: 12px;
+    padding: 12px 15px;
+    background: #262626;
+    color: #f5f2ed;
+    font-size: 14px;
+    line-height: 18px;
+  }
+  .page[data-settings-tab="authentication"] .settingsSection > form:global(#settings-form-authentication) > :global(#profile-password-hint) {
+    margin: 10px 0 22px;
+    color: #a8a8a8;
+    font-size: 12px;
+    line-height: 16px;
+  }
+  .page[data-settings-tab="authentication"] .settingsSection > form:global(#settings-form-authentication) > button {
+    display: block;
+    width: 100%;
+    height: 48px;
+    min-height: 48px;
+    margin: 0;
+    border: 0;
+    border-radius: 24px;
+    padding: 0 10px;
+    background: #fff;
+    color: #191919;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: left;
+  }
+  .page[data-settings-tab="authentication"] .settingsSection > form:global(#settings-form-authentication) + :is(section, form) {
+    display: grid;
+    width: 100%;
+    gap: 0;
+    margin: 22px 0 0;
+    border: 0;
+    border-top: 1px solid #4d4d4d;
+    border-radius: 0;
+    padding: 27px 0 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .page[data-settings-tab="authentication"] .settingsSection > form:global(#settings-form-authentication) + :is(section, form) > h2 {
+    margin: 0 0 15px;
+    color: #f5f2ed;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 22px;
+    text-transform: none;
+  }
+  .page[data-settings-tab="authentication"] .settingsSection > form:global(#settings-form-authentication) + section > p {
+    display: block;
+    min-height: 76px;
+    box-sizing: border-box;
+    margin: 0;
+    border: 1px solid #4d4d4d;
+    border-radius: 12px;
+    padding: 21px 15px;
+    background: #262626;
+    color: #f5f2ed;
+    font-size: 14px;
+    line-height: 18px;
+  }
+  .page[data-settings-tab="authentication"] .settingsSection > form:global(#settings-form-authentication) + form > p {
+    margin: 0 0 47px;
+    color: #a8a8a8;
+    font-size: 13px;
+    line-height: 16px;
+  }
+  .page[data-settings-tab="authentication"] .settingsSection > form:global(#settings-form-authentication) + form:global(#settings-form-supabase-link) > div {
+    display: grid;
+    gap: 4px;
+    margin: 0 0 11px;
+  }
+  .page[data-settings-tab="authentication"] .settingsSection > form:global(#settings-form-authentication) + form:global(#settings-form-supabase-link) > div label {
+    color: #f5f2ed;
+    font-size: 14px;
+    line-height: 17px;
+  }
+  .page[data-settings-tab="authentication"] .settingsSection > form:global(#settings-form-authentication) + form:global(#settings-form-supabase-link) > div input {
+    height: 48px;
+    min-height: 48px;
+    border: 1px solid #4d4d4d;
+    border-radius: 12px;
+    padding: 12px 15px;
+    background: #262626;
+    font-size: 14px;
+  }
+  .page[data-settings-tab="authentication"] .settingsSection > form:global(#settings-form-authentication) + form:global(#settings-form-supabase-link) > button {
+    display: block;
+    width: 100%;
+    height: 51px;
+    min-height: 51px;
+    margin: 0;
+    border: 0;
+    border-radius: 26px;
+    padding: 0 10px;
+    background: #fff;
+    color: #191919;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: left;
+  }
+  .page[data-settings-tab="authentication"] .accountLinks { display: none; }
 }
 
 @media (max-width: 360px) {
@@ -131,9 +331,40 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.settingsSection > form:global(#settings-form-connections) { width: 100%; }
+.settingsSection > form:global(#settings-form-connections) > h2 { margin-bottom: 24px; }
+.settingsSection > form:global(#settings-form-connections) > .connectionCards { display: grid; width: 100%; gap: 24px; margin: 0 0 28px; }
+.connectionCard { display: grid; grid-template-columns: 64px minmax(0, 1fr); grid-template-rows: min-content min-content; align-content: center; align-items: center; gap: 20px 22px; min-height: 272px; box-sizing: border-box; border: 1px solid #303030; border-radius: 20px; padding: 32px; background: #262626; }
+.connectionIcon { display: grid; width: 64px; height: 64px; place-items: center; border-radius: 15px; background: #181818; color: #f5f2ed; font-size: 40px; }
+.connectionIcon { grid-column: 1; grid-row: 1 / span 2; }
+.connectionCopy { display: grid; min-width: 0; gap: 10px; }
+.connectionCopy h3 { margin: 0; color: #f5f2ed; font-size: 20px; line-height: 1.25; }
+.connectionCopy p { max-width: 620px; margin: 0; color: #aaa; font-size: 15px; line-height: 1.45; }
+.settingsSection .connectionInputLabel { display: grid; gap: 8px; max-width: 588px; margin-top: 8px; font-size: 15px; }
+.settingsSection .connectionInputLabel input { min-height: 56px; border-radius: 16px; padding: 14px 18px; font-size: 16px; }
+.settingsSection .connectionCard button { grid-column: 2; justify-self: end; min-width: 150px; min-height: 48px; border: 1px solid transparent; border-radius: 24px; padding: 10px 24px; background: #fff; color: #191919; font-size: 16px; font-weight: 600; }
+.settingsSection .connectionCard .connectedButton { border-color: #3b3b3b; background: #303030; color: #f5f2ed; }
+.settingsSection .connectionCard button:focus-visible, .otherSocialLinks summary:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 3px; }
+.otherSocialLinks { display: grid; gap: 16px; margin: 0 0 24px; border-top: 1px solid #4d4d4d; padding-top: 18px; }
+.otherSocialLinks summary { width: fit-content; color: #d6d1c8; font-size: 15px; cursor: pointer; }
+.otherSocialLinks > div { display: grid; width: min(588px, 100%); gap: 12px; margin: 0; }
+.otherSocialLinks label { font-size: 17px; }
+.settingsSection > form:global(#settings-form-connections) > button[type="submit"] { width: min(588px, 100%); }
+
+@media (min-width: 768px) {
+  .page[data-settings-tab="connections"] .settingsSection { min-height: 881px; box-sizing: border-box; }
+}
+
 @media (max-width: 767px) {
   .settingsSection > form[data-settings-form="profile"] > [data-profile-name-fields] {
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
   }
+
+  .connectionCard { grid-template-columns: 48px minmax(0, 1fr); grid-template-rows: min-content min-content; gap: 14px; min-height: 236px; padding: 20px; }
+  .connectionIcon { width: 48px; height: 48px; border-radius: 12px; font-size: 30px; }
+  .connectionIcon { grid-row: 1 / span 2; }
+  .connectionCopy h3 { font-size: 18px; }
+  .connectionCopy p { font-size: 14px; }
+  .settingsSection .connectionCard button { grid-column: 2; justify-self: start; min-width: 132px; }
 }

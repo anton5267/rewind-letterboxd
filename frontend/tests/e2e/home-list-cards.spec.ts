@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { installHostedAuthFixture, signInHostedFixture } from "./fixtures/hosted-auth";
 
 // Controlled API responses exercise the carousel independently of shared dev data.
 const movies = [1, 2, 3].map(id => ({ id, title: `Preview film ${id}`, photoUrl: null, releaseDate: null, rating: null }));
@@ -85,10 +86,8 @@ test("Home list feed keeps retry and honest empty states", async ({ page }) => {
   const repeatedRetry = panel.getByRole("button", { name: "Retry", exact: true });
   await expect(repeatedRetry).toBeFocused();
   await repeatedRetry.press("Enter");
-  await expect(panel).toHaveAttribute("aria-busy", "false");
-  await expect(panel.locator("article")).toHaveCount(0);
-  await expect(panel.locator("p").filter({ hasText: "Could not load the home page." })).toHaveCount(0);
-  await expect(panel.getByText("No public lists yet.", { exact: true })).toBeVisible();
+  await expect(panel).toHaveCount(0);
+  await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
   expect(attempts).toBe(3);
 });
 
@@ -126,7 +125,7 @@ test("Home does not keep empty feeds as blank modules", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 });
 
-test("Member Home renders the authenticated following activity feed", async ({ page }) => {
+test("Member Home renders the authenticated following activity feed", async ({ context, page }) => {
   const activity = [
     { id: 991_001, type: "WATCHED", createdAt: "2026-11-11T10:00:00Z", actor: { id: 991_101, username: "movie-fan", displayName: "Movie Fan", avatarUrl: null }, movie: { id: 991_201, title: "Arrival" }, relatedUser: null, list: null },
     { id: 991_002, type: "RATING", createdAt: "2026-11-11T09:00:00Z", actor: { id: 991_102, username: "film-critic", displayName: "Film Critic", avatarUrl: null }, movie: { id: 991_202, title: "Moonlight" }, relatedUser: null, list: null },
@@ -136,6 +135,7 @@ test("Member Home renders the authenticated following activity feed", async ({ p
   ];
   const emptyPage = { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 };
 
+  await installHostedAuthFixture(context);
   await page.route("**/api/auth/csrf", route => route.fulfill({ json: { token: "fixture-csrf" } }));
   await page.route("**/api/auth/refresh", route => route.fulfill({ status: 401, json: { message: "Unauthorized" } }));
   await page.route("**/api/users/me", route => route.fulfill({ json: { id: 991_100, username: "home-member", role: "USER" } }));
@@ -150,6 +150,7 @@ test("Member Home renders the authenticated following activity feed", async ({ p
   await page.route("**/api/users/popular-reviewers**", route => route.fulfill({ json: [] }));
   await page.route("**/api/tags/popular**", route => route.fulfill({ json: [] }));
 
+  await signInHostedFixture(page, "uk");
   for (const locale of ["uk", "en"] as const) {
     await page.setViewportSize({ width: locale === "uk" ? 1440 : 393, height: 852 });
     await page.goto(`/${locale}/home`);
@@ -224,8 +225,10 @@ test("Guest Home keeps a short review card content-sized beside taller feed colu
   expect((await card.boundingBox())!.height).toBeLessThan(220);
 });
 
-test("Member Home keeps the dedicated desktop and mobile hero", async ({ page }) => {
+test("Member Home keeps the dedicated desktop and mobile hero", async ({ context, page }) => {
+  await installHostedAuthFixture(context);
   await page.route("**/api/users/me", route => route.fulfill({ json: { id: 1, username: "member", role: "USER" } }));
+  await signInHostedFixture(page, "en");
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/en/home");
 
@@ -291,9 +294,9 @@ test("Guest Home recent-review poster rail stays responsive, keyboard reachable,
 });
 
 test("Guest Home recent reviews recover from an API error and show the empty state", async ({ page }) => {
-  for (const [locale, heading, retry, empty] of [
-    ["uk", "Щойно переглянули…", "Спробувати ще", "Оглядів поки немає."],
-    ["en", "Just reviewed…", "Retry", "No reviews yet."],
+  for (const [locale, heading, retry] of [
+    ["uk", "Щойно переглянули…", "Спробувати ще"],
+    ["en", "Just reviewed…", "Retry"],
   ] as const) {
     await page.unroute("**/api/reviews/recent?**");
     let attempts = 0;
@@ -309,10 +312,8 @@ test("Guest Home recent reviews recover from an API error and show the empty sta
     const retryButton = section.getByRole("button", { name: retry, exact: true });
     await expect(retryButton).toBeVisible();
     await retryButton.click();
-    await expect(section).toHaveAttribute("aria-busy", "false");
-    await expect(section.getByRole("heading", { level: 2, name: heading })).toBeFocused();
-    await expect(section.getByText(empty, { exact: true })).toBeVisible();
-    await expect(section.getByRole("group", { name: heading })).toHaveCount(0);
+    await expect(section).toHaveCount(0);
+    await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
     expect(attempts).toBe(2);
   }
 });

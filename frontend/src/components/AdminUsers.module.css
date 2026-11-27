@@ -71,12 +71,102 @@
   display: none;
 }
 
+.activityTableRail { overflow: hidden; border-color: rgba(255,255,255,.06); border-radius: 38px; background: rgba(255,255,255,.05); }
+.activityTable { text-align: center; }
+.activityTable th,
+.activityTable td { padding: 12px 16px; }
+.activityTable th { background: rgba(255,255,255,.06); color: #fff; font-weight: 600; }
+.activityTable th:nth-child(1) { width: 25%; }
+.activityTable th:nth-child(2) { width: 34%; }
+.activityTable th:nth-child(3) { width: 17%; }
+.activityTable th:nth-child(4) { width: 14%; }
+.activityTable th:nth-child(5) { width: 10%; }
+.activityTable tbody tr { border-color: rgba(255,255,255,.05); }
+.activityTable .actions { justify-content: center; gap: 4px; }
+.activityTable.activityTable .actions > button { display: inline-grid; flex: 0 0 22px; width: 22px; min-height: 30px; place-items: center; padding: 0; border: 0; background: transparent; color: var(--rewind-gold); }
+.activityTable .actions > button:last-child { color: #ed7777; }
+.activityPagination { justify-content: center; margin-top: 48px; }
+.activityPagination button { min-width: 28px; min-height: 32px; padding: 2px 5px; border: 0; border-radius: 0; background: transparent; color: var(--rewind-muted); }
+.activityPagination button[aria-current="page"] { color: var(--rewind-paper); text-decoration: underline; text-underline-offset: 4px; }
+.activityPagination span { color: var(--rewind-muted); }
+
+@media (min-width: 768px) {
+  :global(main[data-admin-user-list-page="true"]) section[data-admin-user-list-section="true"] > h2 {
+    margin: 0 auto 115.203125px;
+    font-size: 24px;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  :global(main[data-admin-user-list-page="true"]) section[data-admin-user-list-section="true"] > form {
+    width: min(402px, 100%);
+    min-height: 41px;
+    margin: 0 auto 31px;
+  }
+
+  :global(main[data-admin-user-list-page="true"]) section[data-admin-user-list-section="true"] > form input { min-height: 41px; }
+
+  :global(main[data-admin-user-list-page="true"]) section[data-admin-user-list-section="true"] > div[data-admin-user-list-rail="true"] {
+    overflow: hidden;
+    border: 0;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, .04);
+  }
+
+  :global(main[data-admin-user-list-page="true"]) section[data-admin-user-list-section="true"] > div[data-admin-user-list-rail="true"][data-admin-user-row-count="2"] { margin-bottom: 68px; }
+  :global(main[data-admin-user-list-page="true"]) section[data-admin-user-list-section="true"] > div[data-admin-user-list-rail="true"][data-admin-user-row-count="3"] { margin-bottom: 60px; }
+
+  .tableActions {
+    display: flex;
+    justify-content: flex-end;
+    min-height: 83px;
+    box-sizing: border-box;
+    align-items: center;
+    padding: 12px 20px;
+  }
+
+  .addUser {
+    min-width: 132px;
+    min-height: 44px;
+    border: 1px solid var(--rewind-line);
+    border-radius: 24px;
+    background: rgba(235, 163, 69, .15);
+    color: var(--rewind-paper);
+    font-weight: 600;
+  }
+
+  .addUser:disabled { opacity: .72; }
+
+  :global(main[data-admin-user-list-page="true"]) .table th,
+  :global(main[data-admin-user-list-page="true"]) .table td { padding: 16px 18px; }
+
+  :global(main[data-admin-user-list-page="true"]) section[data-admin-user-list-section="true"] > div[data-admin-user-list-rail="true"][data-admin-user-row-count="2"] .table th,
+  :global(main[data-admin-user-list-page="true"]) section[data-admin-user-list-section="true"] > div[data-admin-user-list-rail="true"][data-admin-user-row-count="2"] .table td,
+  :global(main[data-admin-user-list-page="true"]) section[data-admin-user-list-section="true"] > div[data-admin-user-list-rail="true"][data-admin-user-row-count="3"] .table th,
+  :global(main[data-admin-user-list-page="true"]) section[data-admin-user-list-section="true"] > div[data-admin-user-list-rail="true"][data-admin-user-row-count="3"] .table td { padding: 11px 18px; }
+
+  :global(main[data-admin-user-list-page="true"]) .table th {
+    height: 41px;
+    background: rgba(255, 255, 255, .06);
+    color: var(--rewind-paper);
+    font-weight: 600;
+  }
+
+  :global(main[data-admin-user-list-page="true"]) .table tbody tr { min-height: 57px; }
+  :global(main[data-admin-user-list-page="true"]) .table .actions { gap: 6px; }
+  :global(main[data-admin-user-list-page="true"]) .table .actions > button { min-height: 36px; padding: 6px 10px; }
+}
+
 @media (max-width: 767px) {
   .tableRail {
     border: 0;
     border-radius: 0;
     background: transparent;
   }
+
+  .tableActions { margin-bottom: 16px; }
+
+  .addUser { width: 100%; min-height: 44px; }
 
   .table,
   .table tbody,

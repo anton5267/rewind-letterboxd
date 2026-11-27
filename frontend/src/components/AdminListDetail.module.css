@@ -1,0 +1,80 @@
+.workspace { width: 100%; box-sizing: border-box; padding: 611px 0 150px; background: #1f1f1f; color: #fff; }
+.workspace > h2 { margin: 0 auto 116px; color: #fff; font-size: 24px; line-height: 1.2; text-align: center; }
+.card { width: min(1200px, 100%); min-height: 1172px; margin: 0 auto; padding: 29px 48px 28px; border: 1px solid rgba(255,255,255,.06); border-radius: 38px; background: rgba(255,255,255,.05); box-sizing: border-box; }
+.regularCard { min-height: 1019px; }
+.reportedCard .reportFields { gap: 8px; margin-top: 20px; }
+.reportedCard .reportFields .field h3 { margin-bottom: 4px; }
+.reportedCard .films { margin-top: 22px; }
+.reportedCard .history { margin-top: 20px; }
+.reportedCard .actions { margin-top: 18px; }
+.fields { display: grid; grid-template-columns: minmax(0,394px) minmax(0,406px); column-gap: 32px; row-gap: 22px; }
+.field { min-width: 0; }
+.field h3,.listText h3,.films h3,.history h3 { margin: 0 0 14px; color: #fff; font-size: 24px; line-height: 1.2; }
+.field p { width: fit-content; max-width: 100%; min-height: 41px; box-sizing: border-box; margin: 0; padding: 5px 12px; border: 1px solid var(--rewind-line); border-radius: 30px; background: rgba(255,255,255,.06); color: #fff; font-size: 24px; line-height: 29px; overflow-wrap: anywhere; }
+.listNameField { display: flex; min-width: 0; align-items: center; overflow-wrap: anywhere; font-size: 24px; line-height: 1.2; }
+.listNameField input { display: block; width: min(653px, 100%); box-sizing: border-box; padding: 12px 16px; border: 1px solid var(--rewind-line); border-radius: 18px; background: rgba(255,255,255,.05); color: #fff; font: inherit; font-size: 20px; line-height: 1.25; }
+.listNameField input:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: 2px; }
+.statusControl { display: flex; align-items: center; width: 406px; max-width: 100%; height: 41px; box-sizing: border-box; padding: 0 15px; border: 3px solid #b4b4b6; border-radius: 38px; background: rgba(255,255,255,.05); font-size: 20px; }
+.statusControl button { min-height: 0!important; margin-left: auto; padding: 0!important; border: 0!important; background: transparent!important; color: rgba(255,255,255,.65)!important; font: inherit; white-space: nowrap; }
+.statusField { grid-column: 2; }
+.listText { position: relative; margin-top: 30px; }
+.listText textarea { display: block; width: min(653px, 100%); box-sizing: border-box; padding: 12px 16px; border: 1px solid var(--rewind-line); border-radius: 18px; background: rgba(255,255,255,.05); color: #fff; font: inherit; font-size: 20px; line-height: 1.25; }
+.listText textarea { min-height: 170px; resize: vertical; white-space: pre-wrap; overflow-wrap: anywhere; }
+.listText textarea:focus-visible,.dialog input:focus-visible { outline: 2px solid var(--rewind-cyan); outline-offset: 2px; }
+.textActions { display: flex; justify-content: center; gap: 8px; width: min(653px, 100%); margin-top: 8px; }
+.textActions button { min-height: 30px; padding: 0 12px; border: 0; background: transparent; color: var(--rewind-muted); }
+.reportFields { display: grid; width: min(394px, 100%); gap: 20px; margin-top: 24px; }
+.sectionHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sectionHeading button,.actions button,.dialog > button:last-child { min-height: 40px; padding: 7px 18px; border: 0; border-radius: 24px; background: rgba(255,255,255,.08); color: #fff; }
+.films { margin-top: 30px; }
+.filmItems { display: flex; align-items: center; gap: 88px; }
+.posterRow { display: flex; gap: 0; overflow-x: auto; }
+.posterRow figure { position: relative; flex: 0 0 120px; margin: 0 -61px 0 0; }
+.posterRow figure:last-child { margin-right: 0; }
+.posterRow img { display: block; width: 120px; height: 180px; border-radius: 10px; object-fit: cover; background: #303030; }
+.posterRow figcaption { display: none; }
+.posterPlaceholder { display: block; width: 120px; height: 180px; border-radius: 10px; background: linear-gradient(135deg,#383838,#202020); }
+.addFilmButton { display: grid; flex: 0 0 69px; width: 69px; height: 69px; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: rgba(255,255,255,.05); color: #fff; font: inherit; font-size: 38px; line-height: 1; }
+.history { margin-top: 28px; }
+.history p,.history li { display: flex; align-items: center; width: fit-content; max-width: 100%; min-height: 41px; box-sizing: border-box; margin: 0; padding: 5px 12px; border-radius: 24px; background: rgba(255,255,255,.07); font-size: 18px; line-height: 1.3; overflow-wrap: anywhere; }
+.history ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+.actions .delete,.actions .block { background: #904b4b; }
+.status,.error,.empty { width: min(1200px, calc(100% - 48px)); margin: 0 auto 18px; text-align: center; }
+.error { color: #ff9a9a; }
+.empty { color: var(--rewind-muted); }
+.back { display: block; width: max-content; max-width: calc(100% - 48px); margin: 24px auto 0; color: var(--rewind-paper); }
+.receiptWorkspace { min-height: 380px; padding: 0; }
+.success { width: fit-content; max-width: calc(100% - 48px); margin: 0 auto; padding: 6px 18px; border-radius: 38px; background: #5b944e; color: #fff; font-size: 24px; line-height: 1.4; text-align: center; overflow-wrap: anywhere; }
+.dialog { width: min(560px, calc(100% - 32px)); max-height: min(80vh, 760px); padding: 24px; border: 1px solid var(--rewind-line); border-radius: 24px; background: #242424; color: #fff; }
+.dialog::backdrop { background: rgba(0,0,0,.7); }
+.dialog label span { display: block; margin-bottom: 6px; }
+.dialog input { width: 100%; box-sizing: border-box; padding: 12px; border: 1px solid var(--rewind-line); border-radius: 12px; background: #1a1a1a; color: #fff; }
+.dialog ul { display: grid; gap: 8px; max-height: 45vh; overflow-y: auto; margin: 16px 0; padding: 0; list-style: none; }
+.dialog li button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px; border: 0; border-radius: 10px; background: rgba(255,255,255,.06); color: #fff; text-align: left; }
+.dialog li img { width: 42px; height: 62px; border-radius: 5px; object-fit: cover; }
+
+@media (max-width: 767px) {
+  .workspace { padding: 28px 0 40px; }
+  .workspace > h2 { margin-bottom: 28px; font-size: 26px; }
+  .card { width: calc(100% - 32px); min-height: 0; padding: 22px 18px; border-radius: 24px; }
+  .card { padding-inline: 18px; }
+  .fields { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px 12px; }
+  .field h3,.listText h3,.films h3,.history h3 { font-size: 15px; }
+  .field p,.listNameField input,.listText textarea { font-size: 16px; }
+  .listNameField { font-size: 16px; }
+  .statusField { grid-column: 1 / -1; }
+  .statusControl { font-size: 14px; padding: 0 8px; }
+  .statusControl button { font-size: 12px; }
+  .filmItems { gap: 12px; min-width: 0; }
+  .posterRow { min-width: 0; }
+  .posterRow figure { flex-basis: 92px; margin-right: -47px; }
+  .posterRow figure:last-child { margin-right: 0; }
+  .posterRow img { width: 92px; height: 138px; }
+  .posterPlaceholder { width: 92px; height: 138px; }
+  .addFilmButton { flex-basis: 52px; width: 52px; height: 52px; font-size: 30px; }
+  .actions { gap: 8px; }
+  .actions button { flex: 1 1 auto; }
+  .receiptWorkspace { min-height: 330px; padding: 48px 24px 74px; }
+  .success { font-size: 18px; }
+}

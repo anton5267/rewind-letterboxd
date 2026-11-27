@@ -2,16 +2,24 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { getAdminDashboard, getAdminSettings, updateAdminSetting, type AdminDashboard as Dashboard, type AdminSetting } from "../api/admin.api";
 import AdminAuditLogs from "../components/AdminAuditLogs";
+import AdminActivity from "../components/AdminActivity";
 import AdminArticles from "../components/AdminArticles";
 import AdminComments from "../components/AdminComments";
 import AdminConversations from "../components/AdminConversations";
 import AdminLists from "../components/AdminLists";
+import AdminListDetail from "../components/AdminListDetail";
 import AdminModerationQueue from "../components/AdminModerationQueue";
+import AdminModerationReports from "../components/AdminModerationReports";
+import AdminReportedCommentDetail from "../components/AdminReportedCommentDetail";
+import AdminReportedReviewDetail from "../components/AdminReportedReviewDetail";
+import AdminReportedReviews from "../components/AdminReportedReviews";
+import AdminReportedComments from "../components/AdminReportedComments";
 import AdminMovies from "../components/AdminMovies";
 import AdminPersonalMetrics from "../components/AdminPersonalMetrics";
 import AdminLoading from "../components/AdminLoading";
 import AdminNotifications from "../components/AdminNotifications";
 import AdminReviews from "../components/AdminReviews";
+import AdminReviewDetail from "../components/AdminReviewDetail";
 import AdminUsers from "../components/AdminUsers";
 import RetryButton from "../components/RetryButton";
 import RetryNotice from "../components/RetryNotice";
@@ -20,7 +28,7 @@ import { useAuth } from "../context/AuthContext";
 import { localizeUserRole, useLocale } from "../i18n";
 import styles from "./AdminDashboard.module.css";
 
-const adminViews = ["dashboard", "users", "user-profile", "movies", "reviews", "comments", "lists", "moderation", "conversations", "notifications", "articles", "logs", "settings"] as const;
+const adminViews = ["dashboard", "users", "more-users", "user-profile", "movies", "reviews", "review-detail", "comments", "lists", "list-detail", "moderation", "queue", "conversations", "notifications", "articles", "logs", "moderator-logs", "reported-comment", "reported-review", "reported-reviews", "reported-comments", "settings"] as const;
 
 function revealNavigationLink(nav: HTMLElement, link: HTMLElement) {
   const rail = nav.getBoundingClientRect();
@@ -36,6 +44,7 @@ export default function AdminDashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedView = searchParams.get("view") ?? "dashboard";
   const activeView = adminViews.find(view => view === requestedView) ?? "dashboard";
+  const moreUsersContext = activeView === "more-users" || (activeView === "user-profile" && searchParams.get("from") === "more-users");
   const rawProfileUserId = searchParams.get("user");
   const parsedProfileUserId = rawProfileUserId && /^\d+$/.test(rawProfileUserId) ? Number(rawProfileUserId) : NaN;
   const profileUserId = Number.isSafeInteger(parsedProfileUserId) && parsedProfileUserId > 0 ? parsedProfileUserId : undefined;
@@ -46,13 +55,14 @@ export default function AdminDashboard() {
     { id: "reviews", label: t("adminReviews"), icon: "fa-solid fa-star" },
     { id: "comments", label: t("adminComments"), icon: "fa-solid fa-comment" },
     { id: "lists", label: t("adminLists"), icon: "fa-solid fa-list" },
-    { id: "moderation", label: t("moderationQueue"), icon: "fa-solid fa-shield-halved" },
+    { id: "moderation", label: activeView === "moderator-logs" ? "System Moderation" : activeView === "settings" ? "System Parameters" : t("moderationQueue"), icon: "fa-solid fa-shield-halved" },
     { id: "conversations", label: t("adminConversations"), icon: "fa-solid fa-comments" },
     { id: "notifications", label: t("adminNotifications"), icon: "fa-solid fa-bell" },
     { id: "articles", label: t("journalEditor"), icon: "fa-solid fa-newspaper" },
-    { id: "logs", label: t("auditLogs"), icon: "fa-solid fa-clock-rotate-left" },
+    { id: "logs", label: activeView === "settings" ? t("adminAuditLogNav") : t("adminActivityNav"), icon: "fa-solid fa-clock-rotate-left" },
     { id: "settings", label: t("adminSettings"), icon: "fa-solid fa-gear" },
   ] as const;
+  const heroName = user ? user.displayName?.trim() || user.username : "";
   const navAssets: Record<string, string> = Object.fromEntries(["dashboard", "users", "movies", "reviews", "comments", "lists", "moderation", "settings"].map(id => [id, `/images/admin-nav-${id}.svg`]));
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [settings, setSettings] = useState<AdminSetting[]>([]);
@@ -266,7 +276,7 @@ export default function AdminDashboard() {
       <h2 className={styles.settingsTitle} id="admin-settings-title" ref={settingsTitle} tabIndex={-1}>{t("adminGeneralSettings")}</h2>
       <div className={styles.settingsWorkspace}>
       {settingsLoading && settings.length === 0 ? <AdminLoading label={t("loading")} layout="settings" />
-        : settingsError ? <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={settingsLoading} busy={settingsLoading} onRetry={() => {
+        : settingsError ? <RetryNotice className={`${styles.error} ${styles.settingsLoadError}`} message={t("adminLoadError")} retryLabel={t("retry")} disabled={settingsLoading} busy={settingsLoading} onRetry={() => {
           settingsFocus.current = { scope: settingsScope.current, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, target: "retry" };
           setSettingsLoading(true);
           setSettingsAttempt(value => value + 1);
@@ -284,13 +294,15 @@ export default function AdminDashboard() {
                   : <label className={styles.settingField}>{settingLabel(setting.key)}<input className={styles.settingInput} value={setting.value} disabled={saveBusyKey !== null} onChange={event => setSettings(current => current.map(item => item.key === setting.key ? { ...item, value: event.target.value } : item))} /></label>}
               <button ref={button => { if (button) settingButtons.current.set(setting.key, button); else settingButtons.current.delete(setting.key); }} type="button" disabled={saveBusyKey !== null} aria-busy={saveBusyKey === setting.key} onClick={event => { void saveSetting(setting, event.currentTarget); }}>{saveBusyKey === setting.key ? t("loading") : t("saveSetting")}</button>
             </li>)}</ul>}
-      {saveError && <p className={styles.error} role="alert" ref={settingsSaveAlert} tabIndex={-1}>{t("adminSaveError")} {failedSettingKey && <RetryButton label={t("retry")} disabled={saveBusyKey !== null} busy={saveBusyKey !== null} onClick={retrySettingSave} />}</p>}
+      {saveError && <p className={`${styles.error} ${styles.settingsSaveError}`} role="alert" ref={settingsSaveAlert} tabIndex={-1}>{t("adminSaveError")} {failedSettingKey && <RetryButton label={t("retry")} disabled={saveBusyKey !== null} busy={saveBusyKey !== null} onClick={retrySettingSave} />}</p>}
       </div>
     </section>
   );
 
   return <main
-    className={`${styles.page} ${activeView === "settings" ? styles.settingsPage : ""} ${activeView === "user-profile" ? styles.userProfilePage : ""}`}
+    className={`${styles.page} ${activeView === "dashboard" ? styles.dashboardPage : ""} ${activeView === "users" ? styles.userListPage : ""} ${activeView === "movies" ? styles.moviePage : ""} ${activeView === "settings" ? styles.settingsPage : ""} ${activeView === "moderator-logs" ? styles.moderatorLogsPage : ""} ${activeView === "reviews" || activeView === "comments" || activeView === "moderator-logs" || activeView === "reported-comment" || activeView === "reported-review" || activeView === "reported-reviews" || activeView === "reported-comments" || activeView === "review-detail" ? styles.logsPage : ""} ${activeView === "logs" || moreUsersContext ? styles.activityPage : ""} ${activeView === "moderation" ? styles.moderationPage : ""} ${activeView === "reported-comment" || activeView === "reported-review" || activeView === "review-detail" ? styles.reportedCommentPage : ""} ${activeView === "user-profile" ? styles.userProfilePage : ""}`}
+    data-admin-user-list-page={activeView === "users" ? "true" : undefined}
+    data-admin-movie-page={activeView === "movies" ? "true" : undefined}
     aria-labelledby="admin-dashboard-title"
     data-document-title={t("adminDashboard")}
     aria-busy={pageBusy}
@@ -299,7 +311,7 @@ export default function AdminDashboard() {
       <div className={styles.profileHeader}>
       <div className={styles.avatar} aria-hidden="true"><ResilientImage src={user.avatarUrl} alt="" fallback={user.username.slice(0, 1).toUpperCase()} /></div>
       <div className={styles.identity}>
-      <h1 className={styles.title} id="admin-dashboard-title">{user.username}</h1>
+      <h1 className={styles.title} id="admin-dashboard-title">{heroName}</h1>
       <p>{localizeUserRole(user.role, t)}</p>
       </div>
       </div>
@@ -307,17 +319,25 @@ export default function AdminDashboard() {
         const link = (event.target as HTMLElement).closest("a");
         if (link) revealNavigationLink(event.currentTarget, link);
       }}>
-        {navigation.map(item => <Link key={item.id} to={`${path("/admin")}${item.id === "dashboard" ? "" : `?view=${item.id}`}`} aria-label={item.label} aria-current={activeView === item.id || (activeView === "user-profile" && item.id === "users") ? "page" : undefined} title={item.label}>
-          {navAssets[item.id] ? <img src={navAssets[item.id]} alt="" /> : <i className={item.icon} aria-hidden="true" />}
+        {navigation.map(item => <Link key={item.id} to={`${path("/admin")}${item.id === "dashboard" ? "" : `?view=${activeView === "moderator-logs" && item.id === "moderation" ? "moderator-logs" : item.id}`}`} aria-label={item.label} aria-current={activeView === item.id || (activeView === "list-detail" && item.id === "lists") || (activeView === "reported-comment" && item.id === "comments") || (activeView === "reported-comments" && item.id === "comments") || ((activeView === "reported-review" || activeView === "reported-reviews" || activeView === "review-detail") && item.id === "reviews") || (activeView === "more-users" && item.id === "logs") || (activeView === "user-profile" && item.id === (moreUsersContext ? "logs" : "users")) || (activeView === "queue" && item.id === "moderation") || (activeView === "moderator-logs" && item.id === "moderation") ? "page" : undefined} title={item.label}>
+          {activeView === "moderator-logs" && item.id === "moderation" ? <i className="fa-solid fa-clock-rotate-left" aria-hidden="true" /> : navAssets[item.id] ? <img src={navAssets[item.id]} alt="" /> : <i className={item.icon} aria-hidden="true" />}
           <span className={styles.navLabel} aria-hidden="true">{item.label}</span>
+          {activeView === "moderator-logs" && item.id === "moderation" && <span className={styles.mobileNavLabel} aria-hidden="true">{t("adminAuditLogNav")}</span>}
         </Link>)}
       </nav>
     </header>
     {activeView === "dashboard" && <h2 className={styles.workspaceTitle}>{t("adminWorkspace")}</h2>}
     {activeView === "dashboard" && <>
-    <AdminPersonalMetrics key={user.id} userId={user.id} />
-    <h3 className={styles.platformTitle} ref={dashboardTitle} tabIndex={-1}>{t("adminPlatformMetrics")}</h3>
+    <AdminPersonalMetrics key={user.id} userId={user.id} className={styles.dashboardMetrics} />
+    <details className={styles.platformDetails}>
+    <summary className={styles.platformSummary}>
+      <h3 className={styles.platformTitle} ref={dashboardTitle} tabIndex={-1}>{t("adminPlatformMetrics")}</h3>
+    </summary>
     {dashboardLoading && <section className={styles.summary} aria-label={t("loading")} aria-busy={true}>{Array.from({ length: 6 }, (_, index) => <div className={`${styles.summaryCard} ${styles.skeleton}`} key={index} aria-hidden="true" />)}</section>}
+    {!dashboardLoading && !dashboardError && dashboard && <section className={styles.summary} aria-label={t("adminPlatformMetrics")}>
+      {([["users", dashboard.users], ["activeUsers", dashboard.activeUsers], ["hqUsers", dashboard.hqUsers], ["movies", dashboard.movies], ["reviews", dashboard.reviews], ["hiddenReviews", dashboard.hiddenReviews]] as const).map(([key, value]) => <div className={styles.summaryCard} key={key}><strong>{t(key)}</strong><div className={styles.summaryValue}>{value}</div></div>)}
+    </section>}
+    </details>
     {dashboardError && <p className={styles.error} role="alert" ref={dashboardAlert} tabIndex={-1}>{t("adminLoadError")} <RetryButton label={t("retry")} disabled={dashboardLoading} busy={dashboardLoading} onClick={() => {
       if (dashboardLoading) return;
       dashboardFocus.current = { scope: dashboardFocusScope.current, request: dashboardRequest.current + 1, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
@@ -326,29 +346,36 @@ export default function AdminDashboard() {
       setDashboardLoading(true);
       setDashboardAttempt(value => value + 1);
     }} /></p>}
-    {!dashboardLoading && !dashboardError && dashboard && <section className={styles.summary} aria-label={t("adminPlatformMetrics")}>
-      {([["users", dashboard.users], ["activeUsers", dashboard.activeUsers], ["hqUsers", dashboard.hqUsers], ["movies", dashboard.movies], ["reviews", dashboard.reviews], ["hiddenReviews", dashboard.hiddenReviews]] as const).map(([key, value]) => <div className={styles.summaryCard} key={key}><strong>{t(key)}</strong><div className={styles.summaryValue}>{value}</div></div>)}
-    </section>}
     </>}
-    {(activeView === "users" || activeView === "user-profile") && <AdminUsers
-      onHqCountChange={delta => setDashboard(current => current ? { ...current, hqUsers: current.hqUsers + delta } : current)}
+    {activeView === "logs" && <AdminActivity />}
+    {(activeView === "users" || activeView === "more-users" || activeView === "user-profile") && <AdminUsers
+      onHqCountChange={delta => setDashboard(current => current ? { ...current, hqUsers: Math.max(0, current.hqUsers + delta) } : current)}
+      activityMode={moreUsersContext}
       profileUserId={activeView === "user-profile" ? profileUserId : undefined}
-      onOpenUserProfile={id => setSearchParams({ view: "user-profile", user: String(id) })}
+      onOpenUserProfile={id => setSearchParams({ view: "user-profile", user: String(id), ...(moreUsersContext ? { from: "more-users" } : {}) })}
       onCloseUserProfile={() => {
         const logId = searchParams.get("focusLog");
-        if (searchParams.get("from") === "logs" && logId && /^\d+$/.test(logId)) setSearchParams({ view: "logs", focusLog: logId });
+        if (searchParams.get("from") === "moderator-logs" && logId && /^\d+$/.test(logId)) setSearchParams({ view: "moderator-logs", focusLog: logId });
+        else if (searchParams.get("from") === "more-users") setSearchParams({ view: "more-users" });
         else setSearchParams({ view: "users" });
       }}
     />}
     {activeView === "movies" && <AdminMovies onTotalChange={updateMovieCount} />}
     {activeView === "reviews" && <AdminReviews />}
+    {activeView === "review-detail" && <AdminReviewDetail />}
     {activeView === "comments" && <AdminComments />}
     {activeView === "lists" && <AdminLists />}
-    {activeView === "moderation" && <AdminModerationQueue />}
+    {activeView === "list-detail" && <AdminListDetail />}
+    {activeView === "moderation" && <AdminModerationReports className={styles.moderationFrameSection} />}
+    {activeView === "queue" && <AdminModerationQueue />}
     {activeView === "conversations" && <AdminConversations />}
     {activeView === "notifications" && <AdminNotifications />}
     {activeView === "articles" && <AdminArticles />}
-    {activeView === "logs" && <AdminAuditLogs onOpenUserProfile={(id, logId) => setSearchParams({ view: "user-profile", user: String(id), from: "logs", focusLog: String(logId) })} />}
+    {activeView === "moderator-logs" && <AdminAuditLogs className={styles.logFrameSection} rowClassName={styles.logFrameCard} onOpenUserProfile={(id, logId) => setSearchParams({ view: "user-profile", user: String(id), from: "moderator-logs", focusLog: String(logId) })} />}
+    {activeView === "reported-comment" && <AdminReportedCommentDetail />}
+    {activeView === "reported-review" && <AdminReportedReviewDetail />}
+    {activeView === "reported-reviews" && <AdminReportedReviews />}
+    {activeView === "reported-comments" && <AdminReportedComments />}
     {activeView === "settings" && settingsPanel}
   </main>;
 }

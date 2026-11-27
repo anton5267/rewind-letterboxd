@@ -8,10 +8,30 @@ import { RewindApiError } from "../errors.ts";
 const MY_PROFILE_PATH = "/api/profile/me";
 const MY_PROFILE_PASSWORD_PATH = "/api/profile/me/password";
 const MY_SOCIAL_LINKS_PATH = "/api/profile/me/social-links";
+const MY_WATCHLIST_VISIBILITY_PATH = "/api/profile/me/watchlist/visibility";
 const MY_PROFILE_COLLECTION_PATTERN = /^\/api\/profile\/me\/(watched|watchlist|favorites|ratings|reviews)$/;
 
 export async function handleProfileRoutes(context: HttpRouteContext): Promise<Response | null> {
   const { request, path, query, corsHeaders, repository, authVerifier } = context;
+
+  if (path === MY_WATCHLIST_VISIBILITY_PATH) {
+    if (request.method !== "PUT") {
+      corsHeaders.set("Allow", "PUT, OPTIONS");
+      return json({ message: "Method not allowed" }, 405, corsHeaders);
+    }
+    const authUser = await confirmedAuthUser(request, authVerifier);
+    if (!authUser) return json({ message: "Authentication required" }, 401, corsHeaders);
+    if (!repository.setMyWatchlistVisibility) return json({ message: "Not found" }, 404, corsHeaders);
+    let body: unknown;
+    try { body = await request.json(); } catch { return json({ message: "Invalid request body" }, 400, corsHeaders); }
+    const isPublic = body && typeof body === "object" ? (body as Record<string, unknown>).isPublic : undefined;
+    if (typeof isPublic !== "boolean") return json({ message: "Invalid watchlist visibility" }, 400, corsHeaders);
+    try {
+      return json({ isPublic: await repository.setMyWatchlistVisibility(authUser, isPublic) }, 200, corsHeaders);
+    } catch (error) {
+      return repositoryFailure(error, "Unable to update watchlist visibility", corsHeaders);
+    }
+  }
 
   if (path === MY_SOCIAL_LINKS_PATH) {
     if (request.method !== "GET" && request.method !== "PUT") {
@@ -38,7 +58,7 @@ export async function handleProfileRoutes(context: HttpRouteContext): Promise<Re
         if (typeof platform !== "string" || typeof url !== "string") return json({ message: "Invalid social links" }, 400, corsHeaders);
         const normalizedPlatform = platform.trim().toLowerCase();
         const normalizedUrl = url.trim();
-        if (!normalizedPlatform || normalizedPlatform.length > 30 || !["website", "instagram", "tiktok", "letterboxd"].includes(normalizedPlatform)
+        if (!normalizedPlatform || normalizedPlatform.length > 30 || !["website", "instagram", "tiktok", "letterboxd", "x"].includes(normalizedPlatform)
           || platforms.has(normalizedPlatform) || normalizedUrl.length > 255 || !/^https?:\/\/\S+$/i.test(normalizedUrl)) {
           return json({ message: "Invalid social links" }, 400, corsHeaders);
         }
@@ -87,8 +107,9 @@ export async function handleProfileRoutes(context: HttpRouteContext): Promise<Re
   if (path === MY_PROFILE_PATH || profileCollectionMatch) {
     const isProfileUpdate = path === MY_PROFILE_PATH && request.method === "PATCH";
     const isAccountDelete = path === MY_PROFILE_PATH && request.method === "DELETE";
-    if (request.method !== "GET" && !isProfileUpdate && !isAccountDelete) {
-      corsHeaders.set("Allow", path === MY_PROFILE_PATH ? "GET, PATCH, DELETE, OPTIONS" : "GET, OPTIONS");
+    const isWatchlistClear = profileCollectionMatch?.[1] === "watchlist" && request.method === "DELETE";
+    if (request.method !== "GET" && !isProfileUpdate && !isAccountDelete && !isWatchlistClear) {
+      corsHeaders.set("Allow", path === MY_PROFILE_PATH ? "GET, PATCH, DELETE, OPTIONS" : profileCollectionMatch?.[1] === "watchlist" ? "GET, DELETE, OPTIONS" : "GET, OPTIONS");
       return json({ message: "Method not allowed" }, 405, corsHeaders);
     }
     const bearer = request.headers.get("Authorization")?.match(/^Bearer\s+(.+)$/i)?.[1];
@@ -131,6 +152,10 @@ export async function handleProfileRoutes(context: HttpRouteContext): Promise<Re
           await repository.updateMyProfile(authUser, update, expectedUserId);
         }
         return json(await repository.getMyProfile(authUser), 200, corsHeaders);
+      }
+      if (isWatchlistClear) {
+        if (!repository.clearMyWatchlist) return json({ message: "Not found" }, 404, corsHeaders);
+        return json({ removed: await repository.clearMyWatchlist(authUser) }, 200, corsHeaders);
       }
       if (!repository.getMyProfileCollection) return json({ message: "Not found" }, 404, corsHeaders);
       const query = new URL(request.url).searchParams;

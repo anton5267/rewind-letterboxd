@@ -114,9 +114,61 @@
   font-size: 12px;
 }
 
+.collectionRating {
+  display: none;
+  width: 98px;
+  height: 18px;
+  overflow: hidden;
+  color: #4d4d4d;
+  font-size: 18px;
+  letter-spacing: 0;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.collectionRating span {
+  color: transparent;
+  background: linear-gradient(90deg, #8f8f8f var(--rating-fill), #4d4d4d var(--rating-fill));
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
 .publicListGrid {
   display: grid;
   gap: 14px;
+}
+
+.page[data-profile-view="collection"][data-collection-kind="liked-lists"] .publicListGrid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 25px;
+}
+
+.page[data-profile-view="collection"][data-collection-kind="liked-lists"] .publicListCard {
+  box-sizing: border-box;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  height: 189px;
+  border-radius: 14px;
+}
+
+.page[data-profile-view="collection"][data-collection-kind="liked-lists"] .publicListPoster {
+  min-height: 189px;
+  padding: 16px 6px;
+  background: transparent;
+  --catalog-poster-height: 157px;
+}
+
+.page[data-profile-view="collection"][data-collection-kind="liked-lists"] .publicListBody {
+  padding: 18px 12px;
+}
+
+.page[data-profile-view="collection"][data-collection-kind="liked-lists"] .publicListHeading {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.page[data-profile-view="collection"][data-collection-kind="liked-lists"] .publicListTitle {
+  font-size: 17px;
 }
 
 .publicListCard {

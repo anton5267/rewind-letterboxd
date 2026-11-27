@@ -426,3 +426,56 @@
   .listControl { grid-template-columns: 1fr; }
   .listControl button { width: 100%; }
 }
+
+.watchedDateRow {
+  display: flex;
+  width: 100%;
+  min-height: 66px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 18px;
+  border: 0;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+  background: transparent;
+  color: var(--rewind-muted);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.watchedDateRow span:first-child { font-weight: 700; }
+.watchedDateRow span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.watchedDateRow:hover { color: #fff; }
+
+.dateEditor { position: relative; box-sizing: border-box; }
+.dateEditorHeading { position: absolute; z-index: 2; top: -48px; left: 0; width: 100%; height: 47px; text-align: center; }
+.dateEditorHeading h2 { margin: 0; color: #fff; font-size: 18px; line-height: 21px; }
+.dateEditorHeading p { margin: 0; color: var(--rewind-muted); font-size: 14px; }
+.dateEditorContent { height: calc(100% - 92px); overflow-y: auto; }
+.dateRow { position: relative; display: flex; height: 66px; align-items: center; justify-content: space-between; gap: 12px; padding: 0 36px; border-bottom: 1px solid rgba(255,255,255,.12); color: var(--rewind-muted); }
+.dateRow > span { font-size: 16px; font-weight: 700; }
+.dateRow .dateRowValue { overflow: hidden; color: var(--rewind-muted); font-size: 14px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.dateRow input { position: absolute; right: 30px; width: 145px; height: 44px; border: 0; background: transparent; opacity: 0; cursor: pointer; }
+.dateRow input:focus-visible { opacity: 1; outline: 2px solid var(--rewind-cyan); outline-offset: 3px; }
+.dateRatingRow { display: flex; min-height: 105px; align-items: flex-start; justify-content: space-between; padding: 17px 36px 0; border-bottom: 1px solid rgba(255,255,255,.12); }
+.dateRating > span,.dateLike > span { display: block; color: var(--rewind-muted); font-size: 14px; font-weight: 700; }
+.dateRating > div { display: flex; gap: 4px; margin-top: 3px; }
+.dateRating button { width: 43px; height: 46px; padding: 0; border: 0; background: transparent; color: #191919; cursor: pointer; font-size: 42px; line-height: 1; }
+.dateRating .dateRatingActive { color: #858585; }
+.dateLike { display: grid; justify-items: center; }
+.dateLike button { width: 40px; height: 46px; padding: 0; border: 0; background: transparent; color: #1a1a1a; cursor: pointer; font-size: 38px; line-height: 1; }
+.dateLike button[aria-pressed="true"] { color: #1a1a1a; }
+.dateSynopsis { margin: 23px 34px 28px; color: var(--rewind-muted); font-size: 16px; line-height: 1.2; }
+.dateEditorActions { position: absolute; right: 16px; bottom: calc(42px + env(safe-area-inset-bottom)); left: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dateEditorActions button { min-height: 50px; border: 0; border-radius: 37px; background: #191919; color: #fff; cursor: pointer; font: inherit; font-size: 14px; }
+.dateEditorActions button:last-child { background: #fff; color: #000; }
+.dateEditorActions button:disabled { cursor: wait; opacity: .6; }
+
+@media (max-width: 767px) {
+  .backdrop:has(.dateEditor) { padding: 130px 0 0; background: #191919; backdrop-filter: none; }
+  .dateEditor { display: block; width: 100%; height: calc(100dvh - 130px); max-height: calc(100dvh - 130px); padding: 0; border: 0; border-radius: 20px 20px 0 0; background: #282828; box-shadow: none; }
+  .dateEditorHeading { position: fixed; top: 82px; left: 0; z-index: 95; }
+  .dateEditorContent { position: absolute; top: 0; right: 0; left: 0; height: calc(100% - 92px); }
+  .dateEditorActions { bottom: calc(42px + env(safe-area-inset-bottom)); }
+}

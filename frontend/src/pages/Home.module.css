@@ -369,6 +369,7 @@
 .listCard p { margin: 0 0 8px; color: var(--rewind-muted); font-size: 13px; }
 .listAuthor { display: flex; align-items: center; gap: 5px; color: var(--rewind-muted); font-size: 12px; }
 .listAuthor > a { display: inline-flex; min-width: 0; align-items: center; gap: 5px; color: inherit; }
+.guestListMetric { display: none; }
 
 .stack {
   display: grid;
@@ -832,7 +833,7 @@
   .guestRecentReviews .sectionHeading { align-items: flex-start; margin-bottom: 0; }
   .guestRecentReviews .sectionHeading h2 { font-size: 14px; }
   .guestRecentReviews .sectionHeading a { align-items: flex-start; font-size: 12px; }
-  .guestReviewPosters { display: flex; gap: 15px; overflow-x: auto; padding: 0; scrollbar-width: none; }
+  .guestReviewPosters { display: flex; gap: 15px; overflow-x: auto; margin-top: -5px; padding: 0; scrollbar-width: none; }
   .guestReviewPosters::-webkit-scrollbar { display: none; }
   .guestReviewPosters a { flex: 0 0 79px; width: 79px; height: 116px; overflow: hidden; border-radius: 10px; background: #282828; color: #fff; text-decoration: none; }
   .guestReviewPosters img { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -917,6 +918,8 @@
   }
 
   .page:has(.memberHero) { padding-top: 0; }
+  .page:has(.memberHero) .sectionHeading { align-items: flex-start; }
+  .page:has(.memberHero) .sectionHeading > a { min-height: 0; height: auto; }
   .page:has(.memberHero) .leadingSection { margin-top: 0; }
   .page:has(.memberHero) .leadingSection .sectionHeading { margin-bottom: 18px; }
   .page:has(.memberHero) .leadingSection .sectionHeading h2 { font-size: 16px; line-height: 1.12; }
@@ -924,20 +927,24 @@
   .page:has(.memberHero) .leadingSection .sectionHeading a { font-size: 12px; }
   .page:has(.memberHero) .leadingSection .movieRow { overflow: hidden; margin-inline: 0; padding: 0; }
   .page:has(.memberHero) .leadingSection .movieCard:nth-child(n + 5) { display: none; }
-  .page:has(.memberHero) .popularSection { margin-top: 42px; }
+  .page:has(.memberHero) .popularSection { margin-top: 37px; }
   .page:has(.memberHero) .popularSection .movieRow { scrollbar-width: none; }
   .page:has(.memberHero) .popularSection .movieRow::-webkit-scrollbar { display: none; }
-  .page:has(.memberHero) .journalSection { margin-top: 29px; }
+  .page:has(.memberHero) .journalSection { margin-top: 30px; }
   .page:has(.memberHero) .journalSection .sectionHeading { margin-bottom: 30px; }
   .page:has(.memberHero) .journalSection .journalEmptyStatus { display: flex; min-height: 149px; align-items: center; }
-  .page:has(.memberHero) .grid { gap: 32px; margin-top: 36px; }
+  .page:has(.memberHero) .grid { gap: 32px; margin-top: 25px; }
   .page:has(.memberHero) .grid > :nth-child(n + 3),
   .page:has(.memberHero) .recentWatchedSection { display: none; }
   .page:has(.memberHero) .memberRecentNewsSection { display: block; margin-top: 16px; }
   .page:has(.memberHero) .memberRecentNewsSection .sectionHeading { margin-bottom: 22px; }
   .page:has(.memberHero) .memberRecentNewsGrid { grid-template-columns: 1fr; }
   .page:has(.memberHero) .memberRecentNewsCard:nth-child(n + 2) { display: none; }
-  .page:has(.memberHero) .memberRecentNewsSection { margin-top: 13px; }
+  .page:has(.memberHero) .memberRecentNewsSection { margin-top: 27px; }
+  .page:has(.memberHero) .memberRecentNewsCover { height: 129px; }
+  .page:has(.memberHero) .memberRecentNewsCopy { box-sizing: border-box; height: 93px; min-height: 0; padding: 15px 16px; }
+  .page:has(.memberHero) .memberRecentNewsCopy h3 { font-size: 16px; line-height: 1.12; }
+  .page:has(.memberHero) .memberRecentNewsCopy p { margin-top: 7px; font-size: 13px; line-height: 1.12; }
   .page:has(.memberHero) .listCard { position: relative; width: calc(100% - 2px); min-height: 231px; }
   .page:has(.memberHero) .listPosterLink { width: calc(100% - 1px); height: 180px; margin-left: 1px; }
   .page:has(.memberHero) .listPosterLink > div { width: 100%; height: 100%; aspect-ratio: auto; }
@@ -1142,7 +1149,7 @@
     gap: 31px;
     overflow: visible;
     margin-inline: -4px;
-    padding: 5px 4px 0;
+    padding: 5px 0 0;
   }
   .page:has(.hero:not(.memberHero)) .leadingSection .movieCard img,
   .page:has(.hero:not(.memberHero)) .leadingSection .posterFallback { height: 260px; aspect-ratio: auto; }
@@ -1162,10 +1169,10 @@
   .page:has(.hero:not(.memberHero)) .guestExplainer h2 {
     position: relative;
     left: 5px;
-    margin: 0 0 55px;
+    margin: 0 0 37px;
     color: #f5f5f5;
-    font-size: 24px;
-    line-height: 1.4;
+    font-size: 36px;
+    line-height: 1.12;
   }
   .page:has(.hero:not(.memberHero)) .guestExplainerCard { display: none; }
   .page:has(.hero:not(.memberHero)) .guestFeatureGrid {
@@ -1261,6 +1268,7 @@
     padding-top: 16px;
   }
   .page:has(.hero:not(.memberHero)) .grid .sectionHeading { margin-bottom: 49px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .sectionHeading { margin-bottom: 26px; }
   .page:has(.hero:not(.memberHero)) .grid .sectionHeading h2 { font-size: 24px; line-height: 1.4; }
   .page:has(.hero:not(.memberHero)) .grid > :nth-child(1) .stack { gap: 54px; }
   .page:has(.hero:not(.memberHero)) .grid > :nth-child(1) .reviewCard { min-height: 0; }
@@ -1269,12 +1277,16 @@
     grid-auto-flow: row;
     grid-auto-columns: auto;
     grid-template-columns: 1fr;
-    gap: 31px;
+    gap: 55px;
     margin: 0;
     padding: 0;
     overflow: visible;
   }
-  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .listCard { min-height: 352.6px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .listCard { min-height: 337px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .listPosterLink { width: calc(100% - 1px); margin-left: 1px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .listPosterLink > [class*="strip"] { aspect-ratio: 385 / 260; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .listCard h3 { margin-top: 18px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .listCard .preview { display: none; }
   .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) {
     position: absolute;
     top: 1270px;
@@ -1292,6 +1304,7 @@
     position: relative;
     left: -2px;
     margin: 85px auto 0;
+    top: -8.84375px;
     border-top: 1px solid #3d3d3d;
     padding-top: 16px;
   }
@@ -1303,6 +1316,10 @@
 }
 
 @media (min-width: 768px) and (max-width: 1099px) {
+  .page:has(.memberHero) .memberRecentNewsSection { display: block; margin-top: 48px; }
+  .page:has(.memberHero) .memberRecentNewsGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .page:has(.memberHero) .memberRecentNewsCover { height: clamp(150px, 24vw, 219px); }
+
   .page:has(.hero:not(.memberHero)) .guestRecentReviews {
     display: block;
     width: min(100%, 1200px);
@@ -1424,10 +1441,12 @@
     margin-bottom: 55px;
     padding-top: 17px;
   }
-  .page:has(.memberHero) .memberRecentNewsGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+  .page:has(.memberHero) .memberRecentNewsGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(16px, 1.46vw, 21.04px); }
   .page:has(.memberHero) .memberRecentNewsCard { min-height: 347px; }
   .page:has(.memberHero) .memberRecentNewsCover { height: 219px; }
   .page:has(.memberHero) .memberRecentNewsCopy { min-height: 128px; padding: 16px; }
+  .page:has(.memberHero) .memberRecentNewsCopy h3 { font-size: 22px; line-height: 1.12; }
+  .page:has(.memberHero) .memberRecentNewsCopy p { margin-top: 6px; font-size: 20px; line-height: 1.12; }
   .page:has(.memberHero) .memberRecentNewsEmpty {
     display: block;
     min-height: 0;
@@ -1472,8 +1491,287 @@
 @keyframes home-loading { to { background-color: #3a3a3a; } }
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
 
+/* Guest Home mobile source: Figma 1411:3473, 393×2265. */
+@media (max-width: 767px) {
+  .page:has(.hero:not(.memberHero)) .guestExplainer { gap: 24px; }
+  .page:has(.hero:not(.memberHero)) .guestExplainerCard {
+    position: relative;
+    box-sizing: border-box;
+    min-height: 116px;
+    left: -4px;
+  }
+  .page:has(.hero:not(.memberHero)) .guestRecentReviews { margin-top: 34.67px; }
+  .page:has(.hero:not(.memberHero)) .guestRecentHeading {
+    position: relative;
+    display: block;
+    box-sizing: border-box;
+    height: 40px;
+    min-height: 40px;
+    margin-bottom: 0;
+  }
+  .page:has(.hero:not(.memberHero)) .guestRecentHeading h2 { position: absolute; top: 0; left: 0; }
+  .page:has(.hero:not(.memberHero)) .guestRecentCount {
+    position: absolute;
+    top: 4px;
+    right: 0;
+    width: 168px;
+    color: #7e7e7e;
+    font-size: 11px;
+    line-height: 1.12;
+    text-align: right;
+  }
+  .page:has(.hero:not(.memberHero)) .guestRecentHeading > a {
+    position: absolute;
+    top: 39px;
+    right: 0;
+    display: block;
+    box-sizing: border-box;
+    width: 133px;
+    min-height: 11px;
+    height: 11px;
+    padding: 0;
+    color: #7e7e7e;
+    font-size: 12px;
+    line-height: 1.12;
+    text-align: right;
+    text-decoration: none;
+  }
+  .page:has(.hero:not(.memberHero)) .guestRecentReviews .sectionHeading > a {
+    min-height: 0;
+    height: auto;
+    color: #7e7e7e;
+    text-decoration: none;
+  }
+  .page:has(.hero:not(.memberHero)) .guestReviewPosters { margin-top: 0; }
+  .page:has(.hero:not(.memberHero)) .guestPitch {
+    margin: 25px 0 36px;
+    font-size: 10px;
+    line-height: 1.2;
+    text-align: center;
+  }
+  .page:has(.hero:not(.memberHero)) .guestPitchMobile { display: grid; gap: 6px; }
+  .page:has(.hero:not(.memberHero)) .guestPitchMobile p { margin: 0; }
+  .page:has(.hero:not(.memberHero)) .guestPitchMobile > p:first-child { font-weight: 700; }
+  .page:has(.hero:not(.memberHero)) .guestPitchPrompt { color: #7e7e7e; font-size: 10px; line-height: 1.2; }
+  .page:has(.hero:not(.memberHero)) .guestPitchPrompt a { color: inherit; text-decoration: none; }
+  .page:has(.hero:not(.memberHero)) .grid > :global(#home-reviews) .reviewCard {
+    box-sizing: border-box;
+    grid-template-columns: 79px minmax(0, 1fr);
+    gap: 13px;
+    min-height: 168px;
+    border: 0;
+    border-radius: 20px;
+    padding: 26px 18px;
+    background: #282828;
+  }
+  .page:has(.hero:not(.memberHero)) .guestReviewPanel .reviewHeading h3 { font-size: 13px; line-height: 1.12; }
+  .page:has(.hero:not(.memberHero)) .guestReviewPanel .reviewRating { font-size: 13px; }
+  .page:has(.hero:not(.memberHero)) .guestReviewPanel .reviewIdentity {
+    gap: 4px 8px;
+    margin-block: 7px 8px;
+    font-size: 10px;
+    line-height: 1.12;
+  }
+  .page:has(.hero:not(.memberHero)) .guestReviewPanel .reviewAvatar,
+  .page:has(.hero:not(.memberHero)) .guestReviewPanel .reviewAvatarFallback { display: none; }
+  .page:has(.hero:not(.memberHero)) .guestReviewPanel .reviewText {
+    color: #7e7e7e;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+  .page:has(.hero:not(.memberHero)) .grid .sectionHeading > a {
+    color: #7e7e7e;
+    text-decoration: none;
+  }
+  .page:has(.hero:not(.memberHero)) .guestPopularReviewsHeading,
+  .page:has(.hero:not(.memberHero)) .guestPopularListsHeading {
+    position: relative;
+    display: block;
+    height: 33px;
+    min-height: 33px;
+    margin-bottom: 6px !important;
+  }
+  .page:has(.hero:not(.memberHero)) .guestPopularListsHeading { height: 35px; min-height: 35px; margin-bottom: 6px !important; }
+  .page:has(.hero:not(.memberHero)) .guestPopularListsHeading + .listCards { padding-top: 1px; }
+  .page:has(.hero:not(.memberHero)) .guestPopularReviewsHeading h2,
+  .page:has(.hero:not(.memberHero)) .guestPopularListsHeading h2,
+  .page:has(.hero:not(.memberHero)) .guestReviewersHeading h2,
+  .page:has(.hero:not(.memberHero)) .guestNewsHeading h2 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 14px;
+    line-height: 1.12;
+  }
+  .page:has(.hero:not(.memberHero)) .guestPopularReviewsHeading > a,
+  .page:has(.hero:not(.memberHero)) .guestPopularListsHeading > a {
+    position: absolute;
+    top: 23px;
+    right: 0;
+    display: block;
+    box-sizing: border-box;
+    width: 133px;
+    min-height: 44px;
+    height: 44px;
+    padding: 0;
+    color: #7e7e7e;
+    font-size: 12px;
+    line-height: 1.12;
+    text-align: right;
+    text-decoration: none;
+  }
+  .page:has(.hero:not(.memberHero)) :global(#home-reviews) > div:first-child,
+  .page:has(.hero:not(.memberHero)) :global(#home-lists) > div:first-child {
+    position: relative;
+    display: block;
+    height: 33px;
+    min-height: 33px;
+    margin-bottom: 6px;
+  }
+  .page:has(.hero:not(.memberHero)) :global(#home-lists) > div:first-child { height: 35px; min-height: 35px; }
+  .page:has(.hero:not(.memberHero)) :global(#home-reviews) > div:first-child h2,
+  .page:has(.hero:not(.memberHero)) :global(#home-lists) > div:first-child h2,
+  .page:has(.hero:not(.memberHero)) :global(#home-reviewers) > div:first-child h2,
+  .page:has(.hero:not(.memberHero)) .journalSection > div:first-child h2 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 14px;
+    line-height: 1.12;
+  }
+  .page:has(.hero:not(.memberHero)) :global(#home-reviews) > div:first-child > a,
+  .page:has(.hero:not(.memberHero)) :global(#home-lists) > div:first-child > a {
+    position: absolute;
+    top: 23px;
+    right: 0;
+    display: block;
+    box-sizing: border-box;
+    width: 133px;
+    min-height: 44px;
+    height: 44px;
+    padding: 0;
+    color: #7e7e7e;
+    font-size: 12px;
+    line-height: 1.12;
+    text-align: right;
+    text-decoration: none;
+  }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) {
+    border-top: 1px solid var(--rewind-line);
+    border-radius: 0;
+    padding: 8px 0 0;
+    background: transparent;
+  }
+  .page:has(.hero:not(.memberHero)) :global(#home-reviewers) > div:first-child {
+    position: relative;
+    display: block;
+    height: 25px;
+    min-height: 25px;
+    margin-bottom: 14px;
+  }
+  .page:has(.hero:not(.memberHero)) :global(#home-reviewers) > div:first-child > a {
+    position: absolute;
+    top: 4px;
+    right: 0;
+    display: block;
+    box-sizing: border-box;
+    width: 125px;
+    min-height: 44px;
+    height: 44px;
+    padding: 0;
+    color: #7e7e7e;
+    font-size: 12px;
+    line-height: 1.12;
+    text-align: right;
+    text-decoration: none;
+  }
+  .page:has(.hero:not(.memberHero)) .guestReviewersHeading {
+    position: relative;
+    display: block;
+    height: 25px;
+    min-height: 25px;
+    margin-bottom: 14px !important;
+  }
+  .page:has(.hero:not(.memberHero)) .guestReviewersHeading > a {
+    position: absolute;
+    top: 4px;
+    right: 0;
+    display: block;
+    box-sizing: border-box;
+    width: 125px;
+    min-height: 44px;
+    height: 44px;
+    padding: 0;
+    color: #7e7e7e;
+    font-size: 12px;
+    line-height: 1.12;
+    text-align: right;
+    text-decoration: none;
+  }
+  .page:has(.hero:not(.memberHero)) .journalSection .sectionHeading > a {
+    color: #7e7e7e;
+    text-decoration: none;
+  }
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCard {
+    display: block;
+    min-height: 222px;
+    border-radius: 20px;
+  }
+  .page:has(.hero:not(.memberHero)) .journalSection { margin-top: 34.25px; padding-top: 8px; }
+  .page:has(.hero:not(.memberHero)) .journalSection > div:first-child {
+    position: relative;
+    display: block;
+    height: 23px;
+    min-height: 23px;
+    margin-bottom: 16.34px !important;
+  }
+  .page:has(.hero:not(.memberHero)) .journalSection > div:first-child > a {
+    position: absolute;
+    top: 4px;
+    right: 0;
+    display: block;
+    box-sizing: border-box;
+    width: 133px;
+    min-height: 44px;
+    height: 44px;
+    padding: 0;
+    color: #7e7e7e;
+    font-size: 12px;
+    line-height: 1.12;
+    text-align: right;
+    text-decoration: none;
+  }
+  .page:has(.hero:not(.memberHero)) .guestNewsHeading {
+    position: relative;
+    display: block;
+    height: 23px;
+    min-height: 23px;
+    margin-bottom: 16px;
+  }
+  .page:has(.hero:not(.memberHero)) .guestNewsHeading > a {
+    position: absolute;
+    top: 4px;
+    right: 0;
+    display: block;
+    box-sizing: border-box;
+    width: 133px;
+    min-height: 44px;
+    height: 44px;
+    padding: 0;
+    color: #7e7e7e;
+    font-size: 12px;
+    line-height: 1.12;
+    text-align: right;
+    text-decoration: none;
+  }
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCoverLink { height: 129px; min-height: 129px; }
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCopy { box-sizing: border-box; min-height: 93px; padding: 14px 16px; }
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCopy h3 { font-size: 16px; line-height: 1.12; }
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCopy p { font-size: 13px; line-height: 1.12; }
+}
+
 @media (min-width: 768px) {
-  .hero:not(.memberHero) { height: auto; min-height: 988px; padding: 706px 24px 0; background: none; }
+  .hero:not(.memberHero) { height: auto; min-height: 988px; padding: 500px 24px 0; background: none; }
   .hero:not(.memberHero)::before { position: absolute; z-index: -1; top: 0; right: 0; left: 0; height: 844px; content: ""; background: linear-gradient(0deg, #1f1f1f 0%, #1f1f1fcc 21%, #2d2d2d4d 51%, transparent 74%), url("/images/home-hero-guest.jpg") 88.84% -66.5px / 112.54% 911px no-repeat; }
   .page:has(.hero:not(.memberHero)) .hero h1 { position: static; max-width: min(900px, 100%); font-size: 58px; line-height: 1.12; }
   .page:has(.hero:not(.memberHero)) .hero .actions { position: static; display: flex; width: auto; margin: 28px auto 0; transform: none; }
@@ -1481,6 +1779,49 @@
   .page:has(.hero:not(.memberHero)) .leadingSection { margin-top: 80px; }
   .memberHero { background-image: linear-gradient(0deg, #1f1f1f 0%, #1f1f1fcc 28%, #2d2d2d4d 69%, transparent), linear-gradient(#000000c4, #000000c4), url("/images/home-hero-member.jpg"); }
   .page { --home-gutter: 24px; }
+}
+
+@media (min-width: 1100px) {
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .guestListAuthorPrefix { display: none; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .listAuthor { gap: 5px; font-size: 14px; line-height: 1.12; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .listAuthor > a { gap: 4px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .listAuthor .reviewAvatar,
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .listAuthor .reviewAvatarFallback { flex-basis: 30px; width: 30px; height: 30px; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .guestListMetric { display: inline-flex; align-items: center; gap: 4px; color: var(--rewind-muted); white-space: nowrap; }
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(2) .guestListLikeMetric i { font-size: 15px; }
+  .page:has(.hero:not(.memberHero)) :global(#home-reviewers) { border: 0; padding: 0; }
+  .page:has(.hero:not(.memberHero)) :global(#home-reviewers) .sectionHeading { position: relative; box-sizing: border-box; height: 69px; margin: 0; border-top: 1px solid #3d3d3d; padding-top: 17px; }
+  .page:has(.hero:not(.memberHero)) :global(#home-reviewers) .sectionHeading h2 { font-size: 22px; line-height: 1.12; }
+  .page:has(.hero:not(.memberHero)) :global(#home-reviewers) .sectionHeading > a { position: absolute; top: 19px; right: 0; min-height: 0; height: auto; padding: 0; color: var(--rewind-muted); font-size: 20px; line-height: 1.12; text-decoration: none; }
+  .page:has(.hero:not(.memberHero)) :global(#home-reviewers) .stack { gap: 21px; }
+  .page:has(.hero:not(.memberHero)) :global(#home-reviewers) .list { box-sizing: border-box; display: flex; min-height: 75px; align-items: center; border: 0; border-radius: 15px; padding: 11px 14px; background: #282828; }
+  .page:has(.hero:not(.memberHero)) :global(#home-reviewers) .homeReviewer { gap: 12px; }
+  .page:has(.hero:not(.memberHero)) :global(#home-reviewers) .homeReviewerAvatar,
+  .page:has(.hero:not(.memberHero)) :global(#home-reviewers) .homeReviewerFallback { flex-basis: 53px; width: 53px; height: 53px; }
+  .page:has(.hero:not(.memberHero)) :global(#home-reviewers) .homeReviewerCopy { gap: 6px; }
+  .page:has(.hero:not(.memberHero)) :global(#home-reviewers) .homeReviewerCopy strong { font-size: 18px; line-height: 1.12; }
+  .page:has(.hero:not(.memberHero)) :global(#home-reviewers) .homeReviewerCopy small { font-size: 14px; line-height: 1.12; }
+  .page:has(.hero:not(.memberHero)) :global(#home-reviewers) .homeReviewerLikes { display: none; }
+
+  .page:has(.hero:not(.memberHero)) > .hero { height: 844px; min-height: 844px; padding: 0 24px; }
+  .page:has(.hero:not(.memberHero)) .hero h1 { position: absolute; top: 706px; left: 50%; width: min(900px, calc(100% - 48px)); max-width: none; margin: 0; transform: translateX(-50%); font-size: 58px; line-height: 1.12; }
+  .page:has(.hero:not(.memberHero)) .hero .actions { position: absolute; z-index: 1; top: 929px; left: 50%; display: flex; width: auto; margin: 0; transform: translateX(-50%); }
+  .page:has(.hero:not(.memberHero)) .leadingSection { margin-top: 224px; }
+}
+
+@media (min-width: 1218px) {
+  .page:has(.hero:not(.memberHero)) .grid > :nth-child(3) { width: 385px; margin-top: 22px; margin-left: 1px; border: 0; padding: 0; }
+  .page:has(.hero:not(.memberHero)) .journalSection .sectionHeading h2 { font-size: 22px; line-height: 1.12; }
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCopy {
+    box-sizing: border-box;
+    height: 128px;
+    padding: 16px 15px 14px 17px;
+  }
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCopy small,
+  .page:has(.hero:not(.memberHero)) .journalSection .journalReadMore { display: none; }
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCopy h3 { font-size: 22px; line-height: 1.12; }
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCopy p { margin-top: 5px; font-size: 20px; line-height: 1.12; }
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCoverLink { height: 219px; min-height: 219px; }
 }
 
 @media (min-width: 1100px) {
@@ -1493,6 +1834,7 @@
 
 @media (max-width: 767px) {
   .page { --home-gutter: 16px; padding-bottom: calc(112px + env(safe-area-inset-bottom)); }
+  .page:has(.memberHero) { padding-bottom: calc(128px + env(safe-area-inset-bottom)); }
   .hero:not(.memberHero) { height: auto; min-height: 320px; padding: 106px 42px 20px; background: linear-gradient(180deg, #0c0c0c29, #1f1f1ff2), url("/images/home-hero-guest.jpg") center top / cover no-repeat; }
   .hero:not(.memberHero) .actions { position: static; margin: 22px auto 0; transform: none; }
   .hero:not(.memberHero) .actions a { display: inline-flex; width: auto; min-width: 85px; align-items: center; justify-content: center; padding: 10px 16px; background: #282828; color: #fff; font-size: 14px; line-height: 1.4; }
@@ -1505,4 +1847,17 @@
   .page .guestExplainerCard p, .page .memberHero > p:not(.eyebrow) { line-height: 1.5; }
   .skeletonRecentPoster { flex-basis: 79px; height: 116px; }
   .skeletonListPoster { aspect-ratio: 2; }
+}
+
+
+@media (max-width: 767px) {
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCard:nth-child(n + 2) { display: none; }
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCopy { height: 93px; }
+  .page:has(.hero:not(.memberHero)) .journalSection .journalCopy small,
+  .page:has(.hero:not(.memberHero)) .journalSection .journalReadMore { display: none; }
+  .page:has(.hero:not(.memberHero)) :global(#home-lists) [class*="strip"] .poster:nth-child(n + 5) { display: none; }
+  .page:has(.hero:not(.memberHero)) :global(#home-lists) [class*="strip"] {
+    --poster-width: 33.333% !important;
+    --poster-overlap: -11.111% !important;
+  }
 }

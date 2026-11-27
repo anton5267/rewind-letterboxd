@@ -49,6 +49,7 @@ for (const lang of ["uk", "en"] as const) {
     await test.info().attach("community-desktop", { body: await page.screenshot({ path: test.info().outputPath("community-desktop.png"), fullPage: true }), contentType: "image/png" });
     for (const width of [768, 393, 320]) {
       await page.setViewportSize({ width, height: 1000 });
+      await expect(directory.locator('[data-network-member-id="11"]')).toBeVisible();
       const size = await avatar.boundingBox();
       expect(Math.abs(size!.width - size!.height)).toBeLessThan(1);
       await expect(stats).toBeVisible();
@@ -56,9 +57,9 @@ for (const lang of ["uk", "en"] as const) {
     }
     await page.setViewportSize({ width: 393, height: 1000 });
     expect((await avatar.boundingBox())?.width).toBeCloseTo(78.25, 1);
-    expect((await favorites.locator("img").first().boundingBox())?.height).toBe(43);
-    expect((await favorites.boundingBox())?.height).toBe(44);
+    await expect(favorites).toBeHidden();
     await test.info().attach("community-phone", { body: await page.screenshot({ path: test.info().outputPath("community-phone.png"), fullPage: true }), contentType: "image/png" });
+    await directory.getByRole("button", { name: /search users|пошук користувачів/i }).click();
     const search = directory.getByRole("textbox");
     await search.fill("Ada"); await directory.getByRole("button", { name: lang === "uk" ? "Пошук" : "Search", exact: true }).click();
     await expect.poll(() => queries.at(-1)).toBe("Ada");

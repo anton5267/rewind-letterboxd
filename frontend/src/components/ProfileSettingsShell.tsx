@@ -14,6 +14,7 @@ export interface ProfileSettingsFeedback {
   id: number;
   origin: HTMLElement | null;
   kind: "success" | "error";
+  source?: "socialLinks";
 }
 
 interface Props {
@@ -57,7 +58,10 @@ export default function ProfileSettingsShell({ activeTab, children, loading, loa
       if (latestFeedback.current !== feedback || feedbackScope.current !== scope || handledFeedback.current === feedback.id) return;
       handledFeedback.current = feedback.id;
       if (document.activeElement !== document.body && document.activeElement !== feedback.origin) return;
-      (feedback.kind === "error" ? errorRef.current : messageRef.current)?.focus();
+      const target = feedback.source === "socialLinks"
+        ? mainRef.current?.querySelector<HTMLElement>('[data-settings-feedback="social-links"]')
+        : feedback.kind === "error" ? errorRef.current : messageRef.current;
+      target?.focus();
     });
     return () => window.cancelAnimationFrame(frame);
   }, [feedback, busy, loading, loadError, error, message, activeTab, lang]);
@@ -115,14 +119,14 @@ export default function ProfileSettingsShell({ activeTab, children, loading, loa
   ] as const;
   const saveFormId = `settings-form-${activeTab}`;
 
-  return <main ref={mainRef} className={styles.page} aria-labelledby="account-settings-title" aria-busy={loading || busy}>
+  return <main ref={mainRef} className={styles.page} data-settings-tab={activeTab} aria-labelledby="account-settings-title" aria-busy={loading || busy}>
     <header className={styles.hero}>
       <h1 ref={titleRef} id="account-settings-title" tabIndex={-1} className={styles.retryFocusHeading}>{t("accountSettings")}</h1>
       <p>{t("accountSettingsIntro")}</p>
       <div className={styles.mobileToolbar}>
-        <Link to={path("/profile")} aria-label={t("cancel")}>{t("cancel")}</Link>
-        <h2 ref={mobileTitleRef} id="account-settings-mobile-title" tabIndex={-1} className={styles.retryFocusHeading}>{t("settings")}</h2>
-        {usesHostedSupabaseAuth && activeTab === "avatar" ? <Link to={path("/profile")}>{t("done")}</Link> : <button type="submit" form={saveFormId} disabled={busy || loading || loadError}>{t("save")}</button>}
+        <Link to={path("/profile")} aria-label={t("cancel")}>{activeTab === "authentication" ? <><span aria-hidden="true">‹</span><span>{lang === "uk" ? "Назад" : "Back"}</span></> : t("cancel")}</Link>
+        <h2 ref={mobileTitleRef} id="account-settings-mobile-title" tabIndex={-1} className={styles.retryFocusHeading}>{activeTab === "authentication" ? "Settings" : t("settings")}</h2>
+        {activeTab === "authentication" ? <span aria-hidden="true" /> : usesHostedSupabaseAuth && activeTab === "avatar" ? <Link to={path("/profile")}>{t("done")}</Link> : <button type="submit" form={saveFormId} disabled={busy || loading || loadError}>{busy ? t("saving") : t("save")}</button>}
       </div>
     </header>
     <div className={styles.content}>
@@ -134,8 +138,9 @@ export default function ProfileSettingsShell({ activeTab, children, loading, loa
         <span>{t("backToProfile")}</span>
       </Link>
       <section className={styles.settingsSection} aria-label={tabs.find(tab => tab.id === activeTab)?.label}>
-        {error && <p ref={errorRef} tabIndex={-1} className={styles.error} id="profile-action-error" role="alert">{error}</p>}
-        {message && <p ref={messageRef} tabIndex={-1} className={styles.message} role="status">{message}</p>}
+        {activeTab === "authentication" && <div className={styles.mobileAuthHeading}><h2>{t("authentication")}</h2></div>}
+        {error && feedback?.source !== "socialLinks" && <p ref={errorRef} tabIndex={-1} className={styles.error} id="profile-action-error" role="alert">{error}</p>}
+        {message && feedback?.source !== "socialLinks" && <p ref={messageRef} tabIndex={-1} className={styles.message} role="status">{message}</p>}
         {loading && <ProfileLoading label={t("loading")} layout="settings" />}
         {loadError && <RetryNotice className={styles.error} message={t("loadProfileError")} retryLabel={t("retry")} onRetry={onRetry} />}
         {!loading && !loadError && children}

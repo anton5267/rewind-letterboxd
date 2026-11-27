@@ -62,7 +62,7 @@
 .reviewSheet .header {
   min-height: 47px;
   align-content: start;
-  gap: 2px;
+  gap: .8px;
   padding: 0 12px;
 }
 
@@ -81,7 +81,7 @@
 .reviewLikeButton {
   position: absolute;
   z-index: 1;
-  top: 16px;
+  top: 15px;
   left: 50%;
   width: auto;
   min-width: 70px;
@@ -92,8 +92,10 @@
 }
 
 .reviewLikeButton img { width: 51px; height: 51px; object-fit: contain; }
+.reviewSheet .reviewLikeButton img { display: block; }
 .reviewLikeButton[aria-pressed="true"] img { border-radius: 50%; background: rgba(212, 168, 95, .2); }
 .reviewSheet .reviewLikeButton > span:last-child { color: var(--rewind-muted); font-size: 14px; line-height: 1.2; }
+.reviewSheet .reviewLikeButton { margin-top: 0; }
 
 .reviewRatingArea {
   position: relative;
@@ -104,10 +106,10 @@
   text-align: center;
 }
 
-.reviewRatingArea .ratingLabel { margin-bottom: 10px; color: var(--rewind-muted); font-size: 14px; line-height: 1.2; }
-.reviewRatingArea .stars { gap: 0; }
-.reviewRatingArea .star { width: 45.5px; height: 44px; padding: 0; }
-.reviewRatingArea .star img { display: block; opacity: .4; }
+.reviewRatingArea .ratingLabel { margin-bottom: 7.2px; color: var(--rewind-muted); font-size: 14px; line-height: 1.2; }
+.reviewRatingArea .stars { width: 219px; margin-inline: auto; gap: 0; }
+.reviewRatingArea .star { width: 43.8px; height: 44px; flex: 0 0 43.8px; padding: 0; }
+.reviewRatingArea .star img { display: block; width: 35px; height: 35px; opacity: .4; }
 .reviewRatingArea .starActive img { opacity: 1; }
 .reviewRatingArea .status,
 .reviewRatingArea .error { margin-top: 4px; }

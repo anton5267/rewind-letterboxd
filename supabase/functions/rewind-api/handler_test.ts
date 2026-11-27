@@ -1,4 +1,5 @@
 import { createRewindApiHandler, parseSafeCount, RewindApiError, type AdminJournalArticleRequest, type InternalWorkerHandler, type RewindApiRepository, type RewindAuthVerifier } from "./handler.ts";
+import type { AdminListResponse } from "./contracts/admin.ts";
 
 const pagesOrigin = "https://anton5267.github.io";
 
@@ -99,6 +100,38 @@ Deno.test("GET /api/users/me requires confirmed email before creating a profile"
   if (response.status !== 401 || provisioned) throw new Error("Unconfirmed email must not provision a REWIND profile");
 });
 
+Deno.test("GET /api/users/popular-reviewers can return 24 accounts for the reviewer table and member rail", async () => {
+  const requestedSizes: number[] = [];
+  const handler = handlerWith({
+    async getPopularReviewers(size) { requestedSizes.push(size); return []; },
+  });
+  for (const size of ["24", "500"]) {
+    const response = await handler(new Request(`https://project.supabase.co/api/users/popular-reviewers?size=${size}`));
+    if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+  }
+  if (requestedSizes.join(",") !== "24,24") {
+    throw new Error(`Expected the route to cap requests at 24, got ${requestedSizes.join(",")}`);
+  }
+});
+
+Deno.test("GET /api/users/popular-reviewers/page returns page content and the actual result count", async () => {
+  const requested: unknown[] = [];
+  const handler = handlerWith({
+    async getPopularReviewersPage(page, size, query) {
+      requested.push(page, size, query);
+      return { content: [], totalPages: 40, totalElements: 400, number: page, size };
+    },
+  });
+  const response = await handler(new Request("https://project.supabase.co/api/users/popular-reviewers/page?page=39&size=10&q=%20Cinephage%20"));
+  const body = await response.json();
+  if (response.status !== 200 || JSON.stringify(body) !== JSON.stringify({ content: [], totalPages: 40, totalElements: 400, number: 39, size: 10 })) {
+    throw new Error(`Unexpected popular reviewer page response: ${response.status} ${JSON.stringify(body)}`);
+  }
+  if (JSON.stringify(requested) !== JSON.stringify([39, 10, "Cinephage"])) throw new Error(`Unexpected repository arguments: ${JSON.stringify(requested)}`);
+  const tooLong = await handler(new Request(`https://project.supabase.co/api/users/popular-reviewers/page?q=${"x".repeat(81)}`));
+  if (tooLong.status !== 400) throw new Error(`Expected overlong reviewer query to return 400, got ${tooLong.status}`);
+});
+
 Deno.test("GET /api/users/me rejects an inactive REWIND account", async () => {
   const handler = authHandler({
     async getOrCreateCurrentUser() { throw new RewindApiError(403, "Account is inactive"); },
@@ -122,7 +155,7 @@ Deno.test("review reports require authentication, validate reasons, preserve own
     },
     async getAdminReportedReviews(_user, page, size) {
       calls.push(["admin-reports", page, size]);
-      return { content: [{ id: 4, movieId: 7, movieTitle: "Film", userId: 3, username: "member", content: "Review",
+      return { content: [{ id: 4, movieId: 7, movieTitle: "Film", userId: 3, username: "member", email: "member@example.invalid", content: "Review",
         rating: 4, isHidden: false, moderatedReason: null, moderatedAt: null, createdAt: "2026-11-08T12:00:00Z",
         reportId: 9, reportReason: "SPAM", reportCreatedAt: "2026-11-10T12:00:00Z", likesCount: 2, commentsCount: 1 }],
         totalPages: 1, totalElements: 1, number: page };
@@ -134,11 +167,12 @@ Deno.test("review reports require authentication, validate reasons, preserve own
   const invalid = await handler(new Request("https://project.supabase.co/api/reviews/4/report", { method: "POST", headers, body: JSON.stringify({ reason: "OTHER" }) }));
   const submitted = await handler(new Request("https://project.supabase.co/api/reviews/4/report", { method: "POST", headers, body: JSON.stringify({ reason: "BULLYING" }) }));
   const queue = await handler(new Request("https://project.supabase.co/api/admin/reported-reviews?page=2&size=100", { headers }));
+  const queueBody = await queue.json();
   const deniedQueue = await authHandler({ async getAdminReportedReviews() { throw new RewindApiError(403, "Administrator access required"); } })(
     new Request("https://project.supabase.co/api/admin/reported-reviews", { headers }));
   if (unauthorized.status !== 401 || status.status !== 200 || !(await status.json()).reported
     || invalid.status !== 400 || submitted.status !== 200 || (await submitted.json()).reason !== "BULLYING"
-    || queue.status !== 200 || (await queue.json()).content[0].commentsCount !== 1
+    || queue.status !== 200 || queueBody.content[0].commentsCount !== 1 || queueBody.content[0].email !== "member@example.invalid"
     || deniedQueue.status !== 403 || JSON.stringify(calls) !== JSON.stringify([
       ["status", 4], ["report", 4, "BULLYING"], ["admin-reports", 2, 50],
     ])) {
@@ -173,6 +207,8 @@ Deno.test("comment and list report routes enforce auth, validate reasons, and ex
     async getMyListReport(_user, id) { calls.push(["list-status", id]); return { reported: true, report: { id: 32, reason: "SPAM", createdAt: "2026-11-13T05:00:00Z" } }; },
     async reportList(_user, id, reason) { calls.push(["list-report", id, reason]); return { id: 32, reason, createdAt: "2026-11-13T05:00:00Z" }; },
     async getAdminReportedComments(_user, page, size) { calls.push(["admin-comments", page, size]); return { content: [], totalPages: 0, totalElements: 0, number: page }; },
+    async getAdminCommentHistory(_user, id) { calls.push(["comment-history", id]); return []; },
+    async getAdminReviewHistory(_user, id) { calls.push(["review-history", id]); return []; },
     async getAdminReportedLists(_user, page, size) { calls.push(["admin-lists", page, size]); return { content: [], totalPages: 0, totalElements: 0, number: page }; },
     async dismissAdminCommentReport(_user, id) { calls.push(["dismiss-comment", id]); return id === 41; },
     async dismissAdminListReport(_user, id) { calls.push(["dismiss-list", id]); return id === 42; },
@@ -186,15 +222,17 @@ Deno.test("comment and list report routes enforce auth, validate reasons, and ex
   const comments = await handler(new Request("https://project.supabase.co/api/admin/reported-comments?page=1&size=90", { headers }));
   const lists = await handler(new Request("https://project.supabase.co/api/admin/reported-lists", { headers }));
   const dismissComment = await handler(new Request("https://project.supabase.co/api/admin/reported-comments/41/dismiss", { method: "POST", headers }));
+  const commentHistory = await handler(new Request("https://project.supabase.co/api/admin/comments/41/history", { headers }));
+  const reviewHistory = await handler(new Request("https://project.supabase.co/api/admin/reviews/40/history", { headers }));
   const dismissList = await handler(new Request("https://project.supabase.co/api/admin/reported-lists/42/dismiss", { method: "POST", headers }));
   const denied = await authHandler({ async getAdminReportedComments() { throw new RewindApiError(403, "Administrator access required"); } })(
     new Request("https://project.supabase.co/api/admin/reported-comments", { headers }));
   if (unauthorized.status !== 401 || commentStatus.status !== 200 || comment.status !== 200
     || listStatus.status !== 200 || !(await listStatus.json()).reported || badReason.status !== 400
-    || comments.status !== 200 || lists.status !== 200 || dismissComment.status !== 204 || dismissList.status !== 204 || denied.status !== 403
+    || comments.status !== 200 || lists.status !== 200 || dismissComment.status !== 204 || commentHistory.status !== 200 || reviewHistory.status !== 200 || dismissList.status !== 204 || denied.status !== 403
     || JSON.stringify(calls) !== JSON.stringify([
       ["comment-status", 8], ["comment-report", 8, "BULLYING"], ["list-status", 9],
-      ["admin-comments", 1, 50], ["admin-lists", 0, 20], ["dismiss-comment", 41], ["dismiss-list", 42],
+      ["admin-comments", 1, 50], ["admin-lists", 0, 20], ["dismiss-comment", 41], ["comment-history", 41], ["review-history", 40], ["dismiss-list", 42],
     ])) {
     throw new Error(`Comment/list report API contract failed: ${JSON.stringify({ calls, statuses: [unauthorized.status, commentStatus.status, comment.status, listStatus.status, badReason.status, comments.status, lists.status, dismissComment.status, dismissList.status, denied.status] })}`);
   }
@@ -1243,6 +1281,10 @@ Deno.test("public social profile routes preserve Spring response shapes and page
       requested.push(["collection", id, collection, page, size]);
       return { content: [], totalPages: 0, totalElements: 0, number: page };
     },
+    async getPublicProfileLikedLists(id, page, size) {
+      requested.push(["liked-lists", id, page, size]);
+      return { content: [], totalPages: 0, totalElements: 0, number: page };
+    },
     async getFollowers(id, page, size) {
       requested.push(["followers", id, page, size]);
       return { content: [], totalPages: 0, totalElements: 0, number: page };
@@ -1250,11 +1292,12 @@ Deno.test("public social profile routes preserve Spring response shapes and page
   });
   const publicProfile = await handler(new Request("https://project.supabase.co/api/users/7/profile"));
   const collection = await handler(new Request("https://project.supabase.co/api/users/7/collections/watched?page=2&size=999"));
+  const likedLists = await handler(new Request("https://project.supabase.co/api/users/7/collections/liked-lists?page=1&size=999"));
   const followers = await handler(new Request("https://project.supabase.co/api/users/7/followers?page=-2&size=8"));
   const publicProfileBody = await publicProfile.json();
   if (publicProfile.status !== 200 || publicProfileBody.stats.reviews !== 1 || publicProfileBody.bio !== "Film fan."
-    || collection.status !== 200 || followers.status !== 200
-    || JSON.stringify(requested) !== JSON.stringify([["profile", 7], ["collection", 7, "watched", 2, 50], ["followers", 7, 0, 8]])) {
+    || collection.status !== 200 || likedLists.status !== 200 || followers.status !== 200
+    || JSON.stringify(requested) !== JSON.stringify([["profile", 7], ["collection", 7, "watched", 2, 50], ["liked-lists", 7, 1, 50], ["followers", 7, 0, 8]])) {
     throw new Error(`Public profile route or pagination contract changed: ${JSON.stringify(requested)}`);
   }
 });
@@ -1316,9 +1359,9 @@ Deno.test("profile social links require confirmation and validate allowlisted UR
   }));
   const update = await handler(new Request("https://project.supabase.co/api/profile/me/social-links", {
     method: "PUT", headers: { Authorization: "Bearer valid-token", "Content-Type": "application/json" },
-    body: JSON.stringify([{ platform: " Website ", url: "https://example.test/profile" }]),
+    body: JSON.stringify([{ platform: " Website ", url: "https://example.test/profile" }, { platform: " X ", url: "https://x.com/example" }]),
   }));
-  const expected = [{ platform: "website", url: "https://example.test/profile" }];
+  const expected = [{ platform: "website", url: "https://example.test/profile" }, { platform: "x", url: "https://x.com/example" }];
   if (get.status !== 200 || (await get.json())[0].platform !== "website" || invalid.status !== 400 || duplicate.status !== 400
     || update.status !== 200 || JSON.stringify(saved) !== JSON.stringify(expected) || JSON.stringify(await update.json()) !== JSON.stringify(expected)) {
     throw new Error("Profile social link validation or response contract changed");
@@ -1499,9 +1542,10 @@ Deno.test("admin newsletter routes queue published articles and return delivery 
 Deno.test("admin moderation routes preserve filters, status codes, audit payloads, and bulk validation", async () => {
   const calls: unknown[] = [];
   const review = { id: 21, movieId: 7, movieTitle: "Film", userId: 3, username: "member", content: "Review",
-    rating: 4, isHidden: true, moderatedReason: "Rule", moderatedAt: "2026-11-09T12:00:00Z", createdAt: "2026-11-08T12:00:00Z" };
+    rating: 4, isHidden: true, moderatedReason: "Rule", moderatedAt: "2026-11-09T12:00:00Z", createdAt: "2026-11-08T12:00:00Z",
+    likesCount: 0, commentsCount: 0 };
   const comment = { id: 31, reviewId: 21, userId: 4, username: "commenter", content: "Comment", isHidden: false,
-    moderatedReason: null, moderatedAt: null, createdAt: "2026-11-08T13:00:00Z" };
+    moderatedReason: null, moderatedAt: null, createdAt: "2026-11-08T13:00:00Z", parentLikesCount: 0, parentRepliesCount: 0 };
   const queueItem = { type: "REVIEW" as const, id: 22, parentId: null, movieId: 7, subject: "Film", userId: 5,
     username: "queue-user", content: "Needs review", createdAt: "2026-11-07T10:00:00Z" };
   const handler = authHandler({
@@ -1609,7 +1653,7 @@ Deno.test("admin user routes preserve paging, fields, validation, active/HQ acti
 Deno.test("admin list routes preserve paging, visibility updates, deletion guards, and authorization", async () => {
   const calls: unknown[] = [];
   const list = { id: 19, userId: 4, username: "member", name: "Favorites", description: "Films",
-    listType: "CUSTOM" as const, isPublic: true, itemCount: 3, createdAt: "2026-11-01T10:00:00Z", updatedAt: "2026-11-09T10:00:00Z", featuredPosition: null as number | null };
+    listType: "CUSTOM" as const, isPublic: true, itemCount: 3, createdAt: "2026-11-01T10:00:00Z", updatedAt: "2026-11-09T10:00:00Z", featuredPosition: null as number | null, featuredCategory: null as AdminListResponse["featuredCategory"] };
   const handler = authHandler({
     async getAdminLists(_auth, page, size) { calls.push(["list", page, size]); return { content: [list], totalPages: 1, totalElements: 1, number: page }; },
     async setAdminListVisibility(_auth, id, visible) { calls.push(["visibility", id, visible]); return id === 19 ? { ...list, isPublic: visible } : null; },
@@ -1657,23 +1701,33 @@ Deno.test("admin dashboard, audit, and site settings preserve authorization and 
   const setting = { key: "default_locale", value: "en", updatedBy: 8, updatedAt: "2026-11-09T12:00:00Z" };
   const handler = authHandler({
     async getAdminDashboard() { calls.push(["dashboard"]); return { users: 9, activeUsers: 8, hqUsers: 2, movies: 50, reviews: 4, hiddenReviews: 1 }; },
+    async getAdminActivityOverview() {
+      calls.push(["activity"]);
+      return { users: [{ id: 9, username: "latest", displayName: "Latest User", email: "latest@example.invalid", followerCount: 3, isActive: true }],
+        metrics: { averageWatched: 2.5, averageReviews: 1.2, averageAllLists: 4, averageCustomLists: 1, averageSessionMinutes: null, averageWatchlist: 0.8 } };
+    },
     async getAdminAuditLogs(_auth, page, size) { calls.push(["audit", page, size]); return { content: [{ id: 2, adminId: 8, action: "SITE_SETTING_UPDATED", targetType: "SITE_SETTING", targetId: null, metadata: "default_locale", createdAt: setting.updatedAt }], totalPages: 1, totalElements: 1, number: page }; },
     async getAdminSettings() { calls.push(["settings"]); return [setting]; },
     async updateAdminSetting(_auth, key, value) { calls.push(["update", key, value]); return key === setting.key ? { ...setting, value } : null; },
   });
   const headers = { Authorization: "Bearer valid-token", "Content-Type": "application/json" };
   const dashboard = await handler(new Request("https://project.supabase.co/api/admin/dashboard", { headers }));
+  const activity = await handler(new Request("https://project.supabase.co/api/admin/activity", { headers }));
+  const activityBody = await activity.json();
+  const wrongActivityMethod = await handler(new Request("https://project.supabase.co/api/admin/activity", { method: "POST", headers }));
   const audit = await handler(new Request("https://project.supabase.co/api/admin/audit-logs?page=0&size=500", { headers }));
   const settings = await handler(new Request("https://project.supabase.co/api/admin/settings", { headers }));
   const update = await handler(new Request("https://project.supabase.co/api/admin/settings/default_locale", { method: "PUT", headers, body: JSON.stringify({ value: " UK " }) }));
   const invalidValue = await handler(new Request("https://project.supabase.co/api/admin/settings/maintenance_mode", { method: "PUT", headers, body: JSON.stringify({ value: "sometimes" }) }));
   const invalidKey = await handler(new Request("https://project.supabase.co/api/admin/settings/role", { method: "PUT", headers, body: JSON.stringify({ value: "ADMIN" }) }));
   const unauthenticated = await authHandler({})(new Request("https://project.supabase.co/api/admin/dashboard"));
-  if (dashboard.status !== 200 || (await dashboard.json()).hiddenReviews !== 1 || audit.status !== 200 || (await audit.json()).content[0].metadata !== "default_locale"
+  if (dashboard.status !== 200 || (await dashboard.json()).hiddenReviews !== 1 || activity.status !== 200
+    || activityBody.users[0].email !== "latest@example.invalid" || activityBody.metrics.averageSessionMinutes !== null
+    || wrongActivityMethod.status !== 405 || audit.status !== 200 || (await audit.json()).content[0].metadata !== "default_locale"
     || settings.status !== 200 || (await settings.json())[0].value !== "en" || update.status !== 200 || (await update.json()).value !== "UK"
     || invalidValue.status !== 400 || invalidKey.status !== 400 || unauthenticated.status !== 401
-    || JSON.stringify(calls) !== JSON.stringify([["dashboard"], ["audit", 0, 100], ["settings"], ["update", "default_locale", "UK"]])) {
-    throw new Error(`Admin dashboard/settings contract changed: ${JSON.stringify({ calls, statuses: [dashboard.status, audit.status, settings.status, update.status, invalidValue.status, invalidKey.status, unauthenticated.status] })}`);
+    || JSON.stringify(calls) !== JSON.stringify([["dashboard"], ["activity"], ["audit", 0, 100], ["settings"], ["update", "default_locale", "UK"]])) {
+    throw new Error(`Admin dashboard/settings contract changed: ${JSON.stringify({ calls, statuses: [dashboard.status, activity.status, wrongActivityMethod.status, audit.status, settings.status, update.status, invalidValue.status, invalidKey.status, unauthenticated.status] })}`);
   }
 });
 

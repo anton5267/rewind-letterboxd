@@ -33,9 +33,10 @@
 | --- | --- | --- |
 | U | `GET`, `PATCH /api/profile/me`; `PUT /api/profile/me/password`; `DELETE /api/profile/me`; `GET`, `PUT /api/profile/me/social-links` | Власний профіль, social-links CRUD, зміна пароля та захищене видалення акаунта з відкликанням сесій |
 | U | `GET /api/profile/me/watched`, `/api/profile/me/watchlist`, `/api/profile/me/favorites` | Сторінки власних системних списків |
+| U | `PUT /api/profile/me/watchlist/visibility` body `{ "isPublic": boolean }`; `DELETE /api/profile/me/watchlist` | Власник перемикає публічність списку та очищує його; DELETE повертає `{ "removed": number }`. Очищення виконується одним запитом після підтвердження власника; інші власні системні списки bulk DELETE не підтримують. Публічний profile endpoint приховує приватний Watchlist та його кількість. |
 | P | `GET /api/users/{id}` | Публічна коротка identity; email не повертається |
 | P | `GET /api/users/{id}/profile`, `/api/users/{id}/collections/{collection}`, `/api/users/{id}/lists`, `/api/users/{id}/liked-reviews` | Повний public profile, watched/watchlist/favorites, публічні списки та вподобані огляди |
-| U | `GET /api/users/me` | Поточний користувач; без сесії — 401 |
+| U | `GET /api/users/me` | Поточний користувач (id, username, nullable `displayName`, role, avatarUrl); без сесії — 401 |
 | U | `GET /api/profile/me/ratings`, `/api/profile/me/reviews` | Сторінкові повні історії оцінок та оглядів |
 
 Own `recentReviews` і paged `/api/profile/me/reviews` у поточному source містять nullable `moviePhotoUrl` із самого review.movie; poster не залежить від останніх 10 ratings. Main API image ще не оновлено; frontend лише для відсутнього поля (`undefined`) підтримує legacy fallback, explicit `null` зберігає missing-image state.
@@ -48,6 +49,7 @@ Own `recentReviews` і paged `/api/profile/me/reviews` у поточному sou
 | P | `GET /api/lists/public` | Сторінковий каталог публічних списків |
 | P | `GET /api/lists/public/{listId}` | Деталі публічного CUSTOM списку з фільмами |
 | P | `GET /api/lists/public/popular`, `/api/lists/public/recently-liked`, `/api/lists/public/team` | Популярні, нещодавно вподобані та HQ/team public-list feeds |
+| P | `GET /api/lists/public/featured` | Публічна кураторська добірка; картка містить nullable `featuredCategory` для трьох груп `REWIND_COMMUNITY`, `OTHER_TOP_FILM_LISTS`, `FILMMAKER_RECOMMENDATIONS` |
 | U | `GET /api/lists/public/{listId}/like-status`; `POST`, `DELETE /api/lists/{listId}/likes` | Статус і зміна вподобання public list |
 | U | `PATCH`, `DELETE /api/lists/{listId}` | Зміна/видалення свого CUSTOM списку. У PATCH пропущений або `null` опис зберігає значення, `""` очищає текст |
 | U | `GET`, `POST /api/lists/{listId}/items`; `DELETE /api/lists/{listId}/items/{movieId}` | Елементи власного списку |
@@ -73,7 +75,7 @@ Hosted Community directory, HQ and popular-reviewer responses add optional watch
 | U | `GET`, `POST /api/conversations`; `GET`, `POST /api/conversations/{id}/messages`; `POST /api/conversations/{id}/read` | Приватні діалоги й повідомлення; blocked pairs не можуть почати/читати/надсилати |
 | U | `GET /api/users/{id}/block-status`, `POST/DELETE /api/users/{id}/block` | Перевірка, встановлення й зняття блокування; блок також прибирає взаємні follow |
 | U | `GET`, `PUT /api/notifications/preferences` | Налаштування сповіщень |
-| P | `GET /api/users/hq`, `/api/users/directory`, `/api/users/popular-reviewers`; `GET /api/users/{id}/followers`, `/api/users/{id}/following`, `/api/users/{id}/activity`; `GET /api/activity/recent-watched` | Community, network, public activity і recent-watched feed. `popular-reviewers` також повертає additive `reviewCount`, `watchedCount`, `listCount`; старі клієнти лишаються сумісними. |
+| P | `GET /api/users/hq`, `/api/users/directory`, `/api/users/popular-reviewers`, `/api/users/popular-reviewers/page?page=&size=`; `GET /api/users/{id}/followers`, `/api/users/{id}/following`, `/api/users/{id}/activity`; `GET /api/activity/recent-watched` | Community, network, public activity і recent-watched feed. `popular-reviewers` лишається array-сумісним і повертає additive `reviewCount`, `watchedCount`, `listCount`; `popular-reviewers/page` повертає `content`, `number`, `size`, `totalPages` і фактичний `totalElements`. |
 | U | `GET /api/users/{id}/follow-status`; `POST`, `DELETE /api/users/{id}/follow`; `GET /api/activity/following` | Власні follow relations і activity feed |
 | U | `GET /api/notifications`, `/api/notifications/unread-count`, `/api/notifications/stream`; `POST /api/notifications/{id}/read`, `/api/notifications/read-all` | Сторінкові notifications, unread, SSE та read actions |
 | U | `GET /api/conversations/unread-count` | Кількість непрочитаних діалогів |
@@ -101,6 +103,7 @@ Hosted Journal responses add optional nullable `coverImages` (one to three HTTP(
 | A | `GET /api/admin/dashboard`, `GET /api/admin/audit-logs` | Лічильники та журнал адміністративних дій |
 | A | `GET /api/admin/comments`; `POST /api/admin/comments/{id}/hide`, `/api/admin/comments/{id}/unhide`; `DELETE /api/admin/comments/{id}` | Модерація коментарів; UI підключено до dashboard |
 | A | `GET /api/admin/lists`; `PUT /api/admin/lists/{id}/visibility?visible=...` | Сторінковий список списків з кількістю фільмів; приховування/публікація з аудитом; UI підключено до dashboard |
+| A | `PUT /api/admin/lists/{id}/featured?featured=true&category=...` | Додати список до Featured або змінити його групу; без `category` новий список потрапляє в `REWIND_COMMUNITY`; вимкнення featured очищує групу. `featured-position` змінює порядок усередині групи. |
 | A | `GET /api/admin/conversations`, `GET /api/admin/notifications`; `DELETE /api/admin/conversations/{id}`, `DELETE /api/admin/notifications/{id}` | Сторінковий огляд і audit-видалення діалогів/сповіщень |
 | A | `GET /api/admin/settings`, `PUT /api/admin/settings/{key}` | Whitelist налаштувань сайту з аудитом; UI підключено до dashboard |
 | A | `PUT /api/admin/users/{id}/hq`; `DELETE /api/admin/lists/{id}` | HQ-прапорець і видалення списків з аудитом |

@@ -84,6 +84,15 @@ public class UserController {
         return profiles.publicLists(id, page, size);
     }
 
+    @GetMapping("/{id}/collections/liked-lists")
+    public Page<PublicListCardResponse> publicLikedLists(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size
+    ) {
+        return profiles.publicLikedLists(id, page, size);
+    }
+
     @GetMapping("/{id}/liked-reviews")
     public Page<PublicProfileResponse.PublicReview> likedReviews(
             @PathVariable Long id,

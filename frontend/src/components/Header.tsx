@@ -158,9 +158,11 @@ function HeaderContent() {
   // Person/filmography pages use the same dark canvas as the Figma Actor frames;
   // only Journal keeps its light editorial header treatment.
   const mobileDetailHeader = /^\/(uk|en)\/(films|reviews)\/[^/]+\/?$/.test(location.pathname);
+  const mobilePopularReviewsHeader = /^\/(uk|en)\/reviews\/?$/.test(location.pathname);
   const mobileFilmsHeader = /^\/(uk|en)\/films\/?$/.test(location.pathname);
   const mobileListDetailHeader = /^\/(uk|en)\/lists\/public\/[^/]+\/?$/.test(location.pathname);
-  const mobileSearchHeader = /^\/(uk|en)\/search\/?$/.test(location.pathname);
+  const searchPageHeader = /^\/(uk|en)\/search\/?$/.test(location.pathname);
+  const mobileSearchHeader = searchPageHeader;
   const mobileHomeHeader = /^\/(uk|en)\/home\/?$/.test(location.pathname);
   const mobileCommunityHeader = /^\/(uk|en)\/community(?:\/reviewers)?\/?$/.test(location.pathname);
   const mobilePersonHeader = /^\/(uk|en)\/people\/(actor|director|producer|writer)\/[^/]+\/?$/.test(location.pathname);
@@ -169,7 +171,9 @@ function HeaderContent() {
   const mobileUserListsHeader = /^\/(uk|en)\/lists\/?$/.test(location.pathname);
   const settingsView = new URLSearchParams(location.search).get("settings");
   const mobileProfileSettingsHeader = mobileProfileHeader && ["profile", "authentication", "avatar", "connections"].includes(settingsView ?? "");
-  const mobileAuthHeader = /^\/(uk|en)\/(auth|login|register|forgot-password|reset-password|email-action)\/?$/.test(location.pathname);
+  const mobileEmailActionHeader = /^\/(uk|en)\/email-action\/?$/.test(location.pathname);
+  const mobileAuthHeader = /^\/(uk|en)\/(auth|login|register|forgot-password|reset-password|email-action|link-account)\/?$/.test(location.pathname) && !mobileEmailActionHeader;
+  const accountLinkHeader = /^\/(uk|en)\/link-account\/?$/.test(location.pathname);
   const listParams = new URLSearchParams(location.search);
   const listsLandingHeader = /^\/(uk|en)\/lists\/discover\/?$/.test(location.pathname)
     && !toTagSlug(listParams.get("tag") ?? "");
@@ -182,9 +186,11 @@ function HeaderContent() {
       ${styles.header}
       ${scrolled ? styles.scrolled : ""}
       ${mobileDetailHeader ? styles.mobileDetail : ""}
+      ${mobilePopularReviewsHeader ? styles.mobilePopularReviews : ""}
       ${mobileFilmsHeader ? styles.mobileFilms : ""}
       ${mobileListDetailHeader ? styles.mobileListDetail : ""}
       ${mobileSearchHeader ? styles.mobileSearch : ""}
+      ${searchPageHeader ? styles.searchPage : ""}
       ${mobileHomeHeader ? styles.mobileHome : ""}
       ${mobileCommunityHeader ? styles.mobileCommunity : ""}
       ${mobilePersonHeader ? styles.mobilePerson : ""}
@@ -193,6 +199,8 @@ function HeaderContent() {
       ${mobileUserListsHeader ? styles.mobileUserLists : ""}
       ${mobileProfileSettingsHeader ? styles.mobileProfileSettings : ""}
       ${mobileAuthHeader ? styles.mobileAuth : ""}
+      ${mobileEmailActionHeader ? styles.mobileEmailAction : ""}
+      ${accountLinkHeader ? styles.accountLinkDesktop : ""}
       ${listsLandingHeader ? styles.listsLanding : ""}
       ${mobileTaggedListsHeader ? styles.mobileTaggedLists : ""}
     `}>
@@ -212,10 +220,10 @@ function HeaderContent() {
       </Link>
 
       <nav className={styles.desktopNav} aria-label={t("mainNavigation")}>
-        <Link to={path("/films/discover")}>{t("films")}</Link>
-        <Link to={path("/lists/discover")}>{t("searchLists")}</Link>
-        <Link to={path("/community")}>{t("searchMembers")}</Link>
-        <Link to={path("/journal")}>{t("journal")}</Link>
+        <Link to={path("/films/discover")}>{accountLinkHeader ? "Films" : t("films")}</Link>
+        <Link to={path("/lists/discover")}>{accountLinkHeader ? "Lists" : t("searchLists")}</Link>
+        <Link to={path("/community")}>{accountLinkHeader ? "Members" : t("searchMembers")}</Link>
+        <Link to={path("/journal")}>{accountLinkHeader ? "Journal" : t("journal")}</Link>
         <div ref={accountAreaRef} className={styles.accountArea}
           onBlurCapture={event => {
             if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) setAccountOpen(false);
@@ -227,7 +235,7 @@ function HeaderContent() {
             accountToggleRef.current?.focus();
           }}>
           <button ref={accountToggleRef} className={styles.accountToggle} type="button" aria-expanded={accountOpen} aria-controls={accountOpen ? "desktop-account-links" : undefined} onClick={() => setAccountOpen(open => !open)}>
-            <span>{t("account")}</span>
+            <span>{accountLinkHeader ? "Account" : t("account")}</span>
             {isAuth && unreadMessages + unreadNotifications > 0 && <span className={styles.badge} aria-label={`${t("unread")}: ${unreadMessages + unreadNotifications}`}>{unreadMessages + unreadNotifications > 99 ? "99+" : unreadMessages + unreadNotifications}</span>}
           </button>
           {accountOpen && <div className={styles.accountPopover} id="desktop-account-links">
@@ -282,11 +290,11 @@ function HeaderContent() {
       </>}
 
       <nav ref={mobileNavRef} className={styles.mobileNav} aria-label={t("mainNavigation")}>
-        <NavLink end to={path("/home")} aria-label={t("home")}><MobileNavIcon name="home" /><span className={mobileHomeHeader ? undefined : styles.visuallyHidden}>{t("home")}</span></NavLink>
-        <NavLink to={path("/search")} aria-label={t("search")}><MobileNavIcon name="search" /><span className={mobileHomeHeader ? undefined : styles.visuallyHidden}>{t("search")}</span></NavLink>
-        <NavLink to={path("/films")} aria-label={t("add")}><MobileNavIcon name="add" /><span className={mobileHomeHeader ? undefined : styles.visuallyHidden}>{t("add")}</span></NavLink>
-        <NavLink to={path("/journal")} aria-label={t("journal")}><MobileNavIcon name="journal" /><span className={mobileHomeHeader ? undefined : styles.visuallyHidden}>{t("journal")}</span></NavLink>
-        <NavLink to={path(isAuth ? "/profile" : "/auth")} aria-label={t("profile")}><MobileNavIcon name="profile" /><span className={mobileHomeHeader ? undefined : styles.visuallyHidden}>{t("profile")}</span></NavLink>
+        <NavLink end to={path("/home")} aria-label={t("home")}><MobileNavIcon name="home" /><span className={mobilePopularReviewsHeader ? styles.visuallyHidden : mobileHomeHeader || mobileDetailHeader || mobileListDetailHeader ? undefined : styles.visuallyHidden}>{t("home")}</span></NavLink>
+        <NavLink to={path("/search")} aria-label={t("search")}><MobileNavIcon name="search" /><span className={mobilePopularReviewsHeader ? styles.visuallyHidden : mobileHomeHeader || mobileDetailHeader || mobileListDetailHeader ? undefined : styles.visuallyHidden}>{t("search")}</span></NavLink>
+        <NavLink to={path("/films")} aria-label={t("add")}><MobileNavIcon name="add" /><span className={mobilePopularReviewsHeader ? styles.visuallyHidden : mobileHomeHeader || mobileDetailHeader || mobileListDetailHeader ? undefined : styles.visuallyHidden}>{t("add")}</span></NavLink>
+        <NavLink to={path("/journal")} aria-label={t("journal")}><MobileNavIcon name="journal" /><span className={mobilePopularReviewsHeader ? styles.visuallyHidden : mobileHomeHeader || mobileDetailHeader || mobileListDetailHeader ? undefined : styles.visuallyHidden}>{t("journal")}</span></NavLink>
+        <NavLink to={path(isAuth ? "/profile" : "/auth")} aria-label={t("profile")}><MobileNavIcon name="profile" /><span className={mobilePopularReviewsHeader ? styles.visuallyHidden : mobileHomeHeader || mobileDetailHeader || mobileListDetailHeader ? undefined : styles.visuallyHidden}>{t("profile")}</span></NavLink>
       </nav>
 
     </header>

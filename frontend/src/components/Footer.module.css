@@ -7,6 +7,8 @@
   font-size: 13px;
 }
 
+.loginDesktopFigmaParity {}
+
 @media (max-width: 767px) {
   .footer { padding: 28px 16px; }
   .top { flex-wrap: wrap; gap: 14px; }
@@ -92,7 +94,10 @@
 /* Shared 1440x265 footer: 251:625 / 1122:2802 / 1413:6425.
    The secondary destinations use the lower free space and may wrap in UK. */
 @media (min-width: 1024px) {
+  .footer.loginDesktopFigmaParity .secondaryNav { display: none; }
+  :global(body:has(main[data-page="not-found"])) .footer .secondaryNav { display: none; }
   .footer { min-height: 265px; padding: 0 24px; background: #000; }
+  :global(body:has(main[class*="featuredFeed"])) .footer { min-height: 280px; }
   .top { width: min(1154px, 100%); min-height: 44px; margin: 0 auto; padding-top: 56px; align-items: center; justify-content: flex-start; gap: 24px clamp(24px, 12.5695vw, 181px); }
   .logo { flex: 0 0 184px; }
   .logo img { width: 184px; height: 30px; object-fit: contain; }
@@ -103,10 +108,35 @@
   .bottom a { color: inherit; }
   .secondaryNav { margin-top: 6px; }
   .secondaryNav a:focus-visible { outline-offset: -2px; }
+  .footer.hqAccountsDesktopParity .socialCenter { margin-top: 9px; }
+  .footer.hqAccountsDesktopParity .socialCenter img { width: 125px; height: 21.6094px; }
+  .footer.hqAccountsDesktopParity .nav { margin-right: 1px; font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+  .footer.hqAccountsDesktopParity .nav a { min-width: 0; white-space: nowrap; }
+  .footer.hqAccountsDesktopParity .nav a:nth-child(1) { flex: 0 0 119px; }
+  .footer.hqAccountsDesktopParity .nav a:nth-child(2) { flex: 0 0 70px; }
+  .footer.hqAccountsDesktopParity .nav a:nth-child(3) { flex: 0 0 60px; }
+  .footer.hqAccountsDesktopParity .nav a:nth-child(4) { flex: 0 0 80px; }
+  .footer.hqAccountsDesktopParity .nav a:nth-child(5) { flex: 0 0 127px; }
+  .footer.hqAccountsDesktopParity .bottom { max-width: 1000px; margin-top: 19.4px; line-height: 18px; text-align: left; }
+  .footer.hqAccountsDesktopParity .bottom a,
+  .footer.hqAccountsDesktopParity .secondaryNav { display: none; }
 }
 
 @media (max-width: 767px) {
   .footer.mobileHidden,
+  :global(body:has(main[class*="featuredFeed"])) .footer,
   :global(body:has(main[data-list-editor="create"])) .footer,
   :global(body:has(main[data-review-detail])) .footer { display: none; }
+
+  .footer.mobileServiceCompact { height: 111px; min-height: 111px; padding: 20px; }
+  .footer.mobileAboutFooter { min-height: 351px; }
+  :global(html[lang="en"]) .footer.mobileAboutFooter { min-height: 295px; }
+  .mobileServiceCompact .top { display: block; width: 100%; min-height: 0; margin: 0; padding: 0; }
+  .mobileServiceCompact .logo { width: 159px; min-height: 0; margin: 0; }
+  .mobileServiceCompact .logo img { width: 159px; height: 25px; object-fit: contain; }
+  .mobileServiceCompact .nav { position: static; display: grid; width: 100%; grid-template-columns: repeat(5, minmax(0, 1fr)); justify-content: space-between; gap: 0; margin-top: 12px; color: #adadad; font-size: 9px; font-weight: 600; line-height: 14.3px; letter-spacing: 0; text-transform: uppercase; opacity: 1; }
+  .mobileServiceCompact .nav a { min-width: 0; max-width: 100%; min-height: 14px; justify-content: center; overflow: hidden; color: inherit; font-size: 9px; letter-spacing: 0; text-align: center; white-space: nowrap; }
+  .mobileServiceCompact .socialCenter,
+  .mobileServiceCompact .secondaryNav { display: none; }
+  .mobileServiceCompact .bottom { margin-top: 6px; color: #adadad; font-size: 9px; line-height: 12.6px; text-align: left; opacity: 1; }
 }

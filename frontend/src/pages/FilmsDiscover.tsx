@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type FocusEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getGenres, searchMovies, type Genre, type MovieCard } from "../api/search.api";
 import { getPopularReviews, getRecentReviews, type RecentReview } from "../api/reviews.api";
-import { getPublicListFeed, type PublicList } from "../api/lists.api";
-import ListPosterStack from "../components/ListPosterStack";
+import { getPublicListFeed, type MoviePreview, type PublicList } from "../api/lists.api";
+import { getPublicWatchedFilmCount } from "../api/stats.api";
 import ResilientImage from "../components/ResilientImage";
 import RetryNotice from "../components/RetryNotice";
 import { editorialText, formatReviewDate, formatMovieYear, localizeGenreName, useLocale } from "../i18n";
@@ -18,6 +18,7 @@ function revealFocusedPoster(event: FocusEvent<HTMLAnchorElement>) {
 
 export default function FilmsDiscover() {
   const { lang, path, t } = useLocale();
+  const navigate = useNavigate();
   const [popular, setPopular] = useState<MovieCard[]>([]);
   const [genres, setGenres] = useState<Genre[]>([]);
   const [genresLoading, setGenresLoading] = useState(true);
@@ -25,12 +26,20 @@ export default function FilmsDiscover() {
   const [genresRetry, setGenresRetry] = useState(0);
   const [filmInput, setFilmInput] = useState("");
   const [filmQuery, setFilmQuery] = useState("");
+  const [filmSuggestions, setFilmSuggestions] = useState<MovieCard[]>([]);
+  const [filmSuggestionsLoading, setFilmSuggestionsLoading] = useState(false);
+  const [filmSuggestionsError, setFilmSuggestionsError] = useState(false);
+  const [filmSuggestionsRetry, setFilmSuggestionsRetry] = useState(0);
+  const [filmSearchFocused, setFilmSearchFocused] = useState(false);
+  const [filmSearchDismissed, setFilmSearchDismissed] = useState(false);
+  const [activeFilmSuggestion, setActiveFilmSuggestion] = useState(-1);
   const [year, setYear] = useState("");
   const [minRating, setMinRating] = useState("");
   const [genreId, setGenreId] = useState("");
   const [recent, setRecent] = useState<RecentReview[]>([]);
   const [reviews, setReviews] = useState<RecentReview[]>([]);
   const [crewPicks, setCrewPicks] = useState<PublicList[]>([]);
+  const [watchedFilmCount, setWatchedFilmCount] = useState<number | null>(null);
   const [loading, setLoading] = useState<Record<FeedKey, boolean>>({ popular: true, recent: true, reviews: true, crew: true });
   const [errors, setErrors] = useState<Partial<Record<FeedKey, boolean>>>({});
   const [retry, setRetry] = useState<Record<FeedKey, number>>({ popular: 0, recent: 0, reviews: 0, crew: 0 });
@@ -122,6 +131,36 @@ export default function FilmsDiscover() {
   }, [lang, retry.crew]);
 
   useEffect(() => {
+    let current = true;
+    getPublicWatchedFilmCount()
+      .then(({ data }) => {
+        if (current && Number.isSafeInteger(data.count) && data.count >= 0) setWatchedFilmCount(data.count);
+      })
+      .catch(() => { if (current) setWatchedFilmCount(null); });
+    return () => { current = false; };
+  }, []);
+
+  useEffect(() => {
+    const query = filmInput.trim();
+    setFilmSuggestions([]);
+    setFilmSuggestionsError(false);
+    setActiveFilmSuggestion(-1);
+    if (!query) {
+      setFilmSuggestionsLoading(false);
+      return;
+    }
+    let current = true;
+    setFilmSuggestionsLoading(true);
+    const timer = window.setTimeout(() => {
+      searchMovies({ q: query, sort: "newest", page: 0, size: 3 })
+        .then(({ data }) => { if (current) setFilmSuggestions(data.content.slice(0, 3)); })
+        .catch(() => { if (current) setFilmSuggestionsError(true); })
+        .finally(() => { if (current) setFilmSuggestionsLoading(false); });
+    }, 200);
+    return () => { current = false; window.clearTimeout(timer); };
+  }, [filmInput, filmSuggestionsRetry]);
+
+  useEffect(() => {
     const readyKeys = (Object.keys(retryFocus.current) as FeedKey[]).filter(key => retryFocus.current[key] && !loading[key]);
     if (readyKeys.length === 0) return;
     const frame = window.requestAnimationFrame(() => {
@@ -151,10 +190,44 @@ export default function FilmsDiscover() {
 
   const submitFilmSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (activeFilmSuggestion >= 0 && filmSuggestions[activeFilmSuggestion]) {
+      navigate(path(`/films/${filmSuggestions[activeFilmSuggestion].id}`));
+      setFilmSearchFocused(false);
+      return;
+    }
     setFilmQuery(filmInput.trim());
   };
 
+  const filmSuggestionsOpen = filmSearchFocused && !filmSearchDismissed && Boolean(filmInput.trim())
+    && (filmSuggestionsLoading || filmSuggestionsError || filmSuggestions.length > 0);
+
+  const handleFilmSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Escape" && filmSuggestionsOpen) {
+      event.preventDefault();
+      setFilmSearchDismissed(true);
+      setActiveFilmSuggestion(-1);
+      return;
+    }
+    if (filmSuggestions.length === 0) return;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveFilmSuggestion(index => Math.min(index + 1, filmSuggestions.length - 1));
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveFilmSuggestion(index => Math.max(index - 1, -1));
+    }
+  };
+
   const busy = Object.values(loading).some(Boolean);
+  const crewMovies: MoviePreview[] = [];
+  const seenCrewMovies = new Set<number>();
+  crewPicks.forEach(list => {
+    list.previewMovies?.forEach(movie => {
+      if (seenCrewMovies.has(movie.id) || crewMovies.length >= 8) return;
+      seenCrewMovies.add(movie.id);
+      crewMovies.push(movie);
+    });
+  });
   const filmErrorMessage = t("loadFilmsError");
   const reviewErrorMessage = t("loadReviewsError");
 
@@ -173,10 +246,23 @@ export default function FilmsDiscover() {
           <label><select aria-label={t("minRating")} value={minRating} onChange={event => setMinRating(event.target.value)}><option value="">{t("rating")}</option>{[1, 2, 3, 4, 5].map(value => <option key={value} value={value}>{value}+</option>)}</select></label>
           <label><select ref={genreSelectRef} aria-label={t("genre")} value={genreId} disabled={genresLoading || genresError} onChange={event => setGenreId(event.target.value)}><option value="">{t("genre")}</option>{genres.map(genre => <option key={genre.id} value={genre.id}>{localizeGenreName(genre.name, lang)}</option>)}</select></label>
         </div>
-        <form className={styles.movieSearch} onSubmit={submitFilmSearch}>
+        <form className={styles.movieSearch} onSubmit={submitFilmSearch} onFocusCapture={() => setFilmSearchFocused(true)} onBlurCapture={event => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFilmSearchFocused(false);
+        }}>
           <label className={styles.visuallyHidden} htmlFor="discover-film-query">{t("searchFilms")}</label>
-          <input id="discover-film-query" value={filmInput} onChange={event => setFilmInput(event.target.value)} placeholder={t("searchFilms")} />
-          <button type="submit" aria-label={t("search")}><i className="fa-solid fa-magnifying-glass" aria-hidden="true" /></button>
+          <input id="discover-film-query" role="combobox" aria-autocomplete="list" aria-expanded={filmSuggestionsOpen} aria-controls="discover-film-suggestions" aria-activedescendant={activeFilmSuggestion >= 0 ? `discover-film-suggestion-${filmSuggestions[activeFilmSuggestion]?.id}` : undefined} value={filmInput} onKeyDown={handleFilmSearchKeyDown} onChange={event => { setFilmInput(event.target.value); setFilmSearchDismissed(false); }} placeholder={t("searchFilms")} />
+          <button type="submit" aria-label={t("search")}><img src="/images/figma-movie-search.svg" width={31} height={31} alt="" /></button>
+          {filmSuggestionsOpen && <>
+            {filmSuggestionsLoading && <p className={styles.movieSearchStatus} role="status">{t("loading")}</p>}
+            {filmSuggestionsError && <div className={styles.movieSearchStatus} role="alert">{t("loadFilmsError")} <button type="button" onClick={() => setFilmSuggestionsRetry(value => value + 1)}>{t("retry")}</button></div>}
+            {!filmSuggestionsLoading && !filmSuggestionsError && filmSuggestions.length > 0 && <ul className={styles.movieSuggestions} id="discover-film-suggestions" role="listbox" aria-label={t("searchFilms")}>
+              {filmSuggestions.map((movie, index) => <li key={movie.id}>
+                <Link id={`discover-film-suggestion-${movie.id}`} role="option" aria-selected={activeFilmSuggestion === index} to={path(`/films/${movie.id}`)} onPointerDown={event => event.preventDefault()} onClick={() => setFilmSearchFocused(false)}>
+                  {editorialText(movie.title, t("untitledFilm"))} ({formatMovieYear(movie.releaseDate, t("unknownYear"))})
+                </Link>
+              </li>)}
+            </ul>}
+          </>}
         </form>
       </div>
       {genresError && <div ref={genreFeedbackRef}><RetryNotice className={styles.genreRetry} message={t("loadGenresError")} retryLabel={t("retry")} busy={genresLoading} onRetry={() => {
@@ -207,8 +293,8 @@ export default function FilmsDiscover() {
         </ol>}
       </section>
 
-      <section className={styles.section} data-films-feed="recent" aria-labelledby="recent-films-title" aria-busy={loading.recent}>
-        <div className={styles.heading}><h2 id="recent-films-title" tabIndex={-1}>{t("homeJustReviewed")}</h2><Link to={path("/reviews")}>{t("homeMore")}</Link></div>
+      <section className={styles.section} data-films-feed="recent" data-empty-feed={!loading.recent && !errors.recent && recent.length === 0 ? "true" : undefined} aria-labelledby="recent-films-title" aria-busy={loading.recent}>
+        <div className={`${styles.heading} ${styles.recentHeading}`}><h2 id="recent-films-title" tabIndex={-1}>{t("homeJustReviewed")}</h2>{watchedFilmCount !== null && <span className={styles.watchedFilmCount} data-testid="films-watched-count">{watchedFilmCount.toLocaleString(lang === "uk" ? "uk-UA" : "en-US")} {t("filmsWatched")}</span>}</div>
         {loading.recent && <><p className="srOnly" role="status">{t("loading")}</p><div className={styles.posterRail} aria-hidden="true">{[0, 1, 2, 3, 4, 5, 6, 7].map(item => <div className={`${styles.railPoster} ${styles.skeleton}`} key={item} />)}</div></>}
         {errors.recent && <RetryNotice className={styles.status} message={reviewErrorMessage} retryLabel={t("retry")} busy={loading.recent} onRetry={() => retryFeed("recent")} />}
         {!loading.recent && !errors.recent && recent.length === 0 && <p className={styles.empty}>{t("noRecentReviews")}</p>}
@@ -222,7 +308,7 @@ export default function FilmsDiscover() {
         </div>}
       </section>
 
-      <section className={styles.section} data-films-feed="reviews" aria-labelledby="popular-reviews-title" aria-busy={loading.reviews}>
+      <section className={styles.section} data-films-feed="reviews" data-empty-feed={!loading.reviews && !errors.reviews && reviews.length === 0 ? "true" : undefined} aria-labelledby="popular-reviews-title" aria-busy={loading.reviews}>
         <div className={styles.heading}><h2 id="popular-reviews-title" tabIndex={-1}>{t("homePopularReviewsThisWeek")}</h2><Link to={path("/reviews")}>{t("viewAll")}</Link></div>
         {loading.reviews && <><p className="srOnly" role="status">{t("loading")}</p><div className={styles.reviewGrid} aria-hidden="true">{[0, 1, 2, 3].map(item => <div className={`${styles.reviewCard} ${styles.skeleton}`} key={item} />)}</div></>}
         {errors.reviews && <RetryNotice className={styles.status} message={reviewErrorMessage} retryLabel={t("retry")} busy={loading.reviews} onRetry={() => retryFeed("reviews")} />}
@@ -248,16 +334,16 @@ export default function FilmsDiscover() {
         </div>}
       </section>
 
-      <section className={`${styles.section} ${styles.crewSection}`} data-films-feed="crew" aria-labelledby="crew-picks-title" aria-busy={loading.crew}>
+      <section className={`${styles.section} ${styles.crewSection}`} data-films-feed="crew" data-after-empty-reviews={!loading.recent && !errors.recent && recent.length === 0 && !loading.reviews && !errors.reviews && reviews.length === 0 ? "true" : undefined} aria-labelledby="crew-picks-title" aria-busy={loading.crew}>
         <div className={styles.heading}><h2 id="crew-picks-title" tabIndex={-1}>{t("crewPicks")}</h2><Link to={path("/lists/discover?feed=team")}>{t("homeMore")}</Link></div>
         {loading.crew && <><p className="srOnly" role="status">{t("loading")}</p><div className={styles.posterRail} aria-hidden="true">{[0, 1, 2, 3].map(item => <div className={`${styles.railPoster} ${styles.skeleton}`} key={item} />)}</div></>}
         {errors.crew && <RetryNotice className={styles.status} message={t("loadCrewPicksError")} retryLabel={t("retry")} busy={loading.crew} onRetry={() => retryFeed("crew")} />}
-        {!loading.crew && !errors.crew && crewPicks.length === 0 && <p className={styles.empty}>{t("noCrewPicks")}</p>}
-        {!loading.crew && !errors.crew && crewPicks.length > 0 && <div className={styles.posterRail} role="group" aria-label={t("crewPicks")}>
-          {crewPicks.map(list => {
-            const name = editorialText(list.name, t("lists"));
-            return <Link className={styles.railPoster} key={list.id} to={path(`/lists/public/${list.id}`)} aria-label={name} title={name}>
-              <ListPosterStack movies={list.previewMovies ?? []} label={name} fallbackTitle={t("untitledFilm")} layout="strip" />
+        {!loading.crew && !errors.crew && crewMovies.length === 0 && <p className={styles.empty}>{t("noCrewPicks")}</p>}
+        {!loading.crew && !errors.crew && crewMovies.length > 0 && <div className={styles.posterRail} role="group" aria-label={t("crewPicks")}>
+          {crewMovies.map(movie => {
+            const title = editorialText(movie.title, t("untitledFilm"));
+            return <Link className={styles.railPoster} key={movie.id} to={path(`/films/${movie.id}`)} aria-label={title} title={title} onFocus={revealFocusedPoster}>
+              <ResilientImage src={movie.photoUrl} alt="" loading="lazy" fallback={<span className={styles.railFallback} aria-hidden="true">{title}</span>} />
             </Link>;
           })}
         </div>}

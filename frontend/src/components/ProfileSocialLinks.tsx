@@ -8,6 +8,7 @@ const platforms: Record<string, { label: TranslationKey; icon: string }> = {
   instagram: { label: "socialInstagram", icon: "fa-brands fa-instagram" },
   tiktok: { label: "socialTiktok", icon: "fa-brands fa-tiktok" },
   letterboxd: { label: "socialLetterboxd", icon: "fa-solid fa-film" },
+  x: { label: "socialX", icon: "fa-brands fa-x-twitter" },
 };
 
 export default function ProfileSocialLinks({ links }: { links: readonly SocialLink[] }) {

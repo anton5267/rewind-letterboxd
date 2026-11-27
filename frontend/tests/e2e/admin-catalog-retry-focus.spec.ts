@@ -3,7 +3,7 @@ import { expect, test, type Route } from "@playwright/test";
 const admin = { id: 91011, username: "retry-admin", role: "ADMIN", displayName: "Retry Admin", email: "retry-admin@example.invalid", avatarUrl: null, isActive: true, isHq: false };
 const emptyPage = { content: [], totalPages: 0, totalElements: 0, number: 0, size: 50 };
 
-async function exerciseRetry(page: import("@playwright/test").Page, view: "lists" | "logs", path: string, headingName: RegExp) {
+async function exerciseRetry(page: import("@playwright/test").Page, view: "lists" | "moderator-logs", path: string, headingName: RegExp) {
   let attempts = 0;
   await page.route(/^https?:\/\/[^/]+\/api\//, async (route: Route) => {
     const url = new URL(route.request().url());
@@ -43,7 +43,7 @@ test("Admin Lists Retry returns focus on another failure and after recovery", as
 });
 
 test("Admin Audit Logs Retry returns focus on another failure and after recovery", async ({ page }) => {
-  await exerciseRetry(page, "logs", "/api/admin/audit-logs", /журнал модераторів/i);
+  await exerciseRetry(page, "moderator-logs", "/api/admin/audit-logs", /журнал модераторів/i);
 });
 
 test("Admin Audit Logs actor details Retry returns focus after repeated failure and recovery", async ({ page }) => {
@@ -65,7 +65,7 @@ test("Admin Audit Logs actor details Retry returns focus after repeated failure 
   });
 
   await page.setViewportSize({ width: 393, height: 900 });
-  await page.goto("/uk/admin?view=logs");
+  await page.goto("/uk/admin?view=moderator-logs");
   const section = page.getByRole("region", { name: /журнал модераторів/i });
   const retry = section.getByRole("button", { name: /спробувати ще/i });
   await expect(retry).toBeVisible();

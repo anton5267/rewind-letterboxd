@@ -2,6 +2,9 @@
    The raw canvas keeps a 1020px identity stage, a 1200x79 profile rail,
    and 174x260 poster slots. Live profile sections remain API-backed. */
 @media (min-width: 1024px) {
+  .page[data-profile-view="lists"] { min-height: calc(100vh - 265px); }
+  .page[data-profile-view="collection"]:not([data-films-view="true"]) { min-height: calc(100vh - 265px); }
+  .page[data-profile-view="reviews"]:not([data-review-detail]) { min-height: auto; }
   .page {
     position: relative;
     /* Keep the full-bleed canvas inside the layout viewport when classic scrollbars are present. */
@@ -31,16 +34,7 @@
     letter-spacing: 0;
   }
 
-  /* Own Profile Films (`341:3348`) is a collection canvas, not the overview
-     identity variant; the H1 remains available via the shared srOnly utility. */
-  .page[data-films-view="true"] .heroActions,
-  .page[data-films-view="true"] .heroEdit,
-  .page[data-films-view="true"] .avatar,
-  .page[data-films-view="true"] .avatarFallback,
-  .page[data-films-view="true"] .heroCopy,
-  .page[data-films-view="true"] .heroMetrics {
-    display: none;
-  }
+  /* Own Films keeps the complete profile identity stage shown in frame 341:3348. */
 
   .hero {
     order: 1;
@@ -56,7 +50,8 @@
     text-align: center;
   }
 
-  .page:not([data-profile-view]) .hero { padding-bottom: 180px; }
+  .page:not([data-profile-view]):not([data-network-view]) .hero { padding: 271px 24px 135px; }
+  .page:not([data-profile-view]):not([data-network-view]) { padding-bottom: 160px; }
 
   /* Raw own-profile layers 238:1060 / 363:304 use the same Babylon
      original as Authentication; its image slot is 817 px high. */
@@ -85,6 +80,16 @@
     border-radius: 50%;
   }
 
+  .page:not([data-profile-view]):not([data-network-view]) .avatar,
+  .page:not([data-profile-view]):not([data-network-view]) .avatarFallback,
+  .page[data-films-view="true"] .avatar,
+  .page[data-films-view="true"] .avatarFallback {
+    width: 275px;
+    height: 275px;
+    flex-basis: 275px;
+    transform: translateY(40px);
+  }
+
   .heroCopy {
     justify-items: center;
     padding: 0;
@@ -107,6 +112,11 @@
 
   .bio { max-width: 538px; font-size: 24px; line-height: 1.2; }
 
+  .page:not([data-profile-view]):not([data-network-view]) .bio,
+  .page[data-films-view="true"] .bio { max-width: 700px; }
+  .page:not([data-profile-view]):not([data-network-view]) .heroMetrics,
+  .page[data-films-view="true"] .heroMetrics { margin-top: 0; }
+
   .profileNav {
     order: 2;
     width: 1200px;
@@ -115,21 +125,22 @@
     box-sizing: border-box;
     margin: 85px 0 0;
     padding: 0;
-    gap: 0;
+    gap: 14px;
     overflow: hidden;
     border: 0;
-    border-bottom: 1px solid #4d4d4d;
     border-radius: 0;
     background: transparent;
   }
 
   .profileNav a {
     flex: 1 1 0;
-    min-height: 79px;
+    min-height: 52px;
     align-items: center;
     justify-content: center;
     padding: 0 16px;
-    border-radius: 0;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: #282828;
     color: #a8a8a8;
     font-size: 24px;
     font-weight: 500;
@@ -202,6 +213,32 @@
 
   .collectionPosterLink {
     border: 0;
+  }
+
+  .page[data-films-view="true"] .collectionGrid {
+    width: calc(100% - 1px);
+    margin-left: 1px;
+    row-gap: 62px;
+  }
+
+  .page[data-films-view="true"] .content > .section[id="profile-collections"] {
+    margin-top: 103px;
+    padding-bottom: 92px;
+  }
+
+  .page[data-films-view="true"] .content > .section[id="profile-collections"] > h2 {
+    margin-bottom: 59px;
+  }
+
+  .page[data-films-view="true"] .filmsPagination {
+    margin-top: 125px;
+  }
+
+  .page[data-films-view="true"] .collectionCard > .collectionRating {
+    margin-top: 4px;
+    font-size: 12px;
+    letter-spacing: .45px;
+    line-height: 14px;
   }
 
   .posterRail {

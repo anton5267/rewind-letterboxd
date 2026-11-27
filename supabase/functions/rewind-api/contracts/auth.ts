@@ -9,6 +9,7 @@ export interface HostedAuthUser {
 export interface CurrentUserResponse {
   id: number;
   username: string;
+  displayName?: string | null;
   role: string;
   avatarUrl: string | null;
 }

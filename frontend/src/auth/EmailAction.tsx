@@ -5,12 +5,15 @@ import { confirmEmailChange } from "../api/emailChange.api";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../i18n";
 import styles from "./EmailAction.module.css";
+import lockFront from "./assets/forgot-lock-front.svg";
+import lockBack from "./assets/forgot-lock-back.svg";
+import lockDesktop from "./assets/figma-email-action-lock-desktop.svg";
 
 type Action = "signup" | "recovery" | "email_change";
 
 export default function EmailAction() {
   const navigate = useNavigate();
-  const { path, t } = useLocale();
+  const { path, t, lang } = useLocale();
   const { isAuth } = useAuth();
   const [action, setAction] = useState<Action | null>(null);
   const [tokenHash, setTokenHash] = useState("");
@@ -109,10 +112,22 @@ export default function EmailAction() {
     title = t(profileError ? "emailActionProfileTitle" : "emailActionExpiredTitle");
     description = t(profileError ? "emailActionProfileError" : "emailActionExpiredBody");
     if (profileError) { returnTarget = path("/login"); returnLabel = t("login"); }
+    else returnLabel = t("emailActionRequestReset");
   }
 
-  return <main className={styles.page} data-rewind-auth-page aria-labelledby="email-action-title" aria-busy={loading}>
-    <section className={styles.card}>
+  const backTarget = action === "recovery" ? path("/forgot-password")
+    : action === "signup" ? path("/register")
+      : action === "email_change" && isAuth ? `${path("/profile")}?settings=profile` : path("/login");
+  const emailActionState = profileError ? "profile-error" : error ? "expired" : emailChangeStatus ?? (loading ? "loading" : "ready");
+  return <main className={`${styles.page} ${styles.recoveryPage}`} data-rewind-auth-page data-auth-language={lang} data-email-action={action ?? "invalid"} data-email-state={emailActionState} aria-labelledby="email-action-title" aria-busy={loading}>
+    <section className={`${styles.card} ${styles.recoveryCard}`}>
+      <>
+        <Link className={styles.recoveryBack} to={backTarget} aria-label={t("return")}>
+          <svg viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="12.5" /><path d="M15.5 8.5 10 14l5.5 5.5M10.5 14H19" /></svg>
+          <span>{t("return")}</span>
+        </Link>
+        <div className={styles.lockIllustration} aria-hidden="true"><img className={styles.lockDesktop} src={lockDesktop} alt="" /><img className={styles.lockBack} src={lockBack} alt="" /><img className={styles.lockFront} src={lockFront} alt="" /></div>
+      </>
       <p className={styles.eyebrow}>{t("accountEyebrow")}</p>
       <h1 className={styles.title} id="email-action-title">{title}</h1>
       <p className={styles.description} role={error ? "alert" : emailChangeStatus ? "status" : undefined}>

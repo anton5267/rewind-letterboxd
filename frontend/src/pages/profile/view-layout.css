@@ -31,10 +31,12 @@
 .reviewsBack { display: none; }
 @media (min-width: 1024px) {
   .page[data-profile-view="reviews"] .content > .section[id="profile-reviews"] > h2 { text-align: left; }
+  .page[data-profile-view="reviews"][data-review-detail] .hero { height: 1020px; }
   .page[data-profile-view="reviews"] .mobileReviewsHeading { display: none; }
   .page[data-profile-view="reviews"] .desktopReviewsHeading { display: inline; }
   .page[data-profile-view="reviews"] .heroProfileEdit,
   .page[data-network-view="true"] .heroProfileEdit,
+  .page[data-films-view="true"] .heroProfileEdit,
   .page:not([data-profile-view]) .heroProfileEdit {
     position: absolute;
     z-index: 2;
@@ -58,6 +60,7 @@
   }
   .page[data-profile-view="reviews"] .heroProfileEdit:focus-visible,
   .page[data-network-view="true"] .heroProfileEdit:focus-visible,
+  .page[data-films-view="true"] .heroProfileEdit:focus-visible,
   .page:not([data-profile-view]) .heroProfileEdit:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 4px; }
   .page:not([data-profile-view]) .heroProfileEdit { bottom: 84px; }
   .page[data-profile-view="reviews"] .reviewsMobileBack { display: none; }
@@ -93,13 +96,43 @@
     padding: 0 1px;
     border-radius: 20px;
   }
+  .page[data-profile-view="reviews"]:not([data-review-detail]) .reviewCard {
+    grid-template-columns: 175px minmax(0, 1fr);
+    gap: 40px;
+    min-height: 315px;
+    padding: 0 1px;
+    border-radius: 20px;
+  }
+  .page[data-review-detail] { min-height: calc(100vh - 264px); }
+  .page[data-review-detail] .reviewCard { box-sizing: border-box; grid-template-columns: 265px minmax(0, 1fr); gap: 28px; padding: 0 0 0 1px; }
+  .page[data-review-detail] .reviewHeading { flex-wrap: wrap; }
+  .page[data-review-detail] .reviewHeading h3 { flex-basis: 100%; font-size: 18px; }
+  .page[data-review-detail] .reviewHeadingActions { width: 100%; justify-content: space-between; }
   .page[data-profile-view="reviews"] .reviewPosterLink { aspect-ratio: 265 / 395; border-radius: 20px; }
+  .page[data-profile-view="reviews"]:not([data-review-detail]) .reviewPosterLink { aspect-ratio: 175 / 260; border-radius: 16px; }
   .page[data-profile-view="reviews"] .reviewCopy .reviewContent { font-size: 20px; }
+  .page[data-review-detail] .reviewCopy .reviewContent { font-size: 12px; line-height: 1.4; }
   .networkBack { display: inline-flex; order: 3; width: 44px; min-height: 44px; align-items: center; justify-content: center; margin-top: 73px; color: #b9b9b9; font-size: 30px; text-decoration: none; }
   .page[data-network-view="true"] .heroActions,
   .page[data-network-view="true"] .heroEdit { display: none; }
   .page[data-network-view="true"] .content > .section { margin-top: 16px; border-top: 1px solid #4d4d4d; padding-top: 17px; }
   .page[data-network-view="true"] .content > .section > h2 { margin-bottom: 59px; line-height: 27px; text-align: left; }
+  /* READY own Followers/Following (`445:455`, `363:411`) use a separate
+     title rail, a 16-row metric card, and pagination below the card. */
+  .page[data-network-view="true"] .networkBack { margin-top: 30px; }
+  .page[data-network-view="true"] .content > .section { padding-bottom: 84px; }
+  .page[data-network-view="true"] .content > .section > h2 { margin-bottom: 57px; }
+  .page[data-network-view="true"] .content > .section > .networkList {
+    box-sizing: border-box;
+    padding: 110px 0 7px;
+    border-radius: 20px;
+    background: #282828;
+  }
+  .page[data-network-view="true"] .content > .section > .pagination {
+    margin-top: 74px;
+    border-top: 1px solid #4d4d4d;
+    padding-top: 26px;
+  }
 }
 .listCards { display: grid; gap: 24px; }
 @media (min-width: 768px) and (max-width: 1023px) {
@@ -111,6 +144,7 @@
   .heroMetrics dt { font-size: 24px; }
   .heroMetrics dd { font-size: 36px; }
   .page .section, .page .section > h2 { scroll-margin-top: 122px; }
+  .page[data-review-detail] .reviewEditorActions button:first-child { display: none; }
 }
 
 .content {

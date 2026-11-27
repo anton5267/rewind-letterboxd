@@ -1,6 +1,8 @@
 import type { ReplyPreference } from "./profile.ts";
 import type { MovieCardResponse } from "./catalog.ts";
 
+export type FeaturedListCategory = "REWIND_COMMUNITY" | "OTHER_TOP_FILM_LISTS" | "FILMMAKER_RECOMMENDATIONS";
+
 export interface PublicListCardResponse {
   id: number;
   name: string;
@@ -13,6 +15,7 @@ export interface PublicListCardResponse {
   likeCount: number;
   itemCount: number;
   previewMovies: MovieCardResponse[];
+  featuredCategory: FeaturedListCategory | null;
 }
 
 export interface PublicListDetailsResponse {

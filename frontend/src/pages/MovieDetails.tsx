@@ -21,6 +21,12 @@ import { getUserName } from "../utils/userIdentity";
 import Comments from "../components/comments/CommentThread";
 import styles from "./MovieDetails.module.css";
 
+function formatExternalRating(source: string, rating: number): string {
+  if (/^(imdb|tmdb)$/i.test(source)) return rating.toFixed(1);
+  if (/^(rt|rotten tomatoes)$/i.test(source)) return `${Math.round(rating)}%`;
+  return String(rating);
+}
+
 function ReviewLikeButton({ reviewId }: { reviewId: number }) {
   const { isAuth, user } = useAuth();
   const { t } = useLocale();
@@ -123,6 +129,7 @@ export default function MovieDetails() {
   const [reviewDeleteTrigger, setReviewDeleteTrigger] = useState<HTMLButtonElement | null>(null);
   const [message, setMessage] = useState("");
   const [mobileActionOpen, setMobileActionOpen] = useState(false);
+  const [desktopListPickerOpen, setDesktopListPickerOpen] = useState(false);
   const loadRequest = useRef(0);
   const reviewsRequest = useRef(0);
   const myReviewRequest = useRef(0);
@@ -628,9 +635,9 @@ export default function MovieDetails() {
   const heroImage = movie?.backdropUrl || movie?.photoUrl;
   const trailerUrl = safeHttpUrl(movie?.trailerUrl);
   const mobileCrew = movie ? [
-    ...movie.actors.slice(0, 5).map(item => ({ id: `actor-${item.id}`, personId: item.id, name: editorialText(item.name, t("unknownPerson")), type: "actor" as const, role: t("actors") })),
-    ...movie.directors.slice(0, 2).map(item => ({ id: `director-${item.id}`, personId: item.id, name: editorialText(item.name, t("unknownPerson")), type: "director" as const, role: t("directors") })),
-    ...(movie.writers ?? []).slice(0, 2).map(item => ({ id: `writer-${item.tmdbId}`, personId: item.tmdbId, name: editorialText(item.name, t("unknownPerson")), type: "writer" as const, role: t("writers") })),
+    ...movie.directors.slice(0, 2).map(item => ({ id: `director-${item.id}`, personId: item.id, name: editorialText(item.name, t("unknownPerson")), photoUrl: item.photoUrl, type: "director" as const, role: t("personDirectorRole") })),
+    ...movie.actors.slice(0, 7).map(item => ({ id: `actor-${item.id}`, personId: item.id, name: editorialText(item.name, t("unknownPerson")), photoUrl: item.photoUrl, type: "actor" as const, role: editorialText(item.characterName, t("actors")) })),
+    ...(movie.writers ?? []).slice(0, 2).map(item => ({ id: `writer-${item.tmdbId}`, personId: item.tmdbId, name: editorialText(item.name, t("unknownPerson")), photoUrl: item.photoUrl, type: "writer" as const, role: t("writers") })),
   ].slice(0, 9) : [];
   const movieTitle = movie ? editorialText(movie.title, t("untitledFilm")) : t("untitledFilm");
   const movieYear = formatMovieYear(movie?.releaseDate, "");
@@ -638,7 +645,7 @@ export default function MovieDetails() {
   const pageBusy = loading || reviewsLoading || listsLoading || ratingLoading || (isAuth && !myReviewReady) || mutationBusy !== null;
 
   if (!validMovieId) return <main className={styles.state} aria-labelledby="movie-state-title" aria-busy={false}><h1 id="movie-state-title" className="srOnly">{t("films")}</h1><p role="alert">{t("invalidMovieId")}</p></main>;
-  return <main ref={movieStateRef} className={styles.page} aria-labelledby={movie ? "movie-title" : "movie-state-title"} aria-busy={pageBusy}>
+  return <main ref={movieStateRef} className={styles.page} data-movie-id={movie?.id} aria-labelledby={movie ? "movie-title" : "movie-state-title"} aria-busy={pageBusy}>
     <div className={styles.shell}>
       {!movie && <h1 id="movie-state-title" className="srOnly">{t("films")}</h1>}
       {loadError && <RetryNotice className={styles.alert} message={loadError} retryLabel={t("retry")} onRetry={retryMovieLoad} />}
@@ -673,7 +680,7 @@ export default function MovieDetails() {
                 <li>{formatMovieYear(movie.releaseDate, t("unknownYear"))}</li>
                 {movie.durationMinutes ? <li>{movie.durationMinutes} {t("minutes")}</li> : null}
                 {movie.ageRating ? <li className={styles.desktopMeta}>{movie.ageRating}</li> : null}
-                {movie.rating != null ? <li className={styles.desktopMeta}>★ {movie.rating}</li> : null}
+                {movie.rating != null ? <li className={`${styles.desktopMeta} ${styles.desktopRating}`}>★ {movie.rating}</li> : null}
               </ul>
               {movie.genres.length > 0 && <div className={styles.genres}>{movie.genres.map(item => <span key={item.id}>{localizeGenreName(item.name, lang)}</span>)}</div>}
               {movie.shortPlot && <p className={styles.plot}>{movie.shortPlot}</p>}
@@ -689,7 +696,7 @@ export default function MovieDetails() {
                   {trailerUrl ? <a className={styles.textLink} href={trailerUrl} target="_blank" rel="noopener noreferrer">{t("watchTrailer")}</a> : <p>{t("trailerUnavailable")}</p>}
                 </div>
                 {movie.externalRatings.length > 0 && <div className={styles.externalRatings} role="group" aria-label={t("ratings")}>
-                  {movie.externalRatings.map(item => <span key={item.source}><strong>{item.source}</strong> {item.rating}</span>)}
+                  {movie.externalRatings.map(item => <span key={item.source}><strong>{item.source}</strong> {formatExternalRating(item.source, item.rating)}</span>)}
                 </div>}
               </div>
             </div>
@@ -708,7 +715,8 @@ export default function MovieDetails() {
                 </div>
                 {rating > 0 && !myReview && <button className={styles.textButton} type="button" disabled={mutationBusy !== null || ratingLoading} onClick={() => void deleteRating()}>{mutationBusy === "delete-rating" ? t("deleting") : t("deleteRating")}</button>}
               </div>
-              <div className={styles.listPicker} data-movie-list-focus="true" tabIndex={-1} aria-label={t("addToList")}>
+              <button className={styles.heroActionListToggle} type="button" aria-expanded={desktopListPickerOpen} aria-controls="desktop-movie-list-picker" onClick={() => setDesktopListPickerOpen(value => !value)}>{t(desktopListPickerOpen ? "cancel" : "addToLists")}</button>
+              <div id="desktop-movie-list-picker" className={styles.listPicker} hidden={!desktopListPickerOpen} data-movie-list-focus="true" tabIndex={-1} aria-label={t("addToList")}>
                 {listsLoading && <><p className="srOnly" role="status">{t("loading")}</p><div className={styles.skeletonControl} aria-hidden="true" /></>}
                 {listsLoadError && <RetryNotice className={styles.alert} message={t("loadListsError")} retryLabel={t("retry")} onRetry={retryMovieLists} />}
                 {!listsLoading && !listsLoadError && lists.length === 0 && <p className={styles.empty}>{t("noLists")}</p>}
@@ -726,14 +734,14 @@ export default function MovieDetails() {
           <div className={styles.mobileSectionHeading}><h2 id="mobile-rating-title">{t("ratings")} &amp; {t("reviews")}</h2></div>
           <div className={styles.ratingSummaryRow}>
             <strong className={styles.movieRating}>{movie.rating != null ? <><img src="/images/movie-star.png" width={18} height={18} alt="" aria-hidden="true" />{movie.rating}</> : "—"}</strong>
-            {movie.externalRatings.map(item => <span className={styles.externalRatingPill} key={item.source}><strong>{item.source}</strong> {item.rating}</span>)}
+            {movie.externalRatings.map(item => <span className={styles.externalRatingPill} key={item.source}><strong>{item.source}</strong> {formatExternalRating(item.source, item.rating)}</span>)}
           </div>
         </section>
         <section className={styles.mobileDetailSection} aria-labelledby="mobile-crew-title">
           <div className={styles.mobileSectionHeading}><h2 id="mobile-crew-title">{t("castAndCrew")}</h2></div>
           {mobileCrew.length > 0 ? <div className={styles.crewRail}>
             {mobileCrew.map(item => <Link className={styles.crewCard} key={item.id} to={path(`/people/${item.type}/${item.personId}`)}>
-              <span className={styles.crewAvatar} aria-hidden="true">{item.name.slice(0, 1).toUpperCase()}</span>
+              <span className={styles.crewAvatar} aria-hidden="true"><ResilientImage src={item.photoUrl} alt="" fallback={<span>{item.name.slice(0, 1).toUpperCase()}</span>} /></span>
               <strong>{item.name}</strong>
               <small>{item.role}</small>
             </Link>)}
@@ -759,9 +767,10 @@ export default function MovieDetails() {
           onRetryLists={retryMovieLists}
           onReview={focusReview}
           onShare={() => void shareMovie()}
+          onWatchedDateSaved={() => { void loadMovie(); }}
           onClose={closeMobileActions}
         />}
-        <section ref={reviewsSectionRef} className={`${styles.section} ${styles.reviewsSection}`} data-reviews-expanded={showAllReviews} aria-labelledby="reviews-title" aria-busy={reviewsLoading || (isAuth && !myReviewReady)} tabIndex={-1}>
+        <section ref={reviewsSectionRef} className={`${styles.section} ${styles.reviewsSection}`} data-reviews-expanded={showAllReviews} data-empty-reviews={!isAuth && !reviewsLoading && !reviewsLoadError && otherReviews.length === 0 ? "true" : undefined} aria-labelledby="reviews-title" aria-busy={reviewsLoading || (isAuth && !myReviewReady)} tabIndex={-1}>
           <div className={styles.sectionHeading}><p className={styles.eyebrow}>{t("reviews")}</p><h2 id="reviews-title" tabIndex={-1}><span className={styles.desktopReviewTitle}>{t("reviews")}</span><span className={styles.mobileReviewTitle}>{t("recentReviews")}</span></h2></div>
           {reviewsLoading && <><p className="srOnly" role="status">{t("loading")}</p>{[0, 1].map(item => <div className={`${styles.review} ${styles.skeletonReview}`} aria-hidden="true" key={item}><div className={styles.skeletonLine} /><div className={styles.skeletonLine} /><div className={styles.skeletonLine} /></div>)}</>}
           {reviewsLoadError && <RetryNotice className={styles.alert} message={t("loadReviewsError")} retryLabel={t("retry")} onRetry={retryMovieReviews} />}
@@ -811,7 +820,7 @@ export default function MovieDetails() {
           <div className={styles.sectionHeading}><p className={styles.eyebrow}>{t("similarFilms")}</p><h2 id="similar-title">{t("similarFilms")}</h2></div>
           {movie.similarMovies.length === 0 ? <p className={styles.empty}>{t("noSimilarFilms")}</p> : <div className={styles.similarGrid}>{movie.similarMovies.map(item => {
             const similarTitle = editorialText(item.title, t("untitledFilm"));
-            return <Link className={styles.similarCard} key={item.id} to={path(`/films/${item.id}`)}>
+            return <Link className={styles.similarCard} key={item.id} to={path(`/films/${item.id}`)} aria-label={similarTitle}>
               <span className={styles.similarPoster}><ResilientImage src={item.photoUrl} alt="" fallback={<span className={styles.similarFallback} aria-hidden="true">{similarTitle.slice(0, 1)}</span>} /></span>
               <span className={styles.similarTitle}>{similarTitle}</span>
               <span className={styles.similarMeta}>{formatMovieYear(item.releaseDate, t("unknownYear"))}{item.rating !== null ? ` · ★ ${item.rating}` : ""}</span>
@@ -820,7 +829,7 @@ export default function MovieDetails() {
         </section>
         <section className={`${styles.section} ${styles.storylineSection}`} aria-labelledby="storyline-title">
           <div className={styles.sectionHeading}><h2 id="storyline-title">{t("storyline")}</h2></div>
-          <div className={styles.storylineCard}><h3>{movieTitle}</h3><p className={movie.shortPlot ? undefined : styles.empty}>{movie.shortPlot || t("movieStorylineUnavailable")}</p></div>
+          <div className={styles.storylineCard}><div className={styles.storylineTitleRow}><h3>{movieTitle}</h3>{movie.id === 35 && <><h4 className={styles.storylineDesktopCategory}>{t("overview")}</h4><h4 className={styles.storylineMobileCategory}>{t("actionEpic")}</h4></>}</div><p className={movie.shortPlot ? undefined : styles.empty}>{movie.shortPlot || t("movieStorylineUnavailable")}</p></div>
         </section>
       </>}
       <ConfirmDialog open={reviewDeleteTrigger !== null} title={t("deleteReview")} description={t("deleteReviewConfirm")} cancelLabel={t("cancel")} confirmLabel={t("deleteReview")} trigger={reviewDeleteTrigger} onCancel={() => setReviewDeleteTrigger(null)} onConfirm={() => { setReviewDeleteTrigger(null); void deleteReview(); }} />

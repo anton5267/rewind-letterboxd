@@ -16,11 +16,11 @@ function StackPoster({ movie, fallbackTitle }: { movie: MoviePreview; fallbackTi
 }
 
 export default function ListPosterStack({ movies, label, fallbackTitle, size = "compact", layout = "fan" }: Props) {
-  const visibleMovies = movies.slice(0, layout === "catalog" ? 5 : layout === "strip" ? 4 : 3);
+  const visibleMovies = movies.slice(0, layout === "catalog" || layout === "strip" ? 5 : 3);
   const count = Math.max(1, visibleMovies.length);
   const stripStyle = layout === "strip" ? {
-    "--poster-width": `${300 / (2 * count + 1)}%`,
-    "--poster-overlap": `${-100 / (2 * count + 1)}%`,
+    "--poster-width": `${count === 5 ? 45.2 : 300 / (2 * count + 1)}%`,
+    "--poster-overlap": `${count === 5 ? -31.4 : -100 / (2 * count + 1)}%`,
   } as CSSProperties : undefined;
   const catalogStyle = layout === "catalog" ? {
     ...stripStyle,

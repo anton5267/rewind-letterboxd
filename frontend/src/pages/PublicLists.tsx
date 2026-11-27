@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { getPublicListFeed, type PublicList } from "../api/lists.api";
+import { getPublicListFeed, type FeaturedListCategory, type PublicList } from "../api/lists.api";
 import { getPopularTags, type PopularTag } from "../api/tags.api";
 import ListPosterStack from "../components/ListPosterStack";
+import ResilientImage from "../components/ResilientImage";
 import Pagination from "../components/Pagination";
 import RetryNotice from "../components/RetryNotice";
-import { editorialText, formatMovieCount, useLocale } from "../i18n";
+import { editorialText, formatCompactCount, formatMovieCount, useLocale } from "../i18n";
 import { getLastPageIndex, isPageOutOfRange } from "../utils/pagination";
 import { toTagSlug } from "../utils/tagSlug";
 import { getUserInitial, getUserName } from "../utils/userIdentity";
@@ -13,6 +14,22 @@ import styles from "./PublicLists.module.css";
 
 type Feed = "recent" | "popular" | "recently-liked" | "team" | "featured";
 type LandingFeed = "featured" | "popular" | "recentlyLiked" | "crew";
+type PopularPageItem = number | "ellipsis";
+const featuredCategoryGroups: { value: FeaturedListCategory; labelKey: "featuredCategoryRewindCommunity" | "featuredCategoryOtherTopFilmLists" | "featuredCategoryFilmmakerRecommendations" }[] = [
+  { value: "REWIND_COMMUNITY", labelKey: "featuredCategoryRewindCommunity" },
+  { value: "OTHER_TOP_FILM_LISTS", labelKey: "featuredCategoryOtherTopFilmLists" },
+  { value: "FILMMAKER_RECOMMENDATIONS", labelKey: "featuredCategoryFilmmakerRecommendations" },
+];
+
+function getPopularPageItems(currentPage: number, totalPages: number): PopularPageItem[] {
+  const pageIndices = [...new Set([0, 1, 2, currentPage - 1, currentPage, currentPage + 1, totalPages - 1])]
+    .filter(index => index >= 0 && index < totalPages)
+    .sort((a, b) => a - b);
+  return pageIndices.flatMap((index, position) => {
+    const previous = pageIndices[position - 1];
+    return previous != null && index - previous > 1 ? ["ellipsis" as const, index] : [index];
+  });
+}
 
 const landingFeedRequests: { key: LandingFeed; feed: Feed }[] = [
   { key: "featured", feed: "featured" },
@@ -223,7 +240,7 @@ export default function PublicLists() {
   ];
 
   const feedHeroTitle = feed === "featured"
-    ? t("featuredLists")
+    ? t("featuredListsHeroTitle")
     : feed === "team"
       ? t("listFeedTeamSection")
     : feed === "popular"
@@ -232,7 +249,7 @@ export default function PublicLists() {
         ? t("recentlyLikedListsTitle")
         : t("recentListsTitle");
   const feedHeroIntro = feed === "featured"
-    ? t("featuredListsIntro")
+    ? t("featuredListsHeroIntro")
     : feed === "team"
       ? t("crewListsIntro")
     : feed === "popular"
@@ -253,6 +270,7 @@ export default function PublicLists() {
   const renderListCard = (list: PublicList, variant: "feed" | "rail" | "liked" | "tagged") => {
     const listName = editorialText(list.name, t("lists"));
     const compact = variant === "feed" && isCompactFeed;
+    const featured = variant === "feed" && feed === "featured";
     const tagged = variant === "tagged";
     const landing = variant === "rail" || variant === "liked";
     const popularFeedCard = variant === "feed" && feed === "popular";
@@ -260,13 +278,23 @@ export default function PublicLists() {
     const posterClass = tagged ? styles.taggedPosterLink : landing ? `${styles.posterLink} ${styles.railPosterLink}` : compact ? styles.featuredPosterLink : styles.posterLink;
     return <article className={cardClass} key={list.id}>
       <Link className={posterClass} to={path(`/lists/public/${list.id}`)} aria-label={listName}>
-        <ListPosterStack movies={list.previewMovies ?? []} label={listName} fallbackTitle={t("untitledFilm")} size={compact ? "featured" : "compact"} layout={landing || compact || tagged ? "catalog" : "fan"} />
+        <ListPosterStack movies={list.previewMovies ?? []} label={listName} fallbackTitle={t("untitledFilm")} size={compact ? "featured" : "compact"} layout={landing || compact || tagged || featured ? "catalog" : "fan"} />
       </Link>
       <div className={styles.cardBody}>
         <h2><Link to={path(`/lists/public/${list.id}`)}>{listName}</Link>{tagged && list.itemCount != null && <span className={styles.taggedCount}>{formatMovieCount(list.itemCount, lang)}</span>}{popularFeedCard && list.itemCount != null && <span className={styles.feedCount}>{formatMovieCount(list.itemCount, lang)}</span>}{variant === "liked" && list.itemCount != null && <span className={styles.landingCount}>{formatMovieCount(list.itemCount, lang)}</span>}</h2>
+        {feed === "featured" && <p className={styles.featuredCreator}>
+          <span className={styles.featuredAvatar} aria-hidden="true">
+            <ResilientImage src={list.ownerAvatarUrl} alt="" fallback={<span>{getUserInitial({ username: list.ownerUsername })}</span>} />
+          </span>
+          <span>{t("createdBy")} <Link to={path(`/users/${list.ownerId}`)}>{getUserName({ username: list.ownerUsername }, t("someone"))}</Link></span>
+        </p>}
         {list.description && <p className={styles.description}>{list.description}</p>}
         {list.tags.length > 0 && <div className={styles.cardTags}>{list.tags.slice(0, 3).map(name => <Link key={name} to={path(`/lists/discover?feed=recent&tag=${encodeURIComponent(toTagSlug(name))}`)}>#{name}</Link>)}</div>}
-        {tagged ? <p className={`${styles.meta} ${styles.taggedMeta}`}><Link to={path(`/users/${list.ownerId}`)}>{getUserName({ username: list.ownerUsername }, t("someone"))}</Link><span>{list.itemCount != null && formatMovieCount(list.itemCount, lang)}{list.likeCount != null && <> · ♡ {list.likeCount}</>}</span></p> : <p className={styles.meta}><span className={landing ? styles.catalogMetric : undefined}>{list.itemCount != null && <>{formatMovieCount(list.itemCount, lang)} · </>}</span>{t("byUser")} <Link to={path(`/users/${list.ownerId}`)}>{landing && <span className={styles.catalogAvatar} aria-hidden="true">{getUserInitial({ username: list.ownerUsername })}</span>}{getUserName({ username: list.ownerUsername }, t("someone"))}</Link><span className={landing ? styles.catalogMetric : undefined}>{list.likeCount != null && <> · {list.likeCount} {t("likes").toLocaleLowerCase(lang)}</>}</span></p>}
+        {popularFeedCard ? <p className={`${styles.meta} ${styles.popularMeta}`}>
+          <Link to={path(`/users/${list.ownerId}`)}>{getUserName({ username: list.ownerUsername }, t("someone"))}</Link>
+          {list.itemCount != null && <span>{formatMovieCount(list.itemCount, lang)}</span>}
+          {list.likeCount != null && <span className={styles.popularLikes}><i className="fa-solid fa-heart" aria-hidden="true" />{formatCompactCount(list.likeCount, lang)}<span className={styles.visuallyHidden}> {t("likes")}</span></span>}
+        </p> : tagged ? <p className={`${styles.meta} ${styles.taggedMeta}`}><Link to={path(`/users/${list.ownerId}`)}>{getUserName({ username: list.ownerUsername }, t("someone"))}</Link><span>{list.itemCount != null && formatMovieCount(list.itemCount, lang)}{list.likeCount != null && <> · ♡ {list.likeCount}</>}</span></p> : <p className={styles.meta}><span className={landing ? styles.catalogMetric : undefined}>{list.itemCount != null && <>{formatMovieCount(list.itemCount, lang)} · </>}</span>{t("byUser")} <Link to={path(`/users/${list.ownerId}`)}>{landing && <span className={styles.catalogAvatar} aria-hidden="true">{getUserInitial({ username: list.ownerUsername })}</span>}{getUserName({ username: list.ownerUsername }, t("someone"))}</Link><span className={landing ? styles.catalogMetric : undefined}>{list.likeCount != null && <> · {list.likeCount} {t("likes").toLocaleLowerCase(lang)}</>}</span></p>}
       </div>
     </article>;
   };
@@ -292,7 +320,7 @@ export default function PublicLists() {
   const anyLandingError = Object.values(landingErrors).some(Boolean);
   const showLandingEmpty = !anyLandingLoading && !anyLandingContent && !anyLandingError;
 
-  return <main className={`${styles.page} ${isLanding ? styles.landingPage : ""} ${isTagged ? styles.taggedPage : ""} ${isFeedView ? styles.feedPage : ""} ${feed === "team" || feed === "featured" ? styles.teamFeed : ""}`} aria-labelledby={isTagged ? "lists-grid-heading" : "public-lists-title"} aria-busy={loading || tagsLoading || anyLandingLoading}>
+  return <main className={`${styles.page} ${isLanding ? styles.landingPage : ""} ${isTagged ? styles.taggedPage : ""} ${isFeedView ? styles.feedPage : ""} ${feed === "popular" ? styles.popularFeed : ""} ${feed === "featured" ? styles.featuredFeed : ""} ${feed === "team" || feed === "featured" ? styles.teamFeed : ""}`} aria-labelledby={isTagged ? "lists-grid-heading" : "public-lists-title"} aria-busy={loading || tagsLoading || anyLandingLoading}>
     <div className={styles.shell}>
       <section className={`${styles.hero} ${isLanding ? styles.landingHero : ""} ${isTagged ? styles.taggedHero : ""} ${isFeedView ? styles.feedHero : ""}`}>
         {isTagged ? <>
@@ -309,9 +337,9 @@ export default function PublicLists() {
             <Link className={styles.feedFilter} to={path("/lists/discover?feed=recent")} aria-label={t("filters")}><img src="/images/search-filter.png" width={20} height={20} alt="" aria-hidden="true" /></Link>
           </div>
           <div className={styles.feedHeroCopy}>
-            <p className={styles.eyebrow}>{t("collectionsEyebrow")}</p>
-            <h1 id="public-lists-title">{feedHeroTitle}</h1>
-            <p>{feedHeroIntro}</p>
+            {feed !== "featured" && <p className={styles.eyebrow}>{t("collectionsEyebrow")}</p>}
+            <h1 id="public-lists-title">{feed === "featured" ? <>{feedHeroTitle}<span> {feedHeroIntro}</span></> : feedHeroTitle}</h1>
+            {feed !== "featured" && <p>{feedHeroIntro}</p>}
           </div>
         </> : <>
           <nav className={styles.landingToolbar} aria-label={t("discoverLists")}>
@@ -365,10 +393,31 @@ export default function PublicLists() {
         })}
         {showLandingEmpty && <div className={styles.landingEmpty}><p>{t("noPublicLists")}</p></div>}
       </section> : <>
-        <section aria-labelledby="lists-grid-heading" aria-busy={loading}>
+        {feed === "featured" ? <div className={styles.featuredCategorySections} aria-busy={loading}>
+          {featuredCategoryGroups.map((group, index) => {
+            const groupLists = lists.filter(list => list.featuredCategory === group.value);
+            return <section className={styles.featuredCategorySection} key={group.value} aria-labelledby={`featured-${group.value}-heading`}>
+              <div className={styles.sectionHeading}><h2 id={`featured-${group.value}-heading`}>{t(group.labelKey)}</h2></div>
+              {index === 0 && loading && <div className={styles.grid} aria-label={t("loading")} role="status">{Array.from({ length: 3 }, (_, card) => <div className={styles.skeleton} key={card} />)}</div>}
+              {index === 0 && error && <RetryNotice className={styles.alert} message={t("loadPublicListError")} retryLabel={t("retry")} busy={loading} onRetry={() => {
+                rememberRetryFocus(`featured-${group.value}-heading`, "feed");
+                setAttempt(value => value + 1);
+              }} />}
+              {!loading && !error && groupLists.length === 0 && <p className={styles.featuredGroupEmpty}>{t("noPublicLists")}</p>}
+              {!loading && !error && groupLists.length > 0 && <div className={styles.grid}>{groupLists.map(list => renderListCard(list, "feed"))}</div>}
+            </section>;
+          })}
+        </div> : <section aria-labelledby="lists-grid-heading" aria-busy={loading}>
           <div className={styles.sectionHeading}>
             <h2 id="lists-grid-heading" tabIndex={-1}>{isTagged ? <>{t("listsTaggedHeading")} <span className={styles.taggedHeadingTag}>{filterLabel}</span></> : feedSectionHeading}</h2>
-            {feed === "popular" && <span className={styles.popularSortLabel}><span>{t("sortByPopularity")}</span><span aria-hidden="true">⌄</span></span>}
+            {feed === "popular" && <details className={styles.popularSort}>
+              <summary className={styles.popularSortLabel}><span>{t("sortByPopularity")}</span><span aria-hidden="true">⌄</span></summary>
+              <div className={styles.popularSortMenu}>
+                <Link to={path("/lists/discover?feed=recent")}>{t("recentListsTitle")}</Link>
+                <Link to={path("/lists/discover?feed=popular")} aria-current="page">{t("popularListsTitle")}</Link>
+                <Link to={path("/lists/discover?feed=recently-liked")}>{t("recentlyLikedListsTitle")}</Link>
+              </div>
+            </details>}
           </div>
 
           {loading && <div className={isTagged ? styles.taggedGrid : isCompactFeed ? styles.featuredGrid : styles.grid} aria-label={t("loading")} role="status">
@@ -382,10 +431,17 @@ export default function PublicLists() {
           {!loading && !error && lists.length > 0 && <div className={isTagged ? styles.taggedGrid : isCompactFeed ? styles.featuredGrid : styles.grid}>
             {lists.map(list => renderListCard(list, isTagged ? "tagged" : "feed"))}
           </div>}
-        </section>
+        </section>}
 
-        <Pagination className={styles.pagination} page={page} totalPages={totalPages} label={t("publicListsPagination")} busy={loading} onPageChange={setPage} />
-        {isFeedView && tagsSection}
+        {feed === "popular" && totalPages > 1 ? <nav className={`${styles.pagination} ${styles.popularPagination}`} aria-label={t("publicListsPagination")} aria-busy={loading}>
+          <button className={styles.popularPageStep} type="button" disabled={loading || page === 0} onClick={() => setPage(page - 1)}><span aria-hidden="true">‹</span>{t("previous")}</button>
+          {getPopularPageItems(page, totalPages).map((item, index) => item === "ellipsis"
+            ? <span className={styles.popularPageNumber} key={`ellipsis-${index}`} aria-hidden="true">…</span>
+            : <button className={styles.popularPageNumber} key={item} type="button" aria-label={`${t("page")} ${item + 1}`} aria-current={item === page ? "page" : undefined} disabled={loading} onClick={() => setPage(item)}>{item + 1}</button>)}
+          <button className={styles.popularPageStep} type="button" disabled={loading || page + 1 >= totalPages} onClick={() => setPage(page + 1)}>{t("next")}<span aria-hidden="true">›</span></button>
+          <span className={styles.visuallyHidden} role="status">{t("page")} {page + 1} {t("of")} {totalPages}</span>
+        </nav> : <Pagination className={styles.pagination} page={page} totalPages={totalPages} label={t("publicListsPagination")} busy={loading} onPageChange={setPage} />}
+        {isFeedView && feed !== "featured" && tagsSection}
       </>}
 
       {isLanding && tagsSection}

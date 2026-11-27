@@ -30,12 +30,15 @@ export const profileRepository: Pick<RewindApiRepository,
   | "getPublicProfile"
   | "getPublicProfileCollection"
   | "getPublicProfileLists"
+  | "getPublicProfileLikedLists"
   | "getPublicProfileLikedReviews"
   | "getOrCreateCurrentUser"
   | "getMyProfile"
   | "updateMyProfile"
   | "deleteMyAccount"
   | "getMyProfileCollection"
+  | "setMyWatchlistVisibility"
+  | "clearMyWatchlist"
 > = {
 
   async getPublicProfile(userId): Promise<PublicProfileResponse | null> {
@@ -56,7 +59,7 @@ export const profileRepository: Pick<RewindApiRepository,
             (SELECT COUNT(*)::text FROM rewind.ratings r JOIN rewind.movies m ON m.id = r.movie_id WHERE r.user_id = $1 AND m.is_published) AS ratings,
             (SELECT COUNT(*)::text FROM rewind.reviews r JOIN rewind.movies m ON m.id = r.movie_id WHERE r.user_id = $1 AND NOT r.is_hidden AND m.is_published) AS reviews,
             (SELECT COUNT(*)::text FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id JOIN rewind.movies m ON m.id = i.movie_id WHERE l.user_id = $1 AND l.list_type = 'WATCHED' AND m.is_published) AS watched,
-            (SELECT COUNT(*)::text FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id JOIN rewind.movies m ON m.id = i.movie_id WHERE l.user_id = $1 AND l.list_type = 'WATCHLIST' AND m.is_published) AS watchlist,
+            (SELECT COUNT(*)::text FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id JOIN rewind.movies m ON m.id = i.movie_id WHERE l.user_id = $1 AND l.list_type = 'WATCHLIST' AND l.is_public AND m.is_published) AS watchlist,
             (SELECT COUNT(*)::text FROM rewind.list_items i JOIN rewind.lists l ON l.id = i.list_id JOIN rewind.movies m ON m.id = i.movie_id WHERE l.user_id = $1 AND l.list_type = 'FAVORITES' AND m.is_published) AS favorites`, args: [userId],
         }),
         connection.queryObject<{ rating: number; count: string }>({
@@ -107,11 +110,11 @@ export const profileRepository: Pick<RewindApiRepository,
       await connection.queryObject("SET ROLE rewind_edge_app");
       const user = await connection.queryObject({ text: "SELECT 1 FROM rewind.users WHERE id = $1 AND is_active", args: [userId] });
       if (!user.rows.length) return null;
-      const list = await connection.queryObject<{ id: string }>({
-        text: "SELECT id::text AS id FROM rewind.lists WHERE user_id = $1 AND list_type = $2 ORDER BY id LIMIT 1",
+      const list = await connection.queryObject<{ id: string; is_public: boolean }>({
+        text: "SELECT id::text AS id, is_public FROM rewind.lists WHERE user_id = $1 AND list_type = $2 ORDER BY id LIMIT 1",
         args: [userId, listType],
       });
-      if (!list.rows[0]) return { content: [], totalPages: 0, totalElements: 0, number: page };
+      if (!list.rows[0] || (collection === "watchlist" && !list.rows[0].is_public)) return { content: [], totalPages: 0, totalElements: 0, number: page };
       const listId = safeId(list.rows[0].id, "List ID");
       const [count, movies] = await Promise.all([
         connection.queryObject<{ total: string }>({ text: "SELECT COUNT(*)::text AS total FROM rewind.list_items i JOIN rewind.movies m ON m.id = i.movie_id WHERE i.list_id = $1 AND m.is_published", args: [listId] }),
@@ -142,8 +145,9 @@ export const profileRepository: Pick<RewindApiRepository,
       });
       const rows = await connection.queryObject<{
         id: string; name: string; description: string | null; owner_username: string; owner_avatar_url: string | null;
+        featured_category: PublicListCardResponse["featuredCategory"];
       }>({
-        text: `SELECT l.id::text AS id, l.name, l.description, u.username AS owner_username, u.avatar_url AS owner_avatar_url
+        text: `SELECT l.id::text AS id, l.name, l.description, l.featured_category, u.username AS owner_username, u.avatar_url AS owner_avatar_url
                FROM rewind.lists l JOIN rewind.users u ON u.id = l.user_id
                WHERE l.user_id = $1 AND l.list_type = 'CUSTOM' AND l.is_public AND u.is_active
                ORDER BY l.updated_at DESC, l.id DESC LIMIT $2 OFFSET $3`, args: [userId, size, page * size],
@@ -161,7 +165,7 @@ export const profileRepository: Pick<RewindApiRepository,
                           ROW_NUMBER() OVER (PARTITION BY i.list_id ORDER BY i.position NULLS LAST, i.id) AS rn
                    FROM rewind.list_items i JOIN rewind.movies m ON m.id = i.movie_id
                     WHERE i.list_id = ANY($1::bigint[]) AND m.is_published
-                 ) ranked WHERE rn <= 3 ORDER BY list_id, rn`, args: [ids],
+                 ) ranked WHERE rn <= 5 ORDER BY list_id, rn`, args: [ids],
         }) : Promise.resolve({ rows: [] as { list_id: string; id: string; title: string; release_date: string | null; rating: string | null; photo_url: string | null }[] }),
         ids.length ? connection.queryObject<{ list_id: string; total: string }>({
           text: `SELECT list_id::text AS list_id, COUNT(*)::text AS total FROM rewind.list_likes ll
@@ -183,7 +187,73 @@ export const profileRepository: Pick<RewindApiRepository,
         const id = safeId(row.id, "List ID");
         return { id, name: row.name, description: row.description, isPublic: true, ownerId: userId,
           ownerUsername: row.owner_username, ownerAvatarUrl: row.owner_avatar_url, tags: tags.get(id) ?? [],
-          likeCount: likeCounts.get(id) ?? 0, itemCount: itemCounts.get(id) ?? 0, previewMovies: previewMap.get(id) ?? [] };
+          likeCount: likeCounts.get(id) ?? 0, itemCount: itemCounts.get(id) ?? 0, previewMovies: previewMap.get(id) ?? [],
+          featuredCategory: row.featured_category };
+      });
+      return pageResult(content, count.rows[0]?.total ?? "0", page, size);
+    } finally { connection.release(); }
+  },
+
+  async getPublicProfileLikedLists(userId, page, size) {
+    const connection = await pool.connect();
+    try {
+      await connection.queryObject("SET ROLE rewind_edge_app");
+      const active = await connection.queryObject({ text: "SELECT 1 FROM rewind.users WHERE id = $1 AND is_active", args: [userId] });
+      if (!active.rows.length) return null;
+      const where = `ll.user_id = $1 AND l.list_type = 'CUSTOM' AND l.is_public AND owner.is_active`;
+      const count = await connection.queryObject<{ total: string }>({
+        text: `SELECT COUNT(*)::text AS total FROM rewind.list_likes ll
+               JOIN rewind.lists l ON l.id = ll.list_id JOIN rewind.users owner ON owner.id = l.user_id
+               WHERE ${where}`, args: [userId],
+      });
+      const rows = await connection.queryObject<{
+        id: string; name: string; description: string | null; owner_id: string; owner_username: string;
+        owner_avatar_url: string | null; featured_category: PublicListCardResponse["featuredCategory"];
+      }>({
+        text: `SELECT l.id::text AS id, l.name, l.description, l.featured_category, owner.id::text AS owner_id,
+                      owner.username AS owner_username, owner.avatar_url AS owner_avatar_url
+               FROM rewind.list_likes ll JOIN rewind.lists l ON l.id = ll.list_id
+               JOIN rewind.users owner ON owner.id = l.user_id
+               WHERE ${where}
+               ORDER BY ll.created_at DESC, ll.id DESC LIMIT $2 OFFSET $3`, args: [userId, size, page * size],
+      });
+      const ids = rows.rows.map((row) => safeId(row.id, "List ID"));
+      const [tags, counts, previews, likes] = await Promise.all([
+        loadListTags(connection, ids),
+        ids.length ? connection.queryObject<{ list_id: string; total: string }>({
+          text: "SELECT i.list_id::text AS list_id, COUNT(*)::text AS total FROM rewind.list_items i JOIN rewind.movies m ON m.id = i.movie_id WHERE i.list_id = ANY($1::bigint[]) AND m.is_published GROUP BY i.list_id", args: [ids],
+        }) : Promise.resolve({ rows: [] as { list_id: string; total: string }[] }),
+        ids.length ? connection.queryObject<{ list_id: string; id: string; title: string; release_date: string | null; rating: string | null; photo_url: string | null }>({
+          text: `SELECT list_id::text AS list_id, id::text AS id, title, release_date::text AS release_date,
+                        rating::text AS rating, photo_url FROM (
+                   SELECT i.list_id, m.id, m.title, m.release_date, m.rating, m.photo_url,
+                          ROW_NUMBER() OVER (PARTITION BY i.list_id ORDER BY i.position NULLS LAST, i.id) AS rn
+                   FROM rewind.list_items i JOIN rewind.movies m ON m.id = i.movie_id
+                   WHERE i.list_id = ANY($1::bigint[]) AND m.is_published
+                 ) ranked WHERE rn <= 5 ORDER BY list_id, rn`, args: [ids],
+        }) : Promise.resolve({ rows: [] as { list_id: string; id: string; title: string; release_date: string | null; rating: string | null; photo_url: string | null }[] }),
+        ids.length ? connection.queryObject<{ list_id: string; total: string }>({
+          text: `SELECT list_id::text AS list_id, COUNT(*)::text AS total FROM rewind.list_likes ll
+                 JOIN rewind.users liker ON liker.id = ll.user_id AND liker.is_active
+                 WHERE list_id = ANY($1::bigint[]) GROUP BY list_id`, args: [ids],
+        }) : Promise.resolve({ rows: [] as { list_id: string; total: string }[] }),
+      ]);
+      const itemCounts = new Map(counts.rows.map((row) => [safeId(row.list_id, "List ID"), Number(row.total)]));
+      const likeCounts = new Map(likes.rows.map((row) => [safeId(row.list_id, "List ID"), Number(row.total)]));
+      const previewMap = new Map<number, MovieCardResponse[]>();
+      for (const movie of previews.rows) {
+        const id = safeId(movie.list_id, "List ID");
+        const list = previewMap.get(id) ?? [];
+        list.push({ id: safeId(movie.id, "Movie ID"), title: movie.title, releaseDate: movie.release_date,
+          rating: movie.rating === null ? null : Number(movie.rating), photoUrl: movie.photo_url });
+        previewMap.set(id, list);
+      }
+      const content: PublicListCardResponse[] = rows.rows.map((row) => {
+        const id = safeId(row.id, "List ID");
+        return { id, name: row.name, description: row.description, isPublic: true,
+          ownerId: safeId(row.owner_id, "Owner ID"), ownerUsername: row.owner_username, ownerAvatarUrl: row.owner_avatar_url,
+          tags: tags.get(id) ?? [], likeCount: likeCounts.get(id) ?? 0, itemCount: itemCounts.get(id) ?? 0,
+          previewMovies: previewMap.get(id) ?? [], featuredCategory: row.featured_category };
       });
       return pageResult(content, count.rows[0]?.total ?? "0", page, size);
     } finally { connection.release(); }
@@ -227,9 +297,9 @@ export const profileRepository: Pick<RewindApiRepository,
         args: [authUser.id],
       });
       const existing = await connection.queryObject<{
-        id: string; username: string; role: string; avatar_url: string | null; is_active: boolean;
+        id: string; username: string; display_name: string | null; role: string; avatar_url: string | null; is_active: boolean;
       }>({
-        text: `SELECT id::text AS id, username, role, avatar_url, is_active
+        text: `SELECT id::text AS id, username, display_name, role, avatar_url, is_active
                FROM rewind.users WHERE supabase_user_id = $1`,
         args: [authUser.id],
       });
@@ -245,23 +315,23 @@ export const profileRepository: Pick<RewindApiRepository,
         await syncVerifiedProfileEmail(connection, userId, authUser);
         await ensureSystemLists(connection, userId);
         await connection.queryObject("COMMIT");
-        return { id: userId, username: row.username, role: row.role, avatarUrl: row.avatar_url };
+        return { id: userId, username: row.username, displayName: row.display_name, role: row.role, avatarUrl: row.avatar_url };
       }
 
       const unusablePassword = `supabase-auth:${crypto.randomUUID()}`;
       const requested = authUser.username ?? `user_${authUser.id.slice(0, 8)}`;
-      let row: { id: string; username: string; role: string; avatar_url: string | null } | undefined;
+      let row: { id: string; username: string; display_name: string | null; role: string; avatar_url: string | null } | undefined;
       for (let attempt = 0; attempt < 5; attempt++) {
         const suffix = attempt === 0 ? "" : `_${crypto.randomUUID().slice(0, 6)}`;
         const username = `${requested.slice(0, 50 - suffix.length)}${suffix}`;
         try {
           const inserted = await connection.queryObject<{
-            id: string; username: string; role: string; avatar_url: string | null;
+            id: string; username: string; display_name: string | null; role: string; avatar_url: string | null;
           }>({
             text: `INSERT INTO rewind.users (username, email, password_hash, supabase_user_id)
                    VALUES ($1, $2, $3, $4)
                    ON CONFLICT DO NOTHING
-                   RETURNING id::text AS id, username, role, avatar_url`,
+                   RETURNING id::text AS id, username, display_name, role, avatar_url`,
             args: [username, authUser.email, unusablePassword, authUser.id],
           });
           row = inserted.rows[0];
@@ -270,9 +340,9 @@ export const profileRepository: Pick<RewindApiRepository,
           // A concurrent /users/me request may have linked this UUID while
           // the insert was waiting on the unique constraint.
           const linked = await connection.queryObject<{
-            id: string; username: string; role: string; avatar_url: string | null; is_active: boolean;
+            id: string; username: string; display_name: string | null; role: string; avatar_url: string | null; is_active: boolean;
           }>({
-            text: `SELECT id::text AS id, username, role, avatar_url, is_active
+            text: `SELECT id::text AS id, username, display_name, role, avatar_url, is_active
                    FROM rewind.users WHERE supabase_user_id = $1`,
             args: [authUser.id],
           });
@@ -295,7 +365,7 @@ export const profileRepository: Pick<RewindApiRepository,
       await syncVerifiedProfileEmail(connection, userId, authUser);
       await ensureSystemLists(connection, userId);
       await connection.queryObject("COMMIT");
-      return { id: userId, username: row.username, role: row.role, avatarUrl: row.avatar_url };
+      return { id: userId, username: row.username, displayName: row.display_name, role: row.role, avatarUrl: row.avatar_url };
     } catch (error) {
       try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
       throw error;
@@ -455,6 +525,46 @@ export const profileRepository: Pick<RewindApiRepository,
       });
       await connection.queryObject("COMMIT");
       return result.rows[0]?.deleted === true;
+    } catch (error) {
+      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+      throw error;
+    } finally {
+      connection.release();
+    }
+  },
+
+  async setMyWatchlistVisibility(authUser, isPublic): Promise<boolean> {
+    const { connection, userId } = await beginUserTransaction(authUser);
+    try {
+      await ensureSystemLists(connection, userId);
+      const result = await connection.queryObject<{ is_public: boolean }>({
+        text: `UPDATE rewind.lists SET is_public = $2, updated_at = CURRENT_TIMESTAMP
+               WHERE user_id = $1 AND list_type = 'WATCHLIST' RETURNING is_public`,
+        args: [userId, isPublic],
+      });
+      if (!result.rows[0]) throw new Error("The watchlist is unavailable.");
+      await connection.queryObject("COMMIT");
+      return result.rows[0].is_public;
+    } catch (error) {
+      try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
+      throw error;
+    } finally {
+      connection.release();
+    }
+  },
+
+  async clearMyWatchlist(authUser): Promise<number> {
+    const { connection, userId } = await beginUserTransaction(authUser);
+    try {
+      await ensureSystemLists(connection, userId);
+      const result = await connection.queryObject<{ id: string }>({
+        text: `DELETE FROM rewind.list_items i USING rewind.lists l
+               WHERE i.list_id = l.id AND l.user_id = $1 AND l.list_type = 'WATCHLIST'
+               RETURNING i.id::text AS id`,
+        args: [userId],
+      });
+      await connection.queryObject("COMMIT");
+      return result.rows.length;
     } catch (error) {
       try { await connection.queryObject("ROLLBACK"); } catch { /* transaction may already be closed */ }
       throw error;

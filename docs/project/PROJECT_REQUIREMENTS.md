@@ -106,14 +106,14 @@
 
 <a id="implementation-status"></a>
 
-## 11. Відповідність реалізації — 14.11.2026
+## 11. Відповідність реалізації — 21.11.2026
 
 Надані вимоги вище збережені. Поточний стан і наступна робота — у [PROGRESS](PROGRESS.md) та [PLAN](../../PLAN.md), точні перевірки й межі — у [RELEASE_EVIDENCE](../operations/RELEASE_EVIDENCE.md). Докладні попередні матриці збережені в [архіві](../archive/IMPLEMENTATION_NOTES_2026_11.md).
 
 | Напрям | Реалізовано | Залишилося прийняти або допрацювати |
 | --- | --- | --- |
 | Акаунти | Hosted signup/confirmation, sign-in/out, recovery/reset, UUID-bound profile, deletion/outbox та email-change UI/callback | Контрольований двоадресний email change, решта token/deletion edge cases. Поточну ADMIN identity зберігати. |
-| Каталог і персоналії | Пошук/фільтри, metadata/credits, ACTOR/DIRECTOR/PRODUCER filmography, decade/genre/sort, біографії | TMDB language gaps та один непідтверджений ID, detailed job/written credits, повна visual parity. |
+| Каталог і персоналії | Пошук/фільтри, metadata/credits, ACTOR/DIRECTOR/PRODUCER filmography, writer pages, decade/genre/sort, біографії, TMDB job labels і written credits у локальному UI | Один фільм без підтвердженого TMDB ID, production acceptance для оновленого UI, повне покриття role/job варіантів і visual parity. |
 | Особисті дії й огляди | Watched/watchlist/favorites, ratings, review/comment CRUD, visibility/moderation, reply overrides | Решта production mutation/ownership flows і фізичний native Share. |
 | Списки | Private/public CUSTOM, системні колекції, reorder, ranked mode, feeds/tags/likes, comments, reply overrides, pin, Admin curation | Owner save/order/rank/pin/comment/cleanup пройшли live acceptance. Admin feature/unfeature/hide/publish і populated featured feed прийняті live. Перестановка двох featured списків прийнята через Admin, SQL, гостьовий API і public reader. Залишаються двоакаунтні reply/comments/reports. |
 | Профілі та social | Bio/links, location/pronoun, owner names, avatar/banner, follow/block, activity, public statistics, messages/notifications | Names/bio/location/pronoun/reply save/clear і website link прийняті live. Медіа upload/replace/clear, двоакаунтна доставка, local SSE reconnect відкриті. |

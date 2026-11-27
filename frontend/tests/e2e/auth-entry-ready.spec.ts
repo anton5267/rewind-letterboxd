@@ -11,8 +11,8 @@ test("Auth Entry READY desktop and phone route renders the existing entry flow",
   const captureDirectory = resolve(process.cwd(), "../artifacts/visual-audit-20261101/auth-entry-refresh");
   await mkdir(captureDirectory, { recursive: true });
   for (const locale of ["uk", "en"] as const) {
-    const createAccountLabel = locale === "uk" ? "Створити акаунт" : "Create your account";
-    const loginLabel = locale === "uk" ? "Увійти" : "Log in";
+    const createAccountLabel = locale === "uk" ? "Створити акаунт" : "Create Account";
+    const loginLabel = locale === "uk" ? "Увійти" : "Log In";
     for (const width of [320, 393, 600, 720, 768, 1024, 1440]) {
       const height = width === 1440 ? 1614 : width === 393 ? 852 : 900;
       await page.setViewportSize({ width, height });

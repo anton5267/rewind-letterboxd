@@ -14,6 +14,7 @@ import com.rewind.rewind.rating.repo.RatingRepository;
 import com.rewind.rewind.review.entity.Review;
 import com.rewind.rewind.review.repo.ReviewRepository;
 import com.rewind.rewind.social.repo.ReviewLikeRepository;
+import com.rewind.rewind.social.repo.ListLikeRepository;
 import com.rewind.rewind.user.entity.User;
 import com.rewind.rewind.user.entity.UserRole;
 import com.rewind.rewind.user.repo.UserRepository;
@@ -50,7 +51,7 @@ class ProfileReviewContractTests {
     private final ReviewRepository reviews = mock(ReviewRepository.class);
     private final ProfileService service = new ProfileService(users, mock(MovieRepository.class), mock(MovieDetailsCacheService.class), lists, ratings, reviews,
             mock(ListItemRepository.class), mock(PasswordEncoder.class), mock(RefreshSessionService.class),
-            mock(EntityManager.class), mock(ReviewLikeRepository.class), mock(UserSocialLinkRepository.class));
+            mock(EntityManager.class), mock(ReviewLikeRepository.class), mock(UserSocialLinkRepository.class), mock(ListLikeRepository.class));
     private final MockMvc mvc = MockMvcBuilders.standaloneSetup(new ProfileController(service)).build();
 
     @Test

@@ -1,9 +1,18 @@
+import { useEffect, useState } from "react";
 import { useLocale } from "../i18n";
 import ServiceNavigation from "../components/ServiceNavigation";
 import styles from "./About.module.css";
 
 export default function About() {
-  const { lang, t } = useLocale();
+  const { lang } = useLocale();
+  const [mobileViewport, setMobileViewport] = useState(() => window.matchMedia("(max-width: 767px)").matches);
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const syncViewport = () => setMobileViewport(media.matches);
+    syncViewport();
+    media.addEventListener("change", syncViewport);
+    return () => media.removeEventListener("change", syncViewport);
+  }, []);
   const sections = lang === "uk" ? [
     ["Наша місія", "Rewind — культурний простір для тих, хто живе кінематографом і бачить у ньому не лише розвагу, а й важливу частину сучасної ідентичності, колективної пам’яті та мистецького діалогу. Від самого початку наша місія — об’єднувати критиків, авторів, дизайнерів і глядачів у спільному пошуку кінематографічних відкриттів. Ми віримо, що кіно — це активна сила, яка впливає на наше сприйняття світу, пам’ять про історію та уявлення про майбутнє."],
     ["Редакційний підхід", "Наша редакція працює з різними форматами: ґрунтовними матеріалами, інтерв’ю, подкастами, візуальними есе та авторськими добірками, щоб показати багатство кінокультури. Кожен матеріал має інформувати, надихати, започатковувати розмову й спонукати до роздумів. Ми прагнемо візуальної виразності, естетичної цілісності та змістовності. Rewind — спільнота, де цінують чесність, естетику й глибину, а кожен творчий проєкт створюють із турботою та повагою до здатності кіно змінювати нас."],
@@ -26,18 +35,21 @@ export default function About() {
 
   return <main className={styles.page} aria-labelledby="about-title">
     <div className={styles.hero}>
-      <ServiceNavigation className={styles.serviceNav} />
+      <ServiceNavigation className={styles.serviceNav} includeTerms={mobileViewport} mobileDraft={mobileViewport} />
       <div className={styles.heroCopy}>
+        <p className={styles.eyebrow}>{lang === "uk" ? "REWIND / ПРО НАС" : "REWIND  /  ABOUT"}</p>
         <h1 className={styles.title} id="about-title">{lang === "uk" ? "Про нас" : "About Us"}</h1>
         <p className={styles.intro}>{lang === "uk" ? "Rewind — культурний простір для тих, хто живе кінематографом і бачить у ньому частину сучасного життя." : "Rewind is a cultural space created for those who live and breathe cinema, seeing it as part of modern life."}</p>
       </div>
     </div>
     <article className={styles.content} aria-labelledby="about-title">
       <div className={styles.story}>{sections.map(([title, body]) => <section key={title}><h2>{title}</h2><p>{body}</p></section>)}</div>
-      <section className={styles.credits} aria-labelledby="credits-heading">
-        <h2 className={styles.creditsTitle} id="credits-heading">{t("filmDataAndImages")}</h2>
-        <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer"><img className={styles.logo} src={`${import.meta.env.BASE_URL}tmdb-logo.svg`} alt="TMDB" /></a>
-        <p className={styles.disclaimer}>{t("tmdbDisclaimer")}</p>
+      <section className={styles.credits} aria-labelledby="about-credits-title">
+        <h2 className={styles.creditsTitle} id="about-credits-title">{lang === "uk" ? "Дані та зображення фільмів" : "Film data and images"}</h2>
+        <a className={styles.tmdbLink} href="https://www.themoviedb.org" target="_blank" rel="noreferrer">
+          <span className={styles.tmdbMobileLabel}>TMDB API</span>
+        </a>
+        <p className={styles.disclaimer}>{lang === "uk" ? "Цей продукт використовує TMDB API, але не схвалений і не сертифікований TMDB." : "This product uses the TMDB API but is not endorsed or certified by TMDB."}</p>
       </section>
     </article>
   </main>;

@@ -135,8 +135,11 @@
     max-height: none;
     box-sizing: border-box;
     border-radius: 0;
-    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    padding: max(env(safe-area-inset-top), 48px) 0 env(safe-area-inset-bottom);
   }
+  .toolbar { min-height: 64px; align-items: center; padding-top: 0; }
+  .toolbar h2 { margin-top: 0; }
+  .sheet form { padding-top: 33px; }
   .trigger {
     min-height: 45px;
     border-radius: 0;

@@ -1,9 +1,11 @@
 .page {
   min-height: 100vh;
-  padding: 80px 0 72px;
+  padding: 80px 0 77px;
   background: #1f1f1f;
   color: #fff;
 }
+
+.page + :global(footer) { margin-top: 5px; }
 
 .intro {
   max-width: 1200px;
@@ -265,6 +267,8 @@
   text-decoration: none;
   text-transform: uppercase;
 }
+.desktopReadText { display: inline; }
+.mobileReadText { display: none; }
 
 .readLink:hover {
   border-color: var(--rewind-cyan);
@@ -360,20 +364,65 @@
 }
 
 @media (max-width: 767px) {
-  .page { padding: 64px 0 48px; }
+  /* Implementation-created populated mobile layout: the named Figma DRAFTs
+     currently render 404, and Journal has no related-film DTO. Use one real
+     article cover in both feed and skeleton states instead of implying a
+     separate film poster from the same image. */
+  .page { padding: 64px 0 48px; background: #151515; }
   .intro, .layout, .archive { margin-inline: 16px; }
-  .intro { min-height: 96px; padding-top: 20px; }
-  .intro h1 { min-height: 38px; margin-bottom: 20px; padding: 0 18px; font-size: 24px; }
+  .intro { min-height: 96px; padding-top: 20px; border-bottom-color: #404040; background: transparent; }
+  .intro h1 { width: 150px; min-height: 38px; margin-bottom: 20px; border-color: #555; border-radius: 20px; padding: 0 18px; background: #252525; font-size: 20px; font-weight: 600; letter-spacing: 0; }
+  .toolbar { padding: 11px 0 7px; }
+  .field { width: 100%; gap: 1px; font-size: 11px; font-weight: 600; letter-spacing: 0; }
+  .field select { min-height: 44px; appearance: none; border-color: #484848; border-radius: 10px; padding-right: 34px; background: #222 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%23c8c8c8' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 19px center; font-size: 14px; font-weight: 600; }
+  .error { min-height: 135px; box-sizing: border-box; border-color: #693238; border-radius: 10px; padding: 16px 16px 16px 15px; font-size: 14px; line-height: 20px; }
+  .error [data-retry-button] { display: flex; width: 150px; height: 44px; box-sizing: border-box; justify-content: flex-start; margin: 37px 0 0; border-color: #8c7474; border-radius: 8px; padding: 0 12px; background: #202020; font-size: 13px; font-weight: 600; line-height: 18px; }
+  .feature:not(.loadingCard) { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; row-gap: 17px; padding: 14px 0 34px; border-bottom: 1px solid #3b3b3b; }
+  .feature:not(.loadingCard) .cardBody { display: grid; grid-column: 1 / -1; grid-row: 1; grid-template-columns: minmax(0, 1fr); align-self: start; gap: 0; }
+  .feature:not(.loadingCard) .cardMeta { color: #9ddce2; font-size: 11px; font-weight: 600; letter-spacing: 0; line-height: 15px; }
+  .feature:not(.loadingCard) .cardMeta time { color: inherit; font-weight: inherit; letter-spacing: inherit; text-transform: uppercase; }
+  .feature:not(.loadingCard) .cardMeta time::before { margin-inline-end: 6px; content: "·"; }
+  .feature:not(.loadingCard) h3 { margin: 6px 0 28px; font-size: 20px; line-height: 24px; letter-spacing: 0; }
+  .feature:not(.loadingCard) p { margin: 0; color: #d0ceca; font-size: 13px; line-height: 18px; }
+  .feature:not(.loadingCard) .cardFooter { justify-content: space-between; flex-direction: row; gap: 8px; margin-top: 4px; }
+  .feature:not(.loadingCard) .byline { font-size: 11px; font-weight: 600; letter-spacing: 0; }
+  .feature:not(.loadingCard) .readLink { width: 127px; min-height: 40px; justify-content: center; border: 0; background: #78d8e6; color: #101010; font-size: 12px; font-weight: 600; text-transform: none; }
+  .feature:not(.loadingCard) .desktopReadText { display: none; }
+  .feature:not(.loadingCard) .mobileReadText { display: inline; }
+  .feature:not(.loadingCard) .cover { grid-column: 1; grid-row: 2; align-self: start; width: 100%; height: auto; min-height: 0; aspect-ratio: 16 / 9; border-radius: 14px; }
+  .feature:not(.loadingCard) .thumb { display: none; }
   .card,
-  .feature { grid-template-columns: minmax(0, 1fr) 104px; gap: 16px; padding: 24px 0; }
-  .cover { grid-row: span 2; min-height: 150px; }
-  .cardBody { grid-column: 1 / -1; grid-row: 1; }
-  .cover { grid-column: 1; grid-row: 2; }
-  .thumb { grid-column: 2; grid-row: 2; }
+  .feature { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; gap: 16px; padding: 24px 0; }
+  .cardBody { grid-column: 1; grid-row: 1; }
+  .cover { grid-column: 1; grid-row: 2; min-height: 0; }
   .cardMeta { font-size: 12px; }
   .card h3 { margin: 8px 0; font-size: 20px; }
   .card p { font-size: 13px; line-height: 1.4; }
-  .thumb, .feature .thumb { width: 104px; height: 150px; }
+  .thumb, .feature .thumb { display: none; }
+  .loadingGrid { gap: 0; }
+  .loadingCard { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; row-gap: 16px; padding: 0 0 21px; border-bottom: 1px solid #3b3b3b; }
+  .loadingCard:first-child { row-gap: 18px; padding-top: 14px; padding-bottom: 22px; }
+  .loadingCard:not(:first-child) { row-gap: 22px; padding-top: 17px; }
+  .loadingCard .cardBody { display: grid; grid-column: 1 / -1; grid-row: 1; grid-template-columns: minmax(0, 1fr); gap: 11px; }
+  .loadingCard .skeletonLine { height: 14px; margin: 0; border-radius: 6px; }
+  .loadingCard .skeletonLine:first-child { width: 178px; height: 12px; }
+  .loadingCard .skeletonLine:nth-child(2) { width: 282px; height: 24px; }
+  .loadingCard .skeletonLine:nth-child(3) { width: 352px; height: 14px; }
+  .loadingCard .skeletonLine:nth-child(4) { width: 234px; height: 14px; margin-top: -2px; }
+  .loadingCard .cover { grid-column: 1; grid-row: 2; width: 100%; height: auto; min-height: 0; aspect-ratio: 16 / 9; border-radius: 8px; }
+  .loadingCard .thumb { display: none; }
+  .loadingCard:not(:first-child) .skeletonLine:first-child { width: 163px; }
+  .loadingCard:not(:first-child) .skeletonLine:nth-child(2) { width: 255px; }
+  .loadingCard:not(:first-child) .skeletonLine:nth-child(3) { width: 329px; }
+  .card:not(.feature):not(.loadingCard) { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; row-gap: 24px; padding: 17px 0 21px; }
+  .card:not(.feature):not(.loadingCard) .cardBody { grid-column: 1 / -1; grid-row: 1; }
+  .card:not(.feature):not(.loadingCard) .cardMeta { color: #9ddce2; font-size: 11px; font-weight: 600; letter-spacing: 0; line-height: 15px; }
+  .card:not(.feature):not(.loadingCard) .cardMeta time { color: inherit; font-weight: inherit; letter-spacing: inherit; text-transform: uppercase; }
+  .card:not(.feature):not(.loadingCard) .cardMeta time::before { margin-inline-end: 6px; content: "·"; }
+  .card:not(.feature):not(.loadingCard) h3 { margin: 6px 0 9px; font-size: 20px; line-height: 24px; letter-spacing: 0; }
+  .card:not(.feature):not(.loadingCard) p { margin: 0; color: #d0ceca; font-size: 13px; line-height: 18px; }
+  .card:not(.feature):not(.loadingCard) .cardFooter { display: none; }
+  .card:not(.feature):not(.loadingCard) .cover { grid-column: 1; grid-row: 2; width: 100%; height: auto; aspect-ratio: 16 / 9; min-height: 0; border-radius: 12px; }
 }
 
 @media (max-width: 380px) {
@@ -387,6 +436,18 @@
   .cover { min-height: 190px; }
   .thumb { width: 104px; }
   .archiveList { grid-template-columns: 1fr; }
+  .loadingCard,
+  .feature:not(.loadingCard),
+  .card:not(.feature):not(.loadingCard) { grid-template-columns: minmax(0, 1fr); column-gap: 0; }
+  .loadingCard,
+  .feature:not(.loadingCard),
+  .card:not(.feature):not(.loadingCard) { grid-template-rows: auto auto; }
+  .loadingCard:not(:first-child) .skeletonLine:nth-child(2) { max-width: 100%; }
+  .loadingCard .skeletonLine:nth-child(3) { max-width: 100%; }
+  .loadingCard .skeletonLine:nth-child(4) { max-width: 100%; }
+  .loadingCard .cover,
+  .feature:not(.loadingCard) .cover,
+  .card:not(.feature):not(.loadingCard) .cover { width: 100%; height: auto; aspect-ratio: 16 / 9; }
 }
 
 /* Portrait-family baseline: the first API-backed feature starts at
@@ -607,13 +668,18 @@
 }
 
 @media (max-width: 767px) {
-  .emptyPage { padding: 64px 0 40px; }
+  .emptyPage + :global(footer) { margin-top: 0; }
+  .emptyPage { padding: 128px 0 40px; }
   .emptyPage .intro,
   .emptyPage .layout { margin-inline: 16px; }
   .emptyPage .intro { padding-top: 20px; }
-  .emptyPage .intro h1 { min-height: 38px; padding-inline: 18px; font-size: 24px; }
+  .emptyPage .intro .eyebrow,
+  .emptyPage .intro > p:last-child { display: none; }
+  .emptyPage .intro h1 { width: 150px; height: 38px; min-height: 38px; padding-inline: 18px; font-size: 24px; }
   .emptyPage .layout { margin-top: 16px; }
-  .emptyState { padding: 18px; }
+  .emptyState { box-sizing: border-box; height: 112px; gap: 10px; padding: 17px; border-radius: 12px; }
+  .emptyState p { font-size: 16px; line-height: 24px; color: var(--rewind-text); }
+  .emptyAction { width: 207px; box-sizing: border-box; justify-content: flex-start; padding-inline: 15px; border-radius: 8px; }
 }
 
 @media (max-width: 380px) {

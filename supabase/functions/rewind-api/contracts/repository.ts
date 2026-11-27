@@ -1,14 +1,16 @@
 import type { ProfileMediaKind, ProfileMediaResponse, ProfileMediaUpload } from "./profile_media.ts";
 import type { GenreResponse, GlobalSearchResponse, MovieDetailsResponse, MovieFlagType, MovieSearchParams, MovieSearchResult, MovieStatusResponse, PersonFilmographyResponse, PersonSearchParams, PersonSearchResult } from "./catalog.ts";
 import type { CurrentUserResponse, HostedAuthUser } from "./auth.ts";
+import type { FeaturedListCategory } from "./lists.ts";
 import type { FavoriteMoveRequest, ProfileCollectionResult, ProfileResponse, ProfileUpdateRequest, PublicProfileResponse } from "./profile.ts";
-import type { ActivityResponse, BlockStatusResponse, ConversationResponse, FollowStatusResponse, MessageResponse, NotificationPreferencesResponse, NotificationResponse, PopularReviewerResponse, PublicSocialUser, CommunityUserResponse, SocialLinkResponse } from "./social.ts";
+import type { ActivityResponse, BlockStatusResponse, ConversationResponse, FollowStatusResponse, MessageResponse, NotificationPreferencesResponse, NotificationResponse, PopularReviewerPageResponse, PopularReviewerResponse, PublicSocialUser, CommunityUserResponse, SocialLinkResponse } from "./social.ts";
 import type { AdminJournalArticleRequest, JournalArchiveEntry, JournalArticleResponse, NewsletterDeliveryStatusResponse, NewsletterQueueResponse, NewsletterSubscriptionResponse } from "./journal.ts";
 import type { CommentPageResponse, CommentResponse, CreateCommentResult, ReviewDetailsResponse, ReviewFeedResponse, ReviewMutationRequest, ReviewPageResponse, ReviewReportReason, ReviewReportResponse, ReviewReportStatusResponse, ReviewResponse } from "./reviews.ts";
 import type { CreateMyListRequest, ListLikeStatusResponse, MyListItemResponse, MyListPageResponse, MyListResponse, PopularTagResponse, PublicListDetailsResponse, PublicListPageResponse, UpdateMyListRequest } from "./lists.ts";
-import type { AdminAuditLogResponse, AdminCommentResponse, AdminConversationResponse, AdminCreateNotificationRequest, AdminDashboardResponse, AdminListResponse, AdminModerationQueueItem, AdminModerationTarget, AdminMovieCatalogResponse, AdminMovieResponse, AdminMovieWriteRequest, AdminNotificationResponse, AdminReportedCommentResponse, AdminReportedListResponse, AdminReportedReviewResponse, AdminReviewResponse, AdminSettingResponse, AdminTmdbBatchResponse, AdminTmdbDiscoveryInput, AdminTmdbDiscoveryResponse, AdminTmdbMovieCandidate, AdminTmdbQualityReport, AdminTmdbSyncInput, AdminTmdbSyncResponse, AdminUserOverviewResponse, AdminUserResponse, AdminUserUpdateRequest } from "./admin.ts";
+import type { AdminActivityOverviewResponse, AdminAuditLogResponse, AdminCommentResponse, AdminConversationResponse, AdminCreateNotificationRequest, AdminDashboardResponse, AdminListDetailsResponse, AdminListResponse, AdminListTextUpdateRequest, AdminModerationQueueItem, AdminModerationTarget, AdminMovieCatalogResponse, AdminMovieResponse, AdminMovieWriteRequest, AdminNotificationResponse, AdminReportedCommentResponse, AdminReportedListResponse, AdminReportedReviewResponse, AdminReviewResponse, AdminSettingResponse, AdminTmdbBatchResponse, AdminTmdbDiscoveryInput, AdminTmdbDiscoveryResponse, AdminTmdbMovieCandidate, AdminTmdbQualityReport, AdminTmdbSyncInput, AdminTmdbSyncResponse, AdminUserOverviewResponse, AdminUserResponse, AdminUserUpdateRequest } from "./admin.ts";
 
 export interface RewindApiRepository {
+  getPublicWatchedFilmCount?(): Promise<number>;
   listGenres(): Promise<GenreResponse[]>;
   searchMovies(params: MovieSearchParams): Promise<MovieSearchResult>;
   getMovieDetails(id: number): Promise<MovieDetailsResponse | null>;
@@ -61,7 +63,11 @@ export interface RewindApiRepository {
   updateMyProfile?(authUser: HostedAuthUser, update: ProfileUpdateRequest, expectedUserId?: number): Promise<void>;
   deleteMyAccount?(authUser: HostedAuthUser): Promise<boolean>;
   getMyProfileCollection?(authUser: HostedAuthUser, collection: string, page: number, size: number): Promise<ProfileCollectionResult>;
+  setMyWatchlistVisibility?(authUser: HostedAuthUser, isPublic: boolean): Promise<boolean>;
+  clearMyWatchlist?(authUser: HostedAuthUser): Promise<number>;
   getMyMovieStatus?(authUser: HostedAuthUser, movieId: number): Promise<MovieStatusResponse>;
+  getMyWatchedDate?(authUser: HostedAuthUser, movieId: number): Promise<string | null>;
+  setMyWatchedDate?(authUser: HostedAuthUser, movieId: number, watchedOn: string): Promise<void>;
   setMyMovieFlag?(authUser: HostedAuthUser, movieId: number, flag: MovieFlagType): Promise<void>;
   deleteMyMovieFlag?(authUser: HostedAuthUser, movieId: number, flag: MovieFlagType): Promise<void>;
   getMyRating?(authUser: HostedAuthUser, movieId: number): Promise<number | null>;
@@ -70,6 +76,7 @@ export interface RewindApiRepository {
   getPublicProfile?(userId: number): Promise<PublicProfileResponse | null>;
   getPublicProfileCollection?(userId: number, collection: "watched" | "watchlist" | "favorites", page: number, size: number): Promise<MovieSearchResult | null>;
   getPublicProfileLists?(userId: number, page: number, size: number): Promise<PublicListPageResponse | null>;
+  getPublicProfileLikedLists?(userId: number, page: number, size: number): Promise<PublicListPageResponse | null>;
   getPublicProfileLikedReviews?(userId: number, page: number, size: number): Promise<{ content: PublicProfileResponse["recentReviews"]; totalPages: number; totalElements: number; number: number } | null>;
   getUserActivity?(userId: number, page: number, size: number): Promise<{ content: ActivityResponse[]; totalPages: number; totalElements: number; number: number } | null>;
   getFollowers?(userId: number, page: number, size: number): Promise<{ content: PublicSocialUser[]; totalPages: number; totalElements: number; number: number } | null>;
@@ -79,6 +86,7 @@ export interface RewindApiRepository {
   getFollowingActivity?(authUser: HostedAuthUser, page: number, size: number): Promise<{ content: ActivityResponse[]; totalPages: number; totalElements: number; number: number }>;
   getRecentWatched?(size: number): Promise<{ content: { id: number; createdAt: string; actor: { id: number; username: string; displayName: string | null } | null; movie: { id: number; title: string } | null }[]; totalPages: number; totalElements: number; number: number }>;
   getPopularReviewers?(size: number): Promise<PopularReviewerResponse[]>;
+  getPopularReviewersPage?(page: number, size: number, query?: string | null): Promise<PopularReviewerPageResponse>;
   getHqUsers?(page: number, size: number): Promise<{ content: CommunityUserResponse[]; totalPages: number; totalElements: number; number: number }>;
   getDirectoryUsers?(query: string | null, page: number, size: number): Promise<{ content: CommunityUserResponse[]; totalPages: number; totalElements: number; number: number }>;
   getPublicUser?(userId: number): Promise<PublicSocialUser | null>;
@@ -105,9 +113,12 @@ export interface RewindApiRepository {
   updateNewsletterSubscription?(authUser: HostedAuthUser, subscribed: boolean): Promise<NewsletterSubscriptionResponse>;
   getAdminReviews?(authUser: HostedAuthUser, filters: { movieId: number | null; userId: number | null; hidden: boolean | null }, page: number, size: number): Promise<{ content: AdminReviewResponse[]; totalPages: number; totalElements: number; number: number }>;
   updateAdminReviewContent?(authUser: HostedAuthUser, id: number, content: string): Promise<AdminReviewResponse | null>;
+  getAdminReviewHistory?(authUser: HostedAuthUser, id: number): Promise<AdminAuditLogResponse[]>;
+  updateAdminCommentContent?(authUser: HostedAuthUser, id: number, content: string): Promise<AdminCommentResponse | null>;
   getAdminReportedReviews?(authUser: HostedAuthUser, page: number, size: number): Promise<{ content: AdminReportedReviewResponse[]; totalPages: number; totalElements: number; number: number }>;
   dismissAdminReviewReport?(authUser: HostedAuthUser, reportId: number): Promise<boolean>;
   getAdminReportedComments?(authUser: HostedAuthUser, page: number, size: number): Promise<{ content: AdminReportedCommentResponse[]; totalPages: number; totalElements: number; number: number }>;
+  getAdminCommentHistory?(authUser: HostedAuthUser, id: number): Promise<AdminAuditLogResponse[]>;
   dismissAdminCommentReport?(authUser: HostedAuthUser, reportId: number): Promise<boolean>;
   getAdminReportedLists?(authUser: HostedAuthUser, page: number, size: number): Promise<{ content: AdminReportedListResponse[]; totalPages: number; totalElements: number; number: number }>;
   dismissAdminListReport?(authUser: HostedAuthUser, reportId: number): Promise<boolean>;
@@ -134,11 +145,15 @@ export interface RewindApiRepository {
   setAdminUserActive?(authUser: HostedAuthUser, id: number, active: boolean): Promise<boolean>;
   setAdminUserHq?(authUser: HostedAuthUser, id: number, hq: boolean): Promise<AdminUserResponse | null>;
   getAdminLists?(authUser: HostedAuthUser, page: number, size: number): Promise<{ content: AdminListResponse[]; totalPages: number; totalElements: number; number: number }>;
+  getAdminListDetails?(authUser: HostedAuthUser, id: number, reportId?: number): Promise<AdminListDetailsResponse | null>;
+  updateAdminListDetails?(authUser: HostedAuthUser, id: number, update: AdminListTextUpdateRequest): Promise<AdminListDetailsResponse | null>;
+  addAdminListMovie?(authUser: HostedAuthUser, listId: number, movieId: number): Promise<AdminListDetailsResponse | "NOT_FOUND" | "SYSTEM_LIST" | "UNPUBLISHED" | "DUPLICATE">;
   setAdminListVisibility?(authUser: HostedAuthUser, id: number, visible: boolean): Promise<AdminListResponse | null>;
-  setAdminListFeatured?(authUser: HostedAuthUser, id: number, featured: boolean): Promise<AdminListResponse | null | "NOT_ELIGIBLE">;
+  setAdminListFeatured?(authUser: HostedAuthUser, id: number, featured: boolean, category?: FeaturedListCategory): Promise<AdminListResponse | null | "NOT_ELIGIBLE">;
   moveAdminListFeatured?(authUser: HostedAuthUser, id: number, direction: "up" | "down"): Promise<"OK" | "NOT_FOUND" | "NOT_ELIGIBLE" | "BOUNDARY">;
   deleteAdminList?(authUser: HostedAuthUser, id: number): Promise<"OK" | "NOT_FOUND" | "SYSTEM_LIST">;
   getAdminDashboard?(authUser: HostedAuthUser): Promise<AdminDashboardResponse>;
+  getAdminActivityOverview?(authUser: HostedAuthUser): Promise<AdminActivityOverviewResponse>;
   getAdminAuditLogs?(authUser: HostedAuthUser, page: number, size: number): Promise<{ content: AdminAuditLogResponse[]; totalPages: number; totalElements: number; number: number }>;
   getAdminSettings?(authUser: HostedAuthUser): Promise<AdminSettingResponse[]>;
   updateAdminSetting?(authUser: HostedAuthUser, key: string, value: string): Promise<AdminSettingResponse | null>;

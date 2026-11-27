@@ -11,6 +11,7 @@ async function mutate(api: APIRequestContext, method: "POST" | "PATCH" | "DELETE
 
 async function findDirectoryUser(page: Page, username: string, userId: number, lang: "uk" | "en") {
   const directory = page.locator("section[aria-labelledby='community-directory']");
+  await directory.getByRole("button", { name: /search users|пошук користувачів/i }).click();
   await directory.locator("#community-user-search").fill(username);
   const response = page.waitForResponse(item => {
     const url = new URL(item.url());

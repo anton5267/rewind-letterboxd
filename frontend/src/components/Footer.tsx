@@ -5,18 +5,23 @@ import { useLocale } from "../i18n";
 export default function Footer() {
   const { path, t } = useLocale();
   const location = useLocation();
-  const mobileAuthFooter = /^\/(uk|en)\/(auth|login|register|forgot-password|reset-password|email-action)\/?$/.test(location.pathname);
+  const mobileAuthFooter = /^\/(uk|en)\/(auth|login|register|forgot-password|reset-password|email-action|link-account)\/?$/.test(location.pathname);
+  const loginDesktopFigmaFooter = /^\/(uk|en)\/login\/?$/.test(location.pathname);
   const mobileDetailFooter = /^\/(uk|en)\/(films|reviews)\/\d+\/?$/.test(location.pathname);
+  const mobilePopularReviewsFooter = /^\/(uk|en)\/reviews\/?$/.test(location.pathname);
   const mobileSearchFooter = /^\/(uk|en)\/search\/?$/.test(location.pathname);
   const mobileHomeFooter = /^\/(uk|en)\/home\/?$/.test(location.pathname);
   const mobilePersonFooter = /^\/(uk|en)\/people\/(actor|director|producer)\/[^/]+\/?$/.test(location.pathname);
+  const hqAccountsFooter = /^\/(uk|en)\/hq-accounts\/?$/.test(location.pathname);
+  const mobileAboutFooter = /^\/(uk|en)\/about\/?$/.test(location.pathname);
   const settingsTab = new URLSearchParams(location.search).get("settings");
   const mobileSettingsFooter = /^\/(uk|en)\/profile\/?$/.test(location.pathname)
     && ["profile", "authentication", "avatar", "connections"].includes(settingsTab ?? "");
-  const mobileFooterHidden = mobileAuthFooter || mobileDetailFooter || mobileSearchFooter
+  const mobileServiceCompact = /^\/(uk|en)\/(help|faq|contact|rules|terms|conditions|safety-notice|hq-accounts|privacy|film-data|important-data|delete-account)\/?$/.test(location.pathname);
+  const mobileFooterHidden = mobileAuthFooter || mobileDetailFooter || mobilePopularReviewsFooter || mobileSearchFooter
     || mobileHomeFooter || mobilePersonFooter || mobileSettingsFooter;
   return (
-    <footer className={`${styles.footer} ${mobileFooterHidden ? styles.mobileHidden : ""}`}>
+      <footer className={`${styles.footer} ${mobileFooterHidden ? styles.mobileHidden : ""} ${mobileServiceCompact ? styles.mobileServiceCompact : ""} ${mobileAboutFooter ? styles.mobileAboutFooter : ""} ${hqAccountsFooter ? styles.hqAccountsDesktopParity : ""} ${loginDesktopFigmaFooter ? styles.loginDesktopFigmaParity : ""}`}>
 
       {/* TOP LINE */}
       <div className={styles.top}>

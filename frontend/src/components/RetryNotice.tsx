@@ -8,6 +8,7 @@ interface RetryNoticeProps {
   role?: "alert" | "status" | null;
   disabled?: boolean;
   busy?: boolean;
+  messageClassName?: string;
 }
 
 /**
@@ -22,10 +23,11 @@ export default function RetryNotice({
   role = "alert",
   disabled = false,
   busy = false,
+  messageClassName,
 }: RetryNoticeProps) {
   return (
     <p className={className} role={role ?? undefined}>
-      {message}{" "}
+      {messageClassName ? <span className={messageClassName}>{message}</span> : message}{messageClassName ? null : " "}
       <RetryButton
         label={retryLabel}
         disabled={disabled}

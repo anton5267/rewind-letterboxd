@@ -45,7 +45,13 @@ const makeCrewLists = () => ({
     tags: [],
     likeCount: 3,
     itemCount: 4,
-    previewMovies: [],
+    previewMovies: Array.from({ length: 8 }, (_, index) => ({
+      id: 88410 + index,
+      title: `Crew pick film ${index + 1}`,
+      releaseDate: "2025-01-01",
+      rating: 4.5,
+      photoUrl: null,
+    })),
   }],
   totalPages: 1,
   totalElements: 1,
@@ -69,23 +75,30 @@ test("Films Discovery matches current desktop and phone READY anchors", async ({
   await page.route("**/api/reviews/recent**", route => route.fulfill({ json: makeReviews(8) }));
   await page.route("**/api/reviews/popular**", route => route.fulfill({ json: makeReviews(4) }));
   await page.route("**/api/lists/public/team**", route => route.fulfill({ json: makeCrewLists() }));
+  await page.route("**/api/stats/watched-films", route => route.fulfill({ json: { count: 3_108_812_335 } }));
 
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize({ width: 1440, height: 2722 });
   await page.goto("/uk/films/discover");
   await expect(page.locator("main")).toHaveAttribute("aria-busy", "false");
   const headings = {
     popular: page.getByRole("heading", { level: 2, name: "Популярні фільми" }),
     recent: page.getByRole("heading", { level: 2, name: "Щойно переглянули…" }),
     reviews: page.getByRole("heading", { level: 2, name: "Популярні огляди цього тижня" }),
+    crew: page.getByRole("heading", { level: 2, name: "Добірки команди" }),
   };
   await expect(page.getByRole("heading", { level: 2, name: "Вибір команди" })).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 2, name: "Добірки команди" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Crew choice fixture" })).toBeVisible();
+  const watchedCount = page.getByTestId("films-watched-count");
+  await expect(watchedCount).toBeVisible();
+  expect((await watchedCount.innerText()).replace(/\s/g, " ")).toBe("3 108 812 335 фільмів переглянуто");
+  await expect(page.getByRole("link", { name: "Crew pick film 1" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Crew pick film 8" })).toBeVisible();
   await expect(page.locator('main header select[aria-label="Жанр"]')).toBeEnabled();
 
   const popularSection = headings.popular.locator("xpath=ancestor::section[1]");
   const recentSection = headings.recent.locator("xpath=ancestor::section[1]");
   const reviewsSection = headings.reviews.locator("xpath=ancestor::section[1]");
+  const crewSection = headings.crew.locator("xpath=ancestor::section[1]");
   near((await headings.popular.boundingBox())?.y, 432);
   near((await popularSection.locator("ol > li a").first().boundingBox())?.y, 514);
   near((await recentSection.boundingBox())?.y, 944);
@@ -94,23 +107,29 @@ test("Films Discovery matches current desktop and phone READY anchors", async ({
   near((await reviewsSection.boundingBox())?.y, 1309);
   near((await headings.reviews.boundingBox())?.y, 1327);
   near((await reviewsSection.locator("article").first().boundingBox())?.y, 1409);
+  near((await headings.crew.boundingBox())?.y, 2035);
+  near((await crewSection.locator('a[class*="railPoster"]').first().boundingBox())?.y, 2117);
+  await expect(crewSection.locator('a[class*="railPoster"]')).toHaveCount(8);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(1440);
 
   const captureDirectory = resolve(process.cwd(), "../artifacts/visual-audit-20261102/films-discovery-platform-emulation");
   await mkdir(captureDirectory, { recursive: true });
   const platform = testInfo.project.name.includes("iOS") ? "ios-webkit" : testInfo.project.name.includes("Android") ? "android-chromium" : "desktop-chromium";
-  await page.screenshot({ path: resolve(captureDirectory, `${platform}-uk-desktop-1440.png`), fullPage: true });
+  await page.screenshot({ path: resolve(captureDirectory, `${platform}-uk-desktop-1440.png`), fullPage: false });
 
   await page.setViewportSize({ width: 393, height: 1235 });
   await expect(page.locator("main")).toHaveAttribute("aria-busy", "false");
+  await expect(watchedCount).toBeHidden();
   near((await popularSection.locator("ol > li a").first().boundingBox())?.y, 168);
   near((await recentSection.boundingBox())?.y, 388);
   near((await recentSection.locator('a[class*="railPoster"]').first().boundingBox())?.y, 436);
   near((await reviewsSection.boundingBox())?.y, 587);
   near((await reviewsSection.locator("article").nth(0).boundingBox())?.y, 635);
   near((await reviewsSection.locator("article").nth(1).boundingBox())?.y, 784);
+  near((await headings.crew.boundingBox())?.y, 952);
+  near((await crewSection.locator('a[class*="railPoster"]').first().boundingBox())?.y, 992);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(393);
-  await page.screenshot({ path: resolve(captureDirectory, `${platform}-uk-phone-393.png`), fullPage: true });
+  await page.screenshot({ path: resolve(captureDirectory, `${platform}-uk-phone-393.png`), fullPage: false });
 
   await page.keyboard.press("Tab");
   await expect(page.locator(":focus")).toBeVisible();
@@ -119,4 +138,21 @@ test("Films Discovery matches current desktop and phone READY anchors", async ({
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
   }
   expect(pageErrors).toEqual([]);
+});
+
+test("Films Discovery omits the watched-film metric when the public stats request fails", async ({ page }) => {
+  await page.route("**/api/users/me", route => route.fulfill({ status: 401, json: { message: "Unauthenticated" } }));
+  await page.route("**/api/auth/csrf", route => route.fulfill({ json: { token: "films-discovery-stats-error" } }));
+  await page.route("**/api/*/unread-count", route => route.fulfill({ json: { count: 0 } }));
+  await page.route("**/api/movies/search**", route => route.fulfill({ json: makeFilmPage() }));
+  await page.route("**/api/genres", route => route.fulfill({ json: [{ id: 2, name: "Science Fiction" }] }));
+  await page.route("**/api/reviews/recent**", route => route.fulfill({ json: makeReviews(8) }));
+  await page.route("**/api/reviews/popular**", route => route.fulfill({ json: makeReviews(4) }));
+  await page.route("**/api/lists/public/team**", route => route.fulfill({ json: makeCrewLists() }));
+  await page.route("**/api/stats/watched-films", route => route.fulfill({ status: 503, json: { message: "Unavailable" } }));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/en/films/discover");
+  await expect(page.locator("main")).toHaveAttribute("aria-busy", "false");
+  await expect(page.getByRole("heading", { level: 2, name: "Just reviewed…" })).toBeVisible();
+  await expect(page.getByTestId("films-watched-count")).toHaveCount(0);
 });

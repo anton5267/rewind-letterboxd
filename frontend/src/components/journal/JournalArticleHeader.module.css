@@ -186,6 +186,15 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  .mobileToolbar > .skeletonLine {
+    grid-column: 2;
+    justify-self: center;
+    width: 45px;
+    margin-bottom: 0;
+  }
+  .articleLead > .skeletonLine:nth-child(1) { width: 140px; }
+  .articleLead > .skeletonLine:nth-child(2) { width: 306px; margin-bottom: 22px; }
+  .articleLead > .skeletonLine:nth-child(3) { width: 210px; }
   .mobileBack {
     display: grid;
     width: 44px;
@@ -220,10 +229,11 @@
     text-transform: none;
   }
   .coverHero {
-    margin-top: 32px;
+    margin-top: 75px;
     border-radius: 20px;
     aspect-ratio: 1.45 / 1;
   }
+  .coverHero.skeleton { height: 206px; aspect-ratio: auto; }
 }
 
 @media (max-width: 380px) {

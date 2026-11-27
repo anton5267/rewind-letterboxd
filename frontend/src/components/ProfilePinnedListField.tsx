@@ -21,7 +21,7 @@ export default function ProfilePinnedListField(
     list.listType === "CUSTOM" && list.isPublic
   );
   return (
-    <div className={className}>
+    <div className={className} data-profile-pinned-list>
       <label htmlFor={id}>{t("pinnedList")}</label>
       <select
         id={id}

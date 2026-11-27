@@ -109,7 +109,7 @@ test("profile collection is visible in own and public profile", async ({ page, b
     await detailLink.focus();
     await detailLink.press("Enter");
     await expect(page).toHaveURL(new RegExp(`/uk/profile\\?view=reviews&review=${reviewId}$`));
-    await expect(page.getByRole("button", { name: /Редагувати:/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Редагувати огляд:/ })).toBeVisible();
     await expect(page.getByRole("button", { name: /Видалити огляд/ })).toBeVisible();
 
     await page.goto("/uk/profile");

@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { isAxiosError } from "axios";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { resetPassword } from "../api/auth.api";
-import { usesHostedSupabaseAuth } from "../api/supabaseClient";
+import { getSupabaseClient, usesHostedSupabaseAuth } from "../api/supabaseClient";
 import { useLocale } from "../i18n";
 import { useAuthFieldValidation } from "./useAuthFieldValidation";
 import styles from "./ResetPassword.module.css";
@@ -38,6 +38,19 @@ function ResetPasswordForm({ token }: { token: string }) {
   const request = useRef(0);
   const busy = useRef(false);
   const focusIntent = useRef<{ origin: HTMLElement | null } | null>(null);
+
+  useEffect(() => {
+    if (!usesHostedSupabaseAuth) return;
+    let active = true;
+    void getSupabaseClient().auth.getSession().then(({ data, error: sessionError }) => {
+      if (!active) return;
+      const session = data.session;
+      setError(sessionError || !session || (token && token !== session.access_token) ? "resetInvalid" : null);
+    }).catch(() => {
+      if (active) setError("resetInvalid");
+    });
+    return () => { active = false; };
+  }, [token]);
 
   useLayoutEffect(() => {
     mounted.current = true;
@@ -89,26 +102,26 @@ function ResetPasswordForm({ token }: { token: string }) {
     }
   };
 
-  return <main className={styles.page} data-rewind-auth-page aria-labelledby="reset-password-title" aria-busy={loading}>
+  return <main className={styles.page} data-rewind-auth-page data-auth-language={lang} data-auth-state={done ? "success" : error ? "error" : "form"} aria-labelledby="reset-password-title" aria-busy={loading}>
     <section className={styles.card}>
       <Link className={styles.back} to={path("/login")}>← {t("return")}</Link>
       <p className={styles.eyebrow}>{t("accountEyebrow")}</p>
       <h1 className={styles.title} id="reset-password-title">{t("resetTitle")}</h1>
       {!token && !usesHostedSupabaseAuth && <p className={styles.missing} role="alert">{t("resetMissing")}</p>}
-      {done ? <p ref={successMessage} className={styles.success} role="status" tabIndex={-1}>{t("resetSuccess")} <Link to={path("/login")}>{t("login")}</Link></p> : (token || usesHostedSupabaseAuth) && <form className={styles.form} onSubmit={submit} onInvalidCapture={validation.onInvalid} aria-busy={loading}>
+      {done ? <p ref={successMessage} className={styles.success} role="status" tabIndex={-1}><span className={styles.successText}>{t("resetSuccess")}</span><Link to={path("/login")}>{t("login")}</Link></p> : (token || usesHostedSupabaseAuth) && <form className={styles.form} onSubmit={submit} onInvalidCapture={validation.onInvalid} aria-busy={loading}>
         <label className={styles.field} htmlFor="reset-password">
           {t("newPassword")}
-          <input className={styles.input} id="reset-password" name="newPassword" type="password" required disabled={loading} minLength={8} maxLength={MAX_PASSWORD_BYTES} autoComplete="new-password" value={password} onChange={event => { setPassword(event.target.value); validation.onInput(event.currentTarget); }} aria-invalid={Boolean(error) || validation.invalid("reset-password")} aria-describedby={validation.describedBy("reset-password", `reset-password-hint${error ? " reset-password-error" : ""}`)} />
+          <input className={styles.input} id="reset-password" name="newPassword" type="password" required disabled={loading} minLength={8} maxLength={MAX_PASSWORD_BYTES} autoComplete="new-password" value={password} onChange={event => { setPassword(event.target.value); setError(current => current === "confirmMismatch" ? null : current); validation.onInput(event.currentTarget); }} aria-invalid={Boolean(error) || validation.invalid("reset-password")} aria-describedby={validation.describedBy("reset-password", `reset-password-hint${error ? " reset-password-error" : ""}`)} />
         </label>
         {validation.message("reset-password") && <p className={styles.validation} id="reset-password-validation">{validation.message("reset-password")}</p>}
         <p className={styles.passwordHint} id="reset-password-hint">{t("passwordByteLimitHint")}</p>
         <label className={styles.field} htmlFor="reset-password-confirm">
           {t("confirmPassword")}
-          <input className={styles.input} id="reset-password-confirm" name="confirmPassword" type="password" required disabled={loading} minLength={8} maxLength={MAX_PASSWORD_BYTES} autoComplete="new-password" value={confirm} onChange={event => { setConfirm(event.target.value); validation.onInput(event.currentTarget); }} aria-invalid={Boolean(error) || validation.invalid("reset-password-confirm")} aria-describedby={validation.describedBy("reset-password-confirm", `reset-password-hint${error ? " reset-password-error" : ""}`)} />
+          <input className={styles.input} id="reset-password-confirm" name="confirmPassword" type="password" required disabled={loading} minLength={8} maxLength={MAX_PASSWORD_BYTES} autoComplete="new-password" value={confirm} onChange={event => { setConfirm(event.target.value); setError(current => current === "confirmMismatch" ? null : current); validation.onInput(event.currentTarget); }} aria-invalid={Boolean(error) || validation.invalid("reset-password-confirm")} aria-describedby={validation.describedBy("reset-password-confirm", `reset-password-hint${error ? " reset-password-error" : ""}`)} />
         </label>
         {validation.message("reset-password-confirm") && <p className={styles.validation} id="reset-password-confirm-validation">{validation.message("reset-password-confirm")}</p>}
         {error && <p ref={errorMessage} tabIndex={-1} className={styles.error} id="reset-password-error" role="alert">{t(error)}</p>}
-        <button className={styles.button} type="submit" aria-busy={loading} disabled={loading}>{loading ? t("loading") : t("changePassword")}</button>
+        <button className={styles.button} type="submit" aria-busy={loading} disabled={loading || error === "resetInvalid" || error === "confirmMismatch" || !password || !confirm}>{loading ? t("loading") : t("changePassword")}</button>
       </form>}
     </section>
   </main>;

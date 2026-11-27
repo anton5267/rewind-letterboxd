@@ -25,14 +25,20 @@ test("All Films phone catalog matches the 4-by-6 layout and keeps working pagina
     { timeout: 20_000 },
   );
   const pagination = page.locator('main nav[aria-label="Сторінки фільмів"]');
+  const title = page.getByRole("heading", { name: "Фільми", level: 1 });
+  const filterSummary = page.locator('main div[class*="filterSummary_"]');
   const previous = pagination.getByRole("button", { name: "Назад", exact: true });
   const next = pagination.getByRole("button", { name: "Далі", exact: true });
   await expect(previous).toBeDisabled();
   await expect(next).toBeEnabled();
   const previousBox = await previous.boundingBox();
   const nextBox = await next.boundingBox();
+  const titleBox = await title.boundingBox();
+  const filterSummaryBox = await filterSummary.boundingBox();
   expect(previousBox?.x).toBeCloseTo(16, 0);
   expect(nextBox ? nextBox.x + nextBox.width : -1).toBeCloseTo(377, 0);
+  expect(titleBox?.y).toBeCloseTo(129.54, 0);
+  expect(filterSummaryBox?.y).toBeCloseTo(127.25, 0);
 
   const measurements = await page.evaluate(() => {
     const grid = document.querySelector('main [class*="grid"]');
@@ -55,6 +61,8 @@ test("All Films phone catalog matches the 4-by-6 layout and keeps working pagina
           ? getComputedStyle(button).display !== "none"
           : false),
       filter: rect(filter),
+      title: rect(document.querySelector('main h1')),
+      filterSummary: rect(document.querySelector('main div[class*="filterSummary_"]')),
     };
   });
   console.log(`ALL_FILMS_PHONE_LIVE ${testInfo.project.name} ${JSON.stringify(measurements)}`);
@@ -62,13 +70,15 @@ test("All Films phone catalog matches the 4-by-6 layout and keeps working pagina
   expect(measurements.grid?.x).toBe(16);
   expect(measurements.grid?.y).toBeCloseTo(228.25, 0);
   expect(measurements.grid?.width).toBe(361);
+  expect(measurements.title?.y).toBeCloseTo(129.54, 0);
+  expect(measurements.filterSummary?.y).toBeCloseTo(127.25, 0);
   expect(measurements.poster?.width).toBeCloseTo(79, 0);
   expect(measurements.poster?.height).toBeCloseTo(116, 0);
   expect(measurements.pagination?.y).toBeGreaterThan(1045);
   expect(measurements.pagination?.y).toBeLessThan(1060);
   expect(measurements.pageNumbersVisible).toBe(false);
 
-  const captureDirectory = resolve(process.cwd(), "../artifacts/visual-audit-20261102/all-films-mobile-live");
+  const captureDirectory = resolve(process.cwd(), "../artifacts/visual-audit-20261124/all-films-mobile-phone");
   await mkdir(captureDirectory, { recursive: true });
   const platform = testInfo.project.name.includes("iOS") ? "ios-webkit" : "android-chromium";
   await page.screenshot({ path: resolve(captureDirectory, `${platform}-uk-393x1215.png`), scale: "css" });

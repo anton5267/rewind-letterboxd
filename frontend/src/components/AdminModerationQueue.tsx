@@ -16,7 +16,7 @@ import dialogStyles from "./AdminConfirmDialog.module.css";
 
 const itemKey = (item: AdminModerationQueueItem) => `${item.type}:${item.id}`;
 
-export default function AdminModerationQueue() {
+export default function AdminModerationQueue({ className = "" }: { className?: string }) {
   const { t, lang, path } = useLocale();
   const { user } = useAuth();
   const [type, setType] = useState<"" | AdminModerationQueueItem["type"]>("");
@@ -192,7 +192,7 @@ export default function AdminModerationQueue() {
     setSelected(values => values.includes(key) ? values.filter(value => value !== key) : [...values, key]);
   };
 
-  return <section className={`${styles.section} ${styles.moderationSection}`} aria-labelledby="moderation-heading" aria-busy={busy}>
+  return <section className={`${styles.section} ${styles.moderationSection} ${className}`} aria-labelledby="moderation-heading" aria-busy={busy}>
     <h2 ref={heading} tabIndex={-1} className={styles.title} id="moderation-heading">{t("moderationQueueTitle")}</h2>
     {mutationError && <p ref={mutationAlert} tabIndex={-1} className={`${styles.error} ${styles.moderationFocus}`} role="alert">{t("adminModerationActionError")}</p>}
     {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={busy} busy={busy} onRetry={refresh} />}
@@ -213,7 +213,7 @@ export default function AdminModerationQueue() {
         </button>
       </fieldset>
     </form>
-    <Link className={styles.moderationLogsLink} to={`${path("/admin")}?view=logs`}>{t("moderatorLogs")}</Link>
+    <Link className={styles.moderationLogsLink} to={`${path("/admin")}?view=moderator-logs`}>{t("moderatorLogs")}</Link>
     {loading ? <AdminLoading label={t("loading")} layout="logs" /> : !error && data && <>
       {data.content.length === 0 ? <p>{t("noModerationItems")}</p> : <ul className={styles.list}>{data.content.map(item => <li className={styles.row} key={itemKey(item)}>
         <div className={styles.rowContent}><label><input type="checkbox" disabled={busy} checked={selected.includes(itemKey(item))} onChange={() => toggle(item)} /> {item.type === "REVIEW" ? t("moderationReview") : t("moderationComment")} · {item.subject} · {getUserName({ username: item.username }, t("someone"))}: {item.content}</label></div>

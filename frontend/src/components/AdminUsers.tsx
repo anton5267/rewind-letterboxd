@@ -14,12 +14,13 @@ import tableStyles from "./AdminUsers.module.css";
 
 interface Props {
   onHqCountChange: (delta: number) => void;
+  activityMode?: boolean;
   profileUserId?: number;
   onOpenUserProfile: (id: number) => void;
   onCloseUserProfile: () => void;
 }
 
-export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserProfile, onCloseUserProfile }: Props) {
+export default function AdminUsers({ onHqCountChange, activityMode = false, profileUserId, onOpenUserProfile, onCloseUserProfile }: Props) {
   const { lang, path, t } = useLocale();
   const { user } = useAuth();
   const [data, setData] = useState<Page<AdminUser> | null>(null);
@@ -176,7 +177,7 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
     setError(false);
     setActionError(null);
     setData(null);
-    getAdminUsers(query, page)
+    getAdminUsers(query, page, activityMode ? 14 : 50)
       .then(({ data: response }) => {
         if (!current || scopeGeneration.current !== scope || catalogRequest.current !== requestId) return;
         const lastPage = Math.max(0, response.totalPages - 1);
@@ -192,7 +193,7 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
       .catch(() => { if (current && scopeGeneration.current === scope && catalogRequest.current === requestId) setError(true); })
       .finally(() => { if (current && scopeGeneration.current === scope && catalogRequest.current === requestId) setLoading(false); });
     return () => { current = false; };
-  }, [page, profileUserId, query, revision, lang, user?.id, user?.role]);
+  }, [page, profileUserId, query, revision, lang, user?.id, user?.role, activityMode]);
 
   useEffect(() => {
     const requestId = ++detailRequest.current;
@@ -262,6 +263,17 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
     setPage(0);
     if (nextQuery === query) setRevision(value => value + 1);
     else setQuery(nextQuery);
+  };
+  const formatFollowerCount = (count: number | undefined) => new Intl.NumberFormat(lang, { notation: "compact", maximumFractionDigits: 1 }).format(count ?? 0);
+
+  const changePage = (nextPage: number) => {
+    if (nextPage === page || nextPage < 0 || nextPage >= (data?.totalPages ?? 0)) return;
+    mutationFocus.current = null;
+    const focus = { kind: "catalog" as const, scope: scopeGeneration.current, request: catalogRequest.current + 1, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
+    retryFocus.current = focus;
+    pageFocusCarry.current = { page: nextPage, query, lang, actor, focus };
+    setLoading(true);
+    setPage(nextPage);
   };
 
   const refreshCurrentView = () => {
@@ -371,8 +383,8 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
     setDetailOverview(null);
   };
 
-  return <section ref={usersSection} className={`${styles.section} ${styles.usersSection} ${selectedId !== null ? styles.userProfileSection : ""}`} aria-label={t(profileUserId === undefined ? "adminUsers" : "adminUserProfile")} aria-busy={loading || detailLoading || detailOverviewLoading || busyId !== null}>
-    <h2 ref={profileUserId === undefined ? usersHeading : undefined} className={`${styles.title} ${profileUserId !== undefined ? "srOnly" : ""}`} tabIndex={profileUserId === undefined ? -1 : undefined}>{t(profileUserId === undefined ? "adminUserList" : "adminUserProfile")}</h2>
+  return <section ref={usersSection} data-admin-user-list-section={profileUserId === undefined && !activityMode ? "true" : undefined} className={`${styles.section} ${styles.usersSection} ${activityMode ? styles.activityUsersSection : ""} ${selectedId !== null ? styles.userProfileSection : ""}`} aria-label={t(profileUserId === undefined ? "adminUsers" : "adminUserProfile")} aria-busy={loading || detailLoading || detailOverviewLoading || busyId !== null}>
+    <h2 ref={profileUserId === undefined ? usersHeading : undefined} className={`${styles.title} ${profileUserId !== undefined ? "srOnly" : ""}`} tabIndex={profileUserId === undefined ? -1 : undefined}>{t(profileUserId === undefined ? activityMode ? "adminActivityTitle" : "adminUserList" : "adminUserProfile")}</h2>
     {actionError && <p ref={actionAlert} className={`${styles.error} ${styles.userRetryFocus}`} tabIndex={-1} role="alert">{t(actionError)}</p>}
     {profileUserId === undefined && <form className={styles.toolbar} onSubmit={search} aria-busy={loading}>
       <input className={styles.control} type="search" aria-label={t("userSearch")} placeholder={t("userSearch")} value={draftQuery} onChange={event => setDraftQuery(event.target.value)} />
@@ -454,13 +466,16 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
     {profileUserId === undefined && error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => retry("catalog")} />}
     {profileUserId === undefined && data && data.content.length === 0 && <p>{t("noAdminUsers")}</p>}
     {profileUserId === undefined && data && <>
-      <div className={tableStyles.tableRail}>
-      <table className={tableStyles.table}>
+      <div data-admin-user-list-rail={!activityMode ? "true" : undefined} data-admin-user-row-count={!activityMode ? data.content.length : undefined} className={`${tableStyles.tableRail} ${activityMode ? tableStyles.activityTableRail : ""}`}>
+      {!activityMode && <div className={tableStyles.tableActions}>
+        <button className={tableStyles.addUser} type="button" disabled aria-label={`${t("adminAddUser")} — ${t("adminAddUserUnavailable")}`} title={t("adminAddUserUnavailable")}>{t("adminAddUser")}</button>
+      </div>}
+      <table className={`${tableStyles.table} ${activityMode ? tableStyles.activityTable : ""}`}>
         <caption className={tableStyles.caption}>{t("adminUsers")}</caption>
         <thead><tr>
           <th scope="col">{t("adminUserNameColumn")}</th>
           <th scope="col">{t("email")}</th>
-          <th scope="col">{t("adminUserRoleColumn")}</th>
+          <th scope="col">{activityMode ? t("adminUserFollowers") : t("adminUserRoleColumn")}</th>
           <th scope="col">{t("userStatus")}</th>
           <th scope="col"><span className="srOnly">{t("adminUserActionsColumn")}</span></th>
         </tr></thead>
@@ -474,36 +489,32 @@ export default function AdminUsers({ onHqCountChange, profileUserId, onOpenUserP
           <span>{target.email}</span>
         </td>
         <td>
-          <span className={tableStyles.cellLabel} aria-hidden="true">{t("adminUserRoleColumn")}</span>
-          <select className={`${styles.control} ${styles.userRetryFocus}`} data-admin-user-id={target.id} data-admin-user-action="role" aria-label={`${t("userRole")}: ${getUserName(target, t("someone"))}`} value={target.role} disabled={busyId !== null} onChange={event => void mutateUser(target, "role", event.currentTarget, event.target.value as "USER" | "ADMIN")}>
+          <span className={tableStyles.cellLabel} aria-hidden="true">{activityMode ? t("adminUserFollowers") : t("adminUserRoleColumn")}</span>
+          {activityMode ? <span>{formatFollowerCount(target.followerCount)}</span> : <select className={`${styles.control} ${styles.userRetryFocus}`} data-admin-user-id={target.id} data-admin-user-action="role" aria-label={`${t("userRole")}: ${getUserName(target, t("someone"))}`} value={target.role} disabled={busyId !== null} onChange={event => void mutateUser(target, "role", event.currentTarget, event.target.value as "USER" | "ADMIN")}>
             <option value="USER">{t("adminUserRoleOption")}</option>
             <option value="ADMIN">{t("adminAdministratorRoleOption")}</option>
-          </select>
+          </select>}
         </td>
         <td>
           <span className={tableStyles.cellLabel} aria-hidden="true">{t("userStatus")}</span>
-          <span>{target.isActive ? t("activeUser") : t("blockedUser")}</span>
+          <span>{target.isActive ? activityMode ? t("adminActivityStatusActive") : t("activeUser") : activityMode ? t("adminActivityStatusBlocked") : t("blockedUser")}</span>
         </td>
         <td>
           <span className={tableStyles.cellLabel} aria-hidden="true">{t("adminUserActionsColumn")}</span>
           <div className={`${styles.rowActions} ${tableStyles.actions}`}>
-          <button type="button" data-admin-user-id={target.id} data-admin-user-action="profile" onClick={event => selectUser(target, event.currentTarget)}>{t("viewUserProfile")}</button>
-          <button className={styles.userRetryFocus} data-admin-user-id={target.id} data-admin-user-action="hq" type="button" aria-busy={busyId === target.id} disabled={busyId !== null} onClick={event => void mutateUser(target, "hq", event.currentTarget)}>{busyId === target.id ? t("loading") : target.isHq ? t("revokeHq") : t("grantHq")}</button>
-          <button className={styles.userRetryFocus} data-admin-user-id={target.id} data-admin-user-action="active" type="button" aria-busy={busyId === target.id} disabled={busyId !== null} onClick={event => void mutateUser(target, "active", event.currentTarget)}>{busyId === target.id ? t("loading") : target.isActive ? t("blockUser") : t("activateUser")}</button>
+          <button type="button" data-admin-user-id={target.id} data-admin-user-action="profile" aria-label={`${t("adminActivityOpenProfile")}: ${getUserName(target, t("someone"))}`} title={t("adminActivityOpenProfile")} onClick={event => selectUser(target, event.currentTarget)}>{activityMode ? <i className="fa-solid fa-pen" aria-hidden="true" /> : t("viewUserProfile")}</button>
+          {!activityMode && <button className={styles.userRetryFocus} data-admin-user-id={target.id} data-admin-user-action="hq" type="button" aria-busy={busyId === target.id} disabled={busyId !== null} onClick={event => void mutateUser(target, "hq", event.currentTarget)}>{busyId === target.id ? t("loading") : target.isHq ? t("revokeHq") : t("grantHq")}</button>}
+          <button className={styles.userRetryFocus} data-admin-user-id={target.id} data-admin-user-action="active" type="button" aria-label={`${target.isActive ? t("blockUser") : t("activateUser")}: ${getUserName(target, t("someone"))}`} title={target.isActive ? t("blockUser") : t("activateUser")} aria-busy={busyId === target.id} disabled={busyId !== null} onClick={event => void mutateUser(target, "active", event.currentTarget)}>{activityMode ? <i className={`fa-solid ${target.isActive ? "fa-trash" : "fa-rotate-left"}`} aria-hidden="true" /> : busyId === target.id ? t("loading") : target.isActive ? t("blockUser") : t("activateUser")}</button>
         </div>
         </td>
       </tr>)}</tbody>
       </table>
       </div>
-      <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminUsersPagination")} busy={loading} statusSuffix={data.totalElements} onPageChange={nextPage => {
-        if (nextPage === page) return;
-        mutationFocus.current = null;
-        const focus = { kind: "catalog" as const, scope: scopeGeneration.current, request: catalogRequest.current + 1, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
-        retryFocus.current = focus;
-        pageFocusCarry.current = { page: nextPage, query, lang, actor, focus };
-        setLoading(true);
-        setPage(nextPage);
-      }} />
+      {activityMode && data.totalPages > 1 ? <nav className={`${styles.pagination} ${tableStyles.activityPagination}`} aria-label={t("adminUsersPagination")} aria-busy={loading}>
+        {Array.from(new Set([0, 1, 2, ...(data.totalPages > 4 ? ["ellipsis" as const, data.totalPages - 1] : data.totalPages === 4 ? [3] : [])])).map(item => item === "ellipsis"
+          ? <span key="ellipsis" aria-hidden="true">…</span>
+          : <button key={item} type="button" aria-current={page === item ? "page" : undefined} aria-label={`${t("page")} ${item + 1}`} disabled={loading} onClick={() => changePage(item)}>{item + 1}</button>)}
+      </nav> : <Pagination className={styles.pagination} page={page} totalPages={data.totalPages} label={t("adminUsersPagination")} busy={loading} statusSuffix={data.totalElements} onPageChange={changePage} />}
     </>}
   </section>;
 }

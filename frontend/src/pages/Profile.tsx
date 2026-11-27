@@ -75,8 +75,13 @@ export default function Profile() {
   const [activeProfileSection, setActiveProfileSection] = useActiveSection(profileSectionIds, "profile-overview", { enabled: profile !== null && !settingsTab, rootMargin: "-88px 0px -55% 0px", scopeKey: `${profile?.id ?? "loading"}:${profileView ?? "overview"}:${location.hash}` });
 
   const [profileActionsOpen, setProfileActionsOpen] = useState(false);
+  const [profileListFilterOpen, setProfileListFilterOpen] = useState(false);
+  const [profileListFilter, setProfileListFilter] = useState("");
 
   const profileActionsButtonRef = useRef<HTMLButtonElement>(null);
+  const profileListFilterButtonRef = useRef<HTMLButtonElement>(null);
+
+  const networkFilterButtonRef = useRef<HTMLButtonElement>(null);
 
   const profileActionsMenuRef = useRef<HTMLDivElement>(null);
 
@@ -96,6 +101,8 @@ export default function Profile() {
     const frame = window.requestAnimationFrame(() => {
       const target = document.getElementById(targetId);
       if (!target) return;
+      const active = document.activeElement;
+      if (active !== document.body && active !== target) return;
       if (anchor) target.scrollIntoView({ block: "center" });
       else window.scrollTo({ top: 0, left: 0, behavior: "instant" });
       if (!target.hasAttribute("tabindex") && !target.matches("input, button, a")) target.setAttribute("tabindex", "-1");
@@ -258,6 +265,11 @@ export default function Profile() {
     navigate(`${path("/profile")}?settings=profile`);
   };
 
+  const closeProfileListFilter = () => {
+    setProfileListFilterOpen(false);
+    window.requestAnimationFrame(() => profileListFilterButtonRef.current?.focus());
+  };
+
   const handleProfileLogout = async () => {
     setProfileActionsOpen(false);
     setError("");
@@ -279,11 +291,11 @@ export default function Profile() {
 
   if (settingsTab) return <ProfileSettingsView settingsTab={settingsTab} identity={identity} account={account} connections={connections} feedback={feedback} favorites={favorites} passwordForm={passwordForm} supabaseLinkForm={supabaseLinkForm} />;
 
-  const pageBusy = profileLoading || followingLoading || activityLoading || newsletterLoading || socialLinksLoading || collectionLoading || favoritePreviewLoading || ratingsLoading || reviewsLoading || reviewDetailLoading || listMetadataLoading || nameBusy || passwordBusy || deleteBusy || newsletterBusy || socialLinksBusy;
+  const pageBusy = profileLoading || followingLoading || (!profileView && activityLoading) || newsletterLoading || socialLinksLoading || collectionLoading || favoritePreviewLoading || ratingsLoading || reviewsLoading || reviewDetailLoading || listMetadataLoading || nameBusy || passwordBusy || deleteBusy || newsletterBusy || socialLinksBusy;
 
   const filmsView = profileView === "collection" && collectionKind === "watched";
 
-  const viewTitle = networkView ? t(profileView === "followers" ? "followers" : "following") : profileView === "ratings" ? t("allRatings") : profileView === "lists" ? t("searchLists") : profileView === "reviews" ? t(requestedReviewValue === null ? "reviews" : "review") : filmsView ? t("films") : collectionKind === "favorites" ? t("likes") : t("watchlist");
+  const viewTitle = networkView ? t(profileView === "followers" ? "followers" : "following") : profileView === "ratings" ? t("allRatings") : profileView === "lists" ? t("searchLists") : profileView === "reviews" ? t(requestedReviewValue === null ? "reviews" : "review") : filmsView ? t("films") : collectionKind === "favorites" ? t("likes") : t("wantsToSee");
 
   return <FollowActionsProvider><main className={styles.page} data-profile-view={profileView ?? undefined} data-review-detail={requestedReviewValue !== null || undefined} data-network-view={networkView || undefined} data-films-view={filmsView || undefined} onFocusCapture={event => {
     const target = event.target;
@@ -300,11 +312,26 @@ export default function Profile() {
       {(filmsView || networkView) && <div className={styles.collectionToolbar}>
         <Link to={sectionTarget("profile-overview", null)} aria-label={t("profile")}>←</Link>
         <h2 ref={filmsView ? collectionToolbarHeadingRef : networkView ? networkToolbarHeadingRef : undefined} tabIndex={filmsView || networkView ? -1 : undefined}>{viewTitle}</h2>
-        {filmsView ? <button ref={collectionFilterButtonRef} type="button" aria-label={t("filters")} aria-expanded={collectionFiltersOpen} aria-controls="profile-collection-filters" onClick={() => setCollectionFiltersOpen(value => !value)} onKeyDown={event => { closeCollectionFiltersOnEscape(event); }}><i className="fa-solid fa-sliders" aria-hidden="true" /></button> : <span className={styles.toolbarAdornment} aria-hidden="true"><i className="fa-solid fa-sliders" /></span>}
+        {filmsView ? <button ref={collectionFilterButtonRef} type="button" aria-label={t("filters")} aria-expanded={collectionFiltersOpen} aria-controls="profile-collection-filters" onClick={() => setCollectionFiltersOpen(value => !value)} onKeyDown={event => { closeCollectionFiltersOnEscape(event); }}><i className="fa-solid fa-sliders" aria-hidden="true" /></button> : <button ref={networkFilterButtonRef} type="button" aria-label={t("filters")} aria-expanded={network.networkFilterOpen} aria-controls="profile-network-filters" onClick={() => network.setNetworkFilterOpen(value => !value)} onKeyDown={event => { if (event.key === "Escape" && network.networkFilterOpen) { event.preventDefault(); network.setNetworkFilterOpen(false); window.requestAnimationFrame(() => networkFilterButtonRef.current?.focus()); } }}><i className="fa-solid fa-sliders" aria-hidden="true" /></button>}
       </div>}
-      <section style={profileBannerStyle(profile.bannerUrl)} className={styles.hero} aria-labelledby="profile-identity">
+      {profileView === "lists" && profileListFilterOpen && <div className={styles.networkFilter} id="profile-list-filters" role="search" onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); closeProfileListFilter(); } }}>
+        <label className="srOnly" htmlFor="profile-list-filter-input">{t("searchLists")}</label>
+        <input id="profile-list-filter-input" type="search" autoFocus value={profileListFilter} placeholder={t("searchLists")} onChange={event => setProfileListFilter(event.target.value)} />
+      </div>}
+      {networkView && network.networkFilterOpen && <div className={styles.networkFilter} id="profile-network-filters" role="search" onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); network.setNetworkFilterOpen(false); window.requestAnimationFrame(() => networkFilterButtonRef.current?.focus()); } }}>
+        <label className="srOnly" htmlFor="profile-network-filter-input">{t("searchUsers")}</label>
+        <input id="profile-network-filter-input" type="search" autoFocus value={network.networkFilter} placeholder={t("searchUsers")} onChange={event => network.setNetworkFilter(event.target.value)} />
+        <p>{t("searchCurrentPage")}</p>
+      </div>}
+      <section style={profileBannerStyle(profile.bannerUrl)} className={`${styles.hero}${savedSocialLinks && savedSocialLinks.userId === user?.id && savedSocialLinks.links.length ? ` ${styles.hasSocialLinks}` : ""}`} aria-labelledby="profile-identity">
         {profileView === "lists" && <Link className={styles.heroCreate} to={path("/lists")} aria-label={t("newList")}>＋</Link>}
         <div className={styles.heroActions}>
+          {profileView === "collection" && !filmsView && <button ref={collectionFilterButtonRef} className={styles.collectionMobileFilter} type="button" aria-label={t("filters")} aria-expanded={collectionFiltersOpen} aria-controls="profile-collection-filters" onClick={() => setCollectionFiltersOpen(open => !open)} onKeyDown={event => { closeCollectionFiltersOnEscape(event); }}>
+            <i className="fa-solid fa-sliders" aria-hidden="true" />
+          </button>}
+          {profileView === "lists" && <button ref={profileListFilterButtonRef} className={styles.collectionMobileFilter} type="button" aria-label={t("filters")} aria-expanded={profileListFilterOpen} aria-controls={profileListFilterOpen ? "profile-list-filters" : undefined} onClick={() => setProfileListFilterOpen(open => !open)}>
+            <i className="fa-solid fa-sliders" aria-hidden="true" />
+          </button>}
           <button ref={profileActionsButtonRef} className={styles.heroAction} type="button" aria-label={t("profileActions")} aria-expanded={profileActionsOpen} aria-controls={profileActionsOpen ? "profile-actions-menu" : undefined} onClick={() => setProfileActionsOpen(open => !open)}>
             <i className="fa-solid fa-ellipsis" aria-hidden="true" />
           </button>
@@ -314,8 +341,10 @@ export default function Profile() {
             <button type="button" role="menuitem" onClick={() => { void handleProfileLogout(); }}>{t("logout")}</button>
           </div>}
         </div>
-        {(!profileView || profileView === "reviews" || networkView) && <button className={styles.heroProfileEdit} type="button" onClick={openProfileSettings}>{t("editProfile")}</button>}
-        {profileView ? <Link className={`${styles.heroEdit} ${profileView === "reviews" ? styles.reviewsMobileBack : ""}`} to={sectionTarget("profile-overview", null)} aria-label={t("profile")}>←</Link> : <button className={styles.heroEdit} type="button" aria-label={t("accountSettings")} onClick={openProfileSettings}>
+        {(!profileView || profileView === "reviews" || networkView || filmsView) && <button className={styles.heroProfileEdit} type="button" aria-label={t("editProfile")} onClick={openProfileSettings}><i className={`fa-solid fa-gear ${styles.mobileProfileSettingsIcon}`} aria-hidden="true" /><span>{t("editProfile")}</span></button>}
+        {profileView === "collection" && !filmsView || profileView === "lists" ? <Link className={styles.heroEdit} to={path("/profile?settings=profile")} aria-label={t("accountSettings")}>
+          <i className={`fa-solid fa-gear ${profileView === "lists" ? styles.listsMobileGear : styles.collectionMobileGear}`} aria-hidden="true" /><span className={styles.collectionDesktopBack} aria-hidden="true">←</span>
+        </Link> : profileView ? <Link className={`${styles.heroEdit} ${profileView === "reviews" ? styles.reviewsMobileBack : ""}`} to={sectionTarget("profile-overview", null)} aria-label={t("profile")}>←</Link> : <button className={styles.heroEdit} type="button" aria-label={t("accountSettings")} onClick={openProfileSettings}>
           <i className="fa-solid fa-gear" aria-hidden="true" />
         </button>}
         <ResilientImage className={styles.avatar} src={profile.avatarUrl} alt="" width={120} height={120}
@@ -323,13 +352,15 @@ export default function Profile() {
         <div className={styles.heroCopy}>
           <p className={styles.eyebrow}>{t("profile")}</p>
           <h2 id="profile-identity">{getUserIdentity(profile, t("someone"))}</h2>
-          <p className={styles.username}>{getUserHandle(profile, t("someone"))}</p>
+          <div className={styles.heroHandle}>
+            <p className={styles.username}>{getUserHandle(profile, t("someone"))}</p>
+            {savedSocialLinks && savedSocialLinks.userId === user?.id && <ProfileSocialLinks links={savedSocialLinks.links} />}
+          </div>
           {profile.location?.trim() && <p className={styles.username} aria-label={t("profileLocation")}><i className="fa-solid fa-location-dot" aria-hidden="true" /> {profile.location}</p>}
-          {savedSocialLinks && savedSocialLinks.userId === user?.id && <ProfileSocialLinks links={savedSocialLinks.links} />}
           {profile.bio?.trim() && <p className={styles.bio}>{profile.bio}</p>}
         </div>
         <dl className={styles.heroMetrics}>
-          <div><dt>{t("watched")}</dt><dd>{profile.stats.watched}</dd></div>
+          <div><dt>{!profileView || profileView === "reviews" || profileView === "lists" ? t("films") : t("watched")}</dt><dd>{profile.stats.watched}</dd></div>
           <div><dt><Link to={sectionTarget("profile-following", null)}>{t("following")}</Link></dt><dd>{following?.totalElements ?? "—"}</dd></div>
           <div><dt><Link to={sectionTarget("profile-followers", null)}>{t("followers")}</Link></dt><dd>{followers?.totalElements ?? "—"}</dd></div>
         </dl>
@@ -347,19 +378,19 @@ export default function Profile() {
             to={sectionTarget(id, itemKind)}
             aria-current={active ? "location" : undefined}
             onClick={event => { if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { if (itemKind) setCollectionPage(0); setActiveProfileSection(id); } }}
-          >{t(label)}</Link>;
+          >{itemKind === "watched" ? <><span data-desktop-label>{t(label)}</span><span data-mobile-label>{t("watched")}</span></> : t(label)}</Link>;
         })}
       </nav>
       {profileView === "reviews" && <div className={styles.reviewsBack}><Link to={requestedReviewValue !== null ? path("/profile?view=reviews") : sectionTarget("profile-overview", null)} aria-label={requestedReviewValue !== null ? t("allReviews") : t("backToProfile")}>←</Link></div>}
       {networkView && <Link className={styles.networkBack} to={sectionTarget("profile-overview", null)} aria-label={t("profile")}>←</Link>}
       {!profileView && profile.pinnedListId != null && <PinnedProfileList key={`${profile.id}:${profile.pinnedListId}`} ownerId={profile.id} listId={profile.pinnedListId} />}
       <ProfileFavoritesSection favorites={favorites} sectionTarget={sectionTarget} />
-      <ProfileActivitySection activityModel={activityModel} />
+      {!profileView && <ProfileActivitySection activityModel={activityModel} />}
       {(profileView === "ratings" || (!profileView && location.hash.startsWith("#profile-ratings"))) && <>
       <ProfileRatingsSection ratings={ratings} />
       </>}
       <section className={`${styles.section} ${styles.previewSection}`} id="profile-review-preview" aria-labelledby="profile-review-preview-title">
-        <h2 id="profile-review-preview-title"><Link to={sectionTarget("profile-reviews", null)}>{t("recentReviews")}</Link></h2>
+        <div className={styles.previewHeading}><h2 id="profile-review-preview-title"><Link to={sectionTarget("profile-reviews", null)}>{t("recentReviews")}</Link></h2><Link className={styles.previewAll} to={sectionTarget("profile-reviews", null)}>{t("allSearchResults")}</Link></div>
         {profile.recentReviews.length === 0 ? <p className={styles.empty}>{t("noReviews")}</p> : <ul className={styles.reviewCards}>{renderReviewCards(profile.recentReviews.slice(0, 2), !profileView)}</ul>}
       </section>
       {(profileView === "reviews" || (!profileView && location.hash.startsWith("#profile-reviews"))) && <>
@@ -372,10 +403,10 @@ export default function Profile() {
       {(profileView === "followers" || (!profileView && location.hash.startsWith("#profile-followers"))) && <>
       <ProfileFollowersSection network={network} route={route} />
       </>}
-      <ProfileListsSection route={route} lists={lists} profile={profile} sectionTarget={sectionTarget} />
+      <ProfileListsSection route={route} lists={lists} profile={profile} sectionTarget={sectionTarget} filterValue={profileListFilter} />
       {!profileView && <nav className={styles.overviewLinks} aria-label={t("profileCollections")}>{overviewNavigation.map(({ id, label, collectionKind: kind }) => <Link key={label} to={sectionTarget(id, kind)} onClick={event => { if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && kind) setCollectionPage(0); }}>{t(label)}<span aria-hidden="true">›</span></Link>)}</nav>}
       {(profileView === "collection" || (!profileView && location.hash.startsWith("#profile-collection"))) && <>
-      <ProfileCollectionsSection collections={collections} route={route} filmsView={filmsView} viewTitle={viewTitle} />
+      <ProfileCollectionsSection collections={collections} route={route} filmsView={filmsView} viewTitle={viewTitle} watchlistIsPublic={profile?.lists.find(list => list.listType === "WATCHLIST")?.isPublic ?? true} />
       </>}
       <section className={styles.section} id="profile-statistics" aria-labelledby="profile-stats">
         <h2 id="profile-stats">{t("profileStats")}</h2>
@@ -397,7 +428,7 @@ export default function Profile() {
       <section className={`${styles.section} ${styles.settingsSection}`} aria-labelledby="social-links-settings" aria-busy={socialLinksLoading || socialLinksBusy}>
         <h2 id="social-links-settings" tabIndex={-1} className={styles.retryFocusHeading}>{t("socialLinks")}</h2>
         {socialLinksLoading && <p className={styles.feedback} role="status">{t("loading")}</p>}
-        {socialLinksError && <RetryNotice className={styles.feedback} message={t("loadSocialLinksError")} retryLabel={t("retry")} onRetry={() => { pendingSocialLinksFocus.current = { origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, attempt: socialLinksAttempt + 1, scope: currentSocialLinksFocusScope.current, request: socialLinksRequest.current + 1 }; setSocialLinksLoading(true); setSocialLinksError(false); setSocialLinksAttempt(value => value + 1); }} />}
+        {socialLinksError && <RetryNotice className={`${styles.feedback} ${styles.socialLinksRetry}`} message={t("loadSocialLinksError")} messageClassName={styles.socialLinksRetryMessage} retryLabel={t("retry")} onRetry={() => { pendingSocialLinksFocus.current = { origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, attempt: socialLinksAttempt + 1, scope: currentSocialLinksFocusScope.current, request: socialLinksRequest.current + 1 }; setSocialLinksLoading(true); setSocialLinksError(false); setSocialLinksAttempt(value => value + 1); }} />}
         {!socialLinksLoading && !socialLinksError && <form className={styles.inlineForm} aria-labelledby="social-links-settings" aria-busy={socialLinksBusy} onSubmit={saveSocialLinks}>
           {socialLinkPlatforms.map(platform => <label key={platform} htmlFor={`social-link-${platform}`}>{t(socialLinkLabelKeys[platform])} <input id={`social-link-${platform}`} type="url" disabled={socialLinksBusy} value={socialLinkValues[platform]} placeholder="https://…" maxLength={255} onChange={event => setSocialLinkValues(values => ({ ...values, [platform]: event.target.value }))} /></label>)}
           <button className={styles.primaryButton} type="submit" disabled={socialLinksBusy}>{socialLinksBusy ? t("saving") : t("save")}</button>

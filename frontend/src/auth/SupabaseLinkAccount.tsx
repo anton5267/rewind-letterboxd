@@ -44,23 +44,30 @@ export default function SupabaseLinkAccount() {
     }
   };
 
-  return <main className={styles.page}>
+  const linkState = success ? "success" : error ? (accessToken ? "error" : "expired") : accessToken ? "form" : "expired";
+  const isExpired = linkState === "expired";
+  return <main className={styles.page} data-rewind-auth-page data-link-state={linkState}>
     <section className={styles.card} aria-labelledby="supabase-link-heading">
+      <p className={styles.eyebrow}>{t("accountEyebrow")}</p>
+      <Link className={styles.backLink} to={path(isExpired ? "/login" : "/profile?settings=profile")}>
+        <span className={styles.backIcon} aria-hidden="true">←</span>
+        <span>{t(isExpired ? "login" : "accountSettings")}</span>
+      </Link>
       <h1 className={styles.title} id="supabase-link-heading">{t("supabaseLinkCompleteTitle")}</h1>
       {success ? <>
         <p ref={statusRef} className={styles.success} role="status" tabIndex={-1}>{t("supabaseLinkSuccess")}</p>
         <Link className={styles.button} to={path("/login")}>{t("login")}</Link>
       </> : accessToken ? <>
-        <p>{t("supabaseLinkCompleteHint")}</p>
+        <p className={styles.hint}>{t("supabaseLinkCompleteHint")}</p>
         <form className={styles.form} onSubmit={submit} aria-busy={loading}>
           <label className={styles.fieldLabel} htmlFor="supabase-link-password">{t("currentPassword")}</label>
-          <input className={styles.input} id="supabase-link-password" type="password" required disabled={loading} autoComplete="current-password" value={currentPassword} onChange={event => setCurrentPassword(event.target.value)} />
+          <input className={styles.input} id="supabase-link-password" type="password" placeholder={t("currentPassword")} required disabled={loading} autoComplete="current-password" value={currentPassword} onChange={event => setCurrentPassword(event.target.value)} />
           {error && <p className={styles.error} role="alert">{t("supabaseLinkCompleteError")}</p>}
           <button className={styles.button} type="submit" disabled={loading}>{loading ? t("saving") : t("supabaseLinkComplete")}</button>
         </form>
       </> : <>
         <p className={styles.error} role="alert">{t("supabaseLinkMissingToken")}</p>
-        <Link to={path("/login")}>{t("login")}</Link>
+        <Link className={styles.expiredLogin} to={path("/login")}>{t("login")}</Link>
       </>}
     </section>
   </main>;

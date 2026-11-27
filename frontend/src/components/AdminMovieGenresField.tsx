@@ -7,9 +7,10 @@ import styles from "./AdminMovieGenresField.module.css";
 interface Props {
   selectedIds: number[];
   onChange: (genreIds: number[]) => void;
+  compact?: boolean;
 }
 
-export default function AdminMovieGenresField({ selectedIds, onChange }: Props) {
+export default function AdminMovieGenresField({ selectedIds, onChange, compact = false }: Props) {
   const { lang, t } = useLocale();
   const [genres, setGenres] = useState<Genre[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,11 +36,20 @@ export default function AdminMovieGenresField({ selectedIds, onChange }: Props) 
   };
 
   return (
-    <fieldset className={styles.fieldset} disabled={loading} aria-busy={loading}>
-      <legend>{t("adminMovieGenres")}</legend>
+    <fieldset className={`${styles.fieldset} ${compact ? styles.compact : ""}`} disabled={loading} aria-busy={loading}>
+      <legend className={compact ? styles.compactLegend : undefined}>{t("adminMovieGenres")}</legend>
       {loading && <p role="status">{t("loading")}</p>}
       {error && <RetryNotice className={styles.error} message={t("loadGenresError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => setRevision(value => value + 1)} />}
-      {!loading && !error && <div className={styles.options}>
+      {!loading && !error && compact && <div className={styles.compactValue}>
+        <span>{genres.filter(genre => selectedIds.includes(genre.id)).map(genre => localizeGenreName(genre.name, lang)).join(" · ") || "—"}</span>
+        <details><summary>{t("adminMovieChangeGenre")}</summary><div className={styles.options}>
+          {genres.map(genre => <label className={styles.option} key={genre.id}>
+            <input type="checkbox" checked={selectedIds.includes(genre.id)} onChange={event => toggle(genre.id, event.target.checked)} />
+            <span>{localizeGenreName(genre.name, lang)}</span>
+          </label>)}
+        </div></details>
+      </div>}
+      {!loading && !error && !compact && <div className={styles.options}>
         {genres.map(genre => <label className={styles.option} key={genre.id}>
           <input type="checkbox" checked={selectedIds.includes(genre.id)} onChange={event => toggle(genre.id, event.target.checked)} />
           <span>{localizeGenreName(genre.name, lang)}</span>

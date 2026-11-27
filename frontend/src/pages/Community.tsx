@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import Pagination from "../components/Pagination";
 import CommunityMemberCard from "../components/community/CommunityMemberCard";
 import RetryButton from "../components/RetryButton";
 import RetryNotice from "../components/RetryNotice";
@@ -19,6 +18,8 @@ export default function Community() {
   const [hqUsers, setHqUsers] = useState<CommunityUserPage | null>(null);
   const [directory, setDirectory] = useState<CommunityUserPage | null>(null);
   const [directoryPage, setDirectoryPage] = useState(0);
+  const [directoryPageSize, setDirectoryPageSize] = useState(() => window.matchMedia("(max-width: 767px)").matches ? 14 : 16);
+  const [showDirectorySearch, setShowDirectorySearch] = useState(false);
   const [directoryQuery, setDirectoryQuery] = useState("");
   const [directorySearch, setDirectorySearch] = useState("");
   const [sectionLoading, setSectionLoading] = useState<Record<CommunitySection, boolean>>({ reviewers: true, hq: true, directory: true });
@@ -36,6 +37,19 @@ export default function Community() {
   useEffect(() => {
     clearRetryFocus();
   }, [lang, clearRetryFocus]);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const updateDirectoryPageSize = () => {
+      const nextSize = media.matches ? 14 : 16;
+      if (directoryPageSize === nextSize) return;
+      setDirectoryPageSize(nextSize);
+      setDirectoryPage(0);
+      setDirectory(null);
+    };
+    media.addEventListener("change", updateDirectoryPageSize);
+    return () => media.removeEventListener("change", updateDirectoryPageSize);
+  }, [directoryPageSize]);
 
   useEffect(() => {
     const pending = retryFocus.current;
@@ -89,31 +103,38 @@ export default function Community() {
     let current = true;
     setSectionLoading(value => ({ ...value, directory: true }));
     setSectionErrors(value => { const next = { ...value }; delete next.directory; return next; });
-    setDirectory(null);
-    getDirectoryUsers(directorySearch, directoryPage)
+    if (directoryPage === 0) setDirectory(null);
+    getDirectoryUsers(directorySearch, directoryPage, directoryPageSize)
       .then(({ data }) => {
         if (!current) return;
         if (isPageOutOfRange(directoryPage, data.totalPages)) {
           setDirectoryPage(getLastPageIndex(data.totalPages));
           return;
         }
-        setDirectory(data);
+        setDirectory(previous => directoryPage === 0 || previous === null
+          ? data
+          : { ...data, content: [...previous.content, ...data.content] });
       })
       .catch(() => { if (current) setSectionErrors(value => ({ ...value, directory: true })); })
       .finally(() => { if (current) setSectionLoading(value => ({ ...value, directory: false })); });
     return () => { current = false; };
-  }, [lang, attempt, directoryPage, directorySearch, sectionAttempts.directory]);
+  }, [lang, attempt, directoryPage, directoryPageSize, directorySearch, sectionAttempts.directory]);
 
   const submitDirectorySearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     clearRetryFocus();
     setDirectoryPage(0);
+    setDirectory(null);
     setDirectorySearch(directoryQuery.trim());
   };
 
   const retrySection = (section: CommunitySection) => {
     clearRetryFocus();
     retryFocus.current = document.activeElement instanceof HTMLElement ? { section, origin: document.activeElement } : null;
+    if (section === "directory" && directoryPage > 0) {
+      setDirectory(null);
+      setDirectoryPage(0);
+    }
     setSectionAttempts(current => ({ ...current, [section]: current[section] + 1 }));
   };
 
@@ -143,13 +164,14 @@ export default function Community() {
           {sectionLoading.reviewers ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.reviewers ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("reviewers")} /> : reviewers.length === 0 ? <p className={styles.empty}>{t("noPopularReviewers")}</p> : <ul className={`${styles.list} ${styles.showcaseList}`}>{reviewers.slice(0, 5).map(reviewer => <CommunityMemberCard key={reviewer.id} user={reviewer} showcase />)}</ul>}
         </section>
         <section className={`${styles.card} ${styles.directoryCard}`} data-community-section="directory" aria-labelledby="community-directory" aria-busy={sectionLoading.directory}>
-          <div className={styles.cardHeading}><h2 id="community-directory" tabIndex={-1}>{t("allUsers")}</h2></div>
-          <form className={styles.searchForm} onSubmit={submitDirectorySearch}>
+          <h2 id="community-directory" className={styles.srOnly} tabIndex={-1}>{t("allUsers")}</h2>
+          <button className={styles.directorySearchToggle} type="button" aria-expanded={showDirectorySearch} aria-controls="community-user-search-form" onClick={() => setShowDirectorySearch(value => !value)}>{t("searchUsers")}</button>
+          {showDirectorySearch && <form id="community-user-search-form" className={styles.searchForm} onSubmit={submitDirectorySearch}>
             <label htmlFor="community-user-search">{t("searchUsers")}</label>
             <div><input id="community-user-search" aria-label={t("searchUsers")} value={directoryQuery} onChange={event => setDirectoryQuery(event.target.value)} placeholder={t("searchUsers")} /><button type="submit">{t("search")}</button></div>
-          </form>
+          </form>}
           {directory && directory.content.some(member => member.watchedCount !== undefined) && <div className={styles.directoryMetricsHeading} aria-hidden="true"><span>{t("watched")}</span><span>{t("searchLists")}</span><span>{t("likes")}</span></div>}
-          {sectionLoading.directory ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.directory ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("directory")} /> : !directory || directory.content.length === 0 ? <p className={styles.empty}>{t("noUsers")}</p> : <><ul className={styles.list}>{directory.content.map(member => <CommunityMemberCard key={member.id} user={member} />)}</ul><Pagination className={styles.pagination} page={directoryPage} totalPages={directory.totalPages} label={t("communityUsersPagination")} busy={sectionLoading.directory} onPageChange={page => { clearRetryFocus(); setDirectoryPage(page); }} /></>}
+          {sectionLoading.directory && !directory ? <p className={styles.loading} role="status">{t("loading")}</p> : sectionErrors.directory ? <RetryNotice className={styles.sectionStatus} message={t("loadCommunityError")} retryLabel={t("retry")} onRetry={() => retrySection("directory")} /> : !directory || directory.content.length === 0 ? <p className={styles.empty}>{t("noUsers")}</p> : <><ul className={styles.list}>{directory.content.map(member => <CommunityMemberCard key={member.id} user={member} />)}</ul>{directoryPage + 1 < directory.totalPages && <button className={styles.viewMore} type="button" aria-busy={sectionLoading.directory} disabled={sectionLoading.directory} onClick={() => { clearRetryFocus(); setDirectoryPage(page => page + 1); }}>{sectionLoading.directory ? t("loading") : t("communityViewMore")}</button>}</>}
         </section>
       </div>
     </div>

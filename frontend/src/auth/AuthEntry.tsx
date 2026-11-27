@@ -7,7 +7,7 @@ import styles from "./AuthEntry.module.css";
 
 /** Selected entry frames605:2173/922:1788; direct auth URLs stay available. */
 export default function AuthEntry() {
-  const { path, t } = useLocale();
+  const { lang, path, t } = useLocale();
   const location = useLocation();
   const returnTo = getAuthReturnTo(location.state, [path("/profile"), path("/messages"), path("/notifications"), path("/lists")]);
   const authState = returnTo ? { returnTo } : undefined;
@@ -22,8 +22,16 @@ export default function AuthEntry() {
       <div className={styles.film} aria-hidden="true"><img src={filmImage} alt="" /></div>
       <div className={styles.mobileLogo} aria-hidden="true"><img src={logo} alt="" /></div>
       <div className={styles.actions}>
-        <Link className={styles.button} to={path("/register")} state={authState}><span className={styles.buttonLabel}>{t("createAccount")}</span></Link>
-        <Link className={styles.button} to={path("/login")} state={authState}><span className={styles.buttonLabel}>{t("login")}</span></Link>
+        <Link className={styles.button} data-auth-entry-action="create-account" to={path("/register")} state={authState}>
+          <span className={styles.buttonBacking} data-auth-entry-layer="backing" aria-hidden="true" />
+          <span className={styles.buttonFace} data-auth-entry-layer="face" aria-hidden="true" />
+          <span className={styles.buttonLabel}>{lang === "en" ? "Create Account" : t("createAccount")}</span>
+        </Link>
+        <Link className={styles.button} data-auth-entry-action="login" to={path("/login")} state={authState}>
+          <span className={styles.buttonBacking} data-auth-entry-layer="backing" aria-hidden="true" />
+          <span className={styles.buttonFace} data-auth-entry-layer="face" aria-hidden="true" />
+          <span className={styles.buttonLabel}>{lang === "en" ? "Log In" : t("login")}</span>
+        </Link>
       </div>
     </section>
   </main>;

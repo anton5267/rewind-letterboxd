@@ -1,8 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
+import path from "node:path";
 
-const films = Array.from({ length: 6 }, (_, index) => ({ id: 986100 + index, title: `Search film ${index + 1}`, releaseDate: "2024-01-01", rating: 4, photoUrl: null }));
+const dunePosterUrl = "https://search-fixture.invalid/dune-poster.png";
+const films = Array.from({ length: 6 }, (_, index) => ({ id: 986100 + index, title: `Search film ${index + 1}`, releaseDate: "2024-01-01", rating: 4, photoUrl: dunePosterUrl }));
 
 async function mockSearch(page: Page) {
+  await page.route(dunePosterUrl, route => route.fulfill({ path: path.resolve(process.cwd(), "tests/e2e/fixtures/review-dune-figma/poster.png") }));
   await page.route(/^https?:\/\/[^/]+\/api\//, route => {
     const url = new URL(route.request().url());
     if (url.pathname === "/api/users/me") return route.fulfill({ status: 401, json: {} });
@@ -12,7 +15,7 @@ async function mockSearch(page: Page) {
       lists: { content: [], totalElements: 0 },
       tags: [],
       people: [],
-      reviews: { content: Array.from({ length: 3 }, (_, index) => ({ id: 986300 + index, movieId: films[index].id, movieTitle: films[index].title, userId: 986200, username: "reader", content: "A review result with enough copy for the editorial card.", rating: 4, createdAt: "2026-10-20T12:00:00Z", moviePhotoUrl: null, userAvatarUrl: null })), totalElements: 3 },
+      reviews: { content: Array.from({ length: 4 }, (_, index) => ({ id: 986300 + index, movieId: films[index].id, movieTitle: films[index].title, userId: 986200, username: "reader", content: "A review result with enough copy for the editorial card.", rating: 4, createdAt: "2026-10-20T12:00:00Z", moviePhotoUrl: dunePosterUrl, userAvatarUrl: null })), totalElements: 4 },
       journal: { content: [], totalElements: 0 },
     } });
     return route.fulfill({ json: { count: 0 } });
@@ -77,6 +80,8 @@ test("global search all variant keeps the raw desktop rails", async ({ page }) =
   expect(firstPoster?.y).toBeCloseTo(377, 0);
   expect(firstPoster?.width).toBeCloseTo(174, 0);
   expect(firstPoster?.height).toBeCloseTo(260, 0);
+  await expect.poll(() => posters.locator("img").evaluateAll(images => images.map(image => (image as HTMLImageElement).naturalWidth > 0))).toEqual(Array(6).fill(true));
+  await expect.poll(() => main.locator('#reviews article img').evaluateAll(images => images.some(image => (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
   const review = await main.locator("#reviews article").first().boundingBox();
   expect(review?.x).toBeCloseTo(120, 0);
   expect(review?.y).toBeCloseTo(692, 0);
@@ -132,14 +137,18 @@ test("global search reviews tab keeps the raw review card rhythm", async ({ page
   const main = page.getByRole("main");
   await expect(main).toHaveAttribute("aria-busy", "false");
   const cards = main.locator('#reviews [class*="reviewCard"]');
-  await expect(cards).toHaveCount(3);
+  await expect(cards).toHaveCount(4);
   const first = await cards.first().boundingBox();
   const second = await cards.nth(1).boundingBox();
+  const third = await cards.nth(2).boundingBox();
+  const fourth = await cards.nth(3).boundingBox();
   expect(first?.x).toBeCloseTo(120, 0);
   expect(first?.y).toBeCloseTo(377, 0);
   expect(first?.width).toBeCloseTo(1200, 0);
   expect(first?.height).toBeCloseTo(315, 0);
   expect(second?.y).toBeCloseTo(730, 0);
+  expect(third?.y).toBeCloseTo(1083, 0);
+  expect(fourth?.y).toBeCloseTo(1436, 0);
 });
 
 test("global search journal tab keeps the raw three-column cards", async ({ page }, testInfo) => {

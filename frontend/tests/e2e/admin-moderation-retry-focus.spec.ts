@@ -26,7 +26,7 @@ async function installFixture(page: Page, delayedSuccess = false) {
 test("Admin moderation queue Retry retains focus after repeated failure and returns to the queue after recovery", async ({ page }) => {
   const attempts = await installFixture(page);
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/uk/admin?view=moderation");
+  await page.goto("/uk/admin?view=queue");
   const queue = page.locator("section[aria-labelledby='moderation-heading']");
   const retry = queue.getByRole("button", { name: "Спробувати ще" });
   await expect(retry).toBeVisible();
@@ -46,7 +46,7 @@ test("Admin moderation queue Retry retains focus after repeated failure and retu
 test("Admin moderation queue Retry preserves a manual Tab move during delayed recovery", async ({ page }) => {
   const attempts = await installFixture(page, true);
   await page.setViewportSize({ width: 393, height: 844 });
-  await page.goto("/en/admin?view=moderation");
+  await page.goto("/en/admin?view=queue");
   const queue = page.locator("section[aria-labelledby='moderation-heading']");
   const retry = queue.getByRole("button", { name: "Retry", exact: true });
   await expect(retry).toBeVisible();

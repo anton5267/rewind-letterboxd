@@ -6,7 +6,7 @@ import RetryButton from "./RetryButton";
 import styles from "./ProfileReviewScore.module.css";
 
 // This is the owner's current movie rating, never the public film average.
-export default function ProfileReviewScore({ movieId, ownerId, title }: { movieId: number; ownerId: number; title: string }) {
+export default function ProfileReviewScore({ movieId, ownerId, title, compact = false }: { movieId: number; ownerId: number; title: string; compact?: boolean }) {
   const { isAuth, user } = useAuth();
   const { t } = useLocale();
   const enabled = isAuth && user?.id === ownerId;
@@ -47,5 +47,5 @@ export default function ProfileReviewScore({ movieId, ownerId, title }: { movieI
     setAttempt(value => value + 1);
   }} /></span>;
   return result.value === null ? null
-    : <span ref={successRef} tabIndex={-1} className={styles.scoreFocus} aria-label={`${t("myRating")}: ${result.value}/5`} title={t("myRating")}>★ {result.value}/5</span>;
+    : <span ref={successRef} tabIndex={-1} className={`${styles.scoreFocus} ${compact ? styles.compact : ""}`} aria-label={`${t("myRating")}: ${result.value}/5`} title={t("myRating")}>★ {compact ? result.value.toFixed(1) : `${result.value}/5`}</span>;
 }

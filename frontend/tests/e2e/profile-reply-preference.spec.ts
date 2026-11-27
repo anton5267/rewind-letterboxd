@@ -53,10 +53,10 @@ async function installFixture(page: Page) {
 for (const lang of ["uk", "en"] as const) {
   const copy = lang === "uk" ? {
     label: "Хто може відповідати", anyone: "Усі", followed: "Друзі (на кого ви підписані)", self: "Лише ви",
-    settings: "Налаштування", save: "Зберегти", hint: "Застосовується до нових коментарів під вашими оглядами.",
+    settings: "Налаштування", save: "Зберегти", hint: "Застосовується лише до нових коментарів. Ви можете перевизначити це налаштування для окремих оглядів або списків.",
   } : {
     label: "Allow replies from", anyone: "Anyone", followed: "Friends (people you follow)", self: "You",
-    settings: "Settings", save: "Save", hint: "Applies to new comments on your reviews.",
+    settings: "Settings", save: "Save", hint: "Applies only to new comments. You can override this setting for individual reviews or lists.",
   };
 
   test(`profile reply preference preserves drafts and saves across desktop and phone in ${lang}`, async ({ page }, testInfo) => {

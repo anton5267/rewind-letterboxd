@@ -7,3 +7,12 @@
 @import "./profile/desktop-layout.css";
 @import "./profile/responsive-views.css";
 @import "./profile/overview-reviews.css";
+
+@media (max-width: 767px) {
+  .page .hero.hasSocialLinks { height: 496px; min-height: 496px; }
+  .heroHandle { position: relative; }
+  .heroHandle > nav { position: absolute; top: 50%; left: calc(50% + 35px); transform: translateY(-50%); }
+  .heroHandle > nav a { width: 16px; min-height: 16px; font-size: 12px; }
+}
+
+.hasSocialLinks {}

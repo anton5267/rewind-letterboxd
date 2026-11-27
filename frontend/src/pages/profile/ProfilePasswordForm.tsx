@@ -38,7 +38,7 @@ export default function ProfilePasswordForm({ account, feedback }: Props) {
   const { t } = useLocale();
 
   return <form id="settings-form-authentication" className={styles.form} aria-labelledby="profile-password-form-title" onSubmit={savePassword} aria-busy={passwordBusy}>
-    <h2 id="profile-password-form-title">{t("changePassword")}</h2>
+    <h2 id="profile-password-form-title">{t("passwordChangeTitle")}</h2>
     <div className={styles.passwordField}>
       <label htmlFor="profile-current-password">{t("currentPassword")}</label>
       <input id="profile-current-password" type="password" required disabled={passwordBusy} autoComplete="current-password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} />
@@ -51,7 +51,7 @@ export default function ProfilePasswordForm({ account, feedback }: Props) {
       <label htmlFor="profile-confirm-new-password">{t("confirmNewPassword")}</label>
       <input id="profile-confirm-new-password" type="password" required disabled={passwordBusy} maxLength={MAX_PASSWORD_BYTES} autoComplete="new-password" value={confirmNewPassword} onChange={e => { setConfirmNewPassword(e.target.value); setPasswordConfirmError(false); setError(current => current === t("confirmMismatch") ? "" : current); }} aria-invalid={passwordConfirmError} aria-describedby={passwordConfirmError ? "profile-action-error" : undefined} />
     </div>
-    <button className={styles.primaryButton} type="submit" disabled={passwordBusy}>{passwordBusy ? t("saving") : t("changePassword")}</button>
     <p className={styles.passwordHint} id="profile-password-hint">{t("passwordByteLimitHint")}</p>
+    <button className={styles.primaryButton} type="submit" disabled={passwordBusy}>{passwordBusy ? t("saving") : t("changePassword")}</button>
   </form>;
 }

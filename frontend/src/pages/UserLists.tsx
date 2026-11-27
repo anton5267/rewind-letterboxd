@@ -104,7 +104,9 @@ export default function UserLists() {
   const [filmSearchLoading, setFilmSearchLoading] = useState(false);
   const [filmSearchError, setFilmSearchError] = useState(false);
   const [filmSearchRetry, setFilmSearchRetry] = useState(0);
+  const [draftPreviewOpen, setDraftPreviewOpen] = useState(false);
   const filmQueryRef = useRef<HTMLInputElement>(null);
+  const mobileFilmQueryRef = useRef<HTMLInputElement>(null);
   const [saveBusy, setSaveBusy] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [pendingListDelete, setPendingListDelete] = useState<{ id: number; trigger: HTMLButtonElement } | null>(null);
@@ -455,8 +457,21 @@ export default function UserLists() {
       window.requestAnimationFrame(() => filmQueryRef.current?.focus());
       return;
     }
-    setFilmSearchOpen(open => !open);
+    setFilmSearchOpen(open => {
+      const next = !open;
+      if (next && window.matchMedia("(max-width: 767px)").matches) window.requestAnimationFrame(() => mobileFilmQueryRef.current?.focus());
+      return next;
+    });
   };
+  const moveDraftFilm = (sourceId: number, targetId: number) => setDraftFilms(current => {
+    const sourceIndex = current.findIndex(film => film.id === sourceId);
+    const targetIndex = current.findIndex(film => film.id === targetId);
+    if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return current;
+    const next = [...current];
+    const [film] = next.splice(sourceIndex, 1);
+    next.splice(targetIndex, 0, film);
+    return next;
+  });
   const clearSelection = () => {
     setStatus("");
     if (requestedListValue !== null) navigate(path("/lists"));
@@ -593,31 +608,45 @@ export default function UserLists() {
     {itemsLoadError && <div className={`${styles.stateCard} ${styles.stateError}`} role="alert"><strong>{t("loadItemsError")}</strong><RetryButton label={t("retry")} onClick={() => { rememberRetry("items", document.activeElement as HTMLElement); setItemsReload(value => value + 1); }} /></div>}
   </>;
 
-  return <main className={`${styles.page} ${styles.mobileEditorPage} ${!selectedList ? styles.createPage : ""} ${phoneCustomEditor ? styles.phoneCustomPage : ""}`} data-list-editor={!selectedList ? "create" : "edit"} aria-labelledby="user-lists-title" aria-busy={listsLoading || itemsLoading || itemsBusy || createBusy || saveBusy || deleting}>
+  return <main className={`${styles.page} ${styles.mobileEditorPage} ${!selectedList ? styles.createPage : ""} ${phoneCustomEditor ? styles.phoneCustomPage : ""}`} data-list-editor={!selectedList ? "create" : "edit"} data-film-picker={!selectedList && filmSearchOpen && phoneLayout ? "true" : undefined} data-preview-open={draftPreviewOpen ? "true" : "false"} aria-labelledby="user-lists-title" aria-busy={listsLoading || itemsLoading || itemsBusy || createBusy || saveBusy || deleting}>
     {!selectedList && <div className={styles.createMobileHeader}>
       <Link to={path("/profile?view=lists")} aria-label={t("backToProfile")}><img src="/images/list-create-back.svg" alt="" width="18" height="18" /></Link>
       <span>{t("createListTitle")}</span>
       <span aria-hidden="true" />
     </div>}
+    {!selectedList && filmSearchOpen && phoneLayout && <section className={styles.mobileFilmPicker} aria-label={t("addFilm")}>
+      <header><button type="button" aria-label={t("backToProfile")} onClick={() => setFilmSearchOpen(false)}><img src="/images/list-create-back.svg" alt="" width="18" height="18" /></button><h1>{t("newList")}</h1></header>
+      <label className={styles.mobileFilmSearch} htmlFor="draft-film-query-mobile"><span aria-hidden="true">⌕</span><input ref={mobileFilmQueryRef} id="draft-film-query-mobile" type="search" placeholder={t("addFilm")} value={filmQuery} disabled={createBusy} onChange={event => setFilmQuery(event.target.value)} onKeyDown={event => { if (event.key === "Enter") event.preventDefault(); if (event.key === "Escape") setFilmSearchOpen(false); }} /></label>
+      {filmSearchLoading && <p role="status">{t("loading")}</p>}
+      {filmSearchError && <p role="alert">{t("loadFilmsError")} <RetryButton label={t("retry")} onClick={() => setFilmSearchRetry(value => value + 1)} /></p>}
+      {!filmSearchLoading && !filmSearchError && filmQuery.trim() && filmResults.length === 0 && <p>{t("noFilms")}</p>}
+      {!filmSearchLoading && filmResults.length > 0 && <ul className={styles.mobileFilmResults}>{filmResults.map(film => <li key={film.id}><button type="button" disabled={draftFilms.some(item => item.id === film.id)} onClick={() => setDraftFilms(current => current.some(item => item.id === film.id) ? current : [...current, film])}>{film.photoUrl && <ResilientImage className={styles.mobileResultPoster} src={film.photoUrl} alt="" fallback={<span className={styles.mobileResultPoster} aria-hidden="true" />} />}{editorialText(film.title, t("untitledFilm"))}<span>{formatMovieYear(film.releaseDate, t("unknownYear"))}</span></button></li>)}</ul>}
+      <ul className={styles.mobileDraftFilms}>{draftFilms.map((film, index) => <li key={film.id} draggable onDragStart={event => event.dataTransfer.setData("text/plain", String(film.id))} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); moveDraftFilm(Number(event.dataTransfer.getData("text/plain")), film.id); }}>
+        {film.photoUrl ? <ResilientImage className={styles.mobileDraftPoster} src={film.photoUrl} alt="" fallback={<span className={styles.mobileDraftPosterFallback} aria-hidden="true" />} /> : <span className={styles.mobileDraftPosterFallback} aria-hidden="true" />}
+        <span className={styles.mobileDraftInfo}><strong>{editorialText(film.title, t("untitledFilm"))}</strong><small>{formatMovieYear(film.releaseDate, t("unknownYear"))}</small><span className={styles.mobileDraftRating} aria-label={t("rating")}>★★★★★</span></span>
+        <span className={styles.mobileDraftActions}><button type="button" aria-label={`${t("remove")} ${editorialText(film.title, t("untitledFilm"))}`} onClick={() => setDraftFilms(current => current.filter(item => item.id !== film.id))}>−</button><button type="button" aria-label={`${t("reorderItem")} ${editorialText(film.title, t("untitledFilm"))}`} onClick={() => moveDraftFilm(film.id, draftFilms[(index + 1) % draftFilms.length]?.id ?? film.id)}>✣</button></span>
+      </li>)}</ul>
+      <button className={styles.mobileFilmDone} type="button" onClick={() => setFilmSearchOpen(false)}>{t("done")}</button>
+    </section>}
     <header className={styles.hero}>
       <p className={styles.eyebrow}>{t("listsEyebrow")}</p>
       <h1 id="user-lists-title">{!detailMode && selectedList?.listType === "CUSTOM" ? t("listSettings") : editorialText(selectedList?.name, t("newList"))}</h1>
-      <p className={styles.heroCopy}>{t("createListIntro")}</p>
+      <p className={styles.heroCopy}>{selectedList && !detailMode && selectedList.listType === "CUSTOM" ? t("listEditorIntro") : t("createListIntro")}</p>
     </header>
     <div className={styles.content}>
     {error && <p ref={actionErrorRef} className={styles.alert} role="alert" tabIndex={-1}>{error}</p>}
     {(status || (detailMode && location.state?.listCreated === selectedList?.id)) && <p className={styles.status} role="status">{status || t("listCreated")}</p>}
-    {!selectedList && <form className={`${styles.form} ${styles.createForm}`} aria-labelledby="user-lists-title" aria-busy={createBusy} onSubmit={create}>
-      <label className={styles.nameField} htmlFor="new-list-name">{t("listName")} <input ref={editorNameRef} id="new-list-name" required disabled={createBusy} value={name} maxLength={120} onChange={e => setName(e.target.value)} /></label>
+    {!selectedList && <form className={`${styles.form} ${styles.createForm}`} data-draft-count={draftFilms.length} aria-labelledby="user-lists-title" aria-busy={createBusy} onSubmit={create}>
+      <label className={styles.nameField} htmlFor="new-list-name"><span className={styles.nameLabelDesktop}>{t("name")}</span><span className={styles.nameLabelMobile}>{t("listName")}</span><input ref={editorNameRef} id="new-list-name" required disabled={createBusy} value={name} maxLength={120} onChange={e => setName(e.target.value)} /></label>
       <label className={styles.descriptionField} htmlFor="new-list-description">{t("description")} <textarea id="new-list-description" rows={5} disabled={createBusy} value={description} maxLength={5000} onChange={e => setDescription(e.target.value)} /></label>
       <div className={styles.createTags}>
-        <label className={styles.tagsField} htmlFor="new-list-tags">{t("tags")} <input ref={tagsInputRef} id="new-list-tags" className={!tagsEditing && tags.trim() ? styles.tagsInputCollapsed : ""} value={tags} maxLength={509} disabled={createBusy} placeholder={t("tagsHint")} onChange={e => setTags(e.target.value)} onFocus={() => { if (tagsCollapseTimer.current !== null) window.clearTimeout(tagsCollapseTimer.current); tagsCollapseTimer.current = null; setTagsEditing(true); }} onBlur={() => { if (tagsCollapseTimer.current !== null) window.clearTimeout(tagsCollapseTimer.current); tagsCollapseTimer.current = window.setTimeout(() => { tagsCollapseTimer.current = null; setTagsEditing(false); }, 250); }} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); if (tagsCollapseTimer.current !== null) window.clearTimeout(tagsCollapseTimer.current); tagsCollapseTimer.current = null; setTagsEditing(false); if (tags.trim()) window.requestAnimationFrame(() => tagsToggleRef.current?.focus()); } }} /></label>
+        <label className={styles.tagsField} htmlFor="new-list-tags"><span className={styles.tagsLabelRow}><span>{t("tags")}</span><small>{lang === "en" ? "Press Tab to complete, Enter to create" : "Натисніть Tab, щоб завершити, Enter — щоб додати"}</small></span><input ref={tagsInputRef} id="new-list-tags" className={!tagsEditing && tags.trim() ? styles.tagsInputCollapsed : ""} value={tags} maxLength={509} disabled={createBusy} placeholder={t("tagsHint")} onChange={e => setTags(e.target.value)} onFocus={() => { if (tagsCollapseTimer.current !== null) window.clearTimeout(tagsCollapseTimer.current); tagsCollapseTimer.current = null; setTagsEditing(true); }} onBlur={() => { if (tagsCollapseTimer.current !== null) window.clearTimeout(tagsCollapseTimer.current); tagsCollapseTimer.current = window.setTimeout(() => { tagsCollapseTimer.current = null; setTagsEditing(false); }, 250); }} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); if (tagsCollapseTimer.current !== null) window.clearTimeout(tagsCollapseTimer.current); tagsCollapseTimer.current = null; setTagsEditing(false); if (tags.trim()) window.requestAnimationFrame(() => tagsToggleRef.current?.focus()); } }} /></label>
         {tags.trim() && <div className={styles.draftTags}>{tags.split(",").map(tag => tag.trim()).filter(Boolean).map((tag, index) => <span key={`${tag}-${index}`}>{tag}</span>)}<button ref={tagsToggleRef} type="button" disabled={createBusy} aria-label={t("tags")} onClick={() => { if (tagsCollapseTimer.current !== null) window.clearTimeout(tagsCollapseTimer.current); tagsCollapseTimer.current = null; setTagsEditing(true); window.requestAnimationFrame(() => tagsInputRef.current?.focus()); }}><img src="/images/list-create-tag-add.svg" alt="" width="16" height="16" /></button></div>}
       </div>
       <fieldset className={styles.createSettings}>
         <legend><span className={styles.settingsLegendMobile}>{t("settings")}</span><span className={styles.settingsLegendDesktop}>{t("whoCanView")}</span></legend>
-        <label className={styles.checkboxLabel}><input type="checkbox" checked={isPublic} disabled={createBusy} onChange={e => setIsPublic(e.target.checked)} /><span className={styles.settingIcon}><img src="/images/list-create-public.svg" alt="" width="18" height="18" /></span> <span>{t("publicList")}</span></label>
-        <ListRankingField checked={isRanked} disabled={createBusy} icon="/images/list-create-ranked.svg" onChange={setIsRanked} />
+        <label className={styles.checkboxLabel}><input type="checkbox" checked={isPublic} disabled={createBusy} onChange={e => setIsPublic(e.target.checked)} /><span className={styles.settingIcon}><img src="/images/list-create-public.svg" alt="" width="18" height="18" /></span><span className={styles.settingAudienceMobile}>{t("publicList")}</span><span className={styles.settingAudienceDesktop}>{isPublic ? (lang === "en" ? "Everyone (public list)" : "Усі (публічний список)") : (lang === "en" ? "You (private list)" : "Лише ви (приватний список)")}</span></label>
+        <div className={styles.rankedSetting}><ListRankingField checked={isRanked} disabled={createBusy} icon="/images/list-create-ranked.svg" label={lang === "en" ? "Ranked" : "Ранжований"} onChange={setIsRanked} /></div>
         {usesHostedSupabaseAuth && <ReplyPreferenceField className={styles.replyPreferenceField} value={replyPreference} disabled={createBusy} onChange={setReplyPreference} onReset={() => setReplyPreference(null)} hint={t("listRepliesHint")} />}
       </fieldset>
       <section className={styles.draftFilms} aria-labelledby="draft-films-title">
@@ -631,20 +660,31 @@ export default function UserLists() {
           {!filmSearchLoading && !filmSearchError && filmQuery.trim() && filmResults.length === 0 && <p>{t("noFilms")}</p>}
             {!filmSearchLoading && !filmSearchError && filmResults.length > 0 && <ul className={styles.draftResults}>{filmResults.map(film => <li key={film.id}><button type="button" disabled={createBusy || draftFilms.some(item => item.id === film.id)} onClick={() => setDraftFilms(current => current.some(item => item.id === film.id) ? current : [...current, film])}>{editorialText(film.title, t("untitledFilm"))} · {formatMovieYear(film.releaseDate, t("unknownYear"))}</button></li>)}</ul>}
         </div>
-        {draftFilms.length === 0 ? <div className={styles.draftEmpty}><strong>{t("listNoFilmsTitle")}</strong><p>{t("listNoFilmsHint")}</p></div> : <ul className={styles.draftSelection}>{draftFilms.map((film, index) => <li key={film.id}><span>{isRanked && <><span data-list-rank="true">{index + 1}</span>{". "}</>}<span>{editorialText(film.title, t("untitledFilm"))}</span></span><button type="button" disabled={createBusy} aria-label={`${t("remove")} ${editorialText(film.title, t("untitledFilm"))}`} onClick={() => setDraftFilms(current => current.filter(item => item.id !== film.id))}>−</button></li>)}</ul>}
+        {draftFilms.length === 0 ? <div className={styles.draftEmpty}><strong>{t("listNoFilmsTitle")}</strong><p>{t("listNoFilmsHint")}</p></div> : <ul className={styles.draftSelection}>{draftFilms.map((film, index) => <li key={film.id} draggable onDragStart={event => event.dataTransfer.setData("text/plain", String(film.id))} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); moveDraftFilm(Number(event.dataTransfer.getData("text/plain")), film.id); }}>
+          <span className={styles.draftFilmPoster}>{film.photoUrl ? <ResilientImage src={film.photoUrl} alt="" fallback={<span aria-hidden="true" />} /> : <span aria-hidden="true" />}</span>
+          <span className={styles.draftFilmDetails}>{isRanked && <span data-list-rank="true">{index + 1}</span>}<strong>{editorialText(film.title, t("untitledFilm"))}</strong><span>{film.rating == null ? "☆☆☆☆☆" : `★ ${film.rating.toFixed(1)}`}</span></span>
+          <button type="button" disabled={createBusy} aria-label={`${t("remove")} ${editorialText(film.title, t("untitledFilm"))}`} onClick={() => setDraftFilms(current => current.filter(item => item.id !== film.id))}><img src="/images/list-create-film-remove.svg" alt="" width="18" height="18" /></button>
+          <button type="button" disabled={createBusy} aria-label={`${t("reorderItem")} ${editorialText(film.title, t("untitledFilm"))}`} onClick={() => moveDraftFilm(film.id, draftFilms[(index + 1) % draftFilms.length]?.id ?? film.id)}><img src="/images/list-create-film-drag.svg" alt="" width="18" height="18" /></button>
+        </li>)}</ul>}
         <div className={styles.createActions}>
           <Link className={styles.createCancel} to={path("/profile?view=lists")} aria-disabled={createBusy || undefined} onClick={event => { if (createBusy) event.preventDefault(); }}>{t("cancel")}</Link>
+          <button className={styles.createPreview} type="button" aria-controls="list-draft-preview" aria-pressed={draftPreviewOpen} onClick={() => { setDraftPreviewOpen(true); window.requestAnimationFrame(() => document.getElementById("list-draft-preview")?.scrollIntoView({ block: "center", behavior: "smooth" })); }}>{t("viewList")}</button>
           <button type="submit" aria-busy={createBusy} disabled={createBusy || !name.trim() || draftFilms.length === 0}>{createBusy ? t("saving") : t("save")}</button>
         </div>
       </section>
     </form>}
-    {!selectedList && <aside className={styles.emptyPreview} aria-label={t("emptyList")}>
+    {!selectedList && <aside id="list-draft-preview" className={styles.emptyPreview} aria-label={t("previewLabel")}>
       <p className={styles.eyebrow}>{t("previewLabel")}</p>
+      <button className={styles.previewClose} type="button" onClick={() => setDraftPreviewOpen(false)}>{t("done")}</button>
       <strong>{name.trim() || t("newList")}</strong>
       <p>{description.trim() || t("emptyList")}</p>
       {tags.trim() && <div className={styles.previewTags}>{tags.split(",").map(tag => tag.trim()).filter(Boolean).map(tag => <span key={tag}>#{tag}</span>)}</div>}
     </aside>}
       {selectedList && <section data-selected-list={selectedList.id} className={`${styles.section} ${styles.selectedSection} ${selectedList.listType === "CUSTOM" ? styles.customEditor : ""} ${phoneCustomEditor ? styles.phoneCustomSection : ""}`} aria-labelledby={phoneCustomEditor ? undefined : "selected-list-heading"} aria-label={phoneCustomEditor ? selectedList.name : undefined} aria-busy={itemsLoading || itemsBusy || saveBusy || deleting}>
+      {!phoneCustomEditor && !detailMode && selectedList.listType === "CUSTOM" && <div className={styles.desktopEditorHeader} data-figma-list-editor-header>
+        <Link className={styles.desktopEditorBack} to={path("/profile?view=lists")} aria-label={t("backToProfile")}><img src="/images/list-entry-back.png" width="30" height="30" alt="" /></Link>
+        <h2>{t("profileSettings")}</h2>
+      </div>}
       {phoneCustomEditor && itemsFeedback}
       {phoneCustomEditor && !mobileEntriesOpen && <MobileListSettings
         key={`${user?.id}:${selectedList.id}:${lang}`}
@@ -684,18 +724,21 @@ export default function UserLists() {
       {!phoneCustomEditor && !detailMode && selectedList.listType === "CUSTOM" && <form className={`${styles.form} ${styles.editForm}`} aria-labelledby="selected-list-heading" aria-busy={itemsBusy || saveBusy || deleting} onSubmit={saveList}>
         <label className={styles.nameField} htmlFor="edit-list-name">{t("listName")} <input ref={editorNameRef} id="edit-list-name" data-list-field="name" required maxLength={120} disabled={itemsBusy || saveBusy || deleting} value={editName} onChange={event => setEditName(event.target.value)} aria-invalid={!editName.trim()} aria-describedby={!editName.trim() ? "edit-list-name-error" : undefined} />{!editName.trim() && <span className={styles.nameError} id="edit-list-name-error" role="alert">{t("listNameRequired")}</span>}</label>
         <label className={styles.descriptionField} htmlFor="edit-list-description">{t("description")} <textarea id="edit-list-description" data-list-field="description" rows={5} maxLength={5000} disabled={itemsBusy || saveBusy || deleting} value={editDescription} onChange={event => setEditDescription(event.target.value)} /></label>
-        <label className={styles.tagsField} htmlFor="edit-list-tags">{t("tags")} <input id="edit-list-tags" data-list-field="tags" value={editTags} maxLength={509} disabled={itemsBusy || saveBusy || deleting} placeholder={t("tagsHint")} onChange={event => setEditTags(event.target.value)} /></label>
-        <label className={styles.checkboxLabel}><input type="checkbox" data-list-field="visibility" checked={editPublic} disabled={itemsBusy || saveBusy || deleting} onChange={event => setEditPublic(event.target.checked)} /> <span>{t("publicList")}</span></label>
-        <div className={styles.rankingField}><ListRankingField checked={editRanked} disabled={listControlsBusy} onChange={setEditRanked} />
-          {usesHostedSupabaseAuth && <ReplyPreferenceField className={styles.replyPreferenceField} value={editReplyPreference} disabled={listControlsBusy} onChange={setEditReplyPreference} onReset={() => setEditReplyPreference(null)} hint={t("listRepliesHint")} />}</div>
+        <label className={styles.tagsField} htmlFor="edit-list-tags">{t("tags")} <input id="edit-list-tags" data-list-field="tags" value={editTags} maxLength={509} disabled={itemsBusy || saveBusy || deleting} placeholder={t("tagsHint")} onChange={event => setEditTags(event.target.value)} /><span className={styles.editTagChips} aria-hidden="true">{editTags.split(",").map(tag => tag.trim()).filter(Boolean).map(tag => <span key={tag}>{tag}</span>)}</span></label>
+        <div className={styles.visibilityField}>
+          <label className={styles.visibilityDesktop} htmlFor="edit-list-visibility">{t("whoCanView")}<select id="edit-list-visibility" data-list-field="visibility" value={editPublic ? "public" : "private"} disabled={listControlsBusy} onChange={event => setEditPublic(event.target.value === "public")}><option value="private">{t("privateList")}</option><option value="public">{t("publicList")}</option></select></label>
+          <label className={`${styles.checkboxLabel} ${styles.visibilityMobile}`}><input type="checkbox" data-list-field="visibility" checked={editPublic} disabled={itemsBusy || saveBusy || deleting} onChange={event => setEditPublic(event.target.checked)} /> <span>{t("publicList")}</span></label>
+        </div>
+        <div className={styles.rankingField}><ListRankingField checked={editRanked} disabled={listControlsBusy} onChange={setEditRanked} /></div>
         <div className={styles.editActions}>
           <Link ref={editAddFilmsRef} className={styles.browseFilms} to={path("/films")} aria-disabled={listControlsBusy || undefined} onClick={event => { if (listControlsBusy) event.preventDefault(); }}>
             <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
             <span className={styles.browseDesktop}>{t("addFilm")}</span>
             <span className={styles.browseMobile}>{t("addFilm")}</span>
           </Link>
+          <ListEntrySearch existingIds={items.map(item => item.movie.id)} busy={listControlsBusy || itemsLoading || itemsLoadError} onAdd={addEntry} embedded />
           <button type="button" className={styles.secondaryButton} disabled={itemsBusy || saveBusy || deleting} onClick={() => { clearSelection(); setError(""); }}>{t("cancelListChanges")}</button>
-          <button type="button" className={styles.dangerButton} aria-busy={deleting} disabled={itemsBusy || deleting || saveBusy} onClick={event => requestListDelete(event.currentTarget)}>{deleting ? t("deletingList") : t("deleteList")}</button>
+            <button type="button" className={styles.dangerButton} aria-busy={deleting} disabled={itemsBusy || deleting || saveBusy} onClick={event => requestListDelete(event.currentTarget)}>{deleting ? t("deletingList") : t("deleteMovie")}</button>
           {selectedList.isPublic && <Link className={styles.viewListButton} to={path(`/lists/public/${selectedList.id}`)} aria-disabled={listControlsBusy || undefined} onClick={event => { if (listControlsBusy) event.preventDefault(); }}>{t("viewList")}</Link>}
           <button type="submit" aria-busy={saveBusy} disabled={itemsBusy || saveBusy || deleting || !editName.trim()}>{saveBusy ? t("saving") : t("save")}</button>
         </div>
@@ -715,7 +758,8 @@ export default function UserLists() {
           </Link>
           <div className={styles.itemInfo}>
             <Link className={styles.itemTitle} to={path(`/films/${item.movie.id}`)}>{movieTitle}</Link>
-            <span className={styles.itemMeta}><span className={styles.itemYear}>{formatMovieYear(item.movie.releaseDate, t("unknownYear"))}</span>{item.movie.rating !== null && <span className={styles.itemRating}> · ★ {item.movie.rating}</span>}</span>
+          <span className={styles.itemMeta}><span className={styles.itemYear}>{formatMovieYear(item.movie.releaseDate, t("unknownYear"))}</span>{!phoneCustomEditor && item.movie.rating !== null && <span className={styles.itemRating}> · ★ {item.movie.rating}</span>}</span>
+          {phoneCustomEditor && <span className={styles.entryStars} role="img" aria-label={t("rating")}>★★★★★</span>}
           </div>
           {!detailMode && <div className={styles.itemActions}>
             <button className={styles.itemRemoveButton} type="button" aria-busy={itemsBusy} disabled={itemsBusy || saveBusy || deleting || (selectedList.listType === "CUSTOM" && items.length === 1)} onClick={() => void remove(item.movie.id)}>
@@ -738,6 +782,7 @@ export default function UserLists() {
         </li>;
         })}</ul>
       </>}
+      {!phoneCustomEditor && !detailMode && selectedList.listType === "CUSTOM" && usesHostedSupabaseAuth && <details className={styles.desktopReplySettings}><summary>{t("moreProfileSettings")}</summary><ReplyPreferenceField className={styles.replyPreferenceField} value={editReplyPreference} disabled={listControlsBusy} onChange={setEditReplyPreference} onReset={() => setEditReplyPreference(null)} hint={t("listRepliesHint")} /></details>}
     </section>}
     <section className={`${styles.section} ${styles.listPicker}`} aria-labelledby="my-lists-heading" aria-busy={listsLoading}>
       <h2 ref={listsHeadingRef} id="my-lists-heading" tabIndex={-1} className={styles.retryFocusHeading}>{t("lists")}</h2>

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import ProfileMediaSettings from "../../components/ProfileMediaSettings";
 import { useLocale } from "../../i18n";
 import { useAuth } from "../../context/AuthContext";
@@ -139,8 +140,14 @@ export default function ProfileSettingsView({ settingsTab, identity, account, co
     setSocialLinkValues,
   } = connections;
   const { error, message, settingsFeedback } = feedback;
+  const socialLinkFeedback = settingsFeedback?.source === "socialLinks";
   const { t, lang } = useLocale();
   const { user } = useAuth();
+  const [editingSocialPlatform, setEditingSocialPlatform] = useState<string | null>(null);
+  const [otherLinksOpen, setOtherLinksOpen] = useState(false);
+  const socialCardPlatforms = ["x", "instagram"] as const;
+  const socialCardLabels = { x: "socialX", instagram: "socialInstagram" } as const;
+  const socialCardIcons = { x: "fa-brands fa-x-twitter", instagram: "fa-brands fa-instagram" } as const;
 
   return <ProfileSettingsShell
     activeTab={settingsTab}
@@ -160,7 +167,7 @@ export default function ProfileSettingsView({ settingsTab, identity, account, co
           <span className={identityStyles.phoneHeading}>{t("profile")}</span>
         </h2>
         <div className={identityStyles.username}><label htmlFor="settings-username">{t("username")}</label><output id="settings-username">{profile.username}</output></div>
-        <div className={identityStyles.displayName}><label htmlFor="profile-display-name">{t("displayName")}</label><input id="profile-display-name" value={displayName} disabled={nameBusy} minLength={displayName.trim() ? 2 : undefined} maxLength={60} autoComplete="nickname" onChange={event => setDisplayName(event.target.value)} /></div>
+        <div className={identityStyles.displayName}><label htmlFor="profile-display-name"><span className={identityStyles.desktopUsernameLabel}>{t("username")}</span><span className={identityStyles.mobileDisplayNameLabel}>{t("displayName")}</span></label><input id="profile-display-name" value={displayName} disabled={nameBusy} minLength={displayName.trim() ? 2 : undefined} maxLength={60} autoComplete="nickname" onChange={event => setDisplayName(event.target.value)} /></div>
         {usesHostedSupabaseAuth && <ProfileNameFields className={identityStyles.names} givenName={givenName} familyName={familyName} disabled={nameBusy} onGivenName={setGivenName} onFamilyName={setFamilyName} />}
         {usesHostedSupabaseAuth ? (
           <ProfileEmailField
@@ -176,7 +183,7 @@ export default function ProfileSettingsView({ settingsTab, identity, account, co
         )}
         <div className={identityStyles.locationWebsite} data-profile-location-website>
           <div className={identityStyles.location}><label htmlFor="settings-profile-location">{t("profileLocation")}</label><input id="settings-profile-location" value={profileLocation} maxLength={80} disabled={nameBusy} onChange={event => setProfileLocation(event.target.value)} /></div>
-          <ProfileWebsiteField value={website} disabled={nameBusy} onChange={setWebsite} />
+          <ProfileWebsiteField className={identityStyles.website} value={website} disabled={nameBusy} onChange={setWebsite} />
         </div>
         <ProfileBioField className={identityStyles.bio} key={`bio-${user?.id}-${lang}`} value={bio} disabled={nameBusy} onChange={setBio} />
         <ProfilePronounField
@@ -188,10 +195,14 @@ export default function ProfileSettingsView({ settingsTab, identity, account, co
           onChange={setPronoun}
         />
         <ReplyPreferenceField className={identityStyles.replies} key={`replies-${user?.id}-${lang}`} value={replyPreference} disabled={nameBusy} onChange={setReplyPreference} />
-        {usesHostedSupabaseAuth && <ProfilePinnedListField className={identityStyles.pinnedList} lists={profile.lists} value={pinnedListId} disabled={nameBusy} onChange={setPinnedListId} />}
+        {usesHostedSupabaseAuth && <div className={identityStyles.mobilePinnedList} data-profile-mobile-pinned-list><ProfilePinnedListField className={identityStyles.pinnedList} lists={profile.lists} value={pinnedListId} disabled={nameBusy} onChange={setPinnedListId} /></div>}
         <button className={identityStyles.save} type="submit" disabled={nameBusy}>{nameBusy ? t("saving") : t("save")}</button>
       </form>
       <ProfileFavoriteSettings favorites={favorites} />
+      {usesHostedSupabaseAuth && settingsTab === "profile" && <details className={identityStyles.desktopAdvanced} data-profile-settings-more>
+        <summary>{t("moreProfileSettings")}</summary>
+        <ProfilePinnedListField className={identityStyles.pinnedList} lists={profile.lists} value={pinnedListId} disabled={nameBusy} onChange={setPinnedListId} />
+      </details>}
     </>}
     {usesHostedSupabaseAuth && (settingsTab === "avatar" || settingsTab === "profile") && <ProfileMediaSettings
       key={`${user?.id}-${profile.id}-${lang}`} userId={profile.id} avatarUrl={profile.avatarUrl} bannerUrl={profile.bannerUrl ?? null}
@@ -205,11 +216,39 @@ export default function ProfileSettingsView({ settingsTab, identity, account, co
     </form>}
     {(settingsTab === "connections" || settingsTab === "profile") && <>
       {socialLinksLoading && <p className={settingsTab === "profile" ? settingsStyles.mobileOnly : undefined} role="status">{t("loading")}</p>}
-      {socialLinksError && <RetryNotice className={`${settingsStyles.error} ${settingsTab === "profile" ? settingsStyles.mobileOnly : ""}`} message={t("loadSocialLinksError")} retryLabel={t("retry")} onRetry={() => { pendingSocialLinksFocus.current = { origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, attempt: socialLinksAttempt + 1, scope: currentSocialLinksFocusScope.current, request: socialLinksRequest.current + 1 }; setSocialLinksLoading(true); setSocialLinksError(false); setSocialLinksAttempt(value => value + 1); }} />}
+      {socialLinksError && <RetryNotice className={`${settingsStyles.error} ${settingsStyles.socialLinksRetry} ${settingsTab === "profile" ? settingsStyles.mobileOnly : ""}`} message={t("loadSocialLinksError")} messageClassName={settingsStyles.socialLinksRetryMessage} retryLabel={t("retry")} onRetry={() => { pendingSocialLinksFocus.current = { origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, attempt: socialLinksAttempt + 1, scope: currentSocialLinksFocusScope.current, request: socialLinksRequest.current + 1 }; setSocialLinksLoading(true); setSocialLinksError(false); setSocialLinksAttempt(value => value + 1); }} />}
       {!socialLinksLoading && !socialLinksError && <form id={settingsTab === "connections" ? "settings-form-connections" : undefined} className={settingsTab === "profile" ? settingsStyles.mobileOnly : undefined} aria-labelledby="social-links-settings" aria-busy={socialLinksBusy} onSubmit={saveSocialLinks}>
-        <h2 id="social-links-settings" tabIndex={-1} className={settingsStyles.retryFocusHeading}>{t("socialLinks")}</h2>
-        {socialLinkPlatforms.map(platform => <div key={platform}><label htmlFor={`social-link-${platform}`}>{t(socialLinkLabelKeys[platform])}</label><input id={`social-link-${platform}`} type="url" disabled={socialLinksBusy} value={socialLinkValues[platform]} placeholder="https://…" maxLength={255} onChange={event => setSocialLinkValues(values => ({ ...values, [platform]: event.target.value }))} /></div>)}
-        <button type="submit" disabled={socialLinksBusy}>{socialLinksBusy ? t("saving") : t("save")}</button>
+        <h2 id="social-links-settings" tabIndex={-1} className={settingsStyles.retryFocusHeading}>{settingsTab === "connections" ? t("socialPlatforms") : t("socialLinks")}</h2>
+        {settingsTab === "connections" ? <>
+          <div className={settingsStyles.connectionCards}>
+            {socialCardPlatforms.map(platform => {
+              const isConnected = Boolean(socialLinkValues[platform].trim());
+              const isEditing = editingSocialPlatform === platform;
+              const label = t(socialCardLabels[platform]);
+              return <article className={settingsStyles.connectionCard} data-social-connection-card={platform} key={platform}>
+                <span className={settingsStyles.connectionIcon} aria-hidden="true"><i className={socialCardIcons[platform]} /></span>
+                <div className={settingsStyles.connectionCopy}>
+                  <h3>{label}</h3>
+                  <p>{t("socialLinkCardDescription")}</p>
+                  {isEditing && <label className={settingsStyles.connectionInputLabel} htmlFor={`social-link-${platform}`}>{label} URL
+                    <input id={`social-link-${platform}`} type="url" disabled={socialLinksBusy} value={socialLinkValues[platform]} placeholder="https://…" maxLength={255} autoFocus onChange={event => setSocialLinkValues(values => ({ ...values, [platform]: event.target.value }))} />
+                  </label>}
+                </div>
+                <button className={isConnected ? settingsStyles.connectedButton : settingsStyles.connectButton} type="button" disabled={socialLinksBusy} aria-expanded={isEditing} aria-label={isConnected ? `${label} — ${t("editSocialLink")}` : `${t("connectSocial")} ${label}`} onClick={() => setEditingSocialPlatform(isEditing ? null : platform)}>{isConnected ? t("connectedSocial") : t("connectSocial")}</button>
+              </article>;
+            })}
+          </div>
+          <details className={settingsStyles.otherSocialLinks} open={otherLinksOpen} onToggle={event => setOtherLinksOpen(event.currentTarget.open)}>
+            <summary>{t("otherSocialLinks")}</summary>
+            {socialLinkPlatforms.filter(platform => platform !== "x" && platform !== "instagram").map(platform => <div key={platform} data-social-platform={platform}><label htmlFor={`social-link-${platform}`}>{t(socialLinkLabelKeys[platform])}</label><input id={`social-link-${platform}`} type="url" disabled={socialLinksBusy} value={socialLinkValues[platform]} placeholder="https://…" maxLength={255} onChange={event => setSocialLinkValues(values => ({ ...values, [platform]: event.target.value }))} /></div>)}
+          </details>
+          {(editingSocialPlatform !== null || otherLinksOpen) && <button type="submit" disabled={socialLinksBusy}>{socialLinksBusy ? t("saving") : t("save")}</button>}
+        </> : <>
+          {socialLinkPlatforms.filter(platform => platform !== "x").map(platform => <div key={platform} data-social-platform={platform}><label htmlFor={`social-link-${platform}`}>{t(socialLinkLabelKeys[platform])} <input id={`social-link-${platform}`} type="url" disabled={socialLinksBusy} value={socialLinkValues[platform]} placeholder="https://…" maxLength={255} onChange={event => setSocialLinkValues(values => ({ ...values, [platform]: event.target.value }))} /></label></div>)}
+          <button type="submit" disabled={socialLinksBusy}>{socialLinksBusy ? t("saving") : t("save")}</button>
+        </>}
+        {socialLinkFeedback && message && <p className={`${settingsStyles.socialLinkFeedback} ${settingsStyles.message}`} data-settings-feedback="social-links" tabIndex={-1} role="status">{message}</p>}
+        {socialLinkFeedback && error && <p className={`${settingsStyles.socialLinkFeedback} ${settingsStyles.error}`} data-settings-feedback="social-links" tabIndex={-1} role="alert">{error}</p>}
       </form>}
     </>}
   </>}</ProfileSettingsShell>;

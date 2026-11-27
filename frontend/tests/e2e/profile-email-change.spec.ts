@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { mkdir } from "node:fs/promises";
+import { resolve } from "node:path";
 
 for (const lang of ["uk", "en"] as const) {
   test(`hosted email editor requests confirmation and refreshes only the address in ${lang}`, async ({ page }, testInfo) => {
@@ -45,12 +47,26 @@ for (const lang of ["uk", "en"] as const) {
     await expect(page).toHaveURL(new RegExp(`/${lang}/films/?$`));
     await page.goto(`/${lang}/profile?settings=profile`);
     const name = page.locator("#profile-display-name");
-    await name.fill("Unsaved name draft");
     const trigger = page.getByRole("button", { name: lang === "uk" ? "Змінити email" : "Change email", exact: true });
+    await page.setViewportSize({ width: 393, height: 852 });
+    await expect(trigger).toBeVisible();
+    const evidenceDirectory = resolve(process.cwd(), "../artifacts/visual-audit-20261126/account-email");
+    await mkdir(evidenceDirectory, { recursive: true });
+    await name.fill("Unsaved name draft");
     await trigger.click();
     const dialog = page.getByRole("dialog");
     const input = dialog.getByRole("textbox");
     await expect(input).toHaveValue(oldEmail);
+    await expect(dialog.getByRole("button", { name: lang === "uk" ? "Готово" : "Done", exact: true })).toBeDisabled();
+    await input.evaluate((element: HTMLInputElement) => element.blur());
+    const sourceGeometry = await dialog.evaluate(element => ({
+      toolbar: element.querySelector("header")!.getBoundingClientRect().toJSON(),
+      emailRow: element.querySelector("form > div")!.getBoundingClientRect().toJSON(),
+    }));
+    expect(Math.abs(sourceGeometry.toolbar.top - 48)).toBeLessThanOrEqual(1);
+    expect(Math.abs(sourceGeometry.toolbar.height - 64)).toBeLessThanOrEqual(1);
+    expect(Math.abs(sourceGeometry.emailRow.top - 145)).toBeLessThanOrEqual(1);
+    await page.screenshot({ path: resolve(evidenceDirectory, `account-settings-email-${lang}-393x852.png`) });
     await input.fill(newEmail);
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
@@ -61,6 +77,7 @@ for (const lang of ["uk", "en"] as const) {
     await input.fill(newEmail);
     await page.setViewportSize({ width: 393, height: 852 });
     await page.screenshot({ path: testInfo.outputPath("email-editor.png") });
+    await page.screenshot({ path: resolve(evidenceDirectory, `email-change-dialog-${lang}-393x852.png`) });
     const done = dialog.getByRole("button", { name: lang === "uk" ? "Готово" : "Done", exact: true });
     await done.click();
     await expect(dialog.getByRole("alert")).toBeFocused();

@@ -14,12 +14,13 @@ import {
 
 function toAdminUser(row: {
   id: string; username: string; display_name: string | null; email: string; role: string;
-  avatar_url: string | null; is_active: boolean; is_hq: boolean; created_at: string | null;
+  avatar_url: string | null; is_active: boolean; is_hq: boolean; created_at: string | null; follower_count?: string;
 }): AdminUserResponse {
   return {
     id: safeId(row.id, "User ID"), username: row.username, displayName: row.display_name,
     email: row.email, role: row.role, avatarUrl: row.avatar_url, isActive: row.is_active,
     isHq: row.is_hq, createdAt: row.created_at,
+    ...(row.follower_count === undefined ? {} : { followerCount: Number(row.follower_count) }),
   };
 }
 
@@ -44,11 +45,18 @@ export const adminUsersRepository: Pick<RewindApiRepository,
         connection.queryObject<{ total: string }>({ text: `SELECT COUNT(*)::text AS total FROM rewind.users u ${where}`, args }),
         connection.queryObject<{
           id: string; username: string; display_name: string | null; email: string; role: string;
-          avatar_url: string | null; is_active: boolean; is_hq: boolean; created_at: string | null;
+          avatar_url: string | null; is_active: boolean; is_hq: boolean; created_at: string | null; follower_count: string;
         }>({
           text: `SELECT u.id::text AS id, u.username, u.display_name, u.email, u.role, u.avatar_url,
-                        u.is_active, u.is_hq, u.created_at::text AS created_at
-                 FROM rewind.users u ${where} ORDER BY u.id DESC LIMIT $${args.length + 1} OFFSET $${args.length + 2}`,
+                        u.is_active, u.is_hq, u.created_at::text AS created_at,
+                        COALESCE(follower_counts.total, 0)::text AS follower_count
+                 FROM rewind.users u
+                 LEFT JOIN LATERAL (
+                   SELECT COUNT(*) AS total FROM rewind.follows f
+                   JOIN rewind.users follower ON follower.id=f.follower_id AND follower.is_active
+                   WHERE f.following_id=u.id
+                 ) follower_counts ON TRUE
+                 ${where} ORDER BY u.id DESC LIMIT $${args.length + 1} OFFSET $${args.length + 2}`,
           args: [...args, size, page * size],
         }),
       ]);

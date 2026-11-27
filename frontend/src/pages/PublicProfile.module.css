@@ -5,3 +5,12 @@
 @import "./public-profile/cards.css";
 @import "./public-profile/layout-responsive.css";
 @import "./public-profile/overview.css";
+
+.page[data-profile-view="lists"] .listsOverview .publicListPageNumbers { display: none; }
+
+@media (min-width: 768px) {
+  .page[data-profile-view="lists"] .listsOverview .publicListPageNumbers { display: flex; min-height: 44px; align-items: center; justify-content: center; gap: 21px; margin: 80px auto 0; color: #7e7e7e; }
+  .publicListPageNumbers button { display: inline-flex; width: 30px; min-height: 44px; align-items: center; justify-content: center; border: 0; padding: 0; background: transparent; color: inherit; font: inherit; font-size: 24px; cursor: pointer; }
+  .publicListPageNumbers button[aria-current="page"] { text-decoration: underline; text-underline-offset: 3px; }
+  .publicListPageNumbers button:disabled { cursor: wait; opacity: .6; }
+}

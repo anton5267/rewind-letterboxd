@@ -34,6 +34,10 @@ export function useProfileNetwork({ route }: {
 
   const [followersAttempt, setFollowersAttempt] = useState(0);
 
+  const [networkFilterOpen, setNetworkFilterOpen] = useState(false);
+
+  const [networkFilter, setNetworkFilter] = useState("");
+
   const networkMounted = useRef(false);
 
   const networkToolbarHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -146,7 +150,7 @@ export function useProfileNetwork({ route }: {
     setFollowingLoading(true);
     setFollowingError(false);
     setFollowing(null);
-    getFollowing(user.id, followingPage)
+    getFollowing(user.id, followingPage, 16)
       .then(({ data }) => {
         if (!isCurrent()) return;
         if (isPageOutOfRange(followingPage, data.totalPages)) {
@@ -166,7 +170,7 @@ export function useProfileNetwork({ route }: {
     const request = ++networkRequests.current.followers;
     const isCurrent = () => current && networkMounted.current && networkRequests.current.followers === request;
     setFollowers(null); setFollowersLoading(true); setFollowersError(false);
-    getFollowers(user.id, followersPage).then(({ data }) => {
+    getFollowers(user.id, followersPage, 16).then(({ data }) => {
       if (!isCurrent()) return;
       if (isPageOutOfRange(followersPage, data.totalPages)) { setFollowersPage(getLastPageIndex(data.totalPages)); return; }
       setFollowers(data);
@@ -178,6 +182,8 @@ export function useProfileNetwork({ route }: {
   useEffect(() => {
     setFollowingPage(0);
     setFollowersPage(0);
+    setNetworkFilter("");
+    setNetworkFilterOpen(false);
   }, [user?.id]);
 
   return {
@@ -196,6 +202,10 @@ export function useProfileNetwork({ route }: {
     setFollowingPage,
     followersPage,
     setFollowersPage,
+    networkFilterOpen,
+    setNetworkFilterOpen,
+    networkFilter,
+    setNetworkFilter,
   };
 }
 

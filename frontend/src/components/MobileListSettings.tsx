@@ -36,7 +36,7 @@ interface Props {
 }
 
 export default function MobileListSettings(props: Props) {
-  const { t } = useLocale();
+  const { t, lang } = useLocale();
   const id = useId();
   const tagsRef = useRef<HTMLInputElement>(null);
   const [editingTags, setEditingTags] = useState(props.initialTagsFocus ?? false);
@@ -48,11 +48,14 @@ export default function MobileListSettings(props: Props) {
         {t("listName")}
         <input id={`${id}-name`} ref={props.nameRef} data-list-field="name" value={props.name} required aria-invalid={!props.name.trim()} maxLength={120} disabled={props.busy} onChange={event => props.onName(event.target.value)} />
       </label>
-      <label className={styles.visibility}>
-        <input className="srOnly" type="checkbox" data-list-field="visibility" aria-label={t("publicList")} checked={props.isPublic} disabled={props.busy} onChange={event => props.onPublic(event.target.checked)} />
-        <img src="/images/list-settings-public.png" width={24} height={24} alt="" />
-        <span>{t(props.isPublic ? "publicList" : "privateList")}</span>
-      </label>
+      <div className={styles.identityToggles}>
+        <label className={styles.visibility}>
+          <input className="srOnly" type="checkbox" data-list-field="visibility" aria-label={t("publicList")} checked={props.isPublic} disabled={props.busy} onChange={event => props.onPublic(event.target.checked)} />
+          <img src="/images/list-settings-public.png" width={24} height={24} alt="" />
+          <span>{props.isPublic ? (lang === "en" ? "Public" : "Публічний") : (lang === "en" ? "Private" : "Приватний")}</span>
+        </label>
+        <ListRankingField compact compactLabel={lang === "en" ? "Ranked" : "Ранжований"} icon="/images/list-settings-ranked.png" checked={props.isRanked} disabled={props.busy} onChange={props.onRanked} />
+      </div>
     </div>
     <div className={styles.description}>
       <label className="srOnly" htmlFor={`${id}-description`}>{t("description")}</label>
@@ -78,10 +81,7 @@ export default function MobileListSettings(props: Props) {
         </button>
       </div>}
     </div>
-    <div className={styles.ranking}>
-      <ListRankingField checked={props.isRanked} disabled={props.busy} onChange={props.onRanked} />
-      {usesHostedSupabaseAuth && <ReplyPreferenceField className={styles.replyPreference} value={props.replyPreference} disabled={props.busy} onChange={props.onReplyPreference} onReset={() => props.onReplyPreference(null)} hint={t("listRepliesHint")} />}
-    </div>
+    {usesHostedSupabaseAuth && <div className={styles.ranking}><ReplyPreferenceField className={styles.replyPreference} value={props.replyPreference} disabled={props.busy} onChange={props.onReplyPreference} onReset={() => props.onReplyPreference(null)} hint={t("listRepliesHint")} /></div>}
     <div className={styles.actions}>
       <button type="button" disabled={props.busy} onClick={props.onCancel}>{t("cancel")}</button>
       <button type="submit" disabled={props.busy || !props.name.trim()}>{props.busy ? t("saving") : t("save")}</button>

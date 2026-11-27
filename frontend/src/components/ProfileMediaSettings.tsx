@@ -152,6 +152,7 @@ export default function ProfileMediaSettings(props: Props) {
   return (
     <div
       className={`${styles.root} ${props.mobileOnly ? styles.mobileOnly : ""}`}
+      data-profile-media-settings
     >
       {error && (
         <div ref={errorRef} tabIndex={-1}>
@@ -173,6 +174,7 @@ export default function ProfileMediaSettings(props: Props) {
         <section
           key={panel.kind}
           className={styles.panel}
+          data-profile-media-panel={panel.kind}
           aria-labelledby={`settings-${panel.kind}-title`}
           aria-busy={busy === panel.kind}
         >
@@ -181,6 +183,7 @@ export default function ProfileMediaSettings(props: Props) {
             className={`${styles.preview} ${
               panel.kind === "banner" ? styles.banner : ""
             }`}
+            data-profile-media-preview
           >
             <ResilientImage
               src={panel.url}
@@ -208,7 +211,7 @@ export default function ProfileMediaSettings(props: Props) {
               if (file) void selectFile(panel.kind, file);
             }}
           />
-          <div className={styles.actions}>
+          <div className={styles.actions} data-profile-media-actions>
             <button
               id={panel.kind === "avatar" ? "profile-avatar-url" : undefined}
               type="button"

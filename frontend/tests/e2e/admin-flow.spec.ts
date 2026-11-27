@@ -124,12 +124,12 @@ test("admin comment and review tables page, filter and recover after moderation"
 
   const comment = (id: number, hidden = false) => ({
     id, reviewId: 1, userId: 1, username: "fixture-user", content: `fixture-comment-${id}`,
-    isHidden: hidden, moderatedReason: null, moderatedAt: null, createdAt: "2026-10-17T00:00:00Z",
+    isHidden: hidden, moderatedReason: null, moderatedAt: null, createdAt: "2026-10-17T00:00:00Z", parentLikesCount: 4, parentRepliesCount: 2,
   });
   const review = (id: number, hidden = false) => ({
     id, movieId: 1, movieTitle: "Fixture film", userId: 1, username: "fixture-user",
     content: `fixture-review-${id}`, rating: 4, isHidden: hidden, moderatedReason: null,
-    moderatedAt: null, createdAt: "2026-10-17T00:00:00Z",
+    moderatedAt: null, createdAt: "2026-10-17T00:00:00Z", likesCount: 4, commentsCount: 2,
   });
   let lastReviewHidden = false;
   const commentRequests: string[] = [];
@@ -170,7 +170,7 @@ test("admin comment and review tables page, filter and recover after moderation"
   const comments = page.getByRole("region", { name: "Коментарі" });
   await expect(comments).toHaveAttribute("aria-busy", "false");
   await expect(comments.getByRole("listitem")).toHaveCount(50);
-  await comments.getByRole("button", { name: "Далі" }).click();
+  await comments.getByRole("button", { name: "Сторінка 2" }).click();
   await expect(comments.getByText("fixture-comment-88050", { exact: false })).toBeVisible();
   await expect(comments.getByRole("status")).toHaveText("Сторінка 2 з 2 · 51");
   await comments.getByRole("combobox").selectOption("hidden");
@@ -182,7 +182,7 @@ test("admin comment and review tables page, filter and recover after moderation"
   const reviews = page.getByRole("region", { name: "Огляди" });
   await reviews.getByRole("combobox").selectOption("visible");
   await expect(reviews.getByRole("listitem")).toHaveCount(50);
-  await reviews.getByRole("button", { name: "Далі" }).click();
+  await reviews.getByRole("button", { name: "Сторінка 2" }).click();
   await expect(reviews.getByText("fixture-review-99050", { exact: false })).toBeVisible();
   await reviews.getByRole("button", { name: "Приховати" }).click();
   await expect(reviews.getByRole("status")).toContainText("успішно приховано");
@@ -385,7 +385,7 @@ test("admin audit log pages through all actions", async ({ page }) => {
     await route.fulfill({ json: { content, totalPages: 2, totalElements: 51 } });
   });
 
-  await page.goto("/uk/admin?view=logs");
+  await page.goto("/uk/admin?view=moderator-logs");
   const audit = page.getByRole("region", { name: "Журнал модераторів" });
   const pagination = audit.getByRole("navigation", { name: "Сторінки журналу дій" });
   await expect(audit).toHaveAttribute("aria-busy", "false");
@@ -586,7 +586,7 @@ test("moderation queue pages, retries failed loads and returns to the previous p
       const response = await browserMutation(page, `/api/reviews/${reviewId}/comments`, "POST", { text: `${marker} comment ${i}` });
       expect(response.status).toBe(200);
     }
-    await page.goto("/uk/admin?view=moderation");
+    await page.goto("/uk/admin?view=queue");
     const queue = page.getByRole("region", { name: "Список контенту для модерації" });
     await expect(queue).toHaveAttribute("aria-busy", "false");
     await queue.getByRole("combobox").selectOption("COMMENT");
@@ -639,7 +639,8 @@ test("admin can open the dashboard, manage a notification and manage a movie", a
 
   await page.goto("/uk/admin");
   await expect(page.locator("main h1")).toHaveText(username!);
-  await expect(page.getByRole("heading", { name: "Особисті показники" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ключові показники" })).toBeVisible();
+  await page.getByText("Статистика платформи", { exact: true }).click();
   await expect(page.getByRole("region", { name: "Статистика платформи" })).toBeVisible();
   await expect(page.locator("main > header nav a")).toHaveCount(12);
 
@@ -710,7 +711,7 @@ test("admin can open the dashboard, manage a notification and manage a movie", a
   await page.getByLabel("Ваш коментар").fill(moderationComment);
   await page.getByRole("button", { name: "Надіслати" }).click();
   await expect(page.getByText(moderationComment)).toBeVisible();
-  await page.goto("/uk/admin?view=moderation");
+  await page.goto("/uk/admin?view=queue");
   const moderationSection = page.getByRole("region", { name: "Список контенту для модерації" });
   await expect(moderationSection).toHaveAttribute("aria-busy", "false");
   await moderationSection.getByLabel("Пошук у черзі").fill(moderationContent);

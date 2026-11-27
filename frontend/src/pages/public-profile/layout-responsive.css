@@ -21,7 +21,7 @@
     min-height: 1020px;
     box-sizing: border-box;
     margin-left: calc(50% - 50vw);
-    padding: 274px 24px 120px;
+    padding: 274px 24px 12px;
     justify-content: flex-start;
     border-radius: 0;
     background:
@@ -136,6 +136,8 @@
 
   .page[data-profile-view="collection"] .tabs { display: none; }
   .page[data-profile-view="collection"] [id="public-profile-collections-title"] { text-align: left; }
+  .page[data-profile-view="collection"] [id="public-profile-collections"] { padding-top: 18px; padding-bottom: 19px; }
+  .page[data-profile-view="collection"] [id="public-profile-collections"] > h2 { margin-bottom: 59px; }
 
   .stats {
     gap: 31px;
@@ -200,7 +202,6 @@
 }
 
 @media (max-width: 400px) {
-  .mobileToolbar { margin-bottom: 96px; }
   .profileRailLink { padding-inline: 12px; }
   .stat { min-height: 70px; padding-inline: 6px; }
   .stat strong { font-size: 21px; }

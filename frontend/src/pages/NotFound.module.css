@@ -1,6 +1,6 @@
-/* READY361:778: original backdrop, decorative404 and a reflowing recovery action. */
-.page { min-height: 100vh; padding: 0; background: #000; color: #fff; }
-.hero { position: relative; isolation: isolate; min-height: 1066px; box-sizing: border-box; overflow: hidden; padding: 621px 24px 160px; background: #000 url("/images/search-hero-desktop.png") center top / max(100%, 1443px) auto no-repeat; text-align: center; }
+/* READY 361:778: source hero artwork, large 404 numeral, recovery copy, and action. */
+.page { padding: 0; background: #000; color: #fff; }
+.hero { position: relative; isolation: isolate; min-height: 1066px; box-sizing: border-box; overflow: hidden; padding: 621px 24px 160px; background: #000 var(--not-found-hero-image) center top / max(100%, 1443px) auto no-repeat; text-align: center; }
 .hero::before { position: absolute; z-index: 1; top: 406px; left: 50%; width: 2645px; height: 1128px; transform: translateX(-50%); background: #000; filter: blur(145.75px); content: ""; pointer-events: none; }
 .errorCode { position: absolute; z-index: 0; top: 186px; left: 50%; transform: translateX(-50%); color: #fff; font-size: 550px; font-weight: 700; line-height: 1.12; white-space: nowrap; }
 .copy { position: relative; z-index: 2; display: grid; justify-items: center; width: min(758px, 100%); margin-inline: auto; overflow-wrap: anywhere; }

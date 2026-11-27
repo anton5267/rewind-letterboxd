@@ -10,8 +10,7 @@ test("Review comments Retry returns focus after another failure and empty recove
     if (pathname === "/api/auth/csrf") return route.fulfill({ json: { token: "comments-retry-focus" } });
     if (pathname === "/api/auth/refresh") return route.fulfill({ status: 401, json: {} });
     if (pathname.includes("unread-count")) return route.fulfill({ json: { count: 0 } });
-    if (pathname === "/api/movies/4401/details") return route.fulfill({ json: movie });
-    if (pathname === "/api/movies/4401/reviews") return route.fulfill({ json: { content: [{ id: review.id, userId: 4403, username: "reviewer", content: review.content, rating: 4, createdAt: review.createdAt }], number: 0, size: 10, totalElements: 1, totalPages: 1 } });
+    if (pathname === `/api/reviews/${review.id}`) return route.fulfill({ json: review });
     if (pathname === `/api/reviews/${review.id}/likes`) return route.fulfill({ json: 0 });
     if (pathname === `/api/reviews/${review.id}/comments`) {
       commentAttempts++;
@@ -22,7 +21,7 @@ test("Review comments Retry returns focus after another failure and empty recove
   });
 
   await page.setViewportSize({ width: 393, height: 900 });
-  await page.goto("/uk/films/4401");
+  await page.goto(`/uk/reviews/${review.id}`);
   const comments = page.getByRole("region", { name: /коментарі/i });
   await comments.getByRole("button", { name: /показати коментарі/i }).click();
   const retry = comments.getByRole("button", { name: /спробувати ще/i });
@@ -55,9 +54,7 @@ test("Review comment edit Retry restores focus after repeated save failure and s
     if (pathname === "/api/auth/csrf") return route.fulfill({ json: { token: "comment-edit-retry" } });
     if (pathname === "/api/auth/refresh") return route.fulfill({ status: 401, json: {} });
     if (pathname.includes("unread-count")) return route.fulfill({ json: { count: 0 } });
-    if (pathname === "/api/movies/4401/details") return route.fulfill({ json: movie });
-    if (pathname === "/api/movies/4401/reviews") return route.fulfill({ json: { content: [{ id: review.id, userId: user.id, username: user.username, content: review.content, rating: 4, createdAt: review.createdAt }], number: 0, size: 10, totalElements: 1, totalPages: 1 } });
-    if (pathname === `/api/movies/4401/reviews/me`) return route.fulfill({ status: 204 });
+    if (pathname === `/api/reviews/${review.id}`) return route.fulfill({ json: review });
     if (pathname === `/api/reviews/${review.id}/like-status`) return route.fulfill({ json: { liked: false, likes: 0 } });
     if (pathname === `/api/reviews/${review.id}/comments` && route.request().method() === "GET") {
       commentReads++;
@@ -73,7 +70,7 @@ test("Review comment edit Retry restores focus after repeated save failure and s
   });
 
   await page.setViewportSize({ width: 393, height: 900 });
-  await page.goto("/uk/films/4401");
+  await page.goto(`/uk/reviews/${review.id}`);
   const comments = page.getByRole("region", { name: /коментарі/i });
   await comments.getByRole("button", { name: /показати коментарі/i }).click();
   const panel = comments.locator("[data-comments-panel]");
@@ -107,9 +104,7 @@ test("review comments cannot be submitted with whitespace-only text", async ({ p
     if (pathname === "/api/auth/csrf") return route.fulfill({ json: { token: "comment-empty-guard" } });
     if (pathname === "/api/auth/refresh") return route.fulfill({ status: 401, json: {} });
     if (pathname.includes("unread-count")) return route.fulfill({ json: { count: 0 } });
-    if (pathname === "/api/movies/4401/details") return route.fulfill({ json: movie });
-    if (pathname === "/api/movies/4401/reviews") return route.fulfill({ json: { content: [{ id: review.id, userId: user.id, username: user.username, content: review.content, rating: 4, createdAt: review.createdAt }], number: 0, size: 10, totalElements: 1, totalPages: 1 } });
-    if (pathname === "/api/movies/4401/reviews/me") return route.fulfill({ status: 204 });
+    if (pathname === `/api/reviews/${review.id}`) return route.fulfill({ json: review });
     if (pathname === `/api/reviews/${review.id}/comments`) {
       if (route.request().method() === "POST") createRequests++;
       return route.fulfill({ json: { content: [], number: 0, size: 20, totalElements: 0, totalPages: 0 } });
@@ -118,7 +113,7 @@ test("review comments cannot be submitted with whitespace-only text", async ({ p
   });
 
   await page.setViewportSize({ width: 393, height: 900 });
-  await page.goto("/uk/films/4401");
+  await page.goto(`/uk/reviews/${review.id}`);
   const comments = page.getByRole("region", { name: /коментарі/i });
   await comments.getByRole("button", { name: /показати коментарі/i }).click();
   const composer = comments.getByRole("textbox", { name: /ваш коментар/i });
@@ -142,6 +137,11 @@ for (const lang of ["uk", "en"] as const) {
       genres: [], actors: [], directors: [], producers: [], externalRatings: [], similarMovies: [], myFlags: null,
     };
     const review = { id: 7302, userId: 7304, username: "author", content: "A review with reply permissions.", rating: 4, createdAt: "2026-10-01T12:00:00Z" };
+    const reviewDetails = {
+      id: review.id, content: review.content, rating: review.rating, createdAt: review.createdAt,
+      author: { id: review.userId, username: review.username, displayName: null, avatarUrl: null },
+      movie, likes: 0, likedBy: [],
+    };
     let postAttempts = 0;
     let savedText = "";
     await page.route(/^https?:\/\/[^/]+\/api\//, async route => {
@@ -150,9 +150,7 @@ for (const lang of ["uk", "en"] as const) {
       if (pathname === "/api/auth/csrf") return route.fulfill({ json: { token: "reply-permissions-fixture" } });
       if (pathname === "/api/auth/refresh") return route.fulfill({ status: 401, json: {} });
       if (pathname.endsWith("/unread-count")) return route.fulfill({ json: { count: 0 } });
-      if (pathname === `/api/movies/${movie.id}/details`) return route.fulfill({ json: movie });
-      if (pathname === `/api/movies/${movie.id}/reviews`) return route.fulfill({ json: { content: [review], number: 0, totalElements: 1, totalPages: 1 } });
-      if (pathname === `/api/movies/${movie.id}/reviews/me`) return route.fulfill({ status: 204 });
+      if (pathname === `/api/reviews/${review.id}`) return route.fulfill({ json: reviewDetails });
       if (pathname.endsWith("/like-status")) return route.fulfill({ json: { liked: false, likes: 0 } });
       if (pathname === `/api/reviews/${review.id}/comments`) {
         if (route.request().method() === "POST") {
@@ -168,7 +166,7 @@ for (const lang of ["uk", "en"] as const) {
     });
 
     await page.setViewportSize({ width: lang === "uk" ? 393 : 1440, height: 900 });
-    await page.goto(`/${lang}/films/${movie.id}`);
+    await page.goto(`/${lang}/reviews/${review.id}`);
     const comments = page.getByRole("region", { name: lang === "uk" ? "Коментарі" : "Comments" });
     await comments.getByRole("button", { name: lang === "uk" ? "Показати коментарі" : "Show comments" }).click();
     const composer = comments.getByRole("textbox", { name: lang === "uk" ? "Ваш коментар" : "Your comment" });

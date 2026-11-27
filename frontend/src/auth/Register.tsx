@@ -104,7 +104,7 @@ export default function Register() {
 
   if (success) {
     return (
-      <main className={`${styles.page} ${styles.registerPage}`} data-rewind-auth-page aria-labelledby="register-success-title" aria-busy={false}>
+      <main className={`${styles.page} ${styles.registerPage}`} data-rewind-auth-page data-register-success="true" aria-labelledby="register-success-title" aria-busy={false}>
         <div className={styles.card}>
           <p className={styles.eyebrow}>{t("accountEyebrow")}</p>
           <h1 ref={successHeading} tabIndex={-1} className={styles.title} id="register-success-title" aria-live="polite">{t("accountCreated")}</h1>
@@ -123,7 +123,7 @@ export default function Register() {
   }
 
   return (
-    <main className={`${styles.page} ${styles.registerPage}`} data-rewind-auth-page aria-labelledby="register-page-title" aria-busy={loading}>
+    <main className={`${styles.page} ${styles.registerPage}`} data-rewind-auth-page data-register-error={error ? "true" : undefined} aria-labelledby="register-page-title" aria-busy={loading}>
       <div className={styles.card}>
         <button type="button" className={styles.mobileBack} aria-label={t("return")} onClick={() => navigate(path("/home"))}>←</button>
         <p className={styles.eyebrow}>{t("accountEyebrow")}</p>
@@ -136,7 +136,7 @@ export default function Register() {
             id="register-username"
             name="username"
             className={styles.input}
-            placeholder={t("username")}
+            placeholder={lang === "en" ? "Enter username" : t("username")}
             value={nickname}
             disabled={loading}
             onChange={(e) => { setNickname(e.target.value); setNicknameTooShort(false); validation.onInput(e.currentTarget); }}
@@ -156,7 +156,7 @@ export default function Register() {
             name="email"
             className={styles.input}
             type="email"
-            placeholder={t("email")}
+            placeholder={lang === "en" ? "Enter email" : t("email")}
             value={email}
             disabled={loading}
             onChange={(e) => { setEmail(e.target.value); validation.onInput(e.currentTarget); }}
@@ -207,7 +207,7 @@ export default function Register() {
           {error && <p ref={errorMessage} tabIndex={-1} className={styles.error} id="register-error" role="alert">{t(error)}</p>}
 
           <button className={styles.button} type="submit" aria-busy={loading} disabled={loading}>
-            {loading ? t("loading") : t("createAccount")}
+            {loading ? t("loading") : lang === "en" ? "Create Account" : "Створити акаунт"}
           </button>
         </form>
 

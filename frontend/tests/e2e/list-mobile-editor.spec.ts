@@ -71,9 +71,9 @@ for (const lang of ["uk", "en"] as const) {
     await settings.screenshot({ path: testInfo.outputPath(`list-settings-${lang}.png`), animations: "disabled" });
     await name.fill("  Updated list  ");
     await settings.getByRole("textbox", { name: copy.description, exact: true }).fill("Updated description");
-    await settings.getByText(copy.public, { exact: true }).click();
+    await settings.getByRole("checkbox", { name: copy.public, exact: true }).uncheck({ force: true });
     await expect(settings.getByRole("checkbox", { name: copy.public, exact: true })).not.toBeChecked();
-    await ranked.uncheck();
+    await ranked.uncheck({ force: true });
     await settings.getByRole("button", { name: copy.tags, exact: true }).click();
     await settings.getByRole("textbox", { name: copy.tags, exact: true }).fill("newtag, favorites");
     await entries.click();
@@ -125,7 +125,7 @@ for (const lang of ["uk", "en"] as const) {
     await expect(name).toHaveValue("Updated list");
     await expect(ranked).not.toBeChecked();
     await name.fill("Discard this name");
-    await ranked.check();
+    await ranked.check({ force: true });
     await settings.getByRole("button", { name: copy.cancel, exact: true }).click();
     await expect(page).toHaveURL(/mode=view/);
     expect(updates).toHaveLength(1);

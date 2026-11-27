@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { getGenres, searchMovies, type Genre, type MoviePage, type MovieSearchParams } from "../api/search.api";
 import ResilientImage from "../components/ResilientImage";
 import RetryNotice from "../components/RetryNotice";
-import { editorialText, formatMovieYear, localizeGenreName, useLocale } from "../i18n";
+import { editorialText, formatMovieCount, formatMovieYear, localizeGenreName, useLocale } from "../i18n";
 import { getLastPageIndex, isPageOutOfRange } from "../utils/pagination";
 import styles from "./Search.module.css";
 
@@ -271,6 +271,7 @@ export default function Search() {
             <input ref={queryInputRef} id="film-search-query" aria-label={t("searchFilms")} placeholder={results ? `${t("resultsCount")}: ${results.totalElements}` : t("searchFilms")} value={query} onChange={event => setQuery(event.target.value)} />
           </label>
           <button className={styles.submit} type="submit" aria-label={t("search")} aria-busy={loading}><i className="fa-solid fa-magnifying-glass" aria-hidden="true" /><span className={styles.submitLabel}>{t("search")}</span></button>
+          {results && <p className={styles.catalogCount} role="status">{lang === "uk" ? "У каталозі" : "There are"} {formatMovieCount(results.totalElements, lang)}.</p>}
         </form>
       </section>
 
@@ -280,13 +281,13 @@ export default function Search() {
         </label>
         <label htmlFor="film-search-rating">{t("minRating")}
           <select id="film-search-rating" value={minRating} onChange={event => setMinRating(event.target.value)}>
-            <option value="">{t("anyRating")}</option>
+          <option value="">{t("rating")}</option>
             {[1, 2, 3, 4, 5].map(value => <option key={value} value={value}>{value}+</option>)}
           </select>
         </label>
         <label htmlFor="film-search-genre">{t("genre")}
           <select id="film-search-genre" aria-busy={genresLoading} value={genreId} disabled={genresLoading || genreError} onChange={event => setGenreId(event.target.value)}>
-            <option value="">{t("allGenres")}</option>
+            <option value="">{t("genre")}</option>
             {genres.map(genre => <option key={genre.id} value={genre.id}>{localizeGenreName(genre.name, lang)}</option>)}
           </select>
         </label>
@@ -318,6 +319,13 @@ export default function Search() {
             return <article className={styles.card} key={movie.id}>
               <Link className={styles.posterLink} to={path(`/films/${movie.id}`)} aria-label={`${movieTitle} ${t("poster")}`}>
                 <ResilientImage className={styles.poster} src={movie.photoUrl} alt={movieTitle} fallback={<span className={styles.posterFallback}>{movieTitle}</span>} />
+                <span className={styles.posterHoverOverlay} data-poster-hover-overlay aria-hidden="true">
+                  <span className={styles.posterActionTray} data-poster-action-tray>
+                    <i className="fa-regular fa-eye" />
+                    <i className="fa-regular fa-heart" />
+                    <i className="fa-solid fa-ellipsis" />
+                  </span>
+                </span>
               </Link>
               <h2><Link to={path(`/films/${movie.id}`)}>{movieTitle}</Link></h2>
               <p>{formatMovieYear(movie.releaseDate, t("unknownYear"))}{movie.rating != null ? ` · ★ ${movie.rating}` : ""}</p>

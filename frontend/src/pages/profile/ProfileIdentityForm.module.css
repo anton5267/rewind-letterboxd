@@ -1,4 +1,8 @@
 .phoneHeading { display: none; }
+.desktopUsernameLabel { display: none; }
+.mobileDisplayNameLabel { display: inline; }
+.mobilePinnedList { display: none; }
+.desktopAdvanced { display: none; }
 
 .locationWebsite { display: grid; gap: 12px; }
 
@@ -12,8 +16,11 @@
 
   .form > h2 { grid-column: 1 / -1; }
   .form.form > div { align-content: start; }
-  .username { grid-area: 2 / 1; }
-  .displayName { grid-area: 2 / 2; }
+  .form.form > .username { display: none; }
+  .form.form > .mobilePinnedList { display: none; }
+  .form.form > .displayName { grid-area: 2 / 1 / auto / span 2; }
+  .desktopUsernameLabel { display: inline; }
+  .mobileDisplayNameLabel { display: none; }
   .names { grid-area: 3 / 1 / auto / span 2; }
   .form.form > .names { column-gap: 8px; }
   .locationWebsite { grid-area: 5 / 1 / auto / span 2; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 12px; }
@@ -48,9 +55,29 @@
     font-size: 22px;
     line-height: 1.2;
   }
+
+  .desktopAdvanced {
+    display: block;
+    margin-top: 24px;
+    border-top: 1px solid #4d4d4d;
+    padding-top: 16px;
+  }
+  .desktopAdvanced > summary {
+    width: fit-content;
+    color: #fff;
+    font-size: 18px;
+    line-height: 1.35;
+    cursor: pointer;
+  }
+  .desktopAdvanced > [data-profile-pinned-list] {
+    width: min(588px, 100%);
+    margin-top: 24px;
+  }
 }
 
 @media (max-width: 767px) {
   .desktopHeading { display: none; }
   .phoneHeading { display: inline; color: #7e7e7e; font-weight: 400; }
+  .locationWebsite { display: contents; }
+  .location, .website { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: center; gap: 12px; min-width: 0; min-height: 45px; margin-bottom: 0; }
 }

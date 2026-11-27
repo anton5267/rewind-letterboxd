@@ -103,6 +103,8 @@ select:focus-visible {
 
 @media (max-width: 767px) {
   body { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+  body:has(main[data-popular-reviews]) { padding-bottom: 0; }
+  body:has(main[data-member-home="true"]) { padding-bottom: 0; }
   body:has([data-rewind-auth-page]) { padding-bottom: env(safe-area-inset-bottom); }
 }
 

@@ -85,7 +85,8 @@ class PublicProfileIntegrationTests {
         lists.create(email, privateList);
 
         var socialLink = new SocialLinkRequest("website", "https://rewind.example/profile");
-        assertEquals("https://rewind.example/profile", profiles.updateMySocialLinks(email, List.of(socialLink)).get(0).url());
+        var xLink = new SocialLinkRequest("x", "https://x.com/rewind");
+        assertEquals(List.of("x", "website"), profiles.updateMySocialLinks(email, List.of(socialLink, xLink)).stream().map(link -> link.platform()).toList());
 
         var profile = profiles.publicProfile(userId);
         assertEquals("profile_" + suffix, profile.username());
@@ -95,7 +96,8 @@ class PublicProfileIntegrationTests {
         assertEquals(1, profile.lists().size());
         assertEquals("Public profile list", profile.lists().get(0).name());
         assertEquals("Visible profile review", profile.recentReviews().get(0).content());
-        assertEquals("https://rewind.example/profile", profile.socialLinks().get(0).url());
+        assertEquals("https://rewind.example/profile", profile.socialLinks().stream().filter(link -> link.platform().equals("website")).findFirst().orElseThrow().url());
+        assertEquals("https://x.com/rewind", profile.socialLinks().stream().filter(link -> link.platform().equals("x")).findFirst().orElseThrow().url());
         assertEquals(1, profiles.publicLikedReviews(userId, 0, 10).getTotalElements());
         assertEquals(reviewId, profiles.publicLikedReviews(userId, 0, 10).getContent().get(0).id());
         mockMvc.perform(get("/api/users/{id}/liked-reviews", userId))

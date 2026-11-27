@@ -6,7 +6,7 @@ const emptyPage = { content: [], totalPages: 0, totalElements: 0, number: 0, siz
 for (const locale of ["uk", "en"] as const) {
   test(`admin can dismiss reported comments and lists in ${locale}`, async ({ page }) => {
     const comment = { id: 950002, reviewId: 950003, userId: 950004, username: "comment-author", content: "Reported comment fixture", isHidden: false, moderatedReason: null, moderatedAt: null, createdAt: "2026-11-10T12:00:00Z" };
-    let list = { id: 950006, userId: 950007, username: "list-owner", name: "Reported public list", description: null, isPublic: true, listType: "CUSTOM", itemCount: 1, createdAt: "2026-11-09T12:00:00Z", updatedAt: "2026-11-09T12:00:00Z", featuredPosition: null };
+    let list = { id: 950006, userId: 950007, username: "list-owner", name: "Reported public list", description: null, isPublic: true, listType: "CUSTOM", itemCount: 1, createdAt: "2026-11-09T12:00:00Z", updatedAt: "2026-11-09T12:00:00Z", featuredPosition: null, likeCount: 2 };
     let commentReports = [
       { ...comment, reportId: 950005, reportReason: "BULLYING", reportCreatedAt: "2026-11-11T12:00:00Z" },
       { ...comment, reportId: 950009, reportReason: "SPAM", reportCreatedAt: "2026-11-12T12:00:00Z" },
@@ -94,11 +94,17 @@ for (const locale of ["uk", "en"] as const) {
     const listRows = lists.getByRole("listitem");
     await expect(listRows).toHaveCount(2);
     const spamList = listRows.filter({ hasText: labels.spam });
+    const revealListActions = async (row: typeof spamList) => {
+      const actions = row.locator("details");
+      if (await actions.getAttribute("open") === null) await actions.locator("summary").click();
+    };
     await expect(spamList).toContainText("Reported public list");
+    await revealListActions(spamList);
     await spamList.getByRole("button", { name: locale === "uk" ? "Додати до вибраних" : "Feature list", exact: true }).click();
     await expect(listRows).toHaveCount(2);
     await expect(listRows.filter({ hasText: labels.spam })).toContainText(labels.spam);
     await expect(listRows.filter({ hasText: labels.bullying })).toContainText(labels.bullying);
+    await revealListActions(spamList);
     await spamList.getByRole("button", { name: locale === "uk" ? "Приховати" : "Hide", exact: true }).click();
     await expect(listRows).toHaveCount(2);
     const remainingSpamList = listRows.filter({ hasText: labels.spam });
@@ -107,10 +113,12 @@ for (const locale of ["uk", "en"] as const) {
     await expect(bullyingList).toContainText("Reported public list");
     await expect(remainingSpamList).toContainText(labels.spam);
     await expect(bullyingList).toContainText(labels.bullying);
+    await revealListActions(spamList);
     await spamList.getByRole("button", { name: labels.dismiss, exact: true }).click();
     await expect(listRows).toHaveCount(1);
     const remainingList = listRows.filter({ hasText: labels.bullying });
     await expect(remainingList).toContainText("Reported public list");
+    await revealListActions(remainingList);
     await remainingList.getByRole("button", { name: labels.dismiss, exact: true }).click();
     await expect(lists.getByRole("listitem")).toHaveCount(0);
 

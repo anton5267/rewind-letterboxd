@@ -116,6 +116,14 @@
 .notice { background: rgba(123, 223, 242, .12); color: #dffaff; }
 .empty { background: rgba(255, 255, 255, .06); color: var(--rewind-muted); }
 .error { background: #4a1f24; color: #ffd2d2; }
+.stateError {
+  padding: 14px 16px;
+  border-radius: 5px;
+  background: #4a1f24;
+  color: #ffd2d2;
+}
+.stateError p { display: inline; margin: 0; }
+.stateError button { margin-inline-start: 8px; }
 .error button:not([class]) {
   min-height: 44px;
   margin-left: 8px;
@@ -147,7 +155,8 @@
 }
 
 .itemUnread { background: var(--rewind-surface-raised); }
-.item a { color: var(--rewind-cyan); font-weight: 800; text-decoration: none; }
+.item a { color: var(--rewind-cyan); font-weight: 700; text-decoration: none; }
+.item .itemAction a { color: #eee; font-weight: 400; }
 .item a:hover { text-decoration: underline; }
 .item a:focus-visible { outline: 2px solid var(--rewind-gold); outline-offset: 3px; }
 .itemBody { line-height: 1.45; }
@@ -188,11 +197,77 @@
 .markButton:disabled { cursor: default; opacity: .5; }
 
 @media (max-width: 680px) {
-  .page { padding: 96px 12px 36px; }
-  .hero { align-items: flex-start; flex-direction: column; padding: 26px 20px; }
-  .primaryButton { width: 100%; }
-  .card { padding: 16px; }
-  .preferences { grid-template-columns: 1fr; }
+  .page { padding: 96px 12px 36px; background: #080808; }
+  .shell { width: 100%; }
+  .hero { min-height: 250px; box-sizing: border-box; align-items: stretch; flex-direction: column; justify-content: flex-start; gap: 0; padding: 20px 20px 27px; border-radius: 5px; background: #3f2056; box-shadow: none; }
+  .hero > div { flex: 1 1 auto; }
+  .hero h1 { font-size: 28px; line-height: 1.14; letter-spacing: 0; }
+  .eyebrow { color: #64dbe2; }
+  .hero p:not(.eyebrow) { max-width: none; margin-top: 14px; color: #c7c7cc; font-size: 14px; line-height: 17px; }
+  .stateError { box-sizing: border-box; display: flex; height: 116px; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 7px; margin: 16px 0 0; padding: 13px 16px; border-radius: 5px; }
+  .stateError p { display: block; min-height: 38px; font-size: 14px; line-height: 19px; }
+  .stateError button { width: 132px; min-height: 44px; flex: 0 0 44px; box-sizing: border-box; margin: 0; border: 0; border-radius: 5px; padding: 8px 12px; background: #53272f; color: #ffd2d2; font-size: 13px; font-weight: 600; line-height: 18px; text-decoration: none; }
+  .stateError button:hover:not(:disabled) { background: #60313a; }
+  .stateErrorEn { height: 72px; flex-direction: row; align-items: center; gap: 14px; padding: 0 16px; }
+  .stateErrorEn p { width: 210px; height: 20px; min-height: 0; flex: 0 0 210px; font-size: 14px; line-height: 20px; }
+  .stateErrorEn button { width: 81px; min-height: 44px; flex-basis: 81px; padding: 8px 6px; font-size: 13px; font-weight: 600; }
+  .primaryButton { width: 100%; min-height: 44px; flex: 0 0 auto; border-radius: 3px; }
+  .primaryButton:not(:disabled) { border-color: rgba(255, 255, 255, .5); background: #523363; }
+  .primaryButton:disabled { border-color: rgba(104, 68, 122, .5); background: #68447a; }
+  .card { margin-top: 16px; padding: 17px 16px 25px 14px; border-radius: 5px; background: #1f1f1f; }
+  .card[aria-label="Notifications"], .card[aria-label="Сповіщення"] { padding: 15px 16px 15px 14px; }
+  .card[aria-labelledby="notification-preferences"] { padding-right: 15px; padding-left: 15px; }
+  .card h2 { margin-bottom: 14px; font-size: 18px; line-height: 22px; }
+  .card.preferencesLoadingCard,
+  .card.preferencesLoadErrorCard,
+  .card.preferencesSaveCard { position: relative; box-sizing: border-box; padding: 16px 16px 0 14px; }
+  .preferencesLoadingCard { height: 136px; }
+  .preferencesLoadErrorCard { height: 188px; }
+  .preferencesLoadErrorCardEn { height: 144px; }
+  .preferencesSaveCard { height: 234px; }
+  .preferencesSaveErrorCard { height: 302px; }
+  .preferencesLoadingNotice { position: absolute; top: 54px; left: 14px; width: 337px; height: 48px; box-sizing: border-box; margin: 0; padding: 14px 16px; border-radius: 3px; font-size: 14px; line-height: 20px; }
+  .preferencesLoadError { position: absolute; top: 54px; left: 14px; width: 337px; height: 116px; box-sizing: border-box; margin: 0; padding: 0; border-radius: 3px; background: #4a1f24; color: #ffd2d2; }
+  .preferencesLoadErrorEn { height: 72px; }
+  .preferencesLoadMessage { position: absolute; top: 14px; left: 16px; display: block; width: 305px; font-size: 16px; line-height: 20px; }
+  .preferencesLoadErrorEn .preferencesLoadMessage { top: 26px; width: 210px; }
+  .preferencesLoadError button,
+  .preferencesSaveError button { position: absolute; left: 16px; width: 132px; height: 44px; min-height: 44px; box-sizing: border-box; margin: 0; padding: 8px 9px; border-radius: 3px; font-size: 14px; line-height: 20px; }
+  .preferencesLoadError button { top: 58px; }
+  .preferencesLoadErrorEn button { top: 14px; left: 240px; width: 81px; padding-inline: 6px; }
+  .preferencesSaveNotice { position: absolute; top: 168px; left: 14px; width: 337px; box-sizing: border-box; margin: 0; border-radius: 3px; }
+  .preferencesSaveNotice p { position: absolute; top: 14px; left: 16px; width: 305px; margin: 0; font-size: 14px; line-height: 20px; }
+  .preferencesSaveSuccess { height: 48px; background: rgba(222, 250, 255, .12); color: #defaff; }
+  .preferencesSaveError { height: 116px; background: #4a1f24; color: #ffd2d2; }
+  .preferencesSaveError p { top: 14px; }
+  .preferencesSaveError button { top: 58px; }
+  .preferencesSaveErrorEn button { left: 16px; width: 81px; padding-inline: 6px; }
+  .card.notificationFeedLoading,
+  .card.notificationFeedEmpty { position: relative; height: 122px; padding: 0; }
+  .card.notificationFeedError { position: relative; height: 132px; padding: 0; }
+  .card.notificationFeedErrorEn { height: 88px; }
+  .notificationFeedNotice { position: absolute; top: 31px; left: 15px; display: flex; width: 337px; height: 54px; align-items: center; justify-content: center; box-sizing: border-box; margin: 0; padding: 0; background: transparent; color: #aaa6a1; font-size: 15px; line-height: 20px; text-align: center; }
+  .notificationFeedErrorNotice { position: absolute; top: 7px; left: 15px; width: 337px; height: 116px; box-sizing: border-box; margin: 0; padding: 0; border-radius: 3px; background: #4a1f24; color: #ffd2d2; }
+  .notificationFeedErrorNoticeEn { height: 72px; }
+  .notificationFeedErrorMessage { position: absolute; top: 14px; left: 16px; display: block; width: 305px; font-size: 16px; line-height: 19px; }
+  .notificationFeedErrorNoticeEn .notificationFeedErrorMessage { top: 26px; width: 210px; }
+  .notificationFeedErrorNotice button { position: absolute; top: 58px; left: 16px; width: 132px; height: 44px; min-height: 44px; box-sizing: border-box; margin: 0; padding: 8px 9px; border-radius: 3px; font-size: 14px; line-height: 20px; }
+  .notificationFeedErrorNoticeEn button { top: 14px; left: 240px; width: 81px; padding-inline: 6px; }
+  .preferences { grid-template-columns: 1fr; gap: 8px; }
+  .preference { min-height: 48px; box-sizing: border-box; justify-content: space-between; gap: 12px; border: 0; border-radius: 4px; padding: 12px; font-size: 14px; line-height: 20px; }
+  .preference input { order: 1; width: 20px; height: 20px; flex: 0 0 20px; margin: 0 23px 0 auto; }
+  .preferencesSaveCard .preference input { margin-right: 0; }
+  .list { gap: 8px; }
+  .item { min-height: 74px; box-sizing: border-box; border-radius: 4px; padding: 14px; }
+  .itemUnread { min-height: 133px; }
+  .itemBody { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: baseline; column-gap: 10px; font-size: 14px; line-height: 20px; }
+  .itemBodyEnRead { column-gap: 4px; }
+  .itemBodyEnUnread { column-gap: 8px; }
+  .itemBodyEnRead [data-notification-actor],
+  .itemBodyEnUnread [data-notification-actor] { letter-spacing: -.06em; }
+  .itemAction { min-width: 0; }
+  .meta { margin-top: 8px; font-size: 12px; line-height: 14px; }
+  .markButton { margin-top: 14px; border-radius: 3px; padding: 8px 16px; }
 }
 
 @media (max-width: 360px) {

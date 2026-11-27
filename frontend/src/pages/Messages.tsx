@@ -319,9 +319,9 @@ export default function Messages() {
       </section>
       <div className={styles.layout}>
         <aside ref={conversationsPanel} className={styles.panel} aria-label={t("conversations")} aria-busy={conversationsLoading}>
-          <h2 tabIndex={-1}>{t("conversations")}</h2>
+          {!conversationsError && <h2 tabIndex={-1}>{t("conversations")}</h2>}
           {conversationsLoading && <p className={styles.notice} role="status">{t("loading")}</p>}
-          {conversationsError && <RetryNotice className={styles.error} message={t("loadConversationsError")} retryLabel={t("retry")} onRetry={() => { retryFocus.current = { target: "conversations", origin: document.activeElement instanceof HTMLElement ? document.activeElement : null }; setConversationsLoading(true); setConversationsError(false); setConversationRevision(value => value + 1); }} />}
+          {conversationsError && <RetryNotice className={`${styles.error} ${styles.conversationError} ${lang === "en" ? styles.compactConversationError : ""}`} messageClassName={lang === "en" ? styles.compactConversationErrorText : styles.conversationErrorText} message={t("loadConversationsError")} retryLabel={t("retry")} onRetry={() => { retryFocus.current = { target: "conversations", origin: document.activeElement instanceof HTMLElement ? document.activeElement : null }; setConversationsLoading(true); setConversationsError(false); setConversationRevision(value => value + 1); }} />}
           {!conversationsLoading && !conversationsError && conversations?.content.length === 0 && <p className={styles.empty}>{t("noConversations")}</p>}
           {!conversationsLoading && !conversationsError && conversations && conversations.content.length > 0 && <ul className={styles.conversationList}>
             {conversations.content.map(item => {
@@ -332,7 +332,7 @@ export default function Messages() {
           {conversations && <Pagination className={styles.pagination} page={conversationPage} totalPages={conversations.totalPages} label={t("conversationsPagination")} busy={conversationsLoading || sending} onPageChange={setConversationPage} />}
         </aside>
         <section ref={messagePanel} className={styles.panel} aria-labelledby={selected ? "conversation-title" : undefined} aria-label={selected ? undefined : t("messages")} aria-busy={messagesLoading || targetConversationLoading || sending}>
-          {updates.error && <RetryNotice className={styles.error} message={t("refreshMessagesError")} retryLabel={t("retry")}
+          {updates.error && <RetryNotice className={`${styles.error} ${styles.mutedError} ${lang === "en" ? styles.compactError : ""}`} messageClassName={lang === "en" ? styles.compactErrorText : undefined} message={t("refreshMessagesError")} retryLabel={t("retry")}
             disabled={updates.refreshing} busy={updates.refreshing} onRetry={() => {
               retryFocus.current = { target: "refresh", origin: document.activeElement instanceof HTMLElement ? document.activeElement : null };
               updates.refresh();
@@ -344,8 +344,8 @@ export default function Messages() {
             <h2 className={styles.conversationTitle} id="conversation-title" tabIndex={-1}><Link to={path(`/users/${selected.otherUser.id}`)}>{getUserIdentity(selected.otherUser, t("someone"))}</Link></h2>
             {messagesLoading && <p className={styles.notice} role="status">{t("loading")}</p>}
             {messagesError && <RetryNotice className={styles.error} message={t("loadMessagesError")} retryLabel={t("retry")} onRetry={() => { retryFocus.current = { target: "messages", origin: document.activeElement instanceof HTMLElement ? document.activeElement : null }; setMessagesLoading(true); setMessagesError(false); setMessageRevision(value => value + 1); }} />}
-            {readError && <RetryNotice className={styles.error} message={t("markMessagesReadError")} retryLabel={readRetrying ? t("loading") : t("retry")} disabled={readRetrying} busy={readRetrying} onRetry={() => { retryFocus.current = { target: "read", origin: document.activeElement instanceof HTMLElement ? document.activeElement : null }; void retryMarkRead(); }} />}
-            {!messagesLoading && !messagesError && messages?.content.length === 0 && <p className={styles.empty}>{t("noMessages")}</p>}
+            {readError && <RetryNotice className={`${styles.error} ${styles.mutedError} ${lang === "en" ? styles.compactError : ""}`} messageClassName={lang === "en" ? styles.compactErrorText : undefined} message={t("markMessagesReadError")} retryLabel={readRetrying ? t("loading") : t("retry")} disabled={readRetrying} busy={readRetrying} onRetry={() => { retryFocus.current = { target: "read", origin: document.activeElement instanceof HTMLElement ? document.activeElement : null }; void retryMarkRead(); }} />}
+            {!messagesLoading && !messagesError && messages?.content.length === 0 && <p className={`${styles.empty} ${styles.emptyMessages}`}><span>{t("noMessages")}</span></p>}
             {!messagesLoading && !messagesError && messages && messages.content.length > 0 && <ul className={styles.messageList} role="log" aria-label={t("messages")} aria-live="polite" aria-relevant="additions">
               {[...messages.content].reverse().map(item => <li className={`${styles.messageBubble} ${item.senderId === user?.id ? styles.messageBubbleOwn : ""}`} key={item.id}><div>{editorialText(item.body, t("emptyMessageBody"))}</div><small>{formatDateTime(item.createdAt, lang)}</small></li>)}
             </ul>}
@@ -356,7 +356,7 @@ export default function Messages() {
             }}>{t("newMessagesAvailable")}</button>}
             {messages && <Pagination className={styles.pagination} page={messagePage} totalPages={messages.totalPages} label={t("messagesPagination")} busy={messagesLoading || sending} previousLabel={t("newerMessages")} nextLabel={t("olderMessages")} onPageChange={setMessagePage} />}
             <form className={styles.composer} onSubmit={submit} aria-busy={sending}>
-              {sendError && <RetryNotice className={styles.error} message={t("sendMessageError")} retryLabel={t("retry")} disabled={sending || !body.trim()} busy={sending} onRetry={() => void sendCurrentMessage()} />}
+              {sendError && <RetryNotice className={`${styles.error} ${styles.sendError} ${lang === "en" ? styles.compactSendError : ""}`} messageClassName={lang === "en" ? styles.compactSendErrorText : undefined} message={t("sendMessageError")} retryLabel={t("retry")} disabled={sending || !body.trim()} busy={sending} onRetry={() => void sendCurrentMessage()} />}
               <input aria-label={t("messageText")} value={body} maxLength={2000} readOnly={sending} onChange={event => { setBody(event.target.value); setSendError(false); }} placeholder={t("messageText")} />
               <button type="submit" aria-busy={sending} disabled={!body.trim() || sending}>{sending ? t("loading") : t("sendMessage")}</button>
             </form>
