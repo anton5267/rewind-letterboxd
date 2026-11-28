@@ -49,7 +49,13 @@ test("Films Discovery recovers API failures, applies filters and keeps retry key
               tags: [],
               likeCount: 2,
               itemCount: 3,
-              previewMovies: [],
+              previewMovies: [{
+                id: 88503,
+                title: "Recovered crew film",
+                releaseDate: "2024-01-01",
+                rating: 7.5,
+                photoUrl: null,
+              }],
             }],
             totalPages: 1,
             totalElements: 1,
@@ -87,7 +93,7 @@ test("Films Discovery recovers API failures, applies filters and keeps retry key
   await expect(crewRetry).toBeVisible();
   await crewRetry.click();
   await expect(crew).toHaveAttribute("aria-busy", "false");
-  await expect(crew.getByRole("link", { name: "Recovered crew choice" })).toBeVisible();
+  await expect(crew.getByRole("link", { name: "Recovered crew film" })).toBeVisible();
   const genreRetry = page.getByRole("button", { name: "Спробувати ще" });
   await expect(genreRetry).toBeVisible();
   await genreRetry.click();
@@ -108,6 +114,6 @@ test("Films Discovery recovers API failures, applies filters and keeps retry key
   await filteredRequest;
 
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1440);
-  await expect(page.getByRole("link", { name: "1. Dune" })).toBeVisible();
+  await expect(page.locator('main article a[href="/uk/films/51001"]').first()).toBeVisible();
   await page.screenshot({ path: resolve(captureDirectory, `${platform}-uk-desktop-1440.png`), fullPage: true });
 });
