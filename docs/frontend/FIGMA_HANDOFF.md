@@ -8,6 +8,10 @@ Re-ran the READY desktop Tags screen `1480:7445` at 1440×1024 and the mobile Ta
 
 # REWIND — Figma design handoff
 
+### All Films desktop contrast — 28 November 2026
+
+Production axe on GitHub Pages `/uk/films/` found a serious WCAG color-contrast failure in the catalogue count and Year/Rating/Genre filter text (3 elements; ratios 4.06:1 and 3.63:1). Raised the source gray from `#7e7e7e` to `#999` on the existing dark surfaces; poster grid, filter geometry, hover state, and Figma frame remain unchanged. Added a Playwright fixture assertion that runs axe `color-contrast` and checks the count/filter color. The regression assertion failed at the old color, then focused fixture test passed 1/1; `npm run verify:build` passed. PR #30 merged as `cc46f0c`; Pages run `46111794371` succeeded. Fresh production axe now reports zero violations (44 passes, 2 incomplete), the three computed colors are `rgb(153,153,153)`, and the page has no JavaScript errors. Other axe categories and states were not included in the fixture regression assertion.
+
 ### Featured lists production status — 28 November 2026
 
 Fresh read-only production checks supersede the older November 27 notes that described a missing category column. Migration `20261127174731_featured_list_categories` is in hosted migration history, `rewind.lists.featured_category` exists, and `rewind-api` v70 is active. The public featured-feed endpoint returned HTTP 200 from the GitHub Pages origin. The hosted table currently has no public featured custom lists, so the three category groups correctly remain empty until an administrator curates real lists. No sample list was inserted; fixture captures prove layout only, not curated-content parity.
