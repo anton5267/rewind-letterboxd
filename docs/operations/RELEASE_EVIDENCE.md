@@ -2,6 +2,13 @@
 
 Reviewed 28 November 2026. This page summarizes recorded production state and acceptance boundaries. Detailed results retain their dates in the [archive](../archive/README.md).
 
+## Local Supabase Auth confirmation and recovery — 28 November 2026
+
+- Started the repository's disposable Supabase stack from all checked-in migrations with local email confirmation enabled and Mailpit as the mail sink. A one-off Playwright browser flow passed UI registration, received the confirmation email, completed its explicit confirmation callback, requested password recovery, followed the recovery email, and changed the password successfully.
+- The first attempt exposed that the local Auth `site_url` lacked a trailing slash, producing malformed email callback URLs because the versioned email templates append `/uk` or `/en`. The local-only `supabase/config.toml` now ends `site_url` with `/`; the generated callback routes then resolved and both confirmation and recovery worked. Keep the hosted Supabase Auth Site URL slash-terminated to match the templates.
+- Playwright bypassed the app's production CSP only in its local test context so the local browser could contact `127.0.0.1:54321`; no CSP or production setting was loosened. Temporary `example.invalid` test accounts were deleted and Mailpit messages purged after the run.
+- This validates local implementation and callback behavior only. It does not verify hosted Auth Site URL / redirect allowlist / email templates, real email delivery, two-account privacy flows, hosted database changes, or deployment. No production data or settings changed.
+
 ## GitHub Actions validation for PR #48 — 28 November 2026
 
 - Latest candidate commit `23236e3f8abdf646bfcaa14aa5dbf4e09598e819` passed GitHub Actions run [46167097791](https://github.com/anton5267/rewind-letterboxd/actions/runs/46167097791): backend/frontend verification and isolated Supabase migration replay both succeeded. This includes MySQL backend tests, Deno Edge API checks, frontend build/typecheck, published-writer route generation, TMDB crosswalk structure, HTTPS proxy configuration, and replay of every migration from a clean baseline.
