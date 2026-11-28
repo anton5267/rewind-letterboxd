@@ -68,3 +68,34 @@ test("public featured list cards use the shared motion affordance", async ({ pag
   await expect.poll(() => card.evaluate(element => getComputedStyle(element).transform)).not.toBe("none");
   await expect.poll(() => card.evaluate(element => getComputedStyle(element).boxShadow)).not.toBe("none");
 });
+
+test("Global Search film results keep the shared motion and reduced-motion behavior", async ({ page }) => {
+  await page.route("**/api/search/global?**", route => route.fulfill({ json: {
+    films: { content: [{ id: 970_301, title: "Search Motion Preview", photoUrl: null, releaseDate: "2025-01-01", rating: 7.8 }], totalElements: 1, totalPages: 1, number: 0, size: 6 },
+    users: { content: [], totalElements: 0 },
+    lists: { content: [], totalElements: 0 },
+    tags: [],
+    people: [],
+    reviews: { content: [], totalElements: 0 },
+    journal: { content: [], totalElements: 0 },
+  } }));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/en/search?q=Motion&tab=films");
+
+  const card = page.locator("article[class*='filmCard']").filter({ hasText: "Search Motion Preview" });
+  const link = card.getByRole("link", { name: "Search Motion Preview poster" });
+  await expect(card).toBeVisible();
+  await card.hover();
+  await expect.poll(() => card.evaluate(element => getComputedStyle(element).transform)).not.toBe("none");
+  await expect.poll(() => card.evaluate(element => getComputedStyle(element).boxShadow)).not.toBe("none");
+
+  await page.mouse.move(0, 0);
+  await link.focus();
+  await expect.poll(() => card.evaluate(element => getComputedStyle(element).transform)).not.toBe("none");
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(card).toHaveCSS("transform", "none");
+  await expect(card).toHaveCSS("box-shadow", "none");
+  await page.setViewportSize({ width: 393, height: 852 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+});

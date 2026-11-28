@@ -5,7 +5,7 @@ Reviewed 28 November 2026. This page summarizes recorded production state and ac
 ## Motion system candidate — 28 November 2026
 
 - Added shared CSS motion tokens and a reusable card interaction for Home films, Global Search films/lists/articles, and public-list cards. Pointer hover and keyboard focus use a restrained 3px lift and shadow without changing layout dimensions; reduced-motion explicitly disables transforms, shadows, and transitions.
-- `frontend/tests/e2e/motion-surfaces.spec.ts`: **2/2 passed** against fixture-intercepted local Vite. It covers Home pointer/keyboard/reduced-motion behavior, phone-width overflow, and public featured-list hover. `npm run verify:build` passed TypeScript and Vite production build; `git diff --check` passed.
+- `frontend/tests/e2e/motion-surfaces.spec.ts`: **3/3 passed** against fixture-intercepted local Vite. It covers Home pointer/keyboard/reduced-motion behavior, phone-width overflow, public featured-list hover, and Global Search film-card hover/focus/reduced motion. `npm run verify:build` passed TypeScript and Vite production build; `git diff --check` passed.
 - This is a local candidate check only. No production deployment or live Figma visual acceptance was performed; whole-site Figma and release gates remain open.
 
 ## GitHub Pages public-route accessibility smoke — 28 November 2026
