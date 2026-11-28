@@ -2,6 +2,13 @@
 
 Reviewed 28 November 2026. This page summarizes recorded production state and acceptance boundaries. Detailed results retain their dates in the [archive](../archive/README.md).
 
+## Full Films catalogue production smoke — 28 November 2026
+
+- Read-only Playwright against GitHub Pages confirmed `/en/films/` and `/uk/films/` return HTTP 200, render the localized Films heading, load 50 catalog records, and have no JavaScript errors. Desktop page 1 shows 36 catalog posters and offers 2 pages; all 44 images in the page DOM (36 catalog plus 8 TMDB discovery) loaded successfully. At 1440px, the grid begins at x=120.5/y=607 with 1199px width and 174×260 first poster; filters remain at x=989/y=294 (331×49), pagination at y=2502.
+- At 393px, the Ukrainian catalog shows 24 cards per page and 3 pages. The Next action changes the URL to `?page=1` and announces page 2 of 3. The document has no horizontal overflow. The route also has no overflow at 1440px.
+- Axe WCAG 2 A/AA on both locales at 393×852 and 1440×900 reported zero violations; all four route/viewport checks had zero page errors.
+- The Figma full-catalog frame ends with its footer at y=2691. Production footer begins around y=3891 because the app appends the separate TMDB discovery module after the 50-record REWIND catalog. This extra section supports live TMDB discovery but remains a page-structure difference for full-frame parity; live poster identities also differ from the Figma sample. No production writes, imports, or Supabase changes were made. The runtime smoke used the direct GitHub Pages project path; the repo's root-relative local E2E helper is intended for the local Vite origin and cannot target that subpath unchanged.
+
 ## Guest Home Figma header parity — 28 November 2026
 
 - Compared current READY desktop `472:492` (1440×4934) and mobile `1411:3473` (393×2265) sources with the local fixture render. The guest “Just reviewed” header has only its title and watched-film count at both sizes; mobile “Popular Lists” has no “More” link, while the desktop list and other source-backed “More” links remain.
