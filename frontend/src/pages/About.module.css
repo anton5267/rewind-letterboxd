@@ -30,7 +30,7 @@
 .story p { max-width: 92ch; margin: 0; color: #e0ddd8; font-size: 17px; line-height: 1.65; }
 
 .credits {
-  display: none;
+  display: block;
   margin-top: 44px;
   padding-top: 28px;
   border-top: 1px solid var(--rewind-line);
@@ -43,7 +43,8 @@
 }
 
 .tmdbMobileLabel { display: none; }
-.tmdbLink { max-width: 100%; }
+.tmdbLink { display: inline-flex; max-width: 100%; align-items: center; gap: 10px; }
+.tmdbLink img { display: block; width: 130px; height: 20px; object-fit: contain; }
 .credits > a { display: inline-flex; min-height: 44px; max-width: 100%; align-items: center; }
 
 @media (max-width: 767px) {
@@ -135,7 +136,7 @@
 
   .credits { display: block; margin: 0; border-top: 1px solid #4a4a4a; padding: 23px 0 0; }
   .credits h2 { margin: 0 0 18px; color: #f5f2ed; font-size: 20px; line-height: 24px; }
-  .credits > .tmdbLink { display: block; width: 230px; min-height: 0; color: #409ec9; font-size: 18px; font-weight: 700; line-height: 21.6px; text-decoration: none; }
+  .credits > .tmdbLink { display: flex; width: 230px; min-height: 0; color: #409ec9; font-size: 18px; font-weight: 700; line-height: 21.6px; text-decoration: none; }
   .tmdbMobileLabel { display: inline; }
   .disclaimer { margin: 16px 0 0; color: #b3b3b3; font-size: 15px; line-height: 21.75px; }
 }
