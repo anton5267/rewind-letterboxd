@@ -140,6 +140,7 @@ test("guest home hero matches the Figma headline and call to action", async ({ p
 
   await expect(page.locator("main")).toHaveAttribute("aria-busy", "false");
   await expect(page.locator("#home-retry-summary")).toHaveCount(0);
+  await expect(page.locator("#home-guest-reviews").getByRole("link", { name: "More", exact: true })).toHaveCount(0);
   await expect.poll(() => hero.evaluate(element => getComputedStyle(element, "::before").backgroundImage)).toMatch(/home-hero-guest\.jpg/);
   const heroArt = await page.request.get("/images/home-hero-guest.jpg");
   expect(heroArt.ok()).toBe(true);
@@ -189,6 +190,7 @@ test("guest home hero matches the Figma headline and call to action", async ({ p
   await expect(page.locator("#home-lists")).toContainText("Classic movies for beginners");
   await expect(page.locator("#home-lists")).toContainText("Movies everyone should watch");
   await expect(page.locator("#home-lists")).toContainText("The Criterion Challenge 2026");
+  await expect(page.locator("#home-lists [class*=guestPopularListsHeading] > a")).toBeVisible();
   await expect(page.locator("#home-lists")).toContainText("326k");
   await expect(page.locator("#home-lists")).toContainText("52 films");
   await expect(page.locator("#home-lists")).toContainText("2k");
@@ -259,6 +261,10 @@ test("guest home hero matches the Figma headline and call to action", async ({ p
 
   await page.setViewportSize({ width: 393, height: 2265 });
   await page.goto("en/home");
+  await expect(page.locator("#home-guest-reviews").getByRole("link", { name: "More", exact: true })).toHaveCount(0);
+  const mobileListsMore = page.locator("#home-lists [class*=guestPopularListsHeading] > a");
+  await expect(mobileListsMore).toHaveCount(1);
+  await expect(mobileListsMore).toBeHidden();
   await expect(page.locator("#home-lists")).toContainText("Created by CinemaPro");
   await expect(page.locator("#home-journal [class*=journalCard]:visible")).toHaveCount(1);
   const mobileHero = page.locator('main > [class*="hero"]');

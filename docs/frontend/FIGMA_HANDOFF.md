@@ -1179,6 +1179,11 @@ Re-ran `global-search-responsive.spec.ts` for exact READY node `1480:8889`; it p
 ### Mobile public profile empty overview — DRAFT validation — 27 November 2026
 
 Re-ran `public-profile-empty-overview-figma.spec.ts`; UK and EN pass **2/2** at 393×1099. The sample profile keeps the Figma READY hero geometry (bottom y=547, first overview heading y≈590), shows all five empty sections, preserves the fixed navigation, and continues with other profile sections below the 1099px DRAFT crop. This is local fixture content only; no profile data or production records were added.
+
+### Guest Home desktop and phone heading parity — 28 November 2026
+
+Rechecked READY guest Home frames `472:492` (desktop 1440×4934) and `1411:3473` (phone 393×2265) against fresh Figma screenshots and the local fixture capture. “Just reviewed” uses only its title and watched-film count on both frames; removed the extra `/reviews` “More” link. The phone “Popular Lists” heading has no “More” link, so the local link is hidden at the phone breakpoint while desktop and other Figma-backed links remain. The focused source-art E2E passed **1/1** across UK/EN and widths 320/393/768/1024/1440; the updated phone capture has no overflow. Build/typecheck passed. Fixture evidence only; live feed records remain API-driven, with no production or Supabase changes.
+
 ### Watchlist visibility migration — privacy-safe release review — 27 November 2026
 
 A read-only Supabase query confirmed two existing system Watchlists, zero marked public, and `rewind.lists.is_public` defaults to `false`. The candidate migration previously set every WATCHLIST row to public, which would have exposed those existing lists. Removed that data update; migration now changes only the read policies, and existing/new Watchlists stay private unless the owner explicitly opts in through the existing visibility action. Migration and production schema are still separate; no hosted write was made during this review.
