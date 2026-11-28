@@ -49,9 +49,10 @@ for (const locale of ["uk", "en"] as const) {
     });
 
     const labels = locale === "uk"
-      ? { showComments: "Показати коментарі", reportComment: "Поскаржитися на коментар", reportList: "Поскаржитися на список", reason: "Причина скарги", bullying: "Булінг", inappropriate: "Неприйнятний вміст", send: "Надіслати скаргу", submitted: "Скаргу надіслано." }
-      : { showComments: "Show comments", reportComment: "Report comment", reportList: "Report list", reason: "Report reason", bullying: "Bullying", inappropriate: "Inappropriate content", send: "Submit report", submitted: "Report submitted." };
+      ? { showComments: "Показати коментарі", hideComments: "Сховати коментарі", reportComment: "Поскаржитися на коментар", reportList: "Поскаржитися на список", reason: "Причина скарги", bullying: "Булінг", inappropriate: "Неприйнятний вміст", send: "Надіслати скаргу", submitted: "Скаргу надіслано." }
+      : { showComments: "Show comments", hideComments: "Hide comments", reportComment: "Report comment", reportList: "Report list", reason: "Report reason", bullying: "Bullying", inappropriate: "Inappropriate content", send: "Submit report", submitted: "Report submitted." };
 
+    await page.setViewportSize({ width: 393, height: 852 });
     await page.goto(`/${locale}/films/${movie.id}`);
     const comments = page.getByRole("region", { name: locale === "uk" ? "Коментарі" : "Comments" });
     await comments.getByRole("button", { name: labels.showComments }).click();
@@ -60,6 +61,8 @@ for (const locale of ["uk", "en"] as const) {
     await comment.getByLabel(labels.reason).selectOption("BULLYING");
     await comment.getByRole("button", { name: labels.send, exact: true }).click();
     await expect(comment.getByRole("status")).toContainText(labels.submitted);
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await expect(comments.getByRole("button", { name: labels.hideComments })).toBeVisible();
 
     await page.goto(`/${locale}/lists/public/${listId}`);
     const listReportArea = page.locator('[data-content-report-type="list"]');
