@@ -18,9 +18,9 @@ Reviewed 28 November 2026. This page summarizes recorded production state and ac
 ## Local private-action fixture acceptance — 28 November 2026
 
 - `profile-media.spec.ts` passed **5/5** and `profile-email-change.spec.ts` passed **2/2** on an isolated Vite process with `VITE_SUPABASE_AUTH_ENABLED=true` and a fixture-only publishable key. Supabase Auth and application API requests were intercepted. Coverage includes invalid-file rejection, upload/retry/remove, retained drafts during upload, user-switch protection, confirmation-only email change, and UK/EN behavior.
-- `content-report-action.spec.ts` passed **2/2** (UK/EN), `admin-review-report-dismiss.spec.ts` **1/1** (UK/EN), messages keyboard focus specs **3/3**, and notification feed loading/error/empty states **6/6**. Combined local fixture result: **19/19**.
+- `content-report-action.spec.ts` passed **2/2** (UK/EN), `admin-review-report-dismiss.spec.ts` **1/1** (UK/EN), messages keyboard focus specs **3/3**, and notification feed loading/error/empty states **6/6**. `list-comments.spec.ts` passed **12/12** on the isolated hosted-auth Vite mode, covering comment loading/retry/create/edit/delete/failure states, reply preference save/reload/reset, and stale-response protection when switching accounts. Combined local fixture result: **31/31**.
 - An earlier media run against the default legacy-auth Vite instance timed out because that mode intentionally renders the URL-avatar editor instead of hosted-auth file uploads. The hosted-auth tests pass when run against the separate configured Vite process; this was a test-mode mismatch, not a confirmed product failure.
-- These are frontend fixture checks, not live storage/Auth/Edge integration. They do not prove two-account message delivery, notification delivery, or a signed-in production media upload. No production account, database, Supabase, or hosted file was changed.
+- These are frontend fixture checks, not live storage/Auth/Edge integration. They do not prove two-account message delivery, notification delivery, comment persistence against the hosted API, or a signed-in production media upload. No production account, database, Supabase, or hosted file was changed.
 
 ## Guest Home Figma header parity — 28 November 2026
 

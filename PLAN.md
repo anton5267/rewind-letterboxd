@@ -66,7 +66,7 @@ Spring Boot/MySQL/Redis/Mailpit мають окремий локальний ж�
 
 Публічні production TMDB-потоки також перевірені read-only 28.11: discovery переходить між сторінками по 8 фільмів, а пошук `Dune` повернув 57 сторінок. Справжній signed-in import фільму не проходив, щоб не створити production-запис без QA-акаунта. [Деталі](docs/operations/RELEASE_EVIDENCE.md#tmdb-discovery-and-title-search-pagination--28-november-2026).
 
-Локальні fixture-сценарії приватних дій пройшли 19/19 (медіа, email change, звіт користувача й dismissal адміністратором, повідомлення та стани сповіщень). Це не live account/storage/API acceptance; двоакаунтні production flows і signed-in media import лишаються відкритими. [Деталі](docs/operations/RELEASE_EVIDENCE.md#local-private-action-fixture-acceptance--28-november-2026).
+Локальні fixture-сценарії приватних дій пройшли 31/31 (медіа, email change, звіти, повідомлення, сповіщення й коментарі до списків). Це не live account/storage/API acceptance; двоакаунтні production flows і signed-in media import лишаються відкритими. [Деталі](docs/operations/RELEASE_EVIDENCE.md#local-private-action-fixture-acceptance--28-november-2026).
 
 Оновлення 28.11.2026: TMDB on-demand search/import і public discovery з PR #28 працюють; PR #46 виправив пряме відкриття сторінок сценаристів і розгорнув Edge v73 + Pages. Далі — повний Figma/UX-приймальний аудит і контрольоване проходження приватних користувацьких сценаріїв, не заповнення production тестовим контентом. Деталі TMDB: [пошук та імпорт — специфікація](docs/superpowers/specs/2026-11-28-tmdb-on-demand-catalog-design.md), [відкриття — специфікація](docs/superpowers/specs/2026-11-28-tmdb-public-discovery-design.md), [план відкриттів](docs/superpowers/plans/2026-11-28-tmdb-public-discovery.md).
 

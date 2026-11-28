@@ -192,8 +192,16 @@ for (const lang of ["uk", "en"] as const) {
     await login(page, lang);
     await page.goto(`/${lang}/lists?list=8&mode=edit`);
     const label = lang === "uk" ? "Хто може відповідати" : "Allow replies from";
+    const openDesktopReplySetting = async () => {
+      if (lang !== "en") return;
+      const control = page.getByRole("combobox", { name: label, exact: true });
+      if (!(await control.isVisible().catch(() => false))) {
+        await page.getByText("More profile settings", { exact: true }).click();
+      }
+      await expect(control).toBeVisible();
+    };
     const choose = async (value: string) => {
-      if (lang === "en") { await page.getByRole("combobox", { name: label, exact: true }).selectOption(value); return; }
+      if (lang === "en") { await openDesktopReplySetting(); await page.getByRole("combobox", { name: label, exact: true }).selectOption(value); return; }
       await page.getByRole("button", { name: label, exact: true }).click();
       const dialog = page.getByRole("dialog");
       await dialog.getByRole("radio", { name: value === "ANYONE" ? "Усі" : "З налаштувань профілю", exact: true }).check();
@@ -206,7 +214,7 @@ for (const lang of ["uk", "en"] as const) {
     await save.click();
     await expect(page.getByRole("status")).toContainText(lang === "uk" ? "Збережено" : "Saved");
     await page.reload();
-    if (lang === "en") await expect(page.getByRole("combobox", { name: label, exact: true })).toHaveValue("ANYONE");
+    if (lang === "en") { await openDesktopReplySetting(); await expect(page.getByRole("combobox", { name: label, exact: true })).toHaveValue("ANYONE"); }
     else await expect(page.getByRole("button", { name: label, exact: true })).toContainText("Усі");
     await choose(""); await save.click();
     await expect.poll(() => state.writes.length).toBe(3);
