@@ -47,6 +47,12 @@ export default function About() {
       <section className={styles.credits} aria-labelledby="about-credits-title">
         <h2 className={styles.creditsTitle} id="about-credits-title">{lang === "uk" ? "Дані та зображення фільмів" : "Film data and images"}</h2>
         <a className={styles.tmdbLink} href="https://www.themoviedb.org" target="_blank" rel="noreferrer">
+          <img
+            src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_long_2-9665a76b1ae401a510ec1e0ca40ddcb3b0cfe45f1d51b77a308fea0845885648.svg"
+            alt="The Movie Database (TMDB)"
+            width="130"
+            height="20"
+          />
           <span className={styles.tmdbMobileLabel}>TMDB API</span>
         </a>
         <p className={styles.disclaimer}>{lang === "uk" ? "Цей продукт використовує TMDB API, але не схвалений і не сертифікований TMDB." : "This product uses the TMDB API but is not endorsed or certified by TMDB."}</p>

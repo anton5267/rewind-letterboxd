@@ -29,6 +29,14 @@ test("About follows the measured Figma editorial shell", async ({ page }) => {
 });
 
 test("About attributes TMDB in UK and EN", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("en/about");
+  const credits = page.locator('main article section[class*="credits"]');
+  await expect(credits).toBeVisible();
+  const tmdbLogo = credits.getByRole("img", { name: "The Movie Database (TMDB)" });
+  await expect(tmdbLogo).toBeVisible();
+  await expect.poll(() => tmdbLogo.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+
   await page.setViewportSize({ width: 393, height: 852 });
   const copy = {
     uk: "Цей продукт використовує TMDB API, але не схвалений і не сертифікований TMDB.",
