@@ -13,9 +13,9 @@
 ## Global Constraints
 
 - Keep GitHub Pages at `https://anton5267.github.io/rewind-letterboxd/` as production.
-- Do not change Supabase schema, data, secrets, or primary Auth Site URL.
+- Do not change Supabase schema, user data, API keys, unrelated secrets, or primary Auth Site URL. The user explicitly approved adding only the exact preview origin to `REWIND_ALLOWED_ORIGINS` and four exact preview callback URLs after reviewing preview evidence.
 - Use Cloudflare Free only; do not add a custom domain or paid add-on.
-- Never enable preview-origin CORS/Auth redirects until the exact preview origin is known and the current list has been read.
+- Never enable preview-origin CORS/Auth redirects until the exact preview origin is known, the current list has been read, and the user explicitly approves the specific entries.
 
 ## Review Focus
 
@@ -63,9 +63,9 @@
 - Produces: a verified preview checklist and any exact-origin follow-up needed.
 
 - [x] Read the root, SPA fallback, unknown localized path, and built JS response headers; verify the localized route renders the app-level 404 page.
-- [ ] Open a localized route and make a public API-backed request from the preview. **Blocked by current production Edge API preflight:** HTTP 403, `Origin is not allowed` for the exact preview origin.
-- [x] Read the Supabase Site URL and Auth redirect allowlist and compare them with callback URL construction. The primary URL is still GitHub Pages; all four preview callback URLs are currently absent, so auth from preview is not yet allowed. No account was created and no email sent.
-- [x] Record the exact CORS rejection and prepare the minimal origin-only change; keep production hosting unchanged. Applying the allowlist change requires explicit user approval.
-- [x] Confirm the GitHub Pages production URL remains `https://anton5267.github.io/rewind-letterboxd/`; no Pages deployment or Supabase configuration was changed in this task.
+- [x] Open localized routes and make public API-backed requests from the preview. After the approved allowlist update, `/uk/home` and `/uk/community/` loaded live data.
+- [x] Read the Supabase Site URL and Auth redirect allowlist, compare them with callback URL construction, then add the four exact preview paths after user approval. The Site URL remains GitHub Pages. No account was created and no email sent.
+- [x] Record the initial CORS rejection and apply the approved minimal origin-only change; the original GitHub Pages and localhost origins remain allowed.
+- [x] Confirm the GitHub Pages production URL remains `https://anton5267.github.io/rewind-letterboxd/`; no GitHub Pages deployment or primary Supabase Site URL was changed in this task.
 
-**Current evidence (2026-11-28):** the GitHub-connected Pages Free preview at `https://codex-cloudflare-pages-secur.rewind-site-preview.pages.dev` deployed successfully from branch `codex/cloudflare-pages-security-headers` (initial code commit `583f180`; documentation update `ed04e15`). Its build uploaded 3,243 assets and parsed the `_headers` file. All five headers were confirmed on `/`, `/404.html`, and an unknown localized route; the browser rendered the Ukrainian not-found page for that route. The homepage shell renders, but API-backed sections show a load error. Supabase Edge API preflight returns HTTP 403 with `Origin is not allowed`. Auth's Site URL is still GitHub Pages and all four preview callback paths are absent from the exact redirect allowlist. No Supabase configuration, schema, data, secrets, or GitHub Pages production deployment was changed. See `docs/frontend/CLOUDFLARE_PAGES_PREVIEW.md` for details.
+**Current evidence (2026-11-28):** the GitHub-connected Pages Free preview at `https://codex-cloudflare-pages-secur.rewind-site-preview.pages.dev` has a verified successful application deployment from branch `codex/cloudflare-pages-security-headers` (commit `6ea9ef1`). The build uploaded 3,243 assets and parsed `_headers`. All five headers were confirmed on the root, fallback document, unknown localized path, and versioned JS; the localized not-found route rendered correctly. After the user-approved exact CORS origin and four Auth callback entries were added, preflights for preview, the production GitHub Pages origin, and four existing localhost origins returned HTTP 204. Browser API-backed home and community routes loaded real data. The Supabase Site URL and GitHub Pages production host are unchanged. No database schema or user data was changed. Cloudflare Pages has no production deployment; switching the public production host still requires separate explicit user approval. See `docs/frontend/CLOUDFLARE_PAGES_PREVIEW.md` for details.
