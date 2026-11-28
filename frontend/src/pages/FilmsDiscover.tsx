@@ -25,7 +25,6 @@ export default function FilmsDiscover() {
   const [genresError, setGenresError] = useState(false);
   const [genresRetry, setGenresRetry] = useState(0);
   const [filmInput, setFilmInput] = useState("");
-  const [filmQuery, setFilmQuery] = useState("");
   const [filmSuggestions, setFilmSuggestions] = useState<MovieCard[]>([]);
   const [filmSuggestionsLoading, setFilmSuggestionsLoading] = useState(false);
   const [filmSuggestionsError, setFilmSuggestionsError] = useState(false);
@@ -55,7 +54,6 @@ export default function FilmsDiscover() {
     setPopular([]);
     searchMovies({
       sort: "rating_desc", page: 0, size: 6,
-      q: filmQuery || undefined,
       year: year || undefined,
       minRating: minRating || undefined,
       genreId: genreId || undefined,
@@ -64,7 +62,7 @@ export default function FilmsDiscover() {
       .catch(() => { if (current) setErrors(value => ({ ...value, popular: true })); })
       .finally(() => { if (current) setLoading(value => ({ ...value, popular: false })); });
     return () => { current = false; };
-  }, [lang, retry.popular, filmQuery, year, minRating, genreId]);
+  }, [lang, retry.popular, year, minRating, genreId]);
 
   useEffect(() => {
     let current = true;
@@ -195,7 +193,8 @@ export default function FilmsDiscover() {
       setFilmSearchFocused(false);
       return;
     }
-    setFilmQuery(filmInput.trim());
+    const q = filmInput.trim();
+    if (q) navigate(path(`/films?q=${encodeURIComponent(q)}${year ? `&year=${encodeURIComponent(year)}` : ""}`));
   };
 
   const filmSuggestionsOpen = filmSearchFocused && !filmSearchDismissed && Boolean(filmInput.trim())

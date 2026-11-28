@@ -1,5 +1,5 @@
 import type { ProfileMediaKind, ProfileMediaResponse, ProfileMediaUpload } from "./profile_media.ts";
-import type { GenreResponse, GlobalSearchResponse, MovieDetailsResponse, MovieFlagType, MovieSearchParams, MovieSearchResult, MovieStatusResponse, PersonFilmographyResponse, PersonSearchParams, PersonSearchResult } from "./catalog.ts";
+import type { GenreResponse, GlobalSearchResponse, MovieDetailsResponse, MovieFlagType, MovieSearchParams, MovieSearchResult, MovieStatusResponse, PersonFilmographyResponse, PersonSearchParams, PersonSearchResult, TmdbMovieSearchResponse } from "./catalog.ts";
 import type { CurrentUserResponse, HostedAuthUser } from "./auth.ts";
 import type { FeaturedListCategory } from "./lists.ts";
 import type { FavoriteMoveRequest, ProfileCollectionResult, ProfileResponse, ProfileUpdateRequest, PublicProfileResponse } from "./profile.ts";
@@ -10,6 +10,8 @@ import type { CreateMyListRequest, ListLikeStatusResponse, MyListItemResponse, M
 import type { AdminActivityOverviewResponse, AdminAuditLogResponse, AdminCommentResponse, AdminConversationResponse, AdminCreateNotificationRequest, AdminDashboardResponse, AdminListDetailsResponse, AdminListResponse, AdminListTextUpdateRequest, AdminModerationQueueItem, AdminModerationTarget, AdminMovieCatalogResponse, AdminMovieResponse, AdminMovieWriteRequest, AdminNotificationResponse, AdminReportedCommentResponse, AdminReportedListResponse, AdminReportedReviewResponse, AdminReviewResponse, AdminSettingResponse, AdminTmdbBatchResponse, AdminTmdbDiscoveryInput, AdminTmdbDiscoveryResponse, AdminTmdbMovieCandidate, AdminTmdbQualityReport, AdminTmdbSyncInput, AdminTmdbSyncResponse, AdminUserOverviewResponse, AdminUserResponse, AdminUserUpdateRequest } from "./admin.ts";
 
 export interface RewindApiRepository {
+  searchTmdbCatalog?(query: string, year: number | null, page: number, language: "uk" | "en"): Promise<TmdbMovieSearchResponse>;
+  importTmdbCatalogMovie?(authUser: HostedAuthUser, tmdbId: number): Promise<{ movieId: number; title: string }>;
   getPublicWatchedFilmCount?(): Promise<number>;
   listGenres(): Promise<GenreResponse[]>;
   searchMovies(params: MovieSearchParams): Promise<MovieSearchResult>;

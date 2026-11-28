@@ -2,6 +2,12 @@
 
 This runbook covers the public GitHub Pages + Supabase deployment. It is separate from the local Spring Boot/MySQL Compose environment and from the legacy VPS runbook.
 
+## On-demand TMDB movie catalog (2026-11-28, pending release)
+
+The public catalog continues to be the REWIND database. Search can also query TMDB on demand; choosing a result requires a confirmed REWIND account and adds only that movie to the shared catalog. The provider API key remains in the Edge Function secret. Each authenticated profile is limited to five imports per UTC day, and matching title/year conflicts require admin review. The Edge search cache is in-memory per worker isolate (15 minutes, at most 256 keys); it is a performance cache, not a durable catalog.
+
+Release requires applying migration `20261128150000_tmdb_user_import_quota.sql` and deploying the Edge Function source, then publishing the frontend. None of those hosted changes are performed by the local implementation work. Before release, confirm the existing `TMDB_API_KEY` secret is present without reading or printing its value, replay the migration against a disposable PostgreSQL database, and inspect the hosted migration/Edge deployment read-back. The frontend build has been verified locally; no live import has been performed. Existing database records are not rewritten by the import path.
+
 ## Daily TMDB catalog refresh
 
 The hosted job `rewind-tmdb-refresh-daily` is configured for `0 3 * * *` (03:00 UTC in the verified project database session). It calls the private Edge worker. The worker processes at most 10 movies per run, and only refreshes records that already have a verified TMDB ID. It does not discover or assign new IDs. An item that fails is recorded with a sanitized error code and becomes eligible for retry after four days. A transaction advisory lock prevents overlapping runs.

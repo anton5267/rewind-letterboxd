@@ -8,6 +8,11 @@
 .results button:disabled { opacity: .55; }
 .search nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; font-size: 13px; }
 .search nav button { min-width: 44px; min-height: 44px; border: 1px solid #555; border-radius: 12px; padding: 8px 12px; background: #191919; color: #fff; }
+.tmdbSection { margin-top: 14px; border-top: 1px solid #555; padding-top: 12px; }
+.tmdbSection h3 { margin: 0 0 8px; color: #f4d28c; font-size: 13px; }
+.tmdbSection > p { color: #aaa; }
+.tmdbAction { display: flex; min-height: 44px; align-items: center; box-sizing: border-box; border: 1px solid #555; border-radius: 12px; padding: 8px 12px; background: #191919; color: #fff; font-size: 14px; text-decoration: none; }
+.tmdbAction:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 2px; }
 
 @media (min-width: 1024px) {
   .embedded { position: relative; width: 351px; height: 79px; flex: 0 0 351px; margin: 0; }

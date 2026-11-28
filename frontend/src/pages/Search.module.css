@@ -76,6 +76,26 @@
 .visuallyHidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 .mobilePageControl { display: none; }
 .catalogCount { display: none; }
+.tmdbSection { margin-top: 44px; border-top: 1px solid var(--rewind-line); padding-top: 24px; }
+.tmdbHeading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.tmdbHeading h2 { margin: 0; font-size: 23px; }
+.tmdbHeading p { margin: 7px 0 0; color: var(--rewind-muted); font-size: 14px; }
+.tmdbHeading > a { color: #8ac6df; font-weight: 700; text-decoration: none; }
+.tmdbGrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 24px 31px; }
+.tmdbCard { min-width: 0; }
+.tmdbPoster { display: block; overflow: hidden; aspect-ratio: 174 / 260; border-radius: 20px; background: #292929; }
+.tmdbCard h3 { overflow: hidden; margin: 11px 0 5px; color: #fff; font-size: 15px; line-height: 1.15; text-overflow: ellipsis; white-space: nowrap; }
+.tmdbCard > p { margin: 0 0 10px; color: var(--rewind-muted); font-size: 12px; }
+.tmdbCard > .tmdbOverview { display: -webkit-box; min-height: 4.2em; overflow: hidden; margin-top: 0; color: #d0d0d0; font-size: 12px; line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.tmdbAdd { display: inline-flex; min-height: 36px; align-items: center; justify-content: center; box-sizing: border-box; border: 1px solid #d4a85f; border-radius: 20px; padding: 5px 12px; background: transparent; color: #f4d28c; font: inherit; font-size: 12px; text-decoration: none; cursor: pointer; }
+.tmdbAdd:hover:not(:disabled) { background: #d4a85f; color: #1f1f1f; }
+.tmdbAdd:focus-visible,
+.tmdbPagination button:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 3px; }
+.tmdbAdd:disabled { cursor: wait; opacity: .55; }
+.tmdbStatus { padding: 14px 0; color: var(--rewind-muted); }
+.tmdbPagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 24px; }
+.tmdbPagination button { min-height: 40px; border: 1px solid var(--rewind-line); border-radius: 20px; padding: 0 14px; background: transparent; color: #fff; cursor: pointer; }
+.tmdbPagination button:disabled { cursor: not-allowed; opacity: .4; }
 
 @media (min-width: 1400px) {
   .shell { position: relative; display: flow-root; }
@@ -146,8 +166,8 @@
   .pagination span:not(.visuallyHidden) { font-size: 20px; }
 }
 
-@media (max-width: 1100px) { .grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } .filterSubmit { grid-column: span 2; } }
-@media (max-width: 820px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 1100px) { .grid, .tmdbGrid { grid-template-columns: repeat(5, minmax(0, 1fr)); } .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } .filterSubmit { grid-column: span 2; } }
+@media (max-width: 820px) { .grid, .tmdbGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 767px) {
   .page { padding: 34px 16px 106px; }
   .hero { position: relative; isolation: isolate; min-height: 165px; box-sizing: border-box; margin: 0 -16px; padding: 16px; border-bottom: 1px solid transparent; background: transparent; }
@@ -181,6 +201,11 @@
   .filtersOpen { display: grid; }
   .filterSubmit { grid-column: span 2; }
   .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 19px 15px; margin-top: 28.25px; }
+  .tmdbSection { margin-top: 32px; padding-top: 18px; }
+  .tmdbHeading h2 { font-size: 19px; }
+  .tmdbHeading p { font-size: 12px; }
+  .tmdbGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 15px; }
+  .tmdbPoster { border-radius: 14px; }
   .posterLink { aspect-ratio: 79 / 116; border-radius: 10px; }
   .card h2 { display: none; }
   .card p { position: absolute; width: 1px; height: 1px; overflow: hidden; margin: -1px; padding: 0; clip: rect(0 0 0 0); white-space: nowrap; }
