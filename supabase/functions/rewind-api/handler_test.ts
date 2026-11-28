@@ -576,7 +576,7 @@ Deno.test("public list feeds preserve paging and tag filters across Spring route
 Deno.test("public list detail hides unknown lists and has a separate authenticated like status", async () => {
   const detail = {
     id: 8, name: "Space films", description: null, ownerId: 3, ownerUsername: "filmfan",
-    ownerAvatarUrl: null, tags: ["Sci-Fi"], likeCount: 2, isRanked: false,
+    ownerAvatarUrl: null, tags: ["Sci-Fi"], likeCount: 2, isRanked: false, publishedAt: "2026-11-28T12:00:00Z",
     movies: [{ id: 20, title: "Arrival", releaseDate: "2016-11-11", rating: 7.9, photoUrl: null }],
   };
   const handler = authHandler({
