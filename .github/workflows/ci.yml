@@ -65,6 +65,10 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: 2.9.6
+      - name: Verify Cloudflare Pages canonical build configuration
+        run: |
+          node --check frontend/scripts/build-cloudflare-pages.mjs
+          node --test frontend/scripts/cloudflare-pages-build-config.test.mjs
       - name: Verify Supabase Edge API
         working-directory: supabase/functions/rewind-api
         run: |
