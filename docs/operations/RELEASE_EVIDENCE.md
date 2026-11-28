@@ -16,6 +16,13 @@ Reviewed 28 November 2026. This page summarizes recorded production state and ac
 - `frontend/tests/e2e/profile-media.spec.ts`: **5/5 passed**, covering UK and EN media upload/retry/persistence/removal, the phone metadata draft, and own/public banner behavior at tablet/phone widths. `npm run verify:build` passed typecheck and production build; `git diff --check` passed. Only fixture-intercepted requests were used.
 - PR #37 ([`bccaaff`](https://github.com/anton5267/rewind-letterboxd/commit/bccaaff30217abda0e8d2004c283b18ba627e855)) merged to `master`. Post-merge CI run [`46116039433`](https://github.com/anton5267/rewind-letterboxd/actions/runs/46116039433) passed; GitHub Pages deployment [`46116039418`](https://github.com/anton5267/rewind-letterboxd/actions/runs/46116039418) succeeded. The project-prefix route shell `/rewind-letterboxd/uk/home/` returned HTTP 200. This verifies publication, not a full live profile interaction/a11y audit. No production Auth, database, or user data was changed.
 
+## Film comment reporting visibility — 28 November 2026
+
+- Found two responsive CSS rules hiding the existing collapsible comment thread inside film review cards. This prevented people from opening comments and reaching the report action on both phone and desktop. Removed those hiding rules while keeping threads collapsed by default.
+- Extended `frontend/tests/e2e/content-report-action.spec.ts` to report a comment at 393px and verify the collapsed control remains visible at 1280px before continuing the public-list report flow.
+- UK/EN Playwright fixture tests passed **2/2**; `npm run verify:build` and `git diff --check` passed. All API responses are intercepted by local fixtures; no production report was submitted.
+- Included in documentation/code candidate PR #38; it has not yet been merged or deployed.
+
 ## Mobile guest Home contrast and route sweep — 28 November 2026
 
 - PR #34 ([`95fa5f1`](https://github.com/anton5267/rewind-letterboxd/commit/95fa5f1ed096419bbe4cb285a0dc1d61b09434c4)) raises muted mobile guest Home text colors while preserving layout geometry. It adds a fixture axe `color-contrast` check at 320px for both UK and EN. The regression failed before the CSS change and passed afterward; `npm run verify:build` and `git diff --check` passed.

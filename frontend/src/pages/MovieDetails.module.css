@@ -912,7 +912,6 @@
   .reviewsSection[data-reviews-expanded="false"] .additionalReviews,
   .reviewsSection[data-reviews-expanded="false"] .pagination { display: none; }
   .reviewsSection .review > p + p,
-  .reviewsSection .review > section[aria-label],
   .reviewsSection .signIn { display: none; }
   .reviewsSection > .sectionHeading { margin-bottom: 18px; }
   .reviewsSection { padding-bottom: 7px; }
@@ -1300,8 +1299,7 @@
   .reviewsSection .mobileReviewByline a { overflow: hidden; color: #fff; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
   .reviewsSection .mobileReviewByline time { color: var(--rewind-muted); font-size: 12px; }
   .reviewsSection .mobileReviewRating { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; color: #f1ece4; white-space: nowrap; }
-  .reviewsSection .review > p + p,
-  .reviewsSection .review > section[aria-label] { display: none; }
+  .reviewsSection .review > p + p { display: none; }
   .reviewsSection .signIn { display: none; }
   .reviewsSection .review h3,
   .reviewsSection .review h3 a { color: #fff; }
