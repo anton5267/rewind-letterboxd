@@ -253,8 +253,13 @@ export default function GlobalSearch() {
         <p className={styles.sectionKicker}>{t("emptyEyebrow")}</p>
         <h2>{t("noGlobalResults")}</h2>
         <p>{t("noGlobalResultsHint")}</p>
+        {query.length >= 2 && (tab === "all" || tab === "films") && <Link className={styles.noMatchesAction} to={path(`/films?q=${encodeURIComponent(query)}`)}>{t("tmdbSearchTitle")}</Link>}
         <Link className={styles.noMatchesAction} to={path("/home")}>{t("backToHome")}</Link>
       </section>}
+
+      {!loading && !error && query.length >= 2 && (tab === "all" || tab === "films") && hasVisibleResults && <p className={styles.tmdbCatalogPrompt}>
+        <Link to={path(`/films?q=${encodeURIComponent(query)}`)}>{t("tmdbSearchTitle")} ↗</Link>
+      </p>}
 
       {!loading && !error && results && <>
         {(tab === "all" || tab === "films") && results.films.content.length > 0 && <section id="films" className={styles.section} aria-labelledby="global-search-films-heading">

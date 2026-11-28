@@ -26,6 +26,27 @@ export interface MovieDetails {
 
 export type MovieFlag = "watched" | "watchlist" | "favorite";
 
+export interface TmdbMovieCandidate {
+  tmdbId: number;
+  title: string;
+  releaseDate: string | null;
+  overview: string | null;
+  posterUrl: string | null;
+}
+
+export interface TmdbMovieSearchPage {
+  content: TmdbMovieCandidate[];
+  page: number;
+  totalPages: number;
+  totalResults: number;
+}
+
+export const searchTmdbMovies = (query: string, year: string | undefined, page: number, language: "uk" | "en") =>
+  api.get<TmdbMovieSearchPage>("/tmdb/movies/search", { params: { q: query, year, page, language } });
+
+export const importTmdbMovie = (tmdbId: number) =>
+  api.post<{ movieId: number; title: string }>("/tmdb/movies/import", { tmdbId });
+
 export const getMovieDetails = (movieId: number) =>
   api.get<MovieDetails>(`/movies/${movieId}/details`);
 

@@ -16,7 +16,7 @@ export default function Login() {
   const { login, isAuth, ready } = useAuth();
   const { path, t, lang } = useLocale();
   const validation = useAuthFieldValidation();
-  const returnLocation = getAuthReturnTo(location.state, [path("/profile"), path("/messages"), path("/notifications"), path("/lists")]);
+  const returnLocation = getAuthReturnTo(location.state, [path("/profile"), path("/messages"), path("/notifications"), path("/lists"), path("/films")]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);

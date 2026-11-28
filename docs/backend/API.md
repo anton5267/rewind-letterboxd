@@ -26,6 +26,8 @@
 | U | `POST`, `DELETE /api/movies/{movieId}/favorite` | Додати/забрати з улюбленого |
 | U | `PUT`, `DELETE /api/movies/{movieId}/rating`; `GET /api/movies/{movieId}/rating/me` | Власна оцінка |
 | P | `GET /api/search/global`, `GET /api/genres`, `GET /api/tags/popular` | Global Search categories, genres і популярні list tags |
+| P | `GET /api/tmdb/movies/search?q=...&page=1&language=uk|en` | Пошук каталогу TMDB без імпорту; максимум 8 карток у відповіді, сторінки до 500, коротке публічне кешування |
+| U | `POST /api/tmdb/movies/import` `{ "tmdbId": 123 }` | Після підтвердженого входу додає вибраний фільм до REWIND; серверний денний ліміт — 5 імпортів на профіль. Наявний опублікований запис повертається без перезапису метаданих; прихований або неоднозначний запис не розкривається/не дублюється. |
 
 ## Profile
 

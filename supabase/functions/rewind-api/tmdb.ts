@@ -5,6 +5,12 @@ export interface TmdbGenre { tmdbId: number; name: string }
 export interface TmdbMovieCandidate {
   tmdbId: number; title: string; releaseDate: string | null; overview: string | null; posterUrl: string | null;
 }
+export interface TmdbMovieCandidatePage {
+  content: TmdbMovieCandidate[];
+  page: number;
+  totalPages: number;
+  totalResults: number;
+}
 export interface TmdbMovie {
   tmdbId: number; imdbId: string | null; originalLanguage: string | null; title: string; runtime: number | null; releaseDate: string | null;
   overview: string | null; posterUrl: string | null; backdropUrl: string | null; trailerUrl: string | null;
@@ -96,6 +102,7 @@ export async function apiGet(path: string, params: Record<string, string>, apiKe
   try { response = await fetcher(url, { headers: { Accept: "application/json" } }); }
   catch { throw new TmdbError(502, "TMDB request failed"); }
   if (response.status === 404) throw new TmdbError(404, "TMDB movie not found", response.status);
+  if (response.status === 429) throw new TmdbError(429, "TMDB rate limit reached", response.status);
   if (!response.ok) throw new TmdbError(502, "TMDB request failed", response.status);
   try {
     const body: unknown = await response.json();
@@ -109,19 +116,37 @@ export async function fetchTmdbMovie(id: number, apiKey: string | undefined, fet
   const body = await apiGet(`/movie/${id}`, { language: "en-US", append_to_response: "credits,videos,similar,external_ids" }, apiKey, fetcher, baseUrl);
   return mapTmdbMovie(body, id);
 }
-export async function searchTmdbMovies(query: string, year: number | null, apiKey: string | undefined, fetcher: typeof fetch = fetch, baseUrl = API_URL): Promise<TmdbMovieCandidate[]> {
+export async function searchTmdbMoviePage(
+  query: string,
+  year: number | null,
+  apiKey: string | undefined,
+  fetcher: typeof fetch = fetch,
+  baseUrl = API_URL,
+  page = 1,
+  language: "uk" | "en" = "en",
+): Promise<TmdbMovieCandidatePage> {
   const normalized = query.trim();
   if (normalized.length < 2 || normalized.length > 120) throw new TmdbError(400, "Invalid movie search");
+  if (!Number.isInteger(page) || page < 1 || page > 500) throw new TmdbError(400, "Invalid movie search page");
   if (!apiKey?.trim()) throw new TmdbError(503, "TMDB integration is disabled");
-  const params: Record<string, string> = { language: "en-US", query: normalized, include_adult: "false", page: "1" };
+  const params: Record<string, string> = { language: language === "uk" ? "uk-UA" : "en-US", query: normalized, include_adult: "false", page: String(page) };
   if (year !== null) params.primary_release_year = String(year);
   const body = await apiGet("/search/movie", params, apiKey, fetcher, baseUrl);
   if (!Array.isArray(body.results)) throw new TmdbError(502, "TMDB returned invalid search results");
-  return records(body.results).flatMap((entry) => {
+  const content = records(body.results).flatMap((entry) => {
     const tmdbId = number(entry.id), title = text(entry.title)?.trim();
     if (!tmdbId || !title) return [];
     return [{ tmdbId, title, releaseDate: text(entry.release_date), overview: text(entry.overview), posterUrl: image(entry.poster_path, "w185") }];
   }).slice(0, 8);
+  return {
+    content,
+    page,
+    totalPages: Math.max(1, Math.min(number(body.total_pages) ?? page, 500)),
+    totalResults: Math.max(0, number(body.total_results) ?? content.length),
+  };
+}
+export async function searchTmdbMovies(query: string, year: number | null, apiKey: string | undefined, fetcher: typeof fetch = fetch, baseUrl = API_URL): Promise<TmdbMovieCandidate[]> {
+  return (await searchTmdbMoviePage(query, year, apiKey, fetcher, baseUrl)).content;
 }
 export async function findTmdbMoviesByImdbId(imdbId: string, apiKey: string | undefined, fetcher: typeof fetch = fetch, baseUrl = API_URL): Promise<TmdbMovieCandidate[]> {
   const normalized = imdbId.trim();

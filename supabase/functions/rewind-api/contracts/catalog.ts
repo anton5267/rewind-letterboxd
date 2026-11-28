@@ -22,6 +22,21 @@ export interface MovieSearchResult {
   number: number;
 }
 
+export interface TmdbMovieCandidateResponse {
+  tmdbId: number;
+  title: string;
+  releaseDate: string | null;
+  overview: string | null;
+  posterUrl: string | null;
+}
+
+export interface TmdbMovieSearchResponse {
+  content: TmdbMovieCandidateResponse[];
+  page: number;
+  totalPages: number;
+  totalResults: number;
+}
+
 export interface MovieDetailsResponse {
   id: number;
   imdbId: string | null;

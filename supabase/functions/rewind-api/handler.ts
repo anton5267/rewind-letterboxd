@@ -21,6 +21,7 @@ import { handleProfileEmailRoute } from "./http/routes/profile_email.ts";
 import { handleMovieRatingRoutes, handleMovieStatusRoutes } from "./http/routes/movie_actions.ts";
 import { handleCatalogRoutes } from "./http/routes/catalog.ts";
 import { handlePublicStatsRoutes } from "./http/routes/public_stats.ts";
+import { handleTmdbCatalogRoutes } from "./http/routes/tmdb_catalog.ts";
 
 export type * from "./contracts/catalog.ts";
 export type * from "./contracts/auth.ts";
@@ -54,6 +55,7 @@ const routeHandlers = [
   handleMovieStatusRoutes,
   handleCurrentUserRoute,
   handleMovieRatingRoutes,
+  handleTmdbCatalogRoutes,
   handlePublicStatsRoutes,
   handleCatalogRoutes,
 ];
