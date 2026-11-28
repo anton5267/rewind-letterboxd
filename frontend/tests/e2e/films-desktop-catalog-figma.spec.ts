@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
 const movies = Array.from({ length: 36 }, (_, index) => ({
   id: 98200 + index,
@@ -32,6 +33,8 @@ test("desktop All Films exposes only the three catalogue filters shown in Figma"
   await expect(filters.getByLabel("Sort by")).toBeHidden();
   await expect(page.locator('main [class*="catalogCount_"]')).toHaveText("There are 50 films.");
   await expect(page.locator("main article")).toHaveCount(36);
+  const contrast = await new AxeBuilder({ page }).withRules(["color-contrast"]).analyze();
+  expect(contrast.violations).toEqual([]);
 
   const filterBounds = await filters.boundingBox();
   expect(filterBounds?.x).toBe(989);
@@ -67,7 +70,8 @@ test("desktop All Films exposes only the three catalogue filters shown in Figma"
   await expect(posterLink).toHaveCSS("box-shadow", "none");
 
   const filterSelect = page.locator("#film-search-rating");
-  await expect(filterSelect).toHaveCSS("color", "rgb(126, 126, 126)");
+  await expect(filterSelect).toHaveCSS("color", "rgb(153, 153, 153)");
+  await expect(page.locator('main [class*="catalogCount_"]')).toHaveCSS("color", "rgb(153, 153, 153)");
   await filterSelect.hover();
   await expect(filterSelect).toHaveCSS("color", "rgb(255, 255, 255)");
   const yearFilter = page.locator("#film-search-year");
