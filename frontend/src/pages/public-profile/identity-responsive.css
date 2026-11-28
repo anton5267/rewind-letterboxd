@@ -2,7 +2,7 @@
   .page { padding: 0 0 92px; background: #1f1f1f; }
   .shell { box-sizing: border-box; padding: 0 16px; }
   /* Figma 825:1378 uses a pale-to-black blur and contains no hero photograph. */
-  .hero { width: 100vw; min-height: 547px; box-sizing: border-box; margin-left: calc(50% - 50vw); align-items: center; justify-content: flex-start; flex-direction: column; gap: 0; border-radius: 0; padding: 51px 16px 10px; background: linear-gradient(180deg, #d7d7d7 0, #898989 76px, #000 190px, #000 547px, #1f1f1f 547px); box-shadow: none; text-align: center; }
+  .hero { width: 100vw; min-height: 547px; box-sizing: border-box; margin-left: calc(50% - 50vw); align-items: center; justify-content: flex-start; flex-direction: column; gap: 0; border-radius: 0; padding: 51px 16px 10px; background: linear-gradient(180deg, rgba(0, 0, 0, .4), rgba(0, 0, 0, .82)), #000 var(--rewind-profile-banner, none) center / cover no-repeat; box-shadow: none; text-align: center; }
   .hero .eyebrow { display: none; }
   .identity { width: 100%; align-items: center; flex-direction: column; gap: 7px; }
   .identityCopy { width: min(100%, 361px); }
