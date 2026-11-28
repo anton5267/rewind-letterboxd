@@ -42,6 +42,34 @@ Deno.test("internal TMDB worker route is POST-only, private, and does not expose
   if (missingWorker.status !== 404) throw new Error("Unconfigured internal worker route was not closed");
 });
 
+Deno.test("public TMDB discovery validates filters, returns cached-public data, and never imports", async () => {
+  const discoveryCalls: unknown[] = [];
+  let imports = 0;
+  const handler = handlerWith({
+    discoverTmdbCatalog: async (input) => {
+      discoveryCalls.push(input);
+      return { content: [{ tmdbId: 2, title: "Popular", releaseDate: "2024-02-03", overview: "Plot", posterUrl: null, voteAverage: 8.1 }], page: input.page, totalPages: 12, totalResults: 90 };
+    },
+    importTmdbCatalogMovie: async () => { imports++; return { movieId: 20, title: "Imported" }; },
+  });
+  const response = await handler(new Request(`https://project.supabase.co/api/tmdb/movies/discover?page=2&genreId=18&year=2020&minRating=7.5&language=uk`, {
+    headers: { Origin: pagesOrigin },
+  }));
+  const body = await response.json();
+  if (response.status !== 200 || body.page !== 2 || body.totalPages !== 12
+    || response.headers.get("Cache-Control") !== "public, max-age=120, stale-while-revalidate=300"
+    || response.headers.get("Access-Control-Allow-Origin") !== pagesOrigin
+    || JSON.stringify(discoveryCalls[0]) !== JSON.stringify({ page: 2, year: 2020, genreId: 18, minRating: 7.5, language: "uk" })
+    || imports !== 0) {
+    throw new Error(`Public TMDB discovery contract failed: ${JSON.stringify({ status: response.status, body, cache: response.headers.get("Cache-Control"), calls: discoveryCalls, imports })}`);
+  }
+  for (const query of ["page=0", "page=501", "genreId=-1", "year=1800", "minRating=10.1", "language=fr"]) {
+    const invalid = await handler(new Request(`https://project.supabase.co/api/tmdb/movies/discover?${query}`));
+    if (invalid.status !== 400) throw new Error(`Invalid discovery filter ${query} returned ${invalid.status}`);
+  }
+  if (discoveryCalls.length !== 1 || imports !== 0) throw new Error("Invalid or read-only discovery called a provider import");
+});
+
 function authHandler(overrides: Partial<RewindApiRepository> = {}, valid = true, confirmed = true, authOverrides: Partial<RewindAuthVerifier> = {}) {
   return createRewindApiHandler({
     listGenres: async () => [],
@@ -865,8 +893,8 @@ Deno.test("GET /api/genres returns the existing array contract and accepts the P
   const handler = handlerWith({
     async listGenres() {
       return [
-        { id: 17, name: "Drama" },
-        { id: 4, name: "Comedy" },
+        { id: 17, name: "Drama", tmdbId: 18 },
+        { id: 4, name: "Comedy", tmdbId: null },
       ];
     },
   });
@@ -884,8 +912,8 @@ Deno.test("GET /api/genres returns the existing array contract and accepts the P
   }
   const body = await response.json();
   if (JSON.stringify(body) !== JSON.stringify([
-    { id: 17, name: "Drama" },
-    { id: 4, name: "Comedy" },
+    { id: 17, name: "Drama", tmdbId: 18 },
+    { id: 4, name: "Comedy", tmdbId: null },
   ])) {
     throw new Error(`Unexpected genre response: ${JSON.stringify(body)}`);
   }

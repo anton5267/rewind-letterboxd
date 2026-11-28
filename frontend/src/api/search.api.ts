@@ -12,7 +12,7 @@ export interface MovieCard {
 
 export type MoviePage = NumberedPage<MovieCard>;
 
-export interface Genre { id: number; name: string }
+export interface Genre { id: number; name: string; tmdbId?: number | null }
 
 export interface MovieSearchParams {
   q?: string;

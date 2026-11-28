@@ -1,16 +1,18 @@
-import type { TmdbMovieSearchResponse } from "../contracts/catalog.ts";
+import type { TmdbMovieDiscoveryInput, TmdbMovieSearchResponse } from "../contracts/catalog.ts";
 import type { HostedAuthUser } from "../contracts/auth.ts";
 import type { RewindApiRepository } from "../contracts/repository.ts";
 import { RewindApiError } from "../http/errors.ts";
 import { tmdbApiBaseUrl, tmdbApiKey } from "../runtime/config.ts";
 import { beginUserTransaction } from "../runtime/transactions.ts";
-import { TmdbError, fetchTmdbMovie, searchTmdbMoviePage, type TmdbMovie } from "../tmdb.ts";
+import { TmdbError, discoverTmdbMoviePage, fetchTmdbMovie, searchTmdbMoviePage, type TmdbMovie } from "../tmdb.ts";
 import { replaceTmdbCrewCredits } from "./shared/tmdb_crew_credits.ts";
 import { resolveTmdbPersonForImport } from "./shared/tmdb_user_import.ts";
 
 const CACHE_TTL_MS = 15 * 60 * 1000;
 const CACHE_MAX_ENTRIES = 256;
 const searchCache = new Map<string, { expiresAt: number; value: TmdbMovieSearchResponse }>();
+const DISCOVERY_CACHE_TTL_MS = 10 * 60 * 1000;
+const discoveryCache = new Map<string, { expiresAt: number; value: TmdbMovieSearchResponse }>();
 
 function providerFailure(error: unknown): never {
   if (error instanceof TmdbError) throw new RewindApiError(error.status, error.message);
@@ -76,7 +78,7 @@ async function applyImportedTmdbMovie(connection: Awaited<ReturnType<typeof begi
   });
 }
 
-export const tmdbCatalogRepository: Pick<RewindApiRepository, "searchTmdbCatalog" | "importTmdbCatalogMovie"> = {
+export const tmdbCatalogRepository: Pick<RewindApiRepository, "searchTmdbCatalog" | "discoverTmdbCatalog" | "importTmdbCatalogMovie"> = {
   async searchTmdbCatalog(query, year, page, language) {
     const normalized = query.trim().replace(/\s+/g, " ");
     const key = `${language}:${year ?? ""}:${page}:${normalized.toLocaleLowerCase()}`;
@@ -88,6 +90,20 @@ export const tmdbCatalogRepository: Pick<RewindApiRepository, "searchTmdbCatalog
       const value = await searchTmdbMoviePage(normalized, year, tmdbApiKey, fetch, tmdbApiBaseUrl, page, language);
       if (searchCache.size >= CACHE_MAX_ENTRIES) searchCache.delete(searchCache.keys().next().value!);
       searchCache.set(key, { expiresAt: now + CACHE_TTL_MS, value });
+      return value;
+    } catch (error) { return providerFailure(error); }
+  },
+
+  async discoverTmdbCatalog(input: TmdbMovieDiscoveryInput) {
+    const key = JSON.stringify([input.page, input.genreId, input.year, input.minRating, input.language]);
+    const now = Date.now();
+    for (const [cacheKey, entry] of discoveryCache) if (entry.expiresAt <= now) discoveryCache.delete(cacheKey);
+    const hit = discoveryCache.get(key);
+    if (hit) return hit.value;
+    try {
+      const value = await discoverTmdbMoviePage(input, tmdbApiKey, fetch, tmdbApiBaseUrl);
+      if (discoveryCache.size >= CACHE_MAX_ENTRIES) discoveryCache.delete(discoveryCache.keys().next().value!);
+      discoveryCache.set(key, { expiresAt: now + DISCOVERY_CACHE_TTL_MS, value });
       return value;
     } catch (error) { return providerFailure(error); }
   },
