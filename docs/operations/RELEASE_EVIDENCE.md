@@ -669,6 +669,12 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - The combined local Playwright suites `global-search-alignment.spec.ts`, `global-search-responsive.spec.ts`, `motion-surfaces.spec.ts`, `search-controls.spec.ts`, and `home-guest-hero-figma.spec.ts` passed **44/44** on a local Vite server. Coverage includes UK/EN global search, responsive READY result layouts, keyboard navigation, loading/error/retry states, filters and URL normalization, reduced-motion interactions, and guest Home.
 - Updated `search-controls.spec.ts` to provide deterministic movie/genre/TMDB fixtures for the local Supabase-first frontend. Its film query/year, poster-rail, invalid-page, and valid-page cases no longer depend on an unavailable Spring API at `localhost:8081`. The test run made no backend or production writes.
 
+## Dune member review composer — Figma follow-up — 28 November 2026
+
+- Compared READY desktop frame `61:244` with the signed-in local detail page. The source frame does not show a permanently expanded review textarea, so the member composer now opens only after the “Review” action; existing-review edit remains directly open. The action focuses the textarea, and a new draft resets when the account or film changes or publish/delete succeeds.
+- `movie-details-dune-layout.spec.ts` and `review-reply-preference.spec.ts` passed **6/6** with hosted-auth fixtures. `movie-my-review-retry-focus.spec.ts` passed **6/6** in legacy-auth fixture mode, including keyboard focus recovery, preserving a manual Tab during delayed retry, and rejecting whitespace-only reviews. No live account or hosted data was used.
+- This closes one specific desktop detail-state mismatch only. Whole-site Figma parity, hosted Auth callbacks, private two-account flows, and final release/host acceptance remain open. The candidate is local and has not been deployed.
+
 ## History
 
 - [Consolidated 2026 evidence](../archive/RELEASE_EVIDENCE_2026.md).

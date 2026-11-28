@@ -134,6 +134,7 @@ for (const lang of ["uk", "en"] as const) {
 test("new review submits its explicit reply permission through the existing create endpoint", async ({ context, page }) => {
   const { creates } = await fixture(context, { create: true });
   await signIn(page, "en");
+  await page.getByRole("button", { name: "Review", exact: true }).click();
   await page.locator("#review-content").fill("New review");
   await choose(page, "en", "SELF");
   await page.getByRole("button", { name: "Publish review", exact: true }).click();
@@ -154,6 +155,8 @@ test("an account switch discards the prior review draft and ignores its delayed 
     await otherTab.goto("/en/email-action/#rewind_action=signup&type=email&token_hash=fixture-next-account");
     await otherTab.getByRole("button", { name: "Confirm email", exact: true }).click();
     await expect(otherTab).toHaveURL(/\/en\/films\/?$/);
+    await expect(page.locator("#review-content")).toHaveCount(0);
+    await page.getByRole("button", { name: "Review", exact: true }).click();
     await expect(page.getByRole("button", { name: "Publish review", exact: true })).toBeVisible();
     await expect(page.locator("#review-content")).toHaveValue("");
     await expect(page.getByRole("combobox", { name: labels.en.permission, exact: true })).toHaveValue("");

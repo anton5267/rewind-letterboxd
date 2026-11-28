@@ -57,7 +57,7 @@ for (const { lang, width, label } of [
     await expect(section).toHaveAttribute("aria-busy", "false");
     await expect(section).toBeFocused();
     await expect(section).toHaveCSS("outline-style", "solid");
-    await expect(section.locator("#review-content")).toBeVisible();
+    await expect(section.locator("#review-content")).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
     if (lang === "uk" && (width === 393 || width === 1440)) {
       await page.screenshot({ path: path.join(evidenceDir, `my-review-retry-${width === 393 ? "mobile" : "desktop"}-uk.png`), fullPage: true });
@@ -96,6 +96,8 @@ test("review cannot be published with whitespace-only content", async ({ page })
   });
   await page.setViewportSize({ width: 393, height: 900 });
   await page.goto("/uk/films/35");
+  await page.getByRole("button", { name: "Мої дії", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Огляд", exact: true }).click();
   const composer = page.locator("#review-content");
   await expect(composer).toBeVisible();
   const publish = page.getByRole("button", { name: "Опублікувати огляд" });

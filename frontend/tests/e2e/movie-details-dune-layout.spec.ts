@@ -256,9 +256,13 @@ test("Dune desktop Figma composition includes member actions when signed in", as
   await expect(actions.getByRole("button", { name: "Add to lists" })).toBeVisible();
   await expect(actions.getByRole("button", { name: "Review" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Ratings & Reviews" })).toBeVisible();
+  await expect(page.locator("#review-content")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Cast & Crew" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Similar films" })).toBeVisible();
   await expect.poll(() => page.locator('img[src="https://dune-movie-fixture.invalid/poster.png"]').evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   await expect.poll(() => page.locator('img[src*="dune-movie-fixture"]').evaluateAll(images => images.filter(image => (image as HTMLImageElement).naturalWidth > 0).length)).toBeGreaterThan(10);
   await page.screenshot({ path: resolve(process.cwd(), "../artifacts/visual-audit-20261127/dune-film-detail/movie-dune-en-1440-member.png"), fullPage: true });
+  await actions.getByRole("button", { name: "Review" }).click();
+  await expect(page.locator("#review-content")).toBeVisible();
+  await expect(page.locator("#review-content")).toBeFocused();
 });

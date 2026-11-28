@@ -106,6 +106,7 @@ export default function MovieDetails() {
   const [myReviewError, setMyReviewError] = useState(false);
   const [myReviewAttempt, setMyReviewAttempt] = useState(0);
   const [editingReview, setEditingReview] = useState(false);
+  const [reviewComposerOpen, setReviewComposerOpen] = useState(false);
   const [reviewRating, setReviewRating] = useState(0);
   const [lists, setLists] = useState<UserList[]>([]);
   const [listsLoading, setListsLoading] = useState(false);
@@ -146,7 +147,7 @@ export default function MovieDetails() {
   const reviewsSectionRef = useRef<HTMLElement>(null);
   const movieRetryFocus = useRef<{ movieId: number; lang: string; origin: HTMLElement } | null>(null);
   const reviewsRetryFocus = useRef<{ movieId: number; lang: string; origin: HTMLElement } | null>(null);
-  const myReviewRetryFocus = useRef<{ movieId: number; lang: string; origin: HTMLElement | null; request: number; isAuth: boolean } | null>(null);
+  const myReviewRetryFocus = useRef<{ movieId: number; lang: string; origin: HTMLElement | null; request: number; isAuth: boolean; userTabbed: boolean } | null>(null);
   const listsRetryFocus = useRef<{ movieId: number; lang: string; origin: HTMLElement | null; userId: number | null } | null>(null);
   const ratingRetryFocus = useRef<{ movieId: number; lang: string; origin: HTMLElement | null; userId: number | null } | null>(null);
 
@@ -277,6 +278,7 @@ export default function MovieDetails() {
     setMyReviewReady(false);
     setMyReviewError(false);
     setEditingReview(false);
+    setReviewComposerOpen(false);
     setReviewText("");
     setReviewReplyPreference(null);
     setReviewRating(0);
@@ -294,6 +296,7 @@ export default function MovieDetails() {
     setMutationBusy(null);
     setMobileActionOpen(false);
     setEditingReview(false);
+    setReviewComposerOpen(false);
     setReviewText("");
     setReviewReplyPreference(null);
     setMyReview(null);
@@ -423,11 +426,19 @@ export default function MovieDetails() {
 
   useEffect(() => {
     const pending = myReviewRetryFocus.current;
-    if (!pending || !myReviewReady || pending.movieId !== movieId || pending.lang !== lang || pending.isAuth !== isAuth || pending.request !== myReviewRequest.current) return;
+    if (!pending) return;
+    const markManualNavigation = (event: KeyboardEvent) => {
+      if (event.key === "Tab") pending.userTabbed = true;
+    };
+    document.addEventListener("keydown", markManualNavigation, true);
+    if (!myReviewReady || pending.movieId !== movieId || pending.lang !== lang || pending.isAuth !== isAuth || pending.request !== myReviewRequest.current) {
+      return () => document.removeEventListener("keydown", markManualNavigation, true);
+    }
     const frame = window.requestAnimationFrame(() => {
       if (myReviewRetryFocus.current !== pending) return;
       myReviewRetryFocus.current = null;
       if (pending.movieId !== currentMovieId.current || pending.lang !== lang || pending.isAuth !== isAuth || pending.request !== myReviewRequest.current) return;
+      if (pending.userTabbed) return;
       const active = document.activeElement;
       if (active !== document.body && active !== pending.origin) return;
       if (myReviewError) {
@@ -435,7 +446,10 @@ export default function MovieDetails() {
         [...document.querySelectorAll<HTMLElement>("[role=alert]")].find(alert => alert.textContent?.includes(message))?.querySelector<HTMLButtonElement>("[data-retry-button]:not(:disabled)")?.focus();
       } else reviewsSectionRef.current?.focus();
     });
-    return () => window.cancelAnimationFrame(frame);
+    return () => {
+      document.removeEventListener("keydown", markManualNavigation, true);
+      window.cancelAnimationFrame(frame);
+    };
   }, [isAuth, lang, movieId, myReviewAttempt, myReviewError, myReviewReady, myReview]);
 
   useEffect(() => {
@@ -522,6 +536,7 @@ export default function MovieDetails() {
       setReviewText("");
       setReviewReplyPreference(null);
       setEditingReview(false);
+      setReviewComposerOpen(false);
       setMessage(t(wasEditing ? "reviewUpdated" : "reviewPublished"));
       setError("");
       await Promise.all([load(), loadMyReview()]);
@@ -541,6 +556,7 @@ export default function MovieDetails() {
       await deleteReviewRequest(myReview.id);
       if (!isCurrentMutation(requestId)) return;
       setEditingReview(false);
+      setReviewComposerOpen(false);
       setReviewText("");
       setReviewReplyPreference(null);
       setMessage(t("reviewDeleted"));
@@ -591,6 +607,7 @@ export default function MovieDetails() {
 
   const focusReview = () => {
     closeMobileActions();
+    setReviewComposerOpen(true);
     // Run after the sheet's focus-return cleanup so the destination keeps focus.
     window.requestAnimationFrame(() => {
       const composer = document.getElementById("review-content");
@@ -805,8 +822,8 @@ export default function MovieDetails() {
           </>}
           {!reviewsLoadError && <Pagination className={styles.pagination} page={reviewsPage} totalPages={reviewsTotalPages} label={t("reviewsPagination")} busy={reviewsLoading} onPageChange={page => { setShowAllReviews(false); setReviewsPage(page); }} />}
           {isAuth && !myReviewReady && <p className={styles.loading} role="status">{t("loading")}</p>}
-          {isAuth && myReviewError && <RetryNotice className={styles.alert} message={t("loadMyReviewError")} retryLabel={t("retry")} onRetry={() => { myReviewRetryFocus.current = { movieId, lang, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, request: myReviewRequest.current + 1, isAuth }; setMyReviewReady(false); setMyReviewError(false); setMyReviewAttempt(value => value + 1); }} />}
-          {isAuth && myReviewReady && !myReviewError && (!myReview || editingReview) && <form className={styles.reviewForm} onSubmit={createReview}>
+          {isAuth && myReviewError && <RetryNotice className={styles.alert} message={t("loadMyReviewError")} retryLabel={t("retry")} onRetry={() => { myReviewRetryFocus.current = { movieId, lang, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, request: myReviewRequest.current + 1, isAuth, userTabbed: false }; setMyReviewReady(false); setMyReviewError(false); setMyReviewAttempt(value => value + 1); }} />}
+          {isAuth && myReviewReady && !myReviewError && (!myReview || editingReview) && (reviewComposerOpen || editingReview) && <form className={styles.reviewForm} onSubmit={createReview}>
             <label htmlFor="review-content">{t("yourReview")}</label>
             <textarea id="review-content" required maxLength={5000} disabled={mutationBusy !== null} value={reviewText} onChange={event => setReviewText(event.target.value)} />
             {usesHostedSupabaseAuth && <ReplyPreferenceField
@@ -821,7 +838,7 @@ export default function MovieDetails() {
             {editingReview && <label htmlFor="review-rating">{t("myRating")}</label>}
             {editingReview && <select id="review-rating" disabled={mutationBusy !== null} value={reviewRating} onChange={event => setReviewRating(Number(event.target.value))}>{[1, 2, 3, 4, 5].map(value => <option key={value} value={value}>{value}/5</option>)}</select>}
              <div className={styles.reviewFormActions}><button className={styles.primaryButton} type="submit" disabled={mutationBusy !== null || !reviewText.trim()} aria-busy={mutationBusy === "review"}>{mutationBusy === "review" ? t("saving") : t(editingReview ? "saveReview" : "publishReview")}</button>
-              {editingReview && <button type="button" disabled={mutationBusy !== null} onClick={() => { setEditingReview(false); setReviewText(""); setReviewReplyPreference(null); }}>{t("cancel")}</button>}</div>
+              {editingReview && <button type="button" disabled={mutationBusy !== null} onClick={() => { setEditingReview(false); setReviewComposerOpen(false); setReviewText(""); setReviewReplyPreference(null); }}>{t("cancel")}</button>}</div>
           </form>}
           {!isAuth && <p className={styles.signIn}><Link to={path("/login")}>{t("login")}</Link> {t("signInToReview")}</p>}
         </section>
