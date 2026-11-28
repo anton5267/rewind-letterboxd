@@ -73,6 +73,8 @@ test("READY mobile login matches the Figma form and keeps password/error states 
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     for (const width of [320, 393, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: 900 });
+      await expect(page.getByRole("link", { name: locale === "en" ? "Forgot password?" : "Забули пароль?", exact: true }))
+        .toHaveCSS("color", "rgb(153, 153, 153)");
       expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
     }
   }

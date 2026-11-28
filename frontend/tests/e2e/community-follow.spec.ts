@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 import { waitForPageContent } from "./helpers";
 
 const actor = { id: 700001, username: "communityreader", role: "USER" };
@@ -19,6 +20,15 @@ function deferred() {
 function pageOf(content: Member[]) {
   return { content, number: 0, size: 12, totalElements: content.length, totalPages: content.length ? 1 : 0, first: true, last: true };
 }
+
+test("community member link accessible names include all visible text", async ({ page }) => {
+  await communityFixture(page);
+  await page.goto("/en/community");
+  await waitForPageContent(page);
+
+  const audit = await new AxeBuilder({ page }).withRules(["label-content-name-mismatch"]).analyze();
+  expect(audit.violations).toEqual([]);
+});
 
 /** All root /api requests are controlled; these checks never write real follow/account data. */
 async function communityFixture(page: Page) {
