@@ -1,6 +1,7 @@
 -- CI guard for the exact policy expressions optimized by
--- 20261128071028_cache_edge_policy_settings.sql. Run after a clean migration
--- replay with `supabase db query --file scripts/verify-rls-initplan.sql`.
+-- 20261128071028_cache_edge_policy_settings.sql and later consolidated by
+-- 20261128073838_consolidate_edge_policy_duplicates.sql. Run after a clean
+-- migration replay with `supabase db query --file scripts/verify-rls-initplan.sql`.
 DO $assertions$
 DECLARE
   expected_policy_count CONSTANT INTEGER := 27;
@@ -14,28 +15,28 @@ BEGIN
       ('profile_media_objects', 'edge_app_profile_media_cleanup_delete'),
       ('tmdb_user_imports', 'edge_app_tmdb_import_usage_select'),
       ('tmdb_user_imports', 'edge_app_tmdb_import_usage_insert'),
-      ('movies', 'edge_app_tmdb_import_movie_insert'),
-      ('movies', 'edge_app_tmdb_import_movie_update'),
-      ('genres', 'edge_app_tmdb_import_genre_insert'),
-      ('genres', 'edge_app_tmdb_import_genre_update'),
-      ('actors', 'edge_app_tmdb_import_actor_insert'),
-      ('actors', 'edge_app_tmdb_import_actor_update'),
-      ('directors', 'edge_app_tmdb_import_director_insert'),
-      ('directors', 'edge_app_tmdb_import_director_update'),
-      ('producers', 'edge_app_tmdb_import_producer_insert'),
-      ('producers', 'edge_app_tmdb_import_producer_update'),
-      ('movie_genres', 'edge_app_tmdb_import_movie_genres_insert'),
-      ('movie_genres', 'edge_app_tmdb_import_movie_genres_delete'),
-      ('movie_actors', 'edge_app_tmdb_import_movie_actors_insert'),
-      ('movie_actors', 'edge_app_tmdb_import_movie_actors_delete'),
-      ('movie_directors', 'edge_app_tmdb_import_movie_directors_insert'),
-      ('movie_directors', 'edge_app_tmdb_import_movie_directors_delete'),
-      ('movie_producers', 'edge_app_tmdb_import_movie_producers_insert'),
-      ('movie_producers', 'edge_app_tmdb_import_movie_producers_delete'),
-      ('similar_movies', 'edge_app_tmdb_import_similar_insert'),
-      ('similar_movies', 'edge_app_tmdb_import_similar_delete'),
-      ('external_ratings', 'edge_app_tmdb_import_external_rating_insert'),
-      ('external_ratings', 'edge_app_tmdb_import_external_rating_update')
+      ('movies', 'edge_app_movies_insert_combined'),
+      ('movies', 'edge_app_movies_update_combined'),
+      ('genres', 'edge_app_genres_insert_combined'),
+      ('genres', 'edge_app_genres_update_combined'),
+      ('actors', 'edge_app_actors_insert_combined'),
+      ('actors', 'edge_app_actors_update_combined'),
+      ('directors', 'edge_app_directors_insert_combined'),
+      ('directors', 'edge_app_directors_update_combined'),
+      ('producers', 'edge_app_producers_insert_combined'),
+      ('producers', 'edge_app_producers_update_combined'),
+      ('movie_genres', 'edge_app_movie_genres_insert_combined'),
+      ('movie_genres', 'edge_app_movie_genres_delete_combined'),
+      ('movie_actors', 'edge_app_movie_actors_insert_combined'),
+      ('movie_actors', 'edge_app_movie_actors_delete_combined'),
+      ('movie_directors', 'edge_app_movie_directors_insert_combined'),
+      ('movie_directors', 'edge_app_movie_directors_delete_combined'),
+      ('movie_producers', 'edge_app_movie_producers_insert_combined'),
+      ('movie_producers', 'edge_app_movie_producers_delete_combined'),
+      ('similar_movies', 'edge_app_similar_movies_insert_combined'),
+      ('similar_movies', 'edge_app_similar_movies_delete_combined'),
+      ('external_ratings', 'edge_app_external_ratings_insert_combined'),
+      ('external_ratings', 'edge_app_external_ratings_update_combined')
   ), actual_policies AS (
     SELECT expected.table_name, expected.policy_name,
       policy.qual AS using_expression,
