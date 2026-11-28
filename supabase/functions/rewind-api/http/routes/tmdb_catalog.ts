@@ -3,6 +3,7 @@ import { optionalPositiveInteger } from "../parsers/query.ts";
 import { confirmedAuthUser, json, repositoryFailure } from "../response.ts";
 
 const SEARCH_PATH = "/api/tmdb/movies/search";
+const DISCOVER_PATH = "/api/tmdb/movies/discover";
 const IMPORT_PATH = "/api/tmdb/movies/import";
 
 export async function handleTmdbCatalogRoutes(context: HttpRouteContext): Promise<Response | null> {
@@ -28,6 +29,34 @@ export async function handleTmdbCatalogRoutes(context: HttpRouteContext): Promis
       return json(result, 200, corsHeaders);
     } catch (error) {
       return repositoryFailure(error, "Unable to search TMDB", corsHeaders);
+    }
+  }
+
+  if (path === DISCOVER_PATH) {
+    if (request.method !== "GET") {
+      corsHeaders.set("Allow", "GET, OPTIONS");
+      return json({ message: "Method not allowed" }, 405, corsHeaders);
+    }
+    const rawPage = query.has("page") ? optionalPositiveInteger(query.get("page")) : 1;
+    const year = query.has("year") ? optionalPositiveInteger(query.get("year")) : null;
+    const genreId = query.has("genreId") ? optionalPositiveInteger(query.get("genreId")) : null;
+    const rawRating = query.get("minRating");
+    const minRating = rawRating === null ? null : /^(?:0|[1-9]|10)(?:\.\d)?$/.test(rawRating) ? Number(rawRating) : null;
+    const language = query.get("language") ?? "en";
+    if (rawPage === null || rawPage > 500
+      || (query.has("year") && (year === null || year < 1888 || year > 2100))
+      || (query.has("genreId") && genreId === null)
+      || (query.has("minRating") && (minRating === null || minRating > 10))
+      || (language !== "uk" && language !== "en")) {
+      return json({ message: "Invalid TMDB discovery parameters" }, 400, corsHeaders);
+    }
+    try {
+      if (!repository.discoverTmdbCatalog) return json({ message: "TMDB discovery is unavailable" }, 503, corsHeaders);
+      const result = await repository.discoverTmdbCatalog({ page: rawPage, year, genreId, minRating, language });
+      corsHeaders.set("Cache-Control", "public, max-age=120, stale-while-revalidate=300");
+      return json(result, 200, corsHeaders);
+    } catch (error) {
+      return repositoryFailure(error, "Unable to discover TMDB movies", corsHeaders);
     }
   }
 

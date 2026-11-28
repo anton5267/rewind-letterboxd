@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { getGenres, searchMovies, type Genre, type MoviePage, type MovieSearchParams } from "../api/search.api";
-import { importTmdbMovie, searchTmdbMovies, type TmdbMovieCandidate } from "../api/movies.api";
+import { discoverTmdbMovies, importTmdbMovie, searchTmdbMovies, type TmdbMovieCandidate } from "../api/movies.api";
 import { useAuth } from "../context/AuthContext";
 import ResilientImage from "../components/ResilientImage";
 import RetryNotice from "../components/RetryNotice";
@@ -57,6 +57,12 @@ export default function Search() {
   const [tmdbImportError, setTmdbImportError] = useState(false);
   const [tmdbPage, setTmdbPage] = useState(1);
   const [tmdbTotalPages, setTmdbTotalPages] = useState(0);
+  const [tmdbDiscoverResults, setTmdbDiscoverResults] = useState<TmdbMovieCandidate[]>([]);
+  const [tmdbDiscoverTotalPages, setTmdbDiscoverTotalPages] = useState(0);
+  const [tmdbDiscoverLoading, setTmdbDiscoverLoading] = useState(false);
+  const [tmdbDiscoverError, setTmdbDiscoverError] = useState(false);
+  const [tmdbDiscoverRetry, setTmdbDiscoverRetry] = useState(0);
+  const [tmdbYearFilter, setTmdbYearFilter] = useState(searchParams.get("tmdbYear") ?? "");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const filtersFormRef = useRef<HTMLFormElement>(null);
   const filterToggleRef = useRef<HTMLButtonElement>(null);
@@ -197,6 +203,35 @@ export default function Search() {
     return () => { current = false; window.clearTimeout(timer); };
   }, [searchKey, lang]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(searchKey);
+    setTmdbYearFilter(params.get("tmdbYear") ?? "");
+    if ((params.get("q")?.trim().length ?? 0) >= 2) {
+      setTmdbDiscoverLoading(false);
+      return;
+    }
+    const parsePositive = (value: string | null, max: number) => {
+      if (!value || !/^\d+$/.test(value)) return undefined;
+      const parsed = Number(value);
+      return Number.isSafeInteger(parsed) && parsed > 0 && parsed <= max ? parsed : undefined;
+    };
+    const page = parsePositive(params.get("tmdbPage"), 500) ?? 1;
+    const genreId = parsePositive(params.get("tmdbGenreId"), 2_147_483_647);
+    const rawYear = parsePositive(params.get("tmdbYear"), 2100);
+    const year = rawYear !== undefined && rawYear >= 1888 ? rawYear : undefined;
+    const minRating = params.get("tmdbMinRating");
+    const rating = minRating && /^(?:[0-9](?:\.[0-9])?|10(?:\.0)?)$/.test(minRating) ? Number(minRating) : undefined;
+    if (rating !== undefined && (rating < 0 || rating > 10)) return;
+    let current = true;
+    setTmdbDiscoverLoading(true);
+    setTmdbDiscoverError(false);
+    discoverTmdbMovies({ page, genreId, year, minRating: rating, language: lang })
+      .then(({ data }) => { if (current) { setTmdbDiscoverResults(data.content); setTmdbDiscoverTotalPages(data.totalPages); } })
+      .catch(() => { if (current) { setTmdbDiscoverResults([]); setTmdbDiscoverTotalPages(0); setTmdbDiscoverError(true); } })
+      .finally(() => { if (current) setTmdbDiscoverLoading(false); });
+    return () => { current = false; };
+  }, [searchKey, lang, tmdbDiscoverRetry]);
+
   const loadTmdbPage = (page: number) => {
     const q = searchParams.get("q")?.trim() ?? "";
     if (q.length < 2 || page < 1 || page > 500) return;
@@ -292,6 +327,21 @@ export default function Search() {
     const next = new URLSearchParams(searchKey);
     next.delete("q");
     next.delete("page");
+    setSearchParams(next);
+  };
+
+  const updateTmdbDiscoveryFilter = (key: string, value: string) => {
+    const next = new URLSearchParams(searchKey);
+    if (value) next.set(key, value);
+    else next.delete(key);
+    next.delete("tmdbPage");
+    setSearchParams(next);
+  };
+
+  const turnTmdbDiscoveryPage = (page: number) => {
+    const next = new URLSearchParams(searchKey);
+    if (page <= 1) next.delete("tmdbPage");
+    else next.set("tmdbPage", String(page));
     setSearchParams(next);
   };
 
@@ -449,6 +499,61 @@ export default function Search() {
           <span>{tmdbPage} / {tmdbTotalPages}</span>
           <button type="button" disabled={tmdbPage >= tmdbTotalPages} onClick={() => loadTmdbPage(tmdbPage + 1)}>{t("next")}</button>
         </nav>}
+      </section>}
+
+      {(searchParams.get("q")?.trim().length ?? 0) < 2 && <section className={styles.tmdbSection} aria-labelledby="tmdb-discover-title" aria-busy={tmdbDiscoverLoading}>
+        <div className={styles.tmdbHeading}>
+          <div><h2 id="tmdb-discover-title">{t("tmdbDiscoverTitle")}</h2><p>{t("tmdbDiscoverHint")}</p></div>
+          <a href="https://www.themoviedb.org" target="_blank" rel="noreferrer" aria-label="TMDB">TMDB</a>
+        </div>
+        <div className={styles.tmdbFilters} aria-label={t("filters")}>
+          <label htmlFor="tmdb-discover-genre">{t("genre")}
+            <select id="tmdb-discover-genre" value={searchParams.get("tmdbGenreId") ?? ""} disabled={genresLoading || genreError} onChange={event => updateTmdbDiscoveryFilter("tmdbGenreId", event.target.value)}>
+              <option value="">{t("allGenres")}</option>
+              {genres.filter(genre => Number.isSafeInteger(genre.tmdbId) && Number(genre.tmdbId) > 0).map(genre => <option key={genre.id} value={genre.tmdbId!}>{localizeGenreName(genre.name, lang)}</option>)}
+            </select>
+          </label>
+          <label htmlFor="tmdb-discover-year">{t("year")}
+            <input id="tmdb-discover-year" type="number" min="1888" max="2100" value={tmdbYearFilter} onChange={event => {
+              const value = event.target.value;
+              setTmdbYearFilter(value);
+              if (!value || (/^\d{4}$/.test(value) && Number(value) >= 1888 && Number(value) <= 2100)) updateTmdbDiscoveryFilter("tmdbYear", value);
+            }} />
+          </label>
+          <label htmlFor="tmdb-discover-rating">{t("minRating")}
+            <select id="tmdb-discover-rating" value={searchParams.get("tmdbMinRating") ?? ""} onChange={event => updateTmdbDiscoveryFilter("tmdbMinRating", event.target.value)}>
+              <option value="">{t("anyRating")}</option>
+              {[5, 6, 7, 8].map(value => <option key={value} value={value}>{value}+</option>)}
+            </select>
+          </label>
+        </div>
+        {genreError && <p className={styles.tmdbStatus}>{t("loadGenresError")}</p>}
+        {tmdbDiscoverLoading && <p role="status" className={styles.tmdbStatus}>{t("loading")}</p>}
+        {tmdbDiscoverError && <div className={styles.alert} role="alert">{t("tmdbDiscoverError")} <button type="button" onClick={() => setTmdbDiscoverRetry(value => value + 1)}>{t("retry")}</button></div>}
+        {tmdbImportError && <p className={styles.alert} role="alert">{t("tmdbImportMovieError")}</p>}
+        {!tmdbDiscoverLoading && !tmdbDiscoverError && tmdbDiscoverResults.length === 0 && <p className={styles.tmdbStatus}>{t("tmdbDiscoverEmpty")}</p>}
+        {!tmdbDiscoverLoading && !tmdbDiscoverError && tmdbDiscoverResults.length > 0 && <div className={styles.tmdbGrid}>
+          {tmdbDiscoverResults.map(movie => {
+            const title = editorialText(movie.title, t("untitledFilm"));
+            return <article className={styles.tmdbCard} key={movie.tmdbId}>
+              <a className={styles.tmdbPoster} href={`https://www.themoviedb.org/movie/${movie.tmdbId}`} target="_blank" rel="noreferrer" aria-label={`${title} · TMDB`}>
+                <ResilientImage className={styles.poster} src={movie.posterUrl} alt="" fallback={<span className={styles.posterFallback}>{title}</span>} />
+              </a>
+              <h3>{title}</h3>
+              <p>{formatMovieYear(movie.releaseDate, t("unknownYear"))}{movie.voteAverage != null ? ` · ★ ${movie.voteAverage.toFixed(1)}` : ""} · TMDB</p>
+              {movie.overview?.trim() && <p className={styles.tmdbOverview}>{movie.overview}</p>}
+              {isAuth
+                ? <button className={styles.tmdbAdd} type="button" disabled={!ready || tmdbImportId !== null} onClick={() => void addTmdbMovie(movie)}>{tmdbImportId === movie.tmdbId ? t("loading") : t("tmdbAddToRewind")}</button>
+                : <Link className={styles.tmdbAdd} to={path("/login")} state={{ returnTo: `${location.pathname}${location.search}${location.hash}` }}>{t("login")}</Link>}
+            </article>;
+          })}
+        </div>}
+        {!tmdbDiscoverLoading && !tmdbDiscoverError && <nav className={styles.tmdbPagination} aria-label={t("tmdbDiscoverTitle")}>
+          <button type="button" disabled={(Number(searchParams.get("tmdbPage")) || 1) <= 1} onClick={() => turnTmdbDiscoveryPage((Number(searchParams.get("tmdbPage")) || 1) - 1)}>{t("previous")}</button>
+          <span>{Number(searchParams.get("tmdbPage")) || 1}</span>
+          <button type="button" disabled={(Number(searchParams.get("tmdbPage")) || 1) >= tmdbDiscoverTotalPages} onClick={() => turnTmdbDiscoveryPage((Number(searchParams.get("tmdbPage")) || 1) + 1)}>{t("next")}</button>
+        </nav>}
+        <p className={styles.tmdbAttribution}>{t("tmdbAttribution")}</p>
       </section>}
     </div>
   </main>;

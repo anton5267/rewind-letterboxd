@@ -3,7 +3,7 @@ export interface TmdbCast extends TmdbPerson { characterName: string | null; cas
 export interface TmdbCrewCredit extends TmdbPerson { department: string; job: string }
 export interface TmdbGenre { tmdbId: number; name: string }
 export interface TmdbMovieCandidate {
-  tmdbId: number; title: string; releaseDate: string | null; overview: string | null; posterUrl: string | null;
+  tmdbId: number; title: string; releaseDate: string | null; overview: string | null; posterUrl: string | null; voteAverage?: number | null;
 }
 export interface TmdbMovieCandidatePage {
   content: TmdbMovieCandidate[];
@@ -148,6 +148,50 @@ export async function searchTmdbMoviePage(
 export async function searchTmdbMovies(query: string, year: number | null, apiKey: string | undefined, fetcher: typeof fetch = fetch, baseUrl = API_URL): Promise<TmdbMovieCandidate[]> {
   return (await searchTmdbMoviePage(query, year, apiKey, fetcher, baseUrl)).content;
 }
+
+export async function discoverTmdbMoviePage(
+  input: { page: number; year: number | null; genreId: number | null; minRating: number | null; language: "uk" | "en" },
+  apiKey: string | undefined,
+  fetcher: typeof fetch = fetch,
+  baseUrl = API_URL,
+): Promise<TmdbMovieCandidatePage> {
+  const validPage = Number.isInteger(input.page) && input.page >= 1 && input.page <= 500;
+  const validYear = input.year === null || (Number.isInteger(input.year) && input.year >= 1888 && input.year <= 2100);
+  const validGenre = input.genreId === null || (Number.isSafeInteger(input.genreId) && input.genreId > 0);
+  const validRating = input.minRating === null || (Number.isFinite(input.minRating) && input.minRating >= 0 && input.minRating <= 10);
+  if (!validPage || !validYear || !validGenre || !validRating || (input.language !== "uk" && input.language !== "en")) {
+    throw new TmdbError(400, "Invalid movie discovery");
+  }
+  if (!apiKey?.trim()) throw new TmdbError(503, "TMDB integration is disabled");
+  const params: Record<string, string> = {
+    language: input.language === "uk" ? "uk-UA" : "en-US",
+    page: String(input.page),
+    sort_by: "popularity.desc",
+    include_adult: "false",
+  };
+  if (input.year !== null) params.primary_release_year = String(input.year);
+  if (input.genreId !== null) params.with_genres = String(input.genreId);
+  if (input.minRating !== null) params["vote_average.gte"] = String(input.minRating);
+  const body = await apiGet("/discover/movie", params, apiKey, fetcher, baseUrl);
+  if (!Array.isArray(body.results)) throw new TmdbError(502, "TMDB returned invalid discovery results");
+  const seen = new Set<number>();
+  const content = records(body.results).flatMap((entry) => {
+    const tmdbId = number(entry.id), title = text(entry.title)?.trim();
+    if (!tmdbId || !Number.isSafeInteger(tmdbId) || tmdbId < 1 || !title || seen.has(tmdbId)) return [];
+    seen.add(tmdbId);
+    return [{
+      tmdbId, title, releaseDate: text(entry.release_date), overview: text(entry.overview),
+      posterUrl: image(entry.poster_path, "w185"), voteAverage: number(entry.vote_average),
+    }];
+  }).slice(0, 8);
+  return {
+    content,
+    page: input.page,
+    totalPages: Math.max(1, Math.min(number(body.total_pages) ?? input.page, 500)),
+    totalResults: Math.max(0, number(body.total_results) ?? content.length),
+  };
+}
+
 export async function findTmdbMoviesByImdbId(imdbId: string, apiKey: string | undefined, fetcher: typeof fetch = fetch, baseUrl = API_URL): Promise<TmdbMovieCandidate[]> {
   const normalized = imdbId.trim();
   if (!/^tt\d{5,12}$/.test(normalized)) throw new TmdbError(400, "Invalid IMDb ID");

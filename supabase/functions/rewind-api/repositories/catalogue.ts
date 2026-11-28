@@ -24,17 +24,19 @@ export const catalogueRepository: Pick<RewindApiRepository,
     const connection = await pool.connect();
     try {
       await connection.queryObject("SET ROLE rewind_edge_reader");
-      const result = await connection.queryObject<{ id: string; name: string }>`
-        SELECT id::text AS id, name
+      const result = await connection.queryObject<{ id: string; name: string; tmdb_id: string | null }>`
+        SELECT id::text AS id, name, tmdb_id::text AS tmdb_id
         FROM rewind.genres
         ORDER BY name ASC
       `;
-      return result.rows.map(({ id, name }) => {
+      return result.rows.map(({ id, name, tmdb_id }) => {
         const numericId = Number(id);
         if (!Number.isSafeInteger(numericId)) {
           throw new Error("Genre ID is outside the safe JSON integer range");
         }
-        return { id: numericId, name };
+        const tmdbId = tmdb_id === null ? null : Number(tmdb_id);
+        if (tmdbId !== null && !Number.isSafeInteger(tmdbId)) throw new Error("TMDB genre ID is outside the safe JSON integer range");
+        return { id: numericId, name, tmdbId };
       });
     } finally {
       connection.release();

@@ -1,4 +1,4 @@
-import { discoverTmdbMovies, fetchTmdbMovie, findTmdbMoviesByImdbId, mapTmdbMovie, searchTmdbMovieCandidates, searchTmdbMovies, TmdbError } from "./tmdb.ts";
+import { discoverTmdbMoviePage, discoverTmdbMovies, fetchTmdbMovie, findTmdbMoviesByImdbId, mapTmdbMovie, searchTmdbMovieCandidates, searchTmdbMovies, TmdbError } from "./tmdb.ts";
 function assertEquals(actual: unknown, expected: unknown) {
   if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error(`Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
 }
@@ -97,6 +97,42 @@ Deno.test("TMDB discovery preserves supported filters and caps unique IDs", asyn
     return jsonResponse({ page: 2, total_pages: 8, total_results: 4, results: [{ id: 3 }, { id: 3 }, { id: 4 }, { id: 5 }] });
   });
   assertEquals(discovery, { page: 2, totalPages: 8, totalResults: 4, tmdbIds: [3, 4] });
+});
+
+Deno.test("public TMDB discovery returns localized popular candidates with bounded pagination", async () => {
+  const result = await discoverTmdbMoviePage({ page: 2, year: 2020, genreId: 18, minRating: 7.5, language: "uk" }, "fixture", (input) => {
+    const url = new URL(String(input));
+    assertEquals(url.pathname, "/3/discover/movie");
+    assertEquals(url.searchParams.get("page"), "2");
+    assertEquals(url.searchParams.get("primary_release_year"), "2020");
+    assertEquals(url.searchParams.get("with_genres"), "18");
+    assertEquals(url.searchParams.get("vote_average.gte"), "7.5");
+    assertEquals(url.searchParams.get("language"), "uk-UA");
+    assertEquals(url.searchParams.get("include_adult"), "false");
+    assertEquals(url.searchParams.get("sort_by"), "popularity.desc");
+    assertEquals(url.searchParams.get("api_key"), "fixture");
+    return jsonResponse({ page: 2, total_pages: 900, total_results: 18000, results: [
+      { id: 3, title: "Popular", release_date: "2020-05-04", overview: "Plot", poster_path: "/popular.jpg", vote_average: 8.2 },
+      { id: 3, title: "Duplicate" },
+      ...Array.from({ length: 10 }, (_, index) => ({ id: index + 4, title: `Movie ${index}` })),
+      { id: -5, title: "Invalid" },
+    ] });
+  });
+  assertEquals(result.page, 2);
+  assertEquals(result.totalPages, 500);
+  assertEquals(result.totalResults, 18000);
+  assertEquals(result.content.length, 8);
+  assertEquals(result.content[0], {
+    tmdbId: 3, title: "Popular", releaseDate: "2020-05-04", overview: "Plot",
+    posterUrl: "https://image.tmdb.org/t/p/w185/popular.jpg", voteAverage: 8.2,
+  });
+});
+
+Deno.test("public TMDB discovery requires the server key and valid filters", async () => {
+  await assertTmdbError(() => discoverTmdbMoviePage({ page: 0, year: null, genreId: null, minRating: null, language: "en" }, "fixture"), "Invalid movie discovery");
+  await assertTmdbError(() => discoverTmdbMoviePage({ page: 1, year: null, genreId: -1, minRating: null, language: "en" }, "fixture"), "Invalid movie discovery");
+  await assertTmdbError(() => discoverTmdbMoviePage({ page: 1, year: null, genreId: null, minRating: 10.1, language: "en" }, "fixture"), "Invalid movie discovery");
+  await assertTmdbError(() => discoverTmdbMoviePage({ page: 1, year: null, genreId: null, minRating: null, language: "en" }, undefined), "disabled");
 });
 
 Deno.test("TMDB title search returns bounded explicit candidates and applies year", async () => {

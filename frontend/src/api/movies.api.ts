@@ -32,6 +32,7 @@ export interface TmdbMovieCandidate {
   releaseDate: string | null;
   overview: string | null;
   posterUrl: string | null;
+  voteAverage?: number | null;
 }
 
 export interface TmdbMovieSearchPage {
@@ -41,8 +42,19 @@ export interface TmdbMovieSearchPage {
   totalResults: number;
 }
 
+export interface TmdbMovieDiscoveryParams {
+  page: number;
+  genreId?: number;
+  year?: number;
+  minRating?: number;
+  language: "uk" | "en";
+}
+
 export const searchTmdbMovies = (query: string, year: string | undefined, page: number, language: "uk" | "en") =>
   api.get<TmdbMovieSearchPage>("/tmdb/movies/search", { params: { q: query, year, page, language } });
+
+export const discoverTmdbMovies = (params: TmdbMovieDiscoveryParams) =>
+  api.get<TmdbMovieSearchPage>("/tmdb/movies/discover", { params });
 
 export const importTmdbMovie = (tmdbId: number) =>
   api.post<{ movieId: number; title: string }>("/tmdb/movies/import", { tmdbId });

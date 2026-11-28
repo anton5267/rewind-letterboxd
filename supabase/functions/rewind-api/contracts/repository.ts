@@ -1,5 +1,5 @@
 import type { ProfileMediaKind, ProfileMediaResponse, ProfileMediaUpload } from "./profile_media.ts";
-import type { GenreResponse, GlobalSearchResponse, MovieDetailsResponse, MovieFlagType, MovieSearchParams, MovieSearchResult, MovieStatusResponse, PersonFilmographyResponse, PersonSearchParams, PersonSearchResult, TmdbMovieSearchResponse } from "./catalog.ts";
+import type { GenreResponse, GlobalSearchResponse, MovieDetailsResponse, MovieFlagType, MovieSearchParams, MovieSearchResult, MovieStatusResponse, PersonFilmographyResponse, PersonSearchParams, PersonSearchResult, TmdbMovieDiscoveryInput, TmdbMovieSearchResponse } from "./catalog.ts";
 import type { CurrentUserResponse, HostedAuthUser } from "./auth.ts";
 import type { FeaturedListCategory } from "./lists.ts";
 import type { FavoriteMoveRequest, ProfileCollectionResult, ProfileResponse, ProfileUpdateRequest, PublicProfileResponse } from "./profile.ts";
@@ -11,6 +11,7 @@ import type { AdminActivityOverviewResponse, AdminAuditLogResponse, AdminComment
 
 export interface RewindApiRepository {
   searchTmdbCatalog?(query: string, year: number | null, page: number, language: "uk" | "en"): Promise<TmdbMovieSearchResponse>;
+  discoverTmdbCatalog?(input: TmdbMovieDiscoveryInput): Promise<TmdbMovieSearchResponse>;
   importTmdbCatalogMovie?(authUser: HostedAuthUser, tmdbId: number): Promise<{ movieId: number; title: string }>;
   getPublicWatchedFilmCount?(): Promise<number>;
   listGenres(): Promise<GenreResponse[]>;

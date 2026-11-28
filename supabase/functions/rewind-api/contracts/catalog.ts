@@ -5,6 +5,7 @@ import type { PopularTagResponse, PublicListPageResponse } from "./lists.ts";
 export interface GenreResponse {
   id: number;
   name: string;
+  tmdbId?: number | null;
 }
 
 export interface MovieCardResponse {
@@ -28,6 +29,7 @@ export interface TmdbMovieCandidateResponse {
   releaseDate: string | null;
   overview: string | null;
   posterUrl: string | null;
+  voteAverage?: number | null;
 }
 
 export interface TmdbMovieSearchResponse {
@@ -35,6 +37,14 @@ export interface TmdbMovieSearchResponse {
   page: number;
   totalPages: number;
   totalResults: number;
+}
+
+export interface TmdbMovieDiscoveryInput {
+  page: number;
+  genreId: number | null;
+  year: number | null;
+  minRating: number | null;
+  language: "uk" | "en";
 }
 
 export interface MovieDetailsResponse {
