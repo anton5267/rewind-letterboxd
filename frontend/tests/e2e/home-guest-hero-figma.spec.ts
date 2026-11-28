@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 import { mkdirSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { basename, resolve } from "node:path";
@@ -306,6 +307,10 @@ test("guest home hero matches the Figma headline and call to action", async ({ p
         await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth),
         `${locale} guest Home at ${width}px must not overflow horizontally`,
       ).toBe(0);
+      if (width === 320) {
+        const contrastAudit = await new AxeBuilder({ page }).withRules(["color-contrast"]).analyze();
+        expect(contrastAudit.violations, `${locale} guest Home at ${width}px has color contrast violations`).toEqual([]);
+      }
     }
   }
 });
