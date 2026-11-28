@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { toWriterRoutePages } from "./public-writer-routes.mjs";
+import { publicImageUrl, toWriterRoutePages } from "./public-writer-routes.mjs";
 
 test("creates localized static route descriptors for each known writer", () => {
   assert.deepEqual(toWriterRoutePages([
-    { id: 7, name: "Bea Writer", photoUrl: null },
+    { id: 7, name: "Bea Writer", photoUrl: null, type: "WRITER" },
   ]), [
     {
       route: "uk/people/writer/7", language: "uk", title: "Bea Writer",
@@ -16,7 +16,13 @@ test("creates localized static route descriptors for each known writer", () => {
     },
   ]);
   assert.throws(
-    () => toWriterRoutePages([{ id: 0, name: "Invalid", photoUrl: null }]),
+    () => toWriterRoutePages([{ id: 0, name: "Invalid", photoUrl: null, type: "WRITER" }]),
     /invalid record/,
   );
+  assert.throws(
+    () => toWriterRoutePages([{ id: 7, name: "Not a writer", photoUrl: null, type: "PRODUCER" }]),
+    /invalid record/,
+  );
+  assert.equal(publicImageUrl("javascript:alert(1)"), null);
+  assert.equal(publicImageUrl("https://image.tmdb.org/t/p/w185/bea.jpg"), "https://image.tmdb.org/t/p/w185/bea.jpg");
 });

@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { fetchPublishedWriterPeople, toWriterRoutePages } from "./public-writer-routes.mjs";
+import { publicImageUrl, toWriterRoutePages } from "./public-writer-routes.mjs";
 
 const frontendDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const distDir = path.join(frontendDir, "dist");
@@ -71,16 +71,6 @@ async function fetchAllPages(resource, type) {
     throw new Error(`Catalog changed while enumerating ${type}; refusing to generate incomplete routes.`);
   }
   return content;
-}
-
-function publicImageUrl(value) {
-  if (typeof value !== "string") return null;
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" ? url.href : null;
-  } catch {
-    return null;
-  }
 }
 
 function routeHtml({ route, language, title, description, imageUrl, noindex = false }) {
