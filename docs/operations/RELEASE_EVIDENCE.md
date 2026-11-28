@@ -686,7 +686,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 
 - Exported all 36 poster assets from READY desktop catalogue frame `1480:4797` in Figma file `BDO9GO1oscOeUTcu4VXVKA`; source-size exports are 174×260. A contact sheet verified the image sequence against the frame. Test-only files live under `frontend/tests/e2e/fixtures/films-catalog-figma/` with a title-to-order manifest.
 - `films-desktop-catalog-figma.spec.ts` now checks the exact ordered 36 film titles and waits until all 36 poster images load at the source width. The first RED run failed because the fixture still contained generic `Catalog fixture N` titles; after adding the source-backed movie and image fixtures, the focused Playwright scenario passed **1/1**.
-- `npm run verify:build` passed TypeScript and Vite production build; `git diff --check` passed. The PNGs are only read by the test route and are excluded from production frontend assets. No Figma design, production data, Supabase, GitHub Pages, or production deployment was changed.
+- `npm run verify:build` passed TypeScript and Vite production build; `git diff --check` passed. GitHub Actions push run `46176786478` and pull-request run `46176789959` both completed successfully for commit `1dd3b93abec64b7af2064065d20b94e4a7861a41`. PR #48 remains open as a draft. The PNGs are only read by the test route and are excluded from production frontend assets. No Figma design, production data, Supabase, GitHub Pages, or production deployment was changed.
 
 ## History
 
