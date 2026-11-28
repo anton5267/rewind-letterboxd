@@ -100,7 +100,7 @@
 
 ## Verification Boundary
 
-No test suites were run. `frontend/npm run verify:build` passed (`tsc --noEmit` and Vite production build); `npx deno check index.ts` passed. Supabase CLI is unavailable, and Docker Desktop is not running, so the disposable PostgreSQL migration replay remains pending. Production schema and deployment are not changed.
+No test suites were run. `frontend/npm run verify:build` passed (`tsc --noEmit` and Vite production build); `npx deno check index.ts` passed. The migration replayed successfully in disposable in-memory PGlite/PostgreSQL 17.5 against a minimal schema matching the hosted catalog columns/roles. Supabase CLI is unavailable and Docker Desktop is not running, so a clean full-schema replay on PostgreSQL 17.11 remains pending. Production schema and deployment are not changed.
 
 ## Self-review
 
