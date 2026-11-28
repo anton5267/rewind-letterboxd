@@ -22,6 +22,8 @@ jobs:
         run: supabase db reset --no-seed
       - name: Verify cached Edge policy settings
         run: supabase db query --file scripts/verify-rls-initplan.sql
+      - name: Verify Edge policy consolidation
+        run: supabase db query --file scripts/verify-rls-policy-consolidation.sql
       - name: Verify migration history and PostgreSQL runtime
         run: |
           supabase migration list
