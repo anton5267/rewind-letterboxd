@@ -67,7 +67,7 @@
   .initial { font-size: 32px; }
   .actions { margin-top: 21px; gap: 8px; }
   .actions button { width: auto; height: 22px; min-height: 22px; padding: 5px 15px; font-size: 11px; }
-  .actions button.remove { display: none; }
+  .actions button.remove { min-height: 44px; padding: 8px 12px; font-size: 12px; }
   .hint, .privacy { margin-top: 16px; font-size: 12px; }
   .panel .hint, .privacy { display: none; }
   .panel:last-of-type .actions { margin-top: 20px; }

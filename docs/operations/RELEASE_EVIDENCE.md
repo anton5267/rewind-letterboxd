@@ -9,6 +9,13 @@ Reviewed 28 November 2026. This page summarizes recorded production state and ac
 - CI run [`46112636772`](https://github.com/anton5267/rewind-letterboxd/actions/runs/46112636772) passed both `verify` and isolated migration replay. GitHub Pages deployment [`46112826612`](https://github.com/anton5267/rewind-letterboxd/actions/runs/46112826612) succeeded for `db39a9ab12e09fff3bac2e1fd7940eaf80cdbb30`.
 - Read-only live Playwright+axe audit returned HTTP 200 and zero WCAG 2 A/AA violations on `/uk/login/`, `/en/login/`, and `/uk/community/`; browser JavaScript errors were zero. These three route checks do not establish whole-site accessibility or authenticated/private flow acceptance.
 
+## Profile media responsive fixes — 28 November 2026
+
+- Fixed the mobile profile settings regression that hid the remove-avatar/remove-banner actions. The buttons now remain visible with a 44px minimum touch target; preview dimensions and the primary upload controls remain unchanged.
+- Fixed mobile public-profile hero styling so a user-uploaded banner remains visible under a dark readability overlay instead of being discarded by the phone breakpoint background shorthand. The no-banner fallback remains the intended gradient-only composition.
+- `frontend/tests/e2e/profile-media.spec.ts`: **5/5 passed**, covering UK and EN media upload/retry/persistence/removal, the phone metadata draft, and own/public banner behavior at tablet/phone widths. `npm run verify:build` passed typecheck and production build; `git diff --check` passed. Only fixture-intercepted requests were used.
+- This is local verification only. The patch is not merged or deployed; no production Auth, database, or user data was changed.
+
 ## Mobile guest Home contrast and route sweep — 28 November 2026
 
 - PR #34 ([`95fa5f1`](https://github.com/anton5267/rewind-letterboxd/commit/95fa5f1ed096419bbe4cb285a0dc1d61b09434c4)) raises muted mobile guest Home text colors while preserving layout geometry. It adds a fixture axe `color-contrast` check at 320px for both UK and EN. The regression failed before the CSS change and passed afterward; `npm run verify:build` and `git diff --check` passed.
