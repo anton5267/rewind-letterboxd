@@ -682,6 +682,12 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - `movie-details-dune-layout.spec.ts` and `review-reply-preference.spec.ts` passed **6/6** with hosted-auth fixtures. `movie-my-review-retry-focus.spec.ts` passed **6/6** in legacy-auth fixture mode, including keyboard focus recovery, preserving a manual Tab during delayed retry, and rejecting whitespace-only reviews. No live account or hosted data was used.
 - This closes one specific desktop detail-state mismatch only. Whole-site Figma parity, hosted Auth callbacks, private two-account flows, and final release/host acceptance remain open. The candidate is local and has not been deployed.
 
+## All Films Figma poster fixtures — 28 November 2026
+
+- Exported all 36 poster assets from READY desktop catalogue frame `1480:4797` in Figma file `BDO9GO1oscOeUTcu4VXVKA`; source-size exports are 174×260. A contact sheet verified the image sequence against the frame. Test-only files live under `frontend/tests/e2e/fixtures/films-catalog-figma/` with a title-to-order manifest.
+- `films-desktop-catalog-figma.spec.ts` now checks the exact ordered 36 film titles and waits until all 36 poster images load at the source width. The first RED run failed because the fixture still contained generic `Catalog fixture N` titles; after adding the source-backed movie and image fixtures, the focused Playwright scenario passed **1/1**.
+- `npm run verify:build` passed TypeScript and Vite production build; `git diff --check` passed. The PNGs are only read by the test route and are excluded from production frontend assets. No Figma design, production data, Supabase, GitHub Pages, or production deployment was changed.
+
 ## History
 
 - [Consolidated 2026 evidence](../archive/RELEASE_EVIDENCE_2026.md).

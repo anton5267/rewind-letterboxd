@@ -113,3 +113,4 @@ Spring Boot/MySQL/Redis/Mailpit мають окремий локальний ж�
 - Для змін лише Markdown перевіряти зміст, шляхи, anchors і diff. Результати CI, fixtures, production reads і реальних дій записувати з точними межами.
 - Після завершеного блоку оновлювати короткий статус. Датовані технічні докази зберігати в архіві.
 - Серверні секрети зберігати в secret storage. Приватну `rewind` schema, Supabase `auth` та межі власності даних зберігати за чинною архітектурою.
+- 28.11.2026: All Films READY desktop frame `1480:4797` тепер має 36 локальних Figma poster fixtures для перевірки точних назв, послідовності й завантаження зображень. Фокусний Playwright пройшов 1/1; `frontend/npm run verify:build` успішний. Це закриває лише source-art перевірку каталогу, а не повний Figma parity. [Докази](docs/operations/RELEASE_EVIDENCE.md#all-films-figma-poster-fixtures--28-november-2026).

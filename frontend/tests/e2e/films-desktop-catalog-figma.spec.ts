@@ -1,15 +1,32 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 
-const movies = Array.from({ length: 36 }, (_, index) => ({
+const figmaFilmTitles = [
+  "Superman", "Barbie", "La La Land", "Whiplash", "Oppenheimer", "F1",
+  "Black Swan", "The Silence of the Lambs", "Weapons", "Wicked", "Call Me by Your Name", "The Dark Knight",
+  "Midsommar", "The Grand Budapest Hotel", "Challengers", "Shutter Island", "The Godfather", "Deadpool & Wolverine",
+  "Avengers: Endgame", "Avengers: Infinity War", "Spider-Man: Across the Spider-Verse", "The Wolf of Wall Street", "Saltburn", "Spirited Away",
+  "American Psycho", "Little Women", "Gone Girl", "The Menu", "Once Upon a Time in Hollywood", "Fantastic Mr. Fox",
+  "The Lord of the Rings: The Fellowship of the Ring", "The Shawshank Redemption", "Hereditary", "No Country for Old Men", "Black Panther", "Titanic",
+];
+
+const movies = figmaFilmTitles.map((title, index) => ({
   id: 98200 + index,
-  title: `Catalog fixture ${index + 1}`,
+  title,
   releaseDate: "2025-01-01",
   rating: 7.2,
-  photoUrl: null,
+  photoUrl: `http://127.0.0.1:5173/__fixtures/films-catalog-figma/poster-${String(index + 1).padStart(2, "0")}.png`,
 }));
 
 test("desktop All Films exposes only the three catalogue filters shown in Figma", async ({ page }) => {
+  await page.route("**/__fixtures/films-catalog-figma/**", async route => {
+    const filename = new URL(route.request().url()).pathname.split("/").pop() ?? "";
+    if (!/^poster-\d{2}\.png$/.test(filename)) return route.abort();
+    const body = await readFile(resolve(process.cwd(), "tests/e2e/fixtures/films-catalog-figma", filename));
+    await route.fulfill({ contentType: "image/png", body });
+  });
   await page.route("**/api/users/me", route => route.fulfill({ status: 401, json: { message: "Unauthenticated" } }));
   await page.route("**/api/auth/csrf", route => route.fulfill({ json: { token: "films-catalog-figma" } }));
   await page.route("**/api/*/unread-count", route => route.fulfill({ json: { count: 0 } }));
@@ -37,6 +54,10 @@ test("desktop All Films exposes only the three catalogue filters shown in Figma"
   await expect(filters.getByLabel("Sort by")).toBeHidden();
   await expect(page.locator('main [class*="catalogCount_"]')).toHaveText("There are 50 films.");
   await expect(page.locator("main [data-search-results-focus] article")).toHaveCount(36);
+  await expect(page.locator("main [data-search-results-focus] article h2")).toHaveText(figmaFilmTitles);
+  const figmaPosters = page.locator("main [data-search-results-focus] article img");
+  await expect(figmaPosters).toHaveCount(36);
+  await expect.poll(() => figmaPosters.evaluateAll(images => images.every(image => image.complete && image.naturalWidth === 174))).toBe(true);
   const contrast = await new AxeBuilder({ page }).withRules(["color-contrast"]).analyze();
   expect(contrast.violations).toEqual([]);
 
