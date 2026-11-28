@@ -698,7 +698,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 
 - Reopened READY Figma frame `604:967` and downloaded five rendered cover layers directly through the connected Figma MCP. Source-order exports are 515×296, 444×407, 444×407, 442×408, and 442×408. The files and title mapping are in `frontend/tests/e2e/fixtures/journal-awards-figma/`.
 - Added a fixture-backed regression that checks all five Awards titles and cover URLs in source order, scrolls each lazy-loaded cover into view, and confirms all five images load at their Figma export dimensions. The initial RED check confirmed the existing media-free feed fixture returned zero cover images; `journal-design-flow.spec.ts` then passed **9/9** with the exact source exports.
-- The exports cover only the main artwork column. Figma's separate right-side poster stacks have no corresponding distinct field in the current Journal API, and the live published Awards feed is empty. Those visual/content checks remain open. No production assets, Figma source, Supabase data, or published site changed.
+- The exports cover only the main artwork column. Figma's separate right-side poster stacks have no corresponding distinct field in the current Journal API, and the live published Awards feed is empty. Those visual/content checks remain open. GitHub push run `46178586258` and PR run `46178591006` both completed successfully for commit `f8775dd16f58f9c999fe6065773c983a784a5580`. No production assets, Figma source, Supabase data, or published site changed.
 
 ## History
 
