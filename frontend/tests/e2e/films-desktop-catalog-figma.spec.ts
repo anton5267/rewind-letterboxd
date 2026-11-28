@@ -19,6 +19,10 @@ test("desktop All Films exposes only the three catalogue filters shown in Figma"
   await page.route("**/api/movies/search**", route => route.fulfill({ json: {
     content: movies, number: 0, size: 36, totalPages: 2, totalElements: 50,
   } }));
+  await page.route("**/api/tmdb/movies/discover**", route => route.fulfill({ json: {
+    content: [{ tmdbId: 101, title: "TMDB fixture", releaseDate: "2025-01-01", posterUrl: null, overview: "A fixture." }],
+    page: 1, totalPages: 1, totalResults: 1,
+  } }));
 
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/en/films");
@@ -32,7 +36,7 @@ test("desktop All Films exposes only the three catalogue filters shown in Figma"
   await expect(filters.getByLabel("Genre")).toBeVisible();
   await expect(filters.getByLabel("Sort by")).toBeHidden();
   await expect(page.locator('main [class*="catalogCount_"]')).toHaveText("There are 50 films.");
-  await expect(page.locator("main article")).toHaveCount(36);
+  await expect(page.locator("main [data-search-results-focus] article")).toHaveCount(36);
   const contrast = await new AxeBuilder({ page }).withRules(["color-contrast"]).analyze();
   expect(contrast.violations).toEqual([]);
 

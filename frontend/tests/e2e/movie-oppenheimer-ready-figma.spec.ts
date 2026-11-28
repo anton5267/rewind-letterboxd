@@ -1,24 +1,55 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
 import { mkdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { installHostedAuthFixture, signInHostedFixture } from "./fixtures/hosted-auth";
+import { installHostedAuthFixture } from "./fixtures/hosted-auth";
 
 const poster = "https://images.example.invalid/oppenheimer-poster.svg";
-const backdrop = "https://images.example.invalid/oppenheimer-backdrop.svg";
+const backdrop = "https://images.example.invalid/oppenheimer-backdrop.png";
 const reviews = {
-  content: [{ id: 611, userId: 52, username: "Carlotta", content: "Wow, wow, wow. Oppenheimer is the best movie I have seen this year. Christopher Nolan turns a real historical event into a compelling story that feels like a fictional journey. A remarkable achievement.", rating: 5, createdAt: "2025-06-24T12:00:00Z" }],
-  number: 0, size: 10, totalElements: 1, totalPages: 1,
+  content: [
+    { id: 610, userId: 52, username: "Thespotxxx", content: "A ridiculous achievement in filmmaking. An absolutely immersive and heart-pounding experience. Cillian Murphy is a fucking stud and RDJ will be a front-runner for Best Supporting Actor. Ludwig Göransson put his entire musical intro into a story, coupled with a sound design that made me feel like I took a bomb to the chest.", rating: 4.5, createdAt: "2025-12-09T12:00:00Z" },
+    { id: 611, userId: 53, username: "Carlotta", content: "Wow, wow, wow. Oppenheimer is the best movie I have seen this year. Christopher Nolan turns a real historical event into a compelling story that feels like a fictional journey. A remarkable achievement.", rating: 5, createdAt: "2025-12-08T12:00:00Z" },
+  ],
+  number: 0, size: 10, totalElements: 2, totalPages: 1,
 };
-const ownReview = { id: 610, userId: 99001, username: "Thespotx", content: "A ridiculous achievement in filmmaking. An immersive, heart-pounding experience. Cillian Murphy is brilliant, and Ludwig Göransson's score makes every moment feel enormous. The sound design puts you right inside the story.", rating: 4.6, createdAt: "2025-06-23T12:00:00Z" };
 // Preserve the visible left-to-right Figma order for this local source-data fixture.
 const similarTitles = ["Tenet", "Dune: Part Two", "Top Gun: Maverick", "Barbie", "Gladiator", "Se7en"];
 
 async function installOppenheimerFixture(context: BrowserContext) {
   await installHostedAuthFixture(context);
   const sourcePoster = await readFile(resolve(import.meta.dirname, "fixtures/figma/public-list/oppenheimer.png"));
+  const sourceBackdrop = await readFile(resolve(import.meta.dirname, "fixtures/figma/movie-similar/oppenheimer-backdrop.png"));
+  const sourceSimilarPosters = await Promise.all([
+    "tenet.png",
+    "dune-part-two.png",
+    "top-gun-maverick.png",
+    "barbie.png",
+    "gladiator.png",
+    "se7en.png",
+  ].map(name => readFile(resolve(import.meta.dirname, `fixtures/figma/movie-similar/${name}`))));
+  const sourceCrewPortraits = await Promise.all([
+    "christopher-nolan.png",
+    "cillian-murphy.png",
+    "emily-blunt.png",
+    "robert-downey-jr.png",
+    "matt-damon.png",
+    "scott-grimes.png",
+    "jason-clarke.png",
+  ].map(name => readFile(resolve(import.meta.dirname, `fixtures/figma/movie-similar/${name}`))));
   await context.route("https://images.example.invalid/**", route => {
     const pathname = new URL(route.request().url()).pathname;
     if (pathname.includes("oppenheimer-poster")) return route.fulfill({ contentType: "image/png", body: sourcePoster });
+    if (pathname.includes("oppenheimer-backdrop")) return route.fulfill({ contentType: "image/png", body: sourceBackdrop });
+    const similarMatch = pathname.match(/similar-(\d+)\.png$/);
+    if (similarMatch) {
+      const image = sourceSimilarPosters[Number(similarMatch[1])];
+      if (image) return route.fulfill({ contentType: "image/png", body: image });
+    }
+    const crewMatch = pathname.match(/crew-(\d+)\.png$/);
+    if (crewMatch) {
+      const image = sourceCrewPortraits[Number(crewMatch[1])];
+      if (image) return route.fulfill({ contentType: "image/png", body: image });
+    }
     const isBackdrop = pathname.includes("backdrop");
     const similarIndex = Number(pathname.match(/similar-(\d+)/)?.[1] ?? 0);
     const label = isBackdrop ? "Oppenheimer backdrop" : similarTitles[similarIndex] ?? "Similar film";
@@ -29,8 +60,8 @@ async function installOppenheimerFixture(context: BrowserContext) {
   await context.route(url => new URL(url).pathname.startsWith("/api/"), route => {
     const url = new URL(route.request().url());
     const { pathname } = url;
-    if (pathname === "/api/users/me") return route.fulfill({ json: { id: 99001, username: "thespotx", role: "USER" } });
-    if (pathname === "/api/profile/me") return route.fulfill({ json: { id: 99001, username: "thespotx", displayName: "Thespotx", role: "USER", replyPreference: "ANYONE" } });
+    if (pathname === "/api/users/me") return route.fulfill({ status: 401, json: { message: "Unauthenticated" } });
+    if (pathname === "/api/auth/refresh") return route.fulfill({ status: 401, json: { message: "Unauthenticated" } });
     if (pathname === "/api/movies/85/details") return route.fulfill({ json: {
       id: 85, title: "Oppenheimer", imdbId: "tt15398776", shortPlot: "The story of J. Robert Oppenheimer and his role in the development of the atomic bomb. As the director of the Los Alamos Laboratory, he changed the course of history forever.",
       photoUrl: poster, backdropUrl: backdrop, releaseDate: "2023-07-21", durationMinutes: 180, ageRating: "R", rating: 4.2,
@@ -42,16 +73,17 @@ async function installOppenheimerFixture(context: BrowserContext) {
         ["Matt Damon", "Leslie Groves"],
         ["Scott Grimes", "Counsel"],
         ["Jason Clarke", "Roger Robb"],
-      ].map(([name, characterName], index) => ({ id: index + 1, name, photoUrl: null, characterName })),
-      directors: [{ id: 1, name: "Christopher Nolan" }], producers: [],
+      ].map(([name, characterName], index) => ({ id: index + 1, name, photoUrl: `https://images.example.invalid/crew-${index + 1}.png`, characterName })),
+      directors: [{ id: 1, name: "Christopher Nolan", photoUrl: "https://images.example.invalid/crew-0.png" }], producers: [],
       externalRatings: [{ source: "IMDb", rating: 8.3 }, { source: "RT", rating: 93 }, { source: "MC", rating: 90 }],
-      similarMovies: similarTitles.map((title, index) => ({ id: 100 + index, title, releaseDate: `${2024 - index}-01-01`, rating: 4.2, photoUrl: `https://images.example.invalid/similar-${index}.svg` })),
+      similarMovies: similarTitles.map((title, index) => ({ id: 100 + index, title, releaseDate: `${2024 - index}-01-01`, rating: 4.2, photoUrl: `https://images.example.invalid/similar-${index}.png` })),
       myFlags: { watched: false, watchlist: false, favorites: false },
     } });
     if (pathname === "/api/movies/85/reviews") return route.fulfill({ json: reviews });
-    if (pathname === "/api/movies/85/reviews/me") return route.fulfill({ json: ownReview });
     if (pathname === "/api/movies/85/rating/me") return route.fulfill({ json: { rating: 0 } });
     if (pathname === "/api/lists/my") return route.fulfill({ json: [] });
+    if (pathname === "/api/reviews/610/likes") return route.fulfill({ json: 331 });
+    if (pathname === "/api/reviews/611/likes") return route.fulfill({ json: 217 });
     if (pathname === "/api/reviews/610/like-status") return route.fulfill({ json: { liked: false, likes: 331 } });
     if (pathname === "/api/reviews/611/like-status") return route.fulfill({ json: { liked: false, likes: 217 } });
     if (pathname.endsWith("/unread-count")) return route.fulfill({ json: { count: 0 } });
@@ -59,9 +91,8 @@ async function installOppenheimerFixture(context: BrowserContext) {
   });
 }
 
-test("READY Oppenheimer member film details match desktop Figma composition", async ({ context, page }) => {
+test("READY Oppenheimer public film details match desktop Figma composition", async ({ context, page }) => {
   await installOppenheimerFixture(context);
-  await signInHostedFixture(page, "uk");
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/uk/films/85");
   await expect(page.locator("main")).toHaveAttribute("aria-busy", "false");
@@ -69,6 +100,8 @@ test("READY Oppenheimer member film details match desktop Figma composition", as
   const posterImage = page.locator("main [class*=posterFrame] img");
   await expect(posterImage).toBeVisible();
   await expect.poll(() => posterImage.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  const backdropImage = page.locator("main [class*=heroBackdrop]");
+  await expect.poll(() => backdropImage.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBe(1440);
   const geometry = await page.evaluate(() => {
     const rect = (selector: string) => {
       const element = document.querySelector<HTMLElement>(selector);
@@ -88,6 +121,7 @@ test("READY Oppenheimer member film details match desktop Figma composition", as
       crewSection: rect('section[aria-labelledby="mobile-crew-title"]'),
       crewRail: rect('section[aria-labelledby="mobile-crew-title"] [class*=crewRail]'),
       crewCardCount: document.querySelectorAll('section[aria-labelledby="mobile-crew-title"] [class*=crewCard]').length,
+      crewPortraitDimensions: Array.from(document.querySelectorAll<HTMLImageElement>('section[aria-labelledby="mobile-crew-title"] img'), image => ({ width: image.naturalWidth, height: image.naturalHeight })),
       reviewSection: rect('section[aria-labelledby="reviews-title"]'),
       reviews: rect('section[aria-labelledby="reviews-title"] h2'),
       reviewCards: Array.from(document.querySelectorAll<HTMLElement>('section[aria-labelledby="reviews-title"] article[class*=review]')).map(item => {
@@ -102,11 +136,15 @@ test("READY Oppenheimer member film details match desktop Figma composition", as
       overflow: document.documentElement.scrollWidth - innerWidth,
     };
   });
-  console.log("OPPENHEIMER_READY_FIGMA", geometry);
+  await expect(page.locator('section[aria-labelledby="similar-title"] [class*=similarTitle]')).toHaveText(similarTitles);
+  const similarPosterDimensions = await page.locator('section[aria-labelledby="similar-title"] img').evaluateAll(images =>
+    images.map(image => ({ width: (image as HTMLImageElement).naturalWidth, height: (image as HTMLImageElement).naturalHeight })),
+  );
+  expect(similarPosterDimensions).toEqual(Array.from({ length: 6 }, () => ({ width: 174, height: 260 })));
   expect(geometry.overflow).toBe(0);
   expect(geometry.pageHeight).toBe(3579);
   expect(geometry.crewCardCount).toBe(7);
-  await expect(page.locator('section[aria-labelledby="similar-title"] [class*=similarTitle]')).toHaveText(similarTitles);
+  expect(geometry.crewPortraitDimensions).toEqual(Array.from({ length: 7 }, () => ({ width: 135, height: 135 })));
   expect(geometry.reviewCards).toHaveLength(2);
   for (const [index, card] of geometry.reviewCards.entries()) {
     expect(card.x).toBe(index === 0 ? 120 : 736);
@@ -130,7 +168,6 @@ test("READY Oppenheimer member film details match desktop Figma composition", as
 test("READY Oppenheimer film details stay responsive in UK and EN", async ({ context, page }) => {
   await installOppenheimerFixture(context);
   for (const locale of ["uk", "en"] as const) {
-    await signInHostedFixture(page, locale);
     for (const width of [320, 360, 393, 600, 720, 768, 1024, 1440]) {
       await page.setViewportSize({ width, height: width >= 1024 ? 900 : 852 });
       await page.goto(`/${locale}/films/85`);

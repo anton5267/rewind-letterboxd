@@ -62,7 +62,13 @@ export default function Search() {
   const [tmdbDiscoverLoading, setTmdbDiscoverLoading] = useState(false);
   const [tmdbDiscoverError, setTmdbDiscoverError] = useState(false);
   const [tmdbDiscoverRetry, setTmdbDiscoverRetry] = useState(0);
-  const [tmdbDiscoveryOpen, setTmdbDiscoveryOpen] = useState(false);
+  const [tmdbDiscoveryOpen, setTmdbDiscoveryOpen] = useState(true);
+  const tmdbDiscoveryToggleRef = useRef<HTMLButtonElement>(null);
+  const tmdbDiscoveryHeadingRef = useRef<HTMLHeadingElement>(null);
+  const tmdbDiscoveryDismissedRef = useRef(false);
+  const focusDiscoveryOnOpenRef = useRef(false);
+  const tmdbParamSignatureRef = useRef(["tmdbPage", "tmdbGenreId", "tmdbYear", "tmdbMinRating"].map(key => searchParams.get(key) ?? "").join("|"));
+  const titleQueryActiveRef = useRef((searchParams.get("q")?.trim().length ?? 0) >= 2);
   const [tmdbYearFilter, setTmdbYearFilter] = useState(searchParams.get("tmdbYear") ?? "");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const filtersFormRef = useRef<HTMLFormElement>(null);
@@ -238,6 +244,38 @@ export default function Search() {
     return () => { current = false; };
   }, [searchKey, lang, tmdbDiscoverRetry, tmdbDiscoveryOpen]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(searchKey);
+    const titleQueryActive = (params.get("q")?.trim().length ?? 0) >= 2;
+    const tmdbSignature = ["tmdbPage", "tmdbGenreId", "tmdbYear", "tmdbMinRating"].map(key => params.get(key) ?? "").join("|");
+    const tmdbLocationChanged = tmdbSignature !== tmdbParamSignatureRef.current;
+    const returnedFromTitleQuery = titleQueryActiveRef.current && !titleQueryActive;
+
+    if (tmdbLocationChanged) {
+      tmdbDiscoveryDismissedRef.current = false;
+    }
+    if (titleQueryActive) {
+      setTmdbDiscoveryOpen(false);
+    } else if (!tmdbDiscoveryDismissedRef.current && (tmdbLocationChanged || returnedFromTitleQuery)) {
+      setTmdbDiscoveryOpen(true);
+    }
+
+    tmdbParamSignatureRef.current = tmdbSignature;
+    titleQueryActiveRef.current = titleQueryActive;
+  }, [searchKey]);
+
+  useEffect(() => {
+    if (!tmdbDiscoveryOpen || !focusDiscoveryOnOpenRef.current) return;
+    focusDiscoveryOnOpenRef.current = false;
+    const frame = window.requestAnimationFrame(() => {
+      const heading = tmdbDiscoveryHeadingRef.current;
+      if (!heading) return;
+      heading.focus({ preventScroll: true });
+      heading.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [tmdbDiscoveryOpen]);
+
   const loadTmdbPage = (page: number) => {
     const q = searchParams.get("q")?.trim() ?? "";
     if (q.length < 2 || page < 1 || page > 500) return;
@@ -255,7 +293,7 @@ export default function Search() {
     }
     setTmdbImportId(candidate.tmdbId); setTmdbImportError(false);
     try {
-      const { data } = await importTmdbMovie(candidate.tmdbId);
+      const { data } = await importTmdbMovie(candidate.tmdbId, { addToWatchlist: true });
       navigate(path(`/films/${data.movieId}`));
     } catch {
       setTmdbImportError(true);
@@ -377,6 +415,20 @@ export default function Search() {
             <span>{t("genre")}</span>
           </div>
         </div>
+        {(searchParams.get("q")?.trim().length ?? 0) < 2 && <button
+          id="tmdb-discovery-toggle"
+          ref={tmdbDiscoveryToggleRef}
+          className={styles.tmdbDiscoveryToggle}
+          type="button"
+          aria-expanded={tmdbDiscoveryOpen}
+          aria-controls="tmdb-discovery-panel"
+          onClick={() => {
+            const nextOpen = !tmdbDiscoveryOpen;
+            tmdbDiscoveryDismissedRef.current = !nextOpen;
+            focusDiscoveryOnOpenRef.current = nextOpen;
+            setTmdbDiscoveryOpen(nextOpen);
+          }}
+        >{tmdbDiscoveryOpen ? t("tmdbDiscoverClose") : t("tmdbDiscoverOpen")}</button>}
         <p className={styles.heroIntro}>{t("searchIntro")}</p>
         <form className={styles.searchForm} onSubmit={applyFilters} aria-busy={loading}>
           <label className={styles.queryField} htmlFor="film-search-query">{t("searchFilms")}
@@ -495,7 +547,7 @@ export default function Search() {
               <p>{formatMovieYear(movie.releaseDate, t("unknownYear"))} · TMDB</p>
               {movie.overview?.trim() && <p className={styles.tmdbOverview}>{movie.overview}</p>}
               {isAuth
-                ? <button className={styles.tmdbAdd} type="button" disabled={!ready || tmdbImportId !== null} onClick={() => void addTmdbMovie(movie)}>{tmdbImportId === movie.tmdbId ? t("loading") : t("tmdbAddToRewind")}</button>
+                ? <button className={styles.tmdbAdd} type="button" disabled={!ready || tmdbImportId !== null} onClick={() => void addTmdbMovie(movie)}>{tmdbImportId === movie.tmdbId ? t("loading") : t("tmdbAddToWatchlist")}</button>
                 : <Link className={styles.tmdbAdd} to={path("/login")} state={{ returnTo: `${location.pathname}${location.search}${location.hash}` }}>{t("login")}</Link>}
             </article>;
           })}
@@ -507,14 +559,17 @@ export default function Search() {
         </nav>}
       </section>}
 
-      {(searchParams.get("q")?.trim().length ?? 0) < 2 && <details className={styles.tmdbSection} aria-busy={tmdbDiscoverLoading} onToggle={event => setTmdbDiscoveryOpen(event.currentTarget.open)}>
-        <summary className={styles.tmdbSummary}>
-          <span className={styles.tmdbHeading}>
-            <span><span id="tmdb-discover-title" role="heading" aria-level={2}>{t("tmdbDiscoverTitle")}</span><span className={styles.tmdbHint}>{t("tmdbDiscoverHint")}</span></span>
-            <span aria-hidden="true">TMDB</span>
-          </span>
-        </summary>
-        {tmdbDiscoveryOpen && <div>
+      {(searchParams.get("q")?.trim().length ?? 0) < 2 && <section id="tmdb-discovery-panel" className={styles.tmdbSection} hidden={!tmdbDiscoveryOpen} aria-busy={tmdbDiscoverLoading} aria-labelledby="tmdb-discover-title">
+        <div className={styles.tmdbHeading}>
+          <div><h2 id="tmdb-discover-title" ref={tmdbDiscoveryHeadingRef} tabIndex={-1}>{t("tmdbDiscoverTitle")}</h2><p className={styles.tmdbHint}>{t("tmdbDiscoverHint")}</p></div>
+          <div className={styles.tmdbHeadingActions}><a href="https://www.themoviedb.org" target="_blank" rel="noreferrer" aria-label="TMDB">TMDB</a><button type="button" aria-label={t("tmdbDiscoverClose")} onClick={() => {
+            tmdbDiscoveryDismissedRef.current = true;
+            focusDiscoveryOnOpenRef.current = false;
+            setTmdbDiscoveryOpen(false);
+            window.requestAnimationFrame(() => tmdbDiscoveryToggleRef.current?.focus());
+          }}>×</button></div>
+        </div>
+        <div>
         <div className={styles.tmdbFilters} aria-label={t("filters")}>
           <label htmlFor="tmdb-discover-genre">{t("genre")}
             <select id="tmdb-discover-genre" value={searchParams.get("tmdbGenreId") ?? ""} disabled={genresLoading || genreError} onChange={event => updateTmdbDiscoveryFilter("tmdbGenreId", event.target.value)}>
@@ -552,7 +607,7 @@ export default function Search() {
               <p>{formatMovieYear(movie.releaseDate, t("unknownYear"))}{movie.voteAverage != null ? ` · ★ ${movie.voteAverage.toFixed(1)}` : ""} · TMDB</p>
               {movie.overview?.trim() && <p className={styles.tmdbOverview}>{movie.overview}</p>}
               {isAuth
-                ? <button className={styles.tmdbAdd} type="button" disabled={!ready || tmdbImportId !== null} onClick={() => void addTmdbMovie(movie)}>{tmdbImportId === movie.tmdbId ? t("loading") : t("tmdbAddToRewind")}</button>
+                ? <button className={styles.tmdbAdd} type="button" disabled={!ready || tmdbImportId !== null} onClick={() => void addTmdbMovie(movie)}>{tmdbImportId === movie.tmdbId ? t("loading") : t("tmdbAddToWatchlist")}</button>
                 : <Link className={styles.tmdbAdd} to={path("/login")} state={{ returnTo: `${location.pathname}${location.search}${location.hash}` }}>{t("login")}</Link>}
             </article>;
           })}
@@ -563,8 +618,8 @@ export default function Search() {
           <button type="button" disabled={(Number(searchParams.get("tmdbPage")) || 1) >= tmdbDiscoverTotalPages} onClick={() => turnTmdbDiscoveryPage((Number(searchParams.get("tmdbPage")) || 1) + 1)}>{t("next")}</button>
         </nav>}
         <p className={styles.tmdbAttribution}>{t("tmdbAttribution")}</p>
-        </div>}
-      </details>}
+        </div>
+      </section>}
     </div>
   </main>;
 }

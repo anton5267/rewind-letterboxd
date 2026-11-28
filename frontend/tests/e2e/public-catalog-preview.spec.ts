@@ -54,7 +54,8 @@ test("full app home, public catalogue, and private account routing work on GitHu
   await page.locator("#film-search-genre").selectOption({ label: "Бойовик" });
   await expect(page.getByRole("link", { name: /The Running Man/ })).toBeVisible();
 
-  await page.locator("#film-search-query").fill("The Running Man");
+  await page.goto("/rewind-letterboxd/uk/search/");
+  await page.locator("#global-search-query").fill("The Running Man");
   await page.getByRole("button", { name: "Пошук" }).click();
   const film = page.getByRole("link", { name: /The Running Man/ });
   await expect(film).toBeVisible();
@@ -70,7 +71,7 @@ test("full app home, public catalogue, and private account routing work on GitHu
   await expect(page.getByRole("heading", { name: "Актори та знімальна група" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Оцінки & Огляди" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Оцінки & Огляди" }).getByText("TMDB", { exact: true })).toBeVisible();
-  const actorLink = page.getByRole("region", { name: "Актори та знімальна група" }).getByRole("link").first();
+  const actorLink = page.getByRole("region", { name: "Актори та знімальна група" }).locator('a[href*="/people/actor/"]').first();
   const actorName = (await actorLink.locator("strong").textContent())?.trim();
   const actorUrl = await actorLink.getAttribute("href");
   expect(actorUrl).toBeTruthy();
@@ -99,7 +100,7 @@ test("full app home, public catalogue, and private account routing work on GitHu
   await expect(page.getByRole("heading", { name: "Track films you’ve watched. Save those you want to see. Tell your friends what’s good." })).toBeVisible();
   await page.goto("/rewind-letterboxd/en/films/");
   await expect(page.getByRole("heading", { name: "Films", exact: true })).toBeVisible();
-  await expect(page.getByRole("option", { name: "Action" })).toBeAttached();
+  await expect(page.locator("#film-search-genre").getByRole("option", { name: "Action", exact: true })).toBeAttached();
   await page.setViewportSize({ width: 320, height: 844 });
   await page.goto("/rewind-letterboxd/uk/home/");
   await expect(page.getByRole("heading", { name: "Позначайте переглянуті фільми. Зберігайте ті, що хочете подивитися. Діліться враженнями з друзями." })).toBeVisible();

@@ -23,6 +23,10 @@ test("Admin dashboard Figma review uses only API-backed profile metrics", async 
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/en/admin");
   await expect(page.getByRole("heading", { name: "Workspace" })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => ["header", "main", "footer"].map(selector => {
+    const element = document.querySelector(selector);
+    return element ? getComputedStyle(element).fontFamily.split(",")[0].replace(/[\"']/g, "").trim() : "missing";
+  }))).toEqual(["Inter", "Inter", "Inter"]);
   const personal = page.getByRole("region", { name: "Key Metrics" });
   await expect(personal.getByRole("heading", { name: "Key Metrics" })).toBeVisible();
   await expect(personal.locator("div[class*='card']")).toHaveCount(9);
@@ -58,6 +62,10 @@ test("Admin dashboard Figma review uses only API-backed profile metrics", async 
 
   await page.setViewportSize({ width: 393, height: 852 });
   await page.goto("/uk/admin");
+  await expect.poll(() => page.evaluate(() => ["header", "main", "footer"].map(selector => {
+    const element = document.querySelector(selector);
+    return element ? getComputedStyle(element).fontFamily.split(",")[0].replace(/[\"']/g, "").trim() : "missing";
+  }))).toEqual(["Inter", "Inter", "Inter"]);
   const mobilePersonal = page.getByRole("region", { name: "Ключові показники" });
   await expect(mobilePersonal.locator("div[class*='card']")).toHaveCount(9);
   await expect(mobilePersonal.getByRole("heading", { name: "Улюблені фільми" })).toBeVisible();

@@ -6,7 +6,7 @@ import ResilientImage from "../components/ResilientImage";
 import RetryButton from "../components/RetryButton";
 import ContentReportAction from "../components/ContentReportAction";
 import { useAuth } from "../context/AuthContext";
-import { editorialText, formatMovieYear, useLocale } from "../i18n";
+import { editorialText, formatMovieYear, formatRelativeTime, useLocale } from "../i18n";
 import { useDialogFocusTrap } from "../hooks/useDialogFocusTrap";
 import { toTagSlug } from "../utils/tagSlug";
 import { getUserInitial, getUserName } from "../utils/userIdentity";
@@ -227,6 +227,7 @@ export default function PublicList() {
           <ResilientImage className={styles.ownerAvatar} src={list.ownerAvatarUrl} alt="" width={30} height={30}
             fallback={<span className={styles.ownerAvatar} aria-hidden="true">{getUserInitial({ username: list.ownerUsername })}</span>} />
           <span>{t("listBy")} <Link to={path(`/users/${list.ownerId}`)}>{ownerName}</Link></span>
+          <time className={styles.publishedAt} data-list-published-at dateTime={list.publishedAt}>{t("publishedAt")} {formatRelativeTime(list.publishedAt, lang)}</time>
         </p>
         {list.description && <p className={styles.description}>{list.description}</p>}
         {list.tags.length > 0 && <div className={styles.tags} role="group" aria-label={t("tags")}>

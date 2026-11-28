@@ -10,6 +10,22 @@ const emptyGlobalResults = {
   reviews: { content: [], totalElements: 0 },
   journal: { content: [], totalElements: 0 },
 };
+const catalogMovie = { id: 980_101, title: "A Film to Browse", photoUrl: null, releaseDate: "2024-01-01", rating: 7.5 };
+
+async function mockFilmCatalog(page: import("@playwright/test").Page) {
+  await page.route("**/api/genres", route => route.fulfill({ json: [{ id: 18, name: "Drama" }] }));
+  await page.route("**/api/tmdb/movies/discover**", route => route.fulfill({ json: {
+    content: [], totalElements: 0, totalPages: 0, number: 0, size: 8,
+  } }));
+  await page.route("**/api/movies/search**", route => {
+    const requestUrl = new URL(route.request().url());
+    const number = Number(requestUrl.searchParams.get("page") ?? 0);
+    return route.fulfill({ json: {
+      content: [catalogMovie], totalElements: 2, totalPages: 2, number,
+      size: Number(requestUrl.searchParams.get("size") ?? 12),
+    } });
+  });
+}
 
 test("global search opens the full TMDB catalog from its result category picker", async ({ page }) => {
   await page.route("**/api/search/global?**", route => route.fulfill({ json: {
@@ -151,23 +167,27 @@ test("empty film search shows zero results without an impossible page counter", 
 
 for (const width of [393, 1440]) {
   test(`film query submit respects the separate year field at ${width}px`, async ({ page }) => {
+    await mockFilmCatalog(page);
     await page.setViewportSize({ width, height: 900 });
     const initialResponse = page.waitForResponse(response => new URL(response.url()).pathname === "/api/movies/search");
-    await page.goto("/uk/films");
+    await page.goto(width <= 560 ? "/uk/films" : "/uk/films?q=cross-form-year-check");
     expect((await initialResponse).ok()).toBe(true);
     if (width <= 560) await page.getByRole("button", { name: "Фільтри", exact: true }).click();
 
     const query = page.locator("#film-search-query");
     const year = page.locator("#film-search-year");
-    await query.fill("cross-form-year-check");
+    if (width <= 560) await query.fill("cross-form-year-check");
+    else await expect(query).toBeHidden();
     await year.fill("2200");
     await year.evaluate(element => {
       element.addEventListener("invalid", () => { element.setAttribute("data-invalid-reported", "true"); });
     });
     const querySubmit = page.locator("form").filter({ has: query }).getByRole("button", { name: "Пошук", exact: true });
-    await querySubmit.click();
+    if (width <= 560) await querySubmit.click();
+    else await year.press("Enter");
     await expect(year).toHaveAttribute("data-invalid-reported", "true");
     expect(new URL(page.url()).searchParams.has("year")).toBe(false);
+    if (width > 560) expect(new URL(page.url()).searchParams.get("q")).toBe("cross-form-year-check");
     await expect(year).toBeFocused();
 
     const validRequest = page.waitForRequest(request => {
@@ -178,7 +198,7 @@ for (const width of [393, 1440]) {
     // phone the query form submits them. Start observing before changing year
     // so both paths are covered without racing the desktop request.
     await year.fill("2000");
-    await querySubmit.click();
+    if (width <= 560) await querySubmit.click();
     const requestUrl = new URL((await validRequest).url());
     expect(requestUrl.searchParams.get("q")).toBe("cross-form-year-check");
     await expect(page).toHaveURL(/year=2000/);
@@ -206,6 +226,7 @@ test("mobile film filters return focus to the trigger after Escape", async ({ pa
 });
 
 test("mobile films canvas keeps the Figma poster rail geometry", async ({ page }) => {
+  await mockFilmCatalog(page);
   await page.setViewportSize({ width: 393, height: 852 });
   await page.goto("/uk/films");
 
@@ -222,7 +243,8 @@ test("mobile films canvas keeps the Figma poster rail geometry", async ({ page }
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 });
 
-test("malformed film page URLs normalize before a real API request", async ({ page }) => {
+test("malformed film page URLs normalize before requesting catalog results", async ({ page }) => {
+  await mockFilmCatalog(page);
   const requests: URL[] = [];
   page.on("request", request => {
     const url = new URL(request.url());
@@ -233,7 +255,7 @@ test("malformed film page URLs normalize before a real API request", async ({ pa
     const before = requests.length;
     const response = page.waitForResponse(item => new URL(item.url()).pathname === "/api/movies/search");
     await page.goto(`/uk/films?sort=title_asc&page=${encodeURIComponent(malformedPage)}`);
-    expect((await response).ok(), `Normalized ${malformedPage} must reach the real API successfully`).toBe(true);
+    expect((await response).ok(), `Normalized ${malformedPage} must receive a successful catalog response`).toBe(true);
     await expect(page).toHaveURL(/sort=title_asc&page=0$/);
     expect(requests.slice(before).length).toBeGreaterThan(0);
     expect(requests.slice(before).every(url => url.searchParams.get("page") === "0")).toBe(true);
@@ -243,10 +265,8 @@ test("malformed film page URLs normalize before a real API request", async ({ pa
 });
 
 test("valid film page URL and sort survive unchanged", async ({ page }) => {
-  const catalog = await page.request.get("/api/movies/search?sort=title_asc&page=0&size=12");
-  expect(catalog.ok()).toBe(true);
-  const totalPages = (await catalog.json() as { totalPages: number }).totalPages;
-  const validPage = totalPages > 1 ? 1 : 0;
+  await mockFilmCatalog(page);
+  const validPage = 1;
   const response = page.waitForResponse(item => new URL(item.url()).pathname === "/api/movies/search");
   await page.goto(`/uk/films?sort=title_asc&page=${validPage}`);
   const result = await response;

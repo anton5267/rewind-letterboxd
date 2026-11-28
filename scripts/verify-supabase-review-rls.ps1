@@ -88,29 +88,43 @@ INSERT INTO auth.users VALUES
  ('11111111-1111-4111-8111-111111111111'),
  ('22222222-2222-4222-8222-222222222222'),
  ('33333333-3333-4333-8333-333333333333');
+CREATE SCHEMA storage;
+CREATE TABLE storage.buckets (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  public BOOLEAN NOT NULL DEFAULT FALSE,
+  file_size_limit BIGINT,
+  allowed_mime_types TEXT[]
+);
 CREATE ROLE anon NOLOGIN;
 CREATE ROLE authenticated NOLOGIN;
 '@ 'Supabase local role fixture' | Out-Null
 
-    foreach ($name in @(
+    $externalServiceMigrations = @(
+        '20261111211408_schedule_tmdb_catalog_refresh.sql',
+        '20261113052117_pg_net_extension_registration_schema.sql'
+    )
+    $alreadyAppliedMigrations = @(
+        '20261104021259_revoke_public_execution_from_rls_event_trigger.sql',
+        '20261104182022_rewind_public_movie_catalog.sql',
+        '20261104182045_rewind_public_movie_catalog_seed.sql',
+        '20261104190525_public_movie_metadata.sql',
+        '20261104190729_public_movie_metadata_seed.sql',
+        '20261104192953_rls_public_catalog_edge_reader.sql',
+        '20261104203146_index_movie_directors_director_id.sql',
         '20261104221452_auth_user_private_data.sql',
-        '20261104221625_auth_user_private_indexes.sql',
-        '20261109145515_rewind_full_application_schema.sql',
-        '20261109145711_supabase_rating_api.sql',
-        '20261109190528_edge_public_list_access.sql',
-        '20261109190530_edge_review_comment_api.sql',
-        '20261109190531_edge_social_api.sql',
-        '20261109190533_edge_notifications_messages.sql',
-        '20261109190534_edge_journal_newsletter.sql',
-        '20261109190536_edge_admin_users.sql',
-        '20261109190540_edge_admin_lists.sql',
-        '20261109190542_edge_admin_settings_audit.sql',
-        '20261109190543_edge_admin_newsletter_queue.sql',
-        '20261109190545_edge_admin_movies.sql',
-        '20261109190546_edge_tmdb_sync.sql',
-        '20261109201052_edge_account_deletion.sql'
-    )) {
-        $source = Join-Path $migrationDir $name
+        '20261104221625_auth_user_private_indexes.sql'
+    )
+    $remainingMigrations = Get-ChildItem -Path $migrationDir -Filter '*.sql' |
+        Where-Object { $_.Name -notin ($alreadyAppliedMigrations + $externalServiceMigrations) } |
+        Sort-Object Name
+    $migrationFiles = @(
+        (Get-Item (Join-Path $migrationDir '20261104221452_auth_user_private_data.sql')),
+        (Get-Item (Join-Path $migrationDir '20261104221625_auth_user_private_indexes.sql'))
+    ) + @($remainingMigrations)
+    foreach ($migration in $migrationFiles) {
+        $name = $migration.Name
+        $source = $migration.FullName
         $target = "/tmp/$name"
         docker cp $source "${postgresName}:$target" | Out-Null
         Assert-DockerSuccess "$name copy"
@@ -288,10 +302,11 @@ Deno.serve({ port: 8001 }, (request) => {
         -e $supabaseUrlForTest `
         -e 'SUPABASE_ANON_KEY=local-review-test-key' `
         -e 'SUPABASE_SERVICE_ROLE_KEY=local-delete-secret' `
+        -e 'PUBLIC_BASE_URL=http://localhost:5173/' `
         -e 'TMDB_API_KEY=local-review-tmdb-fixture' `
         -e "TMDB_API_BASE_URL=http://${authMockName}:8001/3" `
         -e "REWIND_ALLOWED_ORIGINS=$pagesOrigin" `
-        $denoImage deno run --frozen-lockfile --allow-net --allow-env=SUPABASE_DB_URL,SUPABASE_URL,SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,REWIND_ALLOWED_ORIGINS,TMDB_API_KEY,TMDB_API_BASE_URL index.ts | Out-Null
+        $denoImage deno run --frozen-lockfile --allow-net --allow-env=SUPABASE_DB_URL,SUPABASE_URL,SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,PUBLIC_BASE_URL,REWIND_ALLOWED_ORIGINS,TMDB_API_KEY,TMDB_API_BASE_URL index.ts | Out-Null
     Assert-DockerSuccess 'local Edge Function start'
     $startedFunction = $true
     $portMapping = docker port $functionName 8000/tcp
@@ -314,6 +329,53 @@ Deno.serve({ port: 8001 }, (request) => {
         try { $edgeStartupLog = @(docker logs $functionName 2>&1 | ForEach-Object { "$($_)" }) } catch { $edgeStartupLog += $_.Exception.Message }
         throw "Temporary Edge API did not become ready. Last probe: $edgeProbeFailure`n$($edgeStartupLog -join "`n")"
     }
+
+    $newTmdbImport = Invoke-Edge 'POST' '/api/tmdb/movies/import' 'owner-token' @{ tmdbId = 900005; addToWatchlist = $true }
+    $newTmdbMovie = $newTmdbImport.Content | ConvertFrom-Json
+    if ($newTmdbImport.StatusCode -ne 200 -or $newTmdbMovie.title -ne 'TMDB Fixture 900005') {
+        throw "New TMDB-to-Watchlist import failed: HTTP $($newTmdbImport.StatusCode) $($newTmdbImport.Content)"
+    }
+    $newTmdbState = Invoke-Postgres @'
+SELECT (SELECT COUNT(*) FROM rewind.movies WHERE tmdb_id=900005)::text
+  || '|' || (SELECT COUNT(*) FROM rewind.tmdb_user_imports WHERE user_id=1 AND tmdb_id=900005)::text
+  || '|' || (SELECT COUNT(*) FROM rewind.list_items i JOIN rewind.lists l ON l.id=i.list_id WHERE l.user_id=1 AND l.list_type='WATCHLIST' AND i.movie_id=(SELECT id FROM rewind.movies WHERE tmdb_id=900005))::text
+  || '|' || (SELECT COUNT(*) FROM rewind.movie_genres mg JOIN rewind.movies m ON m.id=mg.movie_id WHERE m.tmdb_id=900005)::text
+  || '|' || (SELECT COUNT(*) FROM rewind.movie_actors ma JOIN rewind.movies m ON m.id=ma.movie_id WHERE m.tmdb_id=900005)::text;
+'@ 'new TMDB movie, quota, Watchlist, genre, and cast state'
+    if ($newTmdbState -ne '1|1|1|1|1') { throw "TMDB import did not persist the complete catalog/Watchlist transaction: $newTmdbState" }
+
+    $repeatTmdbImport = Invoke-Edge 'POST' '/api/tmdb/movies/import' 'owner-token' @{ tmdbId = 900005; addToWatchlist = $true }
+    $repeatTmdbMovie = $repeatTmdbImport.Content | ConvertFrom-Json
+    $repeatTmdbState = Invoke-Postgres @'
+SELECT (SELECT COUNT(*) FROM rewind.movies WHERE tmdb_id=900005)::text
+  || '|' || (SELECT COUNT(*) FROM rewind.tmdb_user_imports WHERE user_id=1 AND tmdb_id=900005)::text
+  || '|' || (SELECT COUNT(*) FROM rewind.list_items i JOIN rewind.lists l ON l.id=i.list_id WHERE l.user_id=1 AND l.list_type='WATCHLIST' AND i.movie_id=(SELECT id FROM rewind.movies WHERE tmdb_id=900005))::text;
+'@ 'TMDB import and Watchlist idempotency'
+    if ($repeatTmdbImport.StatusCode -ne 200 -or $repeatTmdbMovie.movieId -ne $newTmdbMovie.movieId -or $repeatTmdbState -ne '1|1|1') {
+        throw "Repeated TMDB add was not idempotent: HTTP $($repeatTmdbImport.StatusCode), state=$repeatTmdbState"
+    }
+
+    $existingTmdbPair = Invoke-Postgres 'SELECT id::text||''|''||tmdb_id::text FROM rewind.movies WHERE tmdb_id IS NOT NULL ORDER BY id LIMIT 1;' 'select existing TMDB-linked movie fixture'
+    $existingTmdbParts = $existingTmdbPair -split '\|', 2
+    $existingTmdbMovieId = [int]$existingTmdbParts[0]
+    $existingTmdbId = [int]$existingTmdbParts[1]
+    $existingTmdbWasInWatchlist = Invoke-Postgres "SELECT COUNT(*) FROM rewind.list_items WHERE list_id=1 AND movie_id=$existingTmdbMovieId;" 'existing movie Watchlist baseline'
+    $existingTmdbImport = Invoke-Edge 'POST' '/api/tmdb/movies/import' 'owner-token' @{ tmdbId = $existingTmdbId; addToWatchlist = $true }
+    $existingTmdbState = Invoke-Postgres "SELECT COUNT(*) FROM rewind.tmdb_user_imports WHERE user_id=1 AND tmdb_id=900005; SELECT COUNT(*) FROM rewind.list_items WHERE list_id=1 AND movie_id=$existingTmdbMovieId;" 'existing movie Watchlist inclusion and quota behavior'
+    if ($existingTmdbImport.StatusCode -ne 200 -or $existingTmdbState -notmatch '(?s)1\s+1') {
+        throw "Existing catalog movie was not added without another import quota row: HTTP $($existingTmdbImport.StatusCode), state=$existingTmdbState"
+    }
+    if ($existingTmdbWasInWatchlist -eq '0') {
+        Invoke-Postgres "DELETE FROM rewind.list_items WHERE list_id=1 AND movie_id=$existingTmdbMovieId;" 'restore existing movie Watchlist fixture' | Out-Null
+    }
+
+    $missingWatchlistImport = Invoke-Edge 'POST' '/api/tmdb/movies/import' 'admin-token' @{ tmdbId = 900006; addToWatchlist = $true }
+    $missingWatchlistState = Invoke-Postgres "SELECT (SELECT COUNT(*) FROM rewind.movies WHERE tmdb_id=900006)::text||'|'||(SELECT COUNT(*) FROM rewind.tmdb_user_imports WHERE user_id=3 AND tmdb_id=900006)::text" 'missing Watchlist rollback state'
+    if ($missingWatchlistImport.StatusCode -lt 400 -or $missingWatchlistState -ne '0|0') {
+        throw "TMDB import was not rolled back when the account has no Watchlist: HTTP $($missingWatchlistImport.StatusCode), state=$missingWatchlistState"
+    }
+    Invoke-Postgres "DELETE FROM rewind.movies WHERE tmdb_id=900005;" 'clean new TMDB import fixture' | Out-Null
+    Write-Output 'TMDB user import transaction passed: new catalog row + Watchlist, idempotent retry, existing-catalog inclusion without quota, and rollback when Watchlist is missing.'
 
     $globalSearchResponse = Invoke-Edge 'GET' '/api/search/global?q=owner&language=en&size=6' ''
     $globalSearch = $globalSearchResponse.Content | ConvertFrom-Json
@@ -350,6 +412,28 @@ Deno.serve({ port: 8001 }, (request) => {
     if ($profileListsResponse.StatusCode -ne 200 -or $profileLists.totalElements -ne 1 -or $profileLists.content[0].previewMovies[0].id -ne 1) {
         throw "Public profile lists returned an unexpected page: $($profileListsResponse.Content)"
     }
+    $publicListId = Invoke-Postgres "SELECT id FROM rewind.lists WHERE user_id=1 AND name='Public picks' AND list_type='CUSTOM';" 'select publication timestamp fixture'
+    $publicListResponse = Invoke-Edge 'GET' "/api/lists/public/$publicListId" ''
+    $publicList = $publicListResponse.Content | ConvertFrom-Json -DateKind String
+    $initialPublicationTime = Invoke-Postgres @"
+SELECT to_char(published_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
+FROM rewind.lists WHERE id=$publicListId;
+"@ 'read initial publication timestamp'
+    if ($publicListResponse.StatusCode -ne 200 -or $publicList.publishedAt -notmatch '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$' -or
+        $publicList.publishedAt -ne $initialPublicationTime) {
+        throw "Public list details did not return the stored publication timestamp: HTTP $($publicListResponse.StatusCode); body=$($publicListResponse.Content); db=$initialPublicationTime"
+    }
+    $unpublishList = Invoke-Edge 'PATCH' "/api/lists/$publicListId" 'owner-token' @{ isPublic = $false }
+    $unpublishedTimestamp = Invoke-Postgres "SELECT COALESCE(published_at::text,'NULL') FROM rewind.lists WHERE id=$publicListId;" 'clear publication timestamp'
+    $hiddenPublicList = Invoke-Edge 'GET' "/api/lists/public/$publicListId" ''
+    $republishList = Invoke-Edge 'PATCH' "/api/lists/$publicListId" 'owner-token' @{ isPublic = $true }
+    $republishedList = Invoke-Edge 'GET' "/api/lists/public/$publicListId" ''
+    if ($unpublishList.StatusCode -ne 200 -or $unpublishedTimestamp -ne 'NULL' -or $hiddenPublicList.StatusCode -ne 404 -or
+        $republishList.StatusCode -ne 200 -or $republishedList.StatusCode -ne 200 -or
+        -not ($republishedList.Content | ConvertFrom-Json).publishedAt) {
+        throw "Public list publish/unpublish lifecycle failed: unpublish=$($unpublishList.StatusCode); timestamp=$unpublishedTimestamp; hidden=$($hiddenPublicList.StatusCode); republish=$($republishList.StatusCode); public=$($republishedList.Content)"
+    }
+    Write-Output 'Public list publication timestamp API and publish/unpublish lifecycle passed.'
     $likedReviewsResponse = Invoke-Edge 'GET' '/api/users/2/liked-reviews?page=0&size=10' ''
     $likedReviews = $likedReviewsResponse.Content | ConvertFrom-Json
     if ($likedReviewsResponse.StatusCode -ne 200 -or $likedReviews.totalElements -ne 2 -or $likedReviews.content.Count -ne 2) {
@@ -369,7 +453,7 @@ Deno.serve({ port: 8001 }, (request) => {
     $popularReviewersResponse = Invoke-Edge 'GET' '/api/users/popular-reviewers?size=6' ''
     $popularReviewers = $popularReviewersResponse.Content | ConvertFrom-Json
     if ($popularReviewersResponse.StatusCode -ne 200 -or $popularReviewers[0].id -ne 1 -or $popularReviewers[0].likes -ne 2 -or
-        $popularReviewers[0].reviewCount -ne 2 -or $popularReviewers[0].watchedCount -ne 1 -or $popularReviewers[0].listCount -ne 1) {
+        $popularReviewers[0].reviewCount -ne 2 -or $popularReviewers[0].watchedCount -ne 0 -or $popularReviewers[0].listCount -ne 1) {
         throw "Popular reviewers query returned an unexpected response: $($popularReviewersResponse.Content)"
     }
     $directoryResponse = Invoke-Edge 'GET' '/api/users/directory?q=owner&page=0&size=12' ''
@@ -663,8 +747,32 @@ SELECT COUNT(*) FROM rewind.admin_audit_logs WHERE admin_id=3 AND action IN
         $adminQueueResponse.StatusCode -ne 200 -or $adminQueue.totalElements -ne 1 -or $adminQueue.content[0].id -ne 3 -or
         $adminQueueHide.StatusCode -ne 200 -or $adminBulkHide.StatusCode -ne 200 -or $adminBulkResult.hidden -ne 2 -or
         $moderatedRows -ne '1|1|1|1|1' -or $adminCommentDelete.StatusCode -ne 204 -or $adminReviewDelete.StatusCode -ne 204 -or $adminAuditEvents -ne '9') {
+        $reviewModerationDiagnostic = Invoke-Postgres @'
+BEGIN;
+SET LOCAL ROLE rewind_edge_app;
+SELECT set_config('rewind.supabase_user_id','33333333-3333-4333-8333-333333333333',TRUE);
+SELECT set_config('rewind.user_id','3',TRUE);
+CREATE TEMP TABLE moderation_debug(step TEXT, outcome TEXT);
+DO $$ DECLARE n BIGINT; BEGIN
+  UPDATE rewind.reviews SET is_hidden=TRUE,moderated_reason='probe',moderated_at=CURRENT_TIMESTAMP,moderated_by=3 WHERE id=1;
+  GET DIAGNOSTICS n = ROW_COUNT;
+  INSERT INTO moderation_debug VALUES('review update',n::text);
+EXCEPTION WHEN OTHERS THEN INSERT INTO moderation_debug VALUES('review update',SQLSTATE||':'||SQLERRM); END $$;
+DO $$ DECLARE n BIGINT; BEGIN
+  UPDATE rewind.review_reports SET status='ACTION_TAKEN',reviewed_at=CURRENT_TIMESTAMP,reviewed_by=3 WHERE review_id=1 AND status='OPEN';
+  GET DIAGNOSTICS n = ROW_COUNT;
+  INSERT INTO moderation_debug VALUES('report update',n::text);
+EXCEPTION WHEN OTHERS THEN INSERT INTO moderation_debug VALUES('report update',SQLSTATE||':'||SQLERRM); END $$;
+DO $$ DECLARE n BIGINT; BEGIN
+  INSERT INTO rewind.admin_audit_logs(admin_id,action,target_type,target_id,metadata) VALUES(3,'REVIEW_HIDDEN','REVIEW',1,'probe');
+  GET DIAGNOSTICS n = ROW_COUNT;
+  INSERT INTO moderation_debug VALUES('audit insert',n::text);
+EXCEPTION WHEN OTHERS THEN INSERT INTO moderation_debug VALUES('audit insert',SQLSTATE||':'||SQLERRM); END $$;
+SELECT step||'='||outcome FROM moderation_debug ORDER BY step;
+ROLLBACK;
+'@ 'review moderation SQL diagnostic'
         $edgeFailureLog = docker logs $functionName 2>&1
-        throw "Admin review/comment moderation flow failed: unauth=$($adminReviewsUnauthenticated.StatusCode); regular=$($adminReviewsForbidden.StatusCode); reviews=$($adminReviewsHiddenResponse.Content); reviewHide=$($adminReviewHide.Content); reviewUnhide=$($adminReviewUnhide.Content); comments=$($adminCommentsHiddenResponse.Content); commentHide=$($adminCommentHide.Content); commentUnhide=$($adminCommentUnhide.Content); queue=$($adminQueueResponse.Content); queueHide=$($adminQueueHide.StatusCode); bulk=$($adminBulkHide.Content); rows=$moderatedRows; deletes=$($adminCommentDelete.StatusCode)/$($adminReviewDelete.StatusCode); audit=$adminAuditEvents`n$($edgeFailureLog -join "`n")"
+        throw "Admin review/comment moderation flow failed: unauth=$($adminReviewsUnauthenticated.StatusCode); regular=$($adminReviewsForbidden.StatusCode); reviews=$($adminReviewsHiddenResponse.Content); reviewHide=$($adminReviewHide.Content); reviewUnhide=$($adminReviewUnhide.Content); comments=$($adminCommentsHiddenResponse.Content); commentHide=$($adminCommentHide.Content); commentUnhide=$($adminCommentUnhide.Content); queue=$($adminQueueResponse.Content); queueHide=$($adminQueueHide.StatusCode); bulk=$($adminBulkHide.Content); rows=$moderatedRows; deletes=$($adminCommentDelete.StatusCode)/$($adminReviewDelete.StatusCode); audit=$adminAuditEvents; SQL probe=$reviewModerationDiagnostic`n$($edgeFailureLog -join "`n")"
     }
 
     $adminNotificationUnauthenticated = Invoke-Edge 'GET' '/api/admin/notifications' ''

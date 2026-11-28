@@ -2,6 +2,30 @@
 
 Reviewed 28 November 2026. This page summarizes recorded production state and acceptance boundaries. Detailed results retain their dates in the [archive](../archive/README.md).
 
+## Revalidation of TMDB Watchlist and public lists — 28 November 2026
+
+- Re-ran the focused local Playwright suites for TMDB discovery/add-to-Watchlist, public-list publication time, featured-list empty/error states, poster/layout parity, and share fallback: **18/18 passed**. `npm run verify:build` passed TypeScript and Vite production build.
+- Re-ran `scripts/verify-supabase-review-rls.ps1` using disposable PostgreSQL 17 and local Auth/TMDB mocks. TMDB import transaction/idempotency/quota/rollback, public-list publication timestamp lifecycle, and the broad Edge API/RLS flows passed. Containers and temporary mocks were cleaned up by the script.
+- The host environment has no local `deno` executable; the repository's verification script ran the Edge function in the official Deno container successfully. These are local candidate checks only: no hosted Supabase changes, production data, user accounts, or deployment were changed.
+- Re-ran all **39** E2E tests affected by the worktree changes. Local Auth suites used a test-only publishable-key placeholder with Auth requests intercepted; the GitHub Pages static-route smoke ran separately against production and passed **1/1**. The first local run used the legacy Spring-mode Vite server and caused environment-only failures; the correctly configured hosted-mode Auth fixtures then passed.
+
+## Production list publication migration — 28 November 2026
+
+- Applied `20261128163602_list_publication_timestamp` to project `cuirmicbzspomijgkkwo` after the focused browser suite, frontend build, and disposable PostgreSQL 17 Edge/RLS rehearsal passed. The newest recorded encrypted backup artifact `14823687186` has a successful restore and is retained through 23 December 2026.
+- The migration adds nullable `rewind.lists.published_at`, backfills currently public lists from `created_at` as the only available historical estimate, and adds a database-owned visibility-transition trigger plus consistency constraint. It does not alter list visibility, insert films, or change other production data.
+- Post-migration checks confirm the migration appears in hosted history; zero public rows lack a timestamp and zero private rows contain one. No Edge Function or Pages deployment occurred in this step. A local copy was synchronized to the hosted migration version `20261128163602` for future parity checks.
+
+## Oppenheimer Figma READY artwork fixture — 28 November 2026
+
+- Corrected the desktop READY-frame E2E to render the public guest state and use exact Figma exports for the backdrop, six related-film posters, and seven cast/crew portraits. The focused suite passes **2/2**, covering UK/EN desktop geometry and responsive widths from 320px through 1440px.
+- Assets live only in the local E2E fixture directory. Production has no Oppenheimer row, so this does not prove live artwork parity or add runtime data. No Supabase, production content, Figma file, or deployment changed.
+
+## Scoped Figma Inter typography — 28 November 2026
+
+- Figma reference `5321:9094` specifies Inter for updated screens. Applied it to the full Admin dashboard, mobile movie-detail routes and the mobile Create List form while preserving the legacy SF-first stack elsewhere and on desktop film details.
+- Matched mobile Dune review-card typography to Figma (18px padding, 35px avatar, 13px reviewer/score, 10px date, 12px copy). Inline comment controls are hidden on mobile movie cards; the linked reviewer page retains the full comment thread. The fixture uses Figma sample review text only for wrapping/geometry; hosted records remain API-driven.
+- Targeted fixture tests cover Inter on header/main/footer for Admin and mobile lists, Inter only below the movie-detail breakpoint, and legacy typography outside the specified screens. The selected Admin/list/Dune suite passed **4/4**; `npm run verify:build` passed TypeScript and Vite production build. No Figma, Supabase, production data, or deployment changes.
+
 ## Mobile search film results and TMDB entry — 28 November 2026
 
 - Compared READY Figma frame `1480:8594` (393×852) with `/en/search?q=dune&tab=films`. The six-poster 4-column grid now begins at the Figma y=267 anchor. A TMDB-search CTA previously inserted above the results and shifted the grid down 48px; moved this action into the accessible result-category picker so the source composition remains intact. Selecting “Search all TMDB films” opens `/films?q={query}` without importing data.
@@ -23,6 +47,8 @@ Reviewed 28 November 2026. This page summarizes recorded production state and ac
 - These checks were read-only. No “Add to REWIND” action, account mutation, or database write was performed; signed-in import acceptance remains open.
 
 ## Local All Films discovery disclosure — 28 November 2026
+
+> Superseded by [TMDB auto discovery user default](#tmdb-auto-discovery-user-default--28-november-2026) below; this entry preserves the earlier implementation checkpoint.
 
 - Changed `/films` TMDB discovery from an always-expanded feed to an accessible native disclosure. The film catalog remains the main content; users can expand the TMDB section to apply genre/year/rating filters and import selected titles. Discovery requests now start only when the section is expanded. Title search still queries TMDB for terms of at least two characters, and imports remain an explicit signed-in action.
 - The initial local browser pass, without API environment settings, confirmed the collapsed state and showed the expected unavailable-API errors after expanding. A later process-local Supabase configuration verified populated catalog/discovery reads (details below); import behavior was not exercised. `frontend/npm run verify:build` passed. No automated browser/E2E suite was run. No production deployment, import, or data mutation occurred. The local footer position still needs a browser geometry capture before claiming exact Figma parity.
@@ -512,8 +538,116 @@ Counts below belong to their recorded release and test scope. Full details, fail
 ## Cloudflare Pages preview and Supabase origin acceptance — 28 November 2026
 
 - The stable `https://rewind-site-preview.pages.dev/uk/home/` and deployment preview `https://codex-cloudflare-pages-secur.rewind-site-preview.pages.dev/uk/home/` both returned HTTP 200. The stable response includes CSP `frame-ancestors 'none'`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Permissions-Policy: camera=(), microphone=(), geolocation=()`. The preview app was also opened in a browser and rendered the localized home page with film links.
+- Cloudflare dashboard identifies `anton5267/rewind-letterboxd` as the connected Git repository, with automatic deployments enabled. Its `rewind-site-preview.pages.dev` Production deployment follows `master` at commit `fa24bd9682f816ebdc2039d69f564fdf7f77550d` (`docs: record writer route release evidence (#47)`). The current `codex/motion-system` worktree is 13 commits ahead of that `master`; those local commits are not yet on the public Cloudflare Pages build.
 - Supabase Edge API CORS `OPTIONS` for the TMDB discovery route returned HTTP 204 and the exact allowed origin for both `https://anton5267.github.io` and the deployment preview domain. The Supabase Auth URL Configuration was inspected read-only: the existing GitHub Pages Site URL is unchanged; UK/EN login and password-reset callbacks exist for GitHub Pages, `rewind-site-preview.pages.dev`, and the deployment-preview hostname.
+- Fresh direct recheck of the stable alias `https://rewind-site-preview.pages.dev/uk/home/` returned HTTP 200 and all five configured security headers: `X-Frame-Options: DENY`, CSP `frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Permissions-Policy: camera=(), microphone=(), geolocation=()`. An exact-origin Supabase CORS preflight from `https://rewind-site-preview.pages.dev` returned HTTP 204. These are read-only preview checks; the actual Auth login and password-reset callbacks remain untested.
 - The old `rewind-letterboxd.antonlistvat47.workers.dev` address does not resolve; it is not the current Pages project. No Auth/CORS setting, production service, database, or user content was changed during this check. Guest rendering, CORS preflight, callback allow-list presence, and headers are accepted for the preview only. Actual sign-in/password-reset completion, private flows, full Figma parity, final host choice, and production deployment remain open.
+
+## All Films TMDB disclosure and Figma geometry — 28 November 2026
+
+- Added a compact UK/EN TMDB discovery control inside the Films hero. On the default route, the panel is hidden and the browser issues no TMDB discovery request. Opening it loads the existing read-only Supabase Edge endpoint; candidates still enter a user's REWIND catalogue only through the explicit authenticated add action. TMDB page/filter links reopen the panel, while title queries retain their existing TMDB text-search flow.
+- Focused Playwright test `films-tmdb-disclosure.spec.ts` passed 1/1, including lazy loading, one request on open, panel close/focus return, four deep-link parameters, same-page discovery → title-search → browser Back/Forward transitions, guest login instead of import action, a 44px mobile target, and zero horizontal overflow at 393px.
+- At 1440px, the fixture measured and asserted filters y=294, first poster y=607, pagination y=2502, and footer y=2691. Combined `films-desktop-catalog-figma.spec.ts` and `films-tmdb-disclosure.spec.ts` passed 2/2. `npm run verify:build` passed TypeScript and Vite production build.
+- A separate legacy runtime-only browser test did not reach its pagination assertion because it calls the configured live backend without fixture interception. The deterministic Figma catalog fixture and new focused discovery fixture both passed. No production write, Supabase change, Git push, or deployment occurred.
+
+## Featured Lists empty production state — 28 November 2026
+
+- Read-only aggregate SQL against the active `REWIND` Supabase project found exactly six rows in `rewind.lists`: two each of `WATCHLIST`, `WATCHED`, and `FAVORITES`; all six are private and have no `featured_category`. There are no public or featured lists. The result contains no usernames or row-level user data.
+- Fixture-backed E2E first failed because the page repeated generic empty text and retained empty categories; independent review also found a transient false empty status on landing-to-featured navigation. Results are now bound to the current feed/page/locale/navigation key. UK/EN empty-state, partial-category, transition, error/retry, and desktop/phone Figma tests pass **6/6**. `npm run verify:build` passed typecheck and Vite production build.
+- Loading skeletons and API error/retry behavior retain the prior three-category rendering; a transition regression confirms the skeleton stays visible until the current feed responds. Populated-category card layout and order are unchanged. The change is local only; there were no Supabase writes, schema changes, Git push, or deployment.
+
+## Public list publication timestamp — local implementation, 28 November 2026
+
+- Added local migration `20261128143356_list_publication_timestamp.sql`: current public rows are backfilled from `created_at` because historical visibility transitions were not stored; a database trigger sets the timestamp on public insert, refreshes it on republish, and clears it when a list becomes private. A check constraint enforces `is_public` iff `published_at` is non-null.
+- The public list detail Edge response now includes ISO `publishedAt`; the UK/EN page renders the translated relative time in a semantic `<time datetime>` element. Private list responses remain unavailable.
+- The complete public-list detail Playwright spec passed 9/9, including EN and UK wording and the source `datetime`; `npm run verify:build` passed; Deno typecheck passed using the repository's `deno.json` in the official Deno container. The disposable PostgreSQL 17 + local Auth/TMDB mock rehearsal passed the complete Edge/RLS flow, including public timestamp serialization, unpublish clearing the field and hiding the list, then republishing. `git diff --check` passed (Git reports existing LF/CRLF normalization notices only).
+- Local-only evidence: no hosted Supabase migration, user data, production Edge Function, Git push, or deployment was changed. The `created_at` backfill is only an estimate for lists that were public before this migration.
+- This local implementation was later applied to hosted Supabase as a separate schema release; see [production list publication migration](#production-list-publication-migration--28-november-2026). Edge and Pages still require a separately reviewed release.
+
+## Film share native-sheet fallback — local implementation, 28 November 2026
+
+- On supported browsers, the film action sheet still invokes the native `navigator.share` flow. If that flow fails for a non-cancellation reason, the page copies its URL to the clipboard and confirms success; user cancellation keeps the sheet open without copying. Browsers without the native share API go straight to clipboard fallback, and unavailable clipboard access shows localized guidance.
+- Added a fixture-backed Playwright scenario for a rejected native share sheet and successful URL copy. It passed 1/1 on local Vite; TypeScript/build verification is recorded after the change. The existing real-action-sheet scenario separately covers a successful native-share call, cancellation, and the no-native-share clipboard path.
+- Local-only change: no hosted Supabase, production data, GitHub, Figma, or deployment state was changed. Physical iOS/Android share-sheet acceptance remains open.
+
+## Supabase advisor and internal-table access recheck — 28 November 2026
+
+- The active `rewind-api` Edge Function is ACTIVE v73 with `verify_jwt=false`, SHA-256 `59bfe9e2b2412e2fdcd15fc34dc4fad79e0e5e86d52fa6ad5ba01366dd79baf2`.
+- The security advisor reports three `RLS Enabled No Policy` informational findings for `rewind.password_reset_tokens`, `rewind.refresh_sessions`, and `rewind.review_archive`, plus the existing `auth_leaked_password_protection` warning. Direct privilege checks confirm `anon` and `authenticated` have no `USAGE` on schema `rewind` and no `SELECT` on those tables; all three tables have RLS enabled. No grant or policy changes were made. Leaked-password protection remains a Supabase Free plan limitation.
+- The health advisor has no findings. Performance advisor currently reports 21 unused indexes; none were dropped because the project is new and those indexes support infrequently used user/admin/reporting flows.
+- This was read-only inspection. Database, Auth configuration, Edge Function, user data, GitHub, and deployments were unchanged.
+
+## TMDB auto discovery user default — 28 November 2026
+
+- Changed the local `/films` candidate so it opens and fetches the first page of TMDB popular movies on initial empty-query load. The visitor can close the feed; title search continues using the existing TMDB search flow. Deep links still restore the relevant TMDB filter/page state.
+- The feed uses the existing read-only Supabase Edge endpoint. Guest cards link to login, and only the existing explicit authenticated Add action imports a selected movie into REWIND. No bulk import or Supabase data write occurred.
+- TDD evidence: the updated Playwright test first failed at `aria-expanded` (`false`, expected `true`) before the implementation change. Review then exposed that Back/Clear after a title search left the feed closed, while local catalog pagination could reopen a manually dismissed filtered feed; isolated regressions failed before their fixes and passed afterward. The final `films-tmdb-disclosure.spec.ts` plus `films-desktop-catalog-figma.spec.ts` suite passed **4/4**. Coverage includes automatic request/render, guest login instead of Add, explicit close/focus restoration, close persistence through local pagination, TMDB deep links, title-search Back and Clear transitions, unchanged 1440px catalogue anchors, 44px mobile target and zero horizontal overflow at 393px.
+- `npm run verify:build` passed TypeScript and Vite production build. Automatic page load does not move keyboard focus; only visitor-opened transitions use the existing focus/scroll behavior. The visible feed intentionally extends page height beyond the Figma source footer, while closing it restores the shorter page. This is a local-only change; no Git push, Supabase change, production write, or deployment occurred.
+
+## Host/header and TMDB discovery accessibility recheck — 28 November 2026
+
+- Fresh read-only `HEAD` to `https://anton5267.github.io/rewind-letterboxd/` returned HTTP 200, with no `X-Frame-Options`, CSP, `X-Content-Type-Options`, or `Referrer-Policy` headers. A later repeat had a connection reset, so this is an observed response, not a transport reliability claim.
+- Fresh `HEAD` to `https://rewind-site-preview.pages.dev/` returned HTTP 200 with `X-Frame-Options: DENY`, CSP `frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Permissions-Policy: camera=(), microphone=(), geolocation=()`.
+- Supabase Edge CORS `OPTIONS` for `GET /api/tmdb/movies/discover` returned HTTP 204 and the exact requested `Access-Control-Allow-Origin` for both `https://anton5267.github.io` and `https://rewind-site-preview.pages.dev`.
+- Local fixture E2E now runs axe WCAG 2 A/AA while the automatically loaded TMDB section is visible. The combined discovery/accessibility and desktop catalog suite passes **4/4**, including clear/back restoration, guest Login/no-Add, persistent manual close, and Figma catalog anchors. No production setting, database data, GitHub branch, or deployment changed.
+
+## Cloudflare Pages preview — full public guest-route retest — 28 November 2026
+
+- Against the live `https://rewind-site-preview.pages.dev` host, Playwright passed the named-control and responsive-overflow check for all 18 public UK/EN routes at 320px, 768px, and 1280px. No unnamed visible interactive controls or horizontal overflow were found.
+- The same 18 routes passed the one-header/main/footer, one-H1, image-alt and link-href checks, plus the WCAG 2 A/AA axe audit with no violations. Combined live preview result: **3/3 E2E scenarios passed**.
+- This validates guest routes on the current Cloudflare deployment from `master`; it does not validate unpushed local UI changes, actual sign-in/password callbacks, private actions, or canonical-host migration. No account, Supabase setting, data, GitHub branch, or deployment was changed.
+
+## Auth fixture isolation correction — 28 November 2026
+
+- A legacy `supabase-auth-redirects.spec.ts` suite was mistakenly run against the live Cloudflare preview. Its `/api/auth/...` mocks did not intercept the hosted build's direct Supabase Auth requests. Trace review confirmed one `signup` request for `newmemberen@example.invalid` and one `recover` request for `member@example.invalid`.
+- The signup request created one unconfirmed Auth user with no sign-in. I deleted only that exact row after matching its email, creation timestamp, and null confirmation/sign-in fields. A follow-up read-only count confirmed zero rows for either fixture address. The recovery address had no Auth user; no database or application data was changed.
+- The suite now intercepts all `/auth/v1/**` calls by default and supplies explicit signup/recovery fixtures where needed, so unmocked test requests fail closed even when the base URL points at a hosted build. Local legacy-auth redirects passed **11/11**; separate hosted email-action and signup-locale fixtures passed **10/10** against local Vite with a dummy publishable key. No further Auth test was run against production.
+- Historical status at the time of this correction: the legacy reset-fragment and successful-PKCE fixtures failed because they did not establish the session/verifier. This was superseded later on 28 November 2026 by the synthetic fixtures and recovery-session fix documented in [Auth recovery and PKCE fixture update](#auth-recovery-and-pkce-fixture-update--28-november-2026). Real hosted callbacks remain unverified.
+- The live run was not valid release evidence. Production config, Edge Functions, user data (apart from the temporary test account created and then removed), GitHub, and deployments were not changed.
+
+## Auth recovery and PKCE fixture update — 28 November 2026
+
+- The local hosted-auth redirect and signup-locale suites passed **13/13** with fake publishable credentials and intercepted `/auth/v1/**` calls. The recovery-fragment case now establishes a synthetic session, exercises password update, and confirms the expected Auth request. The successful PKCE case uses a JSON-serialized verifier and confirms the token exchange payload and in-app continuation.
+- Reproducing the recovery flow exposed a real startup race: `ResetPassword` removed the recovery fragment before Supabase could establish a session. It now installs the URL-provided session first, clears the fragment only after setup completes, and enables password validation after the session is ready. The targeted E2E verifies the local client/UI flow against mocked Auth endpoints.
+- `frontend/npm run verify:build` passed TypeScript and Vite production build. No hosted Supabase, user data, GitHub branch, Pages, or production deployment was changed.
+- This is synthetic local acceptance, not proof that real hosted confirmation/recovery email callbacks work end-to-end. Those callbacks and private two-account production flows remain release gates.
+
+## TMDB add to personal Watchlist — local candidate — 28 November 2026
+
+- Global Films TMDB result buttons now say “Add to my Watchlist” / “Додати до мого списку перегляду”. The request imports a missing movie into the shared catalog and appends it to the initiating user's Watchlist in the same user-scoped transaction. Existing published movies skip the new-import quota; `(list_id, movie_id)` conflict handling keeps repeat selections idempotent.
+- The custom-list editor keeps its previous import behavior and does not additionally mutate Watchlist. Guests still browse without writes and are directed to login from the global catalog action.
+- `frontend`: `npm run verify:build` passed TypeScript and Vite production build. Deno 2.9.8 `deno check repositories/tmdb_catalog.ts http/routes/tmdb_catalog.ts` passed when run in `supabase/functions/rewind-api` so the checked-in `deno.json` import mapping was loaded. `git diff --check` passed with only the repository's CRLF normalization notices.
+- Read-only production schema inspection confirmed `lists` and `list_items` have RLS enabled; the `rewind_edge_app` role has the required SELECT access plus column-level INSERT on `list_items.list_id`, `movie_id`, and `position`; the existing `list_items_list_id_movie_id_key` constraint supports the idempotent insert. This checks compatibility only, not runtime writes.
+- The focused Playwright suite `films-tmdb-disclosure.spec.ts` passed **4/4** on a separate local Vite server with Supabase Auth disabled and API fixtures. Its authenticated UI case confirms the selected TMDB ID is sent with `addToWatchlist: true` and the user is navigated to the canonical REWIND film page. This covers the frontend request/redirect contract only; the Edge transaction, rollback, idempotency, and hosted signed-in behavior were not exercised against a local or hosted database. No schema/migration, hosted Supabase data, GitHub, Pages, or production deployment changed; this candidate is not yet release-accepted.
+
+## TMDB Watchlist transaction and moderation response regression — 28 November 2026
+
+- `pwsh -NoProfile -File scripts/verify-supabase-review-rls.ps1` passed against an isolated Docker PostgreSQL 17 database with local Auth/TMDB mocks. The rehearsal applied the local application migrations; only Supabase infrastructure migrations for scheduled `pg_cron`/Vault refresh and moving `pg_net` were excluded because those services are not present in the disposable image. Supabase Storage's bucket metadata was represented by a local fixture table. Containers and the temporary Auth mock are removed by the script.
+- Authenticated TMDB import now has PostgreSQL-backed evidence for: new movie + metadata + import quota + Watchlist in one transaction; repeated add idempotency; adding an already published movie without another quota row; and full rollback if Watchlist is missing. Fixture writes were cleaned up before the broader HTTP checks. No hosted Supabase, production content, or account was touched.
+- The full local Edge/RLS HTTP rehearsal completed its remaining global search, profile, moderation, notifications, messaging, journal, catalog, and privilege checks. It exposed a separate admin review hide/unhide 500: the response mapper requires like/comment counts, but the post-update SELECT omitted them. `admin_moderation.ts` now selects both counts. The same PostgreSQL-backed flow passed after the fix.
+- Frontend Playwright fixture coverage remains 4/4, including authenticated add request and canonical movie-page redirect. This local rehearsal does not establish real hosted Auth callback behavior or production account acceptance.
+
+## All Films direct Figma source recheck — 28 November 2026
+
+- The connected Figma MCP successfully reopened READY desktop full catalogue `1480:4797` (1440×2956) and mobile full catalogue `1480:9187` (393×1215). The direct source screenshots match the existing local desktop source-art capture and its 36-poster order.
+- REWIND's API-backed catalog is dynamic; its current records/posters do not need to copy Figma's static sample data. The local candidate automatically loads a public, read-only TMDB discovery page with query/filter/pagination support. Only the visitor's explicit signed-in Add action imports a TMDB movie into the shared REWIND catalog and their Watchlist.
+- `films-tmdb-disclosure.spec.ts` and `films-desktop-catalog-figma.spec.ts` passed **5/5** together. `npm run verify:build` passed TypeScript and Vite production build. These are local fixtures/build checks, not a hosted signed-in transaction or a production deployment; no hosted Supabase, Figma, GitHub or production content changed.
+- This closes the source comparison for the Films full-catalogue frames only. Whole-site READY/DRAFT visual acceptance, real auth/email callbacks, private two-account flows and final host selection remain open.
+
+## GitHub Pages accessibility and responsive recheck — 28 November 2026
+
+- Against the canonical `https://anton5267.github.io/rewind-letterboxd/` site, three read-only Playwright scenarios passed for 18 public UK/EN routes: named interactive controls and no overflow at 320/768/1280px; keyboard reachability on the primary routes; and one main/header/footer, one H1, image alternatives, and valid link targets. The WCAG 2 A/AA axe audit passed for all 18 routes. Combined result: **4/4 E2E scenarios passed**.
+- The known security-header scenario was deliberately excluded from this run; GitHub Pages does not return the required response headers, as recorded in the host/header check above. Guest-route checks do not establish real Auth callbacks, private actions, local unpushed UI, or complete Figma parity. No account, Supabase setting/data, GitHub branch, or deployment was changed.
+
+## GitHub Pages public catalog and person flow — 28 November 2026
+
+- The live read-only Playwright smoke passed **1/1** for the canonical GitHub Pages site. It verified sitemap and robots routes, UK/EN home, year/rating/genre filters, a film detail page and its credits, global search for a film and a person, actor filmography, and guest redirection from Profile/Messages to Login. All requests/actions in this scenario were reads; no account, production content, or Supabase data was changed.
+- Updated the smoke to match the current UX: the desktop Figma catalog intentionally hides its inline title input, so free-text titles are searched through Global Search; cast selection now targets a person route of type `actor` instead of assuming the first credit is an actor. This corrects stale test assumptions, not production application code.
+
+## Local Search, motion, and Figma acceptance — 28 November 2026
+
+- The combined local Playwright suites `global-search-alignment.spec.ts`, `global-search-responsive.spec.ts`, `motion-surfaces.spec.ts`, `search-controls.spec.ts`, and `home-guest-hero-figma.spec.ts` passed **44/44** on a local Vite server. Coverage includes UK/EN global search, responsive READY result layouts, keyboard navigation, loading/error/retry states, filters and URL normalization, reduced-motion interactions, and guest Home.
+- Updated `search-controls.spec.ts` to provide deterministic movie/genre/TMDB fixtures for the local Supabase-first frontend. Its film query/year, poster-rail, invalid-page, and valid-page cases no longer depend on an unavailable Spring API at `localhost:8081`. The test run made no backend or production writes.
 
 ## History
 

@@ -18,6 +18,8 @@
 html, body, #root { margin: 0; min-width: 0; width: 100%; }
 html { scroll-behavior: smooth; }
 body { font-family: var(--rewind-font-sans); background: var(--rewind-black); color: #fff; line-height: 1.45; overflow-x: clip; }
+body:has(main[data-rewind-route$="/admin"]) { --rewind-font-sans: "Inter", system-ui, sans-serif; }
+body:has(main[data-rewind-route$="/admin"]) .footer.hqAccountsDesktopParity .nav { font-family: var(--rewind-font-sans); }
 img { max-width: 100%; }
 button, input, select, textarea { font: inherit; }
 a { color: inherit; }
@@ -129,6 +131,10 @@ select:focus-visible {
 }
 
 @media (max-width: 767px) {
+  body:has(main[data-rewind-route*="/films/"]),
+  body:has(main[data-list-editor="create"]) { --rewind-font-sans: "Inter", system-ui, sans-serif; }
+  body:has(main[data-rewind-route*="/films/"]) .footer.hqAccountsDesktopParity .nav,
+  body:has(main[data-list-editor="create"]) .footer.hqAccountsDesktopParity .nav { font-family: var(--rewind-font-sans); }
   body { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
   body:has(main[data-popular-reviews]) { padding-bottom: 0; }
   body:has(main[data-member-home="true"]) { padding-bottom: 0; }

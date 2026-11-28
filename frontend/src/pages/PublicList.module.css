@@ -21,6 +21,7 @@
 .eyebrow { margin: 0 0 22px; color: #d4a85f; font-size: 12px; font-weight: 700; letter-spacing: .18em; }
 .ownerLine { display: flex; align-items: center; gap: 9px; margin: 0 0 14px; color: #c8c2bd; font-size: 14px; }
 .ownerLine > span { min-width: 0; }
+.publishedAt { color: #a9a29b; font-size: 13px; }
 .ownerAvatar { display: grid; width: 30px; height: 30px; flex: 0 0 30px; place-items: center; border-radius: 50%; background: #333; color: var(--rewind-gold); object-fit: cover; }
 .ownerLine a { color: #fff; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 .hero h1 { max-width: 820px; margin: 0; font-size: clamp(46px, 8vw, 108px); line-height: .92; letter-spacing: -.06em; }

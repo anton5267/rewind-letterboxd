@@ -25,6 +25,7 @@ export interface PublicListDetailsResponse {
   ownerId: number;
   ownerUsername: string;
   ownerAvatarUrl: string | null;
+  publishedAt: string;
   tags: string[];
   likeCount: number;
   isRanked?: boolean;

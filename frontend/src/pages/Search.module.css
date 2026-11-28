@@ -6,7 +6,7 @@
 }
 
 .shell { width: min(100%, 1200px); margin: 0 auto; }
-.hero { margin: 0 -5% 28px; padding: 58px 10% 46px; background: linear-gradient(180deg, rgba(15, 20, 22, .12), rgba(15, 20, 22, .42)), url("/images/search-hero-desktop.png") center / cover no-repeat; }
+.hero { position: relative; margin: 0 -5% 28px; padding: 58px 10% 46px; background: linear-gradient(180deg, rgba(15, 20, 22, .12), rgba(15, 20, 22, .42)), url("/images/search-hero-desktop.png") center / cover no-repeat; }
 .heroBar { display: block; }
 .heroTitle { min-width: 0; }
 .mobileBack,
@@ -76,16 +76,19 @@
 .visuallyHidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 .mobilePageControl { display: none; }
 .catalogCount { display: none; }
-.tmdbSection { margin-top: 44px; border-top: 1px solid var(--rewind-line); padding-top: 24px; }
+.tmdbSection { margin-top: 44px; border-top: 1px solid var(--rewind-line); padding-top: 24px; scroll-margin-top: 24px; }
 .tmdbHeading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
-.tmdbSummary { cursor: pointer; }
-.tmdbSummary:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 5px; }
-.tmdbSummary .tmdbHeading { margin-bottom: 0; }
-.tmdbSection[open] .tmdbSummary .tmdbHeading { margin-bottom: 18px; }
-.tmdbHeading [role="heading"] { display: block; margin: 0; font-size: 23px; font-weight: 700; }
+.tmdbHeading h2 { display: block; margin: 0; font-size: 23px; font-weight: 700; }
 .tmdbHint { display: block; margin: 7px 0 0; color: var(--rewind-muted); font-size: 14px; }
 .tmdbHeading > a,
 .tmdbHeading > span:last-child { color: #8ac6df; font-weight: 700; text-decoration: none; }
+.tmdbHeadingActions { display: flex; align-items: center; gap: 12px; }
+.tmdbHeadingActions a { color: #8ac6df; font-weight: 700; text-decoration: none; }
+.tmdbHeadingActions button { min-width: 44px; min-height: 44px; border: 1px solid var(--rewind-line); border-radius: 50%; background: transparent; color: #fff; font-size: 24px; cursor: pointer; }
+.tmdbDiscoveryToggle { position: absolute; bottom: 18px; left: 10%; z-index: 1; min-height: 44px; border: 1px solid #d4a85f; border-radius: 24px; padding: 0 18px; background: rgba(31, 31, 31, .9); color: #f4d28c; font: inherit; font-weight: 600; cursor: pointer; }
+.tmdbDiscoveryToggle:hover { background: #d4a85f; color: #1f1f1f; }
+.tmdbDiscoveryToggle:focus-visible,
+.tmdbHeadingActions button:focus-visible { outline: 3px solid var(--rewind-cyan); outline-offset: 3px; }
 .tmdbGrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 24px 31px; }
 .tmdbFilters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0 0 24px; }
 .tmdbFilters label { display: grid; gap: 7px; color: #e6ded5; font-size: 12px; font-weight: 700; }
@@ -201,6 +204,8 @@
   .filterSummary { position: absolute; top: 77.25px; right: 0; display: flex; width: 215px; height: 31px; box-sizing: border-box; align-items: center; justify-content: flex-end; gap: 5px; border-radius: 16px; padding: 0 9px; background: rgba(40, 40, 40, .88); color: #aaa; font-size: 12px; }
   .filterSummaryArrow { margin: 0 -2px; font-size: 12px; }
   .filterIcon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 50%; background: #282828; }
+  .tmdbDiscoveryToggle { bottom: 0; left: 16px; }
+  .tmdbHeadingActions { gap: 4px; }
   .searchForm { display: none; grid-template-columns: 1fr auto; margin-top: 16px; }
   .searchForm .queryField { display: grid; }
   .searchForm .catalogCount { display: none; }
@@ -214,7 +219,7 @@
   .filterSubmit { grid-column: span 2; }
   .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 19px 15px; margin-top: 28.25px; }
   .tmdbSection { margin-top: 32px; padding-top: 18px; }
-  .tmdbHeading [role="heading"] { font-size: 19px; }
+  .tmdbHeading h2 { font-size: 19px; }
   .tmdbHint { font-size: 12px; }
   .tmdbGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 15px; }
   .tmdbFilters { grid-template-columns: 1fr; }

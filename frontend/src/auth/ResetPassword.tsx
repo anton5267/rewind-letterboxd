@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { isAxiosError } from "axios";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { resetPassword } from "../api/auth.api";
-import { getSupabaseClient, usesHostedSupabaseAuth } from "../api/supabaseClient";
+import { getSupabaseClient, isSupabaseAuthConfigured, usesHostedSupabaseAuth } from "../api/supabaseClient";
 import { useLocale } from "../i18n";
 import { useAuthFieldValidation } from "./useAuthFieldValidation";
 import styles from "./ResetPassword.module.css";
@@ -10,19 +10,39 @@ import { isPasswordWithinByteLimit, MAX_PASSWORD_BYTES } from "../utils/password
 
 export default function ResetPassword() {
   const [params] = useSearchParams();
-  const [recoveryToken] = useState(() => {
+  const [recoveryCredentials] = useState(() => {
     const hash = new URLSearchParams(window.location.hash.slice(1));
-    if (hash.get("type") !== "recovery") return "";
-    return hash.get("access_token") ?? "";
+    if (hash.get("type") !== "recovery") return { accessToken: "", refreshToken: "" };
+    return { accessToken: hash.get("access_token") ?? "", refreshToken: hash.get("refresh_token") ?? "" };
   });
+  const recoveryToken = recoveryCredentials.accessToken;
+  const [recoverySessionReady, setRecoverySessionReady] = useState(() => !recoveryToken || !usesHostedSupabaseAuth);
   useEffect(() => {
-    if (recoveryToken) window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
-  }, [recoveryToken]);
+    if (!recoveryToken) return;
+    let active = true;
+    const clearRecoveryFragment = () => {
+      if (active) window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+    };
+    if (usesHostedSupabaseAuth && isSupabaseAuthConfigured) {
+      setRecoverySessionReady(false);
+      void getSupabaseClient().auth.setSession({
+        access_token: recoveryToken,
+        refresh_token: recoveryCredentials.refreshToken,
+      }).catch(() => undefined).finally(() => {
+        clearRecoveryFragment();
+        if (active) setRecoverySessionReady(true);
+      });
+      return () => { active = false; };
+    }
+    clearRecoveryFragment();
+    if (usesHostedSupabaseAuth) setRecoverySessionReady(true);
+    return () => { active = false; };
+  }, [recoveryToken, recoveryCredentials.refreshToken]);
   const token = params.get("token") ?? recoveryToken;
-  return <ResetPasswordForm key={token} token={token} />;
+  return <ResetPasswordForm key={token} token={token} authSessionReady={recoverySessionReady} />;
 }
 
-function ResetPasswordForm({ token }: { token: string }) {
+function ResetPasswordForm({ token, authSessionReady }: { token: string; authSessionReady: boolean }) {
   const { path, t, lang } = useLocale();
   const validation = useAuthFieldValidation();
   const location = useLocation();
@@ -40,7 +60,8 @@ function ResetPasswordForm({ token }: { token: string }) {
   const focusIntent = useRef<{ origin: HTMLElement | null } | null>(null);
 
   useEffect(() => {
-    if (!usesHostedSupabaseAuth) return;
+    if (!usesHostedSupabaseAuth || !authSessionReady) return;
+    if (!isSupabaseAuthConfigured) { setError("resetInvalid"); return; }
     let active = true;
     void getSupabaseClient().auth.getSession().then(({ data, error: sessionError }) => {
       if (!active) return;
@@ -50,7 +71,7 @@ function ResetPasswordForm({ token }: { token: string }) {
       if (active) setError("resetInvalid");
     });
     return () => { active = false; };
-  }, [token]);
+  }, [token, authSessionReady]);
 
   useLayoutEffect(() => {
     mounted.current = true;

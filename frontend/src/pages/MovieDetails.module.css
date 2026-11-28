@@ -846,6 +846,7 @@
   .section { border-color: #36363a; background: #242426; color: #fff; box-shadow: none; }
   .similarSection,
   .reviewsSection { background: #1f1f1f; }
+  .page[data-movie-id="35"] .similarSection { margin-top: -3.6px; }
   .section .sectionHeading { color: #fff; }
   .section .eyebrow { color: #c69cff; }
   .similarCard { color: #fff; }
@@ -860,19 +861,19 @@
     display: flex;
     min-width: 0;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
+    gap: 12px;
+    margin-bottom: 0;
   }
   .mobileReviewAvatar {
     display: grid;
-    width: 40px;
-    height: 40px;
+    width: 35px;
+    height: 35px;
     flex: none;
     place-items: center;
     border-radius: 50%;
     background: linear-gradient(135deg, #355761, #886746);
     color: #fff;
-    font-size: 15px;
+    font-size: 13px;
     font-weight: 800;
   }
   .mobileReviewByline {
@@ -883,12 +884,13 @@
   .mobileReviewByline a {
     overflow: hidden;
     color: #fff;
+    font-size: 13px;
     font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .mobileReviewByline time { color: var(--rewind-muted); font-size: 12px; }
-  .mobileReviewRating { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; color: #f1ece4; white-space: nowrap; }
+  .mobileReviewByline time { color: var(--rewind-muted); font-size: 10px; }
+  .mobileReviewRating { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; color: #f1ece4; font-size: 13px; white-space: nowrap; }
   .allReviewsButton {
     min-height: 44px;
     align-items: center;
@@ -968,8 +970,9 @@
   .ratingRow { align-items: flex-start; flex-direction: column; gap: 10px; }
   .ratingButtons { width: 100%; }
   .ratingButtons button { flex: 1 1 0; min-width: 0; padding-inline: 6px; }
-  .review { padding: 17px; border: 0; border-radius: 20px; background: #282828; }
-  .review > p { font-size: 12px; line-height: 1.6; white-space: pre-line; }
+  .review { display: flex; flex-direction: column; gap: 12px; padding: 18px; border: 0; border-radius: 20px; background: #282828; }
+  .review > p { margin: 0; font-size: 12px; line-height: 1.6; white-space: pre-line; }
+  .reviewsSection .review > section { display: none; }
   .reviewActions,
   .reviewFormActions { align-items: stretch; flex-direction: column; }
   .reviewActions button,

@@ -603,15 +603,24 @@ export default function MovieDetails() {
 
   const shareMovie = useCallback(async () => {
     if (!movie) return;
+    const copyLink = async () => {
+      try {
+        if (!navigator.clipboard) throw new Error("Clipboard is unavailable");
+        await navigator.clipboard.writeText(window.location.href);
+        setMessage(t("linkCopied"));
+      } catch {
+        setMessage(t("shareFailed"));
+      }
+    };
     try {
       if (typeof navigator.share === "function") {
         await navigator.share({ title: editorialText(movie.title, t("untitledFilm")), url: window.location.href });
-      } else if (navigator.clipboard) {
-        await navigator.clipboard.writeText(window.location.href);
-        setMessage(t("linkCopied"));
+      } else {
+        await copyLink();
       }
-    } catch {
-      // A cancelled native share is not an application error.
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") return;
+      await copyLink();
     }
   }, [movie, t]);
 
