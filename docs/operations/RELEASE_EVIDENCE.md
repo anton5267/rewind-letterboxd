@@ -15,6 +15,13 @@ Reviewed 28 November 2026. This page summarizes recorded production state and ac
 - On production `/en/films/?q=Dune`, live TMDB search returned 8 results per page and 57 pages; the first results were Dune, Dune: Part Two, and Dune: Part Three. The public search route works without importing or copying the entire TMDB catalog into REWIND.
 - These checks were read-only. No “Add to REWIND” action, account mutation, or database write was performed; signed-in import acceptance remains open.
 
+## Local private-action fixture acceptance — 28 November 2026
+
+- `profile-media.spec.ts` passed **5/5** and `profile-email-change.spec.ts` passed **2/2** on an isolated Vite process with `VITE_SUPABASE_AUTH_ENABLED=true` and a fixture-only publishable key. Supabase Auth and application API requests were intercepted. Coverage includes invalid-file rejection, upload/retry/remove, retained drafts during upload, user-switch protection, confirmation-only email change, and UK/EN behavior.
+- `content-report-action.spec.ts` passed **2/2** (UK/EN), `admin-review-report-dismiss.spec.ts` **1/1** (UK/EN), messages keyboard focus specs **3/3**, and notification feed loading/error/empty states **6/6**. Combined local fixture result: **19/19**.
+- An earlier media run against the default legacy-auth Vite instance timed out because that mode intentionally renders the URL-avatar editor instead of hosted-auth file uploads. The hosted-auth tests pass when run against the separate configured Vite process; this was a test-mode mismatch, not a confirmed product failure.
+- These are frontend fixture checks, not live storage/Auth/Edge integration. They do not prove two-account message delivery, notification delivery, or a signed-in production media upload. No production account, database, Supabase, or hosted file was changed.
+
 ## Guest Home Figma header parity — 28 November 2026
 
 - Compared current READY desktop `472:492` (1440×4934) and mobile `1411:3473` (393×2265) sources with the local fixture render. The guest “Just reviewed” header has only its title and watched-film count at both sizes; mobile “Popular Lists” has no “More” link, while the desktop list and other source-backed “More” links remain.
