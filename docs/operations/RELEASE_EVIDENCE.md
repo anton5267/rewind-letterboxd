@@ -2,6 +2,12 @@
 
 Reviewed 28 November 2026. This page summarizes recorded production state and acceptance boundaries. Detailed results retain their dates in the [archive](../archive/README.md).
 
+## GitHub Actions validation for PR #48 — 28 November 2026
+
+- Latest candidate commit `23236e3f8abdf646bfcaa14aa5dbf4e09598e819` passed GitHub Actions run [46167097791](https://github.com/anton5267/rewind-letterboxd/actions/runs/46167097791): backend/frontend verification and isolated Supabase migration replay both succeeded. This includes MySQL backend tests, Deno Edge API checks, frontend build/typecheck, published-writer route generation, TMDB crosswalk structure, HTTPS proxy configuration, and replay of every migration from a clean baseline.
+- The run follows a fixture-only correction that supplied `publishedAt` in the public-list detail API test fixture. Local Deno verification also passed **200/200 tests** and `deno check index.ts`.
+- This is candidate/CI evidence only. The PR remains a draft and this run did not deploy Edge Functions or Pages, modify hosted database records, import films, or test live user callbacks/private account flows.
+
 ## Revalidation of TMDB Watchlist and public lists — 28 November 2026
 
 - Re-ran the focused local Playwright suites for TMDB discovery/add-to-Watchlist, public-list publication time, featured-list empty/error states, poster/layout parity, and share fallback: **18/18 passed**. `npm run verify:build` passed TypeScript and Vite production build.
