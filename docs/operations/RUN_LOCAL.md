@@ -1,8 +1,25 @@
 # Локальний запуск Rewind
 
-Усі команди починаються з кореня Git-репозиторію. Потрібні Docker Desktop; для dev frontend — Node.js 20 (від 20.19) або 22.12+. Локальний Java запуск потребує JDK 25. Секрети створюються у Git-ignored `.env`.
+Рекомендований режим для поточного публічного застосунку — Vite frontend із hosted Supabase; він не потребує Docker, MySQL або локальних даних. Для нього потрібен Node.js 20 (від 20.19) або 22.12+. Docker/Spring/MySQL нижче описані як окремий legacy режим. Серверні секрети тримайте лише в Git-ignored файлах і ніколи не передавайте до Vite.
+
+## Рекомендовано: Vite + hosted Supabase
+
+Команди запускаються з `frontend/`. Скопіюйте шаблон і замініть placeholder `VITE_SUPABASE_PUBLISHABLE_KEY` на client-safe GitHub Actions variable `SUPABASE_PUBLISHABLE_KEY` із Settings → Secrets and variables → Actions → Variables:
+
+```powershell
+Copy-Item .env.example .env.local
+# Відредагуйте .env.local та вставте значення публічного клієнтського ключа.
+npm ci
+npm run dev -- --host 127.0.0.1
+```
+
+Відкрийте `http://127.0.0.1:5173/uk/home`. `.env.local` ігнорується Git. Використовуйте лише publishable client key; `service_role`, пароль БД та інші серверні секрети у `VITE_*` заборонені, бо Vite вбудовує ці значення в код браузера. Перегляд каталогу та пошук ідуть через hosted Supabase; акаунтні дії використовують звичайний Supabase Auth і production permissions.
+
+Щоб локально переключитися на optional Spring API, приберіть `VITE_API_BASE_URL` з `.env.local` та запускайте Docker Compose нижче.
 
 ## Docker Compose
+
+Цей стек призначений лише для розробки legacy Spring/MySQL backend. Dev seed додає 50 фільмів тільки в порожній локальний каталог; він не впливає на hosted Supabase.
 
 ```powershell
 .\scripts\init-dev-env.ps1
@@ -20,7 +37,7 @@ docker compose ps
 
 Flyway застосовує migrations під час старту API. Dev seed додає 50 фільмів тільки в порожній каталог. `docker compose down` зберігає volumes; `down -v` видаляє дані й не використовується для звичайного перезапуску.
 
-## Frontend із поточного source
+## Frontend із поточного source проти legacy API
 
 Залиште Compose API запущеним; в іншому PowerShell:
 

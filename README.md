@@ -45,25 +45,46 @@ Redeployment uses the complete TypeScript source from Git, including `deno.json`
 
 ```mermaid
 flowchart LR
-    Browser["React · Vite 5173 or Nginx 3000"] -->|"/api · cookies · CSRF"| Spring["Spring Boot · 8081"]
+    Vite["React · Vite 5173"] -->|"HTTPS · publishable key · optional Auth token"| Edge["Supabase Edge · rewind-api"]
+    Edge --> Auth["Supabase Auth"]
+    Edge --> Database[("PostgreSQL · private rewind")]
+    Edge --> Storage["Supabase Storage"]
+    Legacy["Optional legacy local stack"] --> Spring["Spring Boot · 8081"]
     Spring --> MySQL[("MySQL 8.4")]
     Spring --> Redis[("Redis cache")]
     Spring -->|"SMTP"| Mailpit["Mailpit"]
     Flyway["Flyway migrations"] --> MySQL
 ```
 
-Spring uses HttpOnly access/refresh cookies, CSRF protection, and role, ownership, and blocking checks. Local MySQL data and hosted PostgreSQL data have separate lifecycles. Migrating local accounts and private records requires the verified procedures in the migration runbook.
+The recommended local frontend flow mirrors the public GitHub Pages + Supabase deployment and does not need Docker, Spring Boot, or a local database. The optional legacy stack is retained for backend development; its MySQL data is separate from hosted PostgreSQL.
 
 ## Local development
 
-From the repository root, run these commands in PowerShell with Docker Desktop running.
+### Frontend with hosted Supabase (recommended)
+
+From `frontend/`, copy the tracked template to the ignored local environment file and replace the placeholder with the client-safe `SUPABASE_PUBLISHABLE_KEY` from GitHub repository Settings → Secrets and variables → Actions → Variables:
+
+```powershell
+Copy-Item .env.example .env.local
+# Edit .env.local and replace VITE_SUPABASE_PUBLISHABLE_KEY with the GitHub variable value.
+npm ci
+npm run dev -- --host 127.0.0.1
+```
+
+Use only the publishable client key in this file. Do not put `service_role`, database passwords, or other server secrets in a Vite variable; frontend variables are embedded in the browser bundle. `.env.local` is ignored by Git.
+
+Open the source frontend at `http://127.0.0.1:5173/uk/home`. The catalog, genre filter, and TMDB search/discovery use hosted APIs. Authenticated actions require signing in and follow production permissions.
+
+### Optional legacy Spring/MySQL stack
+
+Use this only when you specifically need the separate legacy backend. From the repository root, run these commands in PowerShell with Docker Desktop running:
 
 ```powershell
 .\scripts\init-dev-env.ps1
 docker compose up -d --build
 ```
 
-To edit frontend code with the local API running, start Vite from `frontend/`.
+To edit frontend code against that local API, leave `VITE_API_BASE_URL` unset in `.env.local` and start Vite from `frontend/`:
 
 ```powershell
 cd frontend
