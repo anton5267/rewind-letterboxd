@@ -688,6 +688,12 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - `films-desktop-catalog-figma.spec.ts` now checks the exact ordered 36 film titles and waits until all 36 poster images load at the source width. The first RED run failed because the fixture still contained generic `Catalog fixture N` titles; after adding the source-backed movie and image fixtures, the focused Playwright scenario passed **1/1**.
 - `npm run verify:build` passed TypeScript and Vite production build; `git diff --check` passed. GitHub Actions push run `46176786478` and pull-request run `46176789959` both completed successfully for commit `1dd3b93abec64b7af2064065d20b94e4a7861a41`. PR #48 remains open as a draft. The PNGs are only read by the test route and are excluded from production frontend assets. No Figma design, production data, Supabase, GitHub Pages, or production deployment was changed.
 
+## Email-change local Auth fixture recheck — 28 November 2026
+
+- On the correctly configured isolated local Vite server (`VITE_SUPABASE_AUTH_ENABLED=true`, fixture-only publishable key), `profile-email-change.spec.ts` and `supabase-email-action.spec.ts` passed **10/10**. This covers the UK/EN settings UI, confirmation-only email request, intermediate/final email-change callbacks, signup confirmation, and password recovery; every Auth/API request was intercepted by Playwright.
+- An initial run against the already-running auth-disabled Vite server failed six cases before the expected authenticated state. Process inspection confirmed that server had no Auth-enabled fixture configuration. Re-running on a separate isolated auth-enabled port passed all ten cases. The failure was test-environment mode mismatch, not a product-code regression.
+- These are local synthetic fixtures only. They do not verify real hosted email delivery, callback allow-list behavior, or production email change. No hosted account, Supabase data/configuration, GitHub Pages, or production deployment was changed.
+
 ## History
 
 - [Consolidated 2026 evidence](../archive/RELEASE_EVIDENCE_2026.md).
