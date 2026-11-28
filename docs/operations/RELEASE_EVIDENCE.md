@@ -9,6 +9,12 @@ Reviewed 28 November 2026. This page summarizes recorded production state and ac
 - CI run [`46112636772`](https://github.com/anton5267/rewind-letterboxd/actions/runs/46112636772) passed both `verify` and isolated migration replay. GitHub Pages deployment [`46112826612`](https://github.com/anton5267/rewind-letterboxd/actions/runs/46112826612) succeeded for `db39a9ab12e09fff3bac2e1fd7940eaf80cdbb30`.
 - Read-only live Playwright+axe audit returned HTTP 200 and zero WCAG 2 A/AA violations on `/uk/login/`, `/en/login/`, and `/uk/community/`; browser JavaScript errors were zero. These three route checks do not establish whole-site accessibility or authenticated/private flow acceptance.
 
+## Mobile guest Home contrast and route sweep — 28 November 2026
+
+- PR #34 ([`95fa5f1`](https://github.com/anton5267/rewind-letterboxd/commit/95fa5f1ed096419bbe4cb285a0dc1d61b09434c4)) raises muted mobile guest Home text colors while preserving layout geometry. It adds a fixture axe `color-contrast` check at 320px for both UK and EN. The regression failed before the CSS change and passed afterward; `npm run verify:build` and `git diff --check` passed.
+- The PR CI and Cloudflare Pages preview checks passed; post-merge CI run [`46113833034`](https://github.com/anton5267/rewind-letterboxd/actions/runs/46113833034) and GitHub Pages deployment [`46113833028`](https://github.com/anton5267/rewind-letterboxd/actions/runs/46113833028) succeeded.
+- Read-only production Playwright+axe WCAG 2 A/AA at 320px returned HTTP 200, zero violations, zero horizontal overflow, and zero JavaScript errors on UK Home, Films, Search, Lists, Community, Login, Journal, and Help, plus EN Home. A 1440px audit returned zero WCAG 2 A/AA violations on those eight UK routes. This route/viewport matrix is not a complete locale, account-state, private-action, or Figma-frame acceptance.
+
 ## Read-only production smoke — 28 November 2026
 
 - PR #20 ([`c1bf668`](https://github.com/anton5267/rewind-letterboxd/commit/c1bf668c9c89c7a30082a58fe3431f7e1369f1e3)) adds a btree index on `rewind.tmdb_user_imports(movie_id)`. Both `verify` and PostgreSQL migration-replay checks passed for the PR head, and its Cloudflare Pages preview deployed successfully; Supabase Preview was skipped because PR branches are disabled. The PR was squash-merged into `master`.
