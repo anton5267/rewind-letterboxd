@@ -8,6 +8,11 @@ Reviewed 28 November 2026. This page summarizes recorded production state and ac
 - `frontend/tests/e2e/motion-surfaces.spec.ts`: **2/2 passed** against fixture-intercepted local Vite. It covers Home pointer/keyboard/reduced-motion behavior, phone-width overflow, and public featured-list hover. `npm run verify:build` passed TypeScript and Vite production build; `git diff --check` passed.
 - This is a local candidate check only. No production deployment or live Figma visual acceptance was performed; whole-site Figma and release gates remain open.
 
+## GitHub Pages public-route accessibility smoke — 28 November 2026
+
+- Ran `frontend/tests/e2e/accessibility.spec.ts` against the published GitHub Pages base URL with the already-known static response-header test excluded. **4/4** tests passed: named controls and horizontal containment across 18 public UK/EN routes at 320/768/1280px; keyboard reachability on Home, Films, and Help; page landmarks, heading order, image alternatives and valid links across 18 routes; and axe WCAG 2 A/AA with zero violations across those 18 routes.
+- This was a read-only guest smoke. It does not cover signed-in/private actions, all Figma states, runtime page errors, security response headers, or every viewport. No production setting, deployment, database, or content changed.
+
 ## TMDB live catalog, attribution, and RLS policy cleanup — 28 November 2026
 
 - TMDB search and discovery use the hosted Supabase Edge Function on demand. Production GETs from `https://anton5267.github.io` returned HTTP 200 with eight search/discovery results and `Cache-Control: public, max-age=120, stale-while-revalidate=300`; no import button was used and no catalogue/user rows were added. The app imports an individual title only after a signed-in user selects it. TMDB's daily exports contain valid IDs and summary attributes rather than a full data export, and TMDB cautions against needlessly high-volume bulk requests ([exports](https://developer.themoviedb.org/docs/daily-id-exports), [rate limiting](https://developer.themoviedb.org/docs/rate-limiting)).
