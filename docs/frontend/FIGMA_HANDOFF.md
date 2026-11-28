@@ -8,6 +8,10 @@ Re-ran the READY desktop Tags screen `1480:7445` at 1440×1024 and the mobile Ta
 
 # REWIND — Figma design handoff
 
+### Admin reported-list return flow — 28 November 2026
+
+Rechecked Figma all-lists `1344:5249`, reported-list queue `1389:3464`, reported-list editor `1390:3326`, and regular-list editor `1344:6018`. The existing Edge-backed detail editor already supplies the visible list metadata, report reason/count, film previews, change history, and edit/status/add/block/resolve/delete actions. A release-smoke review found that resolving a report sent the moderator to reported reviews, while the reported-only filter existed only in component state. The filter now persists as `?view=lists&reported=true`; list detail receipts return there for reported items and to the ordinary lists view otherwise. `npm run verify:build` passes. This fixes the navigation flow without changing API contracts, database state, Figma source or production deployment.
+
 ### All Films catalogue — fresh Figma source inventory and desktop refinement — 27 November 2026
 
 The Figma helper inspected READY frame `1480:4797` at its source size (1440×2956), without editing the file. The source is a dark catalogue page with the shared 106px header, “Films” heading/divider, Year/Rating/Genre pill, live-count style banner, six-column poster grid, numbered pages and footer. The Figma page contains 36 poster images (6×6), each 174×260, at x=121/326/531/736/941/1146 and row y=607/917/1227/1537/1847/2157. Horizontal poster gap is 31px; row gap is 50px. The grid ends at y=2417, pagination is x=617/y=2502 (sequence `1 2 3 … 40`), and footer starts at y=2691.

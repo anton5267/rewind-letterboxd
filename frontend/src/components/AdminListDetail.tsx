@@ -101,9 +101,10 @@ export default function AdminListDetail() {
   };
 
   const title = list?.report ? t("adminReportedListDetailTitle") : t("adminListDetailTitle");
+  const backToLists = `${path("/admin")}?view=lists${reportId === undefined ? "" : "&reported=true"}`;
   if (receipt) return <section className={`${styles.workspace} ${styles.receiptWorkspace}`} aria-label={title}>
     <p ref={receiptMessage} className={styles.success} role="status" tabIndex={-1}>{t(receipt === "resolved" ? "adminListResolved" : receipt === "blocked" ? "adminListBlocked" : "adminListDeleted")}</p>
-    <Link className={styles.back} to={`${path("/admin")}?view=${receipt === "resolved" ? "reported-reviews" : "lists"}`}>{t("adminBackToPage")}</Link>
+    <Link className={styles.back} to={backToLists}>{t("adminBackToPage")}</Link>
   </section>;
 
   return <section className={styles.workspace} aria-label={title} aria-busy={loading || busy}>

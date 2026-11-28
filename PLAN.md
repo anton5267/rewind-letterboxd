@@ -8,6 +8,13 @@
 
 Spring Boot/MySQL/Redis/Mailpit мають окремий локальний життєвий цикл. Наявні локальні зміни й дані зберігати. Перед перенесенням різних версій файлів проводити змістовне порівняння.
 
+## Поточний перевірений стан — 28.11.2026
+
+- TMDB on-demand catalog пройшов CI та злитий у `master` через PR #15; вирівнювання історії Supabase міграцій завершено через PR #16 і #17. Усі 60 production migration versions збігаються з репозиторієм.
+- Hosted Supabase міграція `20261128020750_tmdb_user_import_quota` застосована; `rewind-api` ACTIVE v70 (`verify_jwt=false`). Hosted import table порожня, RLS увімкнений. Public TMDB search повернув HTTP 200 із вісьмома результатами; anonymous import відхилено з HTTP 401.
+- GitHub Pages publish run `46096029670` завершився успішно для commit `17182ed`; production site відповідає HTTP 200. CORS preflight і пошук із origin `https://anton5267.github.io` пройшли (`204` і `200`).
+- Не перевірено authenticated movie import у справжній сесії; під час release smoke жоден фільм не додано. Це залишається контрольним сценарієм після входу власника/тестового користувача. Повний Figma visual acceptance і GitHub Pages security response headers залишаються окремими відкритими пунктами; статуси нижче не слід трактувати як їх закриття.
+
 ## Підтверджений стан — 23.11.2026
 
 - [x] Повний React frontend опублікований на GitHub Pages. Функціональні релізи та їхні CI/Pages докази наведені в release evidence. Стани Home та Header ізольовані за ID глядача. Cross-tab account switch і запізнілі відповіді перевірені цільовими UK/EN fixtures для feed та unread counters.
