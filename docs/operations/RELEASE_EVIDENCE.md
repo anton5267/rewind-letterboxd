@@ -15,6 +15,14 @@ Reviewed 28 November 2026. This page summarizes recorded production state and ac
 - The run follows a fixture-only correction that supplied `publishedAt` in the public-list detail API test fixture. Local Deno verification also passed **200/200 tests** and `deno check index.ts`.
 - This is candidate/CI evidence only. The PR remains a draft and this run did not deploy Edge Functions or Pages, modify hosted database records, import films, or test live user callbacks/private account flows.
 
+## Journal Awards poster stacks candidate — 28 November 2026
+
+- Added optional `posterImages` to the journal article contract, Admin editor, Edge API parser/repository, and Journal Awards feed. Admins can set up to three image URLs per story; old rows and clients that omit this field remain compatible, and explicit `null` clears a stack. The feed renders the source poster stack only when the API supplies it.
+- Added local migration `20261128191708_journal_article_poster_images.sql` with a nullable JSONB column, a 1–3 image-array constraint, and column-level app-role grants. It has **not** been applied to hosted Supabase. No hosted data or production settings changed.
+- Exported and mapped 15 poster images from the five READY Figma Awards stories into local Playwright fixtures. The desktop acceptance checks the stack count, asset order, dimensions and placement; the mobile check verifies hidden stacks do not cause horizontal overflow. These are source-art fixtures, not production article content.
+- Local verification: `npx --yes deno check index.ts` and the full Deno suite **201/201**; `npm run verify:build` passed; `tests/e2e/journal-media.spec.ts` **4/4** on the Supabase-Auth-enabled local preview; `tests/e2e/journal-design-flow.spec.ts` **9/9**. Running the media suite against the default auth-disabled local server first failed because the legacy admin form intentionally lacks the hosted-auth content editor; it passed against the correct local auth-enabled server.
+- The work is still a release candidate in draft PR #48. CI replay of the new migration, live content parity, production migration, Edge deployment and Pages deployment remain open. The live Awards feed is empty; no examples or records were added to production.
+
 ## PR #48 Cloudflare preview acceptance — 28 November 2026
 
 - The current PR branch preview `https://codex-motion-system.rewind-site-preview.pages.dev` passed `frontend/tests/e2e/accessibility.spec.ts`: **5/5 scenarios**, including named controls/responsive layout, security headers, keyboard access, landmarks and image alternatives, and WCAG 2 A/AA checks across the public UK/EN routes.

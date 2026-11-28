@@ -13,6 +13,7 @@ import type { Page } from "../api/types";
 import type { JournalMedia } from "../api/journal-content";
 import { usesHostedSupabaseAuth } from "../api/supabaseClient";
 import JournalCoverFields from "./journal/JournalCoverFields";
+import JournalPosterFields from "./journal/JournalPosterFields";
 import JournalContentEditor from "./journal/JournalContentEditor";
 import Pagination from "./Pagination";
 import RetryNotice from "./RetryNotice";
@@ -128,6 +129,7 @@ export default function AdminArticles() {
       audioUrl: item.audioUrl ?? "",
       published: item.publishedAt !== null,
       coverImages: item.coverImages ?? null,
+      posterImages: item.posterImages ?? null,
       contentBlocks: item.contentBlocks ?? null,
     });
     setEditingId(item.id);
@@ -156,11 +158,12 @@ export default function AdminArticles() {
     setCreating(true);
     setActionError("");
     try {
-      const { coverImages, contentBlocks, ...fields } = article;
+      const { coverImages, posterImages, contentBlocks, ...fields } = article;
       const request = {
         ...fields,
         ...(usesHostedSupabaseAuth ? {
           coverImages: coverImages?.some(image => image.trim()) ? coverImages.map(image => image.trim()) : null,
+          posterImages: posterImages?.some(image => image.trim()) ? posterImages.map(image => image.trim()) : null,
           contentBlocks: contentBlocks ?? null,
         } : {}),
         slug: article.slug.trim(),
@@ -234,6 +237,8 @@ export default function AdminArticles() {
       {usesHostedSupabaseAuth ? <JournalCoverFields values={article.coverImages ?? [article.coverUrl]} disabled={creating}
         onChange={coverImages => setArticle({ ...article, coverImages, coverUrl: coverImages[0] ?? "" })} /> :
         <input className={styles.input} type="url" maxLength={500} aria-label={t("articleCoverUrl")} placeholder={t("articleCoverUrl")} value={article.coverUrl} onChange={event => setArticle({ ...article, coverUrl: event.target.value })} />}
+      {usesHostedSupabaseAuth && <JournalPosterFields values={article.posterImages ?? []} disabled={creating}
+        onChange={posterImages => setArticle({ ...article, posterImages })} />}
       <input className={styles.input} type="url" maxLength={500} aria-label={t("audioUrl")} placeholder={t("audioUrl")} value={article.audioUrl} onChange={event => setArticle({ ...article, audioUrl: event.target.value })} />
       {usesHostedSupabaseAuth ? <JournalContentEditor key={editingId ?? "new"} text={article.content} blocks={article.contentBlocks ?? null} disabled={creating}
         onChange={(content, contentBlocks) => setArticle({ ...article, content, contentBlocks })} /> :

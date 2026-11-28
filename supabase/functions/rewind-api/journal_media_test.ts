@@ -1,4 +1,5 @@
 import { parseAdminJournalArticle } from "./http/parsers/admin.ts";
+import type { AdminJournalArticleRequest } from "./contracts/journal.ts";
 import {
   journalPlainText,
   parseJournalContentBlocks,
@@ -21,6 +22,11 @@ function same(actual: unknown, expected: unknown) {
 const covers = [
   "https://images.example.invalid/one.jpg",
   "https://images.example.invalid/two.jpg",
+];
+const posterImages = [
+  "https://images.example.invalid/poster-one.jpg",
+  "https://images.example.invalid/poster-two.jpg",
+  "https://images.example.invalid/poster-three.jpg",
 ];
 const blocks = [
   { type: "heading", text: "A heading", level: 2 },
@@ -64,6 +70,47 @@ Deno.test("journal media keeps omission and explicit clearing distinct", () => {
   ) {
     same(parseJournalCoverImages(value), false);
   }
+});
+
+Deno.test("journal poster stacks validate URLs and survive admin and row mapping", () => {
+  same(parseJournalMedia({ posterImages }), { posterImages });
+  same(parseJournalMedia({ posterImages: [] }), { posterImages: null });
+  for (const value of [
+    false,
+    {},
+    ["javascript:alert(1)"],
+    ["data:image/png;base64,a"],
+    ["/relative.jpg"],
+    Array(4).fill(posterImages[0]),
+    ["https://a.invalid/" + "x".repeat(500)],
+  ]) {
+    same(parseJournalMedia({ posterImages: value }), null);
+  }
+
+  const article = parseAdminJournalArticle({ ...legacy, posterImages });
+  same((article as unknown as { posterImages?: unknown } | null)?.posterImages, posterImages);
+  same(parseAdminJournalArticle({ ...legacy, posterImages: ["javascript:alert(1)"] }), null);
+  const storedRow = { poster_images: JSON.stringify(posterImages) } as unknown as Parameters<typeof storedJournalMedia>[0];
+  same(storedJournalMedia(storedRow), {
+    coverImages: null,
+    posterImages,
+    contentBlocks: null,
+  });
+  same((storedJournalMedia({ poster_images: "{broken" } as unknown as Parameters<typeof storedJournalMedia>[0]) as unknown as { posterImages?: unknown }).posterImages, null);
+  const articleRow = {
+    id: "18",
+    slug: "article",
+    language: "uk",
+    category: "Awards",
+    title: "Awards article",
+    excerpt: null,
+    content: "Text",
+    cover_url: null,
+    audio_url: null,
+    published_at: null,
+    poster_images: posterImages,
+  } as unknown as Parameters<typeof toJournalArticle>[0];
+  same((toJournalArticle(articleRow) as unknown as { posterImages?: unknown }).posterImages, posterImages);
 });
 
 Deno.test("journal content validates typed blocks and derives canonical searchable text", () => {
@@ -128,6 +175,7 @@ Deno.test("journal content rejects malformed, unsafe and oversized blocks", () =
 Deno.test("journal Admin parser preserves legacy bodies and uses media as canonical content and cover", () => {
   const original = parseAdminJournalArticle(legacy);
   same(Object.hasOwn(original!, "coverImages"), false);
+  same(Object.hasOwn(original!, "posterImages"), false);
   same(Object.hasOwn(original!, "contentBlocks"), false);
   const article = parseAdminJournalArticle({
     ...legacy,
@@ -142,6 +190,7 @@ Deno.test("journal Admin parser preserves legacy bodies and uses media as canoni
     "A heading\n\nA caption\n\n<script>Rendered as text</script>\n\n• One\n• Two",
   );
   same(article?.contentBlocks, blocks);
+  same(Object.hasOwn(article!, "posterImages"), false);
   same(
     parseAdminJournalArticle({
       ...legacy,
@@ -159,20 +208,20 @@ Deno.test("journal mapping accepts driver JSON and legacy rows and falls back fo
   same(
     storedJournalMedia({
       cover_images: JSON.stringify(covers),
+      poster_images: JSON.stringify(posterImages),
       content_blocks: JSON.stringify(blocks),
     }),
-    { coverImages: covers, contentBlocks: blocks },
+    { coverImages: covers, posterImages, contentBlocks: blocks },
   );
   same(storedJournalMedia({ cover_images: covers, content_blocks: blocks }), {
-    coverImages: covers,
-    contentBlocks: blocks,
+    coverImages: covers, posterImages: null, contentBlocks: blocks,
   });
   same(
     storedJournalMedia({
       cover_images: "{broken",
       content_blocks: [{ type: "unknown" }],
     }),
-    { coverImages: null, contentBlocks: null },
+    { coverImages: null, posterImages: null, contentBlocks: null },
   );
   const row = {
     id: "17",
@@ -190,6 +239,7 @@ Deno.test("journal mapping accepts driver JSON and legacy rows and falls back fo
   same(mapped.id, 17);
   same(mapped.content, "Text");
   same(mapped.coverImages, null);
+  same(mapped.posterImages, null);
   same(mapped.contentBlocks, null);
 });
 
@@ -248,7 +298,7 @@ Deno.test("journal HTTP entry validates media and preserves confirmed Admin auth
         body: JSON.stringify(body),
       },
     );
-  const payload = { ...legacy, coverImages: covers, contentBlocks: blocks };
+  const payload = { ...legacy, coverImages: covers, posterImages, contentBlocks: blocks };
   same((await handler(request("guest", payload))).status, 401);
   same((await handler(request("user", payload))).status, 403);
   same(
@@ -259,16 +309,19 @@ Deno.test("journal HTTP entry validates media and preserves confirmed Admin auth
   );
   const created = await handler(request("admin", payload));
   same(created.status, 200);
-  same((await created.json()).contentBlocks, blocks);
+  const createdBody = await created.json();
+  same(createdBody.contentBlocks, blocks);
+  same(createdBody.posterImages, posterImages);
   same(
     (await handler(
       request(
         "admin",
-        { ...payload, contentBlocks: null, coverImages: null },
+        { ...payload, contentBlocks: null, coverImages: null, posterImages: null },
         true,
       ),
     )).status,
     200,
   );
+  same((writes[1] as AdminJournalArticleRequest).posterImages, null);
   same(writes.length, 2);
 });

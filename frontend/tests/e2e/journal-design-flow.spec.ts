@@ -279,9 +279,10 @@ test("Awards journal feed renders the five Figma source covers", async ({ page }
     "Best in Show: Musical Moments",
   ];
   const coverNames = titles.map((_, index) => `award-cover-${String(index + 1).padStart(2, "0")}.png`);
+  const posterNames = Array.from({ length: 15 }, (_, index) => `award-poster-${String(index + 1).padStart(2, "0")}.png`);
   await page.route("https://journal-awards-fixture.invalid/**", async route => {
     const filename = new URL(route.request().url()).pathname.slice(1);
-    if (!/^award-cover-0[1-5]\.png$/.test(filename)) return route.abort();
+    if (!/^(award-cover-0[1-5]|award-poster-(0[1-9]|1[0-5]))\.png$/.test(filename)) return route.abort();
     await route.fulfill({
       contentType: "image/png",
       body: await readFile(resolve(process.cwd(), "tests/e2e/fixtures/journal-awards-figma", filename)),
@@ -298,6 +299,7 @@ test("Awards journal feed renders the five Figma source covers", async ({ page }
       content: `Awards fixture ${index + 1}.`,
       coverUrl: `https://journal-awards-fixture.invalid/${coverNames[index]}`,
       coverImages: null,
+      posterImages: posterNames.slice(index * 3, index * 3 + 3).map(name => `https://journal-awards-fixture.invalid/${name}`),
       audioUrl: null,
       authorName: "Rewind Crew",
       publishedAt: `2025-12-${String(28 - index * 5).padStart(2, "0")}T12:00:00Z`,
@@ -320,6 +322,31 @@ test("Awards journal feed renders the five Figma source covers", async ({ page }
   expect(loadedNames).toEqual(coverNames);
   const dimensions = await covers.evaluateAll(images => images.map(image => [image.naturalWidth, image.naturalHeight]));
   expect(dimensions).toEqual([[515, 296], [444, 407], [444, 407], [442, 408], [442, 408]]);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const posterStacks = page.locator("[data-journal-poster-stack]");
+  await expect(posterStacks).toHaveCount(5);
+  const stackBoxes = await posterStacks.evaluateAll(elements => elements.map(element => {
+    const { x, y, width, height } = element.getBoundingClientRect();
+    return { x, y, width, height };
+  }));
+  expect(stackBoxes).toEqual([
+    { x: 1008, y: 566, width: 315, height: 260 },
+    { x: 1013, y: 1142, width: 310, height: 260 },
+    { x: 1013, y: 1718, width: 310, height: 260 },
+    { x: 1013, y: 2295, width: 310, height: 260 },
+    { x: 1013, y: 2876, width: 310, height: 260 },
+  ]);
+  for (const [index, stack] of (await posterStacks.all()).entries()) {
+    const posters = stack.locator("img");
+    await expect(posters).toHaveCount(3);
+    await stack.scrollIntoViewIfNeeded();
+    await expect.poll(() => posters.evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0))).toBe(true);
+    const posterFiles = await posters.evaluateAll(images => images.map(image => new URL(image.currentSrc).pathname.slice(1)));
+    expect(posterFiles).toEqual(posterNames.slice(index * 3, index * 3 + 3));
+  }
+  await page.setViewportSize({ width: 393, height: 852 });
+  await expect(posterStacks.first()).toBeHidden();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(393);
 });
 
 test("empty Journal skips unusable filters and archive and offers a useful next step", async ({ page }) => {

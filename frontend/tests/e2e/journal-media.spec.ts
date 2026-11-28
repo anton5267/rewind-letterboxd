@@ -1,6 +1,7 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 
 const covers = [1, 2, 3].map(number => `https://images.example.invalid/journal-${number}.png`);
+const posters = [1, 2, 3].map(number => `https://images.example.invalid/award-poster-${number}.png`);
 const contentBlocks = [
   { type: "heading", text: "Illustrated story", level: 2 },
   { type: "image", url: covers[0], alt: "A film illustration", caption: "Image caption", layout: "aside" },
@@ -120,6 +121,11 @@ for (const lang of ["uk", "en"] as const) {
     await cover.locator('input[type="url"]').first().fill(covers[0]);
     await cover.getByRole("button", { name: lang === "uk" ? "Додати зображення обкладинки" : "Add cover image", exact: true }).click();
     await cover.locator('input[type="url"]').nth(1).fill(covers[1]);
+    const posterStack = form.getByRole("group", { name: lang === "uk" ? "Постери історії" : "Story posters", exact: true });
+    await posterStack.getByRole("button", { name: lang === "uk" ? "Додати постер" : "Add poster", exact: true }).click();
+    await posterStack.locator('input[type="url"]').first().fill(posters[0]);
+    await posterStack.getByRole("button", { name: lang === "uk" ? "Додати постер" : "Add poster", exact: true }).click();
+    await posterStack.locator('input[type="url"]').nth(1).fill(posters[1]);
     const addCover = cover.getByRole("button", { name: lang === "uk" ? "Додати зображення обкладинки" : "Add cover image", exact: true });
     const removeCover = cover.getByRole("button", { name: lang === "uk" ? "Прибрати зображення обкладинки" : "Remove cover image", exact: true });
     await addCover.click();
@@ -135,12 +141,16 @@ for (const lang of ["uk", "en"] as const) {
     await expect(form.getByLabel(lang === "uk" ? "Абзац" : "Paragraph", { exact: true })).toHaveValue("First paragraph");
     await create.click(); await expect.poll(() => writes.length).toBe(2);
     expect(writes[1].coverImages).toEqual(covers.slice(0, 2));
+    expect(writes[1].posterImages).toEqual(posters.slice(0, 2));
     expect(writes[1].content).toBe("First paragraph\n\nHeading");
     expect(writes[1].contentBlocks).toEqual([
       { type: "paragraph", text: "First paragraph" }, { type: "heading", text: "Heading", level: 2 },
       { type: "image", url: covers[0], alt: "Artwork", caption: null, layout: "aside" },
     ]);
     await page.getByRole("button", { name: new RegExp(`${lang === "uk" ? "Редагувати статтю" : "Edit article"}.*Media story`) }).click();
+    await expect(posterStack.locator('input[type="url"]')).toHaveCount(2);
+    await expect(posterStack.locator('input[type="url"]').nth(0)).toHaveValue(posters[0]);
+    await expect(posterStack.locator('input[type="url"]').nth(1)).toHaveValue(posters[1]);
     const heading = form.getByLabel(lang === "uk" ? "Підзаголовок" : "Heading", { exact: true });
     const headingBlock = heading.locator("..").locator("..");
     const moveUp = headingBlock.getByRole("button", { name: lang === "uk" ? "Перемістити вище" : "Move up", exact: true });
@@ -163,6 +173,7 @@ for (const lang of ["uk", "en"] as const) {
     await form.getByRole("button", { name: lang === "uk" ? "Зберегти" : "Save", exact: true }).click();
     await expect.poll(() => writes.length).toBe(3);
     expect(writes[2].contentBlocks).toBeNull();
+    expect(writes[2].posterImages).toEqual(posters.slice(0, 2));
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
   });
 }

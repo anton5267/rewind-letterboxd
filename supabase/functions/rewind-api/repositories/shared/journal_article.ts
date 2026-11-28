@@ -15,6 +15,7 @@ export interface JournalArticleRow {
   published_at: string | null;
   author_name?: string | null;
   cover_images?: unknown;
+  poster_images?: unknown;
   content_blocks?: unknown;
 }
 

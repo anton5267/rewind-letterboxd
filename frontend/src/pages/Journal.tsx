@@ -167,7 +167,8 @@ export default function Journal() {
               const articleLang = article.language === "uk" || article.language === "en" ? article.language : lang;
               const titleLang = article.title?.trim() ? articleLang : lang;
               const audioUrl = safeHttpUrl(article.audioUrl);
-              return <article className={`${styles.card} ${index === 0 ? styles.feature : ""} ${index === 0 && featureCover?.key === featureCoverKey && featureCover.wide ? styles.wideFeature : ""}`} key={article.id}>
+              const posterImages = (article.posterImages ?? []).slice(0, 3);
+              return <article className={`${styles.card} ${posterImages.length ? styles.hasPosterStack : ""} ${index === 0 ? styles.feature : ""} ${index === 0 && featureCover?.key === featureCoverKey && featureCover.wide ? styles.wideFeature : ""}`} key={article.id}>
                 <Link className={styles.cover} to={articlePath} aria-label={title} lang={titleLang}>
                   <JournalCover coverUrl={article.coverUrl} images={article.coverImages} label={title} loading={index === 0 ? "eager" : "lazy"} fallback={<span aria-hidden="true">REWIND</span>}
                     onLoad={index === 0 ? event => {
@@ -196,6 +197,17 @@ export default function Journal() {
                 <Link className={styles.thumb} to={articlePath} aria-hidden="true" tabIndex={-1}>
                   <ResilientImage src={article.coverUrl} alt="" loading="lazy" fallback={<span>?</span>} />
                 </Link>
+                {posterImages.length > 0 && <Link
+                  className={styles.posterStack}
+                  to={articlePath}
+                  aria-hidden="true"
+                  tabIndex={-1}
+                  data-journal-poster-stack
+                >
+                  {posterImages.map((image, posterIndex) => <span className={styles.posterLayer} data-poster-index={posterIndex} key={`${article.id}-poster-${posterIndex}`}>
+                    <ResilientImage src={image} alt="" loading="lazy" fallback={<span className={styles.posterFallback}>?</span>} />
+                  </span>)}
+                </Link>}
               </article>;
             })}
           </div>}

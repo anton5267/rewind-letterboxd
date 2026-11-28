@@ -36,7 +36,7 @@ export const journalRepository: Pick<RewindApiRepository,
       const [count, rows] = await Promise.all([
         connection.queryObject<{ total: string }>({ text: "SELECT COUNT(*)::text AS total FROM rewind.journal_articles", args: [] }),
         connection.queryObject<JournalArticleRow>({
-          text: `SELECT id::text AS id, slug, language, category, title, excerpt, content, cover_url, audio_url, cover_images, content_blocks, published_at::text AS published_at
+          text: `SELECT id::text AS id, slug, language, category, title, excerpt, content, cover_url, audio_url, cover_images, poster_images, content_blocks, published_at::text AS published_at
                  FROM rewind.journal_articles ORDER BY updated_at DESC, id DESC LIMIT $1 OFFSET $2`, args: [size, page * size],
         }),
       ]);
@@ -107,11 +107,12 @@ export const journalRepository: Pick<RewindApiRepository,
     try {
       const result = await connection.queryObject<JournalArticleRow>({
         text: `INSERT INTO rewind.journal_articles
-                 (slug, language, category, title, excerpt, content, cover_url, audio_url, is_published, published_at, author_id, cover_images, content_blocks)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,CASE WHEN $9 THEN CURRENT_TIMESTAMP ELSE NULL END,$10,$11::jsonb,$12::jsonb)
-               RETURNING id::text AS id, slug, language, category, title, excerpt, content, cover_url, audio_url, cover_images, content_blocks, published_at::text AS published_at`,
+                 (slug, language, category, title, excerpt, content, cover_url, audio_url, is_published, published_at, author_id, cover_images, content_blocks, poster_images)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,CASE WHEN $9 THEN CURRENT_TIMESTAMP ELSE NULL END,$10,$11::jsonb,$12::jsonb,$13::jsonb)
+               RETURNING id::text AS id, slug, language, category, title, excerpt, content, cover_url, audio_url, cover_images, poster_images, content_blocks, published_at::text AS published_at`,
         args: [body.slug, body.language, body.category, body.title, body.excerpt, body.content, body.coverUrl, body.audioUrl, body.published, userId,
-          body.coverImages == null ? null : JSON.stringify(body.coverImages), body.contentBlocks == null ? null : JSON.stringify(body.contentBlocks)],
+          body.coverImages == null ? null : JSON.stringify(body.coverImages), body.contentBlocks == null ? null : JSON.stringify(body.contentBlocks),
+          body.posterImages == null ? null : JSON.stringify(body.posterImages)],
       });
       const article = result.rows[0];
       if (!article) throw new Error("Journal article was not created.");
@@ -135,12 +136,14 @@ export const journalRepository: Pick<RewindApiRepository,
                  cover_url=$8::varchar, audio_url=$9, is_published=$10,
                  published_at=CASE WHEN $10 THEN COALESCE(published_at,CURRENT_TIMESTAMP) ELSE NULL END,
                  cover_images=CASE WHEN $11 THEN $12::jsonb WHEN cover_url IS DISTINCT FROM $8::varchar THEN NULL ELSE cover_images END,
-                 content_blocks=CASE WHEN $13 THEN $14::jsonb WHEN content IS DISTINCT FROM $7 THEN NULL ELSE content_blocks END
+                 content_blocks=CASE WHEN $13 THEN $14::jsonb WHEN content IS DISTINCT FROM $7 THEN NULL ELSE content_blocks END,
+                 poster_images=CASE WHEN $15 THEN $16::jsonb ELSE poster_images END
                WHERE id=$1
-               RETURNING id::text AS id, slug, language, category, title, excerpt, content, cover_url, audio_url, cover_images, content_blocks, published_at::text AS published_at`,
+               RETURNING id::text AS id, slug, language, category, title, excerpt, content, cover_url, audio_url, cover_images, poster_images, content_blocks, published_at::text AS published_at`,
         args: [id, body.slug, body.language, body.category, body.title, body.excerpt, body.content, body.coverUrl, body.audioUrl, body.published,
           Object.hasOwn(body, "coverImages"), body.coverImages == null ? null : JSON.stringify(body.coverImages),
-          Object.hasOwn(body, "contentBlocks"), body.contentBlocks == null ? null : JSON.stringify(body.contentBlocks)],
+          Object.hasOwn(body, "contentBlocks"), body.contentBlocks == null ? null : JSON.stringify(body.contentBlocks),
+          Object.hasOwn(body, "posterImages"), body.posterImages == null ? null : JSON.stringify(body.posterImages)],
       });
       const article = result.rows[0];
       if (!article) { await connection.queryObject("COMMIT"); return null; }
@@ -177,7 +180,7 @@ export const journalRepository: Pick<RewindApiRepository,
         connection.queryObject<{ total: string }>({ text: `SELECT COUNT(*)::text AS total FROM rewind.journal_articles a WHERE ${where}`, args }),
         connection.queryObject<JournalArticleRow>({
           text: `SELECT a.id::text AS id, a.slug, a.language, a.category, a.title, a.excerpt, a.content,
-                       a.cover_url, a.audio_url, a.cover_images, a.content_blocks, a.published_at::text AS published_at,
+                       a.cover_url, a.audio_url, a.cover_images, a.poster_images, a.content_blocks, a.published_at::text AS published_at,
                        (SELECT COALESCE(NULLIF(BTRIM(author.display_name), ''), author.username)
                          FROM rewind.users author WHERE author.id = a.author_id AND author.is_active = TRUE) AS author_name
                 FROM rewind.journal_articles a WHERE ${where}
@@ -215,7 +218,7 @@ export const journalRepository: Pick<RewindApiRepository,
       await connection.queryObject("SET ROLE rewind_edge_app");
       const fallback = language === "en" ? "uk" : "en";
       const result = await connection.queryObject<JournalArticleRow>({
-        text: `SELECT id::text AS id, slug, language, category, title, excerpt, content, cover_url, audio_url, cover_images, content_blocks, published_at::text AS published_at,
+        text: `SELECT id::text AS id, slug, language, category, title, excerpt, content, cover_url, audio_url, cover_images, poster_images, content_blocks, published_at::text AS published_at,
                       (SELECT COALESCE(NULLIF(BTRIM(author.display_name), ''), author.username)
                          FROM rewind.users author WHERE author.id = a.author_id AND author.is_active = TRUE) AS author_name
                FROM rewind.journal_articles a WHERE slug = $1 AND is_published = TRUE AND language IN ($2, $3)
