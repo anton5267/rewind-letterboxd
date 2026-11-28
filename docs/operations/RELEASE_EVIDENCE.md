@@ -8,6 +8,12 @@ Reviewed 28 November 2026. This page summarizes recorded production state and ac
 - The run follows a fixture-only correction that supplied `publishedAt` in the public-list detail API test fixture. Local Deno verification also passed **200/200 tests** and `deno check index.ts`.
 - This is candidate/CI evidence only. The PR remains a draft and this run did not deploy Edge Functions or Pages, modify hosted database records, import films, or test live user callbacks/private account flows.
 
+## PR #48 Cloudflare preview acceptance — 28 November 2026
+
+- The current PR branch preview `https://codex-motion-system.rewind-site-preview.pages.dev` passed `frontend/tests/e2e/accessibility.spec.ts`: **5/5 scenarios**, including named controls/responsive layout, security headers, keyboard access, landmarks and image alternatives, and WCAG 2 A/AA checks across the public UK/EN routes.
+- The live preview exposed a stale assertion: Cloudflare's response policy is `X-Frame-Options: DENY` plus HTTP `frame-ancestors 'none'`; the app's meta CSP supplies `object-src 'none'`. The test now checks each policy at its actual enforcement layer. Nginx was aligned to the same no-iframe policy. This keeps framing protection at the HTTP header, where browsers enforce it.
+- This is read-only preview acceptance. No production deployment, hosted Supabase data, user account, or database record changed.
+
 ## Revalidation of TMDB Watchlist and public lists — 28 November 2026
 
 - Re-ran the focused local Playwright suites for TMDB discovery/add-to-Watchlist, public-list publication time, featured-list empty/error states, poster/layout parity, and share fallback: **18/18 passed**. `npm run verify:build` passed TypeScript and Vite production build.
