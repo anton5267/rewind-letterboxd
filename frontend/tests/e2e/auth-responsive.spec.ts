@@ -88,6 +88,37 @@ test("READY mobile login matches the Figma form and keeps password/error states 
   await expect(page.getByRole("alert")).toBeFocused();
 });
 
+test("READY mobile registration aligns account prompt with Figma while keeping a 44px login target", async ({ page }) => {
+  await page.route("**/api/users/me", route => route.fulfill({ status: 401, json: {} }));
+  await page.route("**/api/auth/refresh", route => route.fulfill({ status: 401, json: {} }));
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto("/en/register");
+  await expect(page.getByRole("heading", { name: "Create your account", exact: true })).toBeVisible();
+  await page.locator("main").evaluate(async main => {
+    await Promise.all(main.getAnimations({ subtree: true }).map(animation => animation.finished));
+  });
+
+  const geometry = await page.locator("main p[class*=footer]").evaluate(footer => {
+    const rect = (element: Element | Range) => {
+      const box = element.getBoundingClientRect();
+      return { x: box.x, y: box.y, width: box.width, height: box.height };
+    };
+    const prompt = footer.querySelector("span")!;
+    const link = footer.querySelector("a")!;
+    const promptRange = document.createRange();
+    const linkRange = document.createRange();
+    promptRange.selectNodeContents(prompt!);
+    linkRange.selectNodeContents(link);
+    return { prompt: rect(promptRange), linkText: rect(linkRange), link: rect(link), overflow: document.documentElement.scrollWidth - innerWidth };
+  });
+  const expectNear = (actual: number, expected: number) => expect(Math.abs(actual - expected)).toBeLessThanOrEqual(1);
+  expectNear(geometry.prompt.y, 650);
+  expectNear(geometry.linkText.y, 650);
+  expectNear(geometry.link.y, 650);
+  expectNear(geometry.link.height, 44);
+  expect(geometry.overflow).toBe(0);
+});
+
 test("mobile auth retains standalone composition and supported local forms", async ({ page }) => {
   await page.route("**/api/users/me", route => route.fulfill({ status: 401, json: {} }));
   await page.route("**/api/auth/refresh", route => route.fulfill({ status: 401, json: {} }));
