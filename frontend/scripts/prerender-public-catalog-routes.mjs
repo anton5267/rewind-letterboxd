@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { fetchPublishedWriterPeople, toWriterRoutePages } from "./public-writer-routes.mjs";
 
 const frontendDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const distDir = path.join(frontendDir, "dist");
@@ -208,6 +209,11 @@ for (const movie of movies) {
   }
 }
 
+// Writer IDs come from the published film credits. Prerender those route shells
+// so GitHub Pages returns HTTP 200 for links originating on REWIND film pages.
+const publishedWriters = await fetchPublishedWriterPeople(movies, requestCatalog);
+for (const page of toWriterRoutePages(publishedWriters)) await writeRoute(page);
+
 for (const type of ["actor", "director", "producer"]) {
   const people = await fetchAllPages(`/people/search?type=${type}`, type);
   for (const person of people) {
@@ -248,4 +254,4 @@ const sitemapUrl = new URL("sitemap.xml", siteBase).href;
 const robotsTxt = ["User-agent: *", "Allow: /", `Sitemap: ${sitemapUrl}`, ""].join("\n");
 await writeFile(path.join(distDir, "robots.txt"), robotsTxt, "utf8");
 
-console.log(`Generated ${generatedRoutes.size} public catalog routes and ${appShellRouteCount} noindex app route shells, plus sitemap.xml and robots.txt.`);
+console.log(`Generated ${generatedRoutes.size} public catalog routes, including ${publishedWriters.length} writers, and ${appShellRouteCount} noindex app route shells, plus sitemap.xml and robots.txt.`);

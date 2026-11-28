@@ -73,6 +73,8 @@ jobs:
         run: |
           node --check frontend/scripts/build-cloudflare-pages.mjs
           node --test frontend/scripts/cloudflare-pages-build-config.test.mjs
+      - name: Verify published writer route generation
+        run: node --test frontend/scripts/public-writer-routes.test.mjs
       - name: Verify Supabase Edge API
         working-directory: supabase/functions/rewind-api
         run: |

@@ -96,7 +96,7 @@ test("movie details links writer credits to the localized writer filmography rou
   });
 
   await page.goto("/en/films/3601");
-  const writer = page.getByRole("link", { name: "Kim Byung-woo", exact: true });
+  const writer = page.getByRole("link", { name: "Kim Byung-woo Writers", exact: true });
   await expect(writer).toBeVisible();
   await expect(writer).toHaveAttribute("href", "/en/people/writer/1293082");
   await writer.click();
