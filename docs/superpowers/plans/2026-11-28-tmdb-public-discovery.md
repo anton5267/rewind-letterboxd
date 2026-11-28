@@ -61,7 +61,9 @@
 **Files:** `docs/backend/API.md`, `docs/operations/SUPABASE_OPERATIONS.md`, `PLAN.md`, this plan.
 
 - [x] Document route parameters, filters, cache, read-only boundary, and attribution.
-- [ ] Run full CI and review the complete diff.
-- [ ] Merge only after CI is green; deploy the Edge API and Pages through the established workflow.
-- [ ] Verify live empty-query discovery, filters/pagination, headers, auth-safe add flow, and that discovery created no rows.
-- [ ] Record results in the release plan.
+- [x] Run full CI and review the complete diff (CI run `46110051095`; both `verify` and isolated migration replay succeeded).
+- [x] Merge after CI and deploy Edge API v72 plus Pages through the established workflow (PR #28, commit `0244d154`; Pages run `46110273909`).
+- [x] Verify production `/uk/films/` shell and discovery bundle, public discovery HTTP 200 with eight results, year/rating filters HTTP 200, and GitHub Pages CORS preflight HTTP 204. The endpoint is read-only; no import was made.
+- [x] Record results in `PLAN.md`.
+
+**Deferred:** A browser interaction through the discovery pagination and a signed-in Add flow remain part of later controlled UX acceptance. No production user content was created for this release verification.
