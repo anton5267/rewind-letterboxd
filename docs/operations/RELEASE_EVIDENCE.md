@@ -694,6 +694,12 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - An initial run against the already-running auth-disabled Vite server failed six cases before the expected authenticated state. Process inspection confirmed that server had no Auth-enabled fixture configuration. Re-running on a separate isolated auth-enabled port passed all ten cases. The failure was test-environment mode mismatch, not a product-code regression.
 - These are local synthetic fixtures only. They do not verify real hosted email delivery, callback allow-list behavior, or production email change. No hosted account, Supabase data/configuration, GitHub Pages, or production deployment was changed.
 
+## Journal Awards Figma main-cover artwork — 28 November 2026
+
+- Reopened READY Figma frame `604:967` and downloaded five rendered cover layers directly through the connected Figma MCP. Source-order exports are 515×296, 444×407, 444×407, 442×408, and 442×408. The files and title mapping are in `frontend/tests/e2e/fixtures/journal-awards-figma/`.
+- Added a fixture-backed regression that checks all five Awards titles and cover URLs in source order, scrolls each lazy-loaded cover into view, and confirms all five images load at their Figma export dimensions. The initial RED check confirmed the existing media-free feed fixture returned zero cover images; `journal-design-flow.spec.ts` then passed **9/9** with the exact source exports.
+- The exports cover only the main artwork column. Figma's separate right-side poster stacks have no corresponding distinct field in the current Journal API, and the live published Awards feed is empty. Those visual/content checks remain open. No production assets, Figma source, Supabase data, or published site changed.
+
 ## History
 
 - [Consolidated 2026 evidence](../archive/RELEASE_EVIDENCE_2026.md).
