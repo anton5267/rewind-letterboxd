@@ -723,6 +723,12 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - Added a fixture-backed regression that checks all five Awards titles and cover URLs in source order, scrolls each lazy-loaded cover into view, and confirms all five images load at their Figma export dimensions. The initial RED check confirmed the existing media-free feed fixture returned zero cover images; `journal-design-flow.spec.ts` then passed **9/9** with the exact source exports.
 - The exports cover only the main artwork column. Figma's separate right-side poster stacks have no corresponding distinct field in the current Journal API, and the live published Awards feed is empty. Those visual/content checks remain open. GitHub push run `46178586258` and PR run `46178591006` both completed successfully for commit `f8775dd16f58f9c999fe6065773c983a784a5580`. Follow-up documentation commit `889494031b85b6bb6ab6665a576845683504ab9e` also passed both GitHub Actions push run `46178978992` and PR run `46178984040`. PR #48 remains a draft and production was not deployed. No production assets, Figma source, Supabase data, or published site changed.
 
+## Cloudflare Pages live API origin check — 28 November 2026
+
+- Read-only `GET /movies/search` against the hosted Edge API returned **200** with six catalogue records when sent from `https://rewind-site-preview.pages.dev`, the stable Cloudflare Pages alias. The same request with `Origin: https://codex-motion-system.rewind-site-preview.pages.dev` returned **403 `Origin is not allowed`**. The current exact-origin policy includes the stable alias but not branch-specific Pages previews; no wildcard or new production origin was added.
+- The earlier `home-live-catalog.spec.ts` smoke did not establish signed-in behavior: it mocked `/api/users/me`, while `AuthContext` determines sign-in from Supabase Auth. Its branch-preview run also could not load the live API because that origin is intentionally outside the allowlist. A synthetic Auth fixture needs isolated API routing before this can be treated as a valid member-home acceptance. No production user, data, or setting was changed.
+- The branch-preview asset and stable alias remain distinct builds. A candidate release must still be accepted on the stable alias after it receives the approved build; the branch-preview 403 alone does not show that the stable production origin is broken.
+
 ## History
 
 - [Consolidated 2026 evidence](../archive/RELEASE_EVIDENCE_2026.md).
