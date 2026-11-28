@@ -7,6 +7,8 @@ const defaultAllowedOrigins = [
 ];
 
 const cloudflarePagesProductionOrigin = "https://rewind-site-preview.pages.dev";
+const cloudflarePagesBranchPreviewOrigin =
+  "https://codex-motion-system.rewind-site-preview.pages.dev";
 
 export function resolveAllowedOrigins(
   configuredOrigins: string | undefined,
@@ -18,5 +20,9 @@ export function resolveAllowedOrigins(
       .map((origin) => origin.trim())
       .filter(Boolean);
 
-  return [...new Set([...origins, cloudflarePagesProductionOrigin])];
+  return [...new Set([
+    ...origins,
+    cloudflarePagesProductionOrigin,
+    cloudflarePagesBranchPreviewOrigin,
+  ])];
 }

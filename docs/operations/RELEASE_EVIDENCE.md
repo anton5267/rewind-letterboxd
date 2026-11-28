@@ -31,6 +31,12 @@ Reviewed 28 November 2026. This page summarizes recorded production state and ac
 - The live preview exposed a stale assertion: Cloudflare's response policy is `X-Frame-Options: DENY` plus HTTP `frame-ancestors 'none'`; the app's meta CSP supplies `object-src 'none'`. The test now checks each policy at its actual enforcement layer. Nginx was aligned to the same no-iframe policy. This keeps framing protection at the HTTP header, where browsers enforce it.
 - This is read-only preview acceptance. No production deployment, hosted Supabase data, user account, or database record changed.
 
+## Cloudflare branch preview Supabase CORS recheck — 28 November 2026
+
+- The branch URL returns HTTP 200 with the five security headers, but its browser preflight to `rewind-api` v73 returned **403 `Origin is not allowed`** on 28 November at 20:45 UTC. Supabase function logs confirmed the same `OPTIONS /api/users/me` request and status. This means the earlier guest-route/axe preview checks do not prove that live catalogue/API calls work from this branch origin.
+- Added only `https://codex-motion-system.rewind-site-preview.pages.dev` to the candidate Edge origin resolver. The test asserts that this exact host is allowed and another `pages.dev` branch stays denied. The focused origin suite passed **2/2**, the full Edge suite passed **201/201**, and `deno check index.ts` passed with Deno 2.9.6.
+- The candidate is not deployed: production Edge v73 still rejects this branch origin. No hosted CORS/Auth settings or user data changed. After design acceptance, deploy the reviewed Edge candidate and add/verify the exact UK/EN preview Auth callbacks before claiming signed-in preview acceptance; do not add a Pages wildcard.
+
 ## Stable Cloudflare Pages alias recheck — 28 November 2026
 
 - Read-only `HEAD` checks returned HTTP 200 from GitHub Pages and the stable Cloudflare project alias `https://rewind-site-preview.pages.dev`. GitHub Pages still returns none of the five target security headers; the Cloudflare alias returns `frame-ancestors 'none'`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, strict-origin referrer policy, and a restrictive Permissions Policy.
