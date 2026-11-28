@@ -2,6 +2,13 @@
 
 Reviewed 28 November 2026. This page summarizes recorded production state and acceptance boundaries. Detailed results retain their dates in the [archive](../archive/README.md).
 
+## Authentication and community accessibility — 28 November 2026
+
+- PR #32 ([`db39a9a`](https://github.com/anton5267/rewind-letterboxd/commit/db39a9ab12e09fff3bac2e1fd7940eaf80cdbb30)) raises the UK/EN login recovery link contrast to `#999` at mobile and desktop breakpoints and removes the generated `aria-label` that masked visible community member-link text. Explicit caller-provided labels remain supported.
+- Before the fix, Playwright regression checks observed mobile recovery-link color `rgb(130,130,130)` instead of the expected `rgb(153,153,153)` and axe reported three `label-content-name-mismatch` community links. Both targeted tests passed after the fix; `npm run verify:build` passed.
+- CI run [`46112636772`](https://github.com/anton5267/rewind-letterboxd/actions/runs/46112636772) passed both `verify` and isolated migration replay. GitHub Pages deployment [`46112826612`](https://github.com/anton5267/rewind-letterboxd/actions/runs/46112826612) succeeded for `db39a9ab12e09fff3bac2e1fd7940eaf80cdbb30`.
+- Read-only live Playwright+axe audit returned HTTP 200 and zero WCAG 2 A/AA violations on `/uk/login/`, `/en/login/`, and `/uk/community/`; browser JavaScript errors were zero. These three route checks do not establish whole-site accessibility or authenticated/private flow acceptance.
+
 ## Read-only production smoke — 28 November 2026
 
 - PR #20 ([`c1bf668`](https://github.com/anton5267/rewind-letterboxd/commit/c1bf668c9c89c7a30082a58fe3431f7e1369f1e3)) adds a btree index on `rewind.tmdb_user_imports(movie_id)`. Both `verify` and PostgreSQL migration-replay checks passed for the PR head, and its Cloudflare Pages preview deployed successfully; Supabase Preview was skipped because PR branches are disabled. The PR was squash-merged into `master`.
