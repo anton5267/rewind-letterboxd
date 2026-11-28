@@ -73,6 +73,8 @@ Spring Boot/MySQL/Redis/Mailpit мають окремий локальний ж�
 
 ## Наступна робота
 
+28.11.2026 auth mobile follow-up: READY frame `944:1828` тепер має точне вирівнювання prompt на y=650 зі збереженням 44px login target. Auth responsive + Figma geometry пройшли 5/5; геометрія повторена 3 рази (6/6), build успішний. CI verify та isolated migration replay зелені для `bb5b876`; Cloudflare branch preview зібрався, але не є production acceptance. PR #48 лишається draft. Повне Figma, hosted Auth/two-account і GitHub Pages release-приймання залишаються відкритими. [Докази](docs/operations/RELEASE_EVIDENCE.md#auth-registration-mobile-figma-follow-up-and-stable-geometry-checks--28-november-2026).
+
 28.11.2026 локально узгоджено Figma Inter для Admin, мобільного film detail і мобільного Create List; інші екрани зберегли legacy SF-first stack. Мобільні картки Dune тепер відповідають типографіці джерела; повний потік коментарів лишився на сторінці рецензії. Цільова E2E suite пройшла 4/4, `npm run verify:build` успішний. Це не закриває повне Figma/UX-приймання й не є deployment. [Деталі](docs/operations/RELEASE_EVIDENCE.md#scoped-figma-inter-typography--28-november-2026).
 
 28.11.2026 локально додано спільну CSS-систему мікроанімацій для карток фільмів, пошуку, статей та публічних списків. Playwright fixture 3/3 і `npm run verify:build` пройшли; reduced-motion вимикає lift/shadow/transition. Це кандидат у гілці `codex/motion-system`, не production deploy і не повне Figma-приймання. Деталі: [специфікація](docs/superpowers/specs/2026-11-28-rewind-motion-system.md), [план](docs/superpowers/plans/2026-11-28-rewind-motion-system.md), [докази](docs/operations/RELEASE_EVIDENCE.md#motion-system-candidate--28-november-2026).

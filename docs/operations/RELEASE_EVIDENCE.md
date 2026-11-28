@@ -747,6 +747,13 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - A read-only Supabase query for `id = 36 OR tmdb_id = 1147411` still returns only #36 with `tmdb_id = NULL`; no production record currently uses candidate ID `1147411`.
 - Added `36,1147411` to `docs/project/TMDB_VERIFIED_CROSSWALK.csv`. Updated the structural verifier to require all IDs 1–50 and enforce the confirmed mapping for movie #36. The verifier first failed as expected at 49 rows, then passed with 50 rows and unique IDs. No production SQL, Admin sync, migration, or import was run. The eventual production update remains a controlled Admin-sync step after UX/release gates.
 
+## Auth registration mobile Figma follow-up and stable geometry checks — 28 November 2026
+
+- Compared READY mobile registration frame `944:1828` (393×852) with the local form. The account prompt's text was 13px too low because its 44px login hit target centered the label vertically. The prompt now aligns with the Figma y=650 anchor while the link retains its 44px target; success-state messaging is unaffected.
+- Added a geometry regression that separately checks prompt text, link text and hit target. `auth-responsive.spec.ts` plus `auth-figma-geometry.spec.ts` passed **5/5**; the geometry suite passed **6/6** across three repeated runs. `npm run verify:build` and `git diff --check` passed.
+- Stabilized existing Figma geometry checks by waiting for web fonts, finite entry transitions and two layout frames before measuring. This removed intermittent false 8px overflow/position failures without changing page dimensions.
+- Pushed commits `579de80` and `bb5b876` to `codex/motion-system`. For `bb5b876350f1450d4ee7314cea68762b8c5f6b53`, GitHub verify and isolated Supabase migration replay succeeded in both push and pull-request workflows (`46192833061`, `46192838337`); Cloudflare Pages generated branch preview `https://codex-motion-system.rewind-site-preview.pages.dev`. Supabase Preview was skipped because Supabase branches are disabled for this repository. GitHub Pages, hosted Edge, production Auth settings and user data were not changed. PR #48 remains a draft; the branch preview is not production acceptance.
+
 ## History
 
 - [Consolidated 2026 evidence](../archive/RELEASE_EVIDENCE_2026.md).
