@@ -824,7 +824,7 @@
     padding: 18px 26px;
     border-radius: 18px;
     background: #282828;
-    color: #8d8d8d;
+    color: #999;
   }
   .guestExplainerCard svg { flex: 0 0 38px; width: 38px; fill: none; stroke: #888; stroke-width: 2.2; }
   .guestExplainerCard p { margin: 0; font-size: 14px; line-height: 1.22; }
@@ -1515,7 +1515,7 @@
     top: 4px;
     right: 0;
     width: 168px;
-    color: #7e7e7e;
+    color: #999;
     font-size: 11px;
     line-height: 1.12;
     text-align: right;
@@ -1530,7 +1530,7 @@
     min-height: 11px;
     height: 11px;
     padding: 0;
-    color: #7e7e7e;
+    color: #999;
     font-size: 12px;
     line-height: 1.12;
     text-align: right;
@@ -1539,7 +1539,7 @@
   .page:has(.hero:not(.memberHero)) .guestRecentReviews .sectionHeading > a {
     min-height: 0;
     height: auto;
-    color: #7e7e7e;
+    color: #999;
     text-decoration: none;
   }
   .page:has(.hero:not(.memberHero)) .guestReviewPosters { margin-top: 0; }
@@ -1552,7 +1552,7 @@
   .page:has(.hero:not(.memberHero)) .guestPitchMobile { display: grid; gap: 6px; }
   .page:has(.hero:not(.memberHero)) .guestPitchMobile p { margin: 0; }
   .page:has(.hero:not(.memberHero)) .guestPitchMobile > p:first-child { font-weight: 700; }
-  .page:has(.hero:not(.memberHero)) .guestPitchPrompt { color: #7e7e7e; font-size: 10px; line-height: 1.2; }
+  .page:has(.hero:not(.memberHero)) .guestPitchPrompt { color: #999; font-size: 10px; line-height: 1.2; }
   .page:has(.hero:not(.memberHero)) .guestPitchPrompt a { color: inherit; text-decoration: none; }
   .page:has(.hero:not(.memberHero)) .grid > :global(#home-reviews) .reviewCard {
     box-sizing: border-box;
@@ -1575,12 +1575,12 @@
   .page:has(.hero:not(.memberHero)) .guestReviewPanel .reviewAvatar,
   .page:has(.hero:not(.memberHero)) .guestReviewPanel .reviewAvatarFallback { display: none; }
   .page:has(.hero:not(.memberHero)) .guestReviewPanel .reviewText {
-    color: #7e7e7e;
+    color: #999;
     font-size: 12px;
     line-height: 1.2;
   }
   .page:has(.hero:not(.memberHero)) .grid .sectionHeading > a {
-    color: #7e7e7e;
+    color: #999;
     text-decoration: none;
   }
   .page:has(.hero:not(.memberHero)) .guestPopularReviewsHeading,
@@ -1614,7 +1614,7 @@
     min-height: 44px;
     height: 44px;
     padding: 0;
-    color: #7e7e7e;
+    color: #999;
     font-size: 12px;
     line-height: 1.12;
     text-align: right;
@@ -1650,7 +1650,7 @@
     min-height: 44px;
     height: 44px;
     padding: 0;
-    color: #7e7e7e;
+    color: #999;
     font-size: 12px;
     line-height: 1.12;
     text-align: right;
@@ -1679,7 +1679,7 @@
     min-height: 44px;
     height: 44px;
     padding: 0;
-    color: #7e7e7e;
+    color: #999;
     font-size: 12px;
     line-height: 1.12;
     text-align: right;
@@ -1702,14 +1702,14 @@
     min-height: 44px;
     height: 44px;
     padding: 0;
-    color: #7e7e7e;
+    color: #999;
     font-size: 12px;
     line-height: 1.12;
     text-align: right;
     text-decoration: none;
   }
   .page:has(.hero:not(.memberHero)) .journalSection .sectionHeading > a {
-    color: #7e7e7e;
+    color: #999;
     text-decoration: none;
   }
   .page:has(.hero:not(.memberHero)) .journalSection .journalCard {
@@ -1735,7 +1735,7 @@
     min-height: 44px;
     height: 44px;
     padding: 0;
-    color: #7e7e7e;
+    color: #999;
     font-size: 12px;
     line-height: 1.12;
     text-align: right;
@@ -1758,7 +1758,7 @@
     min-height: 44px;
     height: 44px;
     padding: 0;
-    color: #7e7e7e;
+    color: #999;
     font-size: 12px;
     line-height: 1.12;
     text-align: right;
