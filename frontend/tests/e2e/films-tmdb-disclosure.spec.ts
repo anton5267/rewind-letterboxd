@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { installHostedAuthFixture, signInHostedFixture } from "./fixtures/hosted-auth";
 
 const catalog = {
   content: Array.from({ length: 36 }, (_, index) => ({
@@ -209,6 +210,7 @@ test("closing TMDB stays closed when REWIND catalogue pagination changes", async
 
 test("an authenticated TMDB selection adds the film to the Watchlist and opens its REWIND page", async ({ page }) => {
   let importPayload: unknown;
+  await installHostedAuthFixture(page.context());
   await page.route("**/api/users/me", route => route.fulfill({ json: { id: 990100, username: "tmdb-reader", role: "USER" } }));
   await page.route("**/api/auth/csrf", route => route.fulfill({ json: { token: "tmdb-watchlist-fixture" } }));
   await page.route("**/api/auth/refresh", route => route.fulfill({ status: 401, json: { message: "Unauthenticated" } }));
@@ -221,7 +223,7 @@ test("an authenticated TMDB selection adds the film to the Watchlist and opens i
     await route.fulfill({ json: { movieId: 990101, title: "TMDB fixture" } });
   });
 
-  await page.goto("/en/films");
+  await signInHostedFixture(page, "en");
   await expect(page.getByRole("button", { name: "Add to my Watchlist" })).toBeVisible();
   await page.getByRole("button", { name: "Add to my Watchlist" }).click();
 
