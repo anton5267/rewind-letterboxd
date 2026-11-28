@@ -49,7 +49,7 @@
 - Modify: `supabase/functions/rewind-api/contracts/repository.ts`
 - Modify: `supabase/functions/rewind-api/index.ts`
 - Create: `supabase/functions/rewind-api/repositories/tmdb_catalog.ts`
-- Create: `supabase/migrations/20261128150000_tmdb_user_import_quota.sql`
+- Create: `supabase/migrations/20261128020750_tmdb_user_import_quota.sql`
 
 **Interfaces:**
 - `GET /api/tmdb/movies/search?q=&year=&page=&language=` returns `{ content, page, totalPages, totalResults }` with public cache headers.
@@ -95,12 +95,12 @@
 - Modify: `PLAN.md`
 
 - [x] Document search/import limits, UTC quota, secret location, and release boundary.
-- [x] Record frontend build verification and the pending hosted migration/Edge deployment.
-- [x] No production migration or Edge deploy performed.
+- [x] Record local build, CI, hosted migration, Edge API, and Pages verification.
+- [x] Apply hosted migration `20261128020750`, deploy `rewind-api` v70, and publish the frontend.
 
 ## Verification Boundary
 
-No test suites were run. `frontend/npm run verify:build` passed (`tsc --noEmit` and Vite production build); `npx deno check index.ts` passed. The migration replayed successfully in disposable in-memory PGlite/PostgreSQL 17.5 against a minimal schema matching the hosted catalog columns/roles. A clean Supabase CLI 3.0.0 replay then applied all 60 repository migrations on PostgreSQL 17.11 through `20261128150000`; the isolated local stack was stopped afterward. Production schema and deployment are not changed.
+GitHub Actions CI passed on PR #15 (backend tests with MySQL, Deno checks/tests, frontend build, and clean PostgreSQL 17.11 migration replay) and PR #16 (migration-history alignment). Local `frontend/npm run verify:build` and `npx deno check index.ts` passed earlier. A disposable Supabase CLI 3.0.0 stack replayed all 60 repository migrations on PostgreSQL 17.11 and was stopped afterward. Production migration `20261128020750`, Edge Function v70, and the Pages frontend are deployed. Live checks returned eight TMDB search candidates and rejected an unauthenticated import with 401; no authenticated sample import was performed, so no new movie row was created during verification. Production import rows are currently zero and RLS remains enabled.
 
 ## Self-review
 
