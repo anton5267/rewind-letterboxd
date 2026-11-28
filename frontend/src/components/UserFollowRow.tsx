@@ -171,7 +171,7 @@ export default function UserFollowRow({ user, href, meta, subtitle, label, revie
   };
 
   return <li data-network-member-id={user.id} className={`${styles.row} ${reviewerMetrics || presentation === "communityDirectory" ? styles.reviewerRow : ""} ${presentation ? styles[presentation] : ""} ${hideMobileNetworkStats ? styles.hideMobileNetworkStats : ""}`}>
-    <Link className={styles.userLink} to={href} aria-label={label ?? `${identity} ${getUserHandle(user)}`}>
+    <Link className={styles.userLink} to={href} aria-label={label}>
       <ResilientImage className={styles.avatar} src={user.avatarUrl} alt="" width={44} height={44}
         fallback={<span className={`${styles.avatarFallback} ${presentation === "profileNetwork" ? styles.profileAvatarFallback : ""} ${avatarFallback === "silhouette" ? styles.silhouetteFallback : ""}`} aria-hidden="true">{avatarFallback === "silhouette" ? null : getUserInitial(user)}</span>} />
       <span className={styles.userCopy}>
