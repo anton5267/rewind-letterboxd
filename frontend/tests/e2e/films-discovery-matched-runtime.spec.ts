@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 
@@ -91,6 +92,8 @@ test("Films Discovery matches current desktop and phone READY anchors", async ({
   const watchedCount = page.getByTestId("films-watched-count");
   await expect(watchedCount).toBeVisible();
   expect((await watchedCount.innerText()).replace(/\s/g, " ")).toBe("3 108 812 335 фільмів переглянуто");
+  const contrastAudit = await new AxeBuilder({ page }).withRules(["color-contrast"]).analyze();
+  expect(contrastAudit.violations).toEqual([]);
   await expect(page.getByRole("link", { name: "Crew pick film 1" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Crew pick film 8" })).toBeVisible();
   await expect(page.locator('main header select[aria-label="Жанр"]')).toBeEnabled();

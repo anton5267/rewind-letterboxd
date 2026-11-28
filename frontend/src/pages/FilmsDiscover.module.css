@@ -51,7 +51,7 @@
 .recentHeading { position: relative; }
 .heading h2 { position: relative; z-index: 1; display: block; margin: 0; color: #f5f5f5; font-size: 21px; line-height: 27px; letter-spacing: -.02em; visibility: visible; opacity: 1; }
 .heading > a { position: relative; z-index: 1; min-height: 44px; display: inline-flex; align-items: center; color: #f4d28c; font-size: 14px; visibility: visible; opacity: 1; }
-.watchedFilmCount { position: absolute; top: 0; right: 0; color: #7e7e7e; font-size: 20px; line-height: 1.12; white-space: nowrap; }
+.watchedFilmCount { position: absolute; top: 0; right: 0; color: #8b8b8b; font-size: 20px; line-height: 1.12; white-space: nowrap; }
 .popularGrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 26px 31px; margin: 0; padding: 0; list-style: none; }
 .popularGrid li { position: relative; min-width: 0; }
 .poster,
