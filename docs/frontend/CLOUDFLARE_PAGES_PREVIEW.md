@@ -4,12 +4,17 @@
 
 Cloudflare Pages is a separate preview only. GitHub Pages remains the production frontend, and Supabase remains the production backend. No Cloudflare custom domain or paid feature is configured.
 
-## Preview project
+## Git-connected Pages preview
 
-- Project: `rewind-pages-preview`
-- URL: <https://rewind-pages-preview.pages.dev>
-- Deployment status: project created; static build upload is pending.
-- Production URL: <https://anton5267.github.io/rewind-letterboxd/>
+- Project: `rewind-site-preview` (Cloudflare Pages Free).
+- Preview branch: `codex/cloudflare-pages-security-headers`.
+- Stable branch URL: <https://codex-cloudflare-pages-secur.rewind-site-preview.pages.dev>.
+- Successful deployment: `c675891a-de7e-4f33-81fb-f696ee440f43`, commit `583f180`.
+- Build uploaded 3,243 assets; Cloudflare parsed one valid `_headers` rule.
+- The project has no production deployment. Its configured production branch is `master`; the first `master` deployment was cancelled before publishing.
+- GitHub Pages remains the production URL: <https://anton5267.github.io/rewind-letterboxd/>.
+
+The older `rewind-pages-preview` project is a separate empty direct-upload project and is not used. It has been left untouched.
 
 ## Separate Worker deployment observed on 2026-11-28
 
@@ -33,15 +38,20 @@ This Worker build is not a valid substitute for the Pages preview and has not be
 - `frontend/dist/_headers` exists and contains the intended Cloudflare Pages rules for clickjacking protection, MIME sniffing, referrer policy, and unused device APIs.
 - `frontend/dist/404.html` exists as the SPA fallback.
 
+## Pages response and browser evidence (2026-11-28)
+
+Read-only checks against the stable branch URL returned all five configured headers on `/`, `/404.html`, and a deliberately unknown localized path (`/uk/__codex-preview-not-found__/`). The unknown path returns HTTP 404; opening it in a browser renders the Ukrainian REWIND not-found page. The root and the fallback document return HTTP 200. The preview also sends `X-Robots-Tag: noindex` on the root and fallback document.
+
+The Pages dashboard build log reports Node 22.23.4, 426 modules, 3,243 uploaded files, and a successful deployment. The Git-connected deployment is a branch preview and is not the GitHub Pages production deployment.
+
 ## Supabase compatibility evidence
 
-A production Edge API OPTIONS preflight was sent with the preview's exact origin. It returned HTTP 403 and `{"message":"Origin is not allowed"}`. The deployed allowlist currently does not include `https://rewind-pages-preview.pages.dev`. No allowlist change has been made.
+A production Edge API OPTIONS preflight was sent with the current Pages preview's exact origin (`https://codex-cloudflare-pages-secur.rewind-site-preview.pages.dev`). It returned HTTP 403 and `Origin is not allowed`; an earlier check against `https://rewind-pages-preview.pages.dev` also returned HTTP 403. The current deployed allowlist therefore does not include the preview origin. No allowlist change has been made. Browser API-backed behavior from the preview remains unverified until this is addressed.
 
-The public Supabase Auth settings endpoint returned HTTP 200 with `Access-Control-Allow-Origin: https://rewind-pages-preview.pages.dev`, so the endpoint itself accepts the preview origin. Its public response does not expose the Auth redirect allowlist. That allowlist has not yet been read back. Do not test or alter Auth redirect settings until the dashboard value can be inspected. Do not create accounts or send email for this preview check.
+The public Supabase Auth settings endpoint returned HTTP 200 with `Access-Control-Allow-Origin` matching the preview origin. Its public response does not expose the Auth redirect allowlist. That allowlist has not yet been read back. No auth redirect setting has been altered; do not create accounts or send email for this preview check.
 
 ## Next steps
 
-1. Use a working Pages deployment path. The dashboard folder uploader rejects the 3,000+ file build (its UI limit is 1,000); local Wrangler cannot deploy without `CLOUDFLARE_API_TOKEN`.
-2. Upload the verified build to this preview and inspect headers on `/`, `/404.html`, and a versioned asset.
-3. Review the exact Supabase CORS and Auth redirect changes needed. Keep production origin unchanged; obtain explicit approval before changing production Supabase security settings.
-4. Open a localized route and verify its public API calls from the preview.
+1. Decide whether to authorize adding only `https://codex-cloudflare-pages-secur.rewind-site-preview.pages.dev` to the deployed Supabase Edge API origin allowlist (`REWIND_ALLOWED_ORIGINS`). This is a production Supabase security configuration change; leave it untouched until explicitly approved.
+2. Read back the Supabase Auth redirect allowlist and determine whether this exact preview origin needs an entry. Do not change the primary Site URL, create test accounts, or send email.
+3. After any authorized allowlist change, verify browser API calls and the auth callback from the preview. Keep GitHub Pages production unchanged unless separately approved.

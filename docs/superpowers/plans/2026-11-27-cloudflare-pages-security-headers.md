@@ -51,7 +51,7 @@
 
 - [x] Confirm the account still has only the two existing unrelated Pages projects; leave them untouched.
 - [x] Create only the REWIND preview project and use the root path `/`.
-- [ ] Keep the deploy on a non-production branch and verify that the Pages plan remains Free.
+- [x] Keep the deploy on the non-production branch `codex/cloudflare-pages-security-headers`; confirm Pages Free and no production deployment in the project.
 
 ### Task 3: Verify headers and application compatibility
 
@@ -62,10 +62,10 @@
 - Consumes: the published preview URL and current Supabase production configuration.
 - Produces: a verified preview checklist and any exact-origin follow-up needed.
 
-- [ ] Read the preview document, SPA fallback, and built JS response headers.
-- [ ] Open a localized route and make a public API-backed request from the preview.
-- [ ] Verify Supabase Auth redirect behavior without creating a new account or sending email.
-- [ ] If CORS/Auth rejects the preview origin, record the exact response and prepare the minimal origin-only change; keep production hosting unchanged.
-- [ ] Confirm the GitHub Pages production URL and deployment remain unchanged.
+- [x] Read the root, SPA fallback, unknown localized path, and built JS response headers; verify the localized route renders the app-level 404 page.
+- [ ] Open a localized route and make a public API-backed request from the preview. **Blocked by current production Edge API preflight:** HTTP 403, `Origin is not allowed` for the exact preview origin.
+- [ ] Verify Supabase Auth redirect behavior without creating a new account or sending email. The public Auth settings endpoint accepts the preview Origin, but does not expose the redirect allowlist; dashboard readback is still needed.
+- [x] Record the exact CORS rejection and prepare the minimal origin-only change; keep production hosting unchanged. Applying the allowlist change requires explicit user approval.
+- [x] Confirm the GitHub Pages production URL remains `https://anton5267.github.io/rewind-letterboxd/`; no Pages deployment or Supabase configuration was changed in this task.
 
-**Current evidence (2026-11-27):** the Vite build and route prerender completed, and `frontend/dist/_headers` contains the five configured rules. A production Edge API preflight from `https://rewind-pages-preview.pages.dev` currently returns HTTP 403 with `Origin is not allowed`; no CORS allowlist or Supabase Auth redirect setting has been changed. The dedicated Pages project exists but has not received the build yet because Chrome blocks local-file uploads until its file-URL permission is enabled.
+**Current evidence (2026-11-28):** the GitHub-connected Pages Free preview at `https://codex-cloudflare-pages-secur.rewind-site-preview.pages.dev` deployed successfully from branch `codex/cloudflare-pages-security-headers` (commit `583f180`). Its build uploaded 3,243 assets and parsed the `_headers` file. All five headers were confirmed on `/`, `/404.html`, and an unknown localized route; the browser rendered the Ukrainian not-found page for that route. Supabase Auth public settings responded successfully for the preview origin, but the deployed Edge API preflight returns HTTP 403 with `Origin is not allowed`. No Supabase configuration, schema, data, secrets, or GitHub Pages production deployment was changed. See `docs/frontend/CLOUDFLARE_PAGES_PREVIEW.md` for details.
