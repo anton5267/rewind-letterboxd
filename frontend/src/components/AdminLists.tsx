@@ -1,5 +1,5 @@
 import AdminLoading from "./AdminLoading";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { deleteAdminList, dismissAdminListReport, getAdminLists, getAdminReportedLists, moveAdminListFeatured, setAdminListFeatured, setAdminListVisibility, type AdminList, type AdminReportedList } from "../api/admin.api";
 import type { FeaturedListCategory } from "../api/lists.api";
@@ -15,9 +15,10 @@ import dialogStyles from "./AdminConfirmDialog.module.css";
 export default function AdminLists() {
   const { lang, path, t } = useLocale();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState<Page<AdminList | AdminReportedList> | null>(null);
   const [page, setPage] = useState(0);
-  const [reportedOnly, setReportedOnly] = useState(false);
+  const reportedOnly = searchParams.get("reported") === "true";
   const [revision, setRevision] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -305,7 +306,16 @@ export default function AdminLists() {
   return <section ref={sectionRef} className={`${styles.section} ${styles.listsSection}`} aria-label={t("adminAllLists")} aria-busy={loading || busyId !== null}>
     <h2 className={styles.title} ref={heading} tabIndex={-1}>{t("adminAllLists")}</h2>
     {actionError && <p className={`${styles.error} ${styles.listActionFocus}`} ref={mutationAlert} tabIndex={-1} role="alert">{t(actionError === "visibility" ? "adminListVisibilityError" : actionError === "featuredBoundary" ? "adminListFeaturedBoundary" : actionError === "featured" ? "adminListFeaturedError" : actionError === "report" ? "adminReviewReportDismissError" : "adminListDeleteError")}</p>}
-    <button type="button" aria-pressed={reportedOnly} onClick={() => { setLoading(true); setPage(0); setReportedOnly(value => !value); }}>{reportedOnly ? t("allVisibilityStates") : t("reportedOnly")}</button>
+    <button type="button" aria-pressed={reportedOnly} onClick={() => {
+      setLoading(true);
+      setPage(0);
+      setSearchParams(current => {
+        const next = new URLSearchParams(current);
+        if (reportedOnly) next.delete("reported");
+        else next.set("reported", "true");
+        return next;
+      });
+    }}>{reportedOnly ? t("allVisibilityStates") : t("reportedOnly")}</button>
     {loading && <AdminLoading label={t("loading")} layout="lists" />}
     {error && <RetryNotice className={styles.error} message={t("adminLoadError")} retryLabel={t("retry")} disabled={loading} busy={loading} onRetry={() => {
       pendingFocus.current = { scope: scopeGeneration.current, origin: document.activeElement instanceof HTMLElement ? document.activeElement : null, target: "retry" };
