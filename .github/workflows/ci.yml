@@ -20,6 +20,8 @@ jobs:
         run: supabase start --exclude studio,edge-runtime,logflare,vector,supavisor,mailpit
       - name: Replay all migrations from a clean baseline
         run: supabase db reset --no-seed
+      - name: Verify cached Edge policy settings
+        run: supabase db query --file scripts/verify-rls-initplan.sql
       - name: Verify migration history and PostgreSQL runtime
         run: |
           supabase migration list
