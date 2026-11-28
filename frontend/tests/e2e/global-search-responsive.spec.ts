@@ -446,6 +446,7 @@ test("mobile Search film results render six poster fixtures in the 393px grid", 
 
   const posters = page.locator("#films article > a");
   await expect(posters).toHaveCount(6);
+  await expect(page.getByRole("combobox", { name: "Show results for", exact: true }).locator('option[value="tmdb"]')).toHaveText("Search all TMDB films");
   const boxes = await posters.evaluateAll(elements => elements.map(element => {
     const box = element.getBoundingClientRect();
     return { x: box.x, y: box.y, width: box.width, height: box.height };

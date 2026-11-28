@@ -2,6 +2,12 @@
 
 Reviewed 28 November 2026. This page summarizes recorded production state and acceptance boundaries. Detailed results retain their dates in the [archive](../archive/README.md).
 
+## Mobile search film results and TMDB entry — 28 November 2026
+
+- Compared READY Figma frame `1480:8594` (393×852) with `/en/search?q=dune&tab=films`. The six-poster 4-column grid now begins at the Figma y=267 anchor. A TMDB-search CTA previously inserted above the results and shifted the grid down 48px; moved this action into the accessible result-category picker so the source composition remains intact. Selecting “Search all TMDB films” opens `/films?q={query}` without importing data.
+- On keyboard focus, the mobile horizontal poster rail previously clipped the focused card's 3px motion lift. Disabled only that lift inside the clipped rail; the focus outline and motion on other surfaces remain.
+- `global-search-responsive.spec.ts` + `global-search-alignment.spec.ts`: **28/28 passed**. Targeted global-search and empty-film scenarios in `search-controls.spec.ts`: **6/6 passed**. `npm run verify:build` passed typecheck and Vite production build. These used intercepted local fixtures; no production account, TMDB import, database row, or Figma source was changed.
+
 ## Full Films catalogue production smoke — 28 November 2026
 
 - Read-only Playwright against GitHub Pages confirmed `/en/films/` and `/uk/films/` return HTTP 200, render the localized Films heading, load 50 catalog records, and have no JavaScript errors. Desktop page 1 shows 36 catalog posters and offers 2 pages; all 44 images in the page DOM (36 catalog plus 8 TMDB discovery) loaded successfully. At 1440px, the grid begins at x=120.5/y=607 with 1199px width and 174×260 first poster; filters remain at x=989/y=294 (331×49), pagination at y=2502.

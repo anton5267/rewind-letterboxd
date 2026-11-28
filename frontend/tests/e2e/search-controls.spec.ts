@@ -11,6 +11,19 @@ const emptyGlobalResults = {
   journal: { content: [], totalElements: 0 },
 };
 
+test("global search opens the full TMDB catalog from its result category picker", async ({ page }) => {
+  await page.route("**/api/search/global?**", route => route.fulfill({ json: {
+    ...emptyGlobalResults,
+    films: { content: [{ id: 42, title: "Dune", releaseDate: "2021-10-22", rating: 8, photoUrl: null }], number: 0, totalElements: 1, totalPages: 1, size: 6 },
+  } }));
+
+  await page.goto("/en/search?q=dune&tab=films");
+  const categories = page.getByRole("combobox", { name: "Show results for", exact: true });
+  await expect(categories).toBeVisible();
+  await categories.selectOption("tmdb");
+  await expect(page).toHaveURL("/en/films?q=dune");
+});
+
 test("global search keeps loading and empty category content inside the selected keyboard panel", async ({ page }) => {
   let releaseResponse = () => {};
   const responseReady = new Promise<void>(resolve => { releaseResponse = resolve; });

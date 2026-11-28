@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { searchGlobal, type GlobalSearchResponse } from "../api/search.api";
 import ResilientImage from "../components/ResilientImage";
 import RetryNotice from "../components/RetryNotice";
@@ -26,6 +26,7 @@ function Poster({ src, alt, fallback }: { src: string | null; alt: string; fallb
 
 export default function GlobalSearch() {
   const { lang, path, t } = useLocale();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get("q")?.trim() ?? "";
   const rawTab = searchParams.get("tab");
@@ -139,6 +140,14 @@ export default function GlobalSearch() {
     setSearchParams(next);
   };
 
+  const selectCategory = (value: string) => {
+    if (value === "tmdb") {
+      navigate(path(`/films?q=${encodeURIComponent(query)}`));
+      return;
+    }
+    selectTab(value as SearchTab);
+  };
+
   const focusCategorySelect = () => {
     const select = categorySelectRef.current;
     if (!select) return;
@@ -170,7 +179,8 @@ export default function GlobalSearch() {
   ));
   const hasVisibleAllPreview = Boolean(results && (results.films.content.length > 0 || results.reviews.content.length > 0));
   const collapsedAllPreview = tab === "all" && !expandedResults && hasVisibleAllPreview;
-  const categorySelect = <select ref={categorySelectRef} className={styles.categorySelect} aria-label={t("showSearchResultsFor")} aria-controls="global-search-results" value={tab} onChange={event => selectTab(event.target.value as SearchTab)}>
+  const categorySelect = <select ref={categorySelectRef} className={styles.categorySelect} aria-label={t("showSearchResultsFor")} aria-controls="global-search-results" value={tab} onChange={event => selectCategory(event.target.value)}>
+    <option value="tmdb">{t("tmdbSearchTitle")}</option>
     {searchTabs.map(item => <option value={item} key={item}>{tabLabel(item)}{item !== "all" && resultCounts ? ` (${resultCounts[item]})` : ""}</option>)}
   </select>;
 
@@ -253,13 +263,8 @@ export default function GlobalSearch() {
         <p className={styles.sectionKicker}>{t("emptyEyebrow")}</p>
         <h2>{t("noGlobalResults")}</h2>
         <p>{t("noGlobalResultsHint")}</p>
-        {query.length >= 2 && (tab === "all" || tab === "films") && <Link className={styles.noMatchesAction} to={path(`/films?q=${encodeURIComponent(query)}`)}>{t("tmdbSearchTitle")}</Link>}
         <Link className={styles.noMatchesAction} to={path("/home")}>{t("backToHome")}</Link>
       </section>}
-
-      {!loading && !error && query.length >= 2 && (tab === "all" || tab === "films") && hasVisibleResults && <p className={styles.tmdbCatalogPrompt}>
-        <Link to={path(`/films?q=${encodeURIComponent(query)}`)}>{t("tmdbSearchTitle")} ↗</Link>
-      </p>}
 
       {!loading && !error && results && <>
         {(tab === "all" || tab === "films") && results.films.content.length > 0 && <section id="films" className={styles.section} aria-labelledby="global-search-films-heading">
@@ -361,6 +366,7 @@ export default function GlobalSearch() {
             </Link>;
           })}</div>
         </section>}
+
       </>}
       </div>}
     </div>
