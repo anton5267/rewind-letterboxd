@@ -59,9 +59,11 @@ export async function adminMovieFixture(page: Page, options: { published?: boole
   const movies = page.getByRole("region", { name: "Film database", exact: true });
   await expect(movies).toHaveAttribute("aria-busy", "false");
   const card = movies.getByRole("listitem").filter({ hasText: movie.title });
-  await expect(card).toContainText("Age rating: 12+");
-  await expect(card).toContainText("Duration (minutes): 123");
-  await expect(card).toContainText("Visible reviews: 0");
+  const metadata = card.getByLabel("Film details", { exact: true }).first();
+  await expect(metadata).toContainText("2026");
+  await expect(metadata).toContainText("12+");
+  await expect(metadata).toContainText("2h 3m");
+  await expect(card.getByText("User Reviews", { exact: true }).locator("..")).toContainText("0");
   await expect(card).toContainText(movie.published ? "Published" : "Unpublished");
   return { movie, movies, writes, candidateSearches, failBatchSyncRequest: (number: number) => { failedBatchSyncRequest = number; } };
 }
