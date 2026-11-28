@@ -48,10 +48,18 @@ The Pages dashboard build log reports Node 22.23.4, 426 modules, 3,243 uploaded 
 
 A production Edge API OPTIONS preflight was sent with the current Pages preview's exact origin (`https://codex-cloudflare-pages-secur.rewind-site-preview.pages.dev`). It returned HTTP 403 and `Origin is not allowed`; an earlier check against `https://rewind-pages-preview.pages.dev` also returned HTTP 403. The current deployed allowlist therefore does not include the preview origin. No allowlist change has been made. Browser API-backed behavior from the preview remains unverified until this is addressed.
 
-The public Supabase Auth settings endpoint returned HTTP 200 with `Access-Control-Allow-Origin` matching the preview origin. Its public response does not expose the Auth redirect allowlist. That allowlist has not yet been read back. No auth redirect setting has been altered; do not create accounts or send email for this preview check.
+The public Supabase Auth settings endpoint returned HTTP 200 with `Access-Control-Allow-Origin` matching the preview origin. A read-only dashboard check confirmed that the production Site URL remains `https://anton5267.github.io/rewind-letterboxd/` and the current redirect allowlist has only these four exact URLs:
+
+- `https://anton5267.github.io/rewind-letterboxd/uk/login/`
+- `https://anton5267.github.io/rewind-letterboxd/en/login/`
+- `https://anton5267.github.io/rewind-letterboxd/uk/reset-password/`
+- `https://anton5267.github.io/rewind-letterboxd/en/reset-password/`
+
+For a preview auth flow, the app constructs callback URLs at the preview origin with the same four paths (`/uk/login/`, `/en/login/`, `/uk/reset-password/`, `/en/reset-password/`). They are not currently on the Supabase redirect allowlist. No auth redirect setting has been altered; do not create accounts or send email for this preview check.
+
+Opening `/uk/home` confirms the app shell renders, but data sections show “Не вдалося завантажити головну сторінку” while the Edge API origin remains blocked. This is consistent with the failed CORS preflight; a successful browser API-backed flow has not been verified.
 
 ## Next steps
 
-1. Decide whether to authorize adding only `https://codex-cloudflare-pages-secur.rewind-site-preview.pages.dev` to the deployed Supabase Edge API origin allowlist (`REWIND_ALLOWED_ORIGINS`). This is a production Supabase security configuration change; leave it untouched until explicitly approved.
-2. Read back the Supabase Auth redirect allowlist and determine whether this exact preview origin needs an entry. Do not change the primary Site URL, create test accounts, or send email.
-3. After any authorized allowlist change, verify browser API calls and the auth callback from the preview. Keep GitHub Pages production unchanged unless separately approved.
+1. Decide whether to authorize adding only `https://codex-cloudflare-pages-secur.rewind-site-preview.pages.dev` to the deployed Supabase Edge API origin allowlist (`REWIND_ALLOWED_ORIGINS`) and the four exact preview auth callback URLs listed above. These are production Supabase security configuration changes; do not apply them until explicitly approved.
+2. After any authorized allowlist change, verify browser API calls and the auth callback from the preview. Keep the production Site URL and GitHub Pages hosting unchanged.
