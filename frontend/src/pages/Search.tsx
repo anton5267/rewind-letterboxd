@@ -62,6 +62,7 @@ export default function Search() {
   const [tmdbDiscoverLoading, setTmdbDiscoverLoading] = useState(false);
   const [tmdbDiscoverError, setTmdbDiscoverError] = useState(false);
   const [tmdbDiscoverRetry, setTmdbDiscoverRetry] = useState(0);
+  const [tmdbDiscoveryOpen, setTmdbDiscoveryOpen] = useState(false);
   const [tmdbYearFilter, setTmdbYearFilter] = useState(searchParams.get("tmdbYear") ?? "");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const filtersFormRef = useRef<HTMLFormElement>(null);
@@ -207,6 +208,11 @@ export default function Search() {
     const params = new URLSearchParams(searchKey);
     setTmdbYearFilter(params.get("tmdbYear") ?? "");
     if ((params.get("q")?.trim().length ?? 0) >= 2) {
+      setTmdbDiscoveryOpen(false);
+      setTmdbDiscoverLoading(false);
+      return;
+    }
+    if (!tmdbDiscoveryOpen) {
       setTmdbDiscoverLoading(false);
       return;
     }
@@ -230,7 +236,7 @@ export default function Search() {
       .catch(() => { if (current) { setTmdbDiscoverResults([]); setTmdbDiscoverTotalPages(0); setTmdbDiscoverError(true); } })
       .finally(() => { if (current) setTmdbDiscoverLoading(false); });
     return () => { current = false; };
-  }, [searchKey, lang, tmdbDiscoverRetry]);
+  }, [searchKey, lang, tmdbDiscoverRetry, tmdbDiscoveryOpen]);
 
   const loadTmdbPage = (page: number) => {
     const q = searchParams.get("q")?.trim() ?? "";
@@ -501,11 +507,14 @@ export default function Search() {
         </nav>}
       </section>}
 
-      {(searchParams.get("q")?.trim().length ?? 0) < 2 && <section className={styles.tmdbSection} aria-labelledby="tmdb-discover-title" aria-busy={tmdbDiscoverLoading}>
-        <div className={styles.tmdbHeading}>
-          <div><h2 id="tmdb-discover-title">{t("tmdbDiscoverTitle")}</h2><p>{t("tmdbDiscoverHint")}</p></div>
-          <a href="https://www.themoviedb.org" target="_blank" rel="noreferrer" aria-label="TMDB">TMDB</a>
-        </div>
+      {(searchParams.get("q")?.trim().length ?? 0) < 2 && <details className={styles.tmdbSection} aria-busy={tmdbDiscoverLoading} onToggle={event => setTmdbDiscoveryOpen(event.currentTarget.open)}>
+        <summary className={styles.tmdbSummary}>
+          <span className={styles.tmdbHeading}>
+            <span><span id="tmdb-discover-title" role="heading" aria-level={2}>{t("tmdbDiscoverTitle")}</span><span className={styles.tmdbHint}>{t("tmdbDiscoverHint")}</span></span>
+            <span aria-hidden="true">TMDB</span>
+          </span>
+        </summary>
+        {tmdbDiscoveryOpen && <div>
         <div className={styles.tmdbFilters} aria-label={t("filters")}>
           <label htmlFor="tmdb-discover-genre">{t("genre")}
             <select id="tmdb-discover-genre" value={searchParams.get("tmdbGenreId") ?? ""} disabled={genresLoading || genreError} onChange={event => updateTmdbDiscoveryFilter("tmdbGenreId", event.target.value)}>
@@ -554,7 +563,8 @@ export default function Search() {
           <button type="button" disabled={(Number(searchParams.get("tmdbPage")) || 1) >= tmdbDiscoverTotalPages} onClick={() => turnTmdbDiscoveryPage((Number(searchParams.get("tmdbPage")) || 1) + 1)}>{t("next")}</button>
         </nav>}
         <p className={styles.tmdbAttribution}>{t("tmdbAttribution")}</p>
-      </section>}
+        </div>}
+      </details>}
     </div>
   </main>;
 }

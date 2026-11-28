@@ -13,13 +13,19 @@ Reviewed 28 November 2026. This page summarizes recorded production state and ac
 - Read-only Playwright against GitHub Pages confirmed `/en/films/` and `/uk/films/` return HTTP 200, render the localized Films heading, load 50 catalog records, and have no JavaScript errors. Desktop page 1 shows 36 catalog posters and offers 2 pages; all 44 images in the page DOM (36 catalog plus 8 TMDB discovery) loaded successfully. At 1440px, the grid begins at x=120.5/y=607 with 1199px width and 174×260 first poster; filters remain at x=989/y=294 (331×49), pagination at y=2502.
 - At 393px, the Ukrainian catalog shows 24 cards per page and 3 pages. The Next action changes the URL to `?page=1` and announces page 2 of 3. The document has no horizontal overflow. The route also has no overflow at 1440px.
 - Axe WCAG 2 A/AA on both locales at 393×852 and 1440×900 reported zero violations; all four route/viewport checks had zero page errors.
-- The Figma full-catalog frame ends with its footer at y=2691. Production footer begins around y=3891 because the app appends the separate TMDB discovery module after the 50-record REWIND catalog. This extra section supports live TMDB discovery but remains a page-structure difference for full-frame parity; live poster identities also differ from the Figma sample. No production writes, imports, or Supabase changes were made. The runtime smoke used the direct GitHub Pages project path; the repo's root-relative local E2E helper is intended for the local Vite origin and cannot target that subpath unchanged.
+- At the production checkpoint, the Figma full-catalog frame ended with its footer at y=2691 while the footer began around y=3891 because the app appended TMDB discovery after the 50-record REWIND catalog. A local-only follow-up below collapses discovery and loads it on demand; production still reflects the published version until a later approved release. Live poster identities also differ from the Figma sample. No production writes, imports, or Supabase changes were made. The earlier runtime smoke used the direct GitHub Pages project path; the repo's root-relative local E2E helper is intended for the local Vite origin and cannot target that subpath unchanged.
 
 ## TMDB discovery and title-search pagination — 28 November 2026
 
 - On production `/en/films/`, TMDB discovery returned 8 results on page 1; Next changed the URL to `?tmdbPage=2`, loaded 8 different results and updated the page indicator. No JavaScript errors occurred.
+
 - On production `/en/films/?q=Dune`, live TMDB search returned 8 results per page and 57 pages; the first results were Dune, Dune: Part Two, and Dune: Part Three. The public search route works without importing or copying the entire TMDB catalog into REWIND.
 - These checks were read-only. No “Add to REWIND” action, account mutation, or database write was performed; signed-in import acceptance remains open.
+
+## Local All Films discovery disclosure — 28 November 2026
+
+- Changed `/films` TMDB discovery from an always-expanded feed to an accessible native disclosure. The film catalog remains the main content; users can expand the TMDB section to apply genre/year/rating filters and import selected titles. Discovery requests now start only when the section is expanded. Title search still queries TMDB for terms of at least two characters, and imports remain an explicit signed-in action.
+- A local browser inspection confirmed the collapsed initial state and that expanding it reveals discovery filters and pagination controls. This worktree has no local API environment, so catalog/genre/discovery requests show the expected unavailable-API error states; populated result/import behavior was not checked here. `frontend/npm run verify:build` passed (TypeScript and Vite production build). No automated browser/E2E suite was run. No production deployment, Supabase operation, import, or data mutation occurred. The local footer position still needs a browser geometry capture before claiming exact Figma parity.
 
 ## Local private-action fixture acceptance — 28 November 2026
 

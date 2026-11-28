@@ -8,6 +8,10 @@ Re-ran the READY desktop Tags screen `1480:7445` at 1440×1024 and the mobile Ta
 
 # REWIND — Figma design handoff
 
+### All Films — TMDB discovery disclosure — 28 November 2026
+
+The oversized TMDB discovery feed is now collapsed by default beneath the local catalog; opening it triggers the live discovery request and exposes its genre/year/rating filters, pagination, and explicit import actions. This preserves access to the full on-demand TMDB search/discovery flow while preventing the feed from extending the default catalog page by roughly 1,200px. TypeScript and Vite production build pass. The resulting local footer anchor has not yet been captured in a browser, so exact full-frame height is still unverified; production has not been deployed.
+
 ### All Films desktop contrast — 28 November 2026
 
 Production axe on GitHub Pages `/uk/films/` found a serious WCAG color-contrast failure in the catalogue count and Year/Rating/Genre filter text (3 elements; ratios 4.06:1 and 3.63:1). Raised the source gray from `#7e7e7e` to `#999` on the existing dark surfaces; poster grid, filter geometry, hover state, and Figma frame remain unchanged. Added a Playwright fixture assertion that runs axe `color-contrast` and checks the count/filter color. The regression assertion failed at the old color, then focused fixture test passed 1/1; `npm run verify:build` passed. PR #30 merged as `cc46f0c`; Pages run `46111794371` succeeded. Fresh production axe now reports zero violations (44 passes, 2 incomplete), the three computed colors are `rgb(153,153,153)`, and the page has no JavaScript errors. Other axe categories and states were not included in the fixture regression assertion.
