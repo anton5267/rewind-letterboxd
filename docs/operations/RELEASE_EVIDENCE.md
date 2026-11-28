@@ -14,6 +14,7 @@ Reviewed 28 November 2026. This page summarizes recorded production state and ac
 - PR #34 ([`95fa5f1`](https://github.com/anton5267/rewind-letterboxd/commit/95fa5f1ed096419bbe4cb285a0dc1d61b09434c4)) raises muted mobile guest Home text colors while preserving layout geometry. It adds a fixture axe `color-contrast` check at 320px for both UK and EN. The regression failed before the CSS change and passed afterward; `npm run verify:build` and `git diff --check` passed.
 - The PR CI and Cloudflare Pages preview checks passed; post-merge CI run [`46113833034`](https://github.com/anton5267/rewind-letterboxd/actions/runs/46113833034) and GitHub Pages deployment [`46113833028`](https://github.com/anton5267/rewind-letterboxd/actions/runs/46113833028) succeeded.
 - Read-only production Playwright+axe WCAG 2 A/AA at 320px returned HTTP 200, zero violations, zero horizontal overflow, and zero JavaScript errors on UK Home, Films, Search, Lists, Community, Login, Journal, and Help, plus EN Home. A 1440px audit returned zero WCAG 2 A/AA violations on those eight UK routes. This route/viewport matrix is not a complete locale, account-state, private-action, or Figma-frame acceptance.
+- A follow-up 768px read-only audit returned the same result for the eight UK routes: HTTP 200, zero WCAG 2 A/AA violations, zero horizontal overflow, and zero JavaScript errors.
 
 ## Read-only production smoke — 28 November 2026
 
