@@ -607,6 +607,7 @@ Counts below belong to their recorded release and test scope. Full details, fail
 
 - A fresh read-only Playwright visit to the published GitHub Pages `/en/films/` returned HTTP 200 with no JavaScript errors. The visible “Popular films on TMDB” section loaded eight candidates automatically, exposed genre/year/rating filters, and showed a separate TMDB pagination control. Guest cards offered sign-in to add a selected title.
 - Clicking “Next” made a read-only discovery request and rendered eight different movies on page 2. No account, Watchlist, shared catalog, or Supabase content was changed. This verifies on-demand browse access across pages, not an exhaustive local copy of the entire TMDB database or a signed-in import.
+- From production Global Search, the “Search all TMDB films” action for `Dune` opened `/en/films?q=Dune`; TMDB returned eight candidate cards on page **1/57** with no JavaScript errors. The query stays on the read-only API path until the visitor explicitly signs in and adds a chosen title.
 - The matching local candidate's fixture acceptance is recorded in [TMDB auto discovery user default](#tmdb-auto-discovery-user-default--28-november-2026). Hosted Auth callbacks and real signed-in import remain separate release gates.
 
 ## Host/header and TMDB discovery accessibility recheck — 28 November 2026
