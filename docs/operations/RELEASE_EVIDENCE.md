@@ -31,6 +31,12 @@ Reviewed 28 November 2026. This page summarizes recorded production state and ac
 - The live preview exposed a stale assertion: Cloudflare's response policy is `X-Frame-Options: DENY` plus HTTP `frame-ancestors 'none'`; the app's meta CSP supplies `object-src 'none'`. The test now checks each policy at its actual enforcement layer. Nginx was aligned to the same no-iframe policy. This keeps framing protection at the HTTP header, where browsers enforce it.
 - This is read-only preview acceptance. No production deployment, hosted Supabase data, user account, or database record changed.
 
+## Stable Cloudflare Pages alias recheck — 28 November 2026
+
+- Read-only `HEAD` checks returned HTTP 200 from GitHub Pages and the stable Cloudflare project alias `https://rewind-site-preview.pages.dev`. GitHub Pages still returns none of the five target security headers; the Cloudflare alias returns `frame-ancestors 'none'`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, strict-origin referrer policy, and a restrictive Permissions Policy.
+- The stable Cloudflare alias passed `frontend/tests/e2e/accessibility.spec.ts` **5/5**, including the public UK/EN route/layout checks, keyboard navigation, landmarks/alt text, response headers, and WCAG 2 A/AA audit. This is read-only public acceptance.
+- The stable alias and PR branch preview serve distinct entry bundles (`index-BCGErKVV.js` vs `index-BGVLGiXO.js`); therefore this run does not verify or deploy the current PR candidate. Hosted Auth callbacks, private user flows, source bundle parity, and production host selection remain open. No database, user, Supabase setting, or production host was changed.
+
 ## Revalidation of TMDB Watchlist and public lists — 28 November 2026
 
 - Re-ran the focused local Playwright suites for TMDB discovery/add-to-Watchlist, public-list publication time, featured-list empty/error states, poster/layout parity, and share fallback: **18/18 passed**. `npm run verify:build` passed TypeScript and Vite production build.
