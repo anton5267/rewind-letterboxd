@@ -51,7 +51,7 @@ function MovieRow({ movies }: { movies: MovieCard[] }) {
   return <div className={styles.movieRow}>
     {movies.map(movie => {
       const movieTitle = editorialText(movie.title, t("untitledFilm"));
-      return <article className={styles.movieCard} key={movie.id}>
+      return <article className={`${styles.movieCard} rewindMotionSurface`} key={movie.id}>
         <Link to={path(`/films/${movie.id}`)} aria-label={movieTitle} title={movieTitle}>
           <ResilientImage src={movie.photoUrl} alt="" fallback={<div className={styles.posterFallback} aria-hidden="true"><span>{movieTitle}</span></div>} />
           <h3>{movieTitle}</h3>

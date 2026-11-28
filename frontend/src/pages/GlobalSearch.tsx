@@ -268,7 +268,7 @@ export default function GlobalSearch() {
             if (event.target instanceof HTMLElement) event.target.scrollIntoView({ block: "nearest", inline: "nearest" });
           }}>{results.films.content.map(movie => {
             const movieTitle = editorialText(movie.title, t("untitledFilm"));
-            return <article className={styles.filmCard} key={movie.id}>
+            return <article className={`${styles.filmCard} rewindMotionSurface`} key={movie.id}>
               <Link to={path(`/films/${movie.id}`)} className={styles.posterLink} aria-label={`${movieTitle} ${t("poster")}`} aria-describedby={`global-search-film-meta-${movie.id}`} title={movieTitle}>
                 <Poster src={movie.photoUrl} alt={movieTitle} fallback={movieTitle} />
               </Link>
@@ -341,7 +341,7 @@ export default function GlobalSearch() {
           <div className={styles.sectionHeading}><div><p className={styles.sectionKicker}>03 / {t("lists")}</p><h2 id="global-search-lists-heading" tabIndex={-1}>{t("searchLists")}</h2></div><span>{results.lists.totalElements}</span></div>
           <div className={styles.listGrid}>{results.lists.content.map(list => {
             const listName = editorialText(list.name, t("lists"));
-            return <Link className={styles.listCard} to={path(`/lists/public/${list.id}`)} title={listName} key={list.id}>
+            return <Link className={`${styles.listCard} rewindMotionSurface`} to={path(`/lists/public/${list.id}`)} title={listName} key={list.id}>
               <div className={styles.listSummary}><h3>{listName}</h3><p><span className={styles.listOwner}>{getUserName({ username: list.ownerUsername }, t("someone"))}</span><span className={styles.listSeparator}> · </span><span className={styles.listCount}>{formatMovieCount(list.itemCount ?? 0, lang)}</span></p>{list.description && <small className={styles.listDescription}>{list.description}</small>}</div>
               <div className={styles.listPreview} aria-hidden="true">{list.previewMovies.slice(0, 5).map(movie => {
                 const movieTitle = editorialText(movie.title, t("untitledFilm"));
@@ -355,7 +355,7 @@ export default function GlobalSearch() {
           <div className={styles.sectionHeading}><div><p className={styles.sectionKicker}>07 / {t("journal")}</p><h2 id="global-search-journal-heading" tabIndex={-1}>{t("searchJournal")}</h2></div><span>{results.journal.totalElements}</span></div>
           <div className={styles.articleGrid}>{results.journal.content.map(article => {
             const articleTitle = editorialText(article.title, t("untitledArticle"));
-            return <Link className={styles.articleCard} to={path(`/journal/${article.slug}`)} key={article.id}>
+            return <Link className={`${styles.articleCard} rewindMotionSurface`} to={path(`/journal/${article.slug}`)} key={article.id}>
               <ResilientImage src={article.coverUrl} alt="" fallback={<span className={styles.articleCoverFallback} aria-hidden="true">REWIND</span>} />
               <div><p>{localizeJournalCategory(article.category, t)}</p><h3>{articleTitle}</h3>{article.excerpt && <small>{article.excerpt}</small>}</div>
             </Link>;

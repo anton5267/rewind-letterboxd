@@ -2,6 +2,12 @@
 
 Reviewed 28 November 2026. This page summarizes recorded production state and acceptance boundaries. Detailed results retain their dates in the [archive](../archive/README.md).
 
+## Motion system candidate — 28 November 2026
+
+- Added shared CSS motion tokens and a reusable card interaction for Home films, Global Search films/lists/articles, and public-list cards. Pointer hover and keyboard focus use a restrained 3px lift and shadow without changing layout dimensions; reduced-motion explicitly disables transforms, shadows, and transitions.
+- `frontend/tests/e2e/motion-surfaces.spec.ts`: **2/2 passed** against fixture-intercepted local Vite. It covers Home pointer/keyboard/reduced-motion behavior, phone-width overflow, and public featured-list hover. `npm run verify:build` passed TypeScript and Vite production build; `git diff --check` passed.
+- This is a local candidate check only. No production deployment or live Figma visual acceptance was performed; whole-site Figma and release gates remain open.
+
 ## TMDB live catalog, attribution, and RLS policy cleanup — 28 November 2026
 
 - TMDB search and discovery use the hosted Supabase Edge Function on demand. Production GETs from `https://anton5267.github.io` returned HTTP 200 with eight search/discovery results and `Cache-Control: public, max-age=120, stale-while-revalidate=300`; no import button was used and no catalogue/user rows were added. The app imports an individual title only after a signed-in user selects it. TMDB's daily exports contain valid IDs and summary attributes rather than a full data export, and TMDB cautions against needlessly high-volume bulk requests ([exports](https://developer.themoviedb.org/docs/daily-id-exports), [rate limiting](https://developer.themoviedb.org/docs/rate-limiting)).

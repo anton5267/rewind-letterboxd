@@ -274,7 +274,7 @@ export default function PublicLists() {
     const tagged = variant === "tagged";
     const landing = variant === "rail" || variant === "liked";
     const popularFeedCard = variant === "feed" && feed === "popular";
-    const cardClass = tagged ? styles.taggedCard : landing ? `${styles.card} ${styles.railCard}${variant === "liked" ? ` ${styles.likedCard}` : ""}` : compact ? `${styles.featuredCard}${popularFeedCard ? ` ${styles.popularFeedCard}` : ""}` : `${styles.card}${popularFeedCard ? ` ${styles.popularFeedCard}` : ""}`;
+    const cardClass = `${tagged ? styles.taggedCard : landing ? `${styles.card} ${styles.railCard}${variant === "liked" ? ` ${styles.likedCard}` : ""}` : compact ? `${styles.featuredCard}${popularFeedCard ? ` ${styles.popularFeedCard}` : ""}` : `${styles.card}${popularFeedCard ? ` ${styles.popularFeedCard}` : ""}`} rewindMotionSurface`;
     const posterClass = tagged ? styles.taggedPosterLink : landing ? `${styles.posterLink} ${styles.railPosterLink}` : compact ? styles.featuredPosterLink : styles.posterLink;
     return <article className={cardClass} key={list.id}>
       <Link className={posterClass} to={path(`/lists/public/${list.id}`)} aria-label={listName}>

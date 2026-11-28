@@ -83,7 +83,7 @@
 .listCard, .articleCard { display: grid; grid-template-columns: minmax(220px, .34fr) minmax(0, 1fr); gap: 24px; min-width: 0; border: 1px solid var(--rewind-line); padding: 18px; background: #292929; color: #fff; text-decoration: none; }
 .listCard > div:last-child, .articleCard > div:last-child { min-width: 0; }
 .listSummary { grid-column: 2; grid-row: 1; min-width: 0; }
-.listCard { align-items: stretch; transition: border-color .2s ease, background .2s ease; }
+.listCard { align-items: stretch; transition: border-color var(--rewind-motion-standard) var(--rewind-motion-ease), background var(--rewind-motion-standard) var(--rewind-motion-ease), transform var(--rewind-motion-standard) var(--rewind-motion-ease), box-shadow var(--rewind-motion-standard) var(--rewind-motion-ease); }
 .listCard:hover { border-color: rgba(212, 168, 95, .7); background: #303030; }
 .listPreview { display: grid; grid-column: 1; grid-row: 1; grid-template-columns: repeat(5, minmax(0, 1fr)); align-self: start; overflow: hidden; width: 100%; min-width: 0; min-height: 174px; aspect-ratio: 2.05 / 1; background: #202020; }
 .listPreview .poster, .listPreview .posterFallback { min-width: 0; height: 100%; border-right: 1px solid #292929; object-fit: cover; font-size: 12px; }

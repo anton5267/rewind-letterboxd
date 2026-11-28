@@ -81,6 +81,25 @@ a { color: inherit; }
   --rewind-type-caption: 13px;
   --rewind-shadow: 0 18px 40px rgba(0, 0, 0, .18);
   --rewind-focus-width: 3px;
+  --rewind-motion-standard: 200ms;
+  --rewind-motion-ease: cubic-bezier(.2, .75, .25, 1);
+}
+
+.rewindMotionSurface {
+  transition: transform var(--rewind-motion-standard) var(--rewind-motion-ease),
+    box-shadow var(--rewind-motion-standard) var(--rewind-motion-ease);
+}
+
+@media (hover: hover) {
+  .rewindMotionSurface:hover,
+  .rewindMotionSurface:focus-within {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .24);
+  }
+}
+
+.rewindMotionSurface:focus-within {
+  box-shadow: 0 0 0 1px rgba(123, 223, 242, .36), 0 12px 28px rgba(0, 0, 0, .24);
 }
 
 button:focus-visible,
@@ -98,6 +117,14 @@ select:focus-visible {
     transition-duration: .01ms !important;
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
+  }
+
+  .rewindMotionSurface,
+  .rewindMotionSurface:hover,
+  .rewindMotionSurface:focus-within {
+    transform: none !important;
+    box-shadow: none !important;
+    transition: none !important;
   }
 }
 
