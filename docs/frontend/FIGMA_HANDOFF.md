@@ -8,6 +8,10 @@ Re-ran the READY desktop Tags screen `1480:7445` at 1440×1024 and the mobile Ta
 
 # REWIND — Figma design handoff
 
+### Featured lists production status — 28 November 2026
+
+Fresh read-only production checks supersede the older November 27 notes that described a missing category column. Migration `20261127174731_featured_list_categories` is in hosted migration history, `rewind.lists.featured_category` exists, and `rewind-api` v70 is active. The public featured-feed endpoint returned HTTP 200 from the GitHub Pages origin. The hosted table currently has no public featured custom lists, so the three category groups correctly remain empty until an administrator curates real lists. No sample list was inserted; fixture captures prove layout only, not curated-content parity.
+
 ### Admin reported-list return flow — 28 November 2026
 
 Rechecked Figma all-lists `1344:5249`, reported-list queue `1389:3464`, reported-list editor `1390:3326`, and regular-list editor `1344:6018`. The existing Edge-backed detail editor already supplies the visible list metadata, report reason/count, film previews, change history, and edit/status/add/block/resolve/delete actions. A release-smoke review found that resolving a report sent the moderator to reported reviews, while the reported-only filter existed only in component state. The filter now persists as `?view=lists&reported=true`; list detail receipts return there for reported items and to the ordinary lists view otherwise. `npm run verify:build` passes. This fixes the navigation flow without changing API contracts, database state, Figma source or production deployment.
