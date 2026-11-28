@@ -98,7 +98,7 @@ export async function handleCatalogRoutes(context: HttpRouteContext): Promise<Re
     }
     const query = new URL(request.url).searchParams;
     const rawType = query.get("type") ?? "actor";
-    if (rawType !== "actor" && rawType !== "director" && rawType !== "producer") {
+    if (rawType !== "actor" && rawType !== "director" && rawType !== "producer" && rawType !== "writer") {
       return json({ message: "Invalid person type" }, 400, corsHeaders);
     }
     const q = query.get("q")?.trim() || null;
@@ -111,7 +111,7 @@ export async function handleCatalogRoutes(context: HttpRouteContext): Promise<Re
     try {
       const result = await repository.searchPeople({
         q,
-        type: rawType === "actor" ? "ACTOR" : rawType === "director" ? "DIRECTOR" : "PRODUCER",
+        type: rawType === "actor" ? "ACTOR" : rawType === "director" ? "DIRECTOR" : rawType === "producer" ? "PRODUCER" : "WRITER",
         page,
         size,
       });

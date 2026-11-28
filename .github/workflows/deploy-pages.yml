@@ -13,6 +13,7 @@ on:
       - "frontend/package.json"
       - "frontend/package-lock.json"
       - "frontend/scripts/prerender-public-catalog-routes.mjs"
+      - "frontend/scripts/public-writer-routes.mjs"
       - "frontend/scripts/verify-language-root-routes.mjs"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:

@@ -114,7 +114,7 @@ export interface PersonSearchResult {
     id: number;
     name: string;
     photoUrl: string | null;
-    type: "ACTOR" | "DIRECTOR" | "PRODUCER";
+    type: "ACTOR" | "DIRECTOR" | "PRODUCER" | "WRITER";
     filmCount: number;
   }[];
   totalPages: number;
@@ -124,7 +124,7 @@ export interface PersonSearchResult {
 
 export interface PersonSearchParams {
   q: string | null;
-  type: "ACTOR" | "DIRECTOR" | "PRODUCER";
+  type: "ACTOR" | "DIRECTOR" | "PRODUCER" | "WRITER";
   page: number;
   size: number;
 }

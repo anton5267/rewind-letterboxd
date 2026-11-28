@@ -1144,6 +1144,30 @@ Deno.test("people search supports actor and producer filters and returns paged r
   }
 });
 
+Deno.test("people search supports paged published writer credits", async () => {
+  let requested: { q: string | null; type: string; page: number; size: number } | null = null;
+  const handler = handlerWith({
+    async searchPeople(params) {
+      requested = params;
+      return {
+        content: [{ id: 1293082, name: "Kim Byung-woo", photoUrl: null, type: "WRITER", filmCount: 2 }],
+        totalPages: 3,
+        totalElements: 15,
+        number: params.page,
+      };
+    },
+  });
+  const response = await handler(new Request(
+    "https://project.supabase.co/functions/v1/rewind-api/api/people/search?type=writer&page=1&size=7",
+  ));
+  const body = await response.json();
+  if (response.status !== 200 || JSON.stringify(requested) !== JSON.stringify({ q: null, type: "WRITER", page: 1, size: 7 })
+    || body.content[0]?.id !== 1293082 || body.content[0]?.type !== "WRITER" || body.number !== 1
+    || body.totalElements !== 15 || response.headers.get("Cache-Control") !== "public, max-age=300, stale-while-revalidate=600") {
+    throw new Error(`Unexpected writer search response: ${JSON.stringify({ status: response.status, body, requested })}`);
+  }
+});
+
 Deno.test("person filmography rejects unknown types and invalid IDs/filters", async () => {
   const handler = handlerWith({});
   for (const [url, expected] of [

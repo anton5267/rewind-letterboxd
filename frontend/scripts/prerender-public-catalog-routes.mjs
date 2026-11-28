@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { publicImageUrl, toWriterRoutePages } from "./public-writer-routes.mjs";
 
 const frontendDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const distDir = path.join(frontendDir, "dist");
@@ -70,16 +71,6 @@ async function fetchAllPages(resource, type) {
     throw new Error(`Catalog changed while enumerating ${type}; refusing to generate incomplete routes.`);
   }
   return content;
-}
-
-function publicImageUrl(value) {
-  if (typeof value !== "string") return null;
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" ? url.href : null;
-  } catch {
-    return null;
-  }
 }
 
 function routeHtml({ route, language, title, description, imageUrl, noindex = false }) {
@@ -208,6 +199,11 @@ for (const movie of movies) {
   }
 }
 
+// The paginated writer search is a single aggregate query per page, avoiding a
+// full details request for every published movie during the Pages build.
+const publishedWriters = await fetchAllPages("/people/search?type=writer", "writers");
+for (const page of toWriterRoutePages(publishedWriters)) await writeRoute(page);
+
 for (const type of ["actor", "director", "producer"]) {
   const people = await fetchAllPages(`/people/search?type=${type}`, type);
   for (const person of people) {
@@ -248,4 +244,4 @@ const sitemapUrl = new URL("sitemap.xml", siteBase).href;
 const robotsTxt = ["User-agent: *", "Allow: /", `Sitemap: ${sitemapUrl}`, ""].join("\n");
 await writeFile(path.join(distDir, "robots.txt"), robotsTxt, "utf8");
 
-console.log(`Generated ${generatedRoutes.size} public catalog routes and ${appShellRouteCount} noindex app route shells, plus sitemap.xml and robots.txt.`);
+console.log(`Generated ${generatedRoutes.size} public catalog routes, including ${publishedWriters.length} writers, and ${appShellRouteCount} noindex app route shells, plus sitemap.xml and robots.txt.`);
