@@ -87,6 +87,11 @@ Reviewed 28 November 2026. This page summarizes recorded production state and ac
 - On production `/en/films/?q=Dune`, live TMDB search returned 8 results per page and 57 pages; the first results were Dune, Dune: Part Two, and Dune: Part Three. The public search route works without importing or copying the entire TMDB catalog into REWIND.
 - These checks were read-only. No “Add to REWIND” action, account mutation, or database write was performed; signed-in import acceptance remains open.
 
+## Current worktree TMDB live API mobile smoke — 28 November 2026
+
+- Served the current branch from local Vite at 393×852 with the published client-safe Supabase configuration held in process memory only. The current UI fetched the catalog, genres and TMDB discovery from the production Edge API; the TMDB endpoint returned HTTP 200 with 8 cards. Next changed the route to `?tmdbPage=2` and returned 8 different cards; all 8 poster images loaded. This exercised the current candidate UI against live read-only API data, not a fixture.
+- Browser document width stayed 393px, the five-item navigation remained fixed within the viewport at y=760–852, and there were zero JavaScript errors. Network inspection found only GET/OPTIONS requests; no import button was activated and no production rows were written. This does not verify hosted sign-in or authenticated import.
+
 ## Local All Films discovery disclosure — 28 November 2026
 
 > Superseded by [TMDB auto discovery user default](#tmdb-auto-discovery-user-default--28-november-2026) below; this entry preserves the earlier implementation checkpoint.
