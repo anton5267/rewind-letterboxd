@@ -209,9 +209,9 @@ for (const movie of movies) {
   }
 }
 
-// Writer IDs come from the published film credits. Prerender those route shells
-// so GitHub Pages returns HTTP 200 for links originating on REWIND film pages.
-const publishedWriters = await fetchPublishedWriterPeople(movies, requestCatalog);
+// The paginated writer search is a single aggregate query per page, avoiding a
+// full details request for every published movie during the Pages build.
+const publishedWriters = await fetchAllPages("/people/search?type=writer", "writers");
 for (const page of toWriterRoutePages(publishedWriters)) await writeRoute(page);
 
 for (const type of ["actor", "director", "producer"]) {

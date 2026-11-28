@@ -1,8 +1,45 @@
 import { createRewindApiHandler, type RewindApiRepository } from "./handler.ts";
-import { readWriterFilmography } from "./repositories/shared/writer_filmography.ts";
+import { readPublishedWriterSearch, readWriterFilmography } from "./repositories/shared/writer_filmography.ts";
 import type { PgConnection } from "./runtime/database.ts";
 
 const pagesOrigin = "https://anton5267.github.io";
+
+Deno.test("published writer search uses one deterministic, paginated database query", async () => {
+  const queries: { text: string; args: unknown[] }[] = [];
+  const connection = {
+    queryObject<T>(query: string | { text: string; args?: unknown[] }): Promise<{ rows: T[] }> {
+      const text = typeof query === "string" ? query : query.text;
+      const args = typeof query === "string" ? [] : query.args ?? [];
+      queries.push({ text, args });
+      if (text.includes("SELECT COUNT(DISTINCT c.tmdb_person_id)")) {
+        return Promise.resolve({ rows: [{ total: "1" }] as T[] });
+      }
+      if (text.includes("WITH writer_credits AS")) {
+        return Promise.resolve({ rows: [{
+          tmdb_person_id: "1293082", name: "Kim Byung-woo", photo_url: null, film_count: "2", total: "1",
+        }] as T[] });
+      }
+      return Promise.resolve({ rows: [] as T[] });
+    },
+  } as unknown as PgConnection;
+
+  const result = await readPublishedWriterSearch(connection, "kim", 7, 0);
+  const query = queries.find(({ text }) => text.includes("WITH writer_credits AS"));
+  const excludedJobs = ["NOT LIKE '%storyboard%'", "NOT LIKE '%script supervisor%'", "NOT LIKE '%script coordinator%'"];
+  if (queries[0]?.text !== "SET ROLE rewind_edge_reader" || queries.length !== 3
+    || query?.args.join(",") !== "kim,7,0"
+    || !query.text.includes("m.is_published = TRUE")
+    || !query.text.includes("LOWER(BTRIM(c.department)) = 'writing'")
+    || !query.text.includes("COUNT(DISTINCT movie_id)")
+    || !query.text.includes("DISTINCT ON (tmdb_person_id)")
+    || !query.text.includes("ORDER BY tmdb_person_id, person_name, photo_url NULLS LAST, movie_id")
+    || excludedJobs.some(clause => !query.text.includes(clause))
+    || result.content[0]?.id !== 1293082 || result.content[0]?.type !== "WRITER"
+    || result.content[0]?.filmCount !== 2 || result.totalElements !== 1
+    || result.totalPages !== 1 || result.number !== 0) {
+    throw new Error(`Published writer search query or mapping changed: ${JSON.stringify({ result, queries })}`);
+  }
+});
 
 function handlerWith(repository: Partial<RewindApiRepository> = {}) {
   return createRewindApiHandler({

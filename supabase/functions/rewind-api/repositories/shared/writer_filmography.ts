@@ -1,4 +1,4 @@
-import type { PersonFilmographyResponse } from "../../contracts/catalog.ts";
+import type { PersonFilmographyResponse, PersonSearchResult } from "../../contracts/catalog.ts";
 import type { PgConnection } from "../../runtime/database.ts";
 import { findRelatedPersonRoles } from "./person_roles.ts";
 import { safeId } from "./results.ts";
@@ -25,6 +25,67 @@ interface WriterCreditRow {
 interface WriterIdentity {
   name: string;
   photo_url: string | null;
+}
+
+export async function readPublishedWriterSearch(
+  connection: PgConnection,
+  query: string | null,
+  size: number,
+  page: number,
+): Promise<PersonSearchResult> {
+  await connection.queryObject("SET ROLE rewind_edge_reader");
+  const filter = `m.is_published = TRUE AND ${writingCredit}
+                  AND ($1::text IS NULL OR LOWER(c.person_name) LIKE '%' || LOWER($1) || '%')`;
+  const [countResult, writerResult] = await Promise.all([
+    connection.queryObject<{ total: string }>({
+      text: `SELECT COUNT(DISTINCT c.tmdb_person_id)::text AS total
+             FROM rewind.movie_crew_credits c
+             JOIN rewind.movies m ON m.id = c.movie_id
+             WHERE ${filter}`,
+      args: [query],
+    }),
+    connection.queryObject<{
+      tmdb_person_id: string;
+      name: string;
+      photo_url: string | null;
+      film_count: string;
+    }>({
+      text: `WITH writer_credits AS (
+               SELECT c.tmdb_person_id, c.person_name, c.photo_url, c.movie_id
+               FROM rewind.movie_crew_credits c
+               JOIN rewind.movies m ON m.id = c.movie_id
+               WHERE ${filter}
+             ), writer_counts AS (
+               SELECT tmdb_person_id, COUNT(DISTINCT movie_id)::text AS film_count
+               FROM writer_credits
+               GROUP BY tmdb_person_id
+             ), writer_identity AS (
+               SELECT DISTINCT ON (tmdb_person_id) tmdb_person_id, person_name, photo_url
+               FROM writer_credits
+               ORDER BY tmdb_person_id, person_name, photo_url NULLS LAST, movie_id
+             )
+             SELECT writer_identity.tmdb_person_id::text AS tmdb_person_id,
+                    writer_identity.person_name AS name, writer_identity.photo_url,
+                    writer_counts.film_count
+             FROM writer_identity
+             JOIN writer_counts USING (tmdb_person_id)
+             ORDER BY LOWER(writer_identity.person_name), writer_identity.tmdb_person_id
+             LIMIT $2 OFFSET $3`,
+      args: [query, size, page * size],
+    }),
+  ]);
+  const totalElements = Number(countResult.rows[0]?.total ?? "0");
+  if (!Number.isSafeInteger(totalElements) || totalElements < 0) {
+    throw new Error("Writer count is outside the safe JSON integer range");
+  }
+  const content = writerResult.rows.map((writer) => ({
+    id: safeId(writer.tmdb_person_id, "TMDB person ID"),
+    name: writer.name,
+    photoUrl: writer.photo_url,
+    type: "WRITER" as const,
+    filmCount: safeId(writer.film_count, "Writer film count"),
+  }));
+  return { content, totalElements, totalPages: Math.ceil(totalElements / size), number: page };
 }
 
 export async function readWriterFilmography(

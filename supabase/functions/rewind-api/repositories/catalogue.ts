@@ -10,6 +10,7 @@ import {
 } from "./shared/results.ts";
 import { findRelatedPersonRoles } from "./shared/person_roles.ts";
 import { enrichNetworkCounts } from "./shared/community.ts";
+import { readPublishedWriterSearch } from "./shared/writer_filmography.ts";
 
 export const catalogueRepository: Pick<RewindApiRepository,
   | "listGenres"
@@ -288,6 +289,14 @@ export const catalogueRepository: Pick<RewindApiRepository,
   },
 
   async searchPeople(params: PersonSearchParams): Promise<PersonSearchResult> {
+    if (params.type === "WRITER") {
+      const connection = await pool.connect();
+      try {
+        return await readPublishedWriterSearch(connection, params.q, params.size, params.page);
+      } finally {
+        connection.release();
+      }
+    }
     const peopleTable = params.type === "ACTOR" ? "actors" : params.type === "DIRECTOR" ? "directors" : "producers";
     const relationTable = params.type === "ACTOR" ? "movie_actors" : params.type === "DIRECTOR" ? "movie_directors" : "movie_producers";
     const relationPersonColumn = params.type === "ACTOR" ? "actor_id" : params.type === "DIRECTOR" ? "director_id" : "producer_id";
