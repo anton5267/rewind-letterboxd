@@ -108,7 +108,7 @@ export const tmdbCatalogRepository: Pick<RewindApiRepository, "searchTmdbCatalog
     } catch (error) { return providerFailure(error); }
   },
 
-  async importTmdbCatalogMovie(authUser: HostedAuthUser, tmdbId: number) {
+  async importTmdbCatalogMovie(authUser: HostedAuthUser, tmdbId: number, addToWatchlist = false) {
     let data: TmdbMovie;
     try { data = await fetchTmdbMovie(tmdbId, tmdbApiKey, fetch, tmdbApiBaseUrl); }
     catch (error) { return providerFailure(error); }
@@ -116,11 +116,26 @@ export const tmdbCatalogRepository: Pick<RewindApiRepository, "searchTmdbCatalog
     const { connection, userId } = await beginUserTransaction(authUser);
     try {
       await connection.queryObject({ text: "SELECT id FROM rewind.users WHERE id=$1 FOR UPDATE", args: [userId] });
+      const addMovieToWatchlist = async (movieId: number) => {
+        if (!addToWatchlist) return;
+        const watchlist = await connection.queryObject<{ id: string }>({
+          text: "SELECT id::text AS id FROM rewind.lists WHERE user_id=$1 AND list_type='WATCHLIST'",
+          args: [userId],
+        });
+        if (!watchlist.rows[0]) throw new Error("The user's Watchlist is unavailable.");
+        await connection.queryObject({
+          text: `INSERT INTO rewind.list_items (list_id, movie_id, position)
+                 VALUES ($1, $2, (SELECT COALESCE(MAX(position), 0) + 1 FROM rewind.list_items WHERE list_id=$1))
+                 ON CONFLICT (list_id, movie_id) DO NOTHING`,
+          args: [Number(watchlist.rows[0].id), movieId],
+        });
+      };
       const existing = await connection.queryObject<{ id: string; title: string; is_published: boolean }>({
         text: "SELECT id::text AS id,title,is_published FROM rewind.movies WHERE tmdb_id=$1", args: [tmdbId],
       });
       if (existing.rows[0]) {
         if (!existing.rows[0].is_published) throw new RewindApiError(404, "Movie not found");
+        await addMovieToWatchlist(numericId(existing.rows[0].id));
         await connection.queryObject("COMMIT");
         return { movieId: numericId(existing.rows[0].id), title: existing.rows[0].title };
       }
@@ -150,6 +165,7 @@ export const tmdbCatalogRepository: Pick<RewindApiRepository, "searchTmdbCatalog
           text: "SELECT id::text AS id,title FROM rewind.movies WHERE tmdb_id=$1 AND is_published=TRUE", args: [tmdbId],
         });
         if (!duplicate.rows[0]) throw new RewindApiError(404, "Movie not found");
+        await addMovieToWatchlist(numericId(duplicate.rows[0].id));
         await connection.queryObject("COMMIT");
         return { movieId: numericId(duplicate.rows[0].id), title: duplicate.rows[0].title };
       }
@@ -158,6 +174,7 @@ export const tmdbCatalogRepository: Pick<RewindApiRepository, "searchTmdbCatalog
       await connection.queryObject({
         text: "INSERT INTO rewind.tmdb_user_imports(user_id,tmdb_id,movie_id) VALUES($1,$2,$3)", args: [userId, tmdbId, movieId],
       });
+      await addMovieToWatchlist(movieId);
       await connection.queryObject("COMMIT");
       return { movieId, title: data.title };
     } catch (error) {

@@ -1,6 +1,6 @@
 import { resolveAllowedOrigins } from "./allowed_origins.ts";
 
-Deno.test("configured origins retain existing hosts and add only the Cloudflare Pages production origin", () => {
+Deno.test("configured origins retain existing hosts and add only the exact approved Cloudflare Pages hosts", () => {
   const origins = resolveAllowedOrigins(
     "https://anton5267.github.io, https://codex-cloudflare-pages-secur.rewind-site-preview.pages.dev",
   );
@@ -17,6 +17,12 @@ Deno.test("configured origins retain existing hosts and add only the Cloudflare 
   }
   if (!origins.includes("https://rewind-site-preview.pages.dev")) {
     throw new Error("The Cloudflare Pages production origin must be allowed");
+  }
+  if (!origins.includes("https://codex-motion-system.rewind-site-preview.pages.dev")) {
+    throw new Error("The exact Cloudflare Pages branch preview must be allowed");
+  }
+  if (origins.includes("https://another-branch.rewind-site-preview.pages.dev")) {
+    throw new Error("Unapproved Cloudflare Pages branch previews must remain blocked");
   }
   if (
     origins.some((origin) =>
@@ -38,6 +44,7 @@ Deno.test("default origin configuration keeps local development and GitHub Pages
       "http://localhost:5174",
       "http://127.0.0.1:5174",
       "https://rewind-site-preview.pages.dev",
+      "https://codex-motion-system.rewind-site-preview.pages.dev",
     ]
   ) {
     if (!origins.includes(expected)) {

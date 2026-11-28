@@ -61,9 +61,11 @@ test("static app sends baseline browser security headers", async ({ page }) => {
   expect(response).not.toBeNull();
   const headers = response!.headers();
   expect(headers["x-content-type-options"]).toBe("nosniff");
-  expect(headers["x-frame-options"]).toBe("SAMEORIGIN");
+  expect(headers["x-frame-options"]).toBe("DENY");
   expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
-  expect(headers["content-security-policy"]).toContain("object-src 'none'");
+  expect(headers["content-security-policy"]).toContain("frame-ancestors 'none'");
+  const metaCsp = await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute("content");
+  expect(metaCsp).toContain("object-src 'none'");
 });
 
 test("primary public routes have keyboard reachable controls", async ({ page }) => {

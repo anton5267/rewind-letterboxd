@@ -126,6 +126,10 @@ test("Create List mobile empty form matches the READY frame and keeps Save disab
   await page.goto("/en/lists");
   const main = page.locator('main[data-list-editor="create"]');
   await expect(main).toHaveAttribute("aria-busy", "false");
+  await expect.poll(() => page.evaluate(() => ["header", "main", "footer"].map(selector => {
+    const element = document.querySelector(selector);
+    return element ? getComputedStyle(element).fontFamily.split(",")[0].replace(/[\"']/g, "").trim() : "missing";
+  }))).toEqual(["Inter", "Inter", "Inter"]);
   await expect(main.locator(':scope > [class*="createMobileHeader"]')).toBeVisible();
   await page.locator("#new-list-name").fill("My Top");
   await page.locator("#new-list-description").fill("A personal collection of films that shaped my taste and defined my rewatches. These are the movies I come back to again and again.");
@@ -229,6 +233,7 @@ test("Create List empty desktop layout matches the READY form and View list open
   await page.goto("/en/lists");
   const main = page.locator('main[data-list-editor="create"]');
   await expect(main).toHaveAttribute("aria-busy", "false");
+  await expect.poll(() => page.locator("main").evaluate(element => getComputedStyle(element).fontFamily.split(",")[0].replace(/[\"']/g, "").trim())).toBe("SF Pro Display");
   await page.locator("#new-list-name").fill("My Top");
   await page.locator("#new-list-description").fill("A personal collection of films that shaped my taste and defined my rewatches.\n\nThese are the movies I come back to again and again.");
   await page.locator("#new-list-tags").fill("mytop, favorites");

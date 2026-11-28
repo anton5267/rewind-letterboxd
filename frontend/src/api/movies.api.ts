@@ -56,8 +56,8 @@ export const searchTmdbMovies = (query: string, year: string | undefined, page: 
 export const discoverTmdbMovies = (params: TmdbMovieDiscoveryParams) =>
   api.get<TmdbMovieSearchPage>("/tmdb/movies/discover", { params });
 
-export const importTmdbMovie = (tmdbId: number) =>
-  api.post<{ movieId: number; title: string }>("/tmdb/movies/import", { tmdbId });
+export const importTmdbMovie = (tmdbId: number, options: { addToWatchlist?: boolean } = {}) =>
+  api.post<{ movieId: number; title: string }>("/tmdb/movies/import", { tmdbId, ...options });
 
 export const getMovieDetails = (movieId: number) =>
   api.get<MovieDetails>(`/movies/${movieId}/details`);

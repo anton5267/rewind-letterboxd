@@ -32,6 +32,16 @@ export function parseJournalCoverImages(
   return images.length ? images as string[] : null;
 }
 
+export function parseJournalPosterImages(
+  value: unknown,
+): string[] | null | false {
+  if (value === null) return null;
+  if (!Array.isArray(value) || value.length > 3) return false;
+  const images = value.map(imageUrl);
+  if (images.some((image) => image === null)) return false;
+  return images.length ? images as string[] : null;
+}
+
 export function journalPlainText(blocks: JournalContentBlock[]): string {
   return blocks.map((block) => {
     if (block.type === "list") {
@@ -98,6 +108,11 @@ export function parseJournalMedia(
     if (images === false) return null;
     media.coverImages = images;
   }
+  if (Object.hasOwn(body, "posterImages")) {
+    const images = parseJournalPosterImages(body.posterImages);
+    if (images === false) return null;
+    media.posterImages = images;
+  }
   if (Object.hasOwn(body, "contentBlocks")) {
     const blocks = parseJournalContentBlocks(body.contentBlocks);
     if (blocks === false) return null;
@@ -107,7 +122,7 @@ export function parseJournalMedia(
 }
 
 export function storedJournalMedia(
-  row: { cover_images?: unknown; content_blocks?: unknown },
+  row: { cover_images?: unknown; poster_images?: unknown; content_blocks?: unknown },
 ): JournalMedia {
   const decode = (value: unknown) => {
     if (typeof value !== "string") return value ?? null;
@@ -119,6 +134,7 @@ export function storedJournalMedia(
   };
   return {
     coverImages: parseJournalCoverImages(decode(row.cover_images)) || null,
+    posterImages: parseJournalPosterImages(decode(row.poster_images)) || null,
     contentBlocks: parseJournalContentBlocks(decode(row.content_blocks)) ||
       null,
   };

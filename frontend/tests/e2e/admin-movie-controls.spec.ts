@@ -4,6 +4,7 @@ import { adminMovieFixture } from "./fixtures/admin-movie";
 test("Admin can change a film publication status", async ({ page }) => {
   const { movie, movies, writes } = await adminMovieFixture(page);
   const card = movies.getByRole("listitem").filter({ hasText: movie.title });
+  await card.locator("summary").click();
   await card.getByRole("button", { name: "Change status" }).click();
   await expect(card).toContainText("Unpublished");
   expect(writes.find(write => write.path === `/api/admin/movies/${movie.id}`)?.data).toEqual({ title: movie.title, published: false });
@@ -12,8 +13,9 @@ test("Admin can change a film publication status", async ({ page }) => {
 test("Admin can replace the genre selection when editing a film", async ({ page }) => {
   const { movie, movies, writes } = await adminMovieFixture(page);
   const row = movies.getByRole("listitem").filter({ hasText: movie.title });
-  await row.getByRole("button", { name: "Edit", exact: true }).click();
+  await row.getByRole("button", { name: "Edit Film", exact: true }).click();
 
+  await movies.locator("summary").filter({ hasText: "Change Genre" }).click();
   const drama = movies.getByRole("checkbox", { name: "Drama", exact: true });
   const comedy = movies.getByRole("checkbox", { name: "Comedy", exact: true });
   await expect(drama).toBeChecked();
@@ -22,7 +24,7 @@ test("Admin can replace the genre selection when editing a film", async ({ page 
   await comedy.check();
   await movies.getByRole("button", { name: "Save", exact: true }).click();
 
-  await expect(row.getByRole("button", { name: "Edit", exact: true })).toBeFocused();
+  await expect(row.getByRole("button", { name: "Edit Film", exact: true })).toBeFocused();
   expect(writes.find(write => write.path === `/api/admin/movies/${movie.id}`)?.data).toMatchObject({ genreIds: [8] });
 });
 
@@ -32,23 +34,25 @@ test("Admin can edit actor, director, and producer credits", async ({ page }) =>
   await expect(movies.getByText("Missing original language: 1")).toBeVisible();
   await movies.locator("summary").filter({ hasText: "Add film" }).click();
   const row = movies.getByRole("listitem").filter({ hasText: movie.title });
-  await row.getByRole("button", { name: "Edit", exact: true }).click();
+  await row.getByRole("button", { name: "Edit Film", exact: true }).click();
   const language = movies.getByLabel("Original language (ISO code, for example en)");
   await expect(language).toHaveValue("ja");
   await language.fill("fr");
 
+  await movies.locator("summary").filter({ hasText: "Change Actors / Director" }).click();
   const credits = movies.getByRole("region", { name: "Cast & Crew" });
   for (const [type, label, person] of [["actor", "Cast", "Test Actor"], ["director", "Directors", "Test Director"], ["producer", "Producers", "Test Producer"]] as const) {
     const group = credits.getByRole("group", { name: label });
-    await group.getByLabel(`Find a person · ${label}`).fill(person);
-    await group.getByRole("button", { name: "Search", exact: true }).click();
+    const personSearch = group.getByLabel(`Find a person · ${label}`);
+    await personSearch.fill(person);
+    await personSearch.press("Enter");
     await group.getByRole("list", { name: `${label} · Search results` }).getByRole("button", { name: "Add", exact: true }).click();
   }
   await credits.getByLabel("Character name").fill("The Lead");
   await credits.getByLabel("Cast order").fill("2");
   await movies.getByRole("button", { name: "Save", exact: true }).click();
 
-  await expect(row.getByRole("button", { name: "Edit", exact: true })).toBeFocused();
+  await expect(row.getByRole("button", { name: "Edit Film", exact: true })).toBeFocused();
   expect(writes.find(write => write.path === `/api/admin/movies/${movie.id}`)?.data).toMatchObject({
     originalLanguage: "fr",
     actorCredits: [{ actorId: 31, characterName: "The Lead", castOrder: 2 }],
@@ -126,7 +130,7 @@ test("bulk TMDB sync validates unique ID pairs and submits them through the sync
   const form = movies.getByRole("form", { name: "Bulk catalog sync" });
   const field = form.getByRole("textbox", { name: "Film ID pairs" });
   const submit = form.getByRole("button", { name: "Sync pairs" });
-  await expect(form.getByRole("link", { name: "Open CSV with 49 verified pairs" })).toHaveAttribute("href", "https://raw.githubusercontent.com/anton5267/rewind-letterboxd/master/docs/project/TMDB_VERIFIED_CROSSWALK.csv");
+  await expect(form.getByRole("link", { name: "Open CSV with 50 verified pairs" })).toHaveAttribute("href", "https://raw.githubusercontent.com/anton5267/rewind-letterboxd/master/docs/project/TMDB_VERIFIED_CROSSWALK.csv");
   const invalidInputs = ["", "1,abc", "0,550", "1,550\n1,603", "1,550\n2,550", Array.from({ length: 51 }, (_, index) => `${index + 1},${index + 1000}`).join("\n")];
   for (const invalid of invalidInputs) {
     await field.fill(invalid);
@@ -206,7 +210,7 @@ for (const width of [320, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     const { movie, movies, writes } = await adminMovieFixture(page);
     const row = movies.getByRole("listitem").filter({ hasText: movie.title });
-    const edit = row.getByRole("button", { name: "Edit", exact: true });
+    const edit = row.getByRole("button", { name: "Edit Film", exact: true });
     await edit.focus();
     await edit.press("Enter");
     const title = movies.getByRole("textbox", { name: "Film title", exact: true });
@@ -216,7 +220,7 @@ for (const width of [320, 1440]) {
     const focusedLayout = await title.evaluate(element => ({ top: element.getBoundingClientRect().top, headerBottom: document.querySelector("header")!.getBoundingClientRect().bottom }));
     expect(focusedLayout.top).toBeGreaterThanOrEqual(focusedLayout.headerBottom);
     await page.keyboard.press("Tab");
-    await expect(movies.getByLabel("Duration (minutes)", { exact: true })).toBeFocused();
+    await expect(movies.getByLabel("Duration", { exact: true })).toBeFocused();
     await movies.getByRole("button", { name: "Cancel", exact: true }).click();
     await expect(edit).toBeFocused();
     await movies.locator("summary").filter({ hasText: "Add film" }).click();

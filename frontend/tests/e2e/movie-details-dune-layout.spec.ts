@@ -38,8 +38,8 @@ const duneFigmaSimilarArtwork: Array<[string, string]> = [
 ];
 const reviewPage = {
   content: [
-    { id: 610, userId: 21, username: "Matt Singer", content: "A thoughtful science fiction epic gives its characters and world room to breathe. The patient pace makes Arrakis feel immense, while the images and performances keep the story grounded in Paul’s difficult choices and the people around him.", rating: 4.5, createdAt: "2025-12-09T12:00:00Z" },
-    { id: 611, userId: 22, username: "James Schaffrillas", content: "The story has room to breathe, and the images make the world feel immense. Villeneuve builds a convincing future society with patient direction, sharp production design, and a strong central performance; each scene adds another layer to the film’s strange, compelling world.", rating: 4.5, createdAt: "2025-12-09T12:00:00Z" },
+    { id: 610, userId: 21, username: "Matt Singer", content: "I will never watch any kind of making-of documentary or behind-the-scenes featurette about Denis Villeneuve’s Dune. I don’t want to know how this film was made. I prefer to believe the extremely convincing illusion that Villeneuve somehow traveled to the year 10,191 and documented the strange civilization he encountered.", rating: 4.5, createdAt: "2025-12-09T12:00:00Z" },
+    { id: 611, userId: 22, username: "James Schaffrillas", content: "Yes yes YESSSSSSSSSS\nDenis Villeneuve has this way of bypassing my absurdly short attention span in a way no other filmmaker can. Every scene he shoots is so compelling through its presentation and atmosphere that its overall relevance to the larger story is a moot point.", rating: 4.5, createdAt: "2025-12-09T12:00:00Z" },
   ], number: 0, size: 10, totalElements: 2, totalPages: 1,
 };
 
@@ -66,8 +66,14 @@ test("Dune phone composition grows with plot and storyline content", async ({ pa
       await page.goto(`/${locale}/films/35`);
       await expect(page.getByRole("heading", { level: 1, name: "Dune" })).toBeVisible();
       await expect(page.locator("main")).toHaveAttribute("aria-busy", "false");
+      await expect.poll(() => page.evaluate(() => ["header", "main", "footer"].map(selector => {
+        const element = document.querySelector(selector);
+        return element ? getComputedStyle(element).fontFamily.split(",")[0].replace(/[\"']/g, "").trim() : "missing";
+      }))).toEqual(width <= 767 ? ["Inter", "Inter", "Inter"] : ["SF Pro Display", "SF Pro Display", "SF Pro Display"]);
       await expect.poll(() => page.locator('img[src="https://dune-movie-fixture.invalid/poster.png"]').evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
       if (locale === "uk" && width === 393) {
+        await expect(page.locator('section[aria-labelledby="reviews-title"] article[class*="review"] > section').first()).toBeHidden();
+        await expect(page.getByRole("link", { name: "Matt Singer" })).toHaveAttribute("href", "/uk/reviews/610");
         const crewCards = page.locator('section[aria-labelledby="mobile-crew-title"] a');
         await expect(crewCards).toHaveCount(7);
         await expect(crewCards.nth(0)).toContainText("Denis Villeneuve");
@@ -250,9 +256,13 @@ test("Dune desktop Figma composition includes member actions when signed in", as
   await expect(actions.getByRole("button", { name: "Add to lists" })).toBeVisible();
   await expect(actions.getByRole("button", { name: "Review" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Ratings & Reviews" })).toBeVisible();
+  await expect(page.locator("#review-content")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Cast & Crew" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Similar films" })).toBeVisible();
   await expect.poll(() => page.locator('img[src="https://dune-movie-fixture.invalid/poster.png"]').evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   await expect.poll(() => page.locator('img[src*="dune-movie-fixture"]').evaluateAll(images => images.filter(image => (image as HTMLImageElement).naturalWidth > 0).length)).toBeGreaterThan(10);
   await page.screenshot({ path: resolve(process.cwd(), "../artifacts/visual-audit-20261127/dune-film-detail/movie-dune-en-1440-member.png"), fullPage: true });
+  await actions.getByRole("button", { name: "Review" }).click();
+  await expect(page.locator("#review-content")).toBeVisible();
+  await expect(page.locator("#review-content")).toBeFocused();
 });

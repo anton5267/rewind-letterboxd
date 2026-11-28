@@ -212,7 +212,7 @@ export default function Register() {
         </form>
 
         <p className={styles.footer}>
-          {t("alreadyAccount")} <Link to={path("/login")} state={returnLocation ? { returnTo: returnLocation } : undefined}>{t("login")}</Link>
+          <span>{t("alreadyAccount")}</span><Link to={path("/login")} state={returnLocation ? { returnTo: returnLocation } : undefined}>{t("login")}</Link>
         </p>
       </div>
     </main>

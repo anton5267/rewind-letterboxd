@@ -215,11 +215,11 @@
 .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
 .featuredGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
 .taggedGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-.card { min-width: 0; overflow: hidden; border: 1px solid rgba(255, 255, 255, .1); border-radius: 3px; background: #292929; transition: border-color .2s ease, transform .2s ease; }
+.card { min-width: 0; overflow: hidden; border: 1px solid rgba(255, 255, 255, .1); border-radius: 3px; background: #292929; transition: border-color var(--rewind-motion-standard) var(--rewind-motion-ease), transform var(--rewind-motion-standard) var(--rewind-motion-ease), box-shadow var(--rewind-motion-standard) var(--rewind-motion-ease); }
 .card:hover { border-color: rgba(212, 168, 95, .72); transform: translateY(-3px); }
-.featuredCard { display: grid; grid-template-columns: 178px minmax(0, 1fr); min-width: 0; overflow: hidden; border: 1px solid rgba(255, 255, 255, .1); border-radius: 3px; background: #292929; transition: border-color .2s ease, transform .2s ease; }
+.featuredCard { display: grid; grid-template-columns: 178px minmax(0, 1fr); min-width: 0; overflow: hidden; border: 1px solid rgba(255, 255, 255, .1); border-radius: 3px; background: #292929; transition: border-color var(--rewind-motion-standard) var(--rewind-motion-ease), transform var(--rewind-motion-standard) var(--rewind-motion-ease), box-shadow var(--rewind-motion-standard) var(--rewind-motion-ease); }
 .featuredCard:hover { border-color: rgba(212, 168, 95, .72); transform: translateY(-3px); }
-.taggedCard { display: grid; grid-template-columns: minmax(250px, 34%) minmax(0, 1fr); min-width: 0; overflow: hidden; border: 1px solid rgba(255, 255, 255, .1); border-radius: 3px; background: #292929; transition: border-color .2s ease, transform .2s ease; }
+.taggedCard { display: grid; grid-template-columns: minmax(250px, 34%) minmax(0, 1fr); min-width: 0; overflow: hidden; border: 1px solid rgba(255, 255, 255, .1); border-radius: 3px; background: #292929; transition: border-color var(--rewind-motion-standard) var(--rewind-motion-ease), transform var(--rewind-motion-standard) var(--rewind-motion-ease), box-shadow var(--rewind-motion-standard) var(--rewind-motion-ease); }
 .taggedCard:hover { border-color: rgba(212, 168, 95, .72); transform: translateY(-3px); }
 .posterLink { display: block; min-height: 178px; padding: 16px 18px 0; background: linear-gradient(180deg, rgba(45, 101, 114, .18), transparent); text-decoration: none; }
 .featuredPosterLink { display: flex; min-height: 212px; align-items: center; justify-content: center; padding: 14px 8px 14px 14px; background: linear-gradient(180deg, rgba(45, 101, 114, .24), transparent); text-decoration: none; }
@@ -391,7 +391,7 @@
 .landingSection:first-child .landingRail,
 .landingSection:last-child .landingRail { gap: 112px; }
 .railCard { overflow: visible; border: 0; border-radius: 0; background: none; }
-.railCard:hover { transform: none; }
+.railCard:hover { transform: translateY(-3px); }
 .railCard .railPosterLink { --catalog-poster-height: 260px; height: 260px; min-height: 260px; overflow: visible; padding: 0; background: none; }
 .landingSection:first-child .railPosterLink,
 .landingSection:last-child .railPosterLink { --catalog-poster-height: 180px; height: 180px; min-height: 180px; }

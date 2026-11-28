@@ -126,8 +126,9 @@ for (const locale of ["uk", "en"] as const) {
     await expect(mobileFilter).toBeVisible();
     await mobileFilter.click();
     await expect(selector).toBeFocused();
+    await expect(selector.locator('option[value="tmdb"]')).toHaveText(locale === "uk" ? "Шукати серед фільмів TMDB" : "Search all TMDB films");
     await expect(selector.locator('option[value="films"]')).toHaveText(`${locale === "uk" ? "Фільми" : "Films"} (21)`);
-    await expect(selector.locator("option")).toHaveCount(8);
+    await expect(selector.locator("option")).toHaveCount(9);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
 
     const posters = main.locator("#films article > a");

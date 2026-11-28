@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 const signupFlows = [
   { language: "uk", username: "newmemberuk", email: "newmemberuk@example.invalid", button: "Створити акаунт" },
-  { language: "en", username: "newmemberen", email: "newmemberen@example.invalid", button: "Create your account" },
+  { language: "en", username: "newmemberen", email: "newmemberen@example.invalid", button: "Create Account" },
 ] as const;
 
 for (const flow of signupFlows) {

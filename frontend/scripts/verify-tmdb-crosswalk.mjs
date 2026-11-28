@@ -11,10 +11,8 @@ if (lines[0] !== "movie_id,tmdb_id") {
   throw new Error("TMDB crosswalk must start with the exact movie_id,tmdb_id header.");
 }
 
-const expectedMovieIds = [
-  ...Array.from({ length: 35 }, (_, index) => index + 1),
-  ...Array.from({ length: 14 }, (_, index) => index + 37),
-];
+const expectedMovieIds = Array.from({ length: 50 }, (_, index) => index + 1);
+const confirmedMovieTmdbIds = new Map([[36, 1147411]]);
 const movieIds = new Set();
 const tmdbIds = new Set();
 
@@ -42,10 +40,14 @@ for (const [index, line] of lines.slice(1).entries()) {
   if (tmdbIds.has(tmdbId)) {
     throw new Error(`TMDB crosswalk contains duplicate TMDB ID ${tmdbId}.`);
   }
+  const confirmedTmdbId = confirmedMovieTmdbIds.get(movieId);
+  if (confirmedTmdbId !== undefined && tmdbId !== confirmedTmdbId) {
+    throw new Error(`TMDB crosswalk maps REWIND movie ${movieId} to ${tmdbId}; the TMDB search-confirmed ID is ${confirmedTmdbId}.`);
+  }
 
   movieIds.add(movieId);
   tmdbIds.add(tmdbId);
 }
 
-console.log("TMDB crosswalk structure is valid: 49 rows for REWIND IDs 1–35 and 37–50, with unique positive IDs.");
+console.log("TMDB crosswalk structure is valid: 50 rows for REWIND IDs 1–50, with unique positive IDs and the TMDB-confirmed mapping for movie 36.");
 console.log("This structural check does not independently verify IMDb↔TMDB identity.");

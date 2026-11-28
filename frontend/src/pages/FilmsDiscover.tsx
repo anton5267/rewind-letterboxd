@@ -194,7 +194,13 @@ export default function FilmsDiscover() {
       return;
     }
     const q = filmInput.trim();
-    if (q) navigate(path(`/films?q=${encodeURIComponent(q)}${year ? `&year=${encodeURIComponent(year)}` : ""}`));
+    if (q) {
+      const params = new URLSearchParams({ q });
+      if (year) params.set("year", year);
+      if (minRating) params.set("minRating", minRating);
+      if (genreId) params.set("genreId", genreId);
+      navigate(path(`/films?${params.toString()}`));
+    }
   };
 
   const filmSuggestionsOpen = filmSearchFocused && !filmSearchDismissed && Boolean(filmInput.trim())

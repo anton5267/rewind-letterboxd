@@ -12,6 +12,20 @@ major_version = 17
 
 # Auth templates are the version-controlled source of truth. Apply the same
 # subject/body in the hosted project's Authentication → Emails dashboard.
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:3000/"
+additional_redirect_urls = [
+  "http://127.0.0.1:3000/uk/login/",
+  "http://127.0.0.1:3000/en/login/",
+  "http://127.0.0.1:3000/uk/reset-password/",
+  "http://127.0.0.1:3000/en/reset-password/",
+]
+
+[auth.email]
+enabled = true
+enable_confirmations = true
+
 [auth.email.template.confirmation]
 subject = "{{ if eq .Data.language \"en\" }}Confirm your REWIND email{{ else }}Підтвердьте пошту REWIND{{ end }}"
 content_path = "./supabase/templates/confirmation.html"

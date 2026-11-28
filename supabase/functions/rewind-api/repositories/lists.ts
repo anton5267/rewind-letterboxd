@@ -418,10 +418,12 @@ export const listsRepository: Pick<RewindApiRepository,
       await connection.queryObject("SET ROLE rewind_edge_app");
       const listResult = await connection.queryObject<{
         id: string; name: string; description: string | null; owner_id: string;
-        owner_username: string; owner_avatar_url: string | null; is_ranked: boolean; reply_preference: MyListResponse["replyPreference"];
+        owner_username: string; owner_avatar_url: string | null; published_at: string; is_ranked: boolean; reply_preference: MyListResponse["replyPreference"];
       }>({
         text: `SELECT l.id::text AS id, l.name, l.description, owner.id::text AS owner_id,
-                      owner.username AS owner_username, owner.avatar_url AS owner_avatar_url, l.is_ranked, l.reply_preference
+                      owner.username AS owner_username, owner.avatar_url AS owner_avatar_url,
+                      to_char(l.published_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS published_at,
+                      l.is_ranked, l.reply_preference
                FROM rewind.lists l JOIN rewind.users owner ON owner.id = l.user_id
                WHERE l.id = $1 AND l.list_type = 'CUSTOM' AND l.is_public = TRUE AND owner.is_active = TRUE`,
         args: [listId],
@@ -454,7 +456,7 @@ export const listsRepository: Pick<RewindApiRepository,
       return {
         id: toId(list.id), name: list.name, description: list.description,
         ownerId: toId(list.owner_id), ownerUsername: list.owner_username,
-        ownerAvatarUrl: list.owner_avatar_url, tags: tags.rows.map((row) => row.name),
+        ownerAvatarUrl: list.owner_avatar_url, publishedAt: list.published_at, tags: tags.rows.map((row) => row.name),
         likeCount: Number(likes.rows[0]?.total ?? "0"), isRanked: list.is_ranked, replyPreference: list.reply_preference,
         movies: movies.rows.map((movie) => ({
           id: toId(movie.id), title: movie.title, releaseDate: movie.release_date,

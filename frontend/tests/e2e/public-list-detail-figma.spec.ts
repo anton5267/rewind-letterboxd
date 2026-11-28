@@ -44,6 +44,7 @@ async function mockList(page: Page, isRanked?: boolean, options: {
       ownerId: 985001,
       ownerUsername: options.ownerUsername ?? "FilmOracle",
       ownerAvatarUrl: "https://list-owner.example.invalid/avatar.svg",
+      publishedAt: "2026-11-23T12:00:00.000Z",
       tags: options.tags ?? ["Science Fiction", "Thrillers"],
       likeCount: options.likeCount ?? 554,
       ...(isRanked === undefined ? {} : { isRanked }),
@@ -56,6 +57,19 @@ async function mockList(page: Page, isRanked?: boolean, options: {
     return route.fulfill({ json: {} });
   });
 }
+
+test("public list detail shows a localized publication time with its source timestamp", async ({ page }) => {
+  await page.clock.install({ fixedTime: new Date("2026-11-28T12:00:00.000Z") });
+  await mockList(page, false);
+
+  await page.goto("/en/lists/public/985000");
+  const published = page.locator("time[data-list-published-at]");
+  await expect(published).toHaveText("Published 5 days ago");
+  await expect(published).toHaveAttribute("datetime", "2026-11-23T12:00:00.000Z");
+
+  await page.goto("/uk/lists/public/985000");
+  await expect(page.locator("time[data-list-published-at]")).toHaveText("Опубліковано 5 днів тому");
+});
 
 async function expectSourcePosters(page: Page, prefix: "ranked" | "nolan", count: number) {
   const images = page.locator('a[class*="movieMedia"] img');

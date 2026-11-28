@@ -12,6 +12,7 @@ export type JournalContentBlock =
 
 export interface JournalMedia {
   coverImages?: string[] | null;
+  posterImages?: string[] | null;
   contentBlocks?: JournalContentBlock[] | null;
 }
 

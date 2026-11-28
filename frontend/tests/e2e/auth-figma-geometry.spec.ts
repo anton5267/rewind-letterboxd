@@ -11,6 +11,12 @@ test("auth entry and mobile forms match their Figma anchors", async ({ page }) =
     await page.goto(`/en/${route}`);
     const main = page.locator("main[data-rewind-auth-page]");
     await expect(main).toBeVisible();
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      const finiteAnimations = document.getAnimations().filter(animation => animation.effect?.getComputedTiming().iterations !== Infinity);
+      await Promise.allSettled(finiteAnimations.map(animation => animation.finished));
+      await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    });
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(393);
     if (route === "auth") {
       const logo = await main.locator("[class*='mobileLogo'] img").boundingBox();
@@ -55,6 +61,12 @@ test("auth shells and implementation-created desktop registration match their de
     await page.goto(`/en/${route}`);
     const main = page.locator("main[data-rewind-auth-page]");
     await expect(main).toBeVisible();
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      const finiteAnimations = document.getAnimations().filter(animation => animation.effect?.getComputedTiming().iterations !== Infinity);
+      await Promise.allSettled(finiteAnimations.map(animation => animation.finished));
+      await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    });
     const metrics = await page.evaluate(() => {
       const box = (node: Element | null) => node?.getBoundingClientRect().toJSON() ?? null;
       return { title: box(document.querySelector("main h1")), inputs: Array.from(document.querySelectorAll("main input")).map(box), button: box(document.querySelector('main button[type="submit"]')), card: box(document.querySelector("main section, main > div[class*='card']")), footer: box(document.querySelector("footer")), pageHeight: document.documentElement.scrollHeight };

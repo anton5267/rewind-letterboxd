@@ -51,7 +51,7 @@ function MovieRow({ movies }: { movies: MovieCard[] }) {
   return <div className={styles.movieRow}>
     {movies.map(movie => {
       const movieTitle = editorialText(movie.title, t("untitledFilm"));
-      return <article className={styles.movieCard} key={movie.id}>
+      return <article className={`${styles.movieCard} rewindMotionSurface`} key={movie.id}>
         <Link to={path(`/films/${movie.id}`)} aria-label={movieTitle} title={movieTitle}>
           <ResilientImage src={movie.photoUrl} alt="" fallback={<div className={styles.posterFallback} aria-hidden="true"><span>{movieTitle}</span></div>} />
           <h3>{movieTitle}</h3>
@@ -280,7 +280,6 @@ function HomeContent() {
         <div className={`${styles.sectionHeading} ${styles.guestRecentHeading}`}>
           <h2 tabIndex={-1}>{t("homeJustReviewed")}</h2>
           {publicWatchedFilmCount !== null && <span className={styles.guestRecentCount}>{publicWatchedFilmCount.toLocaleString(lang === "uk" ? "uk-UA" : "en-US")} {t("filmsWatched")}</span>}
-          <Link to={path("/reviews")}>{t("homeMore")}</Link>
         </div>
         {sectionLoading.recentReviews ? <HomeLoading kind="recentReviews" /> : sectionErrors.recentReviews ? <RetryNotice className={styles.sectionStatus} message={t("loadHomeError")} retryLabel={t("retry")} role={null} onRetry={() => retrySection("recentReviews", "home-guest-reviews")} /> : recentReviews.length === 0 ? <p>{t("noRecentReviews")}</p> : <div className={styles.guestReviewPosters} role="group" aria-label={t("homeJustReviewed")}>{recentReviews.map(review => {
           const movieTitle = editorialText(review.movieTitle, t("untitledFilm"));

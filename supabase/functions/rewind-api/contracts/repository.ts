@@ -12,7 +12,7 @@ import type { AdminActivityOverviewResponse, AdminAuditLogResponse, AdminComment
 export interface RewindApiRepository {
   searchTmdbCatalog?(query: string, year: number | null, page: number, language: "uk" | "en"): Promise<TmdbMovieSearchResponse>;
   discoverTmdbCatalog?(input: TmdbMovieDiscoveryInput): Promise<TmdbMovieSearchResponse>;
-  importTmdbCatalogMovie?(authUser: HostedAuthUser, tmdbId: number): Promise<{ movieId: number; title: string }>;
+  importTmdbCatalogMovie?(authUser: HostedAuthUser, tmdbId: number, addToWatchlist?: boolean): Promise<{ movieId: number; title: string }>;
   getPublicWatchedFilmCount?(): Promise<number>;
   listGenres(): Promise<GenreResponse[]>;
   searchMovies(params: MovieSearchParams): Promise<MovieSearchResult>;

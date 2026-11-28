@@ -109,7 +109,8 @@
     border: 0;
   }
   .registerPage form > .button { position: absolute; top: 538px; left: 52px; width: 290px; height: 56px; min-height: 56px; margin: 0; }
-  .registerPage .footer { position: absolute; top: 650px; left: 0; width: 100%; margin: 0; }
+  .registerPage:not([data-register-success]) .footer { position: absolute; top: 650px; left: 0; display: flex; width: 100%; align-items: flex-start; justify-content: center; gap: 0; margin: 0; font-size: 12px; line-height: normal; }
+  .registerPage:not([data-register-success]) .footer a { align-items: flex-start; font-size: 12px; line-height: normal; }
   .registerPage .error {
     position: absolute;
     top: 496px;

@@ -71,11 +71,12 @@ export async function handleTmdbCatalogRoutes(context: HttpRouteContext): Promis
     try { raw = await request.json(); } catch { return json({ message: "Invalid request body" }, 400, corsHeaders); }
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) return json({ message: "Invalid request body" }, 400, corsHeaders);
     const rawId = (raw as Record<string, unknown>).tmdbId;
+    const rawAddToWatchlist = (raw as Record<string, unknown>).addToWatchlist;
     const tmdbId = typeof rawId === "number" && Number.isSafeInteger(rawId) && rawId > 0 ? rawId : null;
-    if (tmdbId === null) return json({ message: "Invalid TMDB movie ID" }, 400, corsHeaders);
+    if (tmdbId === null || (rawAddToWatchlist !== undefined && typeof rawAddToWatchlist !== "boolean")) return json({ message: "Invalid TMDB movie ID or Watchlist option" }, 400, corsHeaders);
     try {
       if (!repository.importTmdbCatalogMovie) return json({ message: "TMDB import is unavailable" }, 503, corsHeaders);
-      return json(await repository.importTmdbCatalogMovie(authUser, tmdbId), 200, corsHeaders);
+      return json(await repository.importTmdbCatalogMovie(authUser, tmdbId, rawAddToWatchlist === true), 200, corsHeaders);
     } catch (error) {
       return repositoryFailure(error, "Unable to add this movie", corsHeaders);
     }

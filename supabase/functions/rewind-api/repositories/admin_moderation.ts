@@ -335,7 +335,9 @@ export const adminModerationRepository: Pick<RewindApiRepository,
       const result = await connection.queryObject<Parameters<typeof toAdminReview>[0]>({
         text: `SELECT r.id::text AS id, r.movie_id::text AS movie_id, m.title AS movie_title,
                      r.user_id::text AS user_id, u.username, r.content, r.rating::int AS rating, r.is_hidden,
-                     r.moderated_reason, r.moderated_at::text AS moderated_at, r.created_at::text AS created_at
+                     r.moderated_reason, r.moderated_at::text AS moderated_at, r.created_at::text AS created_at,
+                     COALESCE((SELECT COUNT(*)::text FROM rewind.review_likes rl WHERE rl.review_id=r.id), '0') AS likes_count,
+                     COALESCE((SELECT COUNT(*)::text FROM rewind.comments c WHERE c.review_id=r.id AND c.is_hidden=FALSE), '0') AS comments_count
               FROM rewind.reviews r JOIN rewind.movies m ON m.id=r.movie_id JOIN rewind.users u ON u.id=r.user_id
               WHERE r.id=$1`, args: [id],
       });

@@ -99,6 +99,11 @@ export default function PublicLists() {
   const [tagsAttempt, setTagsAttempt] = useState(0);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [loadedFeedRequestKey, setLoadedFeedRequestKey] = useState<string | null>(null);
+  const currentFeedRequestKey = JSON.stringify([feed, tag, page, pageSize, lang, location.key]);
+  const renderedFeaturedGroups = featuredCategoryGroups
+    .map(group => ({ ...group, lists: lists.filter(list => list.featuredCategory === group.value) }))
+    .filter(group => loading || error || group.lists.length > 0);
   const [landingLists, setLandingLists] = useState<Record<LandingFeed, PublicList[]>>(createLandingLists);
   const [landingErrors, setLandingErrors] = useState<Record<LandingFeed, boolean>>(createLandingErrors);
   const [landingLoading, setLandingLoading] = useState<Record<LandingFeed, boolean>>(createLandingLoading);
@@ -171,6 +176,7 @@ export default function PublicLists() {
       setError(false);
       setLists([]);
       setTotalPages(0);
+      setLoadedFeedRequestKey(null);
       return;
     }
     let current = true;
@@ -178,6 +184,7 @@ export default function PublicLists() {
     setError(false);
     setLists([]);
     setTotalPages(0);
+    setLoadedFeedRequestKey(null);
     getPublicListFeed(feed, page, tag, pageSize)
       .then(({ data }) => {
         if (!current) return;
@@ -187,6 +194,7 @@ export default function PublicLists() {
         }
         setLists(data.content);
         setTotalPages(data.totalPages);
+        setLoadedFeedRequestKey(currentFeedRequestKey);
       })
       .catch(() => {
         if (!current) return;
@@ -195,7 +203,7 @@ export default function PublicLists() {
       })
       .finally(() => { if (current) setLoading(false); });
     return () => { current = false; };
-  }, [isLanding, tag, feed, lang, page, pageSize, attempt]);
+  }, [isLanding, tag, feed, lang, page, pageSize, attempt, location.key, currentFeedRequestKey]);
 
   useEffect(() => {
     if (!isLanding) {
@@ -274,7 +282,7 @@ export default function PublicLists() {
     const tagged = variant === "tagged";
     const landing = variant === "rail" || variant === "liked";
     const popularFeedCard = variant === "feed" && feed === "popular";
-    const cardClass = tagged ? styles.taggedCard : landing ? `${styles.card} ${styles.railCard}${variant === "liked" ? ` ${styles.likedCard}` : ""}` : compact ? `${styles.featuredCard}${popularFeedCard ? ` ${styles.popularFeedCard}` : ""}` : `${styles.card}${popularFeedCard ? ` ${styles.popularFeedCard}` : ""}`;
+    const cardClass = `${tagged ? styles.taggedCard : landing ? `${styles.card} ${styles.railCard}${variant === "liked" ? ` ${styles.likedCard}` : ""}` : compact ? `${styles.featuredCard}${popularFeedCard ? ` ${styles.popularFeedCard}` : ""}` : `${styles.card}${popularFeedCard ? ` ${styles.popularFeedCard}` : ""}`} rewindMotionSurface`;
     const posterClass = tagged ? styles.taggedPosterLink : landing ? `${styles.posterLink} ${styles.railPosterLink}` : compact ? styles.featuredPosterLink : styles.posterLink;
     return <article className={cardClass} key={list.id}>
       <Link className={posterClass} to={path(`/lists/public/${list.id}`)} aria-label={listName}>
@@ -394,8 +402,8 @@ export default function PublicLists() {
         {showLandingEmpty && <div className={styles.landingEmpty}><p>{t("noPublicLists")}</p></div>}
       </section> : <>
         {feed === "featured" ? <div className={styles.featuredCategorySections} aria-busy={loading}>
-          {featuredCategoryGroups.map((group, index) => {
-            const groupLists = lists.filter(list => list.featuredCategory === group.value);
+          {!loading && !error && loadedFeedRequestKey === currentFeedRequestKey && renderedFeaturedGroups.length === 0 && <div className={styles.empty} role="status">{t("noFeaturedLists")}</div>}
+          {renderedFeaturedGroups.map((group, index) => {
             return <section className={styles.featuredCategorySection} key={group.value} aria-labelledby={`featured-${group.value}-heading`}>
               <div className={styles.sectionHeading}><h2 id={`featured-${group.value}-heading`}>{t(group.labelKey)}</h2></div>
               {index === 0 && loading && <div className={styles.grid} aria-label={t("loading")} role="status">{Array.from({ length: 3 }, (_, card) => <div className={styles.skeleton} key={card} />)}</div>}
@@ -403,8 +411,7 @@ export default function PublicLists() {
                 rememberRetryFocus(`featured-${group.value}-heading`, "feed");
                 setAttempt(value => value + 1);
               }} />}
-              {!loading && !error && groupLists.length === 0 && <p className={styles.featuredGroupEmpty}>{t("noPublicLists")}</p>}
-              {!loading && !error && groupLists.length > 0 && <div className={styles.grid}>{groupLists.map(list => renderListCard(list, "feed"))}</div>}
+              {!loading && !error && <div className={styles.grid}>{group.lists.map(list => renderListCard(list, "feed"))}</div>}
             </section>;
           })}
         </div> : <section aria-labelledby="lists-grid-heading" aria-busy={loading}>

@@ -79,8 +79,9 @@ test("real rating, review and comment actions persist and delete cleanly", async
     await expect(rating).toHaveAttribute("aria-pressed", "true");
     expect(await (await page.request.get("/api/movies/5/rating/me")).json()).toEqual({ rating: 4 });
 
-    await page.getByRole("button", { name: "Готово", exact: true }).click();
+    await sheet.getByRole("button", { name: "Огляд", exact: true }).click();
     const reviewForm = page.locator("form[class*='reviewForm']");
+    await expect(reviewForm).toBeVisible();
     await reviewForm.scrollIntoViewIfNeeded();
     const textarea = reviewForm.locator("#review-content");
     await expect(reviewForm.getByRole("button", { name: "Опублікувати огляд" })).toBeDisabled();
