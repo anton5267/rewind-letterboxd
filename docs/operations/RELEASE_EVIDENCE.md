@@ -9,6 +9,12 @@ Reviewed 28 November 2026. This page summarizes recorded production state and ac
 - Axe WCAG 2 A/AA on both locales at 393×852 and 1440×900 reported zero violations; all four route/viewport checks had zero page errors.
 - The Figma full-catalog frame ends with its footer at y=2691. Production footer begins around y=3891 because the app appends the separate TMDB discovery module after the 50-record REWIND catalog. This extra section supports live TMDB discovery but remains a page-structure difference for full-frame parity; live poster identities also differ from the Figma sample. No production writes, imports, or Supabase changes were made. The runtime smoke used the direct GitHub Pages project path; the repo's root-relative local E2E helper is intended for the local Vite origin and cannot target that subpath unchanged.
 
+## TMDB discovery and title-search pagination — 28 November 2026
+
+- On production `/en/films/`, TMDB discovery returned 8 results on page 1; Next changed the URL to `?tmdbPage=2`, loaded 8 different results and updated the page indicator. No JavaScript errors occurred.
+- On production `/en/films/?q=Dune`, live TMDB search returned 8 results per page and 57 pages; the first results were Dune, Dune: Part Two, and Dune: Part Three. The public search route works without importing or copying the entire TMDB catalog into REWIND.
+- These checks were read-only. No “Add to REWIND” action, account mutation, or database write was performed; signed-in import acceptance remains open.
+
 ## Guest Home Figma header parity — 28 November 2026
 
 - Compared current READY desktop `472:492` (1440×4934) and mobile `1411:3473` (393×2265) sources with the local fixture render. The guest “Just reviewed” header has only its title and watched-film count at both sizes; mobile “Popular Lists” has no “More” link, while the desktop list and other source-backed “More” links remain.
