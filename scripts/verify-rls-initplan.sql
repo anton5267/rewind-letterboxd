@@ -1,5 +1,5 @@
 -- CI guard for the exact policy expressions optimized by
--- 20261128120000_cache_edge_policy_settings.sql. Run after a clean migration
+-- 20261128071028_cache_edge_policy_settings.sql. Run after a clean migration
 -- replay with `supabase db query --file scripts/verify-rls-initplan.sql`.
 DO $assertions$
 DECLARE
