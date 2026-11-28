@@ -438,6 +438,17 @@ Counts below belong to their recorded release and test scope. Full details, fail
 - Both client roles report `EXECUTE` on one function in `rewind`: `rewind_full_touch_updated_at`, which returns `trigger` and is attached to enabled triggers. It is not an RPC-returning function, and the client roles lack `rewind` schema `USAGE`. The application roles `rewind_edge_app` / `rewind_edge_reader` have their intended schema/table privileges; this audit did not evaluate every RLS policy predicate or function behavior.
 - No production privileges or data were changed.
 
+## Writer route release and live Supabase recheck — 28 November 2026
+
+- PR #46 (`be03804`) was merged to `master` as `717e9ec`. CI and the GitHub Pages build/deploy workflow run `46125853099` completed successfully.
+- Before deployment, the production Edge v72 read-back was compared against the candidate. Only the three writer-search runtime files were overlaid onto the hosted bundle; all other hosted files and `verify_jwt=false` were preserved. Supabase now reports `rewind-api` ACTIVE v73 with SHA-256 `59bfe9e2b2412e2fdcd15fc34dc4fad79e0e5e86d52fa6ad5ba01366dd79baf2`.
+- Post-merge read-back matched all 89 deployed Edge files against the `master` source after CRLF/LF normalization. The public writer search returned HTTP 200, 180 published writer identities across four pages, `Cache-Control: public, max-age=300, stale-while-revalidate=600`, and the exact GitHub Pages CORS origin. These GET checks did not modify production data.
+- Direct production navigation to `/uk/people/writer/1293082/` and `/en/people/writer/1293082/` returned HTTP 200 and localized route shells with the Kim Byung-woo title. Headless Playwright confirmed the writer name and filmography render in both locales with no JavaScript page errors. `/sitemap.xml` returned HTTP 200 and includes both localized writer URLs.
+- A fresh read-only schema check confirmed `rewind.lists.featured_category` exists and hosted migration history contains 63 entries, including `20261127174731_featured_list_categories`. `/api/lists/public/featured` responds HTTP 200, but currently has zero published featured lists. No sample lists were inserted; this content state is separate from the fixed endpoint/schema contract.
+- Playwright MCP is already configured in the Codex user config as `@playwright/mcp@0.0.86`; its tools require a Codex restart to load into a session. The project-local Playwright package was available for this published-site smoke check.
+
+- Remaining release gates: full Figma/READY-screen visual acceptance, authenticated multi-account private flows, GitHub Pages response security headers, and local-to-hosted row reconciliation (the owner reported the local MySQL dataset lost and instructed not to search for it).
+
 ## History
 
 - [Consolidated 2026 evidence](../archive/RELEASE_EVIDENCE_2026.md).
